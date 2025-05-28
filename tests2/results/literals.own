@@ -1,16 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
-run::stdout 8
+compile::stdout 8
 hex1: beef
 hex2: beef
 hex3: 37f
@@ -20,7 +8,7 @@ octal_num_2: 159
 bin_num_1: 2
 bin_num_2: 47
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

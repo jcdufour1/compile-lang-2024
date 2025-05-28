@@ -46,8 +46,8 @@ typedef struct {
 // TODO: move this function?
 static inline Str_view defer_pair_print_internal(Defer_pair pair) {
     String buf = {0};
-    string_extend_strv(&print_arena, &buf, tast_defer_print_internal(pair.defer, 0));
-    string_extend_strv(&print_arena, &buf, tast_label_print_internal(pair.label, 0));
+    string_extend_strv(&a_print, &buf, tast_defer_print_internal(pair.defer, 0));
+    string_extend_strv(&a_print, &buf, tast_label_print_internal(pair.label, 0));
     return string_to_strv(buf);
 }
 
@@ -135,6 +135,8 @@ typedef struct Env_ {
     // in load_block_stmts
     Tast_variable_def* rtn_def;
     Defer_colls defered_collections;
+
+    Name llvm_graphvis_parent_block_next;
 } Env;
 
 #endif // ENV_H

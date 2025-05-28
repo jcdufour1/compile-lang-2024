@@ -69,7 +69,9 @@ OBJS=\
 	 ${BUILD_DIR}/codegen/common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
-	 ${BUILD_DIR}/llvm_utils.o
+	 ${BUILD_DIR}/llvm_utils.o \
+	 ${BUILD_DIR}/llvm_graphvis.o \
+	 ${BUILD_DIR}/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
@@ -79,7 +81,7 @@ DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm --backend=c
+ARGS_PROGRAM ?= compile-run ${FILE_TO_TEST}
 
 all: build
 
@@ -103,7 +105,7 @@ build: setup ${BUILD_DIR}/main
 COMPILER_OUTPUT=test.c
 
 test_quick: run
-	${CC_COMPILER} ${COMPILER_OUTPUT} -o a.out && ./a.out ; echo $$?
+	./a.out ; echo $$?
 
 # auto_gen and util
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
@@ -193,6 +195,12 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
+
+${BUILD_DIR}/llvm_graphvis.o: ${DEP_COMMON} src/llvm_graphvis.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_graphvis.o src/llvm_graphvis.c
+
+${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c
 
 ${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c

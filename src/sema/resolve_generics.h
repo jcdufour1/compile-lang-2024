@@ -10,7 +10,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
 bool resolve_generics_struct_like_def_implementation(Name name);
 
 bool resolve_generics_function_def_call(
-    Lang_type* rtn_type,
+    Lang_type_fn* rtn_type,
     Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args,

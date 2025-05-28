@@ -10,31 +10,16 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
+#include <str_view_vec.h>
+#include <subprocess.h>
+#include <llvm_print_graphvis.h>
+#include <symbol_iter.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
 // TODO: test case for handling assigning/returning void item
 //
-// TODO: think about stack overflow if deeply nested generic functions are present?
-// 
-// TODO: expected success test for /r, /t, etc. in source file
-
-static void fail(void) {
-    if (!params.test_expected_fail) {
-        exit(EXIT_CODE_FAIL);
-    }
-
-    log(LOG_DEBUG, "%zu %zu\n", expected_fail_count, params.diag_types.info.count); 
-    if (expected_fail_count == params.diag_types.info.count) {
-        exit(EXIT_CODE_EXPECTED_FAIL);
-    } else {
-        log(
-            LOG_FATAL, "%zu expected fails occured, but %zu expected fails were expected\n",
-            expected_fail_count, params.diag_types.info.count
-        );
-        exit(EXIT_CODE_FAIL);
-    }
-}
+// TODO: expected success test for \r, \t, etc. in source file
 
 static void add_any(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -55,23 +40,22 @@ static void add_primitives(void) {
     add_void();
 }
 
-void do_passes(const Parameters* params) {
+void do_passes(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    // allocate scope 0
     symbol_collection_new(SCOPE_BUILTIN);
 
     add_primitives();
 
     Uast_block* untyped = NULL;
-    bool status = parse_file(&untyped, str_view_from_cstr(params->input_file_name));
+    bool status = parse_file(&untyped, params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
-        assert((!status || params->error_opts_changed) && "parse_file is not returning false when it should\n");
-        fail();
+        assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
+        exit(EXIT_CODE_FAIL);
     }
     assert(status && "error_count should be zero if parse_file returns true");
 
@@ -80,19 +64,19 @@ void do_passes(const Parameters* params) {
     log(LOG_DEBUG, TAST_FMT, uast_block_print(untyped));
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
-    arena_reset(&print_arena);
+    arena_reset(&a_print);
     Tast_block* typed = NULL;
     status = try_set_types(&typed, untyped);
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
-        assert((!status || params->error_opts_changed) && "try_set_types is not returning false when it should\n");
-        fail();
+        assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
+        exit(EXIT_CODE_FAIL);
     }
     log(LOG_DEBUG, "try_set_block_types succedded\n");
     assert(status && "error_count should be zero if try_set_types returns true");
     
     unwrap(typed);
-    arena_reset(&print_arena);
+    arena_reset(&a_print);
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
     symbol_log_level(LOG_DEBUG, 0);
@@ -102,43 +86,80 @@ void do_passes(const Parameters* params) {
     Llvm_block* llvm_root = add_load_and_store(typed);
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     llvm_log_level(LOG_DEBUG, 0);
+
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    Llvm* curr = NULL;
+    while (all_tbl_iter_next(&curr, &iter)) {
+        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
+        log(LOG_DEBUG, TAST_FMT, llvm_print(curr));
+        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
+    }
+    // TODO: for this to actually do anything, we need to iterate on scope_id SCOPE_BUILTIN
     log(LOG_DEBUG, TAST_FMT, llvm_block_print(llvm_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
     assert(llvm_root);
+
+    if (params.dump_dot) {
+        String graphvis = {0};
+        string_extend_strv(&a_print, &graphvis, llvm_graphvis(llvm_root));
+        write_file("dump.dot", string_to_strv(graphvis));
+    }
 
     if (error_count > 0) {
         unreachable("should have exited before now\n");
     }
 
-    if (params->emit_llvm) {
-        switch (params->backend_info.backend) {
-            case BACKEND_NONE:
-                unreachable("this should have been caught eariler");
-            case BACKEND_LLVM:
-                emit_llvm_from_tree(llvm_root);
-                break;
-            case BACKEND_C:
-                emit_c_from_tree(llvm_root);
-                break;
-            default:
-                unreachable("");
+    if (params.compile) {
+        if (params.emit_llvm) {
+            switch (params.backend_info.backend) {
+                case BACKEND_NONE:
+                    unreachable("this should have been caught eariler");
+                case BACKEND_LLVM:
+                    emit_llvm_from_tree(llvm_root);
+                    break;
+                case BACKEND_C:
+                    emit_c_from_tree(llvm_root);
+                    break;
+                default:
+                    unreachable("");
+            }
+        } else {
+            switch (params.backend_info.backend) {
+                case BACKEND_NONE:
+                    unreachable("this should have been caught eariler");
+                case BACKEND_LLVM:
+                    todo();
+                case BACKEND_C:
+                    emit_c_from_tree(llvm_root);
+                    break;
+                default:
+                    unreachable("");
+            }
         }
-    } else if (params->test_expected_fail) {
-        fail();
-    } else {
-        unreachable("");
+    }
+
+    if (params.run) {
+        Str_view_vec cmd = {0};
+        vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
+        int status = subprocess_call(cmd);
+        if (status != 0) {
+            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
+            // exit with the child process return status
+            exit(status);
+        }
     }
 
     if (error_count > 0) {
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
 }
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
-    do_passes(&params);
+    do_passes();
     return 0;
 }

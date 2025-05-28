@@ -1,16 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
-run::stdout 24
+compile::stdout 24
 yes3
 yes4
 yes6
@@ -36,7 +24,7 @@ yes25
 yes26
 yes27
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

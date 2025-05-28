@@ -4,6 +4,7 @@ extern("c") fn printf(format_string u8*, args any...) i32
 extern("c") fn isdigit(character i32) i32
 extern("c") fn abort()
 extern("c") fn fopen(file_path u8*, flags u8*) any*
+extern("c") fn malloc(size u64) any*
 
 type Token struct {
     num i32
@@ -33,5 +34,24 @@ fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, l
             abort()
         }
     }
+}
+
+type Arr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+    max u64
+}
+
+// TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
+fn arr_append(<ItemT>)(arr Arr(<ItemT>), item ItemT) Arr(<ItemT>) {
+    assert(arr.count < arr.max, "arr overflow");
+    arr.buf[arr.count] = item
+    arr.count += 1
+    return arr
+}
+
+fn arr_first(<ItemT>)(arr Arr(<ItemT>)) ItemT {
+    assert(arr.count > 0, "out of bounds");
+    return arr.buf[0];
 }
 

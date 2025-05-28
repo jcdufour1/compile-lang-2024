@@ -1,16 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
-run::stdout 18
+compile::stdout 19
 8
 9
 10
@@ -29,8 +17,9 @@ bye
 yes
 pointer back to int: 0
 pointer_to_pointer: yes
+93/1298
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

@@ -136,4 +136,8 @@ static inline String string_clone(Arena* new_arena, String string) {
     return new_str;
 }
 
+static inline const char* string_to_cstr(Arena* arena, String string) {
+    return str_view_to_cstr(arena, string_to_strv(string));
+}
+
 #endif // NEWSTRING_H

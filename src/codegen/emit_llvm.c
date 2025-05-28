@@ -758,7 +758,7 @@ static void emit_label(String* output, const Llvm_label* label) {
 
 static void emit_goto(String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    llvm_extend_name(output, lang_goto->name);
+    llvm_extend_name(output, lang_goto->label);
     vec_append(&a_main, output, '\n');
 }
 
@@ -1013,7 +1013,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     String output = {0};
     String literals = {0};
 
-    Alloca_iter iter = all_tbl_iter_new(0);
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_sometimes(&struct_defs, &output, &literals, curr);
@@ -1024,8 +1024,8 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     FILE* file = fopen("test.ll", "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
-            params.input_file_name, errno, strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
+            str_view_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
@@ -1049,8 +1049,8 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     }
 
     msg(
-        DIAG_FILE_BUILT, dummy_pos, "file %s built\n",
-        params.input_file_name
+        DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
+        str_view_print(params.input_file_path)
     );
 
     fclose(file);

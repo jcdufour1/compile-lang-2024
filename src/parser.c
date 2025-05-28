@@ -199,8 +199,8 @@ static Pos get_curr_pos(Tk_view tokens) {
 
 static void msg_expected_expr_internal(const char* file, int line, Tk_view tokens, const char* msg_suffix) {
     String message = {0};
-    string_extend_cstr(&print_arena, &message, "expected expression ");
-    string_extend_cstr(&print_arena, &message, msg_suffix);
+    string_extend_cstr(&a_print, &message, "expected expression ");
+    string_extend_cstr(&a_print, &message, msg_suffix);
 
     msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
 }
@@ -213,24 +213,24 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
     va_start(args, count_expected);
 
     String message = {0};
-    string_extend_cstr(&print_arena, &message, "got token `");
-    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, TOKEN_MODE_MSG, got));
-    string_extend_cstr(&print_arena, &message, "`, but expected ");
+    string_extend_cstr(&a_print, &message, "got token `");
+    string_extend_strv(&a_print, &message, token_print_internal(&a_print, TOKEN_MODE_MSG, got));
+    string_extend_cstr(&a_print, &message, "`, but expected ");
 
     for (int idx = 0; idx < count_expected; idx++) {
         if (idx > 0) {
             if (idx == count_expected - 1) {
-                string_extend_cstr(&print_arena, &message, " or ");
+                string_extend_cstr(&a_print, &message, " or ");
             } else {
-                string_extend_cstr(&print_arena, &message, ", ");
+                string_extend_cstr(&a_print, &message, ", ");
             }
         }
-        string_extend_cstr(&print_arena, &message, "`");
-        string_extend_strv(&print_arena, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
-        string_extend_cstr(&print_arena, &message, "` ");
+        string_extend_cstr(&a_print, &message, "`");
+        string_extend_strv(&a_print, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
+        string_extend_cstr(&a_print, &message, "` ");
     }
 
-    string_extend_cstr(&print_arena, &message, msg_suffix);
+    string_extend_cstr(&a_print, &message, msg_suffix);
 
     DIAG_TYPE expect_fail_type = DIAG_PARSER_EXPECTED;
     if (got.type == TOKEN_NONTYPE) {
@@ -2308,10 +2308,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
         if (PARSE_OK != parse_function_call(&new_call, tokens, lhs, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = uast_function_call_wrap(new_call);
-        assert(*result);
-        return PARSE_EXPR_OK;
-        // TODO: also consume TOKEN_CLOSE_PAR here
+        return parse_high_presidence_internal(result, uast_function_call_wrap(new_call), tokens, scope_id);
     }
 
     if (try_consume(&oper, tokens, TOKEN_OPEN_GENERIC)) {
@@ -2659,7 +2656,7 @@ bool parse_file(Uast_block** block, Str_view file_path) {
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos,
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
             "could not open file `"STR_VIEW_FMT"`: %s\n",
             str_view_print(file_path), strerror(errno)
         );

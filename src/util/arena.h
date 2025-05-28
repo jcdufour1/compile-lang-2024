@@ -16,7 +16,7 @@ typedef struct {
 } Arena;
 
 extern Arena a_main;
-extern Arena print_arena;
+extern Arena a_print;
 
 // allocate a zero-initialized memory region in arena, return pointer (similer to malloc, but never return null)
 void* arena_alloc(Arena* arena, size_t capacity);
@@ -39,16 +39,34 @@ size_t arena_get_total_capacity(const Arena* arena);
 
 size_t arena_get_total_usage(const Arena* arena);
 
-// will not return null string
+// will not return null string, unless count is one extra
 static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t count) {
+    if (!cstr) {
+        return NULL;
+    }
     char* new_cstr = arena_alloc(arena, count);
     memcpy(new_cstr, cstr, count);
     return new_cstr;
 }
 
-// will not return null string
+// will return null string
+static inline char* arena_strndup_mut(Arena* arena, const char* cstr, size_t count) {
+    char* new_cstr = arena_alloc(arena, count);
+    memcpy(new_cstr, cstr, count);
+    return new_cstr;
+}
+
+// will return null string
 static inline const char* arena_strdup(Arena* arena, const char* cstr) {
-    return arena_strndup(arena, cstr, strlen(cstr));
+    return arena_strndup(arena, cstr, strlen(cstr) + 1);
+}
+
+// will return null string
+static inline char* arena_strdup_mut(Arena* arena, const char* cstr) {
+    if (!cstr) {
+        return NULL;
+    }
+    return arena_strndup_mut(arena, cstr, strlen(cstr) + 1);
 }
 
 #endif // ARENA_H

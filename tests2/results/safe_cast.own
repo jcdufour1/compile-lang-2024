@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/safe_cast.own:6:21:[1;31merror[0;39m:symbol `cast(<i16>)` is not defined
+tests2/inputs/safe_cast.own:6:21:[1;31merror[0;39m:symbol `cast(<i16>)` is not defined
      5 |     let num i32 = 8
      6 |     let small i16 = cast(<i16>)(num)
        |                     ^

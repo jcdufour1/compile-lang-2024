@@ -5,7 +5,7 @@ Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, mode, lang_type);
     if (mode == LANG_TYPE_MODE_LOG) {
-        string_extend_cstr(&print_arena, &buf, "\n");
+        string_extend_cstr(&a_print, &buf, "\n");
     }
     return string_to_strv(buf);
 }
@@ -13,24 +13,24 @@ Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
 void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_atom atom) {
     // TODO: remove?
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&print_arena, string, '<');
+        vec_append(&a_print, string, '<');
     }
 
     if (atom.str.base.count > 1) {
         extend_uname(mode == LANG_TYPE_MODE_MSG ? UNAME_MSG : UNAME_LOG, string, atom.str);
     } else {
-        string_extend_cstr(&print_arena, string, "<null>");
+        string_extend_cstr(&a_print, string, "<null>");
     }
     if (atom.pointer_depth < 0) {
         todo();
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
+        vec_append(&a_print, string, '*');
     }
 
     // TODO: remove?
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&print_arena, string, '>');
+        vec_append(&a_print, string, '>');
     }
     return;
 }
@@ -41,15 +41,15 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             extend_ulang_type_atom_to_string(string, mode, ulang_type_regular_const_unwrap(lang_type).atom);
             return;
         case ULANG_TYPE_TUPLE: {
-            vec_append(&print_arena, string, '(');
+            vec_append(&a_print, string, '(');
             Ulang_type_tuple tuple = ulang_type_tuple_const_unwrap(lang_type);
             for (size_t idx = 0; idx < tuple.ulang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
-                    string_extend_cstr(&print_arena, string, ", ");
+                    string_extend_cstr(&a_print, string, ", ");
                 }
                 extend_ulang_type_to_string(string, mode, vec_at(&tuple.ulang_types, idx));
             }
-            vec_append(&print_arena, string, ')');
+            vec_append(&a_print, string, ')');
             return;
         }
         case ULANG_TYPE_FN: {

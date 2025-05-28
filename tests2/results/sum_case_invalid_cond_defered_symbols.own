@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/sum_case_invalid_cond_defered_symbols.own:15:38:[1;31merror[0;39m:types `Token(<i32>)` and `Token(<i64>)` are not valid operands to binary expression
+tests2/inputs/sum_case_invalid_cond_defered_symbols.own:15:38:[1;31merror[0;39m:types `Token(<i32>)` and `Token(<i64>)` are not valid operands to binary expression
     14 |     switch token {
     15 |         case Token(<i64>).number(num): placeholder()
        |                                      ^

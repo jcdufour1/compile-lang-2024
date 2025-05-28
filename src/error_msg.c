@@ -93,28 +93,6 @@ void msg_internal(
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 
-    if (log_level >= LOG_ERROR && params.test_expected_fail) {
-        if (params.diag_types.info.count <= expected_fail_count) {
-            log(LOG_FATAL, "too many fails occured\n");
-            exit(EXIT_CODE_FAIL);
-        }
-        unwrap(expected_fail_count < params.diag_types.info.count && "out of bounds");
-        DIAG_TYPE expected_expect_fail = vec_at(&params.diag_types, expected_fail_count);
-
-        if (msg_expect_fail_type != expected_expect_fail) {
-            log(
-                LOG_FATAL,
-                "fail type `"STR_VIEW_FMT"` occured, but `"STR_VIEW_FMT"` was expected\n",
-                expect_fail_type_print(msg_expect_fail_type),
-                expect_fail_type_print(expected_expect_fail)
-            );
-            exit(EXIT_CODE_FAIL);
-        }
-
-        log(LOG_NOTE, "expected fail occured\n");
-        expected_fail_count++;
-    }
-
     if (fail_immediately) {
         fprintf(stderr, "%s: fail_immediately option active\n", get_log_level_str(LOG_FATAL));
         abort();

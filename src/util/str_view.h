@@ -127,6 +127,12 @@ static inline const char* str_view_dup(Arena* arena, Str_view str_view) {
     return arena_strndup(arena, str_view.str, str_view.count);
 }
 
+static inline const char* str_view_to_cstr(Arena* arena, Str_view str_view) {
+    char* buf = arena_alloc(arena, str_view.count + 1);
+    memcpy(buf, str_view.str, str_view.count);
+    return buf;
+}
+
 #define STR_VIEW_FMT "%.*s"
 
 #define str_view_print(str_view) (int)((str_view).count), (str_view).str

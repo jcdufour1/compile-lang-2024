@@ -1,12 +1,12 @@
 compile::stdout 0
 
 compile::stderr 10
-./tests2/inputs/break_invalid_location.own:4:5:[1;31merror[0;39m:break statement outside of a for loop
+tests2/inputs/break_invalid_location.own:4:5:[1;31merror[0;39m:break statement outside of a for loop
      3 | fn main() i32 {
      4 |     break
        |     ^
      5 |     continue
-./tests2/inputs/break_invalid_location.own:5:5:[1;31merror[0;39m:continue statement outside of a for loop
+tests2/inputs/break_invalid_location.own:5:5:[1;31merror[0;39m:continue statement outside of a for loop
      4 |     break
      5 |     continue
        |     ^

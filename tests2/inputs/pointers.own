@@ -77,6 +77,11 @@ fn cast_pointer_to_pointer() {
     }
 }
 
+fn deref_struct(div Div*) Div {
+    let div2 Div = *div
+    return div2
+}
+
 fn main() i32 {
     let num i32 = 8
     io.printf("%d\n", num)
@@ -113,6 +118,8 @@ fn main() i32 {
 
     cast_to_pointer()
     cast_pointer_to_pointer()
+
+    io.printf("%d/%d\n", deref_struct(&div2).numerator, deref_struct(&div2).denominator)
 
     return 0
 }

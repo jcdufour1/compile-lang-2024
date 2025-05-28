@@ -1,16 +1,7 @@
 compile::stdout 0
 
 compile::stderr 1
-[1;33mwarning[0;39m:no main function
+[1;31merror[0;39m:no main function
 
-compile::return_code 0
-
-clang::stdout 0
-
-clang::stderr 3
-/usr/bin/ld: /lib/x86_64-linux-gnu/Scrt1.o: in function `_start':
-(.text+0x17): undefined reference to `main'
-clang: error: linker command failed with exit code 1 (use -v to see invocation)
-
-clang::return_code 1
+compile::return_code 1
 

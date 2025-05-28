@@ -12,6 +12,10 @@
 #include <lang_type_serialize.h>
 #include <parser_utils.h>
 #include <sizeof.h>
+#include <str_view_vec.h>
+#include <subprocess.h>
+
+static const char* TEST_OUTPUT = "test.c";
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {
@@ -59,9 +63,15 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
             unreachable("");
         case LANG_TYPE_STRUCT:
             llvm_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
+            for (size_t idx = 0; idx < (size_t)lang_type_struct_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+                string_extend_cstr(&a_main, output, "*");
+            }
             return;
         case LANG_TYPE_RAW_UNION:
             llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
+            for (size_t idx = 0; idx < (size_t)lang_type_raw_union_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+                string_extend_cstr(&a_main, output, "*");
+            }
             return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
@@ -77,8 +87,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
     unreachable("");
 }
 
-static void emit_c_function_params(String* output, String* aux_assigns /* TODO: remove */, const Llvm_function_params* params) {
-    (void) aux_assigns;
+static void emit_c_function_params(String* output, const Llvm_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -96,7 +105,7 @@ static void emit_c_function_params(String* output, String* aux_assigns /* TODO: 
     }
 }
 
-static void emit_c_function_decl_internal(String* output, String* aux_assigns, const Llvm_function_decl* decl) {
+static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -105,27 +114,23 @@ static void emit_c_function_decl_internal(String* output, String* aux_assigns, c
     if (decl->params->params.info.count < 1) {
         string_extend_cstr(&a_main, output, "void");
     } else {
-        emit_c_function_params(output, aux_assigns, decl->params);
+        emit_c_function_params(output, decl->params);
     }
     string_extend_cstr(&a_main, output, ")");
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
-    String dummy = {0};
-    emit_c_function_decl_internal(&strs->forward_decls, &dummy, fun_def->decl);
+    emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
-    String aux_assigns = {0};
-    emit_c_function_decl_internal(&strs->output, &aux_assigns, fun_def->decl);
+    emit_c_function_decl_internal(&strs->output, fun_def->decl);
     string_extend_cstr(&a_main, &strs->output, " {\n");
-    string_extend_strv(&a_main, &strs->output, string_to_strv(aux_assigns));
     emit_c_block(strs, fun_def->body);
     string_extend_cstr(&a_main, &strs->output, "}\n");
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
-    String dummy = {0};
-    emit_c_function_decl_internal(&strs->forward_decls, &dummy, decl);
+    emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
@@ -599,7 +604,11 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src), false);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
+    if (lang_type_get_pointer_depth(lang_type_from_get_name(load->llvm_src)) < 1) {
+        string_extend_cstr(&a_main, &strs->output, "*");
+    }
+    string_extend_cstr(&a_main, &strs->output, ")");
     llvm_extend_name(&strs->output, load->llvm_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
     llvm_extend_name(&strs->output, vec_at(&llvm_struct_def_unwrap(llvm_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
@@ -620,9 +629,9 @@ static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* acce
     string_extend_cstr(&a_main, &strs->output, "]);\n");
 }
 
-static void emit_c_goto_internal(Emit_c_strs* strs, Name name) {
+static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
     string_extend_cstr(&a_main, &strs->output, "    goto ");
-    llvm_extend_name(&strs->output, name);
+    llvm_extend_name(&strs->output, label);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
@@ -639,7 +648,7 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
 
 static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
     emit_c_loc(&strs->output, lang_goto->loc);
-    emit_c_goto_internal(strs, lang_goto->name);
+    emit_c_goto_internal(strs, lang_goto->label);
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
@@ -704,7 +713,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <string.h>\n");
     string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
-    Alloca_iter iter = all_tbl_iter_new(0);
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(&strs, curr);
@@ -712,15 +721,16 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     emit_c_block(&strs, root);
 
-    FILE* file = fopen("test.c", "w");
+    FILE* file = fopen(TEST_OUTPUT, "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
-            params.input_file_name, errno, strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
+            str_view_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
-
+    
+    // TODO: make function for for loop to compress code
     for (size_t idx = 0; idx < header.info.count; idx++) {
         if (EOF == fputc(vec_at(&header, idx), file)) {
             todo();
@@ -751,10 +761,28 @@ void emit_c_from_tree(const Llvm_block* root) {
         }
     }
 
-    msg(
-        DIAG_FILE_BUILT, dummy_pos, "file %s built\n",
-        params.input_file_name
-    );
+    msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
 
     fclose(file);
+
+    {
+        Str_view_vec cmd = {0};
+        vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
+        // TODO: command line argument for this:
+        //vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-g"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
+        vec_append(&a_main, &cmd, params.output_file_path);
+        vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
+        int status = subprocess_call(cmd);
+        if (status != 0) {
+            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
+            exit(EXIT_CODE_FAIL);
+        }
+    }
 }

@@ -218,15 +218,15 @@ static void msg_invalid_count_function_args_internal(
     size_t max_args
 ) {
     String message = {0};
-    string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
-    string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
+    string_extend_size_t(&a_print, &message, fun_call->args.info.count);
+    string_extend_cstr(&a_print, &message, " arguments are passed to function `");
     extend_name(NAME_MSG, &message, fun_decl->name);
-    string_extend_cstr(&print_arena, &message, "`, but ");
-    string_extend_size_t(&print_arena, &message, min_args);
+    string_extend_cstr(&a_print, &message, "`, but ");
+    string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&print_arena, &message, " or more");
+        string_extend_cstr(&a_print, &message, " or more");
     }
-    string_extend_cstr(&print_arena, &message, " arguments expected\n");
+    string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
@@ -253,13 +253,13 @@ static void msg_invalid_count_struct_literal_args_internal(
     Pos pos
 ) {
     String message = {0};
-    string_extend_size_t(&print_arena, &message, membs.info.count);
-    string_extend_cstr(&print_arena, &message, " arguments are passed to struct literal, but ");
-    string_extend_size_t(&print_arena, &message, min_args);
+    string_extend_size_t(&a_print, &message, membs.info.count);
+    string_extend_cstr(&a_print, &message, " arguments are passed to struct literal, but ");
+    string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&print_arena, &message, " or more");
+        string_extend_cstr(&a_print, &message, " or more");
     }
-    string_extend_cstr(&print_arena, &message, " arguments expected\n");
+    string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
@@ -501,7 +501,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_FUNCTION_DEF: {
-            Lang_type new_lang_type = {0};
+            Lang_type_fn new_lang_type = {0};
             Name new_name = {0};
             if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
@@ -509,7 +509,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 new_name,
-                new_lang_type
+                lang_type_fn_const_wrap(new_lang_type)
             )));
             return true;
         }
@@ -2080,6 +2080,14 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 
         }
+        case TAST_FUNCTION_CALL: {
+            Tast_function_call* call = tast_function_call_unwrap(new_callee);
+            Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
+            Uast_def* lang_type_def = NULL;
+            unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
+
+        }
         case TAST_MODULE_ALIAS: {
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
                 tast_module_alias_unwrap(new_callee)->mod_path,
@@ -2418,10 +2426,10 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     unwrap(enum_def.members.info.count > 0);
     exhaustive_data.max_data = enum_def.members.info.count - 1;
 
-    vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
-    vec_reserve(&print_arena, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
+    vec_reserve(&a_print, &exhaustive_data.covered, exhaustive_data.max_data + 1);
+    vec_reserve(&a_print, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
     for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
-        vec_append(&print_arena, &exhaustive_data.covered, false);
+        vec_append(&a_print, &exhaustive_data.covered, false);
     }
     unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
@@ -2470,7 +2478,7 @@ static bool check_for_exhaustiveness_inner(
                 return false;
             }
             *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
-            vec_append(&print_arena, &exhaustive_data->covered_pos, curr_lit->pos);
+            vec_append(&a_print, &exhaustive_data->covered_pos, curr_lit->pos);
             return true;
         }
         default:
@@ -2791,7 +2799,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
         }
-        Lang_type new_lang_type = {0};
+        Lang_type_fn new_lang_type = {0};
         Name new_name = {0};
         if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
             status = false;

@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/member_access_on_primitive.own:3:19:[1;31merror[0;39m:`none` is not a member of `i32`
+tests2/inputs/member_access_on_primitive.own:3:19:[1;31merror[0;39m:`none` is not a member of `i32`
      2 | fn main() i32 {
      3 |     let num i32 = .none
        |                   ^

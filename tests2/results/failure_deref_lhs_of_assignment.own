@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/failure_deref_lhs_of_assignment.own:9:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `i32*`
+tests2/inputs/failure_deref_lhs_of_assignment.own:9:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `i32*`
      8 | 
      9 |     ptr = 7
        |         ^

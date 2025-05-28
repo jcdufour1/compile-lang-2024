@@ -10,7 +10,7 @@
 #include <parser_utils.h>
 #include <pos_vec.h>
 
-static Arena tk_arena = {0};
+static Arena a_token = {0};
 
 static void msg_tokenizer_invalid_token(Str_view_col token_text, Pos pos) {
     msg(DIAG_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
@@ -88,7 +88,7 @@ static bool get_next_token(
     Str_view file_path
 ) {
     memset(token, 0, sizeof(*token));
-    arena_reset(&tk_arena);
+    arena_reset(&a_token);
 
     *is_preced_space = trim_non_newline_whitespace(file_text_rem, pos) > 0;
 
@@ -230,7 +230,7 @@ static bool get_next_token(
     } else if (str_view_col_try_consume(pos, file_text_rem, '/')) {
         if (str_view_col_try_consume(pos, file_text_rem, '*')) {
             Pos_vec pos_stack = {0};
-            vec_append(&tk_arena, &pos_stack, *pos);
+            vec_append(&a_token, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {
                 Str_view temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
@@ -242,7 +242,7 @@ static bool get_next_token(
                 }
 
                 if (str_view_try_consume(&temp_text, '/') && str_view_try_consume(&temp_text, '*')) {
-                    vec_append(&tk_arena, &pos_stack, *pos);
+                    vec_append(&a_token, &pos_stack, *pos);
                     str_view_col_consume_count(pos, file_text_rem, 2);
                 } else if (str_view_try_consume(&temp_text, '*') && str_view_try_consume(&temp_text, '/')) {
                     vec_rem_last(&pos_stack);
