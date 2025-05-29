@@ -2312,11 +2312,10 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
     }
 
     if (pairs->info.count > 0) {
-        // jump to the top of the defer stack
+        // jump to the top of the defer stack to execute the defered statements
         Llvm_goto* new_goto = llvm_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new2(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
     }
-
 }
 
 static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
@@ -2420,8 +2419,6 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
             load_brking_or_conting_set_etc(new_block, old_stmt, false);
             return;
         }
-            //load_continue(new_block, tast_continue_unwrap(old_stmt));
-            //return;
         case TAST_BLOCK:
             vec_append(
                 &a_main,
