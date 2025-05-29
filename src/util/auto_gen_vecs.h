@@ -20,7 +20,7 @@ static void gen_vec_from_strv(Str_view vec_name, Str_view item_name) {
 }
 
 static void gen_vec_from_cstr(const char* vec_name, const char* item_name) {
-    gen_vec_from_strv(str_view_from_cstr(vec_name), str_view_from_cstr(item_name));
+    gen_vec_from_strv(sv(vec_name), sv(item_name));
 }
 
 static void gen_all_vecs_internal(void) {

@@ -101,7 +101,7 @@ static inline void string_extend_strv_indent(Arena* arena, String* string, Str_v
 }
 
 static inline void string_extend_cstr_indent(Arena* arena, String* string, const char* cstr, size_t indent) {
-    string_extend_strv_indent(arena, string, str_view_from_cstr(cstr), indent);
+    string_extend_strv_indent(arena, string, sv(cstr), indent);
 }
 
 static inline void string_add_int(Arena* arena, String* string, int num) {

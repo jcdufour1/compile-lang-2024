@@ -112,7 +112,7 @@ static void extend_parent_uast_name_first_upper(String* output, Uast_name name) 
 }
 
 static Uast_name uast_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Uast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Uast_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Uast_type uast_gen_import_path(const char* prefix) {
@@ -738,7 +738,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
 
     if (uast.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
     }
 

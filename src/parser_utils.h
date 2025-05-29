@@ -53,7 +53,7 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
 Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix);
 
 #define util_literal_str_view_new() \
-    util_literal_str_view_new_internal(__FILE__, __LINE__, str_view_from_cstr(""))
+    util_literal_str_view_new_internal(__FILE__, __LINE__, sv(""))
 
 Str_view util_literal_name_new_prefix_internal(const char* file, int line, Str_view debug_prefix);
 
@@ -68,10 +68,10 @@ Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_vie
 
 // TODO: remove 2 suffix
 #define util_literal_name_new2() \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), (Str_view) {0})
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""), (Str_view) {0})
 
 #define util_literal_name_new_mod_path2(mod_path) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), mod_path)
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""), mod_path)
 
 Name get_storage_location(Name sym_name);
 

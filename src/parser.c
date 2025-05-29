@@ -1491,7 +1491,7 @@ static PARSE_STATUS parse_for_range_internal(
             ))
         ),
         inner,
-        util_literal_name_new_prefix2(str_view_from_cstr("todo_remove_in_src_parser")),
+        util_literal_name_new_prefix2(sv("todo_remove_in_src_parser")),
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
@@ -1703,7 +1703,7 @@ static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* token
             *rtn_stmt = uast_return_new(
                 prev_token.pos,
                 uast_literal_wrap(util_uast_literal_new_from_strv(
-                    str_view_from_cstr(""),
+                    sv(""),
                     TOKEN_VOID,
                     prev_token.pos
                 )),
@@ -2683,7 +2683,7 @@ static void parser_test_parse_expr(const char* input, int test) {
     (void) test;
     todo();
     //Env env = {0};
-    //Str_view file_text = str_view_from_cstr(input);
+    //Str_view file_text = sv(input);
     //env.file_path_to_text = file_text;
 
     //Token_vec tokens_ = {0};
@@ -2706,7 +2706,7 @@ static void parser_test_parse_stmt(const char* input, int test) {
     (void) test;
     log(LOG_DEBUG, "start parser_test_%d:\n", test);
     //Env env = {0};
-    //Str_view file_text = str_view_from_cstr(input);
+    //Str_view file_text = sv(input);
     //env.file_text = file_text;
 
     //Token_vec tokens_ = {0};

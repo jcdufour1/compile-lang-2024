@@ -11,7 +11,7 @@ void msg_internal(
 );
 
 #define msg_todo(feature, pos) \
-    msg_todo_internal(__FILE__, __LINE__, str_view_from_cstr(feature), pos);
+    msg_todo_internal(__FILE__, __LINE__, sv(feature), pos);
 
 #define msg_todo_strv(feature, pos) \
     msg_todo_internal(__FILE__, __LINE__, feature, pos);

@@ -112,7 +112,7 @@ static void extend_parent_tast_name_first_upper(String* output, Tast_name name) 
 }
 
 static Tast_name tast_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Tast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Tast_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Tast_type tast_gen_block(const char* prefix) {
@@ -782,7 +782,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
 
     if (tast.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
     }
 

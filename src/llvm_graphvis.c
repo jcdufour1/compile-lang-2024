@@ -98,9 +98,9 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
 
     // TODO: make size_t_print_macro?
     String scope_buf = {0};
-    string_extend_strv(&a_print, &scope_buf, str_view_from_cstr("block (scope "));
+    string_extend_strv(&a_print, &scope_buf, sv("block (scope "));
     string_extend_size_t(&a_print, &scope_buf, block->scope_id);
-    string_extend_strv(&a_print, &scope_buf, str_view_from_cstr(")"));
+    string_extend_strv(&a_print, &scope_buf, sv(")"));
 
     label(buf, block->name, string_to_strv(scope_buf));
 
@@ -110,7 +110,7 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
         Llvm* next = is_last ? NULL : vec_at(&block->children, idx + 1);
 
         if (idx < 1) {
-            arrow_names_label(buf, block->name, llvm_tast_get_name(curr), str_view_from_cstr("next"));
+            arrow_names_label(buf, block->name, llvm_tast_get_name(curr), sv("next"));
         }
 
         String idx_buf = {0};
@@ -130,11 +130,11 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
                         buf,
                         llvm_tast_get_name(curr),
                         env.llvm_graphvis_parent_block_next,
-                        str_view_from_cstr("next")
+                        sv("next")
                     );
                 }
             } else {
-                arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), str_view_from_cstr("next"));
+                arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), sv("next"));
             }
         }
     }
@@ -151,7 +151,7 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
 }
 
 static void llvm_function_params_graphvis_internal(String* buf, const Llvm_function_params* params) {
-    label(buf, params->name, str_view_from_cstr("params"));
+    label(buf, params->name, sv("params"));
 
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         String idx_buf = {0};
@@ -161,15 +161,15 @@ static void llvm_function_params_graphvis_internal(String* buf, const Llvm_funct
 }
 
 static void llvm_variable_def_graphvis_internal(String* buf, const Llvm_variable_def* def) {
-    label_ex(buf, def->name_self, str_view_from_cstr("variable_def"), def->name_corr_param);
+    label_ex(buf, def->name_self, sv("variable_def"), def->name_corr_param);
 }
 
 static void llvm_label_graphvis_internal(String* buf, const Llvm_label* label) {
-    label_ex(buf, label->name, str_view_from_cstr("label"), label->name);
+    label_ex(buf, label->name, sv("label"), label->name);
 }
 
 static void llvm_function_decl_graphvis_internal(String* buf, const Llvm_function_decl* decl) {
-    label_ex(buf, decl->name, str_view_from_cstr("function decl"), decl->name);
+    label_ex(buf, decl->name, sv("function decl"), decl->name);
     arrow_names(buf, decl->name, decl->params->name);
 
     llvm_function_params_graphvis_internal(buf, decl->params);
@@ -178,7 +178,7 @@ static void llvm_function_decl_graphvis_internal(String* buf, const Llvm_functio
 }
 
 static void llvm_function_def_graphvis_internal(String* buf, const Llvm_function_def* def) {
-    label(buf, def->name_self, str_view_from_cstr("function def"));
+    label(buf, def->name_self, sv("function def"));
     arrow_names(buf, def->name_self, def->decl->name);
     arrow_names(buf, def->name_self, def->body->name);
 
@@ -223,17 +223,17 @@ static void llvm_def_graphvis_internal(String* buf, const Llvm_def* def) {
 
 static void llvm_load_element_ptr_graphvis_internal(String* buf, const Llvm_load_element_ptr* load) {
     String idx_buf = {0};
-    string_extend_strv(&a_print, &idx_buf, str_view_from_cstr("load element ptr "));
+    string_extend_strv(&a_print, &idx_buf, sv("load element ptr "));
     string_extend_size_t(&a_print, &idx_buf, load->memb_idx);
     label(buf, load->name_self, string_to_strv(idx_buf));
 
-    arrow_names_label(buf, load->name_self, load->llvm_src, str_view_from_cstr("src"));
+    arrow_names_label(buf, load->name_self, load->llvm_src, sv("src"));
 }
 
 static void llvm_array_access_graphvis_internal(String* buf, const Llvm_array_access* access) {
-    label(buf, access->name_self, str_view_from_cstr("access"));
-    arrow_names_label(buf, access->name_self, access->index, str_view_from_cstr("index"));
-    arrow_names_label(buf, access->name_self, access->callee, str_view_from_cstr("callee"));
+    label(buf, access->name_self, sv("access"));
+    arrow_names_label(buf, access->name_self, access->index, sv("index"));
+    arrow_names_label(buf, access->name_self, access->callee, sv("callee"));
 }
 
 static void llvm_int_graphvis_internal(String* buf, const Llvm_int* lit) {
@@ -263,11 +263,11 @@ static void llvm_string_graphvis_internal(String* buf, const Llvm_string* lit) {
 }
 
 static void llvm_void_graphvis_internal(String* buf, const Llvm_void* lit) {
-    label(buf, lit->name, str_view_from_cstr("void"));
+    label(buf, lit->name, sv("void"));
 }
 
 static void llvm_function_name_graphvis_internal(String* buf, const Llvm_function_name* lit) {
-    label_ex(buf, lit->name_self, str_view_from_cstr("function_name"), lit->fun_name);
+    label_ex(buf, lit->name_self, sv("function_name"), lit->fun_name);
 }
 
 static void llvm_literal_graphvis_internal(String* buf, const Llvm_literal* lit) {
@@ -292,12 +292,12 @@ static void llvm_literal_graphvis_internal(String* buf, const Llvm_literal* lit)
 }
 
 static void llvm_function_call_graphvis_internal(String* buf, const Llvm_function_call* call) {
-    label(buf, call->name_self, str_view_from_cstr("function_call"));
-    arrow_names_label(buf, call->name_self, call->callee, str_view_from_cstr("callee"));
+    label(buf, call->name_self, sv("function_call"));
+    arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
     Name args_name = util_literal_name_new2();
-    label(buf, args_name, str_view_from_cstr("args"));
-    arrow_names_label(buf, call->name_self, args_name, str_view_from_cstr("args"));
+    label(buf, args_name, sv("args"));
+    arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
@@ -315,8 +315,8 @@ static void llvm_binary_graphvis_internal(String* buf, const Llvm_binary* bin) {
     string_extend_strv(&a_print, &type_buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
 
-    arrow_names_label(buf, bin->name, bin->lhs, str_view_from_cstr("lhs"));
-    arrow_names_label(buf, bin->name, bin->rhs, str_view_from_cstr("rhs"));
+    arrow_names_label(buf, bin->name, bin->lhs, sv("lhs"));
+    arrow_names_label(buf, bin->name, bin->rhs, sv("rhs"));
 }
 
 static void llvm_unary_graphvis_internal(String* buf, const Llvm_unary* unary) {
@@ -327,7 +327,7 @@ static void llvm_unary_graphvis_internal(String* buf, const Llvm_unary* unary) {
     string_extend_strv(&a_print, &type_buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
 
-    arrow_names_label(buf, unary->name, unary->child, str_view_from_cstr("child"));
+    arrow_names_label(buf, unary->name, unary->child, sv("child"));
 }
 
 static void llvm_operator_graphvis_internal(String* buf, const Llvm_operator* oper) {
@@ -358,35 +358,35 @@ static void llvm_expr_graphvis_internal(String* buf, const Llvm_expr* expr) {
 }
 
 static void llvm_return_graphvis_internal(String* buf, const Llvm_return* rtn) {
-    label(buf, rtn->name_self, str_view_from_cstr("return"));
+    label(buf, rtn->name_self, sv("return"));
 
-    arrow_names_label(buf, rtn->name_self, rtn->child, str_view_from_cstr("src"));
+    arrow_names_label(buf, rtn->name_self, rtn->child, sv("src"));
 }
 
 static void llvm_alloca_graphvis_internal(String* buf, const Llvm_alloca* alloca) {
-    label_ex(buf, alloca->name, str_view_from_cstr("alloca"), alloca->name);
+    label_ex(buf, alloca->name, sv("alloca"), alloca->name);
 
     // TODO
 }
 
 static void llvm_cond_goto_graphvis_internal(String* buf, const Llvm_cond_goto* cond_goto) {
-    label(buf, cond_goto->name_self, str_view_from_cstr("cond_goto"));
-    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_true, str_view_from_cstr("if true"));
-    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_false, str_view_from_cstr("if false"));
-    arrow_names_label(buf, cond_goto->name_self, cond_goto->condition, str_view_from_cstr("condition"));
+    label(buf, cond_goto->name_self, sv("cond_goto"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_true, sv("if true"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_false, sv("if false"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->condition, sv("condition"));
 }
 
 static void llvm_goto_graphvis_internal(String* buf, const Llvm_goto* lang_goto) {
-    label(buf, lang_goto->name_self, str_view_from_cstr("goto"));
-    arrow_names_label(buf, lang_goto->name_self, lang_goto->label, str_view_from_cstr("label"));
+    label(buf, lang_goto->name_self, sv("goto"));
+    arrow_names_label(buf, lang_goto->name_self, lang_goto->label, sv("label"));
 }
 
 static void llvm_store_another_llvm_graphvis_internal(String* buf, const Llvm_store_another_llvm* store) {
     // TODO: name_self and name inconsistent
-    label(buf, store->name, str_view_from_cstr("store"));
+    label(buf, store->name, sv("store"));
 
-    arrow_names_label(buf, store->name, store->llvm_src, str_view_from_cstr("src"));
-    arrow_names_label(buf, store->name, store->llvm_dest, str_view_from_cstr("dest"));
+    arrow_names_label(buf, store->name, store->llvm_src, sv("src"));
+    arrow_names_label(buf, store->name, store->llvm_dest, sv("dest"));
     // TODO: lang_type
 }
 
@@ -396,7 +396,7 @@ static void llvm_load_another_llvm_graphvis_internal(String* buf, const Llvm_loa
     string_extend_strv(&a_print, &type_buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
     label(buf, load->name, string_to_strv(type_buf));
 
-    arrow_names_label(buf, load->name, load->llvm_src, str_view_from_cstr("src"));
+    arrow_names_label(buf, load->name, load->llvm_src, sv("src"));
 }
 
 // this should return false for statement types that never return or have custom code paths, etc.

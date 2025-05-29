@@ -112,7 +112,7 @@ static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_n
 }
 
 static Lang_type_name lang_type_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Lang_type_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Lang_type_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Lang_type_type lang_type_gen_signed_int(const char* prefix) {
@@ -352,7 +352,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
 
     if (lang_type.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
     }
 

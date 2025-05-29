@@ -29,44 +29,44 @@ typedef enum {
 static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
     switch (bin_type) {
         case BINARY_SINGLE_EQUAL:
-            return str_view_from_cstr("=");
+            return sv("=");
         case BINARY_SUB:
-            return str_view_from_cstr("-");
+            return sv("-");
         case BINARY_ADD:
-            return str_view_from_cstr("+");
+            return sv("+");
         case BINARY_MULTIPLY:
-            return str_view_from_cstr("*");
+            return sv("*");
         case BINARY_DIVIDE:
-            return str_view_from_cstr("/");
+            return sv("/");
         case BINARY_MODULO:
-            return str_view_from_cstr("%");
+            return sv("%");
         case BINARY_LESS_THAN:
-            return str_view_from_cstr("<");
+            return sv("<");
         case BINARY_LESS_OR_EQUAL:
-            return str_view_from_cstr("<=");
+            return sv("<=");
         case BINARY_GREATER_OR_EQUAL:
-            return str_view_from_cstr(">=");
+            return sv(">=");
         case BINARY_GREATER_THAN:
-            return str_view_from_cstr(">");
+            return sv(">");
         case BINARY_DOUBLE_EQUAL:
-            return str_view_from_cstr("==");
+            return sv("==");
         case BINARY_NOT_EQUAL:
-            return str_view_from_cstr("!=");
+            return sv("!=");
         case BINARY_BITWISE_XOR:
             // TODO: change to "^"
-            return str_view_from_cstr("xor");
+            return sv("xor");
         case BINARY_BITWISE_AND:
-            return str_view_from_cstr("&");
+            return sv("&");
         case BINARY_BITWISE_OR:
-            return str_view_from_cstr("|");
+            return sv("|");
         case BINARY_LOGICAL_AND:
-            return str_view_from_cstr("&&");
+            return sv("&&");
         case BINARY_LOGICAL_OR:
-            return str_view_from_cstr("||");
+            return sv("||");
         case BINARY_SHIFT_LEFT:
-            return str_view_from_cstr("<<");
+            return sv("<<");
         case BINARY_SHIFT_RIGHT:
-            return str_view_from_cstr(">>");
+            return sv(">>");
     }
     unreachable("");
 }
@@ -83,13 +83,13 @@ typedef enum {
 static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
     switch (unary_type) {
         case UNARY_DEREF:
-            return str_view_from_cstr("deref");
+            return sv("deref");
         case UNARY_REFER:
-            return str_view_from_cstr("refer");
+            return sv("refer");
         case UNARY_UNSAFE_CAST:
-            return str_view_from_cstr("unsafe_cast");
+            return sv("unsafe_cast");
         case UNARY_NOT:
-            return str_view_from_cstr("!");
+            return sv("!");
     }
     unreachable("");
 }

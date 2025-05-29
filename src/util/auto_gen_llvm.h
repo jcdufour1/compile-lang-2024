@@ -113,7 +113,7 @@ static void extend_parent_llvm_name_first_upper(String* output, Llvm_name name) 
 }
 
 static Llvm_name llvm_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Llvm_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Llvm_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Llvm_type llvm_gen_block(void) {
@@ -553,10 +553,10 @@ static void llvm_gen_llvm_struct(Llvm_type llvm) {
 
     if (llvm.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Loc"), .name = str_view_from_cstr("loc")
+            .type = sv("Loc"), .name = sv("loc")
         });
     }
 

@@ -389,7 +389,7 @@ static bool get_next_token(
 }
 
 static Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = str_view_from_cstr(text), .type = token_type};
+    Token token = {.text = sv(text), .type = token_type};
     return token;
 }
 
@@ -397,7 +397,7 @@ static void test(const char* file_text, Tk_view expected) {
     (void) file_text;
     (void) expected;
     todo();
-    //Env env = {.file_text = str_view_from_cstr(file_text)};
+    //Env env = {.file_text = sv(file_text)};
 
     //Token_vec tokens = {0};
     //if (!tokenize(&tokens, & (Str_view){0})) {
@@ -646,7 +646,7 @@ bool tokenize(Token_vec* result, Str_view file_path) {
                 if (!is_preced_space && next_token.type == TOKEN_SINGLE_EQUAL) {
                     // +=, *=, etc.
                     // append TOKEN_ASSIGN_BY_BIN, which will be followed by the binary operator
-                    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
+                    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
                 } else {
                     // put back the next token
                     pos = temp_pos;
@@ -658,7 +658,7 @@ bool tokenize(Token_vec* result, Str_view file_path) {
         vec_append(&a_main, &tokens, curr_token);
     }
 
-    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), TOKEN_EOF, pos}));
+    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
 
     *result = tokens;
     return error_count == prev_err_count;

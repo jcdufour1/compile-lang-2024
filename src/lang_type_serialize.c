@@ -17,19 +17,19 @@ Str_view serialize_struct_def_base(Struct_def_base base) {
 Str_view serialize_lang_type_get_prefix(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_RAW_UNION:
-            return str_view_from_cstr("RAW_UNION");
+            return sv("RAW_UNION");
         case LANG_TYPE_STRUCT:
-            return str_view_from_cstr("STRUCT");
+            return sv("STRUCT");
         case LANG_TYPE_ENUM:
-            return str_view_from_cstr("ENUM");
+            return sv("ENUM");
         case LANG_TYPE_PRIMITIVE:
-            return str_view_from_cstr("PRI");
+            return sv("PRI");
         case LANG_TYPE_TUPLE:
             todo();
         case LANG_TYPE_VOID:
-            return str_view_from_cstr("VOID");
+            return sv("VOID");
         case LANG_TYPE_FN:
-            return str_view_from_cstr("FN");
+            return sv("FN");
     }
     unreachable("");
 }

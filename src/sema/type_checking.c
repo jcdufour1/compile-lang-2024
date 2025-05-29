@@ -2767,7 +2767,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Uast_return* rtn_statement = uast_return_new(
             block->pos_end,
             uast_literal_wrap(util_uast_literal_new_from_strv(
-                 str_view_from_cstr(""), TOKEN_VOID, block->pos_end
+                 sv(""), TOKEN_VOID, block->pos_end
             )),
             true
         );
@@ -2791,7 +2791,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN, POS_BUILTIN, "no main function\n");
             goto error;
         }

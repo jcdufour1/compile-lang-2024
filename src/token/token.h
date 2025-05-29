@@ -434,7 +434,7 @@ static inline bool token_is_equal(const Token a, const Token b) {
 
 // TODO: rename this function
 static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE token_type) {
-    Token b = {.text = str_view_from_cstr(cstr), .type = token_type};
+    Token b = {.text = sv(cstr), .type = token_type};
     return token_is_equal(a, b);
 }
 

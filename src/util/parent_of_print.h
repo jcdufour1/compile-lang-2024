@@ -8,17 +8,17 @@
 static inline Str_view parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
         case PARENT_OF_NONE:
-            return str_view_from_cstr("PARENT_OF_NONE");
+            return sv("PARENT_OF_NONE");
         case PARENT_OF_CASE:
-            return str_view_from_cstr("PARENT_OF_CASE");
+            return sv("PARENT_OF_CASE");
         case PARENT_OF_ASSIGN_RHS:
-            return str_view_from_cstr("PARENT_OF_ASSIGN_RHS");
+            return sv("PARENT_OF_ASSIGN_RHS");
         case PARENT_OF_RETURN:
-            return str_view_from_cstr("PARENT_OF_RETURN");
+            return sv("PARENT_OF_RETURN");
         case PARENT_OF_BREAK:
-            return str_view_from_cstr("PARENT_OF_BREAK");
+            return sv("PARENT_OF_BREAK");
         case PARENT_OF_IF:
-            return str_view_from_cstr("PARENT_OF_IF");
+            return sv("PARENT_OF_IF");
     }
     unreachable("");
 }

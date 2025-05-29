@@ -784,17 +784,17 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     {
         Str_view_vec cmd = {0};
-        vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
+        vec_append(&a_main, &cmd, sv("clang"));
+        vec_append(&a_main, &cmd, sv("-std=c99"));
+        vec_append(&a_main, &cmd, sv("-Wno-override-module"));
+        vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
+        vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
         // TODO: command line argument for this:
-        //vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-g"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
+        //vec_append(&a_main, &cmd, sv("-O2"));
+        vec_append(&a_main, &cmd, sv("-g"));
+        vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
-        vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
+        vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);

@@ -109,9 +109,9 @@ static Str_view llvm_block_graphvis_internal(Name block_name, const Llvm_block* 
     extend_source_loc(&buf);
 
     Name children_name = util_literal_name_new2();
-    label(&buf, block_name, str_view_from_cstr("block"));
+    label(&buf, block_name, sv("block"));
     arrow_names(&buf, block_name, children_name);
-    label(&buf, children_name, str_view_from_cstr("block children"));
+    label(&buf, children_name, sv("block children"));
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
     Llvm* curr = NULL;
@@ -144,7 +144,7 @@ static Str_view llvm_function_params_graphvis_internal(Name params_name, const L
     String buf = {0};
     extend_source_loc(&buf);
 
-    label(&buf, params_name, str_view_from_cstr("params"));
+    label(&buf, params_name, sv("params"));
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         child_with_arrow1(&buf, params_name, vec_at(&params->params, idx), llvm_variable_def_graphvis_internal);
     }
@@ -156,7 +156,7 @@ static Str_view llvm_function_decl_graphvis_internal(const Llvm_function_decl* d
     String buf = {0};
     extend_source_loc(&buf);
 
-    label_ex(&buf, decl->name, str_view_from_cstr("function_decl"), decl->name);
+    label_ex(&buf, decl->name, sv("function_decl"), decl->name);
 
     extend_name_graphvis(&buf, decl->name);
     string_extend_cstr(&a_print, &buf, " -> \"");
@@ -173,7 +173,7 @@ static Str_view llvm_function_def_graphvis_internal(Name def_name, const Llvm_fu
     String buf = {0};
     extend_source_loc(&buf);
 
-    label(&buf, def_name, str_view_from_cstr("function_def"));
+    label(&buf, def_name, sv("function_def"));
 
     arrow_names(&buf, def_name, def->decl->name);
     string_extend_strv(&a_print, &buf, llvm_function_decl_graphvis_internal(def->decl));
@@ -229,9 +229,9 @@ static Str_view llvm_literal_graphvis_internal(const Llvm_literal* lit) {
 static Str_view llvm_function_call_graphvis_internal(const Llvm_function_call* call) {
     String buf = {0};
 
-    label(&buf, call->name_self, str_view_from_cstr("fun_call"));
+    label(&buf, call->name_self, sv("fun_call"));
 
-    arrow_names_label(&buf, call->name_self, call->callee, str_view_from_cstr("callee"));
+    arrow_names_label(&buf, call->name_self, call->callee, sv("callee"));
 
     Name args_name = util_literal_name_new2();
 
@@ -280,7 +280,7 @@ static Str_view llvm_return_graphvis_internal(Name rtn_name, const Llvm_return* 
     String buf = {0};
     extend_source_loc(&buf);
 
-    label(&buf, rtn_name, str_view_from_cstr("return"));
+    label(&buf, rtn_name, sv("return"));
 
     arrow_names(&buf, rtn_name, rtn->child);
 
@@ -290,7 +290,7 @@ static Str_view llvm_return_graphvis_internal(Name rtn_name, const Llvm_return* 
 static Str_view llvm_alloca_graphvis_internal(Name all_name, const Llvm_alloca* alloca) {
     String buf = {0};
 
-    label(&buf, all_name, str_view_from_cstr("return"));
+    label(&buf, all_name, sv("return"));
 
     return string_to_strv(buf);
 }
@@ -298,7 +298,7 @@ static Str_view llvm_alloca_graphvis_internal(Name all_name, const Llvm_alloca* 
 static Str_view llvm_store_another_llvm_graphvis_internal(Name store_name, const Llvm_store_another_llvm* store) {
     String buf = {0};
 
-    label(&buf, store_name, str_view_from_cstr("store_another_llvm"));
+    label(&buf, store_name, sv("store_another_llvm"));
     // TODO
     //
     return string_to_strv(buf);
@@ -307,7 +307,7 @@ static Str_view llvm_store_another_llvm_graphvis_internal(Name store_name, const
 static Str_view llvm_load_another_llvm_graphvis_internal(Name load_name, const Llvm_load_another_llvm* load) {
     String buf = {0};
 
-    label(&buf, load_name, str_view_from_cstr("load_another_llvm"));
+    label(&buf, load_name, sv("load_another_llvm"));
     // TODO
     //
     return string_to_strv(buf);

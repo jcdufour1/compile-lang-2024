@@ -35,7 +35,7 @@ void llvm_extend_name(String* output, Name name) {
     } else if (str_view_cstr_is_equal(name.base, "main")) {
         name.scope_id = SCOPE_BUILTIN;
     } else if (name.mod_path.count < 1) {
-        name.mod_path = str_view_from_cstr("PREFIX"); // TODO: make variable or similar for this
+        name.mod_path = sv("PREFIX"); // TODO: make variable or similar for this
     }
 
     extend_name(NAME_EMIT_LLVM, output, name);

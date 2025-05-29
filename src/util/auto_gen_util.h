@@ -106,8 +106,8 @@ static void extend_struct_member(String* output, Member member) {
 
 static void append_member(Members* members, const char* type, const char* name) {
     Member member = {
-        .type = str_view_from_cstr(type),
-        .name = str_view_from_cstr(name)
+        .type = sv(type),
+        .name = sv(name)
     };
     vec_append(&gen_a, members, member);
 }

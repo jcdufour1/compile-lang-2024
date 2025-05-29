@@ -95,7 +95,7 @@ static inline bool str_view_is_equal(Str_view a, Str_view b) {
 }
 
 // only string literals can be passed into this function
-static inline Str_view str_view_from_cstr(const char* cstr) {
+static inline Str_view sv(const char* cstr) {
     Str_view str_view;
     str_view.str = cstr;
     str_view.count = strlen(cstr);
