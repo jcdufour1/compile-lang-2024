@@ -67,7 +67,7 @@ static void load_stmt(
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
-static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
+static void load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
 
 static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
 
@@ -1570,7 +1570,7 @@ static Llvm_function_params* load_function_parameters(
     return new_params;
 }
 
-static Name load_function_def(Tast_function_def* old_fun_def) {
+static void load_function_def(Tast_function_def* old_fun_def) {
     Name old_fun_name = env.name_parent_fn;
     env.name_parent_fn = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
@@ -1615,14 +1615,10 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env.name_parent_fn = old_fun_name;
-    return (Name) {0};
-    todo();
 }
 
-static Name load_function_decl(Tast_function_decl* old_fun_decl) {
+static void load_function_decl(Tast_function_decl* old_fun_decl) {
     unwrap(alloca_add(llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
-
-    return (Name) {0};
 }
 
 static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
@@ -1715,7 +1711,7 @@ static Name load_assignment_internal(const char* file, int line, Llvm_block* new
     return new_store->name;
 }
 
-static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def) {
+static void load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def) {
     Llvm_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
     Llvm* alloca = NULL;
@@ -1727,7 +1723,6 @@ static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_
     vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_variable_def_wrap(new_var_def)));
 
     assert(alloca);
-    return llvm_tast_get_name(alloca);
 }
 
 static void load_struct_def(Tast_struct_def* old_def) {
@@ -2268,20 +2263,23 @@ static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr) {
     unreachable("");
 }
 
-static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
+static void load_def(Llvm_block* new_block, Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
-            return load_function_def(tast_function_def_unwrap(old_def));
+            load_function_def(tast_function_def_unwrap(old_def));
+            return;
         case TAST_FUNCTION_DECL:
-            return load_function_decl(tast_function_decl_unwrap(old_def));
+            load_function_decl(tast_function_decl_unwrap(old_def));
+            return;
         case TAST_VARIABLE_DEF:
-            return load_variable_def(new_block, tast_variable_def_unwrap(old_def));
+            load_variable_def(new_block, tast_variable_def_unwrap(old_def));
+            return;
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
-            return (Name) {0};
+            return;
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
-            return (Name) {0};
+            return;
         case TAST_ENUM_DEF:
             unreachable("enum def should not make it here");
         case TAST_PRIMITIVE_DEF:
@@ -2492,23 +2490,24 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
     unreachable("");
 }
 
-static Name load_def_sometimes(Tast_def* old_def) {
+static void load_def_sometimes(Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
-            return load_function_def(tast_function_def_unwrap(old_def));
+            load_function_def(tast_function_def_unwrap(old_def));
+            return;
         case TAST_FUNCTION_DECL:
-            return load_function_decl(tast_function_decl_unwrap(old_def));
+            load_function_decl(tast_function_decl_unwrap(old_def));
+            return;
         case TAST_VARIABLE_DEF:
-            //return load_variable_def(new_block, tast_variable_def_unwrap(old_def));
-            return (Name) {0};
+            return;
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
-            return (Name) {0};
+            return;
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
-            return (Name) {0};
+            return;
         case TAST_ENUM_DEF:
-            return (Name) {0};
+            return;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:

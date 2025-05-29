@@ -82,19 +82,37 @@ Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol, Scope_id new_scope) {
 }
 
 Uast_member_access* uast_member_access_clone(const Uast_member_access* access, Scope_id new_scope, Pos dest_pos) {
-    return uast_member_access_new(access->pos, access->member_name, uast_expr_clone(access->callee, new_scope, dest_pos));
+    return uast_member_access_new(
+        access->pos,
+        access->member_name,
+        uast_expr_clone(access->callee, new_scope, dest_pos)
+    );
 }
 
 Uast_unary* uast_unary_clone(const Uast_unary* unary, Scope_id new_scope, Pos dest_pos) {
-    return uast_unary_new(unary->pos, uast_expr_clone(unary->child, new_scope, dest_pos), unary->token_type, ulang_type_clone(unary->lang_type, new_scope));
+    return uast_unary_new(
+        unary->pos,
+        uast_expr_clone(unary->child, new_scope, dest_pos),
+        unary->token_type,
+        ulang_type_clone(unary->lang_type, new_scope)
+    );
 }
 
 Uast_binary* uast_binary_clone(const Uast_binary* binary, Scope_id new_scope, Pos dest_pos) {
-    return uast_binary_new(binary->pos, uast_expr_clone(binary->lhs, new_scope, dest_pos), uast_expr_clone(binary->rhs, new_scope, dest_pos), binary->token_type);
+    return uast_binary_new(
+        binary->pos,
+        uast_expr_clone(binary->lhs, new_scope, dest_pos),
+        uast_expr_clone(binary->rhs, new_scope, dest_pos),
+        binary->token_type
+    );
 }
 
 Uast_index* uast_index_clone(const Uast_index* index, Scope_id new_scope, Pos dest_pos) {
-    return uast_index_new(index->pos, uast_expr_clone(index->index, new_scope, dest_pos), uast_expr_clone(index->callee, new_scope, dest_pos));
+    return uast_index_new(
+        index->pos,
+        uast_expr_clone(index->index, new_scope, dest_pos),
+        uast_expr_clone(index->callee, new_scope, dest_pos)
+    );
 }
 
 Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call, Scope_id new_scope, Pos dest_pos) {
@@ -240,7 +258,11 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond, Scope_id new_sc
 }
 
 Uast_break* uast_break_clone(const Uast_break* lang_break, Scope_id new_scope, Pos dest_pos) {
-    return uast_break_new(lang_break->pos, lang_break->do_break_expr, uast_expr_clone(lang_break->break_expr, new_scope, dest_pos));
+    return uast_break_new(
+        lang_break->pos,
+        lang_break->do_break_expr,
+        uast_expr_clone(lang_break->break_expr, new_scope, dest_pos)
+    );
 }
 
 Uast_continue* uast_continue_clone(const Uast_continue* cont) {
@@ -248,7 +270,11 @@ Uast_continue* uast_continue_clone(const Uast_continue* cont) {
 }
 
 Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, Scope_id new_scope, Pos dest_pos) {
-    return uast_assignment_new(assign->pos, uast_expr_clone(assign->lhs, new_scope, dest_pos), uast_expr_clone(assign->rhs, new_scope, dest_pos));
+    return uast_assignment_new(
+        assign->pos,
+        uast_expr_clone(assign->lhs, new_scope, dest_pos),
+        uast_expr_clone(assign->rhs, new_scope, dest_pos)
+    );
 }
 
 Uast_return* uast_return_clone(const Uast_return* rtn, Scope_id new_scope, Pos dest_pos) {
