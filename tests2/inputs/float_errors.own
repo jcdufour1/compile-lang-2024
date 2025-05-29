@@ -1,10 +1,17 @@
 
-
-fn main() i32 {
+fn part1() {
     let num2 f64 = 9.8
     let num3 f32 = num2
 
     let num4 f64 = num
+}
 
+fn part2() {
+    let num1 f32 = 8.2 == 4.2
+}
+
+fn main() i32 {
+    part1()
+    part2()
     return 0
 }

@@ -84,7 +84,6 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
-// TODO: use newer mechanisms for getting bit_width of dest and src
 static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
@@ -642,8 +641,7 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
         case BINARY_SHIFT_LEFT:
             // fallthrough
         case BINARY_SHIFT_RIGHT:
-            // TODO: expected failure tests for some of these
-            msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation "TAST_FMT" not allowed\n", binary_type_print(token_type));
+            msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"TAST_FMT"` is not supported\n", binary_type_print(token_type));
             return false;
     }
     unreachable("");
@@ -659,7 +657,8 @@ static Tast_literal* precalulate_number(
     return util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
 }
 
-static Tast_literal* precalulate_float(
+static bool precalulate_float(
+    Tast_literal** result,
     const Tast_float* lhs,
     const Tast_float* rhs,
     BINARY_TYPE token_type,
@@ -667,10 +666,10 @@ static Tast_literal* precalulate_float(
 ) {
     double result_val = 0;
     if (!precalulate_float_internal(&result_val, lhs->data, rhs->data, token_type, pos)) {
-        // TODO
-        todo();
+        return false;
     }
-    return util_tast_literal_new_from_double(result_val, pos);
+    *result = util_tast_literal_new_from_double(result_val, pos);
+    return true;
 }
 
 static Tast_literal* precalulate_char(
@@ -760,12 +759,15 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 );
                 break;
             case TAST_FLOAT:
-                literal = precalulate_float(
+                if (!precalulate_float(
+                    &literal,
                     tast_float_const_unwrap(lhs_lit),
                     tast_float_const_unwrap(rhs_lit),
                     oper_token_type,
                     oper_pos
-                );
+                )) {
+                    return false;
+                }
                 break;
             case TAST_CHAR:
                 literal = precalulate_char(
