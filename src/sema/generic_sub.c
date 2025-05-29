@@ -123,7 +123,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_ENUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
-            log(LOG_DEBUG, TAST_FMT, uast_def_print(def));
             todo();
         case UAST_FUNCTION_DECL:
             todo();

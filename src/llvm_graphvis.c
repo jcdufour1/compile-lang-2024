@@ -140,7 +140,6 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
-    log(LOG_DEBUG, "%zu\n", vec_at_ref(&env.symbol_tables, block->scope_id)->alloca_table.count);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         if (all_tbl_add_ex(&already_visited, curr)) {
@@ -489,7 +488,6 @@ Str_view llvm_graphvis(const Llvm_block* block) {
     while (all_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make alloca_add_ex)
         if (all_tbl_add_ex(&already_visited, curr)) {
-            log(LOG_DEBUG, TAST_FMT"\n", llvm_print(curr));
             llvm_graphvis_internal(&buf, curr);
         }
     }

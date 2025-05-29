@@ -82,7 +82,6 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 static bool is_unary(TOKEN_TYPE token_type);
 
 static bool prev_is_newline(void) {
-    log(LOG_DEBUG, "prev_is_newline: "TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, prev_token.type));
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
 }
 

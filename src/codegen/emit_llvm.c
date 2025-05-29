@@ -146,7 +146,6 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)));
         unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(llvm_literal_const_wrap(literal))));
     }
 

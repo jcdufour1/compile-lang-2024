@@ -1780,7 +1780,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
                     msg_invalid_function_arg(new_arg, param->base);
                     status = false;
                     goto error;
@@ -2985,8 +2984,6 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     Usymbol_iter rec_iter = usym_tbl_iter_new_table(env.struct_like_tbl);
     Uast_def* curr_def = NULL;
     while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
-        log(LOG_DEBUG, "%d\n", curr_def->type);
-        log(LOG_DEBUG, TAST_FMT, uast_def_print(curr_def));
         if (!check_struct_for_rec(curr_def)) {
             status = false;
         }
