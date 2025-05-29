@@ -50,3 +50,22 @@ void write_file(const char* file_path, Str_view text_to_write) {
 
     fclose(file);
 }
+
+Str_view file_path_normalize(Str_view file_path) {
+    unwrap(file_path.count > 0);
+
+    if (str_view_front(file_path) == '/') {
+        // is absolute path
+        return file_path;
+    }
+
+    if (file_path.count > 1 && str_view_is_equal(str_view_slice(file_path, 0, 2), str_view_from_cstr("./"))) {
+        return file_path;
+    }
+
+    String new_path = {0};
+    string_extend_cstr(&a_main, &new_path, "./"); 
+    string_extend_strv(&a_main, &new_path, file_path); 
+    return string_to_strv(new_path);
+}
+

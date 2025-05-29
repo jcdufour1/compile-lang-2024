@@ -45,7 +45,7 @@ OBJS=\
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/uast_utils.o \
 	 ${BUILD_DIR}/symbol_table.o \
-	 ${BUILD_DIR}/file.o \
+	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
@@ -160,8 +160,8 @@ ${BUILD_DIR}/sema/check_struct_recursion.o: ${DEP_COMMON} src/sema/check_struct_
 ${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c
 
-${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
+${BUILD_DIR}/util/file.o: ${DEP_COMMON} src/util/file.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/file.o src/util/file.c
 
 ${BUILD_DIR}/util/parameters.o: ${DEP_COMMON} src/util/parameters.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/parameters.o src/util/parameters.c
