@@ -1497,8 +1497,6 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
-    log(LOG_VERBOSE, TAST_FMT, uast_block_print(outer));
-
     *result = outer;
     return PARSE_OK;
 }

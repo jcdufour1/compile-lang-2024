@@ -98,20 +98,6 @@ static void load_block_stmts(
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
         local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, lang_type).str.base, "void"));
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, "void"));
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_MSG, lang_type).str.base, "void"));
-        log(LOG_DEBUG, TAST_FMT"\n", tast_variable_def_print(local_rtn_def));
-        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
-        log(LOG_DEBUG, "%d\n", lang_type.type);
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, lang_type).str.base));
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base));
-        log(LOG_DEBUG, "%d\n", LANG_TYPE_VOID);
-        log(LOG_DEBUG, "%d\n", LANG_TYPE_VOID);
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, lang_type).str.base, "void"));
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, "void"));
-        assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_MSG, lang_type).str.base, "void"));
     }
 
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
@@ -143,7 +129,7 @@ static void load_block_stmts(
             break;
         }
         default:
-            todo();
+            unreachable("");
     }
 
     Tast_variable_def* is_rtning = tast_variable_def_new(pos, u1_lang_type, false, is_rtning_name);
@@ -179,7 +165,7 @@ static void load_block_stmts(
             break;
         }
         default:
-            todo();
+            unreachable("");
     }
 
     Name is_conting_name = {0};
@@ -275,14 +261,11 @@ static void load_block_stmts(
         default:
             todo();
     }
-    log(LOG_VERBOSE, TAST_FMT"\n", tast_defer_print(defer));
+
     // TODO: have one is_rtning per stack item instead of per function?
     if (env.defered_collections.coll_stack.info.count < 1) {
         env.defered_collections.is_rtning = is_rtning->name;
     }
-    // TODO: remove below line?
-    //env.defered_collections.is_rtning = is_rtning->name;
-    log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, is_brking->name));
     vec_append(&a_main, &env.defered_collections.coll_stack, ((Defer_collection) {
         .pairs = (Defer_pair_vec) {0},
         .parent_of = parent_of,
@@ -290,9 +273,6 @@ static void load_block_stmts(
         .is_brking = is_brking->name,
         .is_conting = is_conting->name
     }));
-    for (size_t idx = 0; idx < env.defered_collections.coll_stack.info.count; idx++) {
-        log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, vec_at(&env.defered_collections.coll_stack, idx).is_brking));
-    }
 
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -329,10 +309,6 @@ static void load_block_stmts(
         default:
             todo();
     }
-    //vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
-    //    defer,
-    //    tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return")))
-    //}));
 
     if (lang_type.type != LANG_TYPE_VOID) {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
@@ -355,7 +331,6 @@ static void load_block_stmts(
     while (pairs->info.count > 0) {
         Defer_pair_vec dummy_stmts = {0};
         Defer_pair pair = vec_top(pairs);
-        log(LOG_VERBOSE, TAST_FMT"\n", defer_pair_print(pair));
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
             //Name goto_cond = llvm_
@@ -375,8 +350,6 @@ static void load_block_stmts(
                 env.label_if_continue,
                 env.label_if_break
             );
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_continue));
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
 
             //Name goto_cond = llvm_
             if_for_add_cond_goto(
@@ -395,13 +368,9 @@ static void load_block_stmts(
                 env.label_if_continue,
                 env.label_if_break
             );
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_continue));
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
-        } else if (pairs->info.count == 1) {
-            log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
+
         load_stmt(rtn_in_block, new_block, pair.defer->child, true);
-        log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
