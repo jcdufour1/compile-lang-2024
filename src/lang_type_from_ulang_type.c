@@ -83,6 +83,8 @@ bool name_from_uname(Name* new_name, Uname name) {
             return false;
         case UAST_LANG_DEF:
             todo();
+        case UAST_VOID_DEF:
+            todo();
     }
     unreachable("");
 }

@@ -3,7 +3,7 @@ type io import = std.io
 
 fn for_range() {
     for idx i32 in 0..100 {
-        io.printf("idx: %d\n", idx)
+        io.printf("test 1: idx: %d\n", idx)
 
         if idx < 2 {
             continue
@@ -13,13 +13,13 @@ fn for_range() {
     }
 
     for idx i32 in 0..2 {
-        io.printf("idx: %d\n", idx)
+        io.printf("test 2: idx: %d\n", idx)
         continue
-        io.printf("no\n")
+        io.printf("test 3: no\n")
     }
 
     for idx i32 in 0..2 {
-        io.printf("idx: %d\n", idx)
+        io.printf("test 4: idx: %d\n", idx)
         continue
     }
 
@@ -31,7 +31,7 @@ fn for_range() {
 fn for_cond() {
     let idx1 i32 = 0
     for idx1 < 100 {
-        io.printf("idx: %d\n", idx1)
+        io.printf("test 5: %d\n", idx1)
 
         idx1 = idx1 + 1
 
@@ -44,15 +44,15 @@ fn for_cond() {
 
     let idx2 i32 = 0
     for idx2 < 2 {
-        io.printf("idx: %d\n", idx2)
+        io.printf("test 6: idx: %d\n", idx2)
         idx2 = idx2 + 1
         continue
-        io.printf("no\n")
+        io.printf("test 7: no\n")
     }
 
     let idx3 i32 = 0
     for idx3 < 2 {
-        io.printf("idx: %d\n", idx3)
+        io.printf("test 8: idx: %d\n", idx3)
         idx3 = idx3 + 1
         continue
     }

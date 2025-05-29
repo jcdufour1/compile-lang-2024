@@ -154,6 +154,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
         case UAST_FUNCTION_DECL:
             return EXPAND_NAME_NORMAL;
+        case UAST_VOID_DEF:
+            return EXPAND_NAME_NORMAL;
     }
 
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, name.scope_id, dest_pos);
@@ -505,6 +507,8 @@ bool expand_def_def(Uast_def* def) {
             return expand_def_function_decl(uast_function_decl_unwrap(def));
         case UAST_LANG_DEF:
             return expand_def_lang_def(uast_lang_def_unwrap(def));
+        case UAST_VOID_DEF:
+            return true;
     }
     unreachable("");
 }

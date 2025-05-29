@@ -222,6 +222,7 @@ Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto, int inde
 
     string_extend_cstr_indent(&a_print, &buf, "cond_goto", indent);
     extend_name(NAME_LOG, &buf, cond_goto->if_true);
+    string_extend_cstr(&a_print, &buf, " ");
     extend_name(NAME_LOG, &buf, cond_goto->if_false);
     string_extend_cstr(&a_print, &buf, "\n");
 

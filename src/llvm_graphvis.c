@@ -66,6 +66,12 @@ static void label_internal(const char* file, int line, String* buf, Name name, S
     extend_name_graphvis(buf, name);
     string_extend_cstr(&a_print, buf, " [label = \"");
     string_extend_strv(&a_print, buf, label);
+    // TODO: make parameter to enable/disable below block
+    {
+        //string_extend_cstr(&a_print, buf, " ");
+        //string_extend_strv(&a_print, buf, serialize_name(name));
+
+    }
     string_extend_cstr(&a_print, buf, "\"];\n");
 }
 
@@ -77,6 +83,11 @@ static void label_ex_internal(const char* file, int line, String* buf, Name name
     extend_name_graphvis(buf, name);
     string_extend_cstr(&a_print, buf, " [label = \"");
     string_extend_strv(&a_print, buf, label);
+    // TODO: make parameter to enable/disable below block
+    {
+        //string_extend_cstr(&a_print, buf, " ");
+        //string_extend_strv(&a_print, buf, serialize_name(name));
+    }
     string_extend_cstr(&a_print, buf, " ");
     extend_name_graphvis(buf, actual_name);
     string_extend_cstr(&a_print, buf, "\"];\n");

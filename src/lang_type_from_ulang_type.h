@@ -130,7 +130,6 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     unreachable("");
 }
 
-// TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type, Pos pos) {
     (void) new_lang_type;
     (void) pos;
@@ -162,6 +161,9 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             return true;
         case LANG_TYPE_PRIMITIVE:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
+            return true;
+        case LANG_TYPE_VOID:
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
             return true;
         default:
             unreachable("");

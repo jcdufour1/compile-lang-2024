@@ -105,6 +105,8 @@ static bool get_next_token(
         Str_view text = str_view_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (str_view_cstr_is_equal(text, "unsafe_cast")) {
             token->type = TOKEN_UNSAFE_CAST;
+        } else if (str_view_cstr_is_equal(text, "defer")) {
+            token->type = TOKEN_DEFER;
         } else if (str_view_cstr_is_equal(text, "fn")) {
             token->type = TOKEN_FN;
         } else if (str_view_cstr_is_equal(text, "for")) {

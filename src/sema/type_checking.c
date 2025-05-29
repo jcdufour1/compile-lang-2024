@@ -521,6 +521,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             // fallthrough
         case UAST_PRIMITIVE_DEF:
             // fallthrough
+        case UAST_VOID_DEF:
+            // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
@@ -1458,6 +1460,11 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             }
             return STMT_NO_STMT;
         }
+        case UAST_VOID_DEF:
+            if (!try_set_void_def_types(uast_void_def_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
         case UAST_ENUM_DEF: {
             return STMT_NO_STMT;
         }
@@ -2026,6 +2033,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_VOID_DEF:
+            unreachable("");
         case UAST_LANG_DEF:
             unreachable("lang def should have been eliminated by now");
     }
@@ -2170,6 +2179,12 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
     unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
+    return true;
+}
+
+bool try_set_void_def_types(Uast_void_def* tast) {
+    (void) tast;
+    //symbol_add(tast_void_def_wrap(tast_void_def_new(POS_BUILTIN)));
     return true;
 }
 
@@ -2625,6 +2640,22 @@ bool try_set_label_types(Tast_label** new_tast, const Uast_label* label) {
     return label;
 }
 
+bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
+    Tast_stmt* new_child = NULL;
+    switch (try_set_stmt_types(&new_child, defer->child, false)) {
+        case STMT_OK:
+            break;
+        case STMT_ERROR:
+            return false;
+        case STMT_NO_STMT:
+            todo();
+        default:
+            unreachable("");
+    }
+    *new_tast = tast_defer_new(defer->pos, new_child);
+    return true;
+}
+
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
@@ -2813,6 +2844,8 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_RETURN:
             return false;
+        case UAST_DEFER:
+            return false;
     }
     unreachable("");
 }
@@ -2888,6 +2921,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_label_wrap(new_label);
+            return STMT_OK;
+        }
+        case UAST_DEFER: {
+            Tast_defer* new_defer = NULL;
+            if (!try_set_defer_types(&new_defer, uast_defer_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_defer_wrap(new_defer);
             return STMT_OK;
         }
     }

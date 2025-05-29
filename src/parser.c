@@ -14,6 +14,7 @@
 #include <file.h>
 #include <errno.h>
 #include <name.h>
+#include <ulang_type_clone.h>
 
 static bool can_end_stmt(Token token);
 
@@ -316,11 +317,19 @@ static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
+// TODO: remove if statement in below starts_with_* functions
 static bool starts_with_type_def(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
+}
+
+static bool starts_with_defer(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_DEFER;
 }
 
 static bool starts_with_function_decl(Tk_view tokens) {
@@ -598,6 +607,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_MACRO:
             return true;
+        case TOKEN_DEFER:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -739,6 +750,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_ASSIGN_BY_BIN:
             return false;
         case TOKEN_MACRO:
+            return false;
+        case TOKEN_DEFER:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -1379,11 +1392,21 @@ static PARSE_STATUS parse_variable_def(
 
 static PARSE_STATUS parse_for_range_internal(
     Uast_block** result,
-    Uast_variable_def* var_def,
+    Uast_variable_def* var_def_user,
     Uast_block* outer,
     Tk_view* tokens,
     Scope_id block_scope
 ) {
+    // TODO: create mod_path "builtin" for all builtin symbols (to prevent collisions between user defined symbols and internal symbols)
+
+    Name user_name = var_def_user->name;
+    Uast_variable_def* var_def_builtin = uast_variable_def_new(
+        var_def_user->pos,
+        ulang_type_clone(var_def_user->lang_type, user_name.scope_id),
+        name_new(user_name.mod_path, util_literal_str_view_new(), user_name.gen_args, user_name.scope_id)
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
+
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound = NULL;
@@ -1417,12 +1440,45 @@ static PARSE_STATUS parse_for_range_internal(
 
     Uast_assignment* init_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
         lower_bound
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = util_literal_name_new_mod_path2(env.curr_mod_path);
+    Uast_assignment* increment = uast_assignment_new(
+        uast_expr_get_pos(upper_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            var_def_builtin->pos,
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            BINARY_ADD
+        )))
+    );
+    // TODO: make new vector instead to avoid O(n) insert time
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(increment));
+
+    Uast_assignment* user_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_user->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name))
+    );
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
+
+    // this is a way to compensate for increment occuring on the first iteration
+    // TODO: this will not work properly for unsigned if the initial value is 0
+    //Uast_assignment* init_decre = uast_assignment_new(
+    //    uast_expr_get_pos(upper_bound),
+    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+    //        var_def->pos,
+    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+    //        BINARY_SUB
+    //    )))
+    //);
+    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_decre));
+
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1430,34 +1486,16 @@ static PARSE_STATUS parse_for_range_internal(
             outer->pos,
             uast_binary_wrap(uast_binary_new(
                 outer->pos,
-                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
                 upper_bound,
                 BINARY_LESS_THAN
             ))
         ),
         inner,
-        incre_name,
+        util_literal_name_new_prefix2(str_view_from_cstr("todo_remove_in_src_parser")),
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
-
-    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
-    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
-
-    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name.base);
-    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
-
-    Uast_assignment* increment = uast_assignment_new(
-        uast_expr_get_pos(upper_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            var_def->pos,
-            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-            BINARY_ADD
-        )))
-    );
-    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
 
     *result = outer;
     return PARSE_OK;
@@ -1541,6 +1579,26 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
     Token continue_token = consume(tokens);
     Uast_continue* cont_stmt = uast_continue_new(continue_token.pos);
     return cont_stmt;
+}
+
+static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
+    // TODO: expected failure case for return in defer block
+    Token defer_tk = {0};
+    unwrap(try_consume(&defer_tk, tokens, TOKEN_DEFER));
+    Uast_stmt* child = NULL;
+    switch (parse_stmt(&child, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "after `defer`");
+            return PARSE_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+    *defer = uast_defer_new(defer_tk.pos, child);
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* tokens) {
@@ -1877,6 +1935,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(fun_decl);
+    } else if (starts_with_defer(*tokens)) {
+        Uast_defer* fun_decl;
+        if (PARSE_OK != parse_defer(&fun_decl, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_defer_wrap(fun_decl);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {
@@ -2452,7 +2516,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

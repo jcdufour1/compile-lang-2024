@@ -280,6 +280,8 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             return tast_expr_get_lang_type(tast_expr_const_unwrap(stmt));
         case TAST_BLOCK:
             unreachable("");
+        case TAST_DEFER:
+            return tast_stmt_get_lang_type(tast_defer_const_unwrap(stmt)->child);
         case TAST_RETURN:
             return tast_expr_get_lang_type(tast_return_const_unwrap(stmt)->child);
         case TAST_BREAK:
@@ -340,6 +342,8 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_BREAK:
             tast_expr_set_lang_type(tast_break_unwrap(stmt)->break_expr, lang_type);
             return;
+        case TAST_DEFER:
+            unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_CONTINUE:
@@ -439,6 +443,8 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
             return tast_def_get_name(tast_def_const_unwrap(stmt));
         case TAST_EXPR:
             return tast_expr_get_name(tast_expr_const_unwrap(stmt));
+        case TAST_DEFER:
+            unreachable("");
         case TAST_BLOCK:
             unreachable("");
         case TAST_RETURN:
@@ -475,6 +481,12 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             todo();
     }
     unreachable("");
+}
+
+static inline Lang_type tast_lang_type_from_name(Name name) {
+    Tast_def* def = NULL;
+    unwrap(symbol_lookup(&def, name));
+    return tast_def_get_lang_type(def);
 }
 
 #endif // TAST_UTIL_H

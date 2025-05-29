@@ -343,6 +343,15 @@ Str_view uast_label_print_internal(const Uast_label* label, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view uast_defer_print_internal(const Uast_defer* defer, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "defer", indent);
+    string_extend_strv(&a_print, &buf, uast_stmt_print_internal(defer->child, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_break_print_internal(const Uast_break* lang_break, int indent) {
     (void) lang_break;
     String buf = {0};
@@ -467,6 +476,15 @@ Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     string_extend_cstr(&a_print, &buf, "\n");
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(def->expr, indent + INDENT_WIDTH));
     string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
+    (void) def;
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "void_def\n", indent);
 
     return string_to_strv(buf);
 }
@@ -631,6 +649,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_poison_def_print_internal(uast_poison_def_const_unwrap(def), indent);
         case UAST_LANG_DEF:
             return uast_lang_def_print_internal(uast_lang_def_const_unwrap(def), indent);
+        case UAST_VOID_DEF:
+            return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -694,6 +714,8 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_LABEL:
             return uast_label_print_internal(uast_label_const_unwrap(stmt), indent);
+        case UAST_DEFER:
+            return uast_defer_print_internal(uast_defer_const_unwrap(stmt), indent);
     }
     unreachable("");
 }

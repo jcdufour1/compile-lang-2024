@@ -109,6 +109,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped);
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast);
 
+bool try_set_void_def_types(Uast_void_def* tast);
+
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast);
 
 bool try_set_module_alias_types(Tast_block** new_tast, Uast_mod_alias* tast);

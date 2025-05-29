@@ -599,6 +599,15 @@ static Tast_type tast_gen_label(const char* prefix) {
     return lang_label;
 }
 
+static Tast_type tast_gen_defer(const char* prefix) {
+    const char* base_name = "defer";
+    Tast_type defer = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&defer.members, "Tast_stmt*", "child");
+
+    return defer;
+}
+
 static Tast_type tast_gen_break(const char* prefix) {
     const char* base_name = "break";
     Tast_type lang_break = {.name = tast_name_new(prefix, base_name, false)};
@@ -641,6 +650,7 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &stmt.sub_types, tast_gen_defer(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));

@@ -55,6 +55,8 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_LABEL:
             unreachable("");
+        case UAST_DEFER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -81,6 +83,7 @@ static inline Ulang_type uast_get_ulang_type(const Uast* uast) {
     unreachable("");
 }
 
+// TODO: remove this function
 static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
@@ -107,6 +110,8 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_LANG_DEF:
             unreachable("");
+        case UAST_VOID_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -130,6 +135,8 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_LABEL:
+            unreachable("");
+        case UAST_DEFER:
             unreachable("");
     }
     unreachable("");
@@ -157,6 +164,8 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
             unreachable("");
         case UAST_LABEL:
             unreachable("");
+        case UAST_DEFER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -183,6 +192,7 @@ static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang
     unreachable("");
 }
 
+// TODO: remove this function
 static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
@@ -209,6 +219,8 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_LANG_DEF:
             unreachable("");
+        case UAST_VOID_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -233,6 +245,8 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
             unreachable("");
         case UAST_LABEL:
             unreachable("");
+        case UAST_DEFER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -241,6 +255,8 @@ static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
             return lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_const_unwrap(def)->lang_type);
+        case UAST_VOID_DEF:
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:
@@ -300,6 +316,8 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
             return uast_struct_def_const_unwrap(def)->base;
         case UAST_RAW_UNION_DEF:
             return uast_raw_union_def_const_unwrap(def)->base;
+        case UAST_VOID_DEF:
+            unreachable("");
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_VARIABLE_DEF:

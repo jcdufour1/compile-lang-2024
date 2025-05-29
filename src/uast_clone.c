@@ -129,12 +129,23 @@ Uast_unknown* uast_unknown_clone(const Uast_unknown* unknown) {
 }
 
 Uast_param* uast_param_clone(const Uast_param* param, Scope_id new_scope) {
-    return uast_param_new(param->pos, uast_variable_def_clone(param->base, new_scope), param->is_optional, param->is_variadic, param->optional_default);
+    return uast_param_new(
+        param->pos,
+        uast_variable_def_clone(param->base, new_scope),
+        param->is_optional,
+        param->is_variadic,
+        param->optional_default
+    );
 }
 
 Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
     (void) def;
     todo();
+}
+
+Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
+    (void) def;
+    return uast_void_def_new(POS_BUILTIN);
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
@@ -208,6 +219,8 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_LANG_DEF:
             return uast_lang_def_wrap(uast_lang_def_clone(uast_lang_def_const_unwrap(def)));
+        case UAST_VOID_DEF:
+            return uast_void_def_wrap(uast_void_def_clone(uast_void_def_const_unwrap(def)));
     }
     unreachable("");
 }
@@ -247,7 +260,11 @@ Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, 
 }
 
 Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, Scope_id new_scope, Pos dest_pos) {
-    return uast_switch_new(lang_switch->pos, uast_expr_clone(lang_switch->operand, new_scope, dest_pos), uast_case_vec_clone(lang_switch->cases, new_scope, dest_pos));
+    return uast_switch_new(
+        lang_switch->pos,
+        uast_expr_clone(lang_switch->operand, new_scope, dest_pos),
+        uast_case_vec_clone(lang_switch->cases, new_scope, dest_pos)
+    );
 }
 
 Uast_label* uast_label_clone(const Uast_label* lang_label, Scope_id new_scope) {
@@ -255,6 +272,10 @@ Uast_label* uast_label_clone(const Uast_label* lang_label, Scope_id new_scope) {
     // TODO: new_scope should be put in label
     // label may need name
     return uast_label_new(lang_label->pos, lang_label->name);
+}
+
+Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, Scope_id new_scope, Pos dest_pos) {
+    return uast_defer_new(lang_defer->pos, uast_stmt_clone(lang_defer->child, new_scope, dest_pos));
 }
 
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_pos) {
@@ -277,12 +298,23 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(stmt), new_scope));
+        case UAST_DEFER:
+            return uast_defer_wrap(uast_defer_clone(uast_defer_const_unwrap(stmt), new_scope, dest_pos));
     }
     unreachable("");
 }
 
 Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope, Pos dest_pos) {
-    return uast_case_new(lang_case->pos, lang_case->is_default, uast_expr_clone(lang_case->expr, new_scope, dest_pos), uast_stmt_clone(lang_case->if_true, new_scope, dest_pos), new_scope);
+    return uast_case_new(
+        lang_case->pos,
+        lang_case->is_default,
+        uast_expr_clone(
+            lang_case->expr,
+            new_scope, dest_pos
+        ),
+        uast_stmt_clone(lang_case->if_true, new_scope, dest_pos),
+        new_scope
+    );
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope) {

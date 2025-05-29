@@ -89,7 +89,7 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
         case LANG_TYPE_MODE_EMIT_LLVM:
             break;
         case LANG_TYPE_MODE_EMIT_C:
-            todo();
+            break;
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
@@ -129,6 +129,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
+            log(LOG_DEBUG, "thing thing tuple\n");
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
@@ -144,21 +145,30 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             }
             goto end;
         case LANG_TYPE_FN: {
+            log(LOG_DEBUG, "thing thing fn\n");
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
             string_extend_cstr(&a_main, string, "fn");
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
             goto end;
         }
-        case LANG_TYPE_VOID:
-            // fallthrough
         case LANG_TYPE_ENUM:
+            log(LOG_DEBUG, "thing 2.2 other\n");
             // fallthrough
         case LANG_TYPE_RAW_UNION:
+            log(LOG_DEBUG, "thing 2.3 other\n");
             // fallthrough
         case LANG_TYPE_STRUCT:
+            log(LOG_DEBUG, "thing 2.4 other\n");
+            // fallthrough
+            assert(!str_view_cstr_is_equal(lang_type_get_atom(mode, lang_type).str.base, "void"));
+        case LANG_TYPE_VOID:
+            log(LOG_DEBUG, "thing 2.1 other\n");
             // fallthrough
         case LANG_TYPE_PRIMITIVE:
+            log(LOG_DEBUG, "thing 2.5 other\n");
+            log(LOG_DEBUG, "thing thing other\n");
+            log(LOG_DEBUG, TAST_FMT"\n", lang_type_atom_print(LANG_TYPE_MODE_LOG, lang_type_get_atom(mode, lang_type)));
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
             goto end;
     }

@@ -308,6 +308,14 @@ static Uast_type uast_gen_macro(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_defer(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "defer", false)};
+
+    append_member(&lit.members, "Uast_stmt*", "child");
+
+    return lit;
+}
+
 static Uast_type uast_gen_enum_access(const char* prefix) {
     const char* base_name = "enum_access";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
@@ -429,6 +437,12 @@ static Uast_type uast_gen_primitive_def(const char* prefix) {
     return def;
 }
 
+static Uast_type uast_gen_void_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "void_def", false)};
+
+    return def;
+}
+
 static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
@@ -451,6 +465,7 @@ static Uast_type uast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, uast_gen_void_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_poison_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_import_path(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_mod_alias(base_name));
@@ -586,6 +601,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));

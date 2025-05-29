@@ -29,6 +29,19 @@ static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
+static void emit_c_loc(String* output, Loc loc, Pos pos) {
+    string_extend_cstr(&a_main, output, "/* loc: ");
+    string_extend_cstr(&a_main, output, loc.file);
+    string_extend_cstr(&a_main, output, ":");
+    string_extend_int64_t(&a_main, output, loc.line);
+    string_extend_cstr(&a_main, output, " */\n");
+    string_extend_cstr(&a_main, output, "/* pos: ");
+    string_extend_strv(&a_main, output, pos.file_path);
+    string_extend_cstr(&a_main, output, ":");
+    string_extend_int64_t(&a_main, output, pos.line);
+    string_extend_cstr(&a_main, output, " */\n");
+}
+
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opaque_ptr) {
     if (opaque_ptr && lang_type_get_pointer_depth(lang_type) != 0) {
@@ -98,6 +111,7 @@ static void emit_c_function_params(String* output, const Llvm_function_params* p
 }
 
 static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
+    emit_c_loc(output, decl->loc, decl->pos);
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -112,6 +126,7 @@ static void emit_c_function_decl_internal(String* output, const Llvm_function_de
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
+    emit_c_loc(&strs->output, fun_def->loc, fun_def->pos);
     emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
@@ -122,11 +137,13 @@ static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
+    emit_c_loc(&strs->output, decl->loc, decl->pos);
     emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
+    emit_c_loc(&strs->output, def->loc, def->pos);
     String buf = {0};
     Arena a_temp = {0};
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
@@ -144,10 +161,10 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
                 Llvm_struct_def* child_def = llvm_struct_def_unwrap(llvm_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
                 *struct_to_use = util_literal_name_new2();
-                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, (Llvm_struct_def_base) {
+                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, ((Llvm_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
-                });
+                }));
                 unwrap(c_forward_struct_tbl_add(struct_to_use, ori_name));
                 emit_c_struct_def(strs, new_def);
             }
@@ -231,6 +248,7 @@ static void emit_c_sometimes(Emit_c_strs* strs, const Llvm* llvm) {
 }
 
 static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fun_call) {
+    emit_c_loc(&strs->output, fun_call->loc, fun_call->pos);
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -241,7 +259,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
         llvm_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
+        //assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Llvm* callee = NULL;
@@ -471,16 +489,34 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
 }
 
 static void emit_c_return(Emit_c_strs* strs, const Llvm_return* rtn) {
+    emit_c_loc(&strs->output, rtn->loc, rtn->pos);
     string_extend_cstr(&a_main, &strs->output, "    return ");
     emit_c_expr_piece(strs, rtn->child);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
 static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
+    emit_c_loc(output, alloca->loc, alloca->pos);
     Name storage_loc = util_literal_name_new2();
 
     string_extend_cstr(&a_main, output, "    ");
-    c_extend_type_call_str(output, alloca->lang_type, true);
+    log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
+    // TODO: remove these two if statements, and fix the actual underlying issues
+    // we may need to make system to identify location of node generation, etc.
+    // NOTE: this seems to be related to function callbacks for some reason
+    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
+        todo();
+    }
+    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
+        string_extend_cstr(&a_main, output, " uint64_t ");
+    } else {
+        c_extend_type_call_str(output, alloca->lang_type, true);
+        // this line below should be kept though
+    }
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -494,6 +530,7 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Llvm_label* def) {
+    emit_c_loc(&strs->output, def->loc, def->pos);
     llvm_extend_name(&strs->output, def->name);
     string_extend_cstr(&a_main, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
@@ -529,6 +566,7 @@ static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
 }
 
 static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_another_llvm* store) {
+    emit_c_loc(&strs->output, store->loc, store->pos);
     Llvm* src = NULL;
     unwrap(alloca_lookup(&src, store->llvm_src));
 
@@ -555,6 +593,7 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
 }
 
 static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
+    emit_c_loc(&strs->output, load->loc, load->pos);
     string_extend_cstr(&a_main, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, " ");
@@ -570,6 +609,7 @@ static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_
 }
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
+    emit_c_loc(&strs->output, load->loc, load->pos);
     Llvm* struct_def_ = NULL;
     unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->llvm_src))));
 
@@ -591,6 +631,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
 }
 
 static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* access) {
+    emit_c_loc(&strs->output, access->loc, access->pos);
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     llvm_extend_name(&strs->output, access->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
@@ -611,6 +652,7 @@ static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
 }
 
 static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto) {
+    emit_c_loc(&strs->output, cond_goto->loc, cond_goto->pos);
     string_extend_cstr(&a_main, &strs->output, "    if (");
     llvm_extend_name(&strs->output, cond_goto->condition);
     string_extend_cstr(&a_main, &strs->output, ") {\n");
@@ -621,10 +663,12 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
+    emit_c_loc(&strs->output, lang_goto->loc, lang_goto->pos);
     emit_c_goto_internal(strs, lang_goto->label);
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
+    emit_c_loc(&strs->output, block->loc, block->pos);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
         switch (stmt->type) {
@@ -684,6 +728,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
     string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
     string_extend_cstr(&a_main, &header, "#include <string.h>\n");
+    string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
@@ -744,7 +789,9 @@ void emit_c_from_tree(const Llvm_block* root) {
         vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
         vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
+        // TODO: command line argument for this:
+        //vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-g"));
         vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
         vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));

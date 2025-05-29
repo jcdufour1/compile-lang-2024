@@ -417,6 +417,15 @@ Str_view tast_label_print_internal(const Tast_label* label, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view tast_defer_print_internal(const Tast_defer* defer, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "defer", indent);
+    string_extend_strv(&a_print, &buf, tast_stmt_print_internal(defer->child, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, int indent) {
     String buf = {0};
 
@@ -614,6 +623,8 @@ Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
         case TAST_LABEL:
             return tast_label_print_internal(tast_label_const_unwrap(stmt), indent);
+        case TAST_DEFER:
+            return tast_defer_print_internal(tast_defer_const_unwrap(stmt), indent);
     }
     unreachable("");
 }
