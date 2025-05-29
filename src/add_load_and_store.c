@@ -62,8 +62,7 @@ static void load_stmt(
     bool* rtn_in_block,
     Llvm_block* new_block,
     Tast_stmt* old_stmt,
-    bool is_defered,
-    Name label_normal_brk/* break out of for only basically */
+    bool is_defered
 );
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
@@ -250,25 +249,25 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
+                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
                 defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             }
             break;
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break);
+                load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false);
             }
             //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -349,7 +348,7 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break);
+        load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false);
     }
 
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
@@ -401,7 +400,7 @@ static void load_block_stmts(
         } else if (pairs->info.count == 1) {
             log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
-        load_stmt(rtn_in_block, new_block, pair.defer->child, true, env.label_if_break);
+        load_stmt(rtn_in_block, new_block, pair.defer->child, true);
         log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -2458,7 +2457,7 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
                 return;
             }
 
-            if (label_normal_brk.base.count < 1) {
+            if (env.label_if_break.base.count < 1) {
                 msg(
                     DIAG_BREAK_INVALID_LOCATION, tast_break_unwrap(old_stmt)->pos,
                     "break statement outside of a for loop\n"

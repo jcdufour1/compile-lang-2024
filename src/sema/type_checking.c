@@ -2310,7 +2310,7 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
         }
     }
 
-    *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, true, new_child);
+    *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
 
     env.break_in_case = true;
 error:
