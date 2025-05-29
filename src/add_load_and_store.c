@@ -94,8 +94,7 @@ static void load_block_stmts(
     Tast_stmt_vec children,
     DEFER_PARENT_OF parent_of,
     Pos pos,
-    Lang_type lang_type,
-    Name for_check_cond
+    Lang_type lang_type
 ) {
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
@@ -165,7 +164,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            assert(for_check_cond.base.count > 0);
+            assert(env.label_if_continue.base.count > 0);
             is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_for"));
             break;
         }
@@ -192,7 +191,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            assert(for_check_cond.base.count > 0);
+            assert(env.label_if_continue.base.count > 0);
             is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_for"));
             break;
         }
@@ -375,10 +374,10 @@ static void load_block_stmts(
                     u1_lang_type
                 )),
                 new_block,
-                for_check_cond,
+                env.label_if_continue,
                 env.label_if_break
             );
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, for_check_cond));
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_continue));
             log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
 
             //Name goto_cond = llvm_
@@ -395,10 +394,10 @@ static void load_block_stmts(
                     u1_lang_type
                 )),
                 new_block,
-                for_check_cond,
+                env.label_if_continue,
                 env.label_if_break
             );
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, for_check_cond));
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_continue));
             log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
         } else if (pairs->info.count == 1) {
             log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
@@ -1644,8 +1643,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
         old_fun_def->body->children,
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
-        old_fun_def->decl->return_type,
-        (Name) {0}
+        old_fun_def->decl->return_type
     );
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
@@ -2057,24 +2055,19 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
     string_extend_cstr(&a_main, &after_loop_, "after_loop");
 
     Tast_operator* operator = old_for->condition->child;
-    Name check_cond_label = util_literal_name_new_prefix2(string_to_strv(check_cond_));
-    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, util_literal_name_new2(), check_cond_label);
+    env.label_if_continue = util_literal_name_new_prefix2(string_to_strv(check_cond_));
+    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue);
     Name after_check_label = util_literal_name_new_prefix2(string_to_strv(after_chk_));
     Name after_for_loop_label = util_literal_name_new_prefix2(string_to_strv(after_loop_));
 
     env.label_after_for = after_for_loop_label;
     env.label_if_break = after_for_loop_label;
 
-    if (false && old_for->do_cont_label) {
-        env.label_if_continue = old_for->continue_label;
-    } else {
-        env.label_if_continue = check_cond_label;
-    }
     assert(env.label_if_continue.base.count > 0);
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(jmp_to_check_cond_label));
 
-    add_label(new_branch_block, check_cond_label, pos);
+    add_label(new_branch_block, env.label_if_continue, pos);
 
     load_operator(new_branch_block, operator);
 
@@ -2101,8 +2094,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
         old_for->body->children,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
-        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
-        env.label_if_continue
+        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */
     );
     add_label(new_branch_block, after_inner_block, pos);
 
@@ -2110,7 +2102,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
         log(LOG_VERBOSE, TAST_FMT, llvm_print(vec_at(&new_branch_block->children, idx)));
     }
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
-        llvm_goto_new(old_for->pos, util_literal_name_new2(), check_cond_label)
+        llvm_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue)
     ));
     add_label(new_branch_block, after_for_loop_label, pos);
     for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
@@ -2578,7 +2570,7 @@ static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_P
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type, (Name) {0});
+    load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type);
     log(LOG_VERBOSE, TAST_FMT, llvm_block_print(new_block));
 
     return new_block;
