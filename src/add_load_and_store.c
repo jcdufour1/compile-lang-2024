@@ -1645,7 +1645,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
         old_fun_def->decl->return_type,
-        env.label_if_break /* TODO */
+        (Name) {0}
     );
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
@@ -2065,7 +2065,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
     env.label_after_for = after_for_loop_label;
     env.label_if_break = after_for_loop_label;
 
-    if (old_for->do_cont_label) {
+    if (false && old_for->do_cont_label) {
         env.label_if_continue = old_for->continue_label;
     } else {
         env.label_if_continue = check_cond_label;
@@ -2102,7 +2102,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
         DEFER_PARENT_OF_FOR,
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
-        check_cond_label
+        env.label_if_continue
     );
     add_label(new_branch_block, after_inner_block, pos);
 
@@ -2578,7 +2578,7 @@ static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_P
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type, env.label_if_break);
+    load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type, (Name) {0});
     log(LOG_VERBOSE, TAST_FMT, llvm_block_print(new_block));
 
     return new_block;
