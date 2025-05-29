@@ -2345,6 +2345,78 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
+typedef Name (*Get_is_brking_or_conting)(const Defer_collection* item);
+
+Name get_is_brking(const Defer_collection* item) {
+    return item->is_brking;
+}
+
+Name get_is_conting(const Defer_collection* item) {
+    return item->is_conting;
+}
+
+// TODO: try to come up with a better name for this function
+static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
+    Get_is_brking_or_conting get_is_brking_or_conting = is_brking ? get_is_brking : get_is_conting;
+    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+
+    Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
+    Defer_pair_vec* pairs = &coll.pairs;
+
+    // TODO: extract this into separate function? (and for can use same function as continue, etc.
+    Tast_assignment* is_cont_assign = tast_assignment_new(
+        tast_stmt_get_pos(old_stmt),
+        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+            .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
+            .name = get_is_brking_or_conting(&coll)
+        })),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+    );
+    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(is_cont_assign));
+    load_assignment(new_block, is_cont_assign);
+
+    // the purpose of these two for loops: 
+    //   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
+    //   we need to set is_brking of multiple scopes to break/continue out of for
+    bool is_for = false;
+    size_t for_pos = 0;
+    // these two for loops exclude the top of defered_collections.coll_stack
+    assert(env.defered_collections.coll_stack.info.count > 0 && "will underflow");
+    for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+        size_t idx = idx_ - 1;
+        if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+            is_for = true;
+            for_pos = idx;
+        }
+    }
+    if (is_for) {
+        for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+            size_t idx = idx_ - 1;
+            if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR || vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_IF) {
+                Tast_assignment* is_cont_assign_aux = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(vec_at_ref(&env.defered_collections.coll_stack, for_pos))),
+                        .name = get_is_brking_or_conting(vec_at_ref(&env.defered_collections.coll_stack, idx))
+                    })),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+                );
+                log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_cont_assign_aux));
+                load_assignment(new_block, is_cont_assign_aux);
+            }
+        }
+    }
+
+    if (pairs->info.count > 0) {
+        // jump to the top of the defer stack
+        Llvm_goto* new_goto = llvm_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new2(), vec_top(pairs).label->name);
+        vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+    }
+
+}
+
 static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered, Name label_normal_brk, Name label_defer_brk) {
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
@@ -2416,72 +2488,21 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
                 return;
             }
 
-            for (size_t idx = 0; idx < env.defered_collections.coll_stack.info.count; idx++) {
-                log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, vec_at(&env.defered_collections.coll_stack, idx).is_brking));
-            }
-            Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
 
             Tast_break* brk = tast_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(env.load_break_symbol_name /*TODO: consider using coll.rtn_val instead, etc. */),
+                        .lang_type = tast_lang_type_from_name(env.load_break_symbol_name),
                         .name = env.load_break_symbol_name
                     })),
                     brk->break_expr
                 );
-                log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
 
-            Tast_assignment* is_brk_assign = tast_assignment_new(
-                tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                    .lang_type = tast_lang_type_from_name(coll.is_brking),
-                    .name = coll.is_brking
-                })),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
-            );
-            log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_brk_assign));
-            load_assignment(new_block, is_brk_assign);
-
-            bool is_for = false;
-            size_t for_pos = 0;
-            // these two for loops exclude the top of defered_collections.coll_stack
-            assert(env.defered_collections.coll_stack.info.count > 0 && "will underflow");
-            for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-                size_t idx = idx_ - 1;
-                if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
-                    is_for = true;
-                    for_pos = idx;
-                }
-            }
-            if (is_for) {
-                for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-                    size_t idx = idx_ - 1;
-                    if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR || vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_IF) {
-                        Tast_assignment* is_brk_assign_aux = tast_assignment_new(
-                            tast_stmt_get_pos(old_stmt),
-                            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                                .lang_type = tast_lang_type_from_name(vec_at(&env.defered_collections.coll_stack, for_pos).is_brking),
-                                .name = vec_at(&env.defered_collections.coll_stack, idx).is_brking
-                            })),
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
-                        );
-                        log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_brk_assign_aux));
-                        log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, vec_at(&env.defered_collections.coll_stack, idx).is_brking));
-                        load_assignment(new_block, is_brk_assign_aux);
-                    }
-                }
-            }
-
-            Defer_pair_vec* pairs = &coll.pairs;
-            if (pairs->info.count > 0) {
-                // jump to the top of the defer stack
-                Llvm_goto* new_goto = llvm_goto_new(brk->pos, util_literal_name_new2(), vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-            }
+            load_brking_or_conting_set_etc(new_block, old_stmt, true);
             return;
         }
         case TAST_CONTINUE: {
@@ -2497,59 +2518,7 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
                 return;
             }
 
-            Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
-            Defer_pair_vec* pairs = &coll.pairs;
-
-            // TODO: extract this into separate function? (and for can use same function as continue, etc.
-            Tast_assignment* is_cont_assign = tast_assignment_new(
-                tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                    .lang_type = tast_lang_type_from_name(coll.is_conting),
-                    .name = coll.is_conting
-                })),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
-            );
-            log(LOG_DEBUG, TAST_FMT, tast_assignment_print(is_cont_assign));
-            load_assignment(new_block, is_cont_assign);
-
-            // the purpose of these two for loops: 
-            //   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
-            //   we need to set is_brking of multiple scopes to break/continue out of for
-            bool is_for = false;
-            size_t for_pos = 0;
-            // these two for loops exclude the top of defered_collections.coll_stack
-            assert(env.defered_collections.coll_stack.info.count > 0 && "will underflow");
-            for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-                size_t idx = idx_ - 1;
-                if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
-                    is_for = true;
-                    for_pos = idx;
-                }
-            }
-            if (is_for) {
-                for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-                    size_t idx = idx_ - 1;
-                    if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR || vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_IF) {
-                        Tast_assignment* is_cont_assign_aux = tast_assignment_new(
-                            tast_stmt_get_pos(old_stmt),
-                            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                                .lang_type = tast_lang_type_from_name(vec_at(&env.defered_collections.coll_stack, for_pos).is_conting),
-                                .name = vec_at(&env.defered_collections.coll_stack, idx).is_conting
-                            })),
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
-                        );
-                        log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_cont_assign_aux));
-                        load_assignment(new_block, is_cont_assign_aux);
-                    }
-                }
-            }
-
-            if (pairs->info.count > 0) {
-                // jump to the top of the defer stack
-                Llvm_goto* new_goto = llvm_goto_new(tast_continue_unwrap(old_stmt)->pos, util_literal_name_new2(), vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-            }
-
+            load_brking_or_conting_set_etc(new_block, old_stmt, false);
             return;
         }
             //load_continue(new_block, tast_continue_unwrap(old_stmt));
