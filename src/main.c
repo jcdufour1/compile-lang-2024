@@ -143,7 +143,10 @@ void do_passes(void) {
 
     if (params.run) {
         Str_view_vec cmd = {0};
-        vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
+        String output_path = {0};
+        string_extend_cstr(&a_main, &output_path, "./");
+        string_extend_strv(&a_main, &output_path, params.output_file_path);
+        vec_append(&a_main, &cmd, string_to_strv(output_path));
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
