@@ -63,21 +63,20 @@ static void load_stmt(
     Llvm_block* new_block,
     Tast_stmt* old_stmt,
     bool is_defered,
-    Name label_normal_brk/* break out of for only basically */,
-    Name label_defer_brk /* break out of innermost if/for, even if inner is if and outer is for*/
+    Name label_normal_brk/* break out of for only basically */
 );
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
 static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
 
-static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else, Name label_normal_brk);
+static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label);
 
 static Name load_return(Llvm_block* new_block, Tast_return* old_return);
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk);
+static void load_break(Llvm_block* new_block, Tast_break* old_break);
 
 static Name load_assignment_internal(const char* file, int line, Llvm_block* new_block, Tast_assignment* old_assign);
 
@@ -269,7 +268,7 @@ static void load_block_stmts(
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break, env.label_if_break);
+                load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break);
             }
             //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -350,7 +349,7 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break, env.label_if_break);
+        load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, env.label_if_break);
     }
 
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
@@ -402,7 +401,7 @@ static void load_block_stmts(
         } else if (pairs->info.count == 1) {
             log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
-        load_stmt(rtn_in_block, new_block, pair.defer->child, true, env.label_if_break, env.label_if_break);
+        load_stmt(rtn_in_block, new_block, pair.defer->child, true, env.label_if_break);
         log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -1227,7 +1226,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
     Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs, false);
     
     load_variable_def(new_block, new_var);
-    load_if_else_chain(new_block, if_else, (Name) {0} /* TODO */);
+    load_if_else_chain(new_block, if_else);
     return load_symbol(new_block, tast_symbol_new_from_variable_def(old_bin->pos, new_var));
 }
 
@@ -1560,7 +1559,7 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr) {
         case TAST_ENUM_GET_TAG:
             return load_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
-            return load_if_else_chain(new_block, tast_if_else_chain_unwrap(old_expr), env.label_if_break);
+            return load_if_else_chain(new_block, tast_if_else_chain_unwrap(old_expr));
         case TAST_MODULE_ALIAS:
             unreachable("");
     }
@@ -1777,7 +1776,7 @@ static void load_struct_def(Tast_struct_def* old_def) {
     }
 }
 
-static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name label_defer_brk/* TODO: remove */) {
+static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
@@ -1844,15 +1843,14 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
     Llvm_goto* jmp_to_after_chain = llvm_goto_new(
         old_block->pos,
         util_literal_name_new2(),
-        label_defer_brk
+        env.label_if_after
     );
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
 
     return new_block;
 }
 
-static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else, Name label_normal_brk) {
-    (void) label_normal_brk;
+static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
     Name old_label_if_after = env.label_if_after;
 
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
@@ -1904,7 +1902,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         }
 
         assert(env.label_if_break.base.count > 0);
-        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
+        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
@@ -2003,11 +2001,10 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 
 static Name load_if_else_chain(
     Llvm_block* new_block,
-    Tast_if_else_chain* old_if_else,
-    Name label_normal_brk
+    Tast_if_else_chain* old_if_else
 ) {
     Llvm_block* new_if_else = NULL;
-    Name result = if_else_chain_to_branch(&new_if_else, old_if_else, label_normal_brk);
+    Name result = if_else_chain_to_branch(&new_if_else, old_if_else);
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_if_else));
 
     return result;
@@ -2142,10 +2139,8 @@ static void load_for_with_cond(bool* rtn_in_block, Llvm_block* new_block, Tast_f
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_for));
 }
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk) {
-    (void) label_defer_brk;
-    (void) label_normal_brk;
-    if (label_normal_brk.base.count < 1) {
+static void load_break(Llvm_block* new_block, Tast_break* old_break) {
+    if (env.label_if_break.base.count < 1) {
         return;
     }
 
@@ -2401,7 +2396,7 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
 
 }
 
-static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered, Name label_normal_brk, Name label_defer_brk) {
+static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
@@ -2459,8 +2454,7 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
             return;
         case TAST_BREAK: {
             if (is_defered) {
-                log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, label_defer_brk));
-                load_break(new_block, tast_break_unwrap(old_stmt), label_normal_brk, label_defer_brk);
+                load_break(new_block, tast_break_unwrap(old_stmt));
                 return;
             }
 
