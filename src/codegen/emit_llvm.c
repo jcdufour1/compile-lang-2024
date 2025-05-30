@@ -77,7 +77,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
                 lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(lang_type), old_num.bit_width, old_num.pointer_depth)));
             }
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_IR, lang_type);
+            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
         case LANG_TYPE_ENUM:
             string_extend_cstr(&a_main, output, "%");
@@ -273,7 +273,7 @@ static void emit_function_call(String* output, String* literals, const Ir_functi
         ir_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_IR, fun_call->lang_type).base, "void"));
+        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
