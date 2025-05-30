@@ -558,14 +558,6 @@ static Uast_type uast_gen_if(const char* prefix) {
     return lang_if;
 }
 
-static Uast_type uast_gen_label(const char* prefix) {
-    Uast_type lang_label = {.name = uast_name_new(prefix, "label", false)};
-
-    append_member(&lang_label.members, "Str_view", "name");
-
-    return lang_label;
-}
-
 static Uast_type uast_gen_case(const char* prefix) {
     Uast_type lang_case = {.name = uast_name_new(prefix, "case", false)};
 
@@ -602,7 +594,6 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));

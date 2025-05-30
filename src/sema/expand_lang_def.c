@@ -374,8 +374,6 @@ static bool expand_def_stmt(Uast_stmt* stmt) {
             todo();
         case UAST_RETURN:
             return expand_def_return(uast_return_unwrap(stmt));
-        case UAST_LABEL:
-            todo();
     }
     unreachable("");
 }

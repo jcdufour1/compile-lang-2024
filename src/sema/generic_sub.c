@@ -138,12 +138,6 @@ void generic_sub_continue(Uast_continue* cont) {
     (void) cont;
 }
 
-void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
-    (void) label;
-    (void) gen_param;
-    (void) gen_arg;
-}
-
 void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
         case UAST_BLOCK:
@@ -168,9 +162,6 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
-            return;
-        case UAST_LABEL:
-            generic_sub_label(uast_label_unwrap(stmt), gen_param, gen_arg);
             return;
     }
     unreachable("");

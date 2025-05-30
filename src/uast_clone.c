@@ -293,13 +293,6 @@ Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, Scope_id new_scop
     );
 }
 
-Uast_label* uast_label_clone(const Uast_label* lang_label, Scope_id new_scope) {
-    (void) new_scope;
-    // TODO: new_scope should be put in label
-    // label may need name
-    return uast_label_new(lang_label->pos, lang_label->name);
-}
-
 Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, Scope_id new_scope, Pos dest_pos) {
     return uast_defer_new(lang_defer->pos, uast_stmt_clone(lang_defer->child, new_scope, dest_pos));
 }
@@ -322,8 +315,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
             return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_RETURN:
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt), new_scope, dest_pos));
-        case UAST_LABEL:
-            return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(stmt), new_scope));
         case UAST_DEFER:
             return uast_defer_wrap(uast_defer_clone(uast_defer_const_unwrap(stmt), new_scope, dest_pos));
     }

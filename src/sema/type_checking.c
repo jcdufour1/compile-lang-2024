@@ -2630,11 +2630,6 @@ error:
     return status;
 }
 
-bool try_set_label_types(Tast_label** new_tast, const Uast_label* label) {
-    *new_tast = tast_label_new(label->pos, name_new(env.curr_mod_path, label->name, (Ulang_type_vec) {0}, 0 /* TODO */));
-    return label;
-}
-
 bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
     Tast_stmt* new_child = NULL;
     switch (try_set_stmt_types(&new_child, defer->child, false)) {
@@ -2821,8 +2816,6 @@ error:
 
 static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
     switch (type) {
-        case UAST_LABEL:
-            return false;
         case UAST_BLOCK:
             return false;
         case UAST_EXPR:
@@ -2908,14 +2901,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_block_wrap(new_for);
-            return STMT_OK;
-        }
-        case UAST_LABEL: {
-            Tast_label* new_label = NULL;
-            if (!try_set_label_types(&new_label, uast_label_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_label_wrap(new_label);
             return STMT_OK;
         }
         case UAST_DEFER: {
