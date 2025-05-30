@@ -141,6 +141,11 @@ void do_passes(void) {
         }
     }
 
+    static_assert(
+        PARAMETERS_COUNT == 14,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+
     if (params.run) {
         Str_view_vec cmd = {0};
         String output_path = {0};

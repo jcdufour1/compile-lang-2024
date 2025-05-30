@@ -30,10 +30,14 @@ typedef enum {
     OPT_LEVEL_COUNT,
 } OPT_LEVEL;
 
+// PARAMETERS_COUNT should be set to the number of members in Parameters
+#define PARAMETERS_COUNT 14
 typedef struct {
     Str_view input_file_path;
     Str_view output_file_path;
     Str_view_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
+    Str_view_vec static_libs;
+    Str_view_vec dynamic_libs;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     bool compile : 1;

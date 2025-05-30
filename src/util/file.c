@@ -71,8 +71,16 @@ FILE_TYPE get_file_type(Str_view file_path) {
         exit(EXIT_CODE_FAIL);
     }
 
+    static_assert(FILE_TYPE_COUNT == 3, "exhausive handling of file types");
+
     if (str_view_is_equal(ext, sv("own"))) {
         return FILE_TYPE_OWN;
+    }
+    if (str_view_is_equal(ext, sv("a"))) {
+        return FILE_TYPE_STATIC_LIB;
+    }
+    if (str_view_is_equal(ext, sv("so"))) {
+        return FILE_TYPE_DYNAMIC_LIB;
     }
 
     String buf = {0};

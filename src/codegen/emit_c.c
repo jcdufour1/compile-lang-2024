@@ -783,17 +783,17 @@ void emit_c_from_tree(const Ir_block* root) {
     fclose(file);
 
     {
+        static_assert(
+            PARAMETERS_COUNT == 14,
+            "exhausive handling of params (not all parameters are explicitly handled)"
+        );
+
         Str_view_vec cmd = {0};
         vec_append(&a_main, &cmd, sv("clang"));
         vec_append(&a_main, &cmd, sv("-std=c99"));
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
         vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
-
-        for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
-            vec_append(&a_main, &cmd, sv("-l"));
-            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
-        }
 
         static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
         switch (params.opt_level) {
@@ -811,6 +811,20 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
         vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
+
+        for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
+            vec_append(&a_main, &cmd, sv("-l"));
+            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
+        }
+
+        for (size_t idx = 0; idx < params.static_libs.info.count; idx++) {
+            vec_append(&a_main, &cmd, vec_at(&params.static_libs, idx));
+        }
+
+        for (size_t idx = 0; idx < params.dynamic_libs.info.count; idx++) {
+            vec_append(&a_main, &cmd, vec_at(&params.dynamic_libs, idx));
+        }
+
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
