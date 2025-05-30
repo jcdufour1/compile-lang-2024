@@ -790,6 +790,11 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
 
+        for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
+            vec_append(&a_main, &cmd, sv("-l"));
+            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
+        }
+
         static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
         switch (params.opt_level) {
             case OPT_LEVEL_O0:

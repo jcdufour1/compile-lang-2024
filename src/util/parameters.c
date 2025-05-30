@@ -184,11 +184,14 @@ static void set_backend(BACKEND backend) {
     unreachable("");
 }
 
+// TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
     const char* curr_opt = consume_arg(argc, argv, "arg expected");
 
     if (0 == strcmp(curr_opt, "emit-llvm")) {
         params.emit_llvm = true;
+    } else if (0 == strcmp(curr_opt, "l")) {
+        vec_append(&a_main, &params.l_flags, sv(consume_arg(argc, argv, "library name was expected after `-l`")));
     } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
         Str_view backend = sv(&curr_opt[strlen("backend")]);
         if (!str_view_try_consume(&backend, '=') || backend.count < 1) {

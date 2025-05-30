@@ -1,9 +1,10 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include "util.h"
-#include "newstring.h"
-#include "diag_type.h"
+#include <util.h>
+#include <newstring.h>
+#include <diag_type.h>
+#include <str_view_vec.h>
 
 typedef struct {
     Vec_base info;
@@ -32,6 +33,7 @@ typedef enum {
 typedef struct {
     Str_view input_file_path;
     Str_view output_file_path;
+    Str_view_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     bool compile : 1;
