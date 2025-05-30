@@ -789,8 +789,19 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
         vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
-        // TODO: command line argument for this:
-        //vec_append(&a_main, &cmd, sv("-O2"));
+
+        static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
+        switch (params.opt_level) {
+            case OPT_LEVEL_O0:
+                vec_append(&a_main, &cmd, sv("-O0"));
+                break;
+            case OPT_LEVEL_O2:
+                vec_append(&a_main, &cmd, sv("-O2"));
+                break;
+            default:
+                unreachable("");
+        }
+
         vec_append(&a_main, &cmd, sv("-g"));
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);

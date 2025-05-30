@@ -208,6 +208,10 @@ static void parse_long_option(int* argc, char*** argv) {
         params.all_errors_fatal = true;
     } else if (0 == strcmp(curr_opt, "o")) {
         params.output_file_path = sv(consume_arg(argc, argv, "output file path was expected after `-o`"));
+    } else if (0 == strcmp(curr_opt, "O0")) {
+        params.opt_level = OPT_LEVEL_O0;
+    } else if (0 == strcmp(curr_opt, "O2")) {
+        params.opt_level = OPT_LEVEL_O2;
     } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
         Str_view error = sv(&curr_opt[strlen("error")]);
         if (!str_view_try_consume(&error, '=') || error.count < 1) {
@@ -231,14 +235,13 @@ static void parse_long_option(int* argc, char*** argv) {
             log(LOG_FATAL, "expected =<log level> after `log-level`");
             exit(EXIT_CODE_FAIL);
         }
+
         if (str_view_is_equal(log_level, sv("FETAL"))) {
             params_log_level = LOG_FATAL;
         } else if (str_view_is_equal(log_level, sv("ERROR"))) {
             params_log_level = LOG_ERROR;
         } else if (str_view_is_equal(log_level, sv("WARNING"))) {
             params_log_level = LOG_WARNING;
-        } else if (str_view_is_equal(log_level, sv("NOTE"))) {
-            params_log_level = LOG_NOTE;
         } else if (str_view_is_equal(log_level, sv("NOTE"))) {
             params_log_level = LOG_NOTE;
         } else if (str_view_is_equal(log_level, sv("VERBOSE"))) {
@@ -258,6 +261,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static void set_params_to_defaults(void) {
+    params.opt_level = OPT_LEVEL_O0;
     params.emit_llvm = false;
     params.compile = false;
     params.output_file_path = sv("a.out");

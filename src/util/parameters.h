@@ -21,10 +21,19 @@ typedef struct {
     bool struct_rtn_through_param;
 } Backend_info;
 
+typedef enum {
+    OPT_LEVEL_O0 = 0,
+    OPT_LEVEL_O2,
+
+    // count of opt levels for static_asserts
+    OPT_LEVEL_COUNT,
+} OPT_LEVEL;
+
 typedef struct {
     Str_view input_file_path;
     Str_view output_file_path;
     Expect_fail_type_vec diag_types;
+    OPT_LEVEL opt_level : 4;
     bool compile : 1;
     bool run : 1;
     bool dump_dot : 1;
