@@ -18,8 +18,6 @@
 
 static bool can_end_stmt(Token token);
 
-// TODO: remove unused functions
-
 // TODO: make consume_expect function to print error automatically
 
 // TODO: use parent block for scope_ids instead of function calls everytime
@@ -87,8 +85,6 @@ static bool prev_is_newline(void) {
 
 // TODO: inline this function?
 static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type, bool rm_newlines) {
-    //log(LOG_DEBUG, "    start try_consume_internal\n");
-    //log_tokens(LOG_DEBUG, *tokens);
     Token temp = {0};
     if (allow_any_type) {
         temp = tk_view_consume(tokens);
@@ -126,7 +122,7 @@ static bool try_consume_newlines(Tk_view* tokens) {
     Token dummy = {0};
     bool is_newline = false;
     if (can_end_stmt(tk_view_front(*tokens))) {
-        while (/* TODO: do semicolon this way as well */try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE, false) || try_consume_internal(&dummy, tokens, false, TOKEN_SEMICOLON, false)) {
+        while (try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE, false) || try_consume_internal(&dummy, tokens, false, TOKEN_SEMICOLON, false)) {
             is_newline = true;
         }
     }
@@ -296,118 +292,75 @@ finish:
     return status;
 }
 
-static bool starts_with_mod_alias(Tk_view tokens) {
+static bool starts_with_mod_alias_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_IMPORT;
 }
 
-static bool starts_with_struct_def(Tk_view tokens) {
+static bool starts_with_struct_def_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_STRUCT;
 }
 
-static bool starts_with_raw_union_def(Tk_view tokens) {
+static bool starts_with_raw_union_def_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
-static bool starts_with_enum_def(Tk_view tokens) {
+static bool starts_with_enum_def_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_ENUM;
+}
+
+static bool starts_with_type_def_in_def(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
 }
 
 static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
-// TODO: remove if statement in below starts_with_* functions
-static bool starts_with_type_def(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
-    return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
-}
-
 static bool starts_with_defer(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_DEFER;
 }
 
 static bool starts_with_function_decl(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_EXTERN;
 }
 
 static bool starts_with_function_def(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_FN;
 }
 
 static bool starts_with_return(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_RETURN;
 }
 
 static bool starts_with_if(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_IF;
 }
 
 static bool starts_with_switch(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_SWITCH;
 }
 
 static bool starts_with_for(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_FOR;
 }
 
 static bool starts_with_break(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_BREAK;
 }
 
 static bool starts_with_continue(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_CONTINUE;
 }
 
 static bool starts_with_block(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE;
 }
 
 static bool starts_with_function_call(Tk_view tokens) {
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_OPEN_PAR)) {
-        return false;
-    }
-    return true;
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_OPEN_PAR);
 }
 
 static bool starts_with_variable_def(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_LET;
 }
 
@@ -454,7 +407,7 @@ static void sync(Tk_view* tokens) {
         }
 
         if (
-            starts_with_type_def(*tokens) ||
+            starts_with_type_def_in_def(*tokens) ||
             starts_with_function_decl(*tokens) ||
             starts_with_function_def(*tokens) ||
             starts_with_return(*tokens) ||
@@ -1296,25 +1249,25 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id sco
         return PARSE_ERROR;
     }
 
-    if (starts_with_struct_def(*tokens)) {
+    if (starts_with_struct_def_in_def(*tokens)) {
         Uast_struct_def* struct_def;
         if (PARSE_OK != parse_struct_def(&struct_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_struct_def_wrap(struct_def);
-    } else if (starts_with_raw_union_def(*tokens)) {
+    } else if (starts_with_raw_union_def_in_def(*tokens)) {
         Uast_raw_union_def* raw_union_def;
         if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_raw_union_def_wrap(raw_union_def);
-    } else if (starts_with_enum_def(*tokens)) {
+    } else if (starts_with_enum_def_in_def(*tokens)) {
         Uast_enum_def* enum_def;
         if (PARSE_OK != parse_enum_def(&enum_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_enum_def_wrap(enum_def);
-    } else if (starts_with_mod_alias(*tokens)) {
+    } else if (starts_with_mod_alias_in_def(*tokens)) {
         Uast_mod_alias* import = NULL;
         if (PARSE_OK != parse_import(&import, tokens, name)) {
             return PARSE_ERROR;
@@ -1926,7 +1879,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_stmt* lhs = NULL;
-    if (starts_with_type_def(*tokens)) {
+    if (starts_with_type_def_in_def(*tokens)) {
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
         unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
         Uast_def* fun_decl;
