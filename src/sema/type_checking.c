@@ -810,10 +810,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
         *new_tast = tast_literal_wrap(literal);
     } else {
-        Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-            lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-        ));
-
         switch (oper_token_type) {
             case BINARY_SHIFT_LEFT:
                 // fallthrough
@@ -858,7 +854,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     new_lhs,
                     new_rhs,
                     oper_token_type,
-                    u1_lang_type
+                    lang_type_new_u1()
                 )));
                 break;
             case BINARY_LOGICAL_OR:
@@ -877,17 +873,17 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                         tast_literal_wrap(new_lit_lhs),
                         new_lhs,
                         BINARY_NOT_EQUAL,
-                        u1_lang_type
+                        lang_type_new_u1()
                     ))),
                     tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                         tast_expr_get_pos(new_rhs),
                         tast_literal_wrap(new_lit_rhs),
                         new_rhs,
                         BINARY_NOT_EQUAL,
-                        u1_lang_type
+                        lang_type_new_u1()
                     ))),
                     oper_token_type,
-                    u1_lang_type
+                    lang_type_new_u1()
                 )));
                 break;
             }

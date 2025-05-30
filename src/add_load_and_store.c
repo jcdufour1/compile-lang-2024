@@ -100,10 +100,6 @@ static void load_block_stmts(
         local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(sv("rtn_val")));
     }
 
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-
     Name is_rtning_name = {0};
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -132,13 +128,13 @@ static void load_block_stmts(
             unreachable("");
     }
 
-    Tast_variable_def* is_rtning = tast_variable_def_new(pos, u1_lang_type, false, is_rtning_name);
+    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(), false, is_rtning_name);
     Tast_assignment* is_rtn_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
             .lang_type = is_rtning->lang_type, .name = is_rtning->name
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
     Name is_brking_name = {0};
@@ -195,22 +191,22 @@ static void load_block_stmts(
             todo();
     }
 
-    Tast_variable_def* is_brking = tast_variable_def_new(pos, u1_lang_type, false, is_brking_name);
+    Tast_variable_def* is_brking = tast_variable_def_new(pos, lang_type_new_u1(), false, is_brking_name);
     Tast_assignment* is_brk_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
             .lang_type = is_brking->lang_type, .name = is_brking->name
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
-    Tast_variable_def* is_conting = tast_variable_def_new(pos, u1_lang_type, false, is_conting_name);
+    Tast_variable_def* is_conting = tast_variable_def_new(pos, lang_type_new_u1(), false, is_conting_name);
     Tast_assignment* is_cont_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
             .lang_type = is_conting->lang_type, .name = is_conting->name
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
 
@@ -340,9 +336,9 @@ static void load_block_stmts(
                         .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_brking),
                         .name = vec_top(&env.defered_collections.coll_stack).is_brking
                     })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type))),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
                     BINARY_DOUBLE_EQUAL,
-                    u1_lang_type
+                    lang_type_new_u1()
                 )),
                 new_block,
                 env.label_if_continue,
@@ -358,9 +354,9 @@ static void load_block_stmts(
                         .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_conting),
                         .name = vec_top(&env.defered_collections.coll_stack).is_conting
                     })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type))),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
                     BINARY_DOUBLE_EQUAL,
-                    u1_lang_type
+                    lang_type_new_u1()
                 )),
                 new_block,
                 env.label_if_continue,
@@ -1106,13 +1102,9 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
             unreachable("");
     }
 
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-
     Tast_variable_def* new_var = tast_variable_def_new(
         old_bin->pos,
-        u1_lang_type,
+        lang_type_new_u1(),
         false,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
@@ -1143,7 +1135,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
                 util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
             ),
             if_true_type,
-            u1_lang_type
+            lang_type_new_u1()
         ))),
         // TODO: load inner expr in block, and update new symbol
         tast_block_new(
@@ -1167,7 +1159,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
                 util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
             ),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         ))),
         // TODO: load inner expr in block, and update new symbol
         tast_block_new(
@@ -1730,10 +1722,6 @@ static void load_struct_def(Tast_struct_def* old_def) {
 }
 
 static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-
     Tast_block* old_block = if_statement->body;
     bool rtn_in_block = false;
     Llvm_block* inner_block = load_block(
@@ -1776,9 +1764,9 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
                 .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
                 .name = env.defered_collections.is_rtning
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, u1_lang_type))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         )),
         new_block,
         after_is_rtn,
@@ -1798,10 +1786,6 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
 
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
     Name old_label_if_after = env.label_if_after;
-
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
 
     *new_block = llvm_block_new(
         if_else->pos,
@@ -1876,9 +1860,9 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
                 .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
                 .name = env.defered_collections.is_rtning
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         )),
         *new_block,
         before_brk_chk,
@@ -1899,9 +1883,9 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
                 .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_brking),
                 .name = vec_top(&env.defered_collections.coll_stack).is_brking
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         )),
         *new_block,
         after_is_brk,
@@ -1920,9 +1904,9 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
                 .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_conting),
                 .name = vec_top(&env.defered_collections.coll_stack).is_conting
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         )),
         *new_block,
         after_is_cont,
@@ -1956,11 +1940,6 @@ static Name load_if_else_chain(
 }
 
 static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond* old_for) {
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-    (void) u1_lang_type;
-
     Name old_after_for = env.label_after_for;
     Name old_if_continue = env.label_if_continue;
     Name old_if_break = env.label_if_break;
@@ -2050,9 +2029,9 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
                 .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
                 .name = env.defered_collections.is_rtning
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(old_for->pos, 0, u1_lang_type))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(old_for->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
-            u1_lang_type
+            lang_type_new_u1()
         )),
         new_branch_block,
         after_is_rtn,
@@ -2262,10 +2241,6 @@ Name get_is_conting(const Defer_collection* item) {
 // TODO: try to come up with a better name for this function
 static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
     Get_is_brking_or_conting get_is_brking_or_conting = is_brking ? get_is_brking : get_is_conting;
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-
     Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
 
@@ -2276,7 +2251,7 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
             .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
             .name = get_is_brking_or_conting(&coll)
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
     );
     load_assignment(new_block, is_cont_assign);
 
@@ -2304,7 +2279,7 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
                         .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(vec_at_ref(&env.defered_collections.coll_stack, for_pos))),
                         .name = get_is_brking_or_conting(vec_at_ref(&env.defered_collections.coll_stack, idx))
                     })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
                 );
                 load_assignment(new_block, is_cont_assign_aux);
             }
@@ -2319,10 +2294,6 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
 }
 
 static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
-    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -2358,7 +2329,7 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
                     .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
                     .name = env.defered_collections.is_rtning
                 })),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
             );
             load_assignment(new_block, is_rtn_assign);
 

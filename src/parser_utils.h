@@ -8,6 +8,12 @@
 #include "llvm_utils.h"
 #include "ctype.h"
 
+static inline Lang_type lang_type_new_u1(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+}
+
 size_t get_count_excape_seq(Str_view str_view);
 
 // \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a (depending on the backend)
