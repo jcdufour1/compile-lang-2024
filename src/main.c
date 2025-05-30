@@ -40,7 +40,7 @@ static void add_primitives(void) {
     add_void();
 }
 
-void do_passes(void) {
+Ir_block* compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
@@ -102,9 +102,19 @@ void do_passes(void) {
     }
     assert(ir_root);
 
+    return ir_root;
+}
+
+void do_passes(void) {
+    Ir_block* ir = NULL;
+    if (params.compile) {
+        ir = compile_file_to_ir();
+    }
+
     if (params.dump_dot) {
+        unwrap(params.compile && "this should have been caught in parse_args");
         String graphvis = {0};
-        string_extend_strv(&a_print, &graphvis, ir_graphvis(ir_root));
+        string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
         write_file("dump.dot", string_to_strv(graphvis));
     }
 
@@ -112,16 +122,16 @@ void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
-    if (params.compile) {
+    if (params.compile || params.compile_c) {
         if (params.emit_llvm) {
             switch (params.backend_info.backend) {
                 case BACKEND_NONE:
                     unreachable("this should have been caught eariler");
                 case BACKEND_LLVM:
-                    emit_llvm_from_tree(ir_root);
+                    emit_llvm_from_tree(ir);
                     break;
                 case BACKEND_C:
-                    emit_c_from_tree(ir_root);
+                    emit_c_from_tree(ir);
                     break;
                 default:
                     unreachable("");
@@ -133,7 +143,7 @@ void do_passes(void) {
                 case BACKEND_LLVM:
                     todo();
                 case BACKEND_C:
-                    emit_c_from_tree(ir_root);
+                    emit_c_from_tree(ir);
                     break;
                 default:
                     unreachable("");
@@ -142,7 +152,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 14,
+        PARAMETERS_COUNT == 16,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

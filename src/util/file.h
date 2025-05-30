@@ -8,6 +8,7 @@ typedef enum {
     FILE_TYPE_OWN,
     FILE_TYPE_STATIC_LIB,
     FILE_TYPE_DYNAMIC_LIB,
+    FILE_TYPE_C,
 
     // count for static asserts
     FILE_TYPE_COUNT,

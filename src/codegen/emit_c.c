@@ -720,71 +720,73 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 }
 
 void emit_c_from_tree(const Ir_block* root) {
-    String header = {0};
-    Emit_c_strs strs = {0};
+    if (params.compile) {
+        String header = {0};
+        Emit_c_strs strs = {0};
 
-    string_extend_cstr(&a_main, &header, "static int dummy = 0;\n");
-    string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
-    string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
-    string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
-    string_extend_cstr(&a_main, &header, "#include <string.h>\n");
-    string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
+        string_extend_cstr(&a_main, &header, "static int dummy = 0;\n");
+        string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
+        string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
+        string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
+        string_extend_cstr(&a_main, &header, "#include <string.h>\n");
+        string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
-    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
-    Ir* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
-        emit_c_sometimes(&strs, curr);
-    }
-
-    emit_c_block(&strs, root);
-
-    FILE* file = fopen(TEST_OUTPUT, "w");
-    if (!file) {
-        msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
-            str_view_print(params.input_file_path), strerror(errno)
-        );
-        exit(EXIT_CODE_FAIL);
-    }
-    
-    // TODO: make function for for loop to compress code
-    for (size_t idx = 0; idx < header.info.count; idx++) {
-        if (EOF == fputc(vec_at(&header, idx), file)) {
-            todo();
+        Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+        Ir* curr = NULL;
+        while (all_tbl_iter_next(&curr, &iter)) {
+            emit_c_sometimes(&strs, curr);
         }
-    }
 
-    for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
-            todo();
+        emit_c_block(&strs, root);
+
+        FILE* file = fopen(TEST_OUTPUT, "w");
+        if (!file) {
+            msg(
+                DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
+                str_view_print(params.input_file_path), strerror(errno)
+            );
+            exit(EXIT_CODE_FAIL);
         }
-    }
-
-    for (size_t idx = 0; idx < strs.forward_decls.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.forward_decls, idx), file)) {
-            todo();
+        
+        // TODO: make function for for loop to compress code
+        for (size_t idx = 0; idx < header.info.count; idx++) {
+            if (EOF == fputc(vec_at(&header, idx), file)) {
+                todo();
+            }
         }
-    }
 
-    for (size_t idx = 0; idx < strs.literals.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.literals, idx), file)) {
-            todo();
+        for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
+            if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
+                todo();
+            }
         }
-    }
 
-    for (size_t idx = 0; idx < strs.output.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.output, idx), file)) {
-            todo();
+        for (size_t idx = 0; idx < strs.forward_decls.info.count; idx++) {
+            if (EOF == fputc(vec_at(&strs.forward_decls, idx), file)) {
+                todo();
+            }
         }
+
+        for (size_t idx = 0; idx < strs.literals.info.count; idx++) {
+            if (EOF == fputc(vec_at(&strs.literals, idx), file)) {
+                todo();
+            }
+        }
+
+        for (size_t idx = 0; idx < strs.output.info.count; idx++) {
+            if (EOF == fputc(vec_at(&strs.output, idx), file)) {
+                todo();
+            }
+        }
+
+        msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
+        fclose(file);
     }
 
-    msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
-
-    fclose(file);
 
     {
         static_assert(
-            PARAMETERS_COUNT == 14,
+            PARAMETERS_COUNT == 16,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
@@ -810,7 +812,9 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-g"));
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
-        vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
+        if (params.compile) {
+            vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
+        }
 
         for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
             vec_append(&a_main, &cmd, sv("-l"));
@@ -823,6 +827,10 @@ void emit_c_from_tree(const Ir_block* root) {
 
         for (size_t idx = 0; idx < params.dynamic_libs.info.count; idx++) {
             vec_append(&a_main, &cmd, vec_at(&params.dynamic_libs, idx));
+        }
+
+        for (size_t idx = 0; idx < params.c_input_files.info.count; idx++) {
+            vec_append(&a_main, &cmd, vec_at(&params.c_input_files, idx));
         }
 
         int status = subprocess_call(cmd);
