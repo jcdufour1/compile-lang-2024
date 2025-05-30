@@ -786,7 +786,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 16,
+            PARAMETERS_COUNT == 19,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
@@ -810,6 +810,9 @@ void emit_c_from_tree(const Ir_block* root) {
         }
 
         vec_append(&a_main, &cmd, sv("-g"));
+        if (params.dump_object) {
+            vec_append(&a_main, &cmd, sv("-c"));
+        }
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
         if (params.compile) {
@@ -820,17 +823,17 @@ void emit_c_from_tree(const Ir_block* root) {
             vec_append(&a_main, &cmd, sv("-l"));
             vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
         }
-
         for (size_t idx = 0; idx < params.static_libs.info.count; idx++) {
             vec_append(&a_main, &cmd, vec_at(&params.static_libs, idx));
         }
-
         for (size_t idx = 0; idx < params.dynamic_libs.info.count; idx++) {
             vec_append(&a_main, &cmd, vec_at(&params.dynamic_libs, idx));
         }
-
         for (size_t idx = 0; idx < params.c_input_files.info.count; idx++) {
             vec_append(&a_main, &cmd, vec_at(&params.c_input_files, idx));
+        }
+        for (size_t idx = 0; idx < params.object_files.info.count; idx++) {
+            vec_append(&a_main, &cmd, vec_at(&params.object_files, idx));
         }
 
         int status = subprocess_call(cmd);

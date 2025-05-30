@@ -154,7 +154,7 @@ static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 16,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -162,7 +162,7 @@ static void parse_normal_option(int* argc, char*** argv) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
-        static_assert(FILE_TYPE_COUNT == 4, "exhaustive handling of file types");
+        static_assert(FILE_TYPE_COUNT == 5, "exhaustive handling of file types");
         switch (get_file_type(curr_opt)) {
             case FILE_TYPE_OWN:
                 if (params.compile == true) {
@@ -189,6 +189,10 @@ static void parse_normal_option(int* argc, char*** argv) {
             case FILE_TYPE_C:
                 params.compile_c = true;
                 vec_append(&a_main, &params.c_input_files, curr_opt);
+                break;
+            case FILE_TYPE_OBJECT:
+                params.compile_object = true;
+                vec_append(&a_main, &params.object_files, curr_opt);
                 break;
             default:
                 unreachable("");
@@ -217,7 +221,7 @@ static void parse_long_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 16,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -243,8 +247,10 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
+    } else if (str_view_is_equal(curr_opt, sv("c"))) {
+        params.dump_object = true;
     } else if (str_view_is_equal(curr_opt, sv("run"))) {
-        if (!params.compile && !params.compile_c) {
+        if (!params.compile && !params.compile_c && !params.compile_object) {
             log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
             exit(EXIT_CODE_FAIL);
         }

@@ -112,6 +112,7 @@ void do_passes(void) {
     }
 
     if (params.dump_dot) {
+        // TODO: add logic in parse_args to catch below error:
         unwrap(params.compile && "this should have been caught in parse_args");
         String graphvis = {0};
         string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
@@ -152,11 +153,13 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 16,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
     if (params.run) {
+        // TODO: add logic in parse_args to catch below error:
+        unwrap(!params.dump_object && "this should have been caught eariler");
         Str_view_vec cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_main, &output_path, "./");
