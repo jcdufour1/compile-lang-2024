@@ -13,8 +13,6 @@
 #include <errno.h>
 #include <msg_todo.h>
 
-extern char **environ;
-
 Str_view cmd_to_strv(Arena* arena, Str_view_vec cmd) {
     String cmd_str = {0};
     for (size_t idx = 0; idx < cmd.info.count; idx++) {
