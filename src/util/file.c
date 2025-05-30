@@ -7,6 +7,7 @@
 #include <msg.h>
 #include <file.h>
 #include <newstring.h>
+#include <msg_todo.h>
 
 bool read_file(Str_view* result, Str_view file_path) {
     String file_text = {0};
@@ -49,4 +50,34 @@ void write_file(const char* file_path, Str_view text_to_write) {
     }
 
     fclose(file);
+}
+
+bool get_file_extension(Str_view* extension, Str_view file_path) {
+    for (size_t idx_ = file_path.count; idx_ > 0; idx_--) {
+        size_t idx = idx_ - 1;
+        if (str_view_at(file_path, idx) == '.') {
+            *extension = str_view_slice(file_path, idx + 1, file_path.count - idx - 1);
+            return true;
+        }
+    }
+    return false;
+}
+
+FILE_TYPE get_file_type(Str_view file_path) {
+    Str_view ext = {0};
+    if (!get_file_extension(&ext, file_path)) {
+        // TODO: print what user command line option caused this, etc.
+        msg_todo("executable file passed on the command line", POS_BUILTIN);
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (str_view_is_equal(ext, sv("own"))) {
+        return FILE_TYPE_OWN;
+    }
+
+    String buf = {0};
+    string_extend_strv(&a_main, &buf, sv("file with extension ."));
+    string_extend_strv(&a_main, &buf, ext);
+    msg_todo_strv(string_to_strv(buf), POS_BUILTIN);
+    exit(EXIT_CODE_FAIL);
 }

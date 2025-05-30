@@ -16,7 +16,7 @@ static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t co
 }
 
 static inline char str_view_at(Str_view str_view, size_t index) {
-    unwrap(index <= str_view.count && "out of bounds");
+    unwrap(index < str_view.count && "out of bounds");
     return str_view.str[index];
 }
 

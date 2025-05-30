@@ -106,7 +106,6 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     else:
         assert(False and "not implemented")
 
-    compile_cmd.append("compile-run")
     compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     compile_cmd.append("--emit-llvm")
     compile_cmd.append("--log-level=NOTE")

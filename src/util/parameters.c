@@ -1,5 +1,6 @@
-#include "parameters.h"
-#include "parser_utils.h"
+#include <parameters.h>
+#include <parser_utils.h>
+#include <file.h>
 
 static bool is_long_option(char** argv) {
     if (strlen(argv[0]) < 2) {
@@ -152,18 +153,32 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
-    if (str_view_is_equal(curr_opt, sv("compile"))) {
-        params.compile = true;
-        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile`");
-    } else if (str_view_is_equal(curr_opt, sv("compile-run"))) {
-        params.compile = true;
-        params.run = true;
-        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
-    } else if (str_view_is_equal(curr_opt, sv("dump-dot"))) {
+    //if (str_view_is_equal(curr_opt, sv("compile"))) {
+    //    params.compile = true;
+    //    params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile`");
+    //} else if (str_view_is_equal(curr_opt, sv("compile-run"))) {
+    //    params.compile = true;
+    //    params.run = true;
+    //    params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
+    if (str_view_is_equal(curr_opt, sv("dump-dot"))) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
-        todo();
+        static_assert(FILE_TYPE_COUNT == 1, "exhaustive handling of file types");
+        switch (get_file_type(curr_opt)) {
+            case FILE_TYPE_OWN:
+                if (params.compile == true) {
+                    msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
+                    exit(EXIT_CODE_FAIL);
+                }
+                params.compile = true;
+                // TODO: remove below line; use `--run` flag to run program
+                params.run = true;
+                params.input_file_path = curr_opt;
+                break;
+            default:
+                unreachable("");
+        }
     }
 }
 
