@@ -112,6 +112,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     compile_cmd.append("-o")
     compile_cmd.append("test")
     compile_cmd.append("--error=no-main-function")
+    compile_cmd.append("--run")
 
     print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))

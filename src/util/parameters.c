@@ -153,13 +153,6 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
-    //if (str_view_is_equal(curr_opt, sv("compile"))) {
-    //    params.compile = true;
-    //    params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile`");
-    //} else if (str_view_is_equal(curr_opt, sv("compile-run"))) {
-    //    params.compile = true;
-    //    params.run = true;
-    //    params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     if (str_view_is_equal(curr_opt, sv("dump-dot"))) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
@@ -172,8 +165,6 @@ static void parse_normal_option(int* argc, char*** argv) {
                     exit(EXIT_CODE_FAIL);
                 }
                 params.compile = true;
-                // TODO: remove below line; use `--run` flag to run program
-                params.run = true;
                 params.input_file_path = curr_opt;
                 break;
             default:
@@ -224,6 +215,13 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
+    } else if (str_view_is_equal(curr_opt, sv("run"))) {
+        if (!params.compile) {
+            log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
+            exit(EXIT_CODE_FAIL);
+        }
+        params.run = true;
+        // TODO: args after `--run` should be passed to the program being compiled and run
     } else if (str_view_is_equal(curr_opt, sv("o"))) {
         params.output_file_path = consume_arg(argc, argv, "output file path was expected after `-o`");
     } else if (str_view_is_equal(curr_opt, sv("O0"))) {
