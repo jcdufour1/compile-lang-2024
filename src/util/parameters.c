@@ -14,7 +14,7 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
-static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
+static Str_view consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
         msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
@@ -27,7 +27,7 @@ static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missi
     (*argc)--;
 
     if (curr_arg[0]) {
-        return curr_arg;
+        return sv(curr_arg);
     }
 
     return consume_arg(argc, argv, "stray - or -- is not permitted");
@@ -150,21 +150,20 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 }
 
 static void parse_normal_option(int* argc, char*** argv) {
-    const char* curr_opt = consume_arg(argc, argv, "arg expected");
+    Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
-    if (0 == strcmp(curr_opt, "compile")) {
+    if (str_view_is_equal(curr_opt, sv("compile"))) {
         params.compile = true;
-        params.input_file_path = sv(consume_arg(argc, argv, "input file path was expected after `compile`"));
-    } else if (0 == strcmp(curr_opt, "compile-run")) {
+        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile`");
+    } else if (str_view_is_equal(curr_opt, sv("compile-run"))) {
         params.compile = true;
         params.run = true;
-        params.input_file_path = sv(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
-    } else if (0 == strcmp(curr_opt, "dump-dot")) {
+        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
+    } else if (str_view_is_equal(curr_opt, sv("dump-dot"))) {
         params.dump_dot = true;
-        params.input_file_path = sv(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
+        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
-        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
-        exit(EXIT_CODE_FAIL);
+        todo();
     }
 }
 
@@ -186,14 +185,15 @@ static void set_backend(BACKEND backend) {
 
 // TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
-    const char* curr_opt = consume_arg(argc, argv, "arg expected");
+    Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
-    if (0 == strcmp(curr_opt, "emit-llvm")) {
+    if (str_view_is_equal(curr_opt, sv("emit-llvm"))) {
         params.emit_llvm = true;
-    } else if (0 == strcmp(curr_opt, "l")) {
-        vec_append(&a_main, &params.l_flags, sv(consume_arg(argc, argv, "library name was expected after `-l`")));
-    } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
-        Str_view backend = sv(&curr_opt[strlen("backend")]);
+    } else if (str_view_is_equal(curr_opt, sv("l"))) {
+        vec_append(&a_main, &params.l_flags, consume_arg(argc, argv, "library name was expected after `-l`"));
+    } else if (str_view_starts_with(curr_opt, sv("backend"))) {
+        Str_view backend = curr_opt;
+        str_view_consume_count(&backend, sv("backend").count);
         if (!str_view_try_consume(&backend, '=') || backend.count < 1) {
             log(LOG_FATAL, "expected =<backend> after `backend`");
             exit(EXIT_CODE_FAIL);
@@ -207,20 +207,22 @@ static void parse_long_option(int* argc, char*** argv) {
             log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", str_view_print(backend));
             exit(EXIT_CODE_FAIL);
         }
-    } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
+    } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
-    } else if (0 == strcmp(curr_opt, "o")) {
-        params.output_file_path = sv(consume_arg(argc, argv, "output file path was expected after `-o`"));
-    } else if (0 == strcmp(curr_opt, "O0")) {
+    } else if (str_view_is_equal(curr_opt, sv("o"))) {
+        params.output_file_path = consume_arg(argc, argv, "output file path was expected after `-o`");
+    } else if (str_view_is_equal(curr_opt, sv("O0"))) {
         params.opt_level = OPT_LEVEL_O0;
-    } else if (0 == strcmp(curr_opt, "O2")) {
+    } else if (str_view_is_equal(curr_opt, sv("O2"))) {
         params.opt_level = OPT_LEVEL_O2;
-    } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
-        Str_view error = sv(&curr_opt[strlen("error")]);
+    } else if (str_view_starts_with(curr_opt, sv("error"))) {
+        Str_view error = curr_opt;
+        str_view_consume_count(&error, sv("error").count);
         if (!str_view_try_consume(&error, '=') || error.count < 1) {
             log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
             exit(EXIT_CODE_FAIL);
         }
+
         DIAG_TYPE type = {0};
         size_t idx = 0;
         if (!expect_fail_type_from_strv(&idx, &type, error)) {
@@ -232,8 +234,9 @@ static void parse_long_option(int* argc, char*** argv) {
         }
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
         params.error_opts_changed = true;
-    } else if (0 == strncmp(curr_opt, "log-level", strlen("log-level"))) {
-        Str_view log_level = sv(&curr_opt[strlen("log-level")]);
+    } else if (str_view_starts_with(curr_opt, sv("log-level"))) {
+        Str_view log_level = curr_opt;
+        str_view_consume_count(&log_level, sv("log-level").count);
         if (!str_view_try_consume(&log_level, '=')) {
             log(LOG_FATAL, "expected =<log level> after `log-level`");
             exit(EXIT_CODE_FAIL);
@@ -258,7 +261,7 @@ static void parse_long_option(int* argc, char*** argv) {
             exit(EXIT_CODE_FAIL);
         }
     } else {
-        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
+        log(LOG_FATAL, "invalid option: "STR_VIEW_FMT"\n", str_view_print(curr_opt));
         exit(EXIT_CODE_FAIL);
     }
 }

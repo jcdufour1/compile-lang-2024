@@ -4,20 +4,19 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
-#include <assert.h>
-#include "util.h"
-#include "str_view_struct.h"
+#include <util.h>
+#include <str_view_struct.h>
 #include <ctype.h>
 #include <arena.h>
 
 static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t count) {
-    assert(count <= str_view.count && start + count <= str_view.count && "out of bounds");
+    unwrap(count <= str_view.count && start + count <= str_view.count && "out of bounds");
     Str_view new_str_view = {.str = str_view.str + start, .count = count};
     return new_str_view;
 }
 
 static inline char str_view_at(Str_view str_view, size_t index) {
-    assert(index <= str_view.count && "out of bounds");
+    unwrap(index <= str_view.count && "out of bounds");
     return str_view.str[index];
 }
 
@@ -94,12 +93,15 @@ static inline bool str_view_is_equal(Str_view a, Str_view b) {
     return 0 == str_view_cmp(a, b);
 }
 
-// only string literals can be passed into this function
+static inline bool str_view_starts_with(Str_view base, Str_view prefix) {
+    return base.count >= prefix.count && str_view_is_equal(str_view_slice(base, 0, prefix.count), prefix);
+}
+
+// only cstrs with a long enough lifetime can be passed here
 static inline Str_view sv(const char* cstr) {
     Str_view str_view;
     str_view.str = cstr;
     str_view.count = strlen(cstr);
-    assert(str_view.count < 1e6);
     return str_view;
 }
 
