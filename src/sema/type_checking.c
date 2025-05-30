@@ -416,8 +416,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             Uast_string* old_string = uast_string_unwrap(literal);
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
-                old_string->data,
-                name_new(env.curr_mod_path, util_literal_str_view_new(), (Ulang_type_vec) {0}, 0)
+                old_string->data
             ));
         }
         case UAST_INT: {
@@ -1809,10 +1808,9 @@ error:
     return status;
 }
 
-// TODO: remove name member from Tast_string
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (str_view_cstr_is_equal(macro->name, "file")) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, util_literal_name_new2())));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
         return true;
     } else if (str_view_cstr_is_equal(macro->name, "line")) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
@@ -1821,7 +1819,7 @@ bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos));
         return true;
     } else {
-        msg_todo("language feature macro (other than `#file`)", macro->pos);
+        msg_todo("language feature macro (other than `#file`, `#line`, `#column`)", macro->pos);
         return false;
     }
     unreachable("");

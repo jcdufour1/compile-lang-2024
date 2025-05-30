@@ -271,7 +271,6 @@ static Tast_type tast_gen_string(const char* prefix) {
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Name", "name");
 
     return string;
 }

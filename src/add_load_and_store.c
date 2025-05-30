@@ -844,7 +844,7 @@ static Name load_string(Tast_string* old_lit) {
     Ir_string* string = ir_string_new(
         old_lit->pos,
         old_lit->data,
-        old_lit->name
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_string_wrap(string)))));
     return string->name;

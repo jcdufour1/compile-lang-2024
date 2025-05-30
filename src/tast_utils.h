@@ -354,6 +354,7 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
     unreachable("");
 }
 
+// TODO: remove
 static inline Name tast_literal_get_name(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_INT:
@@ -361,7 +362,7 @@ static inline Name tast_literal_get_name(const Tast_literal* lit) {
         case TAST_FLOAT:
             unreachable("");
         case TAST_STRING:
-            return tast_string_const_unwrap(lit)->name;
+            unreachable("");
         case TAST_VOID:
             unreachable("");
         case TAST_ENUM_TAG_LIT:
