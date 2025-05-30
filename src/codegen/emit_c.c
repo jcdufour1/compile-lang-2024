@@ -1,9 +1,9 @@
-#include <llvm.h>
+#include <ir.h>
 #include <util.h>
 #include <symbol_iter.h>
 #include <msg.h>
 #include <errno.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <lang_type.h>
 #include <lang_type_after.h>
 #include <common.h>
@@ -25,7 +25,7 @@ typedef struct {
     String forward_decls;
 } Emit_c_strs;
 
-static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
+static void emit_c_block(Emit_c_strs* strs,  const Ir_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
@@ -42,7 +42,7 @@ static void emit_c_loc(String* output, Loc loc, Pos pos) {
     string_extend_cstr(&a_main, output, " */\n");
 }
 
-// TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
+// TODO: see if this can be merged with extend_type_call_str in emit_ir.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opaque_ptr) {
     if (opaque_ptr && lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "void*");
@@ -67,13 +67,13 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_STRUCT:
-            llvm_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
             for (size_t idx = 0; idx < (size_t)lang_type_struct_const_unwrap(lang_type).atom.pointer_depth; idx++) {
                 string_extend_cstr(&a_main, output, "*");
             }
             return;
         case LANG_TYPE_RAW_UNION:
-            llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             for (size_t idx = 0; idx < (size_t)lang_type_raw_union_const_unwrap(lang_type).atom.pointer_depth; idx++) {
                 string_extend_cstr(&a_main, output, "*");
             }
@@ -86,13 +86,13 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
             return;
         case LANG_TYPE_ENUM:
-            llvm_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
             return;
     }
     unreachable("");
 }
 
-static void emit_c_function_params(String* output, const Llvm_function_params* params) {
+static void emit_c_function_params(String* output, const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -106,15 +106,15 @@ static void emit_c_function_params(String* output, const Llvm_function_params* p
 
         c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type, true);
         string_extend_cstr(&a_main, output, " ");
-        llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
+        ir_extend_name(output, vec_at(&params->params, idx)->name_self);
     }
 }
 
-static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
+static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
     emit_c_loc(output, decl->loc, decl->pos);
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
-    llvm_extend_name(output, decl->name);
+    ir_extend_name(output, decl->name);
 
     vec_append(&a_main, output, '(');
     if (decl->params->params.info.count < 1) {
@@ -125,7 +125,7 @@ static void emit_c_function_decl_internal(String* output, const Llvm_function_de
     string_extend_cstr(&a_main, output, ")");
 }
 
-static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
+static void emit_c_function_def(Emit_c_strs* strs, const Ir_function_def* fun_def) {
     emit_c_loc(&strs->output, fun_def->loc, fun_def->pos);
     emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
@@ -136,32 +136,32 @@ static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_
     string_extend_cstr(&a_main, &strs->output, "}\n");
 }
 
-static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
+static void emit_c_function_decl(Emit_c_strs* strs, const Ir_function_decl* decl) {
     emit_c_loc(&strs->output, decl->loc, decl->pos);
     emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
-static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
+static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     emit_c_loc(&strs->output, def->loc, def->pos);
     String buf = {0};
     Arena a_temp = {0};
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        Llvm_variable_def* curr = vec_at(&def->base.members, idx);
+        Ir_variable_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
         Lang_type lang_type = {0};
         if (is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
             Name ori_name = lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
-                Llvm* child_def_  = NULL;
+                Ir* child_def_  = NULL;
                 unwrap(alloca_lookup(&child_def_, ori_name));
-                Llvm_struct_def* child_def = llvm_struct_def_unwrap(llvm_def_unwrap(child_def_));
+                Ir_struct_def* child_def = ir_struct_def_unwrap(ir_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
                 *struct_to_use = util_literal_name_new2();
-                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, ((Llvm_struct_def_base) {
+                Ir_struct_def* new_def = ir_struct_def_new(def->pos, ((Ir_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
                 }));
@@ -177,12 +177,12 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
         }
         c_extend_type_call_str(&buf, lang_type, true);
         string_extend_cstr(&a_temp, &buf, " ");
-        llvm_extend_name(&buf, curr->name_self);
+        ir_extend_name(&buf, curr->name_self);
         string_extend_cstr(&a_temp, &buf, ";\n");
     }
 
     string_extend_cstr(&a_temp, &buf, "} ");
-    llvm_extend_name(&buf, def->base.name);
+    ir_extend_name(&buf, def->base.name);
     string_extend_cstr(&a_temp, &buf, ";\n");
 
     string_extend_strv(&a_main, &strs->struct_defs, string_to_strv(buf));
@@ -190,82 +190,82 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
 }
 
 // this is only intended for alloca_table, etc.
-static void emit_c_def_sometimes(Emit_c_strs* strs, const Llvm_def* def) {
+static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
     switch (def->type) {
-        case LLVM_FUNCTION_DEF:
-            emit_c_function_def(strs, llvm_function_def_const_unwrap(def));
+        case IR_FUNCTION_DEF:
+            emit_c_function_def(strs, ir_function_def_const_unwrap(def));
             return;
-        case LLVM_VARIABLE_DEF:
+        case IR_VARIABLE_DEF:
             return;
-        case LLVM_FUNCTION_DECL:
-            emit_c_function_decl(strs, llvm_function_decl_const_unwrap(def));
+        case IR_FUNCTION_DECL:
+            emit_c_function_decl(strs, ir_function_decl_const_unwrap(def));
             return;
-        case LLVM_LABEL:
+        case IR_LABEL:
             return;
-        case LLVM_STRUCT_DEF:
-            emit_c_struct_def(strs, llvm_struct_def_const_unwrap(def));
+        case IR_STRUCT_DEF:
+            emit_c_struct_def(strs, ir_struct_def_const_unwrap(def));
             return;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             todo();
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             todo();
     }
     unreachable("");
 }
 
-static void emit_c_sometimes(Emit_c_strs* strs, const Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_DEF:
-            emit_c_def_sometimes(strs, llvm_def_const_unwrap(llvm));
+static void emit_c_sometimes(Emit_c_strs* strs, const Ir* ir) {
+    switch (ir->type) {
+        case IR_DEF:
+            emit_c_def_sometimes(strs, ir_def_const_unwrap(ir));
             return;
-        case LLVM_BLOCK:
+        case IR_BLOCK:
             unreachable("");
-        case LLVM_EXPR:
+        case IR_EXPR:
             return;
-        case LLVM_LOAD_ELEMENT_PTR:
+        case IR_LOAD_ELEMENT_PTR:
             return;
-        case LLVM_FUNCTION_PARAMS:
+        case IR_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_RETURN:
-            unreachable("");
-            return;
-        case LLVM_GOTO:
+        case IR_RETURN:
             unreachable("");
             return;
-        case LLVM_ALLOCA:
-            return;
-        case LLVM_COND_GOTO:
+        case IR_GOTO:
             unreachable("");
             return;
-        case LLVM_STORE_ANOTHER_LLVM:
+        case IR_ALLOCA:
             return;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_COND_GOTO:
+            unreachable("");
             return;
-        case LLVM_ARRAY_ACCESS:
+        case IR_STORE_ANOTHER_IR:
+            return;
+        case IR_LOAD_ANOTHER_IR:
+            return;
+        case IR_ARRAY_ACCESS:
             return;
     }
     unreachable("");
 }
 
-static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fun_call) {
+static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_call) {
     emit_c_loc(&strs->output, fun_call->loc, fun_call->pos);
-    //assert(fun_call->llvm_id == 0);
+    //assert(fun_call->ir_id == 0);
 
     // start of actual function call
     string_extend_cstr(&a_main, &strs->output, "    ");
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
         c_extend_type_call_str(&strs->output, fun_call->lang_type, true);
         string_extend_cstr(&a_main, &strs->output, " ");
-        llvm_extend_name(&strs->output, fun_call->name_self);
+        ir_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
         //assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
-    Llvm* callee = NULL;
+    Ir* callee = NULL;
     unwrap(alloca_lookup(&callee, fun_call->callee));
     string_extend_cstr(&a_main, &strs->output, "(");
-    if (callee->type != LLVM_EXPR) {
+    if (callee->type != IR_EXPR) {
         c_extend_type_call_str(&strs->output, lang_type_from_get_name(fun_call->callee), false);
     }
     string_extend_cstr(&a_main, &strs->output, "(");
@@ -368,22 +368,22 @@ static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
     unreachable("");
 }
 
-static void emit_c_operator(Emit_c_strs* strs, const Llvm_operator* oper) {
+static void emit_c_operator(Emit_c_strs* strs, const Ir_operator* oper) {
     string_extend_cstr(&a_main, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, llvm_operator_get_lang_type(oper), true);
+    c_extend_type_call_str(&strs->output, ir_operator_get_lang_type(oper), true);
     string_extend_cstr(&a_main, &strs->output, " ");
-    llvm_extend_name(&strs->output, llvm_operator_get_name(oper));
+    ir_extend_name(&strs->output, ir_operator_get_name(oper));
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     switch (oper->type) {
-        case LLVM_UNARY: {
-            const Llvm_unary* unary = llvm_unary_const_unwrap(oper);
+        case IR_UNARY: {
+            const Ir_unary* unary = ir_unary_const_unwrap(oper);
             emit_c_unary_operator(strs, unary->token_type, unary->lang_type);
             emit_c_expr_piece(strs, unary->child);
             break;
         }
-        case LLVM_BINARY: {
-            const Llvm_binary* bin = llvm_binary_const_unwrap(oper);
+        case IR_BINARY: {
+            const Ir_binary* bin = ir_binary_const_unwrap(oper);
             emit_c_expr_piece(strs, bin->lhs);
             emit_c_binary_operator(strs, bin->token_type);
             emit_c_expr_piece(strs, bin->rhs);
@@ -396,106 +396,106 @@ static void emit_c_operator(Emit_c_strs* strs, const Llvm_operator* oper) {
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
-static void emit_c_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
+static void emit_c_expr(Emit_c_strs* strs, const Ir_expr* expr) {
     switch (expr->type) {
-        case LLVM_OPERATOR:
-            emit_c_operator(strs, llvm_operator_const_unwrap(expr));
+        case IR_OPERATOR:
+            emit_c_operator(strs, ir_operator_const_unwrap(expr));
             return;
-        case LLVM_FUNCTION_CALL:
-            emit_c_function_call(strs, llvm_function_call_const_unwrap(expr));
+        case IR_FUNCTION_CALL:
+            emit_c_function_call(strs, ir_function_call_const_unwrap(expr));
             return;
-        case LLVM_LITERAL:
+        case IR_LITERAL:
             todo();
-            //extend_literal_decl(&strs->output, literals, llvm_literal_const_unwrap(expr), true);
+            //extend_literal_decl(&strs->output, literals, ir_literal_const_unwrap(expr), true);
             return;
     }
     unreachable("");
 }
 
-static void extend_c_literal(Emit_c_strs* strs, const Llvm_literal* lit) {
+static void extend_c_literal(Emit_c_strs* strs, const Ir_literal* lit) {
     switch (lit->type) {
-        case LLVM_STRING:
+        case IR_STRING:
             string_extend_cstr(&a_main, &strs->output, "\"");
-            string_extend_strv(&a_main, &strs->output, llvm_string_const_unwrap(lit)->data);
+            string_extend_strv(&a_main, &strs->output, ir_string_const_unwrap(lit)->data);
             string_extend_cstr(&a_main, &strs->output, "\"");
             return;
-        case LLVM_INT:
-            string_extend_int64_t(&a_main, &strs->output, llvm_int_const_unwrap(lit)->data);
+        case IR_INT:
+            string_extend_int64_t(&a_main, &strs->output, ir_int_const_unwrap(lit)->data);
             return;
-        case LLVM_FLOAT:
-            string_extend_double(&a_main, &strs->output, llvm_float_const_unwrap(lit)->data);
+        case IR_FLOAT:
+            string_extend_double(&a_main, &strs->output, ir_float_const_unwrap(lit)->data);
             return;
-        case LLVM_VOID:
+        case IR_VOID:
             return;
-        case LLVM_FUNCTION_NAME:
-            llvm_extend_name(&strs->output, llvm_function_name_const_unwrap(lit)->fun_name);
+        case IR_FUNCTION_NAME:
+            ir_extend_name(&strs->output, ir_function_name_const_unwrap(lit)->fun_name);
             return;
     }
     unreachable("");
 }
 
-static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
+static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Ir_expr* expr) {
     switch (expr->type) {
-        case LLVM_LITERAL: {
-            extend_c_literal(strs, llvm_literal_const_unwrap(expr));
+        case IR_LITERAL: {
+            extend_c_literal(strs, ir_literal_const_unwrap(expr));
             return;
         }
-        case LLVM_OPERATOR:
+        case IR_OPERATOR:
             // fallthrough
-        case LLVM_FUNCTION_CALL:
-            llvm_extend_name(&strs->output, llvm_expr_get_name(expr));
+        case IR_FUNCTION_CALL:
+            ir_extend_name(&strs->output, ir_expr_get_name(expr));
             return;
     }
     unreachable("");
 }
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
-    Llvm* result = NULL;
+    Ir* result = NULL;
     unwrap(alloca_lookup(&result, child));
 
     switch (result->type) {
-        case LLVM_EXPR:
-            emit_c_expr_piece_expr(strs, llvm_expr_unwrap(result));
+        case IR_EXPR:
+            emit_c_expr_piece_expr(strs, ir_expr_unwrap(result));
             return;
-        case LLVM_ARRAY_ACCESS:
+        case IR_ARRAY_ACCESS:
             todo();
-        case LLVM_LOAD_ELEMENT_PTR:
-            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+        case IR_LOAD_ELEMENT_PTR:
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
-        case LLVM_STORE_ANOTHER_LLVM:
-            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+        case IR_STORE_ANOTHER_IR:
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
-        case LLVM_LOAD_ANOTHER_LLVM:
-            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+        case IR_LOAD_ANOTHER_IR:
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
-        case LLVM_FUNCTION_PARAMS:
+        case IR_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_DEF:
-            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+        case IR_DEF:
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
-        case LLVM_RETURN:
+        case IR_RETURN:
             unreachable("");
-        case LLVM_GOTO:
+        case IR_GOTO:
             unreachable("");
-        case LLVM_ALLOCA:
-            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+        case IR_ALLOCA:
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
-        case LLVM_COND_GOTO:
+        case IR_COND_GOTO:
             unreachable("");
-        case LLVM_BLOCK:
+        case IR_BLOCK:
             unreachable("");
     }
     unreachable("");
 }
 
-static void emit_c_return(Emit_c_strs* strs, const Llvm_return* rtn) {
+static void emit_c_return(Emit_c_strs* strs, const Ir_return* rtn) {
     emit_c_loc(&strs->output, rtn->loc, rtn->pos);
     string_extend_cstr(&a_main, &strs->output, "    return ");
     emit_c_expr_piece(strs, rtn->child);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
-static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
+static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     emit_c_loc(output, alloca->loc, alloca->pos);
     Name storage_loc = util_literal_name_new2();
 
@@ -518,143 +518,143 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
     string_extend_cstr(&a_main, output, " ");
-    llvm_extend_name(output, storage_loc);
+    ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
 
     string_extend_cstr(&a_main, output, "    ");
     string_extend_cstr(&a_main, output, "void* ");
-    llvm_extend_name(output, alloca->name);
+    ir_extend_name(output, alloca->name);
     string_extend_cstr(&a_main, output, " = (void*)&");
-    llvm_extend_name(output, storage_loc);
+    ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
 }
 
-static void emit_c_label(Emit_c_strs* strs, const Llvm_label* def) {
+static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     emit_c_loc(&strs->output, def->loc, def->pos);
-    llvm_extend_name(&strs->output, def->name);
+    ir_extend_name(&strs->output, def->name);
     string_extend_cstr(&a_main, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
     string_extend_cstr(&a_main, &strs->output, "    dummy = 0;\n");
 }
 
-static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
+static void emit_c_def(Emit_c_strs* strs, const Ir_def* def) {
     (void) strs;
     switch (def->type) {
-        case LLVM_FUNCTION_DEF:
+        case IR_FUNCTION_DEF:
             todo();
-            //emit_function_def(struct_defs, output, literals, llvm_function_def_const_unwrap(def));
+            //emit_function_def(struct_defs, output, literals, ir_function_def_const_unwrap(def));
             return;
-        case LLVM_VARIABLE_DEF:
+        case IR_VARIABLE_DEF:
             return;
-        case LLVM_FUNCTION_DECL:
+        case IR_FUNCTION_DECL:
             todo();
-            //emit_function_decl(output, llvm_function_decl_const_unwrap(def));
+            //emit_function_decl(output, ir_function_decl_const_unwrap(def));
             return;
-        case LLVM_LABEL:
-            emit_c_label(strs, llvm_label_const_unwrap(def));
+        case IR_LABEL:
+            emit_c_label(strs, ir_label_const_unwrap(def));
             return;
-        case LLVM_STRUCT_DEF:
+        case IR_STRUCT_DEF:
             todo();
-            //emit_struct_def(struct_defs, llvm_struct_def_const_unwrap(def));
+            //emit_struct_def(struct_defs, ir_struct_def_const_unwrap(def));
             return;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             todo();
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             todo();
     }
     unreachable("");
 }
 
-static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_another_llvm* store) {
+static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir* store) {
     emit_c_loc(&strs->output, store->loc, store->pos);
-    Llvm* src = NULL;
-    unwrap(alloca_lookup(&src, store->llvm_src));
+    Ir* src = NULL;
+    unwrap(alloca_lookup(&src, store->ir_src));
 
-    if (true /*src->type == LLVM_EXPR && llvm_expr_const_unwrap(src)->type == LLVM_LITERAL*/) {
+    if (true /*src->type == IR_EXPR && ir_expr_const_unwrap(src)->type == IR_LITERAL*/) {
         string_extend_cstr(&a_main, &strs->output, "    *((");
         c_extend_type_call_str(&strs->output, store->lang_type, true);
         string_extend_cstr(&a_main, &strs->output, "*)");
-        llvm_extend_name(&strs->output, store->llvm_dest);
+        ir_extend_name(&strs->output, store->ir_dest);
         string_extend_cstr(&a_main, &strs->output, ") = ");
 
-        emit_c_expr_piece(strs, store->llvm_src);
+        emit_c_expr_piece(strs, store->ir_src);
         string_extend_cstr(&a_main, &strs->output, ";\n");
         return;
     }
 
     string_extend_cstr(&a_main, &strs->output, "    memcpy(");
-    emit_c_expr_piece(strs, store->llvm_dest);
+    emit_c_expr_piece(strs, store->ir_dest);
     string_extend_cstr(&a_main, &strs->output, ", &");
 
-    emit_c_expr_piece(strs, store->llvm_src);
+    emit_c_expr_piece(strs, store->ir_src);
     string_extend_cstr(&a_main, &strs->output, ", ");
     string_extend_size_t(&a_main, &strs->output, sizeof_lang_type(store->lang_type));
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
+static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
     string_extend_cstr(&a_main, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, " ");
-    llvm_extend_name(&strs->output, load->name);
+    ir_extend_name(&strs->output, load->name);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "*((");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, "*)");
-    llvm_extend_name(&strs->output, load->llvm_src);
+    ir_extend_name(&strs->output, load->ir_src);
 
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
+static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
-    Llvm* struct_def_ = NULL;
-    unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->llvm_src))));
+    Ir* struct_def_ = NULL;
+    unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
     string_extend_cstr(&a_main, &strs->output, "    void* ");
-    llvm_extend_name(&strs->output, load->name_self);
+    ir_extend_name(&strs->output, load->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src), false);
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
     // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
-    if (lang_type_get_pointer_depth(lang_type_from_get_name(load->llvm_src)) < 1) {
+    if (lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
         string_extend_cstr(&a_main, &strs->output, "*");
     }
     string_extend_cstr(&a_main, &strs->output, ")");
-    llvm_extend_name(&strs->output, load->llvm_src);
+    ir_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
-    llvm_extend_name(&strs->output, vec_at(&llvm_struct_def_unwrap(llvm_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
+    ir_extend_name(&strs->output, vec_at(&ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* access) {
+static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access) {
     emit_c_loc(&strs->output, access->loc, access->pos);
     string_extend_cstr(&a_main, &strs->output, "    void* ");
-    llvm_extend_name(&strs->output, access->name_self);
+    ir_extend_name(&strs->output, access->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee), false);
     string_extend_cstr(&a_main, &strs->output, ")");
-    llvm_extend_name(&strs->output, access->callee);
+    ir_extend_name(&strs->output, access->callee);
     string_extend_cstr(&a_main, &strs->output, ")[");
-    llvm_extend_name(&strs->output, access->index);
+    ir_extend_name(&strs->output, access->index);
     string_extend_cstr(&a_main, &strs->output, "]);\n");
 }
 
 static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
     string_extend_cstr(&a_main, &strs->output, "    goto ");
-    llvm_extend_name(&strs->output, label);
+    ir_extend_name(&strs->output, label);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
-static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto) {
+static void emit_c_cond_goto(Emit_c_strs* strs, const Ir_cond_goto* cond_goto) {
     emit_c_loc(&strs->output, cond_goto->loc, cond_goto->pos);
     string_extend_cstr(&a_main, &strs->output, "    if (");
-    llvm_extend_name(&strs->output, cond_goto->condition);
+    ir_extend_name(&strs->output, cond_goto->condition);
     string_extend_cstr(&a_main, &strs->output, ") {\n");
     emit_c_goto_internal(strs, cond_goto->if_true);
     string_extend_cstr(&a_main, &strs->output, "    } else {\n");
@@ -662,64 +662,64 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
     string_extend_cstr(&a_main, &strs->output, "    }\n");
 }
 
-static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
+static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
     emit_c_loc(&strs->output, lang_goto->loc, lang_goto->pos);
     emit_c_goto_internal(strs, lang_goto->label);
 }
 
-static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
+static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     emit_c_loc(&strs->output, block->loc, block->pos);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Llvm* stmt = vec_at(&block->children, idx);
+        const Ir* stmt = vec_at(&block->children, idx);
         switch (stmt->type) {
-            case LLVM_EXPR:
-                emit_c_expr(strs, llvm_expr_const_unwrap(stmt));
+            case IR_EXPR:
+                emit_c_expr(strs, ir_expr_const_unwrap(stmt));
                 break;
-            case LLVM_DEF:
-                emit_c_def(strs, llvm_def_const_unwrap(stmt));
+            case IR_DEF:
+                emit_c_def(strs, ir_def_const_unwrap(stmt));
                 break;
-            case LLVM_RETURN:
-                emit_c_return(strs, llvm_return_const_unwrap(stmt));
+            case IR_RETURN:
+                emit_c_return(strs, ir_return_const_unwrap(stmt));
                 break;
-            case LLVM_BLOCK:
-                emit_c_block(strs, llvm_block_const_unwrap(stmt));
+            case IR_BLOCK:
+                emit_c_block(strs, ir_block_const_unwrap(stmt));
                 break;
-            case LLVM_COND_GOTO:
-                emit_c_cond_goto(strs, llvm_cond_goto_const_unwrap(stmt));
+            case IR_COND_GOTO:
+                emit_c_cond_goto(strs, ir_cond_goto_const_unwrap(stmt));
                 break;
-            case LLVM_GOTO:
-                emit_c_goto(strs, llvm_goto_const_unwrap(stmt));
+            case IR_GOTO:
+                emit_c_goto(strs, ir_goto_const_unwrap(stmt));
                 break;
-            case LLVM_ALLOCA:
-                emit_c_alloca(&strs->output, llvm_alloca_const_unwrap(stmt));
+            case IR_ALLOCA:
+                emit_c_alloca(&strs->output, ir_alloca_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_ELEMENT_PTR:
-                emit_c_load_element_ptr(strs, llvm_load_element_ptr_const_unwrap(stmt));
+            case IR_LOAD_ELEMENT_PTR:
+                emit_c_load_element_ptr(strs, ir_load_element_ptr_const_unwrap(stmt));
                 break;
-            case LLVM_ARRAY_ACCESS:
-                emit_c_array_access(strs, llvm_array_access_const_unwrap(stmt));
+            case IR_ARRAY_ACCESS:
+                emit_c_array_access(strs, ir_array_access_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_ANOTHER_LLVM:
-                emit_c_load_another_llvm(strs, llvm_load_another_llvm_const_unwrap(stmt));
+            case IR_LOAD_ANOTHER_IR:
+                emit_c_load_another_ir(strs, ir_load_another_ir_const_unwrap(stmt));
                 break;
-            case LLVM_STORE_ANOTHER_LLVM:
-                emit_c_store_another_llvm(strs, llvm_store_another_llvm_const_unwrap(stmt));
+            case IR_STORE_ANOTHER_IR:
+                emit_c_store_another_ir(strs, ir_store_another_ir_const_unwrap(stmt));
                 break;
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(strs->output));
-                llvm_printf(stmt);
+                ir_printf(stmt);
                 todo();
         }
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(strs, curr);
     }
 }
 
-void emit_c_from_tree(const Llvm_block* root) {
+void emit_c_from_tree(const Ir_block* root) {
     String header = {0};
     Emit_c_strs strs = {0};
 
@@ -731,7 +731,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(&strs, curr);
     }

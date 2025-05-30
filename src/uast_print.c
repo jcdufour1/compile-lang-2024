@@ -1,7 +1,7 @@
 #include <uast.h>
 #include <uast_utils.h>
 #include <tast_utils.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <util.h>
 #include <ulang_type.h>
 #include <lang_type_print.h>

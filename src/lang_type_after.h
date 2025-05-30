@@ -153,7 +153,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, L
             return lang_type_primitive_get_atom_normal(lang_type);
         case LANG_TYPE_MODE_MSG:
             return lang_type_primitive_get_atom_normal(lang_type);
-        case LANG_TYPE_MODE_EMIT_LLVM:
+        case LANG_TYPE_MODE_EMIT_IR:
             return lang_type_primitive_get_atom_normal(lang_type);
         case LANG_TYPE_MODE_EMIT_C:
             return lang_type_primitive_get_atom_c(lang_type);

@@ -13,7 +13,7 @@ typedef enum {
     NAME_MSG,
     NAME_LOG,
     NAME_EMIT_C,
-    NAME_EMIT_LLVM,
+    NAME_EMIT_IR,
 } NAME_MODE;
 
 typedef struct {
@@ -34,7 +34,7 @@ Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_i
 
 Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
 
-void extend_name_llvm(String* buf, Name name);
+void extend_name_ir(String* buf, Name name);
 
 void serialize_str_view(String* buf, Str_view str_view);
 

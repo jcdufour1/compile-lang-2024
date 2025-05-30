@@ -1,5 +1,5 @@
 #include <tast.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <util.h>
 #include <tast_serialize.h>
 #include <lang_type_print.h>

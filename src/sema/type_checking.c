@@ -4,7 +4,7 @@
 #include <uast.h>
 #include <tast.h>
 #include <tast_utils.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <uast_hand_written.h>
 #include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>

@@ -483,7 +483,7 @@ void lang_type_gen_lang_type_wrap(Lang_type_type lang_type) {
     lang_type_gen_internal_wrap(lang_type, true);
 }
 
-// TODO: deduplicate these functions (use same function for Llvm and Lang_type)
+// TODO: deduplicate these functions (use same function for Ir and Lang_type)
 static void lang_type_gen_print_forward_decl(Lang_type_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         lang_type_gen_print_forward_decl(vec_at(&type.sub_types, idx));

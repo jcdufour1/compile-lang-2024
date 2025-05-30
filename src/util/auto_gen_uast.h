@@ -845,7 +845,7 @@ void uast_gen_uast_wrap(Uast_type uast) {
     uast_gen_internal_wrap(uast, true);
 }
 
-// TODO: deduplicate these functions (use same function for Llvm and Uast)
+// TODO: deduplicate these functions (use same function for Ir and Uast)
 static void uast_gen_print_forward_decl(Uast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         uast_gen_print_forward_decl(vec_at(&type.sub_types, idx));

@@ -30,7 +30,7 @@ size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
+// \n excapes are actually stored as is in tokens and irs, but should be printed as \0a
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
         char front_char = str_view_consume(&str_view);
@@ -484,11 +484,11 @@ Name get_storage_location(Name sym_name) {
     switch (sym_def_->type) {
         case TAST_VARIABLE_DEF: {
             Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
-            Llvm* result = NULL;
+            Ir* result = NULL;
             if (!alloca_lookup(&result,  sym_def->name)) {
                 unreachable("");
             }
-            return llvm_tast_get_name(result);
+            return ir_tast_get_name(result);
         }
         default:
             unreachable(TAST_FMT, tast_def_print(sym_def_));

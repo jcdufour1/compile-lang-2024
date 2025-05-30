@@ -5,7 +5,7 @@
 #include "symbol_table.h"
 #include "tast_utils.h"
 #include "uast_utils.h"
-#include "llvm_utils.h"
+#include "ir_utils.h"
 #include "ctype.h"
 
 static inline Lang_type lang_type_new_u1(void) {
@@ -16,7 +16,7 @@ static inline Lang_type lang_type_new_u1(void) {
 
 size_t get_count_excape_seq(Str_view str_view);
 
-// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a (depending on the backend)
+// \n excapes are actually stored as is in tokens, uast, tasts, and irs, but should be printed as \0a (depending on the backend)
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view);
 
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
@@ -172,22 +172,22 @@ bool try_set_variable_def_types(
 
 bool try_get_struct_def(Tast_struct_def** struct_def, Tast_stmt* stmt);
 
-bool llvm_try_get_struct_def(Tast_struct_def** struct_def, Llvm* tast);
+bool ir_try_get_struct_def(Tast_struct_def** struct_def, Ir* tast);
     
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
-static inline Tast_struct_def* llvm_get_struct_def(Llvm* tast) {
+static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
     Tast_struct_def* struct_def;
-    if (!llvm_try_get_struct_def( &struct_def, tast)) {
-        unreachable("could not find struct definition for "TAST_FMT"\n", llvm_print(tast));
+    if (!ir_try_get_struct_def( &struct_def, tast)) {
+        unreachable("could not find struct definition for "TAST_FMT"\n", ir_print(tast));
     }
     return struct_def;
 }
 
-static inline const Tast_struct_def* llvm_get_struct_def_const(const Llvm* tast) {
-    return llvm_get_struct_def( (Llvm*)tast);
+static inline const Tast_struct_def* ir_get_struct_def_const(const Ir* tast) {
+    return ir_get_struct_def( (Ir*)tast);
 }
 
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {

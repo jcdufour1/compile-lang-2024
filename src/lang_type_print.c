@@ -59,8 +59,8 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
             case LANG_TYPE_MODE_EMIT_C:
                 extend_name(NAME_EMIT_C, string, atom.str);
                 break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_name(NAME_EMIT_LLVM, string, atom.str);
+            case LANG_TYPE_MODE_EMIT_IR:
+                extend_name(NAME_EMIT_IR, string, atom.str);
                 break;
             default:
                 unreachable("");
@@ -75,7 +75,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
         vec_append(&a_print, string, '*');
     }
 
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
+    if (mode == LANG_TYPE_MODE_EMIT_IR) {
         if (temp.gen_args.info.count > 0) {
             todo();
         }
@@ -86,7 +86,7 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     String buf = {0};
     extend_lang_type_to_string(&buf, mode, lang_type);
     switch (mode) {
-        case LANG_TYPE_MODE_EMIT_LLVM:
+        case LANG_TYPE_MODE_EMIT_IR:
             break;
         case LANG_TYPE_MODE_EMIT_C:
             break;
@@ -119,7 +119,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             break;
         case LANG_TYPE_MODE_MSG:
             break;
-        case LANG_TYPE_MODE_EMIT_LLVM:
+        case LANG_TYPE_MODE_EMIT_IR:
             break;
         case LANG_TYPE_MODE_EMIT_C:
             break;

@@ -43,7 +43,7 @@ static void gen_all_vecs(const char* file_path) {
     gen_gen("#include <vector.h>\n");
     gen_gen("#include <uast_forward_decl.h>\n");
     gen_gen("#include <tast_forward_decl.h>\n");
-    gen_gen("#include <llvm_forward_decl.h>\n");
+    gen_gen("#include <ir_forward_decl.h>\n");
 
     //gen_all_vecs_internal();
 

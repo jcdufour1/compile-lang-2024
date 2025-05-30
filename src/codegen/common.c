@@ -2,32 +2,32 @@
 
 // TODO: rename this file (and corresponding header) because -I /src/codegen could cause conflicts in the future otherwise
 
-bool is_extern_c(const Llvm* llvm) {
-    if (llvm->type != LLVM_DEF) {
+bool is_extern_c(const Ir* ir) {
+    if (ir->type != IR_DEF) {
         return false;
     }
 
-    switch (llvm_def_const_unwrap(llvm)->type) {
-        case LLVM_FUNCTION_DEF:
+    switch (ir_def_const_unwrap(ir)->type) {
+        case IR_FUNCTION_DEF:
             return false;
-        case LLVM_FUNCTION_DECL:
+        case IR_FUNCTION_DECL:
             return true;
-        case LLVM_VARIABLE_DEF:
+        case IR_VARIABLE_DEF:
             return false;
-        case LLVM_STRUCT_DEF:
+        case IR_STRUCT_DEF:
             return false;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             return false;
-        case LLVM_LABEL:
+        case IR_LABEL:
             return false;
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             return false;
     }
     unreachable("");
 }
 
-void llvm_extend_name(String* output, Name name) {
-    Llvm* result = NULL;
+void ir_extend_name(String* output, Name name) {
+    Ir* result = NULL;
     if (alloca_lookup(&result, name) && is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         name.scope_id = SCOPE_BUILTIN;
@@ -38,6 +38,6 @@ void llvm_extend_name(String* output, Name name) {
         name.mod_path = sv("PREFIX"); // TODO: make variable or similar for this
     }
 
-    extend_name(NAME_EMIT_LLVM, output, name);
+    extend_name(NAME_EMIT_IR, output, name);
 }
 

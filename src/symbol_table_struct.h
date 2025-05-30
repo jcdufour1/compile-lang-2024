@@ -9,7 +9,7 @@ typedef enum {
 
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
-#include <llvm_forward_decl.h>
+#include <ir_forward_decl.h>
 
 typedef struct {
     Uast_def* tast;
@@ -38,7 +38,7 @@ typedef struct {
 
 
 typedef struct {
-    Llvm* tast;
+    Ir* tast;
     Str_view key;
     SYM_TBL_STATUS status;
 } Alloca_table_tast;

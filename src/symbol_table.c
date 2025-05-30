@@ -4,7 +4,7 @@
 #include "symbol_table_struct.h"
 #include <uast_utils.h>
 #include <tast_utils.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
 #include <symbol_log.h>
@@ -124,7 +124,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Str_view key, void* item) 
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
         return false;
     }
-    Llvm* dummy;
+    Ir* dummy;
     (void) dummy;
     assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
@@ -354,18 +354,18 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 }
 
 //
-// Llvm implementation
+// Ir implementation
 //
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add_ex(Alloca_table* tbl, Llvm* item) {
-    Name name = llvm_tast_get_name(item);
+bool all_tbl_add_ex(Alloca_table* tbl, Ir* item) {
+    Name name = ir_tast_get_name(item);
     return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(name), item);
 }
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Llvm* item) {
-    Name name = llvm_tast_get_name(item);
+bool all_tbl_add(Ir* item) {
+    Name name = ir_tast_get_name(item);
     return all_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
 }
 
@@ -373,8 +373,8 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->alloca_table;
 }
 
-bool alloca_add(Llvm* item) {
-    Name name = llvm_tast_get_name(item);
+bool alloca_add(Ir* item) {
+    Name name = ir_tast_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(name),
         item,
@@ -383,8 +383,8 @@ bool alloca_add(Llvm* item) {
     );
 }
 
-void all_tbl_update(Llvm* item) {
-    Name name = llvm_tast_get_name(item);
+void all_tbl_update(Ir* item) {
+    Name name = ir_tast_get_name(item);
     generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
 }
 
@@ -398,17 +398,17 @@ void usymbol_update(Uast_def* item) {
     );
 }
 
-void alloca_update(Llvm* item) {
+void alloca_update(Ir* item) {
     (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(ir_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
-bool all_tbl_lookup(Llvm** result, Name key) {
+bool all_tbl_lookup(Ir** result, Name key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
-bool alloca_lookup(Llvm** result, Name key) {
+bool alloca_lookup(Ir** result, Name key) {
     return generic_symbol_lookup(
         (void**)result,
         serialize_name_symbol_table(key),
@@ -530,7 +530,7 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_print, buf, ir_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }

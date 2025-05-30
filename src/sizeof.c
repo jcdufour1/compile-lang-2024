@@ -2,9 +2,9 @@
 #include <lang_type.h>
 #include <lang_type_after.h>
 #include <tast_utils.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <tast.h>
-#include <llvm.h>
+#include <ir.h>
 #include <lang_type_print.h>
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
@@ -126,39 +126,39 @@ uint64_t sizeof_struct_expr(const Tast_expr* struct_literal_or_def) {
     unreachable("");
 }
 
-static uint64_t llvm_sizeof_expr(const Llvm_expr* expr) {
+static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
     (void) env;
     switch (expr->type) {
-        case LLVM_LITERAL:
-            return sizeof_lang_type( llvm_literal_get_lang_type(llvm_literal_const_unwrap(expr)));
+        case IR_LITERAL:
+            return sizeof_lang_type( ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
 }
 
-static uint64_t llvm_sizeof_def(const Llvm_def* def) {
+static uint64_t ir_sizeof_def(const Ir_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type( llvm_variable_def_const_unwrap(def)->lang_type);
+            return sizeof_lang_type( ir_variable_def_const_unwrap(def)->lang_type);
         default:
             unreachable("");
     }
 }
 
-uint64_t llvm_sizeof_item(const Llvm* item) {
+uint64_t ir_sizeof_item(const Ir* item) {
     (void) env;
     switch (item->type) {
         case TAST_EXPR:
-            return llvm_sizeof_expr( llvm_expr_const_unwrap(item));
+            return ir_sizeof_expr( ir_expr_const_unwrap(item));
         case TAST_DEF:
-            return llvm_sizeof_def( llvm_def_const_unwrap(item));
+            return ir_sizeof_def( ir_def_const_unwrap(item));
         default:
             unreachable("");
     }
 }
 
-uint64_t llvm_sizeof_struct_def_base(const Struct_def_base* base) {
+uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;

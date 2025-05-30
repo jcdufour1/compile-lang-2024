@@ -39,7 +39,7 @@ OBJS=\
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
-	 ${BUILD_DIR}/llvm_print.o \
+	 ${BUILD_DIR}/ir_print.o \
 	 ${BUILD_DIR}/lang_type_print.o \
 	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
@@ -69,8 +69,8 @@ OBJS=\
 	 ${BUILD_DIR}/codegen/common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
-	 ${BUILD_DIR}/llvm_utils.o \
-	 ${BUILD_DIR}/llvm_graphvis.o \
+	 ${BUILD_DIR}/ir_utils.o \
+	 ${BUILD_DIR}/ir_graphvis.o \
 	 ${BUILD_DIR}/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -136,8 +136,8 @@ ${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c
 ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
 
-${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_print.o src/llvm_print.c
+${BUILD_DIR}/ir_print.o: ${DEP_COMMON} src/ir_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_print.o src/ir_print.c
 
 ${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
@@ -193,11 +193,11 @@ ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clon
 ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
 
-${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
+${BUILD_DIR}/ir_utils.o: ${DEP_COMMON} src/ir_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_utils.o src/ir_utils.c
 
-${BUILD_DIR}/llvm_graphvis.o: ${DEP_COMMON} src/llvm_graphvis.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_graphvis.o src/llvm_graphvis.c
+${BUILD_DIR}/ir_graphvis.o: ${DEP_COMMON} src/ir_graphvis.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_graphvis.o src/ir_graphvis.c
 
 ${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c

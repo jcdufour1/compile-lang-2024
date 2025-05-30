@@ -8,7 +8,7 @@
 #include <do_passes.h>
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
-#include <llvm_forward_decl.h>
+#include <ir_forward_decl.h>
 #include <env.h>
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth);
@@ -72,25 +72,25 @@ void alloca_log_table_internal(int log_level, const Alloca_table sym_table, int 
     } while(0)
 
 // returns false if symbol is already added to the table
-bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Llvm* tast_of_symbol);
+bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
 
 bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Str_view key);
 
-bool all_tbl_lookup(Llvm** result, Name key);
+bool all_tbl_lookup(Ir** result, Name key);
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add_ex(Alloca_table* tbl, Llvm* item);
+bool all_tbl_add_ex(Alloca_table* tbl, Ir* item);
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Llvm* tast_of_symbol);
+bool all_tbl_add(Ir* tast_of_symbol);
 
-void all_tbl_update(Llvm* tast_of_symbol);
+void all_tbl_update(Ir* tast_of_symbol);
 
-bool alloca_lookup(Llvm** result, Name key);
+bool alloca_lookup(Ir** result, Name key);
 
-bool alloca_add(Llvm* tast_of_symbol);
+bool alloca_add(Ir* tast_of_symbol);
 
-void alloca_update(Llvm* tast_of_symbol);
+void alloca_update(Ir* tast_of_symbol);
 
 Symbol_table* symbol_get_block(void);
 

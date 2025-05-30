@@ -1,6 +1,6 @@
 #include <tast.h>
 #include <uast.h>
-#include <llvm.h>
+#include <ir.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <type_checking.h>
@@ -27,7 +27,7 @@
 static void if_for_add_cond_goto_internal(
     Loc loc,
     Tast_operator* old_oper,
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Name label_name_if_true,
     Name label_name_if_false
 );
@@ -35,7 +35,7 @@ static void if_for_add_cond_goto_internal(
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
 static Name load_symbol(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_symbol* old_symbol
 );
 
@@ -48,36 +48,36 @@ static void load_raw_union_def(
 );
 
 static Name load_ptr_symbol(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_symbol* old_sym
 );
 
-static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type);
+static Ir_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type);
 
-static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
+static Name load_expr(Ir_block* new_block, Tast_expr* old_expr);
 
-static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
+static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr);
 
 static void load_stmt(
     bool* rtn_in_block,
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_stmt* old_stmt,
     bool is_defered
 );
 
-static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
+static Name load_operator(Ir_block* new_block, Tast_operator* old_oper);
 
-static void load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
+static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def);
 
-static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
+static Name load_if_else_chain(Ir_block* new_block, Tast_if_else_chain* old_if_else);
 
-static void load_label(Llvm_block* new_block, Tast_label* old_label);
+static void load_label(Ir_block* new_block, Tast_label* old_label);
 
-static Name load_return(Llvm_block* new_block, Tast_return* old_return);
+static Name load_return(Ir_block* new_block, Tast_return* old_return);
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break);
+static void load_break(Ir_block* new_block, Tast_break* old_break);
 
-static Name load_assignment_internal(const char* file, int line, Llvm_block* new_block, Tast_assignment* old_assign);
+static Name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign);
 
 static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variable_def* def) {
     return tast_symbol_new(
@@ -88,7 +88,7 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 
 static void load_block_stmts(
     bool* rtn_in_block,
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_stmt_vec children,
     DEFER_PARENT_OF parent_of,
     Pos pos,
@@ -327,7 +327,7 @@ static void load_block_stmts(
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
-            //Name goto_cond = llvm_
+            //Name goto_cond = ir_
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not breaking right now
                 tast_binary_wrap(tast_binary_new(
@@ -345,7 +345,7 @@ static void load_block_stmts(
                 env.label_if_break
             );
 
-            //Name goto_cond = llvm_
+            //Name goto_cond = ir_
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not breaking right now
                 tast_binary_wrap(tast_binary_new(
@@ -578,17 +578,17 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
     unreachable("");
 }
 
-static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
+static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
-static Llvm_alloca* add_load_and_store_alloca_new(Llvm_variable_def* var_def) {
-    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, rm_tuple_lang_type(var_def->lang_type, var_def->pos), var_def->name_corr_param);
-    alloca_add(llvm_alloca_wrap(alloca));
+static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
+    Ir_alloca* alloca = ir_alloca_new(var_def->pos, rm_tuple_lang_type(var_def->lang_type, var_def->pos), var_def->name_corr_param);
+    alloca_add(ir_alloca_wrap(alloca));
     assert(alloca);
     return alloca;
 }
 
-static Llvm_function_params* load_function_params_clone(Tast_function_params* old_params) {
-    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, util_literal_name_new2(), (Llvm_variable_def_vec){0});
+static Ir_function_params* load_function_params_clone(Tast_function_params* old_params) {
+    Ir_function_params* new_params = ir_function_params_new(old_params->pos, util_literal_name_new2(), (Ir_variable_def_vec){0});
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         vec_append(&a_main, &new_params->params, load_variable_def_clone(vec_at(&old_params->params, idx)));
@@ -597,8 +597,8 @@ static Llvm_function_params* load_function_params_clone(Tast_function_params* ol
     return new_params;
 }
 
-static Llvm_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) {
-    return llvm_function_decl_new(
+static Ir_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) {
+    return ir_function_decl_new(
         old_decl->pos,
         load_function_params_clone(old_decl->params),
         rm_tuple_lang_type(old_decl->return_type, old_decl->pos),
@@ -606,8 +606,8 @@ static Llvm_function_decl* load_function_decl_clone(Tast_function_decl* old_decl
     );
 }
 
-static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) {
-    return llvm_variable_def_new(
+static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) {
+    return ir_variable_def_new(
         old_var_def->pos,
         rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
         old_var_def->is_variadic,
@@ -616,33 +616,33 @@ static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def
     );
 }
 
-static Llvm_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
-    Llvm_variable_def_vec new_membs = {0};
+static Ir_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
+    Ir_variable_def_vec new_membs = {0};
     for (size_t idx = 0; idx < old_def->base.members.info.count; idx++) {
         vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, idx)));
     }
-    return llvm_struct_def_new(
+    return ir_struct_def_new(
         old_def->pos,
-        ((Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
+        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
     );
 }
 
-static Llvm_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
+static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
     size_t largest_idx = struct_def_base_get_idx_largest_member(old_def->base);
-    Llvm_variable_def_vec new_membs = {0};
+    Ir_variable_def_vec new_membs = {0};
     vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
-    return llvm_struct_def_new(
+    return ir_struct_def_new(
         old_def->pos,
-        ((Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
+        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
     );
 }
 
-static void do_function_def_alloca_param(Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
+static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param) {
     if (params.backend_info.struct_rtn_through_param && is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;
-        alloca_add(llvm_def_wrap(llvm_variable_def_wrap(param)));
+        alloca_add(ir_def_wrap(ir_variable_def_wrap(param)));
     } else {
-        vec_insert(&a_main, &new_block->children, 0, llvm_alloca_wrap(
+        vec_insert(&a_main, &new_block->children, 0, ir_alloca_wrap(
             add_load_and_store_alloca_new(param)
         ));
     }
@@ -650,16 +650,16 @@ static void do_function_def_alloca_param(Llvm_function_params* new_params, Llvm_
     vec_append(&a_main, &new_params->params, param);
 }
 
-static Llvm_function_params* do_function_def_alloca(
+static Ir_function_params* do_function_def_alloca(
     Lang_type* new_rtn_type,
     Lang_type rtn_type,
-    Llvm_block* new_block,
+    Ir_block* new_block,
     const Tast_function_params* old_params
 ) {
-    Llvm_function_params* new_params = llvm_function_params_new(
+    Ir_function_params* new_params = ir_function_params_new(
         old_params->pos,
         util_literal_name_new2(),
-        (Llvm_variable_def_vec) {0}
+        (Ir_variable_def_vec) {0}
     );
 
     Lang_type rtn_lang_type = rm_tuple_lang_type(rtn_type, (Pos) {0});
@@ -671,7 +671,7 @@ static Llvm_function_params* do_function_def_alloca(
             false,
             util_literal_name_new_mod_path2(env.curr_mod_path)
         );
-        Llvm_variable_def* param = load_variable_def_clone(new_def);
+        Ir_variable_def* param = load_variable_def_clone(new_def);
         do_function_def_alloca_param(new_params, new_block, param);
         *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         env.struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
@@ -680,25 +680,25 @@ static Llvm_function_params* do_function_def_alloca(
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        Llvm_variable_def* param = load_variable_def_clone(vec_at(&old_params->params, idx));
+        Ir_variable_def* param = load_variable_def_clone(vec_at(&old_params->params, idx));
         do_function_def_alloca_param(new_params, new_block, param);
     }
 
     return new_params;
 }
 
-static void add_label_internal(Loc loc, Llvm_block* block, Name label_name, Pos pos) {
-    Llvm_label* label = llvm_label_new_internal(pos, loc, label_name);
+static void add_label_internal(Loc loc, Ir_block* block, Name label_name, Pos pos) {
+    Ir_label* label = ir_label_new_internal(pos, loc, label_name);
     unwrap(label_name.base.count > 0);
     label->name = label_name;
-    unwrap(alloca_add(llvm_def_wrap(llvm_label_wrap(label))));
-    vec_append(&a_main, &block->children, llvm_def_wrap(llvm_label_wrap(label)));
+    unwrap(alloca_add(ir_def_wrap(ir_label_wrap(label))));
+    vec_append(&a_main, &block->children, ir_def_wrap(ir_label_wrap(label)));
 }
 
 static void if_for_add_cond_goto_internal(
     Loc loc,
     Tast_operator* old_oper,
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Name label_name_if_true,
     Name label_name_if_false
 ) {
@@ -706,7 +706,7 @@ static void if_for_add_cond_goto_internal(
 
     assert(label_name_if_true.base.count > 0);
     assert(label_name_if_false.base.count > 0);
-    Llvm_cond_goto* cond_goto = llvm_cond_goto_new_internal(
+    Ir_cond_goto* cond_goto = ir_cond_goto_new_internal(
         pos,
         loc,
         util_literal_name_new2(),
@@ -715,10 +715,10 @@ static void if_for_add_cond_goto_internal(
         label_name_if_false
     );
 
-    vec_append(&a_main, &new_block->children, llvm_cond_goto_wrap(cond_goto));
+    vec_append(&a_main, &new_block->children, ir_cond_goto_wrap(cond_goto));
 }
 
-static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
+static Name load_function_call(Ir_block* new_block, Tast_function_call* old_call) {
     bool rtn_is_struct = is_struct_like(old_call->lang_type.type);
 
     Name_vec new_args = {0};
@@ -736,24 +736,24 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
         //unreachable(TAST_FMT, tast_function_call_print(old_call));
     }
 
-    Llvm_function_call* new_call = llvm_function_call_new(
+    Ir_function_call* new_call = ir_function_call_new(
         old_call->pos,
         new_args,
         util_literal_name_new_prefix2(sv("fun_call")),
         load_expr(new_block, old_call->callee),
         fun_lang_type
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_function_call_wrap(new_call))));
+    unwrap(alloca_add(ir_expr_wrap(ir_function_call_wrap(new_call))));
 
     for (size_t idx = 0; idx < old_call->args.info.count; idx++) {
         Tast_expr* old_arg = vec_at(&old_call->args, idx);
         Name thing = load_expr(new_block, old_arg);
         vec_append(&a_main, &new_call->args, thing);
-        Llvm* result = NULL;
+        Ir* result = NULL;
         unwrap(alloca_lookup(&result, thing));
     }
 
-    vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_call)));
+    vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_function_call_wrap(new_call)));
 
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         assert(def_name.base.count > 0);
@@ -771,7 +771,7 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
 }
 
 // this function is needed for situations such as switching directly on enum
-static Name load_ptr_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
+static Name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_call) {
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
         old_call->lang_type,
@@ -792,7 +792,7 @@ static Name load_ptr_function_call(Llvm_block* new_block, Tast_function_call* ol
 }
 
 static Tast_variable_def* load_struct_literal_internal(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_struct_literal* old_lit
 ) {
     Tast_variable_def* new_var = tast_variable_def_new(
@@ -830,62 +830,62 @@ static Tast_variable_def* load_struct_literal_internal(
     return new_var;
 }
 
-static Name load_ptr_struct_literal(Llvm_block* new_block, Tast_struct_literal* old_lit) {
+static Name load_ptr_struct_literal(Ir_block* new_block, Tast_struct_literal* old_lit) {
     Tast_variable_def* new_var = load_struct_literal_internal(new_block, old_lit);
     return load_ptr_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
-static Name load_struct_literal(Llvm_block* new_block, Tast_struct_literal* old_lit) {
+static Name load_struct_literal(Ir_block* new_block, Tast_struct_literal* old_lit) {
     Tast_variable_def* new_var = load_struct_literal_internal(new_block, old_lit);
     return load_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
 static Name load_string(Tast_string* old_lit) {
-    Llvm_string* string = llvm_string_new(
+    Ir_string* string = ir_string_new(
         old_lit->pos,
         old_lit->data,
         old_lit->name
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_string_wrap(string)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_string_wrap(string)))));
     return string->name;
 }
 
 static Name load_void(Pos pos) {
-    Llvm_void* new_void = llvm_void_new(pos, util_literal_name_new_mod_path2(env.curr_mod_path));
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_void_wrap(new_void)))));
+    Ir_void* new_void = ir_void_new(pos, util_literal_name_new_mod_path2(env.curr_mod_path));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_void_wrap(new_void)))));
     return new_void->name;
 }
 
 static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
-    Llvm_int* enum_tag_lit = llvm_int_new(
+    Ir_int* enum_tag_lit = ir_int_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(enum_tag_lit)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(enum_tag_lit)))));
     return enum_tag_lit->name;
 }
 
 static Name load_number(Tast_int* old_lit) {
-    Llvm_int* number = llvm_int_new(
+    Ir_int* number = ir_int_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(number)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(number)))));
     return number->name;
 }
 
 static Name load_float(Tast_float* old_lit) {
-    Llvm_float* number = llvm_float_new(
+    Ir_float* number = ir_float_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_float_wrap(number)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_float_wrap(number)))));
     return number->name;
 }
 
@@ -893,24 +893,24 @@ static Name load_char(
     Tast_char* old_lit
 ) {
     Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
-    Llvm_int* lang_char = llvm_int_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new_mod_path2(env.curr_mod_path));
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(lang_char)))));
+    Ir_int* lang_char = ir_int_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new_mod_path2(env.curr_mod_path));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(lang_char)))));
     return lang_char->name;
 }
 
 static Name load_function_lit(
     Tast_function_lit* old_lit
 ) {
-    Llvm_function_name* name = llvm_function_name_new(
+    Ir_function_name* name = ir_function_name_new(
         old_lit->pos,
         old_lit->name,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_function_name_wrap(name)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_function_name_wrap(name)))));
     return name->name_self;
 }
 
-static Name load_enum_lit(Llvm_block* new_block, Tast_enum_lit* old_lit) {
+static Name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     Tast_def* enum_def_ = NULL;
     unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
@@ -949,7 +949,7 @@ static Name load_enum_lit(Llvm_block* new_block, Tast_enum_lit* old_lit) {
 }
 
 static Name load_raw_union_lit(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_raw_union_lit* old_lit
 ) {
     Tast_def* union_def_ = NULL;
@@ -984,7 +984,7 @@ static Name load_raw_union_lit(
     return load_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
-static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
+static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
     switch (old_lit->type) {
         case TAST_STRING:
             return load_string(tast_string_unwrap(old_lit));
@@ -1008,13 +1008,13 @@ static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
     unreachable("");
 }
 
-static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
+static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
-    Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
-    Llvm* alloca = NULL;
+    Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
+    Ir* alloca = NULL;
     if (!alloca_lookup(&alloca, var_def->name_corr_param)) {
         load_variable_def(new_block, tast_variable_def_unwrap(var_def_));
         unwrap(alloca_lookup(&alloca, var_def->name_corr_param));
@@ -1038,7 +1038,7 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
             // fallthrough
         case LANG_TYPE_FN:
             // fallthrough
-        return llvm_tast_get_name(alloca);
+        return ir_tast_get_name(alloca);
     }
     unreachable("");
 
@@ -1046,7 +1046,7 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
 }
 
 static Name load_ptr_enum_callee(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_enum_callee* old_callee
 ) {
     (void) new_block;
@@ -1062,30 +1062,30 @@ static Name load_ptr_enum_callee(
     //));
     todo();
 
-    //return llvm_tast_get_name(alloca);
+    //return ir_tast_get_name(alloca);
 }
 
 static Name load_symbol(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_symbol* old_sym
 ) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
     Name ptr = load_ptr_symbol(new_block, old_sym);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
         ptr,
         rm_tuple_lang_type(old_sym->base.lang_type, old_sym->pos),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
-static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bin) {
+static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin) {
     BINARY_TYPE if_true_type = {0};
     int if_false_val = 0;
 
@@ -1182,12 +1182,12 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
     return load_symbol(new_block, tast_symbol_new_from_variable_def(old_bin->pos, new_var));
 }
 
-static Name load_binary(Llvm_block* new_block, Tast_binary* old_bin) {
+static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
     if (binary_is_short_circuit(old_bin->token_type)) {
         return load_binary_short_circuit(new_block, old_bin);
     }
 
-    Llvm_binary* new_bin = llvm_binary_new(
+    Ir_binary* new_bin = ir_binary_new(
         old_bin->pos,
         load_expr(new_block, old_bin->lhs),
         load_expr(new_block, old_bin->rhs),
@@ -1196,29 +1196,29 @@ static Name load_binary(Llvm_block* new_block, Tast_binary* old_bin) {
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
 
-    unwrap(alloca_add(llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin)))));
+    unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_binary_wrap(new_bin)))));
 
-    vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin))));
+    vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_operator_wrap(ir_binary_wrap(new_bin))));
     return new_bin->name;
 }
 
-static Name load_deref(Llvm_block* new_block, Tast_unary* old_unary) {
+static Name load_deref(Ir_block* new_block, Tast_unary* old_unary) {
     assert(old_unary->token_type == UNARY_DEREF);
 
     Name ptr = load_expr(new_block, old_unary->child);
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_unary->pos,
         ptr,
         old_unary->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
-static Name load_unary(Llvm_block* new_block, Tast_unary* old_unary) {
+static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
     switch (old_unary->token_type) {
         case UNARY_DEREF:
             return load_deref(new_block, old_unary);
@@ -1248,16 +1248,16 @@ static Name load_unary(Llvm_block* new_block, Tast_unary* old_unary) {
                 return new_child;
             }
 
-            Llvm_unary* new_unary = llvm_unary_new(
+            Ir_unary* new_unary = ir_unary_new(
                 old_unary->pos,
                 new_child,
                 old_unary->token_type,
                 old_unary->lang_type,
                 util_literal_name_new_mod_path2(env.curr_mod_path)
             );
-            unwrap(alloca_add(llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary)))));
+            unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary)))));
 
-            vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary))));
+            vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary))));
             return new_unary->name;
         case UNARY_NOT:
             unreachable("not should not still be present here");
@@ -1267,7 +1267,7 @@ static Name load_unary(Llvm_block* new_block, Tast_unary* old_unary) {
 
 static Name load_operator(
 
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_operator* old_oper
 ) {
     switch (old_oper->type) {
@@ -1279,7 +1279,7 @@ static Name load_operator(
     unreachable("");
 }
 
-static Name load_ptr_member_access(Llvm_block* new_block, Tast_member_access* old_access) {
+static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
 
     Tast_def* def = NULL;
@@ -1300,70 +1300,70 @@ static Name load_ptr_member_access(Llvm_block* new_block, Tast_member_access* ol
             unreachable("");
     }
     
-    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
+    Ir_load_element_ptr* new_load = ir_load_element_ptr_new(
         old_access->pos,
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         struct_index,
         new_callee,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_load)));
+    unwrap(alloca_add(ir_load_element_ptr_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_load));
     return new_load->name_self;
 }
 
-static Name load_ptr_index(Llvm_block* new_block, Tast_index* old_index) {
-    Llvm_array_access* new_load = llvm_array_access_new(
+static Name load_ptr_index(Ir_block* new_block, Tast_index* old_index) {
+    Ir_array_access* new_load = ir_array_access_new(
         old_index->pos,
         old_index->lang_type,
         load_expr(new_block, old_index->index),
         load_expr(new_block, old_index->callee),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_array_access_wrap(new_load)));
+    unwrap(alloca_add(ir_array_access_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_array_access_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_array_access_wrap(new_load));
     return new_load->name_self;
 }
 
 static Name load_member_access(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_member_access* old_access
 ) {
     Name ptr = load_ptr_member_access(new_block, old_access);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         ptr,
         lang_type_from_get_name(ptr),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
 static Name load_index(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_index* old_index
 ) {
     Name ptr = load_ptr_index(new_block, old_index);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_index->pos,
         ptr,
         lang_type_from_get_name(ptr),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
-static Name load_ptr_enum_get_tag(Llvm_block* new_block, Tast_enum_get_tag* old_access) {
+static Name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access) {
     Tast_def* enum_def_ = NULL;
     unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
@@ -1375,73 +1375,73 @@ static Name load_ptr_enum_get_tag(Llvm_block* new_block, Tast_enum_get_tag* old_
         return new_enum;
     }
 
-    Llvm_load_element_ptr* new_tag = llvm_load_element_ptr_new(
+    Ir_load_element_ptr* new_tag = ir_load_element_ptr_new(
         old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         0,
         new_enum,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_tag)));
-    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_tag));
+    unwrap(alloca_add(ir_load_element_ptr_wrap(new_tag)));
+    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_tag));
 
     return new_tag->name_self;
 }
 
-static Name load_enum_get_tag(Llvm_block* new_block, Tast_enum_get_tag* old_access) {
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+static Name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access) {
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         load_ptr_enum_get_tag(new_block, old_access),
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
-static Name load_ptr_enum_access(Llvm_block* new_block, Tast_enum_access* old_access) {
+static Name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_access) {
     Tast_def* enum_def_ = NULL;
     unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
     Tast_raw_union_def* union_def = get_raw_union_def_from_enum_def(enum_def);
     
-    Llvm_load_element_ptr* new_union = llvm_load_element_ptr_new(
+    Ir_load_element_ptr* new_union = ir_load_element_ptr_new(
         old_access->pos,
         tast_raw_union_def_get_lang_type(union_def),
         1,
         new_callee,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_union)));
-    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_union));
+    unwrap(alloca_add(ir_load_element_ptr_wrap(new_union)));
+    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_union));
 
-    Llvm_load_element_ptr* new_item = llvm_load_element_ptr_new(
+    Ir_load_element_ptr* new_item = ir_load_element_ptr_new(
         old_access->pos,
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         0,
         new_union->name_self,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_item)));
-    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_item));
+    unwrap(alloca_add(ir_load_element_ptr_wrap(new_item)));
+    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_item));
 
     return new_item->name_self;
 }
 
-static Name load_enum_access(Llvm_block* new_block, Tast_enum_access* old_access) {
+static Name load_enum_access(Ir_block* new_block, Tast_enum_access* old_access) {
     Name ptr = load_ptr_enum_access(new_block, old_access);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         ptr,
         lang_type_from_get_name(ptr),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
@@ -1449,7 +1449,7 @@ static Name load_enum_case(Tast_enum_case* old_case) {
     return load_enum_tag_lit(old_case->tag);
 }
 
-static Name load_tuple(Llvm_block* new_block, Tast_tuple* old_tuple) {
+static Name load_tuple(Ir_block* new_block, Tast_tuple* old_tuple) {
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
          old_tuple->lang_type, old_tuple->pos
     ));
@@ -1457,13 +1457,13 @@ static Name load_tuple(Llvm_block* new_block, Tast_tuple* old_tuple) {
         old_tuple->pos, old_tuple->members, util_literal_name_new_mod_path2(env.curr_mod_path), new_lang_type
     ));
 
-    Llvm* dummy = NULL;
+    Ir* dummy = NULL;
     unwrap(alloca_lookup(&dummy, new_lit));
     return new_lit;
 }
 
 // TODO: make separate tuple types for lhs and rhs
-static Name load_tuple_ptr(Llvm_block* new_block, Tast_tuple* old_tuple) {
+static Name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
     (void) new_block;
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
          old_tuple->lang_type, old_tuple->pos
@@ -1476,13 +1476,13 @@ static Name load_tuple_ptr(Llvm_block* new_block, Tast_tuple* old_tuple) {
         todo();
     }
 
-    //Llvm* dummy = NULL;
+    //Ir* dummy = NULL;
     //unwrap(alloca_lookup(&dummy, new_lit));
     todo();
     //return new_lit;
 }
 
-static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr) {
+static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_ASSIGNMENT:
             return load_assignment(new_block, tast_assignment_unwrap(old_expr));
@@ -1518,34 +1518,34 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr) {
     unreachable("");
 }
 
-static Llvm_function_params* load_function_parameters(
-    Llvm_block* new_fun_body,
+static Ir_function_params* load_function_parameters(
+    Ir_block* new_fun_body,
     Lang_type* new_lang_type,
     Lang_type rtn_type,
     Tast_function_params* old_params
 ) {
-    Llvm_function_params* new_params = do_function_def_alloca(new_lang_type, rtn_type, new_fun_body, old_params);
+    Ir_function_params* new_params = do_function_def_alloca(new_lang_type, rtn_type, new_fun_body, old_params);
 
     for (size_t idx = 0; idx < new_params->params.info.count; idx++) {
-        Llvm_variable_def* param = vec_at(&new_params->params, idx);
+        Ir_variable_def* param = vec_at(&new_params->params, idx);
 
-        Llvm* dummy = NULL;
+        Ir* dummy = NULL;
 
         bool is_struct = is_struct_like(param->lang_type.type);
 
         if (!params.backend_info.struct_rtn_through_param || !is_struct) {
-            unwrap(alloca_add(llvm_def_wrap(llvm_variable_def_wrap(param))));
+            unwrap(alloca_add(ir_def_wrap(ir_variable_def_wrap(param))));
 
-            Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
+            Ir_store_another_ir* new_store = ir_store_another_ir_new(
                 param->pos,
                 param->name_self,
                 param->name_corr_param,
                 param->lang_type,
                 util_literal_name_new_prefix2(sv("load_function_parameters_store"))
             );
-            unwrap(alloca_add(llvm_store_another_llvm_wrap(new_store)));
+            unwrap(alloca_add(ir_store_another_ir_wrap(new_store)));
 
-            vec_append(&a_main, &new_fun_body->children, llvm_store_another_llvm_wrap(new_store));
+            vec_append(&a_main, &new_fun_body->children, ir_store_another_ir_wrap(new_store));
         }
 
         unwrap(alloca_lookup(&dummy, param->name_corr_param));
@@ -1559,21 +1559,21 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     env.name_parent_fn = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
 
-    Llvm_function_decl* new_decl = llvm_function_decl_new(
+    Ir_function_decl* new_decl = ir_function_decl_new(
         pos,
         NULL,
         rm_tuple_lang_type(old_fun_def->decl->return_type, old_fun_def->pos),
         old_fun_def->decl->name
     );
 
-    Llvm_function_def* new_fun_def = llvm_function_def_new(
+    Ir_function_def* new_fun_def = ir_function_def_new(
         pos,
         util_literal_name_new2(),
         new_decl,
-        llvm_block_new(
+        ir_block_new(
             pos,
             util_literal_name_new2(),
-            (Llvm_vec) {0},
+            (Ir_vec) {0},
             old_fun_def->body->pos_end,
             old_fun_def->body->scope_id
         )
@@ -1596,15 +1596,15 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         old_fun_def->decl->return_type
     );
 
-    unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
+    unwrap(alloca_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
     env.name_parent_fn = old_fun_name;
 }
 
 static void load_function_decl(Tast_function_decl* old_fun_decl) {
-    unwrap(alloca_add(llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
+    unwrap(alloca_add(ir_def_wrap(ir_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
 }
 
-static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
+static Name load_return(Ir_block* new_block, Tast_return* old_return) {
     Pos pos = old_return->pos;
 
     Tast_def* fun_def_ = NULL;
@@ -1628,44 +1628,44 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
     bool rtn_is_struct = is_struct_like(rtn_type.type);
 
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
-        Llvm* dest_ = NULL;
+        Ir* dest_ = NULL;
         unwrap(alloca_lookup(&dest_, env.struct_rtn_name_parent_function));
         Name dest = env.struct_rtn_name_parent_function;
         Name src = load_expr(new_block, old_return->child);
 
-        Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
+        Ir_store_another_ir* new_store = ir_store_another_ir_new(
             pos,
             src,
             dest,
             rtn_type,
             util_literal_name_new_prefix2(sv("return_store_another"))
         );
-        vec_append(&a_main, &new_block->children, llvm_store_another_llvm_wrap(new_store));
+        vec_append(&a_main, &new_block->children, ir_store_another_ir_wrap(new_store));
         
         Tast_void* new_void = tast_void_new(old_return->pos);
-        Llvm_return* new_return = llvm_return_new(
+        Ir_return* new_return = ir_return_new(
             pos,
             util_literal_name_new2(),
             load_literal(new_block, tast_void_wrap(new_void)),
             old_return->is_auto_inserted
         );
-        vec_append(&a_main, &new_block->children, llvm_return_wrap(new_return));
+        vec_append(&a_main, &new_block->children, ir_return_wrap(new_return));
     } else {
         Name result = load_expr(new_block, old_return->child);
-        Llvm_return* new_return = llvm_return_new(
+        Ir_return* new_return = ir_return_new(
             pos,
             util_literal_name_new2(),
             result,
             old_return->is_auto_inserted
         );
 
-        vec_append(&a_main, &new_block->children, llvm_return_wrap(new_return));
+        vec_append(&a_main, &new_block->children, ir_return_wrap(new_return));
     }
 
     return (Name) {0};
 }
 
-static Name load_assignment_internal(const char* file, int line, Llvm_block* new_block, Tast_assignment* old_assign) {
+static Name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign) {
     assert(old_assign->lhs);
     assert(old_assign->rhs);
 
@@ -1674,7 +1674,7 @@ static Name load_assignment_internal(const char* file, int line, Llvm_block* new
     Name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Name new_rhs = load_expr(new_block, old_assign->rhs);
 
-    Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new_internal(
+    Ir_store_another_ir* new_store = ir_store_another_ir_new_internal(
         pos,
         (Loc) {.file = file, .line = line},
         new_rhs,
@@ -1682,33 +1682,33 @@ static Name load_assignment_internal(const char* file, int line, Llvm_block* new
         rm_tuple_lang_type(tast_expr_get_lang_type(old_assign->lhs), old_assign->pos),
         util_literal_name_new_prefix2(sv("store_for_assign"))
     );
-    unwrap(alloca_add(llvm_store_another_llvm_wrap(new_store)));
+    unwrap(alloca_add(ir_store_another_ir_wrap(new_store)));
 
-    assert(new_store->llvm_src.base.count > 0);
-    assert(new_store->llvm_dest.base.count > 0);
+    assert(new_store->ir_src.base.count > 0);
+    assert(new_store->ir_dest.base.count > 0);
     assert(old_assign->rhs);
 
-    vec_append(&a_main, &new_block->children, llvm_store_another_llvm_wrap(new_store));
+    vec_append(&a_main, &new_block->children, ir_store_another_ir_wrap(new_store));
 
     return new_store->name;
 }
 
-static void load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def) {
-    Llvm_variable_def* new_var_def = load_variable_def_clone(old_var_def);
+static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def) {
+    Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
-    Llvm* alloca = NULL;
+    Ir* alloca = NULL;
     if (!alloca_lookup(&alloca, new_var_def->name_self)) {
-        alloca = llvm_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
+        alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
         vec_insert(&a_main, &new_block->children, 0, alloca);
     }
 
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_variable_def_wrap(new_var_def)));
+    vec_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));
 
     assert(alloca);
 }
 
 static void load_struct_def(Tast_struct_def* old_def) {
-    all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_struct_def_clone(old_def))));
+    all_tbl_add(ir_def_wrap(ir_struct_def_wrap(load_struct_def_clone(old_def))));
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy, old_def->base.name)) {
@@ -1721,19 +1721,19 @@ static void load_struct_def(Tast_struct_def* old_def) {
     }
 }
 
-static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
+static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
     Tast_block* old_block = if_statement->body;
     bool rtn_in_block = false;
-    Llvm_block* inner_block = load_block(
+    Ir_block* inner_block = load_block(
         &rtn_in_block,
         old_block,
         DEFER_PARENT_OF_IF,
         if_statement->yield_type
     );
-    Llvm_block* new_block = llvm_block_new(
+    Ir_block* new_block = ir_block_new(
         old_block->pos,
         util_literal_name_new2(),
-        (Llvm_vec) {0},
+        (Ir_vec) {0},
         inner_block->pos_end,
         if_statement->body->scope_id
     );
@@ -1774,23 +1774,23 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
     );
     add_label(new_block, after_is_rtn, if_statement->pos);
 
-    Llvm_goto* jmp_to_after_chain = llvm_goto_new(
+    Ir_goto* jmp_to_after_chain = ir_goto_new(
         old_block->pos,
         util_literal_name_new2(),
         env.label_if_after
     );
-    vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
+    vec_append(&a_main, &new_block->children, ir_goto_wrap(jmp_to_after_chain));
 
     return new_block;
 }
 
-static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
+static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if_else) {
     Name old_label_if_after = env.label_if_after;
 
-    *new_block = llvm_block_new(
+    *new_block = ir_block_new(
         if_else->pos,
         util_literal_name_new2(),
-        (Llvm_vec) {0},
+        (Ir_vec) {0},
         (Pos) {0},
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0 /* TODO: consider empty if_else_chain */)->body->scope_id))
     );
@@ -1820,7 +1820,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     }
     env.label_if_after = if_after;
     
-    Llvm* dummy = NULL;
+    Ir* dummy = NULL;
     Tast_def* dummy_def = NULL;
 
     Name next_if = {0};
@@ -1832,9 +1832,9 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         }
 
         assert(env.label_if_break.base.count > 0);
-        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
+        Ir_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
-        vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
+        vec_append(&a_main, &(*new_block)->children, ir_block_wrap(if_block));
 
         if (idx + 1 < if_else->tasts.info.count) {
             assert(!alloca_lookup(&dummy, next_if));
@@ -1929,27 +1929,27 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 }
 
 static Name load_if_else_chain(
-    Llvm_block* new_block,
+    Ir_block* new_block,
     Tast_if_else_chain* old_if_else
 ) {
-    Llvm_block* new_if_else = NULL;
+    Ir_block* new_if_else = NULL;
     Name result = if_else_chain_to_branch(&new_if_else, old_if_else);
-    vec_append(&a_main, &new_block->children, llvm_block_wrap(new_if_else));
+    vec_append(&a_main, &new_block->children, ir_block_wrap(new_if_else));
 
     return result;
 }
 
-static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond* old_for) {
+static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond* old_for) {
     Name old_after_for = env.label_after_for;
     Name old_if_continue = env.label_if_continue;
     Name old_if_break = env.label_if_break;
 
     Pos pos = old_for->pos;
 
-    Llvm_block* new_branch_block = llvm_block_new(
+    Ir_block* new_branch_block = ir_block_new(
         pos,
         util_literal_name_new2(),
-        (Llvm_vec) {0},
+        (Ir_vec) {0},
         old_for->body->pos_end,
         old_for->body->scope_id
     );
@@ -1977,7 +1977,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
 
     Tast_operator* operator = old_for->condition->child;
     env.label_if_continue = util_literal_name_new_prefix2(string_to_strv(check_cond_));
-    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue);
+    Ir_goto* jmp_to_check_cond_label = ir_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue);
     Name after_check_label = util_literal_name_new_prefix2(string_to_strv(after_chk_));
     Name after_for_loop_label = util_literal_name_new_prefix2(string_to_strv(after_loop_));
 
@@ -1986,7 +1986,7 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
 
     assert(env.label_if_continue.base.count > 0);
 
-    vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(jmp_to_check_cond_label));
+    vec_append(&a_main, &new_branch_block->children, ir_goto_wrap(jmp_to_check_cond_label));
 
     add_label(new_branch_block, env.label_if_continue, pos);
 
@@ -2013,8 +2013,8 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
     );
     add_label(new_branch_block, after_inner_block, pos);
 
-    vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
-        llvm_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue)
+    vec_append(&a_main, &new_branch_block->children, ir_goto_wrap(
+        ir_goto_new(old_for->pos, util_literal_name_new2(), env.label_if_continue)
     ));
     add_label(new_branch_block, after_for_loop_label, pos);
 
@@ -2046,12 +2046,12 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
     return new_branch_block;
 }
 
-static void load_for_with_cond(bool* rtn_in_block, Llvm_block* new_block, Tast_for_with_cond* old_for) {
-    Llvm_block* new_for = for_with_cond_to_branch(rtn_in_block, old_for);
-    vec_append(&a_main, &new_block->children, llvm_block_wrap(new_for));
+static void load_for_with_cond(bool* rtn_in_block, Ir_block* new_block, Tast_for_with_cond* old_for) {
+    Ir_block* new_for = for_with_cond_to_branch(rtn_in_block, old_for);
+    vec_append(&a_main, &new_block->children, ir_block_wrap(new_for));
 }
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break) {
+static void load_break(Ir_block* new_block, Tast_break* old_break) {
     if (env.label_if_break.base.count < 1) {
         return;
     }
@@ -2070,14 +2070,14 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
     assert(env.label_if_break.base.count > 0);
 }
 
-static void load_label(Llvm_block* new_block, Tast_label* old_label) {
-    Llvm_label* new_label = llvm_label_new(old_label->pos, old_label->name);
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_label_wrap(new_label)));
+static void load_label(Ir_block* new_block, Tast_label* old_label) {
+    Ir_label* new_label = ir_label_new(old_label->pos, old_label->name);
+    vec_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(new_label)));
     assert(new_label->name.base.count > 0);
-    alloca_add(llvm_def_wrap(llvm_label_wrap(new_label)));
+    alloca_add(ir_def_wrap(ir_label_wrap(new_label)));
 }
 
-static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
+static void load_continue(Ir_block* new_block, Tast_continue* old_continue) {
     if (env.label_if_continue.base.count < 1) {
         msg(
             DIAG_CONTINUE_INVALID_LOCATION, old_continue->pos,
@@ -2086,12 +2086,12 @@ static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
         return;
     }
 
-    Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, util_literal_name_new2(), env.label_if_continue);
-    vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+    Ir_goto* new_goto = ir_goto_new(old_continue->pos, util_literal_name_new2(), env.label_if_continue);
+    vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
 }
 
 static void load_raw_union_def(Tast_raw_union_def* old_def) {
-    if (!all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_raw_union_def_clone(old_def))))) {
+    if (!all_tbl_add(ir_def_wrap(ir_struct_def_wrap(load_raw_union_def_clone(old_def))))) {
         return;
     };
 
@@ -2106,12 +2106,12 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     }
 }
 
-static Name load_ptr_deref(Llvm_block* new_block, Tast_unary* old_unary) {
+static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
     assert(old_unary->token_type == UNARY_DEREF);
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
-            // TODO: this may not do the right thing for the llvm backend. Fix underlying issues instead of relying on this hack for llvm?
+            // TODO: this may not do the right thing for the ir backend. Fix underlying issues instead of relying on this hack for ir?
             // TODO: (if this is nessessary) make params.backend_info.load_ptr_deref_break arg instead of just doing BACKEND_C check this way
             if (params.backend_info.backend == BACKEND_C) {
                 break;
@@ -2130,20 +2130,20 @@ static Name load_ptr_deref(Llvm_block* new_block, Tast_unary* old_unary) {
     }
 
     Name ptr = load_ptr_expr(new_block, old_unary->child);
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_unary->pos,
         ptr,
         old_unary->lang_type,
-        util_literal_name_new_prefix2(sv("load_another_llvm"))
+        util_literal_name_new_prefix2(sv("load_another_ir"))
     );
-    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
     lang_type_set_pointer_depth(&new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
 
-    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
     return new_load->name;
 }
 
-static Name load_ptr_unary(Llvm_block* new_block, Tast_unary* old_unary) {
+static Name load_ptr_unary(Ir_block* new_block, Tast_unary* old_unary) {
     switch (old_unary->token_type) {
         case UNARY_DEREF:
             return load_ptr_deref(new_block, old_unary);
@@ -2153,7 +2153,7 @@ static Name load_ptr_unary(Llvm_block* new_block, Tast_unary* old_unary) {
     todo();
 }
 
-static Name load_ptr_operator(Llvm_block* new_block, Tast_operator* old_oper) {
+static Name load_ptr_operator(Ir_block* new_block, Tast_operator* old_oper) {
     switch (old_oper->type) {
         case TAST_BINARY:
             todo();
@@ -2164,7 +2164,7 @@ static Name load_ptr_operator(Llvm_block* new_block, Tast_operator* old_oper) {
     }
 }
 
-static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr) {
+static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_SYMBOL:
             return load_ptr_symbol(new_block, tast_symbol_unwrap(old_expr));
@@ -2201,7 +2201,7 @@ static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr) {
     unreachable("");
 }
 
-static void load_def(Llvm_block* new_block, Tast_def* old_def) {
+static void load_def(Ir_block* new_block, Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             load_function_def(tast_function_def_unwrap(old_def));
@@ -2239,7 +2239,7 @@ Name get_is_conting(const Defer_collection* item) {
 }
 
 // TODO: try to come up with a better name for this function
-static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
+static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
     Get_is_brking_or_conting get_is_brking_or_conting = is_brking ? get_is_brking : get_is_conting;
     Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
@@ -2288,12 +2288,12 @@ static void load_brking_or_conting_set_etc(Llvm_block* new_block, Tast_stmt* old
 
     if (pairs->info.count > 0) {
         // jump to the top of the defer stack to execute the defered statements
-        Llvm_goto* new_goto = llvm_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new2(), vec_top(pairs).label->name);
-        vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new2(), vec_top(pairs).label->name);
+        vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
 }
 
-static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
+static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -2335,8 +2335,8 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
 
             Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
             if (pairs->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(rtn->pos, util_literal_name_new2(), vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+                Ir_goto* new_goto = ir_goto_new(rtn->pos, util_literal_name_new2(), vec_top(pairs).label->name);
+                vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             }
             return;
         }
@@ -2394,7 +2394,7 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
             vec_append(
                 &a_main,
                 &new_block->children,
-                llvm_block_wrap(load_block(rtn_in_block, tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
+                ir_block_wrap(load_block(rtn_in_block, tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
             );
             return;
         case TAST_LABEL:
@@ -2439,11 +2439,11 @@ static void load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
-static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type) {
-    Llvm_block* new_block = llvm_block_new(
+static Ir_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type) {
+    Ir_block* new_block = ir_block_new(
         old_block->pos,
         util_literal_name_new2(),
-        (Llvm_vec) {0},
+        (Ir_vec) {0},
         old_block->pos_end,
         old_block->scope_id
     );
@@ -2459,7 +2459,7 @@ static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_P
     return new_block;
 }
 
-Llvm_block* add_load_and_store(Tast_block* old_root) {
+Ir_block* add_load_and_store(Tast_block* old_root) {
     Symbol_iter iter = sym_tbl_iter_new(0);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
@@ -2467,7 +2467,7 @@ Llvm_block* add_load_and_store(Tast_block* old_root) {
     }
 
     bool rtn_in_block = false;
-    Llvm_block* block = load_block(&rtn_in_block, old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+    Ir_block* block = load_block(&rtn_in_block, old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
     return block;
 }
 

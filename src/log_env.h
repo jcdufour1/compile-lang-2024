@@ -1,5 +1,5 @@
 
-#include <llvm.h>
+#include <ir.h>
 #include <tast.h>
 
 static inline void log_env_internal(const char* file, int line, LOG_LEVEL log_level) {

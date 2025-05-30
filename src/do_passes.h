@@ -2,7 +2,7 @@
 #define PASSES_H
 
 #include <tast.h>
-#include <llvm.h>
+#include <ir.h>
 #include <do_passes.h>
 #include <token_vec.h>
 #include <parameters.h>
@@ -17,12 +17,12 @@ Tast_block* change_operators(Tast_block* root);
 
 Tast_block* remove_tuples(Tast_block* root);
 
-Llvm_block* add_load_and_store(Tast_block* old_block);
+Ir_block* add_load_and_store(Tast_block* old_block);
 
-Llvm_block* assign_llvm_ids(Llvm_block* root);
+Ir_block* assign_ir_ids(Ir_block* root);
 
-void emit_llvm_from_tree(const Llvm_block* root);
+void emit_llvm_from_tree(const Ir_block* root);
 
-void emit_c_from_tree(const Llvm_block* root);
+void emit_c_from_tree(const Ir_block* root);
 
 #endif // PASSES_H

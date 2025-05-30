@@ -3,7 +3,7 @@
 
 #include <symbol_table_struct.h>
 #include <tast_forward_decl.h>
-#include <llvm_forward_decl.h>
+#include <ir_forward_decl.h>
 #include <ulang_type.h>
 
 typedef struct {
@@ -84,7 +84,7 @@ typedef struct Env_ {
 
     Uast_def_vec udefered_symbols_to_add;
     Tast_def_vec defered_symbols_to_add;
-    Llvm_vec defered_allocas_to_add;
+    Ir_vec defered_allocas_to_add;
     int recursion_depth;
     File_path_to_text file_path_to_text;
 
@@ -136,7 +136,7 @@ typedef struct Env_ {
     Tast_variable_def* rtn_def;
     Defer_colls defered_collections;
 
-    Name llvm_graphvis_parent_block_next;
+    Name ir_graphvis_parent_block_next;
 } Env;
 
 #endif // ENV_H

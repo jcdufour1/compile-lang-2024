@@ -1,4 +1,4 @@
-#include <llvm_print_graphvis.h>
+#include <ir_graphvis.h>
 #include <parser_utils.h>
 #include <symbol_iter.h>
 
@@ -8,11 +8,11 @@ static Alloca_table already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
 
-static void llvm_graphvis_internal(String* buf, const Llvm* llvm);
+static void ir_graphvis_internal(String* buf, const Ir* ir);
 
-static void llvm_variable_def_graphvis_internal(String* buf, const Llvm_variable_def* def);
+static void ir_variable_def_graphvis_internal(String* buf, const Ir_variable_def* def);
 
-static bool llvm_graphvis_do_next_arrow(const Llvm* llvm);
+static bool ir_graphvis_do_next_arrow(const Ir* ir);
 
 static void extend_source_loc_internal(const char* file, int line, String* buf) {
     string_extend_cstr(&a_print, buf, "// ");
@@ -93,7 +93,7 @@ static void label_ex_internal(const char* file, int line, String* buf, Name name
     string_extend_cstr(&a_print, buf, "\"];\n");
 }
 
-static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
+static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
     extend_source_loc(buf);
 
     // TODO: make size_t_print_macro?
@@ -106,51 +106,51 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         bool is_last = idx + 1 >= block->children.info.count;
-        Llvm* curr = vec_at(&block->children, idx);
-        Llvm* next = is_last ? NULL : vec_at(&block->children, idx + 1);
+        Ir* curr = vec_at(&block->children, idx);
+        Ir* next = is_last ? NULL : vec_at(&block->children, idx + 1);
 
         if (idx < 1) {
-            arrow_names_label(buf, block->name, llvm_tast_get_name(curr), sv("next"));
+            arrow_names_label(buf, block->name, ir_tast_get_name(curr), sv("next"));
         }
 
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
         if (all_tbl_add_ex(&already_visited, curr)) {
-            Name old_parent_block_next = env.llvm_graphvis_parent_block_next;
-            env.llvm_graphvis_parent_block_next = is_last ? (Name) {0} : llvm_tast_get_name(next);
-            llvm_graphvis_internal(buf, curr);
-            env.llvm_graphvis_parent_block_next = old_parent_block_next;
+            Name old_parent_block_next = env.ir_graphvis_parent_block_next;
+            env.ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_tast_get_name(next);
+            ir_graphvis_internal(buf, curr);
+            env.ir_graphvis_parent_block_next = old_parent_block_next;
         }
-        if (llvm_graphvis_do_next_arrow(curr)) {
+        if (ir_graphvis_do_next_arrow(curr)) {
             if (is_last) {
                 // this is the last node of this block. If we are nested in a parent block, then
-                // the next statement to be executed is in env.llvm_graphvis_parent_block_next (set by the parent block)
-                if (env.llvm_graphvis_parent_block_next.base.count > 0) {
+                // the next statement to be executed is in env.ir_graphvis_parent_block_next (set by the parent block)
+                if (env.ir_graphvis_parent_block_next.base.count > 0) {
                     arrow_names_label(
                         buf,
-                        llvm_tast_get_name(curr),
-                        env.llvm_graphvis_parent_block_next,
+                        ir_tast_get_name(curr),
+                        env.ir_graphvis_parent_block_next,
                         sv("next")
                     );
                 }
             } else {
-                arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), sv("next"));
+                arrow_names_label(buf, ir_tast_get_name(curr), ir_tast_get_name(next), sv("next"));
             }
         }
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         if (all_tbl_add_ex(&already_visited, curr)) {
             todo();
-            arrow_names(buf, block->name, llvm_tast_get_name(curr));
-            llvm_graphvis_internal(buf, curr);
+            arrow_names(buf, block->name, ir_tast_get_name(curr));
+            ir_graphvis_internal(buf, curr);
         }
     }
 }
 
-static void llvm_function_params_graphvis_internal(String* buf, const Llvm_function_params* params) {
+static void ir_function_params_graphvis_internal(String* buf, const Ir_function_params* params) {
     label(buf, params->name, sv("params"));
 
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
@@ -160,83 +160,83 @@ static void llvm_function_params_graphvis_internal(String* buf, const Llvm_funct
     }
 }
 
-static void llvm_variable_def_graphvis_internal(String* buf, const Llvm_variable_def* def) {
+static void ir_variable_def_graphvis_internal(String* buf, const Ir_variable_def* def) {
     label_ex(buf, def->name_self, sv("variable_def"), def->name_corr_param);
 }
 
-static void llvm_label_graphvis_internal(String* buf, const Llvm_label* label) {
+static void ir_label_graphvis_internal(String* buf, const Ir_label* label) {
     label_ex(buf, label->name, sv("label"), label->name);
 }
 
-static void llvm_function_decl_graphvis_internal(String* buf, const Llvm_function_decl* decl) {
+static void ir_function_decl_graphvis_internal(String* buf, const Ir_function_decl* decl) {
     label_ex(buf, decl->name, sv("function decl"), decl->name);
     arrow_names(buf, decl->name, decl->params->name);
 
-    llvm_function_params_graphvis_internal(buf, decl->params);
+    ir_function_params_graphvis_internal(buf, decl->params);
     // TODO
     //string_extend_strv(&a_print, buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
 }
 
-static void llvm_function_def_graphvis_internal(String* buf, const Llvm_function_def* def) {
+static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def* def) {
     label(buf, def->name_self, sv("function def"));
     arrow_names(buf, def->name_self, def->decl->name);
     arrow_names(buf, def->name_self, def->body->name);
 
-    llvm_function_decl_graphvis_internal(buf, def->decl);
-    llvm_block_graphvis_internal(buf, def->body);
+    ir_function_decl_graphvis_internal(buf, def->decl);
+    ir_block_graphvis_internal(buf, def->body);
 }
 
-static void llvm_struct_def_base_graphvis_internal(String* buf, const Llvm_struct_def_base* base) {
+static void ir_struct_def_base_graphvis_internal(String* buf, const Ir_struct_def_base* base) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         arrow_names(buf, base->name, vec_at(&base->members, idx)->name_self);
-        llvm_variable_def_graphvis_internal(buf, vec_at(&base->members, idx));
+        ir_variable_def_graphvis_internal(buf, vec_at(&base->members, idx));
     }
 }
 
-static void llvm_struct_def_graphvis_internal(String* buf, const Llvm_struct_def* def) {
-    llvm_struct_def_base_graphvis_internal(buf, &def->base);
+static void ir_struct_def_graphvis_internal(String* buf, const Ir_struct_def* def) {
+    ir_struct_def_base_graphvis_internal(buf, &def->base);
 }
 
-static void llvm_def_graphvis_internal(String* buf, const Llvm_def* def) {
+static void ir_def_graphvis_internal(String* buf, const Ir_def* def) {
     switch (def->type) {
-        case LLVM_FUNCTION_DEF:
-            llvm_function_def_graphvis_internal(buf, llvm_function_def_const_unwrap(def));
+        case IR_FUNCTION_DEF:
+            ir_function_def_graphvis_internal(buf, ir_function_def_const_unwrap(def));
             return;
-        case LLVM_VARIABLE_DEF:
-            llvm_variable_def_graphvis_internal(buf, llvm_variable_def_const_unwrap(def));
+        case IR_VARIABLE_DEF:
+            ir_variable_def_graphvis_internal(buf, ir_variable_def_const_unwrap(def));
             return;
-        case LLVM_STRUCT_DEF:
-            llvm_struct_def_graphvis_internal(buf, llvm_struct_def_const_unwrap(def));
+        case IR_STRUCT_DEF:
+            ir_struct_def_graphvis_internal(buf, ir_struct_def_const_unwrap(def));
             return;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             todo();
-        case LLVM_FUNCTION_DECL:
+        case IR_FUNCTION_DECL:
             todo();
-        case LLVM_LABEL:
-            llvm_label_graphvis_internal(buf, llvm_label_const_unwrap(def));
+        case IR_LABEL:
+            ir_label_graphvis_internal(buf, ir_label_const_unwrap(def));
             return;
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             todo();
     }
     unreachable("");
 }
 
-static void llvm_load_element_ptr_graphvis_internal(String* buf, const Llvm_load_element_ptr* load) {
+static void ir_load_element_ptr_graphvis_internal(String* buf, const Ir_load_element_ptr* load) {
     String idx_buf = {0};
     string_extend_strv(&a_print, &idx_buf, sv("load element ptr "));
     string_extend_size_t(&a_print, &idx_buf, load->memb_idx);
     label(buf, load->name_self, string_to_strv(idx_buf));
 
-    arrow_names_label(buf, load->name_self, load->llvm_src, sv("src"));
+    arrow_names_label(buf, load->name_self, load->ir_src, sv("src"));
 }
 
-static void llvm_array_access_graphvis_internal(String* buf, const Llvm_array_access* access) {
+static void ir_array_access_graphvis_internal(String* buf, const Ir_array_access* access) {
     label(buf, access->name_self, sv("access"));
     arrow_names_label(buf, access->name_self, access->index, sv("index"));
     arrow_names_label(buf, access->name_self, access->callee, sv("callee"));
 }
 
-static void llvm_int_graphvis_internal(String* buf, const Llvm_int* lit) {
+static void ir_int_graphvis_internal(String* buf, const Ir_int* lit) {
     String num_buf = {0};
 
     string_extend_int64_t(&a_print, &num_buf, lit->data);
@@ -245,7 +245,7 @@ static void llvm_int_graphvis_internal(String* buf, const Llvm_int* lit) {
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
-static void llvm_float_graphvis_internal(String* buf, const Llvm_float* lit) {
+static void ir_float_graphvis_internal(String* buf, const Ir_float* lit) {
     String num_buf = {0};
 
     string_extend_double(&a_print, &num_buf, lit->data);
@@ -254,7 +254,7 @@ static void llvm_float_graphvis_internal(String* buf, const Llvm_float* lit) {
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
-static void llvm_string_graphvis_internal(String* buf, const Llvm_string* lit) {
+static void ir_string_graphvis_internal(String* buf, const Ir_string* lit) {
     String str_buf = {0};
 
     string_extend_cstr(&a_print, &str_buf, "string_lit ");
@@ -262,36 +262,36 @@ static void llvm_string_graphvis_internal(String* buf, const Llvm_string* lit) {
     label(buf, lit->name, string_to_strv(str_buf));
 }
 
-static void llvm_void_graphvis_internal(String* buf, const Llvm_void* lit) {
+static void ir_void_graphvis_internal(String* buf, const Ir_void* lit) {
     label(buf, lit->name, sv("void"));
 }
 
-static void llvm_function_name_graphvis_internal(String* buf, const Llvm_function_name* lit) {
+static void ir_function_name_graphvis_internal(String* buf, const Ir_function_name* lit) {
     label_ex(buf, lit->name_self, sv("function_name"), lit->fun_name);
 }
 
-static void llvm_literal_graphvis_internal(String* buf, const Llvm_literal* lit) {
+static void ir_literal_graphvis_internal(String* buf, const Ir_literal* lit) {
     switch (lit->type) {
-        case LLVM_INT:
-            llvm_int_graphvis_internal(buf, llvm_int_const_unwrap(lit));
+        case IR_INT:
+            ir_int_graphvis_internal(buf, ir_int_const_unwrap(lit));
             return;
-        case LLVM_FLOAT:
-            llvm_float_graphvis_internal(buf, llvm_float_const_unwrap(lit));
+        case IR_FLOAT:
+            ir_float_graphvis_internal(buf, ir_float_const_unwrap(lit));
             return;
-        case LLVM_STRING:
-            llvm_string_graphvis_internal(buf, llvm_string_const_unwrap(lit));
+        case IR_STRING:
+            ir_string_graphvis_internal(buf, ir_string_const_unwrap(lit));
             return;
-        case LLVM_VOID:
-            llvm_void_graphvis_internal(buf, llvm_void_const_unwrap(lit));
+        case IR_VOID:
+            ir_void_graphvis_internal(buf, ir_void_const_unwrap(lit));
             return;
-        case LLVM_FUNCTION_NAME:
-            llvm_function_name_graphvis_internal(buf, llvm_function_name_const_unwrap(lit));
+        case IR_FUNCTION_NAME:
+            ir_function_name_graphvis_internal(buf, ir_function_name_const_unwrap(lit));
             return;
     }
     unreachable("");
 }
 
-static void llvm_function_call_graphvis_internal(String* buf, const Llvm_function_call* call) {
+static void ir_function_call_graphvis_internal(String* buf, const Ir_function_call* call) {
     label(buf, call->name_self, sv("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
@@ -307,7 +307,7 @@ static void llvm_function_call_graphvis_internal(String* buf, const Llvm_functio
     // TODO: lang_type
 }
 
-static void llvm_binary_graphvis_internal(String* buf, const Llvm_binary* bin) {
+static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "binary ");
     string_extend_strv(&a_print, &type_buf, binary_type_to_str_view(bin->token_type));
@@ -319,7 +319,7 @@ static void llvm_binary_graphvis_internal(String* buf, const Llvm_binary* bin) {
     arrow_names_label(buf, bin->name, bin->rhs, sv("rhs"));
 }
 
-static void llvm_unary_graphvis_internal(String* buf, const Llvm_unary* unary) {
+static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "unary ");
     string_extend_strv(&a_print, &type_buf, unary_type_to_str_view(unary->token_type));
@@ -330,149 +330,149 @@ static void llvm_unary_graphvis_internal(String* buf, const Llvm_unary* unary) {
     arrow_names_label(buf, unary->name, unary->child, sv("child"));
 }
 
-static void llvm_operator_graphvis_internal(String* buf, const Llvm_operator* oper) {
+static void ir_operator_graphvis_internal(String* buf, const Ir_operator* oper) {
     switch (oper->type) {
-        case LLVM_BINARY:
-            llvm_binary_graphvis_internal(buf, llvm_binary_const_unwrap(oper));
+        case IR_BINARY:
+            ir_binary_graphvis_internal(buf, ir_binary_const_unwrap(oper));
             return;
-        case LLVM_UNARY:
-            llvm_unary_graphvis_internal(buf, llvm_unary_const_unwrap(oper));
+        case IR_UNARY:
+            ir_unary_graphvis_internal(buf, ir_unary_const_unwrap(oper));
             return;
     }
     unreachable("");
 }
 
-static void llvm_expr_graphvis_internal(String* buf, const Llvm_expr* expr) {
+static void ir_expr_graphvis_internal(String* buf, const Ir_expr* expr) {
     switch (expr->type) {
-        case LLVM_OPERATOR:
-            llvm_operator_graphvis_internal(buf, llvm_operator_const_unwrap(expr));
+        case IR_OPERATOR:
+            ir_operator_graphvis_internal(buf, ir_operator_const_unwrap(expr));
             return;
-        case LLVM_LITERAL:
-            llvm_literal_graphvis_internal(buf, llvm_literal_const_unwrap(expr));
+        case IR_LITERAL:
+            ir_literal_graphvis_internal(buf, ir_literal_const_unwrap(expr));
             return;
-        case LLVM_FUNCTION_CALL:
-            llvm_function_call_graphvis_internal(buf, llvm_function_call_const_unwrap(expr));
+        case IR_FUNCTION_CALL:
+            ir_function_call_graphvis_internal(buf, ir_function_call_const_unwrap(expr));
             return;
     }
     unreachable("");
 }
 
-static void llvm_return_graphvis_internal(String* buf, const Llvm_return* rtn) {
+static void ir_return_graphvis_internal(String* buf, const Ir_return* rtn) {
     label(buf, rtn->name_self, sv("return"));
 
     arrow_names_label(buf, rtn->name_self, rtn->child, sv("src"));
 }
 
-static void llvm_alloca_graphvis_internal(String* buf, const Llvm_alloca* alloca) {
+static void ir_alloca_graphvis_internal(String* buf, const Ir_alloca* alloca) {
     label_ex(buf, alloca->name, sv("alloca"), alloca->name);
 
     // TODO
 }
 
-static void llvm_cond_goto_graphvis_internal(String* buf, const Llvm_cond_goto* cond_goto) {
+static void ir_cond_goto_graphvis_internal(String* buf, const Ir_cond_goto* cond_goto) {
     label(buf, cond_goto->name_self, sv("cond_goto"));
     arrow_names_label(buf, cond_goto->name_self, cond_goto->if_true, sv("if true"));
     arrow_names_label(buf, cond_goto->name_self, cond_goto->if_false, sv("if false"));
     arrow_names_label(buf, cond_goto->name_self, cond_goto->condition, sv("condition"));
 }
 
-static void llvm_goto_graphvis_internal(String* buf, const Llvm_goto* lang_goto) {
+static void ir_goto_graphvis_internal(String* buf, const Ir_goto* lang_goto) {
     label(buf, lang_goto->name_self, sv("goto"));
     arrow_names_label(buf, lang_goto->name_self, lang_goto->label, sv("label"));
 }
 
-static void llvm_store_another_llvm_graphvis_internal(String* buf, const Llvm_store_another_llvm* store) {
+static void ir_store_another_ir_graphvis_internal(String* buf, const Ir_store_another_ir* store) {
     // TODO: name_self and name inconsistent
     label(buf, store->name, sv("store"));
 
-    arrow_names_label(buf, store->name, store->llvm_src, sv("src"));
-    arrow_names_label(buf, store->name, store->llvm_dest, sv("dest"));
+    arrow_names_label(buf, store->name, store->ir_src, sv("src"));
+    arrow_names_label(buf, store->name, store->ir_dest, sv("dest"));
     // TODO: lang_type
 }
 
-static void llvm_load_another_llvm_graphvis_internal(String* buf, const Llvm_load_another_llvm* load) {
+static void ir_load_another_ir_graphvis_internal(String* buf, const Ir_load_another_ir* load) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "load ");
     string_extend_strv(&a_print, &type_buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
     label(buf, load->name, string_to_strv(type_buf));
 
-    arrow_names_label(buf, load->name, load->llvm_src, sv("src"));
+    arrow_names_label(buf, load->name, load->ir_src, sv("src"));
 }
 
 // this should return false for statement types that never return or have custom code paths, etc.
-static bool llvm_graphvis_do_next_arrow(const Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_BLOCK:
+static bool ir_graphvis_do_next_arrow(const Ir* ir) {
+    switch (ir->type) {
+        case IR_BLOCK:
             return false;
-        case LLVM_EXPR:
+        case IR_EXPR:
             return true;
-        case LLVM_DEF:
+        case IR_DEF:
             return true;
-        case LLVM_LOAD_ELEMENT_PTR:
+        case IR_LOAD_ELEMENT_PTR:
             return true;
-        case LLVM_ARRAY_ACCESS:
+        case IR_ARRAY_ACCESS:
             return true;
-        case LLVM_FUNCTION_PARAMS:
+        case IR_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_RETURN:
+        case IR_RETURN:
             return false;
-        case LLVM_GOTO:
+        case IR_GOTO:
             return false;
-        case LLVM_COND_GOTO:
+        case IR_COND_GOTO:
             return false;
-        case LLVM_ALLOCA:
+        case IR_ALLOCA:
             return true;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_LOAD_ANOTHER_IR:
             return true;
-        case LLVM_STORE_ANOTHER_LLVM:
+        case IR_STORE_ANOTHER_IR:
             return true;
     }
     unreachable("");
 }
 
-static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_BLOCK:
-            llvm_block_graphvis_internal(buf, llvm_block_const_unwrap(llvm));
+static void ir_graphvis_internal(String* buf, const Ir* ir) {
+    switch (ir->type) {
+        case IR_BLOCK:
+            ir_block_graphvis_internal(buf, ir_block_const_unwrap(ir));
             return;
-        case LLVM_EXPR:
-            llvm_expr_graphvis_internal(buf, llvm_expr_const_unwrap(llvm));
+        case IR_EXPR:
+            ir_expr_graphvis_internal(buf, ir_expr_const_unwrap(ir));
             return;
-        case LLVM_DEF:
-            llvm_def_graphvis_internal(buf, llvm_def_const_unwrap(llvm));
+        case IR_DEF:
+            ir_def_graphvis_internal(buf, ir_def_const_unwrap(ir));
             return;
-        case LLVM_LOAD_ELEMENT_PTR:
-            llvm_load_element_ptr_graphvis_internal(buf, llvm_load_element_ptr_const_unwrap(llvm));
+        case IR_LOAD_ELEMENT_PTR:
+            ir_load_element_ptr_graphvis_internal(buf, ir_load_element_ptr_const_unwrap(ir));
             return;
-        case LLVM_ARRAY_ACCESS:
-            llvm_array_access_graphvis_internal(buf, llvm_array_access_const_unwrap(llvm));
+        case IR_ARRAY_ACCESS:
+            ir_array_access_graphvis_internal(buf, ir_array_access_const_unwrap(ir));
             return;
-        case LLVM_FUNCTION_PARAMS:
-            llvm_function_params_graphvis_internal(buf, llvm_function_params_const_unwrap(llvm));
+        case IR_FUNCTION_PARAMS:
+            ir_function_params_graphvis_internal(buf, ir_function_params_const_unwrap(ir));
             return;
-        case LLVM_RETURN:
-            llvm_return_graphvis_internal(buf, llvm_return_const_unwrap(llvm));
+        case IR_RETURN:
+            ir_return_graphvis_internal(buf, ir_return_const_unwrap(ir));
             return;
-        case LLVM_GOTO:
-            llvm_goto_graphvis_internal(buf, llvm_goto_const_unwrap(llvm));
+        case IR_GOTO:
+            ir_goto_graphvis_internal(buf, ir_goto_const_unwrap(ir));
             return;
-        case LLVM_COND_GOTO:
-            llvm_cond_goto_graphvis_internal(buf, llvm_cond_goto_const_unwrap(llvm));
+        case IR_COND_GOTO:
+            ir_cond_goto_graphvis_internal(buf, ir_cond_goto_const_unwrap(ir));
             return;
-        case LLVM_ALLOCA:
-            llvm_alloca_graphvis_internal(buf, llvm_alloca_const_unwrap(llvm));
+        case IR_ALLOCA:
+            ir_alloca_graphvis_internal(buf, ir_alloca_const_unwrap(ir));
             return;
-        case LLVM_LOAD_ANOTHER_LLVM:
-            llvm_load_another_llvm_graphvis_internal(buf, llvm_load_another_llvm_const_unwrap(llvm));
+        case IR_LOAD_ANOTHER_IR:
+            ir_load_another_ir_graphvis_internal(buf, ir_load_another_ir_const_unwrap(ir));
             return;
-        case LLVM_STORE_ANOTHER_LLVM:
-            llvm_store_another_llvm_graphvis_internal(buf, llvm_store_another_llvm_const_unwrap(llvm));
+        case IR_STORE_ANOTHER_IR:
+            ir_store_another_ir_graphvis_internal(buf, ir_store_another_ir_const_unwrap(ir));
             return;
     }
     unreachable("");
 }
 
-Str_view llvm_graphvis(const Llvm_block* block) {
+Str_view ir_graphvis(const Ir_block* block) {
     // TODO: remove parameter block?
     (void) block;
     String buf = {0};
@@ -484,11 +484,11 @@ Str_view llvm_graphvis(const Llvm_block* block) {
     string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make alloca_add_ex)
         if (all_tbl_add_ex(&already_visited, curr)) {
-            llvm_graphvis_internal(&buf, curr);
+            ir_graphvis_internal(&buf, curr);
         }
     }
 

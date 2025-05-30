@@ -12,7 +12,7 @@ Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-void extend_name_llvm(String* buf, Name name) {
+void extend_name_ir(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
 
@@ -177,10 +177,10 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
             extend_name_log_internal(false, buf, name);
             return;
         case NAME_EMIT_C:
-            extend_name_llvm(buf, name);
+            extend_name_ir(buf, name);
             return;
-        case NAME_EMIT_LLVM:
-            extend_name_llvm(buf, name);
+        case NAME_EMIT_IR:
+            extend_name_ir(buf, name);
             return;
     }
     unreachable("");
