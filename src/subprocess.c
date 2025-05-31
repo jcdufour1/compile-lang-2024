@@ -44,6 +44,7 @@ int subprocess_call(Str_view_vec cmd) {
             vec_append(&a_temp, &cstrs, curr);
         }
         vec_append(&a_temp, &cstrs, NULL);
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         execvpe(str_view_to_cstr(&a_temp, vec_at(&cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));

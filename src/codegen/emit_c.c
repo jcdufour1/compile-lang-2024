@@ -786,7 +786,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 20,
+            PARAMETERS_COUNT == 21,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
@@ -812,6 +812,8 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-g"));
         if (params.dump_object) {
             vec_append(&a_main, &cmd, sv("-c"));
+        } else if (params.dump_lower_s) {
+            vec_append(&a_main, &cmd, sv("-S"));
         }
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);

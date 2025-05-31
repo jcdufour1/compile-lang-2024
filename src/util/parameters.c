@@ -4,7 +4,7 @@
 
 bool is_compiling(void) {
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     return params.compile || params.compile_c || params.compile_object || params.compile_s;
@@ -162,7 +162,7 @@ static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -233,7 +233,7 @@ static void parse_long_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -259,9 +259,24 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
+    } else if (str_view_is_equal(curr_opt, sv("S"))) {
+        params.dump_lower_s = true;
     } else if (str_view_is_equal(curr_opt, sv("c"))) {
         params.dump_object = true;
     } else if (str_view_is_equal(curr_opt, sv("run"))) {
+        static_assert(
+            PARAMETERS_COUNT == 21,
+            "exhausive handling of params for if statement below "
+            "(not all parameters are explicitly handled)"
+        );
+        // TODO: make enum for dump_lower_s, compile, etc.
+        if (params.dump_lower_s || params.dump_dot || params.dump_object) {
+            log(
+                LOG_FATAL,
+                "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
+            );
+            exit(EXIT_CODE_FAIL);
+        }
         if (!is_compiling()) {
             log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
             exit(EXIT_CODE_FAIL);
