@@ -31,7 +31,7 @@ typedef enum {
 } OPT_LEVEL;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 19
+#define PARAMETERS_COUNT 20
 typedef struct {
     Str_view input_file_path;
     Str_view output_file_path;
@@ -40,11 +40,13 @@ typedef struct {
     Str_view_vec dynamic_libs;
     Str_view_vec c_input_files;
     Str_view_vec object_files;
+    Str_view_vec lower_s_files;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     bool compile : 1;
     bool compile_c : 1;
     bool compile_object : 1;
+    bool compile_s : 1;
     bool run : 1;
     bool dump_dot : 1;
     bool dump_object : 1;
@@ -53,6 +55,8 @@ typedef struct {
     bool error_opts_changed : 1;
     Backend_info backend_info;
 } Parameters;
+
+bool is_compiling(void);
 
 void parse_args(int argc, char** argv);
 

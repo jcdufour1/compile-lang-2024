@@ -71,7 +71,7 @@ FILE_TYPE get_file_type(Str_view file_path) {
         exit(EXIT_CODE_FAIL);
     }
 
-    static_assert(FILE_TYPE_COUNT == 5, "exhausive handling of file types");
+    static_assert(FILE_TYPE_COUNT == 6, "exhausive handling of file types");
 
     if (str_view_is_equal(ext, sv("own"))) {
         return FILE_TYPE_OWN;
@@ -87,6 +87,9 @@ FILE_TYPE get_file_type(Str_view file_path) {
     }
     if (str_view_is_equal(ext, sv("o"))) {
         return FILE_TYPE_OBJECT;
+    }
+    if (str_view_is_equal(ext, sv("s"))) {
+        return FILE_TYPE_LOWER_S;
     }
 
     String buf = {0};

@@ -123,7 +123,7 @@ void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
-    if (params.compile || params.compile_c) {
+    if (is_compiling()) {
         if (params.emit_llvm) {
             switch (params.backend_info.backend) {
                 case BACKEND_NONE:
@@ -153,7 +153,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

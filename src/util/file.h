@@ -10,6 +10,7 @@ typedef enum {
     FILE_TYPE_DYNAMIC_LIB,
     FILE_TYPE_C,
     FILE_TYPE_OBJECT,
+    FILE_TYPE_LOWER_S,
 
     // count for static asserts
     FILE_TYPE_COUNT,

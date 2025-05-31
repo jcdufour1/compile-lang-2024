@@ -2,6 +2,14 @@
 #include <parser_utils.h>
 #include <file.h>
 
+bool is_compiling(void) {
+    static_assert(
+        PARAMETERS_COUNT == 20,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    return params.compile || params.compile_c || params.compile_object || params.compile_s;
+}
+
 static bool is_long_option(char** argv) {
     if (strlen(argv[0]) < 2) {
         return false;
@@ -154,7 +162,7 @@ static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -162,7 +170,7 @@ static void parse_normal_option(int* argc, char*** argv) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
-        static_assert(FILE_TYPE_COUNT == 5, "exhaustive handling of file types");
+        static_assert(FILE_TYPE_COUNT == 6, "exhaustive handling of file types");
         switch (get_file_type(curr_opt)) {
             case FILE_TYPE_OWN:
                 if (params.compile == true) {
@@ -194,6 +202,10 @@ static void parse_normal_option(int* argc, char*** argv) {
                 params.compile_object = true;
                 vec_append(&a_main, &params.object_files, curr_opt);
                 break;
+            case FILE_TYPE_LOWER_S:
+                params.compile_s = true;
+                vec_append(&a_main, &params.lower_s_files, curr_opt);
+                break;
             default:
                 unreachable("");
         }
@@ -221,7 +233,7 @@ static void parse_long_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -250,7 +262,7 @@ static void parse_long_option(int* argc, char*** argv) {
     } else if (str_view_is_equal(curr_opt, sv("c"))) {
         params.dump_object = true;
     } else if (str_view_is_equal(curr_opt, sv("run"))) {
-        if (!params.compile && !params.compile_c && !params.compile_object) {
+        if (!is_compiling()) {
             log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
             exit(EXIT_CODE_FAIL);
         }
