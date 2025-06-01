@@ -731,7 +731,7 @@ static Ir_function_params* do_function_def_alloca(
     if (params.backend_info.struct_rtn_through_param && is_struct_like(rtn_type.type)) {
         lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
-            old_params,
+            old_params->pos,
             rtn_lang_type,
             false,
             util_literal_name_new()
@@ -1913,8 +1913,6 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 
     assert(!symbol_lookup(&dummy_def, next_if));
 
-    Name before_brk_chk = util_literal_name_new_prefix(sv("after_is_before_brk_chk_if_else_chain_to_branch"));
-
     // is_rtn_check
     Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
     unwrap(pairs->info.count > 0 && "not implemented");
@@ -1931,11 +1929,9 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
             lang_type_new_u1()
         )),
         *new_block,
-        before_brk_chk,
+        if_after,
         vec_top(pairs).label->name
     );
-    // TODO: merge before_brk_chk and if_after
-    add_label((*new_block), before_brk_chk, if_else->pos);
     add_label((*new_block), if_after, if_else->pos);
 
     // is_brk_check
@@ -1960,7 +1956,6 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     add_label((*new_block), after_is_brk, if_else->pos);
 
     // is_cont_check
-    Name after_is_cont = util_literal_name_new_prefix(sv("after_is_cont_check_if_else_chain_to_branch"));
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not breaking right now
@@ -1975,13 +1970,11 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
             lang_type_new_u1()
         )),
         *new_block,
-        after_is_cont,
+        next_if,
         vec_top(pairs).label->name
     );
-    add_label((*new_block), after_is_cont, if_else->pos);
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
-
 
     label_if_break = old_label_if_break;
     label_if_after = old_label_if_after;
