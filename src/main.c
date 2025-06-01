@@ -124,36 +124,21 @@ void do_passes(void) {
     }
 
     if (params.stop_after > STOP_AFTER_GEN_IR) {
-        if (params.emit_llvm) {
-            switch (params.backend_info.backend) {
-                case BACKEND_NONE:
-                    unreachable("this should have been caught eariler");
-                case BACKEND_LLVM:
-                    emit_llvm_from_tree(ir);
-                    break;
-                case BACKEND_C:
-                    emit_c_from_tree(ir);
-                    break;
-                default:
-                    unreachable("");
-            }
-        } else {
-            switch (params.backend_info.backend) {
-                case BACKEND_NONE:
-                    unreachable("this should have been caught eariler");
-                case BACKEND_LLVM:
-                    todo();
-                case BACKEND_C:
-                    emit_c_from_tree(ir);
-                    break;
-                default:
-                    unreachable("");
-            }
+        switch (params.backend_info.backend) {
+            case BACKEND_NONE:
+                unreachable("this should have been caught eariler");
+            case BACKEND_LLVM:
+                todo();
+            case BACKEND_C:
+                emit_c_from_tree(ir);
+                break;
+            default:
+                unreachable("");
         }
     }
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

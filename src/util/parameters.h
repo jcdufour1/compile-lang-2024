@@ -44,7 +44,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 18
+#define PARAMETERS_COUNT 17
 typedef struct {
     Strv input_file_path;
     Strv output_file_path;
@@ -60,7 +60,6 @@ typedef struct {
     STOP_AFTER stop_after : 4;
     bool compile_own : 1;
     bool dump_dot : 1;
-    bool emit_llvm : 1; // TODO: remove?
     bool all_errors_fatal : 1;
     bool error_opts_changed : 1;
     Backend_info backend_info;

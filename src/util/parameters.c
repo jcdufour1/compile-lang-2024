@@ -196,7 +196,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -266,11 +266,6 @@ typedef struct {
     bool arg_expected;
 } Long_option_pair;
 
-static void long_option_emit_llvm(Strv curr_opt) {
-    (void) curr_opt;
-    params.emit_llvm = true;
-}
-
 static void long_option_l(Strv curr_opt) {
     vec_append(&a_main, &params.l_flags, curr_opt);
 }
@@ -316,7 +311,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -398,11 +393,10 @@ static void long_option_log_level(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 18,
+    PARAMETERS_COUNT == 17,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
-    {"emit-llvm", long_option_emit_llvm, false},
     {"l", long_option_l, true},
     {"backend", long_option_backend, true},
     {"all-errors-fetal", long_option_all_errors_fetal, false},
@@ -420,11 +414,6 @@ Long_option_pair long_options[] = {
 // TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
-
-    static_assert(
-        PARAMETERS_COUNT == 18,
-        "exhausive handling of params (not all parameters are explicitly handled)"
-    );
 
     for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
         Long_option_pair curr = long_options[idx];
@@ -449,8 +438,6 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static void set_params_to_defaults(void) {
-    params.opt_level = OPT_LEVEL_O0;
-    params.emit_llvm = false;
     params.output_file_path = sv("a.out");
 
     set_backend(BACKEND_C);
@@ -472,7 +459,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (

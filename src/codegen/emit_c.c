@@ -760,7 +760,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 18,
+            PARAMETERS_COUNT == 17,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
