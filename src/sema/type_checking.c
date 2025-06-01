@@ -1278,7 +1278,7 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        util_literal_name_new2(),
+        util_literal_name_new(),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1340,19 +1340,19 @@ bool try_set_array_literal_types(
             lit->pos,
             gen_arg,
             false,
-            util_literal_name_new2()
+            util_literal_name_new()
         ));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new2()}
+        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()}
     );
     sym_tbl_add(tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        util_literal_name_new2(),
+        util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
     Ulang_type dummy = {0};
@@ -1379,7 +1379,7 @@ bool try_set_array_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
         new_lit_membs,
-        util_literal_name_new2(),
+        util_literal_name_new(),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1617,7 +1617,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
             pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new2()),
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL

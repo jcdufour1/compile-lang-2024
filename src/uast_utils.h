@@ -53,85 +53,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Ulang_type uast_get_ulang_type(const Uast* uast) {
-    switch (uast->type) {
-        case UAST_STMT:
-            return uast_get_ulang_type_stmt(uast_stmt_const_unwrap(uast));
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
-            unreachable("");
-        case UAST_CASE:
-            unreachable("");
-        case UAST_PARAM:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-// TODO: remove this function
-static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
-    switch (def->type) {
-        case UAST_FUNCTION_DEF:
-            unreachable("");
-        case UAST_RAW_UNION_DEF:
-            unreachable("");
-        case UAST_VARIABLE_DEF:
-            unreachable("");
-        case UAST_FUNCTION_DECL:
-            unreachable("");
-        case UAST_STRUCT_DEF:
-            unreachable("");
-        case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_ENUM_DEF:
-            unreachable("");
-        case UAST_GENERIC_PARAM:
-            unreachable("");
-        case UAST_POISON_DEF:
-            unreachable("");
-        case UAST_IMPORT_PATH:
-            unreachable("");
-        case UAST_MOD_ALIAS:
-            unreachable("");
-        case UAST_LANG_DEF:
-            unreachable("");
-        case UAST_VOID_DEF:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
-    switch (stmt->type) {
-        case UAST_EXPR:
-            unreachable("");
-        case UAST_BLOCK:
-            unreachable("");
-        case UAST_DEF:
-            return uast_get_ulang_type_def_ref(uast_def_unwrap(stmt));
-        case UAST_RETURN:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
-        case UAST_FOR_WITH_COND:
-            unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_DEFER:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics);
 
 static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_vec generics) {
@@ -180,63 +101,6 @@ static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang
     unreachable("");
 }
 
-// TODO: remove this function
-static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
-    switch (def->type) {
-        case UAST_FUNCTION_DEF:
-            unreachable("");
-        case UAST_RAW_UNION_DEF:
-            unreachable("");
-        case UAST_VARIABLE_DEF:
-            unreachable("");
-        case UAST_FUNCTION_DECL:
-            unreachable("");
-        case UAST_STRUCT_DEF:
-            unreachable("");
-        case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_ENUM_DEF:
-            unreachable("");
-        case UAST_GENERIC_PARAM:
-            unreachable("");
-        case UAST_POISON_DEF:
-            unreachable("");
-        case UAST_IMPORT_PATH:
-            unreachable("");
-        case UAST_MOD_ALIAS:
-            unreachable("");
-        case UAST_LANG_DEF:
-            unreachable("");
-        case UAST_VOID_DEF:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
-    switch (stmt->type) {
-        case UAST_EXPR:
-            unreachable("");
-        case UAST_BLOCK:
-            unreachable("");
-        case UAST_DEF:
-            return uast_def_ref_get_lang_type(uast_def_unwrap(stmt));
-        case UAST_RETURN:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
-        case UAST_FOR_WITH_COND:
-            unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_DEFER:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
@@ -256,8 +120,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_ENUM_DEF:
             return uast_enum_def_const_unwrap(def)->base.name;
         case UAST_GENERIC_PARAM:
-            todo();
-            //return uast_generic_param_const_unwrap(def)->child->name;
+            unreachable("");
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT_PATH:
@@ -267,30 +130,6 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_LANG_DEF:
             return uast_lang_def_const_unwrap(def)->alias_name;
     }
-    unreachable("");
-}
-
-static inline Strv uast_get_name(const Uast* uast) {
-    (void) uast;
-    todo();
-    //switch (uast->type) {
-    //    case UAST_STMT:
-    //        return uast_stmt_get_name(uast_stmt_const_unwrap(uast));
-    //    case UAST_FUNCTION_PARAMS:
-    //        unreachable("");
-    //    case UAST_FOR_LOWER_BOUND:
-    //        unreachable("");
-    //    case UAST_FOR_UPPER_BOUND:
-    //        unreachable("");
-    //    case UAST_IF:
-    //        unreachable("");
-    //    case UAST_CONDITION:
-    //        unreachable("");
-    //    case UAST_CASE:
-    //        unreachable("");
-    //    case UAST_PARAM:
-    //        return uast_param_const_unwrap(uast)->base->name;
-    //}
     unreachable("");
 }
 

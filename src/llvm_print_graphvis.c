@@ -49,7 +49,7 @@ static void arrow_names_label(String* buf, Name lhs, Name rhs, Strv label) {
 // (String* buf, Name parent_name, void* child, <Fun*> child_fun)
 #define child_with_arrow2(buf, parent_name, child, child_fun) \
     do { \
-        Name child_name = util_literal_name_new2(); \
+        Name child_name = util_literal_name_new(); \
         arrow_names(buf, parent_name, child_name); \
         string_extend_strv(&a_print, buf, child_fun(child_name, child)); \
     } while (0)
@@ -58,7 +58,7 @@ static void arrow_names_label(String* buf, Name lhs, Name rhs, Strv label) {
 // (String* buf, Name parent_name, void* child, <Fun*> child_fun)
 #define child_with_arrow1(buf, parent_name, child, child_fun) \
     do { \
-        Name child_name = util_literal_name_new2(); \
+        Name child_name = util_literal_name_new(); \
         arrow_names(buf, parent_name, child_name); \
         string_extend_strv(&a_print, buf, child_fun(child)); \
     } while (0)
@@ -67,7 +67,7 @@ static void arrow_names_label(String* buf, Name lhs, Name rhs, Strv label) {
 // (String* buf, Name parent_name, void* child, <Fun*> child_fun, Strv label)
 #define child_with_arrow_label(buf, parent_name, child, child_fun, label) \
     do { \
-        Name child_name = util_literal_name_new2(); \
+        Name child_name = util_literal_name_new(); \
         arrow_names_label(buf, parent_name, child_name, label); \
         string_extend_strv(&a_print, buf, child_fun(child_name, child)); \
     } while (0)
@@ -108,7 +108,7 @@ static Strv ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
     String buf = {0};
     extend_source_loc(&buf);
 
-    Name children_name = util_literal_name_new2();
+    Name children_name = util_literal_name_new();
     label(&buf, block_name, sv("block"));
     arrow_names(&buf, block_name, children_name);
     label(&buf, children_name, sv("block children"));
@@ -116,7 +116,7 @@ static Strv ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
-        Name child_name = util_literal_name_new2();
+        Name child_name = util_literal_name_new();
         arrow_names(&buf, children_name, child_name);
         string_extend_strv(&a_print, &buf, ir_graphvis_internal(child_name, curr));
     }
@@ -233,7 +233,7 @@ static Strv ir_function_call_graphvis_internal(const Ir_function_call* call) {
 
     arrow_names_label(&buf, call->name_self, call->callee, sv("callee"));
 
-    Name args_name = util_literal_name_new2();
+    Name args_name = util_literal_name_new();
 
     arrow_names(&buf, call->name_self, args_name);
 
@@ -352,7 +352,7 @@ Strv ir_graphvis(const Ir_block* block) {
     string_extend_cstr(&a_print, &buf, "node [style=filled, fillcolor=\"#2e2e2e\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];");
 
-    Name block_name = util_literal_name_new2();
+    Name block_name = util_literal_name_new();
     extend_name_graphvis(&buf, block_name);
     string_extend_cstr(&a_print, &buf, " [label = block];\n");
     string_extend_strv(&a_print, &buf, ir_block_graphvis_internal(block_name, block));

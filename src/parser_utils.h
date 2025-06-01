@@ -61,16 +61,13 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 #define util_literal_strv_new() \
     util_literal_strv_new_internal(__FILE__, __LINE__, sv(""))
 
-Strv util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
+Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix);
+#define util_literal_name_new_prefix(debug_prefix) \
+    util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
 
-#define util_literal_name_new_prefix2(debug_prefix) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix)
-
-// TODO: remove 2 suffix
-#define util_literal_name_new2() \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""))
+#define util_literal_name_new() \
+    util_literal_name_new_prefix_internal(__FILE__, __LINE__, sv(""))
 
 Name get_storage_location(Name sym_name);
 
@@ -156,7 +153,6 @@ static inline bool tast_try_get_member_def(
 }
 
 bool try_set_variable_def_types(
-     
     Tast_variable_def** new_tast,
     Uast_variable_def* uast,
     bool add_to_sym_tbl,
@@ -180,7 +176,7 @@ static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
 }
 
 static inline const Tast_struct_def* ir_get_struct_def_const(const Ir* tast) {
-    return ir_get_struct_def( (Ir*)tast);
+    return ir_get_struct_def((Ir*)tast);
 }
 
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {

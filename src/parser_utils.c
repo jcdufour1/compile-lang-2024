@@ -434,6 +434,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
 }
 
 Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix) {
+    (void) debug_prefix;
     (void) file;
     (void) line;
     static String_vec literal_strings = {0};
@@ -465,7 +466,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     return strv;
 }
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix) {
+Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
     return name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 }
 

@@ -1456,7 +1456,7 @@ static PARSE_STATUS parse_for_range_internal(
             ))
         ),
         inner,
-        util_literal_name_new_prefix2(sv("todo_remove_in_src_parser")),
+        util_literal_name_new_prefix(sv("todo_remove_in_src_parser")),
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));

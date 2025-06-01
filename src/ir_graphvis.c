@@ -297,7 +297,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     label(buf, call->name_self, sv("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
-    Name args_name = util_literal_name_new2();
+    Name args_name = util_literal_name_new();
     label(buf, args_name, sv("args"));
     arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {

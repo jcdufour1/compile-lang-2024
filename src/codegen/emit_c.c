@@ -161,7 +161,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
                 unwrap(alloca_lookup(&child_def_, ori_name));
                 Ir_struct_def* child_def = ir_struct_def_unwrap(ir_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
-                *struct_to_use = util_literal_name_new2();
+                *struct_to_use = util_literal_name_new();
                 Ir_struct_def* new_def = ir_struct_def_new(def->pos, ((Ir_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
@@ -498,7 +498,7 @@ static void emit_c_return(Emit_c_strs* strs, const Ir_return* rtn) {
 
 static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     emit_c_loc(output, alloca->loc, alloca->pos);
-    Name storage_loc = util_literal_name_new2();
+    Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_main, output, "    ");
     log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
