@@ -258,6 +258,17 @@ static void set_backend(BACKEND backend) {
     unreachable("");
 }
 
+typedef void(*Long_option_action)(Strv curr_opt);
+
+typedef struct {
+    const char* text;
+    Long_option_action action;
+    bool arg_expected;
+} Long_option_pair;
+
+Long_option_pair long_options[] = {
+};
+
 // TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, "arg expected");
@@ -267,6 +278,19 @@ static void parse_long_option(int* argc, char*** argv) {
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
+    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
+        Long_option_pair curr = long_options[idx];
+        if (strv_starts_with(sv(curr.text), curr_opt)) {
+            strv_consume_count(&curr_opt, sv(curr.text).count);
+            if (curr.arg_expected && curr_opt.count < 1) {
+                curr.action(consume_arg(argc, argv, "argument expected"));
+            } else {
+                curr.action(curr_opt);
+            }
+        }
+    }
+
+    {"emit-llvm", long_option_emit_llvm, false}
     if (strv_is_equal(curr_opt, sv("emit-llvm"))) {
         params.emit_llvm = true;
     } else if (strv_is_equal(curr_opt, sv("l"))) {
