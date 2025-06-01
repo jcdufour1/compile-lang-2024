@@ -12,6 +12,8 @@
 #include <msg_todo.h>
 #include <symbol_iter.h>
 
+static bool is_in_struct_base_def;
+
 #define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
 
@@ -61,7 +63,7 @@ static void msg_invalid_count_generic_args_internal(
 }
 
 static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
-    env.type_checking_is_in_struct_base_def = true;
+    is_in_struct_base_def = true;
     bool success = true;
     Tast_variable_def_vec new_members = {0};
 
@@ -89,7 +91,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
         .name = base->name
     };
 
-    env.type_checking_is_in_struct_base_def = false;
+    is_in_struct_base_def = false;
     return success;
 }
 

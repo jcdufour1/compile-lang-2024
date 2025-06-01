@@ -17,7 +17,6 @@
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
 #include <symbol_log.h>
-#include <parent_of_print.h>
 #include <lang_type_get_pos.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>
@@ -27,6 +26,35 @@
 #include <msg_undefined_symbol.h>
 #include <pos_vec.h>
 #include <check_struct_recursion.h>
+
+typedef enum {
+    PARENT_OF_NONE = 0,
+    PARENT_OF_CASE,
+    PARENT_OF_ASSIGN_RHS,
+    PARENT_OF_RETURN,
+    PARENT_OF_BREAK,
+    PARENT_OF_IF,
+} PARENT_OF;
+
+static Strv parent_of_print_internal(PARENT_OF parent_of) {
+    switch (parent_of) {
+        case PARENT_OF_NONE:
+            return sv("PARENT_OF_NONE");
+        case PARENT_OF_CASE:
+            return sv("PARENT_OF_CASE");
+        case PARENT_OF_ASSIGN_RHS:
+            return sv("PARENT_OF_ASSIGN_RHS");
+        case PARENT_OF_RETURN:
+            return sv("PARENT_OF_RETURN");
+        case PARENT_OF_BREAK:
+            return sv("PARENT_OF_BREAK");
+        case PARENT_OF_IF:
+            return sv("PARENT_OF_IF");
+    }
+    unreachable("");
+}
+
+#define parent_of_print(parent_of) strv_print(parent_of_print_internal(parent_of))
 
 static int dummy_int;
 
@@ -43,6 +71,8 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
 static PARENT_OF parent_of;
 static Uast_expr* parent_of_operand;
+
+static bool is_in_struct_base_def;
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -2218,7 +2248,7 @@ bool try_set_variable_def_types(
     }
 
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
-    if (add_to_sym_tbl && !env.type_checking_is_in_struct_base_def) {
+    if (add_to_sym_tbl && !is_in_struct_base_def) {
         symbol_add(tast_variable_def_wrap(*new_tast));
     }
     return true;
