@@ -12,13 +12,14 @@
 
 typedef enum {
     LOG_NEVER   = 0,
-    LOG_TRACE   = 1,
-    LOG_DEBUG   = 2,
-    LOG_VERBOSE = 3,
-    LOG_NOTE    = 4,
-    LOG_WARNING = 5,
-    LOG_ERROR   = 6,
-    LOG_FATAL   = 7,
+    LOG_TRACE,
+    LOG_DEBUG,
+    LOG_VERBOSE,
+    LOG_INFO,
+    LOG_NOTE,
+    LOG_WARNING,
+    LOG_ERROR,
+    LOG_FATAL,
 } LOG_LEVEL;
 
 #ifndef MIN_LOG_LEVEL
@@ -27,8 +28,8 @@ typedef enum {
 
 typedef enum {
     EXIT_CODE_SUCCESS = 0,
-    EXIT_CODE_FAIL = 1,
-    EXIT_CODE_EXPECTED_FAIL = 2,
+    EXIT_CODE_FAIL,
+    EXIT_CODE_EXPECTED_FAIL,
 } EXIT_CODE;
 
 struct Env_;
@@ -39,9 +40,6 @@ typedef struct {
     uint32_t line;
     uint32_t column;
 } Pos;
-
-// TODO: make these constants upper case
-#define dummy_env (&(Env){0})
 
 #define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
 
