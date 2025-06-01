@@ -449,10 +449,10 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
 
-#ifndef DNDEBUG
-    string_extend_cstr(&a_main, &var_name, "__");
-    string_extend_strv(&a_main, &var_name, debug_prefix);
-    string_extend_cstr(&a_main, &var_name, "__");
+#ifndef NDEBUG
+    //string_extend_cstr(&a_main, &var_name, "__");
+    //string_extend_strv(&a_main, &var_name, debug_prefix);
+    //string_extend_cstr(&a_main, &var_name, "__");
 #endif // DNDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);
@@ -465,12 +465,8 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     return strv;
 }
 
-Strv util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
-    return util_literal_strv_new_internal(file, line, debug_prefix);
-}
-
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix, Strv mod_path) {
-    return name_new(mod_path, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix) {
+    return name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 }
 
 // TODO: inline this function

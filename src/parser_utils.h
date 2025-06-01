@@ -63,21 +63,14 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
 Strv util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix, Strv mod_path);
-
-// TODO: remove this macro?
-#define util_literal_name_new_prefix(debug_prefix) \
-    util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix);
 
 #define util_literal_name_new_prefix2(debug_prefix) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix, (Strv) {0})
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix)
 
 // TODO: remove 2 suffix
 #define util_literal_name_new2() \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""), (Strv) {0})
-
-#define util_literal_name_new_mod_path2(mod_path) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""), mod_path)
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, sv(""))
 
 Name get_storage_location(Name sym_name);
 

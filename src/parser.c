@@ -1367,7 +1367,7 @@ static PARSE_STATUS parse_for_range_internal(
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, user_name.scope_id),
-        name_new(user_name.mod_path, util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
+        name_new(sv("builtin"), util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
