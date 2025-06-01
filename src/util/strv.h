@@ -135,8 +135,6 @@ static inline const char* strv_to_cstr(Arena* arena, Strv strv) {
     return buf;
 }
 
-#define STR_VIEW_FMT "%.*s"
-
 #define strv_print(strv) (int)((strv).count), (strv).str
 
 #endif // STR_VIEW_H

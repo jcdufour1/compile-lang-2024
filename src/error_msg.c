@@ -26,7 +26,7 @@ static void show_location_error(Pos pos) {
         }
 
         Strv prev_line = strv_slice(file_con, 0, count_prev);
-        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line - 1, strv_print(prev_line));
+        fprintf(stderr, " %5"PRIu32" | "FMT"\n", pos.line - 1, strv_print(prev_line));
 
         while (file_con.count > 0 && strv_consume(&file_con) != '\n');
     }
@@ -40,7 +40,7 @@ static void show_location_error(Pos pos) {
         }
     }
     Strv curr_line = strv_slice(file_con, 0, count_curr);
-    fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, strv_print(curr_line));
+    fprintf(stderr, " %5"PRIu32" | "FMT"\n", pos.line, strv_print(curr_line));
     while (file_con.count > 0 && strv_consume(&file_con) != '\n');
 
     fprintf(stderr, "       | ");
@@ -59,7 +59,7 @@ static void show_location_error(Pos pos) {
             }
         }
         Strv next_line = strv_slice(file_con, 0, count_next);
-        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line + 1, strv_print(next_line));
+        fprintf(stderr, " %5"PRIu32" | "FMT"\n", pos.line + 1, strv_print(next_line));
     }
 }
 
@@ -86,7 +86,7 @@ void msg_internal(
             fprintf(stderr, "%s:", get_log_level_str(log_level));
             vfprintf(stderr, format, args);
         } else {
-            fprintf(stderr, STR_VIEW_FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            fprintf(stderr, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
             vfprintf(stderr, format, args);
             show_location_error(pos);
         }

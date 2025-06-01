@@ -236,8 +236,8 @@ static void msg_invalid_function_arg_internal(
     msg_internal(
         file, line,
         DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
-        "argument is of type `"LANG_TYPE_FMT"`, "
-        "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
+        "argument is of type `"FMT"`, "
+        "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
         name_print(NAME_MSG, corres_param->name),
         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
@@ -245,7 +245,7 @@ static void msg_invalid_function_arg_internal(
     msg_internal(
         file, line,
         DIAG_NOTE, corres_param->pos,
-        "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
+        "corresponding parameter `"FMT"` defined here\n",
         name_print(NAME_MSG, corres_param->name)
     );
 }
@@ -270,12 +270,12 @@ static void msg_invalid_count_function_args_internal(
     string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
-        STR_VIEW_FMT, strv_print(string_to_strv(message))
+        FMT, strv_print(string_to_strv(message))
     );
 
     msg_internal(
         file, line, DIAG_NOTE, uast_function_decl_get_pos(fun_decl),
-        "function `"STR_VIEW_FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
+        "function `"FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
     );
 }
 
@@ -303,7 +303,7 @@ static void msg_invalid_count_struct_literal_args_internal(
     string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
-        STR_VIEW_FMT, strv_print(string_to_strv(message))
+        FMT, strv_print(string_to_strv(message))
     );
 }
 
@@ -315,14 +315,14 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
         msg_internal(
             file, line,
             DIAG_MISSING_YIELD_STATEMENT, pos,
-            "no break statement in case that breaks `"LANG_TYPE_FMT"`\n",
+            "no break statement in case that breaks `"FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, break_type)
         );
     } else {
         msg_internal(
             file, line,
             DIAG_MISMATCHED_YIELD_TYPE, pos,
-            "breaking `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            "breaking `"FMT"`, but type `"FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
             lang_type_print(LANG_TYPE_MODE_MSG, break_type)
         );
@@ -331,7 +331,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
     msg_internal(
         file, line,
         DIAG_NOTE, lang_type_get_pos(break_type),
-        "case break type `"LANG_TYPE_FMT"` defined here\n",
+        "case break type `"FMT"` defined here\n",
         lang_type_print(LANG_TYPE_MODE_MSG, break_type) 
     );
 }
@@ -341,14 +341,14 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
         msg_internal(
             file, line,
             DIAG_MISSING_RETURN, pos,
-            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+            "no return statement in function that returns `"FMT"`\n",
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     } else {
         msg_internal(
             file, line,
             DIAG_MISMATCHED_RETURN_TYPE, pos,
-            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            "returning `"FMT"`, but type `"FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
@@ -357,7 +357,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
     msg_internal(
         file, line,
         DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
-        "function return type `"LANG_TYPE_FMT"` defined here\n",
+        "function return type `"FMT"` defined here\n",
         ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
     );
 }
@@ -682,7 +682,7 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
         case BINARY_SHIFT_LEFT:
             // fallthrough
         case BINARY_SHIFT_RIGHT:
-            msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"TAST_FMT"` is not supported\n", binary_type_print(token_type));
+            msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"FMT"` is not supported\n", binary_type_print(token_type));
             return false;
     }
     unreachable("");
@@ -769,7 +769,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         } else {
             msg(
                 DIAG_BINARY_MISMATCHED_TYPES, oper_pos,
-                "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
+                "types `"FMT"` and `"FMT"` are not valid operands to binary expression\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
             );
@@ -832,7 +832,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     vec_at(&uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
                     lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
                 )) {
-                    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
+                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
                     // overloaded binary operators not defined for non-void inner types of enum
                     msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
                     todo();
@@ -929,7 +929,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 break;
             }
             default:
-                unreachable(STR_VIEW_FMT, binary_type_print(oper_token_type));
+                unreachable(FMT, binary_type_print(oper_token_type));
         }
 
     }
@@ -957,7 +957,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
                 msg(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
                     operator->pos,
-                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
                 );
@@ -1027,10 +1027,9 @@ bool try_set_unary_types_finish(
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_NOTE, TAST_FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
-                log(LOG_NOTE, BOOL_FMT, bool_print(lang_type_is_number(tast_expr_get_lang_type(new_child))));
+                log(LOG_NOTE, FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
                 log(LOG_NOTE, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
-                log(LOG_NOTE, TAST_FMT, tast_expr_print(new_child));
+                log(LOG_NOTE, FMT, tast_expr_print(new_child));
                 todo();
             }
             *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
@@ -1045,7 +1044,7 @@ bool try_set_unary_types_finish(
             if (!lang_type_is_number(new_lang_type)) {
                 msg(
                     DIAG_UNARY_MISMATCHED_TYPES, unary_pos,
-                    "`"LANG_TYPE_FMT"` is not valid operand to logical not operation\n",
+                    "`"FMT"` is not valid operand to logical not operation\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type)
                 );
                 return false;
@@ -1094,8 +1093,8 @@ bool try_set_tuple_assignment_types(
     if (lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
         msg(
             DIAG_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
-            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`; "
-            "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT"` has %zu elements\n",
+            "tuple `"FMT"` cannot be assigned to `"FMT"`; "
+            "tuple `"FMT"` has %zu elements, but type `"FMT"` has %zu elements\n",
             uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
             uast_tuple_print(tuple), tuple->members.info.count,
             lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
@@ -1124,7 +1123,7 @@ bool try_set_tuple_assignment_types(
                 msg(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
                     tast_expr_get_pos(new_memb),
-                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_memb)),
                     lang_type_print(LANG_TYPE_MODE_MSG, curr_dest)
                 );
@@ -1189,7 +1188,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
             if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
                 msg(
                     DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
-                    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+                    "expected `."FMT" =`, got `."FMT" =`\n", 
                     strv_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
                 );
                 return false;
@@ -1208,7 +1207,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 msg(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(memb),
-                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     ulang_type_print(LANG_TYPE_MODE_MSG, memb_def->lang_type)
                 );
@@ -1249,12 +1248,12 @@ bool try_set_struct_literal_types(
         case LANG_TYPE_PRIMITIVE:
             msg(
                 DIAG_STRUCT_INIT_ON_PRIMITIVE,
-                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
+                assign_pos, "struct literal cannot be assigned to primitive type `"FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
             );
             return false;
         default:
-            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+            unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     }
     Uast_def* struct_def_ = NULL;
     unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
@@ -1310,7 +1309,7 @@ bool try_set_array_literal_types(
                 msg(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
-                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
@@ -1545,7 +1544,7 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
             msg(
                 DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                 assignment->pos,
-                "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
             );
@@ -1676,7 +1675,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_INVALID:
                     msg(
                         DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
-                        "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
+                        "cannot assign "FMT" of type `"FMT"` to '"FMT"`\n", 
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
@@ -1761,7 +1760,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
             todo();
         default:
-            unreachable(TAST_FMT, tast_expr_print(new_callee));
+            unreachable(FMT, tast_expr_print(new_callee));
     }
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
@@ -1917,7 +1916,7 @@ static void msg_invalid_member_internal(
     msg_internal(
         file, line, DIAG_INVALID_MEMBER_ACCESS,
         access->pos,
-        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+        "`"FMT"` is not a member of `"FMT"`\n", 
         strv_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
     );
 }
@@ -2090,7 +2089,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
-                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
                 todo();
             }
 
@@ -2140,7 +2139,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             return true;
         }
         default:
-            unreachable(TAST_FMT, tast_expr_print(new_callee));
+            unreachable(FMT, tast_expr_print(new_callee));
     }
     unreachable("");
 }
@@ -2504,7 +2503,7 @@ static bool check_for_exhaustiveness_inner(
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     DIAG_DUPLICATE_CASE, curr_if->pos,
-                    "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
+                    "duplicate case `"FMT"."FMT"` in switch statement\n",
                     name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
@@ -2562,7 +2561,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         if (!status) {
             msg(
                 DIAG_NON_EXHAUSTIVE_SWITCH, pos_switch,
-                STR_VIEW_FMT"\n", string_print(string)
+                FMT"\n", string_print(string)
             );
         }
         return status;
@@ -2691,14 +2690,14 @@ bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
         DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
+        "redefinition of symbol "FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         DIAG_NOTE, uast_def_get_pos(original_def),
-        STR_VIEW_FMT " originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
+        FMT " originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 }
 

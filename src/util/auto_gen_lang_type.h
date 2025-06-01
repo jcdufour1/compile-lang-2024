@@ -262,7 +262,7 @@ static void lang_type_gen_lang_type_forward_decl(Lang_type_type lang_type) {
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void lang_type_gen_lang_type_struct_as(String* output, Lang_type_type lang_type) {
@@ -360,7 +360,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
@@ -421,7 +421,7 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
@@ -470,7 +470,7 @@ static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void lang_type_gen_lang_type_unwrap(Lang_type_type lang_type) {
@@ -507,7 +507,7 @@ static void lang_type_gen_print_forward_decl(Lang_type_type type) {
     extend_lang_type_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* lang_type, int recursion_depth);");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void lang_type_gen_new_internal(Lang_type_type type, bool implementation) {
@@ -567,7 +567,7 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {

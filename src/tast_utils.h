@@ -6,8 +6,6 @@
 #include <ulang_type.h>
 #include <ulang_type_get_pos.h>
 
-#define LANG_TYPE_FMT STR_VIEW_FMT
-
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
@@ -81,7 +79,7 @@ Strv tast_print_internal(const Tast* tast, int recursion_depth);
 
 #define tast_printf(tast) \
     do { \
-        log(LOG_NOTE, TAST_FMT"\n", tast_print(tast)); \
+        log(LOG_NOTE, FMT"\n", tast_print(tast)); \
     } while (0);
 
 static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operator) {

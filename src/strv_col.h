@@ -113,8 +113,6 @@ static inline bool strv_col_try_consume(Pos* pos, Strv_col* strv, char ch) {
     return false;
 }
 
-#define STR_VIEW_COL_FMT STR_VIEW_FMT
-
 #define strv_col_print(strv) strv_print((strv).base)
 
 #endif // STR_VIEW_COL_H

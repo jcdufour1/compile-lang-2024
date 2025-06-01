@@ -16,7 +16,7 @@ static void gen_vec_from_strv(Strv vec_name, Strv item_name) {
     extend_strv_first_upper(&function, vec_name);
     string_extend_cstr(&gen_a, &function, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void gen_vec_from_cstr(const char* vec_name, const char* item_name) {

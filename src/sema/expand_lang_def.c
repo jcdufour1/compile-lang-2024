@@ -527,7 +527,7 @@ bool expand_def_block(Uast_block* block) {
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         if (!expand_def_stmt(vec_at(&block->children, idx))) {
-            log(LOG_DEBUG, TAST_FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
+            log(LOG_DEBUG, FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
     todo();
             status = false;
         }

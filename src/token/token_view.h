@@ -22,7 +22,7 @@ static inline Token tk_view_front(Tk_view tk_view) {
 static inline void log_tokens_internal(const char* file, int line, LOG_LEVEL log_level, Tk_view tk_view) {
     log_internal(log_level, file, line, 0, "tokens:\n");
     for (size_t idx = 0; idx < tk_view.count; idx++) {
-        log_internal(log_level, file, line, 0, TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
+        log_internal(log_level, file, line, 0, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
     }
     log_internal(log_level, file, line, 0, "\n");
 }
@@ -86,7 +86,7 @@ static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_
                 log(log_level, "TOKENS expected:\n");
                 log_tokens(log_level, b);
                 log(
-                    log_level, "idx %zu: "TOKEN_FMT" is not equal to "TOKEN_FMT"\n",
+                    log_level, "idx %zu: "FMT" is not equal to "FMT"\n",
                     idx, token_print(TOKEN_MODE_LOG, tk_view_at(a, idx)), token_print(TOKEN_MODE_LOG, tk_view_at(b, idx))
                 );
             }
@@ -115,8 +115,6 @@ static inline bool tk_view_is_equal(Tk_view a, Tk_view b) {
 static inline bool tk_view_is_equal_log(LOG_LEVEL log_level, Tk_view a, Tk_view b) {
     return tk_view_is_equal_internal(log_level, a, b, true);
 }
-
-#define TK_VIEW_FMT STR_VIEW_FMT
 
 #define tk_view_print(tk_view) strv_print(tk_view_print_internal(tk_view))
 

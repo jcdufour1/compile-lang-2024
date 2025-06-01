@@ -292,7 +292,7 @@ int64_t strv_to_int64_t(const Pos pos, Strv strv) {
     int64_t result = INT64_MAX;
 
     if (!try_strv_to_int64_t(&result,  pos, strv)) {
-        unreachable(STR_VIEW_FMT, strv_print(strv));
+        unreachable(FMT, strv_print(strv));
     }
     return result;
 }
@@ -478,7 +478,7 @@ Name get_storage_location(Name sym_name) {
     Tast_def* sym_def_;
     if (!symbol_lookup(&sym_def_, sym_name)) {
         symbol_log(LOG_DEBUG, sym_name.scope_id);
-        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", name_print(NAME_LOG, sym_name));
+        unreachable("symbol definition for symbol "FMT" not found\n", name_print(NAME_LOG, sym_name));
     }
 
     switch (sym_def_->type) {
@@ -491,7 +491,7 @@ Name get_storage_location(Name sym_name) {
             return ir_tast_get_name(result);
         }
         default:
-            unreachable(TAST_FMT, tast_def_print(sym_def_));
+            unreachable(FMT, tast_def_print(sym_def_));
     }
     unreachable("");
 }

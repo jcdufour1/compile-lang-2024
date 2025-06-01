@@ -13,7 +13,7 @@
 static Arena a_token = {0};
 
 static void msg_tokenizer_invalid_token(Strv_col token_text, Pos pos) {
-    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", strv_col_print(token_text));
+    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"FMT"`\n", strv_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {

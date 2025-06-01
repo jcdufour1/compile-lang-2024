@@ -291,7 +291,7 @@ static void parse_long_option(int* argc, char*** argv) {
         } else if (strv_is_equal(backend, sv("llvm"))) {
             set_backend(BACKEND_LLVM);
         } else {
-            log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", strv_print(backend));
+            log(LOG_FATAL, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
             exit(EXIT_CODE_FAIL);
         }
     } else if (strv_is_equal(curr_opt, sv("all-errors-fatal"))) {
@@ -339,7 +339,7 @@ static void parse_long_option(int* argc, char*** argv) {
         if (!expect_fail_type_from_strv(&idx, &type, error)) {
             msg(
                 DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
-                "invalid fail type `"STR_VIEW_FMT"`\n", strv_print(error)
+                "invalid fail type `"FMT"`\n", strv_print(error)
             );
             exit(EXIT_CODE_FAIL);
         }
@@ -368,11 +368,11 @@ static void parse_long_option(int* argc, char*** argv) {
         } else if (strv_is_equal(log_level, sv("TRACE"))) {
             params_log_level = LOG_TRACE;
         } else {
-            log(LOG_FATAL, "log level `"STR_VIEW_FMT"` is not a supported log level\n", strv_print(log_level));
+            log(LOG_FATAL, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
             exit(EXIT_CODE_FAIL);
         }
     } else {
-        log(LOG_FATAL, "invalid option: "STR_VIEW_FMT"\n", strv_print(curr_opt));
+        log(LOG_FATAL, "invalid option: "FMT"\n", strv_print(curr_opt));
         exit(EXIT_CODE_FAIL);
     }
 }

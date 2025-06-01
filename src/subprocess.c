@@ -32,7 +32,7 @@ int subprocess_call(Strv_vec cmd) {
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
 
@@ -47,7 +47,7 @@ int subprocess_call(Strv_vec cmd) {
         execvpe(strv_to_cstr(&a_temp, vec_at(&cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
 
@@ -60,16 +60,16 @@ int subprocess_call(Strv_vec cmd) {
         return WEXITSTATUS(wstatus);
     } else if (WIFSIGNALED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was killed by signal %d\n", WTERMSIG(wstatus));
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     } else if (WIFSTOPPED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was stopped by signal %d\n", WSTOPSIG(wstatus));
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
         msg_todo("handling process stopped by signal", POS_BUILTIN);
         exit(EXIT_CODE_FAIL);
     } else if (WIFCONTINUED(wstatus)) {
         msg_todo("handling process continued", POS_BUILTIN);
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
     unreachable("");

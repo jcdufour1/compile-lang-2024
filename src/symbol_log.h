@@ -15,7 +15,7 @@
 static inline void usymbol_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Usymbol_table level, int recursion_depth) {
     String buf = {0};
     usymbol_extend_table_internal(&buf, level, recursion_depth);
-    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"STR_VIEW_FMT"\n", string_print(buf));
+    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"FMT"\n", string_print(buf));
 }
 
 static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth, Scope_id scope_id) {
@@ -45,7 +45,7 @@ static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, i
 static inline void symbol_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Symbol_table level, int recursion_depth) {
     String buf = {0};
     symbol_extend_table_internal(&buf, level, recursion_depth);
-    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"STR_VIEW_FMT"\n", string_print(buf));
+    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"FMT"\n", string_print(buf));
 }
 
 static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth, Scope_id scope_id) {
@@ -75,7 +75,7 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
 static inline void ir_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Alloca_table level, int recursion_depth) {
     String buf = {0};
     alloca_extend_table_internal(&buf, level, recursion_depth);
-    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"STR_VIEW_FMT"\n", string_print(buf));
+    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"FMT"\n", string_print(buf));
 }
 
 static inline void ir_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth, Scope_id scope_id) {

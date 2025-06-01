@@ -594,7 +594,7 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_FN:
             return lang_type;
         default:
-            unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
     unreachable("");
 }
@@ -798,7 +798,7 @@ static Name load_function_call(Ir_block* new_block, Tast_function_call* old_call
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(new_block, def);
         fun_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
-        //unreachable(TAST_FMT, tast_function_call_print(old_call));
+        //unreachable(FMT, tast_function_call_print(old_call));
     }
 
     Ir_function_call* new_call = ir_function_call_new(

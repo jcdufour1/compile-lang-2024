@@ -24,7 +24,7 @@ static inline void log_env_internal(const char* file, int line, LOG_LEVEL log_le
     //    symbol_extend_table_internal(&buf, curr.symbol_table, 2*(1 + idx)*INDENT_WIDTH);
     //}
 
-    //log_internal(log_level, file, line, 0, STRING_FMT"\n", string_print(buf));
+    //log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
 }
 
 #define log_env(log_level, env) \

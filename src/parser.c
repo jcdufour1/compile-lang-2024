@@ -209,7 +209,7 @@ static void msg_expected_expr_internal(const char* file, int line, Tk_view token
     string_extend_cstr(&a_print, &message, "expected expression ");
     string_extend_cstr(&a_print, &message, msg_suffix);
 
-    msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
+    msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), FMT"\n", string_print(message)); \
 }
 
 #define msg_expected_expr(tokens, msg_suffix) \
@@ -243,7 +243,7 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
     if (got.type == TOKEN_NONTYPE) {
         expect_fail_type = DIAG_INVALID_TOKEN;
     }
-    msg_internal(file, line, expect_fail_type, got.pos, STR_VIEW_FMT"\n", strv_print(string_to_strv(message)));
+    msg_internal(file, line, expect_fail_type, got.pos, FMT"\n", strv_print(string_to_strv(message)));
 
     va_end(args);
 }
@@ -256,14 +256,14 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
 static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
         DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol `"STR_VIEW_FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
+        "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         DIAG_NOTE, uast_def_get_pos(original_def),
-        "`"STR_VIEW_FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
+        "`"FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 
     return PARSE_ERROR;
@@ -1581,7 +1581,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!strv_cstr_is_equal(extern_type_token.text, "c")) {
         msg(
             DIAG_INVALID_EXTERN_TYPE, extern_type_token.pos,
-            "invalid extern type `"STR_VIEW_FMT"`\n", strv_print(extern_type_token.text)
+            "invalid extern type `"FMT"`\n", strv_print(extern_type_token.text)
         );
         goto error;
     }
@@ -1713,7 +1713,7 @@ static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* token
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
-            unreachable(UAST_FMT"\n", uast_expr_print(cond_child));
+            unreachable(FMT"\n", uast_expr_print(cond_child));
     }
 
     *result = uast_condition_new(uast_expr_get_pos(cond_child), cond_oper);
@@ -2374,7 +2374,7 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         }
         default:
-            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
+            unreachable(FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
     PARSE_EXPR_STATUS status = parse_unary(&child, tokens, false, scope_id);
@@ -2407,7 +2407,7 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         }
         default:
-            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
+            unreachable(FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
     return PARSE_EXPR_OK;
@@ -2619,7 +2619,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
     if (!read_file(file_con, file_path)) {
         msg(
             DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
-            "could not open file `"STR_VIEW_FMT"`: %s\n",
+            "could not open file `"FMT"`: %s\n",
             strv_print(file_path), strerror(errno)
         );
         status = false;
@@ -2658,7 +2658,7 @@ static void parser_test_parse_expr(const char* input, int test) {
     //Uast_expr* result = NULL;
     //switch (parse_expr(& &result, &tokens, false, false)) {
     //    case PARSE_EXPR_OK:
-    //        log(LOG_DEBUG, "\n"TAST_FMT, uast_expr_print(result));
+    //        log(LOG_DEBUG, "\n"FMT, uast_expr_print(result));
     //        break;
     //    default:
     //        unreachable("");
@@ -2681,7 +2681,7 @@ static void parser_test_parse_stmt(const char* input, int test) {
     //Uast_stmt* result = NULL;
     //switch (parse_stmt(& &result, &tokens, true)) {
     //    case PARSE_EXPR_OK:
-    //        log(LOG_DEBUG, "\n"TAST_FMT, uast_stmt_print(result));
+    //        log(LOG_DEBUG, "\n"FMT, uast_stmt_print(result));
     //        break;
     //    default:
     //        assert(error_count > 0);

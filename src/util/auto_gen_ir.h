@@ -463,7 +463,7 @@ static void ir_gen_ir_forward_decl(Ir_type ir) {
     extend_ir_name_first_upper(&output, ir.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void ir_gen_ir_struct_as(String* output, Ir_type ir) {
@@ -564,7 +564,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
     extend_ir_name_first_upper(&output, ir.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
@@ -609,7 +609,7 @@ static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
@@ -648,7 +648,7 @@ static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void ir_gen_ir_unwrap(Ir_type ir) {
@@ -689,7 +689,7 @@ static void ir_gen_print_forward_decl(Ir_type type) {
         string_extend_cstr(&gen_a, &function, "* ir, int recursion_depth);");
     }
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void ir_gen_new_internal(Ir_type type, bool implementation) {
@@ -813,7 +813,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
@@ -868,7 +868,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_ir_new_forward_decl(Ir_type ir) {

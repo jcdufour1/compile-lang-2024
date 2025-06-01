@@ -54,7 +54,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_FN:
             todo();
     }
-    unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
 uint64_t sizeof_expr(const Tast_expr* expr) {

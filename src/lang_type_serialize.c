@@ -92,6 +92,6 @@ Strv serialize_lang_type(Lang_type lang_type) {
 }
 
 Lang_type deserialize_lang_type(Strv* serialized) {
-    log(LOG_DEBUG, TAST_FMT"\n", strv_print(*serialized));
+    log(LOG_DEBUG, FMT"\n", strv_print(*serialized));
     todo();
 }

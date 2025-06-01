@@ -6,8 +6,6 @@
 #include <tast_forward_decl.h>
 #include <lang_type.h>
 
-#define UAST_FMT STR_VIEW_FMT
-
 #define ir_register_sym_print(reg_sym) \
     lang_type_print((reg_sym).lang_type), tast_print((reg_sym).tast)
 

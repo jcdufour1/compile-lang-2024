@@ -93,7 +93,7 @@ static bool ir_is_variadic(const Ir* ir) {
             case IR_LITERAL:
                 return false;
             default:
-                unreachable(IR_FMT, ir_print(ir));
+                unreachable(FMT, ir_print(ir));
         }
     } else {
         const Ir_def* def = ir_def_const_unwrap(ir);
@@ -101,7 +101,7 @@ static bool ir_is_variadic(const Ir* ir) {
             case IR_VARIABLE_DEF:
                 return ir_variable_def_const_unwrap(ir_def_const_unwrap(ir))->is_variadic;
             default:
-                unreachable(IR_FMT, ir_print(ir));
+                unreachable(FMT, ir_print(ir));
         }
     }
 }
@@ -147,7 +147,7 @@ static void extend_literal_decl_prefix(String* output, String* literals, const I
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        unreachable(IR_FMT"\n", ir_print(ir_expr_const_wrap(ir_literal_const_wrap(literal))));
+        unreachable(FMT"\n", ir_print(ir_expr_const_wrap(ir_literal_const_wrap(literal))));
     }
 
     if (literal->type == IR_STRING) {
@@ -258,7 +258,7 @@ static void emit_function_call_arguments(String* output, String* literals, const
                 ir_extend_name(output, ir_tast_get_name(argument));
                 break;
             default:
-                unreachable(TAST_FMT"\n", ir_print(argument));
+                unreachable(FMT"\n", ir_print(argument));
         }
     }
 }
@@ -341,12 +341,12 @@ static void emit_unary_type(String* output, const Ir_unary* unary) {
                 extend_type_call_str(output, lang_type_from_get_name(unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
-                log(LOG_DEBUG, TAST_FMT, ir_unary_print(unary));
+                log(LOG_DEBUG, FMT, ir_unary_print(unary));
                 todo();
             }
             break;
         default:
-            unreachable(IR_FMT"\n", ir_unary_print(unary));
+            unreachable(FMT"\n", ir_unary_print(unary));
     }
 }
 
@@ -512,7 +512,7 @@ static void emit_operator_operand_expr(String* output, const Ir_expr* operand) {
             ir_extend_name(output, ir_expr_get_name(operand));
             break;
         default:
-            unreachable(IR_FMT, ir_expr_print(operand));
+            unreachable(FMT, ir_expr_print(operand));
     }
 }
 
@@ -529,7 +529,7 @@ static void emit_operator_operand(String* output, const Name operand_name) {
             ir_extend_name(output, ir_tast_get_name(operand));
             break;
         default:
-            unreachable(IR_FMT, ir_print(operand));
+            unreachable(FMT, ir_print(operand));
     }
 }
 
@@ -621,7 +621,7 @@ static void emit_store_another_ir_src_expr(String* output, String* literals, con
             ir_extend_name(output, ir_expr_get_name(expr));
             break;
         default:
-            unreachable(IR_FMT"\n", ir_print(ir_expr_const_wrap(expr)));
+            unreachable(FMT"\n", ir_print(ir_expr_const_wrap(expr)));
     }
 }
 
@@ -654,7 +654,7 @@ static void emit_store_another_ir(String* output, String* literals, const Ir_sto
             ir_extend_name(output, ir_tast_get_name(src));
             break;
         default:
-            unreachable(IR_FMT"\n", ir_print(src));
+            unreachable(FMT"\n", ir_print(src));
     }
     //string_extend_cstr(&a_main, output, " %");
     //ir_extend_name(output, ir_tast_get_name(store->ir_src.ir));
@@ -712,7 +712,7 @@ static void emit_return_expr(String* output, const Ir_expr* child) {
             break;
         }
         default:
-            unreachable(TAST_FMT"\n", ir_expr_print(child));
+            unreachable(FMT"\n", ir_expr_print(child));
     }
 }
 
@@ -734,7 +734,7 @@ static void emit_return(String* output, const Ir_return* fun_return) {
             return;
         }
         default:
-            unreachable(TAST_FMT"\n", ir_print(sym_to_return));
+            unreachable(FMT"\n", ir_print(sym_to_return));
     }
 }
 
@@ -914,7 +914,7 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
                 emit_store_another_ir(output, literals, ir_store_another_ir_const_unwrap(stmt));
                 break;
             default:
-                log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
+                log(LOG_ERROR, FMT"\n", string_print(*output));
                 ir_printf(stmt);
                 todo();
         }
@@ -1024,7 +1024,7 @@ void emit_llvm_from_tree(const Ir_block* root) {
     FILE* file = fopen("test.ll", "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT": %s\n",
             strv_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
@@ -1035,7 +1035,7 @@ void emit_llvm_from_tree(const Ir_block* root) {
     file_extend_strv(file, string_to_strv(literals));
 
     msg(
-        DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
+        DIAG_FILE_BUILT, POS_BUILTIN, "file "FMT" built\n",
         strv_print(params.input_file_path)
     );
 

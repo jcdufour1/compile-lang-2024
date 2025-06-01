@@ -18,8 +18,8 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
         if (name_is_equal(vec_at(&rec_stack, idx), name)) {
             msg(
                 DIAG_STRUCT_LIKE_RECURSION, lang_type.pos,
-                "`"TAST_FMT"` recursively includes itself without indirection; consider "
-                "storing `"TAST_FMT"` by pointer here instead of by value\n",
+                "`"FMT"` recursively includes itself without indirection; consider "
+                "storing `"FMT"` by pointer here instead of by value\n",
                 name_print(NAME_MSG, uast_def_get_name(def)),
                 name_print(NAME_MSG, uast_def_get_name(def))
             );
@@ -29,7 +29,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 unwrap(usymbol_lookup(&curr, vec_at(&rec_stack, idx_stk)));
                 msg(
                     DIAG_NOTE, uast_def_get_pos(prev),
-                    "`"TAST_FMT"` contains `"TAST_FMT"`\n",
+                    "`"FMT"` contains `"FMT"`\n",
                     name_print(NAME_MSG, uast_def_get_name(prev)),
                     name_print(NAME_MSG, uast_def_get_name(curr))
                 );
@@ -38,7 +38,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
             }
             msg(
                 DIAG_NOTE, uast_def_get_pos(prev),
-                "`"TAST_FMT"` contains `"TAST_FMT"`\n",
+                "`"FMT"` contains `"FMT"`\n",
                 name_print(NAME_MSG, uast_def_get_name(prev)),
                 name_print(NAME_MSG, uast_def_get_name(def))
             );

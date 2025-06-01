@@ -96,8 +96,6 @@ Symbol_table* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);
 
-#define SYM_TBL_STATUS_FMT "%s"
-
 const char* sym_tbl_status_print(SYM_TBL_STATUS status);
 
 bool c_forward_struct_tbl_lookup(Name** result, Name key);

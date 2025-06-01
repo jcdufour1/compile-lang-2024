@@ -16,8 +16,6 @@ typedef struct {
     char* buf;
 } String;
 
-#define STRING_FMT STR_VIEW_FMT
-
 #define string_print(string) strv_print(string_to_strv(string))
 
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {

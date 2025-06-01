@@ -502,7 +502,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
 
     string_extend_cstr(&a_main, output, "    ");
     log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
     // TODO: remove these two if statements, and fix the actual underlying issues
     // we may need to make system to identify location of node generation, etc.
     // NOTE: this seems to be related to function callbacks for some reason
@@ -515,9 +515,9 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
         c_extend_type_call_str(output, alloca->lang_type, true);
         // this line below should be kept though
     }
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -707,7 +707,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 emit_c_store_another_ir(strs, ir_store_another_ir_const_unwrap(stmt));
                 break;
             default:
-                log(LOG_ERROR, STRING_FMT"\n", string_print(strs->output));
+                log(LOG_ERROR, FMT"\n", string_print(strs->output));
                 ir_printf(stmt);
                 todo();
         }
@@ -743,7 +743,7 @@ void emit_c_from_tree(const Ir_block* root) {
         FILE* file = fopen(TEST_OUTPUT, "w");
         if (!file) {
             msg(
-                DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
+                DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT" %s\n",
                 strv_print(params.input_file_path), strerror(errno)
             );
             exit(EXIT_CODE_FAIL);
@@ -755,7 +755,7 @@ void emit_c_from_tree(const Ir_block* root) {
         file_extend_strv(file, string_to_strv(strs.literals));
         file_extend_strv(file, string_to_strv(strs.output));
 
-        msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", strv_print(params.input_file_path));
+        msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "FMT" built\n", strv_print(params.input_file_path));
         fclose(file);
     }
 
@@ -842,7 +842,7 @@ void emit_c_from_tree(const Ir_block* root) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             exit(EXIT_CODE_FAIL);
         }
     }

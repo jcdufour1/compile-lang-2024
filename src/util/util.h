@@ -79,14 +79,13 @@ __attribute__((format (printf, 5, 6)));
         abort(); \
     } while (0)
 
-#define BOOL_FMT "%s"
-
-static inline const char* bool_print(bool condition) {
-    if (condition) {
-        return "true";
-    }
-    return "false";
-}
+// TODO
+//static inline Strv bool_print(bool condition) {
+//    if (condition) {
+//        return sv("true");
+//    }
+//    return sv("false");
+//}
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -119,5 +118,7 @@ typedef size_t Scope_id;
 #define SCOPE_BUILTIN 0
 #define SCOPE_TOP_LEVEL 1
 #define SCOPE_NOT SIZE_MAX
+
+#define FMT "%.*s"
 
 #endif // UTIL_H

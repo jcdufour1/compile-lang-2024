@@ -9,8 +9,6 @@
 
 #define token_print(mode, token) strv_print(token_print_internal(&a_print, mode, token))
 
-#define TOKEN_FMT STR_VIEW_FMT
-
 typedef enum {
     // nontype
     TOKEN_NONTYPE,
@@ -402,12 +400,10 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_COUNT:
             unreachable("");
     }
-    unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
+    unreachable(FMT"\n", token_print(TOKEN_MODE_LOG, token));
 }
 
 static const uint32_t TOKEN_MAX_PRECEDENCE = 20;
-
-#define TOKEN_TYPE_FMT STR_VIEW_FMT
 
 Strv token_type_to_strv_msg(TOKEN_TYPE token_type);
 

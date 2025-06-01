@@ -14,12 +14,6 @@
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
 #define ustruct_def_base_print(base) strv_print(ustruct_def_base_print_internal(base, 0))
 
-#define LANG_TYPE_FMT STR_VIEW_FMT
-
-#ifndef UAST_FMT
-#define UAST_FMT STR_VIEW_FMT
-#endif // UAST_FMT
-
 Strv uast_print_internal(const Uast* uast, int recursion_depth);
 
 Ulang_type uast_get_ulang_type_def(const Uast_def* def);
@@ -32,7 +26,7 @@ static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_d
 
 #define uast_printf(uast) \
     do { \
-        log(LOG_NOTE, UAST_FMT"\n", uast_print(uast)); \
+        log(LOG_NOTE, FMT"\n", uast_print(uast)); \
     } while (0);
 
 static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {

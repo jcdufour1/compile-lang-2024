@@ -181,7 +181,7 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
     Tast_struct_def* struct_def;
     if (!ir_try_get_struct_def( &struct_def, tast)) {
-        unreachable("could not find struct definition for "TAST_FMT"\n", ir_print(tast));
+        unreachable("could not find struct definition for "FMT"\n", ir_print(tast));
     }
     return struct_def;
 }

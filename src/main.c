@@ -61,7 +61,7 @@ Ir_block* compile_file_to_ir(void) {
 
     log(LOG_DEBUG, "\nafter parsing start--------------------\n");
     usymbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG, TAST_FMT, uast_block_print(untyped));
+    log(LOG_DEBUG, FMT, uast_block_print(untyped));
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
     arena_reset(&a_print);
@@ -80,7 +80,7 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
     symbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG,TAST_FMT, tast_block_print(typed));
+    log(LOG_DEBUG,FMT, tast_block_print(typed));
     log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
 
     Ir_block* ir_root = add_load_and_store(typed);
@@ -91,11 +91,11 @@ Ir_block* compile_file_to_ir(void) {
     Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
-        log(LOG_DEBUG, TAST_FMT, ir_print(curr));
+        log(LOG_DEBUG, FMT, ir_print(curr));
         log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
     }
     // TODO: for this to actually do anything, we need to iterate on scope_id SCOPE_BUILTIN
-    log(LOG_DEBUG, TAST_FMT, ir_block_print(ir_root));
+    log(LOG_DEBUG, FMT, ir_block_print(ir_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
         exit(EXIT_CODE_FAIL);
@@ -168,7 +168,7 @@ void do_passes(void) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             // exit with the child process return status
             exit(status);
         }

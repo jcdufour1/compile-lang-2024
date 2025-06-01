@@ -26,7 +26,7 @@ static void msg_undefined_type_internal(
 ) {
     msg_internal(
         file, line, DIAG_UNDEFINED_TYPE, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+        "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
     );
 }
 
@@ -53,7 +53,7 @@ static void msg_invalid_count_generic_args_internal(
     string_extend_cstr(&a_print, &message, " generic arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
-        STR_VIEW_FMT, strv_print(string_to_strv(message))
+        FMT, strv_print(string_to_strv(message))
     );
 
     msg_internal(

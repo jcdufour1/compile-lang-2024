@@ -124,7 +124,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         // TODO: does this make sense?
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else {
-        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
+        log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
     }
     unreachable("");
@@ -138,10 +138,10 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
         return false;
     }
-    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
-    //log(LOG_DEBUG, TAST_FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
-    //log(LOG_DEBUG, TAST_FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
+    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
+    //log(LOG_DEBUG, FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
+    //log(LOG_DEBUG, FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
     Name temp_name = {0};
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         return false;

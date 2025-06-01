@@ -691,7 +691,7 @@ static void tast_gen_tast_forward_decl(Tast_type tast) {
     extend_tast_name_first_upper(&output, tast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void tast_gen_tast_struct_as(String* output, Tast_type tast) {
@@ -789,7 +789,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
     extend_tast_name_first_upper(&output, tast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
@@ -835,7 +835,7 @@ static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
@@ -874,7 +874,7 @@ static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void tast_gen_tast_unwrap(Tast_type tast) {
@@ -911,7 +911,7 @@ static void tast_gen_print_forward_decl(Tast_type type) {
     extend_tast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* tast, int recursion_depth);");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void tast_gen_new_internal(Tast_type type, bool implementation) {
@@ -992,7 +992,7 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
@@ -1048,7 +1048,7 @@ static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_tast_new_forward_decl(Tast_type tast) {

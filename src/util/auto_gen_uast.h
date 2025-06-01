@@ -639,7 +639,7 @@ static void uast_gen_uast_forward_decl(Uast_type uast) {
     extend_uast_name_first_upper(&output, uast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void uast_gen_uast_struct_as(String* output, Uast_type uast) {
@@ -737,7 +737,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
     extend_uast_name_first_upper(&output, uast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
@@ -783,7 +783,7 @@ static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
@@ -823,7 +823,7 @@ static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void uast_gen_uast_unwrap(Uast_type uast) {
@@ -860,7 +860,7 @@ static void uast_gen_print_forward_decl(Uast_type type) {
     extend_uast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* uast, int recursion_depth);");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void uast_gen_new_internal(Uast_type type, bool implementation) {
@@ -943,7 +943,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
@@ -999,7 +999,7 @@ static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_uast_new_forward_decl(Uast_type uast) {

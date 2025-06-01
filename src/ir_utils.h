@@ -3,17 +3,13 @@
 
 #include <ir.h>
 
-#define LANG_TYPE_FMT STR_VIEW_FMT
-
 Strv lang_type_vec_print_internal(Lang_type_vec types);
 
 #define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))
 
-#define IR_FMT STR_VIEW_FMT
-
 #define ir_printf(ir) \
     do { \
-        log(LOG_NOTE, IR_FMT"\n", ir_print(ir)); \
+        log(LOG_NOTE, FMT"\n", ir_print(ir)); \
     } while (0);
 
 Lang_type ir_operator_get_lang_type(const Ir_operator* operator);
