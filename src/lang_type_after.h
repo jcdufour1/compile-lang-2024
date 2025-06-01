@@ -141,8 +141,10 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
             );
         }
         case LANG_TYPE_ANY:
-            todo();
-            return lang_type_any_const_unwrap(lang_type).atom;
+            return lang_type_atom_new(
+                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
+                lang_type_any_const_unwrap(lang_type).atom.pointer_depth
+            );
     }
     unreachable("");
 }
@@ -165,7 +167,6 @@ static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type l
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE: {
             Lang_type_atom atom = lang_type_primitive_get_atom(mode, lang_type_primitive_const_unwrap(lang_type));
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
             return atom;
         }
         case LANG_TYPE_ENUM: {

@@ -122,7 +122,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (strv_cstr_is_equal(atom.str.base, "any")) {
         // TODO: does this make sense?
-        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
+        return lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type.pos, atom)));
     } else {
         log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
