@@ -2,12 +2,41 @@
 #include <parser_utils.h>
 #include <file.h>
 
+Str_view stop_after_print_internal(STOP_AFTER stop_after) {
+    switch (stop_after) {
+        case STOP_AFTER_NONE:
+            return sv("none");
+        case STOP_AFTER_GEN_IR:
+            return sv("gen_ir");
+        case STOP_AFTER_EMIT_BACKEND_IR:
+            return sv("emit_backend_ir");
+        case STOP_AFTER_LOWER_S:
+            return sv("lower_s");
+        case STOP_AFTER_OBJ:
+            return sv("obj");
+        case STOP_AFTER_BIN:
+            return sv("bin");
+        case STOP_AFTER_RUN:
+            return sv("run");
+        case STOP_AFTER_COUNT:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+// TODO: remove this function?
 bool is_compiling(void) {
     static_assert(
-        PARAMETERS_COUNT == 21,
-        "exhausive handling of params (not all parameters are explicitly handled)"
+        STOP_AFTER_COUNT == 7,
+        "exhausive handling of stop after states (not all states are explicitly handled)"
     );
-    return params.compile || params.compile_c || params.compile_object || params.compile_s;
+    return params.stop_after == STOP_AFTER_RUN || params.stop_after == STOP_AFTER_BIN;
+}
+
+static void stop_after_set_if_none(STOP_AFTER set_to) {
+    if (params.stop_after == STOP_AFTER_NONE) {
+        params.stop_after = set_to;
+    }
 }
 
 static bool is_long_option(char** argv) {
@@ -54,7 +83,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 60, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 61, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
@@ -116,6 +145,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"no-main-function", DIAG_NO_MAIN/*TODO: rename this to match string*/, LOG_WARNING, false},
     {"struct-like-recursion", DIAG_STRUCT_LIKE_RECURSION, LOG_ERROR, true},
     {"child-process-failure", DIAG_CHILD_PROCESS_FAILURE, LOG_FATAL, true},
+    {"no-input-files", DIAG_NO_INPUT_FILES, LOG_FATAL, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -162,7 +192,7 @@ static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -173,37 +203,40 @@ static void parse_normal_option(int* argc, char*** argv) {
         static_assert(FILE_TYPE_COUNT == 6, "exhaustive handling of file types");
         switch (get_file_type(curr_opt)) {
             case FILE_TYPE_OWN:
-                if (params.compile == true) {
+                if (is_compiling()) {
                     msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
                     exit(EXIT_CODE_FAIL);
                 }
-                params.compile = true;
+                params.compile_own = true;
+                if (params.stop_after == STOP_AFTER_NONE) {
+                    params.stop_after = STOP_AFTER_BIN;
+                }
                 params.input_file_path = curr_opt;
                 break;
             case FILE_TYPE_STATIC_LIB:
-                if (!params.compile) {
+                if (is_compiling()) {
                     // TODO
                     todo();
                 }
                 vec_append(&a_main, &params.static_libs, curr_opt);
                 break;
             case FILE_TYPE_DYNAMIC_LIB:
-                if (!params.compile) {
+                if (is_compiling()) {
                     // TODO
                     todo();
                 }
                 vec_append(&a_main, &params.dynamic_libs, curr_opt);
                 break;
             case FILE_TYPE_C:
-                params.compile_c = true;
+                stop_after_set_if_none(STOP_AFTER_BIN);
                 vec_append(&a_main, &params.c_input_files, curr_opt);
                 break;
             case FILE_TYPE_OBJECT:
-                params.compile_object = true;
+                stop_after_set_if_none(STOP_AFTER_BIN);
                 vec_append(&a_main, &params.object_files, curr_opt);
                 break;
             case FILE_TYPE_LOWER_S:
-                params.compile_s = true;
+                stop_after_set_if_none(STOP_AFTER_BIN);
                 vec_append(&a_main, &params.lower_s_files, curr_opt);
                 break;
             default:
@@ -233,7 +266,7 @@ static void parse_long_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -260,28 +293,28 @@ static void parse_long_option(int* argc, char*** argv) {
     } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
     } else if (str_view_is_equal(curr_opt, sv("S"))) {
-        params.dump_lower_s = true;
+        params.stop_after = STOP_AFTER_LOWER_S;
     } else if (str_view_is_equal(curr_opt, sv("c"))) {
-        params.dump_object = true;
+        params.stop_after = STOP_AFTER_OBJ;
     } else if (str_view_is_equal(curr_opt, sv("run"))) {
         static_assert(
-            PARAMETERS_COUNT == 21,
+            PARAMETERS_COUNT == 17,
             "exhausive handling of params for if statement below "
             "(not all parameters are explicitly handled)"
         );
         // TODO: make enum for dump_lower_s, compile, etc.
-        if (params.dump_lower_s || params.dump_dot || params.dump_object) {
+        if (params.stop_after == STOP_AFTER_NONE) {
+            log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
+            exit(EXIT_CODE_FAIL);
+        }
+        if (!is_compiling()) {
             log(
                 LOG_FATAL,
                 "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
             );
             exit(EXIT_CODE_FAIL);
         }
-        if (!is_compiling()) {
-            log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
-            exit(EXIT_CODE_FAIL);
-        }
-        params.run = true;
+        params.stop_after = STOP_AFTER_RUN;
         // TODO: args after `--run` should be passed to the program being compiled and run
     } else if (str_view_is_equal(curr_opt, sv("o"))) {
         params.output_file_path = consume_arg(argc, argv, "output file path was expected after `-o`");
@@ -343,7 +376,6 @@ static void parse_long_option(int* argc, char*** argv) {
 static void set_params_to_defaults(void) {
     params.opt_level = OPT_LEVEL_O0;
     params.emit_llvm = false;
-    params.compile = false;
     params.output_file_path = sv("a.out");
 
     set_backend(BACKEND_C);
@@ -364,6 +396,21 @@ void parse_args(int argc, char** argv) {
         } else {
             parse_normal_option(&argc, &argv);
         }
+    }
+
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    if (
+        !params.compile_own &&
+        params.static_libs.info.count == 0 &&
+        params.c_input_files.info.count == 0 &&
+        params.object_files.info.count == 0 &&
+        params.lower_s_files.info.count == 0
+    ) {
+        msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
+        exit(EXIT_CODE_FAIL);
     }
 }
 

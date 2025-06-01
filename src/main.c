@@ -107,13 +107,13 @@ Ir_block* compile_file_to_ir(void) {
 
 void do_passes(void) {
     Ir_block* ir = NULL;
-    if (params.compile) {
+    if (params.compile_own) {
         ir = compile_file_to_ir();
     }
 
     if (params.dump_dot) {
         // TODO: add logic in parse_args to catch below error:
-        unwrap(params.compile && "this should have been caught in parse_args");
+        unwrap(params.compile_own && "this should have been caught in parse_args");
         String graphvis = {0};
         string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
         write_file("dump.dot", string_to_strv(graphvis));
@@ -123,7 +123,7 @@ void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
-    if (is_compiling()) {
+    if (params.stop_after > STOP_AFTER_GEN_IR) {
         if (params.emit_llvm) {
             switch (params.backend_info.backend) {
                 case BACKEND_NONE:
@@ -153,13 +153,13 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 17,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
-    if (params.run) {
+    static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop_after states (not all are explicitly handled");
+    if (params.stop_after == STOP_AFTER_RUN) {
         // TODO: add logic in parse_args to catch below error:
-        unwrap(!params.dump_object && "this should have been caught eariler");
         Str_view_vec cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_main, &output_path, "./");

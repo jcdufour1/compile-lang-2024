@@ -720,7 +720,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 }
 
 void emit_c_from_tree(const Ir_block* root) {
-    if (params.compile) {
+    if (params.compile_own) {
         String header = {0};
         Emit_c_strs strs = {0};
 
@@ -786,7 +786,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 21,
+            PARAMETERS_COUNT == 17,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
@@ -796,6 +796,9 @@ void emit_c_from_tree(const Ir_block* root) {
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
         vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
+#       ifdef NDEBUG
+            vec_append(&a_main, &cmd, sv("-Wno-unused-command-line-argument"));
+#       endif // DNDEBUG
 
         static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
         switch (params.opt_level) {
@@ -810,17 +813,34 @@ void emit_c_from_tree(const Ir_block* root) {
         }
 
         vec_append(&a_main, &cmd, sv("-g"));
-        if (params.dump_object) {
-            vec_append(&a_main, &cmd, sv("-c"));
-        } else if (params.dump_lower_s) {
-            vec_append(&a_main, &cmd, sv("-S"));
+
+        // output step
+        static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states (not all are explicitly handled)");
+        switch (params.stop_after) {
+            case STOP_AFTER_RUN:
+                break;
+            case STOP_AFTER_BIN:
+                break;
+            case STOP_AFTER_LOWER_S:
+                vec_append(&a_main, &cmd, sv("-S"));
+                break;
+            case STOP_AFTER_OBJ:
+                vec_append(&a_main, &cmd, sv("-c"));
+                break;
+            default:
+                unreachable("");
         }
+
+        // output file
         vec_append(&a_main, &cmd, sv("-o"));
         vec_append(&a_main, &cmd, params.output_file_path);
-        if (params.compile) {
+
+        // .own file, compiled to .c
+        if (params.compile_own) {
             vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
         }
 
+        // non-.own files to build
         for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
             vec_append(&a_main, &cmd, sv("-l"));
             vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
