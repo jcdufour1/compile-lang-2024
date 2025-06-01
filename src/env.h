@@ -81,8 +81,6 @@ typedef struct {
 typedef struct Env_ {
     Sym_coll_vec symbol_tables;
 
-    Uast_def_vec udefered_symbols_to_add; // TODO: remove
-
     bool type_checking_is_in_struct_base_def;
 
     Ulang_type parent_fn_rtn_type;

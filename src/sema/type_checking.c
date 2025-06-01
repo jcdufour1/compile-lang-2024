@@ -2158,7 +2158,6 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
 static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* cond) {
     Tast_expr* new_child_ = NULL;
     if (!try_set_operator_types(&new_child_, cond->child)) {
-        vec_reset(&env.udefered_symbols_to_add);
         return false;
     }
 
