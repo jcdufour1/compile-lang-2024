@@ -83,7 +83,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 61, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 62, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
@@ -146,6 +146,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"struct-like-recursion", DIAG_STRUCT_LIKE_RECURSION, LOG_ERROR, true},
     {"child-process-failure", DIAG_CHILD_PROCESS_FAILURE, LOG_FATAL, true},
     {"no-input-files", DIAG_NO_INPUT_FILES, LOG_FATAL, true},
+    {"return-in-defer", DIAG_RETURN_IN_DEFER, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

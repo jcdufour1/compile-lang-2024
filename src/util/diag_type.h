@@ -63,6 +63,7 @@ typedef enum {
     DIAG_STRUCT_LIKE_RECURSION,
     DIAG_CHILD_PROCESS_FAILURE,
     DIAG_NO_INPUT_FILES,
+    DIAG_RETURN_IN_DEFER,
 
     // count of cases for static asserts
     DIAG_COUNT,

@@ -74,6 +74,9 @@ static Uast_expr* parent_of_operand;
 
 static bool is_in_struct_base_def;
 
+static bool is_in_defer;
+static Pos parent_defer_pos;
+
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
     if (num <= 0) {
@@ -2300,6 +2303,13 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     PARENT_OF old_parent_of = parent_of;
     parent_of = PARENT_OF_RETURN;
 
+    if (is_in_defer) {
+        msg(DIAG_RETURN_IN_DEFER, rtn->pos, "return statement cannot be located in defer\n");
+        msg(DIAG_NOTE, parent_defer_pos, "defer statement defined here\n");
+        status = false;
+        goto error;
+    }
+
     Tast_expr* new_child = NULL;
     switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
@@ -2671,19 +2681,30 @@ error:
 }
 
 bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
+    bool status = true;
+    bool old_is_in_defer = is_in_defer;
+    is_in_defer = true;
+    Pos old_defer_pos = parent_defer_pos;
+    parent_defer_pos = defer->pos;
+
     Tast_stmt* new_child = NULL;
     switch (try_set_stmt_types(&new_child, defer->child, false)) {
         case STMT_OK:
             break;
         case STMT_ERROR:
-            return false;
+            status = false;
+            goto error;
         case STMT_NO_STMT:
             todo();
         default:
             unreachable("");
     }
     *new_tast = tast_defer_new(defer->pos, new_child);
-    return true;
+
+error:
+    is_in_defer = old_is_in_defer;
+    parent_defer_pos = old_defer_pos;
+    return status;
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?

@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 20
+tests2/inputs/defer_sema_errors.own:6:16:[1;31merror[0;39m:return statement cannot be located in defer
+     5 |     defer {
+     6 |         return 2
+       |                ^
+     7 |     }
+tests2/inputs/defer_sema_errors.own:5:5:[1;34mnote[0;39m:defer statement defined here
+     4 | fn main() i32 {
+     5 |     defer {
+       |     ^
+     6 |         return 2
+tests2/inputs/defer_sema_errors.own:8:18:[1;31merror[0;39m:return statement cannot be located in defer
+     7 |     }
+     8 |     defer return 1
+       |                  ^
+     9 |     return 0
+tests2/inputs/defer_sema_errors.own:8:5:[1;34mnote[0;39m:defer statement defined here
+     7 |     }
+     8 |     defer return 1
+       |     ^
+     9 |     return 0
+
+compile::return_code 1
+
