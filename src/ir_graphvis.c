@@ -4,6 +4,8 @@
 
 // NOTE: arrow from parent to child created in parent corresponding function, not child
 
+
+static Name ir_graphvis_parent_block_next;
 static Alloca_table already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
@@ -116,20 +118,20 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
         if (all_tbl_add_ex(&already_visited, curr)) {
-            Name old_parent_block_next = env.ir_graphvis_parent_block_next;
-            env.ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_tast_get_name(next);
+            Name old_parent_block_next = ir_graphvis_parent_block_next;
+            ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_tast_get_name(next);
             ir_graphvis_internal(buf, curr);
-            env.ir_graphvis_parent_block_next = old_parent_block_next;
+            ir_graphvis_parent_block_next = old_parent_block_next;
         }
         if (ir_graphvis_do_next_arrow(curr)) {
             if (is_last) {
                 // this is the last node of this block. If we are nested in a parent block, then
                 // the next statement to be executed is in env.ir_graphvis_parent_block_next (set by the parent block)
-                if (env.ir_graphvis_parent_block_next.base.count > 0) {
+                if (ir_graphvis_parent_block_next.base.count > 0) {
                     arrow_names_label(
                         buf,
                         ir_tast_get_name(curr),
-                        env.ir_graphvis_parent_block_next,
+                        ir_graphvis_parent_block_next,
                         sv("next")
                     );
                 }

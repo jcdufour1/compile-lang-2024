@@ -163,6 +163,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
+        case UAST_DEFER:
+            todo();
     }
     unreachable("");
 }

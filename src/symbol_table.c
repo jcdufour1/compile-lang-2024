@@ -421,26 +421,31 @@ bool alloca_lookup(Ir** result, Name key) {
 // File_path_to_text implementation
 //
 
+static File_path_to_text file_path_to_text;
+
 bool file_path_to_text_tbl_lookup(Strv** result, Strv key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.file_path_to_text, key);
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&file_path_to_text, key);
 }
 
 // returns false if file_path_to_text has already been added to the table
 bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
-    return generic_tbl_add((Generic_symbol_table*)&env.file_path_to_text, key, file_text);
+    return generic_tbl_add((Generic_symbol_table*)&file_path_to_text, key, file_text);
 }
 
 //
 // C_forward_struct_tbl implementation
 //
 
+// this is used to define additional structs to get around the requirement of in order definitions in c
+static C_forward_struct_tbl c_forward_struct_tbl;
+
 bool c_forward_struct_tbl_lookup(Name** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key));
 }
 
 // returns false if value has already been added to the table
 bool c_forward_struct_tbl_add(Name* value, Name key) {
-    return generic_tbl_add((Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key), value);
+    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key), value);
 }
 
 //
@@ -474,43 +479,49 @@ bool struct_like_tbl_lookup(Uast_def** def, Name key) {
 // Raw_union_of_enum implementation
 //
 
+static Raw_union_of_enum raw_union_of_enum;
+
 bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&env.raw_union_of_enum, serialize_name_symbol_table(enum_name), def);
+    return generic_tbl_add((Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(enum_name), def);
 }
 
 bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.raw_union_of_enum, serialize_name_symbol_table(enum_name));
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(enum_name));
 }
 
 //
 // Struct_to_struct implementation
 //
 
+static Struct_to_struct struct_to_struct;
+
 bool struct_to_struct_add(Tast_struct_def* def, Name enum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(enum_name), def);
+    return generic_tbl_add((Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(enum_name), def);
 }
 
 bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(enum_name));
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(enum_name));
 }
 //
 // Scope_id_to_next_table implementation
 //
 
+static Scope_id_vec scope_id_to_parent;
+
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    return vec_at(&env.scope_id_to_parent, key);
+    return vec_at(&scope_id_to_parent, key);
 }
 
 void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
-    while (env.scope_id_to_parent.info.count <= key) {
-        vec_append(&a_main, &env.scope_id_to_parent, 0);
+    while (scope_id_to_parent.info.count <= key) {
+        vec_append(&a_main, &scope_id_to_parent, 0);
     }
-    *vec_at_ref(&env.scope_id_to_parent, key) = parent;
+    *vec_at_ref(&scope_id_to_parent, key) = parent;
 }
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
-    *vec_at_ref(&env.scope_id_to_parent, key) = parent;
+    *vec_at_ref(&scope_id_to_parent, key) = parent;
 }
 
 //

@@ -28,9 +28,21 @@
 #include <pos_vec.h>
 #include <check_struct_recursion.h>
 
-static int dummy_int = 0;
+static int dummy_int;
+
+static Lang_type break_type;
+
+static bool break_in_case;
+
+static Uast_stmt_vec switch_case_defer_add_if_true;
+static Uast_stmt_vec switch_case_defer_add_enum_case_part;
+
+static Lang_type lhs_lang_type;
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
+
+static PARENT_OF parent_of;
+static Uast_expr* parent_of_operand;
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -274,7 +286,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
             file, line,
             DIAG_MISSING_YIELD_STATEMENT, pos,
             "no break statement in case that breaks `"LANG_TYPE_FMT"`\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, env.break_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, break_type)
         );
     } else {
         msg_internal(
@@ -282,15 +294,15 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
             DIAG_MISMATCHED_YIELD_TYPE, pos,
             "breaking `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
-            lang_type_print(LANG_TYPE_MODE_MSG, env.break_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, break_type)
         );
     }
 
     msg_internal(
         file, line,
-        DIAG_NOTE, lang_type_get_pos(env.break_type),
+        DIAG_NOTE, lang_type_get_pos(break_type),
         "case break type `"LANG_TYPE_FMT"` defined here\n",
-        lang_type_print(LANG_TYPE_MODE_MSG, env.break_type) 
+        lang_type_print(LANG_TYPE_MODE_MSG, break_type) 
     );
 }
 
@@ -389,17 +401,17 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
         *new_src = tast_tuple_wrap(new_src_);
     } else {
-        Lang_type old_lhs_lang_type = env.lhs_lang_type;
-        PARENT_OF old_parent_of = env.parent_of;
-        env.parent_of = PARENT_OF_ASSIGN_RHS;
-        env.lhs_lang_type = dest_lang_type;
+        Lang_type old_lhs_lang_type = lhs_lang_type;
+        PARENT_OF old_parent_of = parent_of;
+        parent_of = PARENT_OF_ASSIGN_RHS;
+        lhs_lang_type = dest_lang_type;
         if (!try_set_expr_types(new_src, src)) {
-            env.lhs_lang_type = old_lhs_lang_type;
-            env.parent_of = old_parent_of;
+            lhs_lang_type = old_lhs_lang_type;
+            parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
-        env.lhs_lang_type = old_lhs_lang_type;
-        env.parent_of = old_parent_of;
+        lhs_lang_type = old_lhs_lang_type;
+        parent_of = old_parent_of;
     }
 
     bool src_is_zero = false;
@@ -927,7 +939,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
         }
     }
 
-    env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
+    lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
     }
@@ -1349,7 +1361,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
         case UAST_UNKNOWN:
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
-                lang_type_get_str(LANG_TYPE_MODE_LOG, env.lhs_lang_type)
+                lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type)
             ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
@@ -1542,11 +1554,11 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(env.parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id, enum_case->pos)
+                    uast_expr_clone(parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id, enum_case->pos)
                 ))
             );
 
-            vec_append(&a_main, &env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
+            vec_append(&a_main, &switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
 
             *new_case = enum_case;
             return true;
@@ -1920,7 +1932,7 @@ bool try_set_member_access_types_finish_enum_def(
 ) {
     (void) new_callee;
 
-    switch (env.parent_of) {
+    switch (parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
@@ -2257,8 +2269,8 @@ bool try_set_function_params_types(
 
 bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     bool status = true;
-    PARENT_OF old_parent_of = env.parent_of;
-    env.parent_of = PARENT_OF_RETURN;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_RETURN;
 
     Tast_expr* new_child = NULL;
     switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
@@ -2278,18 +2290,18 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
 error:
-    env.parent_of = old_parent_of;
+    parent_of = old_parent_of;
     return status;
 }
 
 bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
     bool status = true;
-    PARENT_OF old_parent_of = env.parent_of;
-    env.parent_of = PARENT_OF_BREAK;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_BREAK;
 
     Tast_expr* new_child = NULL;
     if (lang_break->do_break_expr) {
-        switch (check_generic_assignment(&new_child, env.break_type, lang_break->break_expr, lang_break->pos)) {
+        switch (check_generic_assignment(&new_child, break_type, lang_break->break_expr, lang_break->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
@@ -2307,9 +2319,9 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
 
     *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
 
-    env.break_in_case = true;
+    break_in_case = true;
 error:
-    env.parent_of = old_parent_of;
+    parent_of = old_parent_of;
     return status;
 }
 
@@ -2339,12 +2351,12 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     }
 
     Uast_stmt_vec new_if_children = {0};
-    vec_extend(&a_main, &new_if_children, &env.switch_case_defer_add_enum_case_part);
-    vec_extend(&a_main, &new_if_children, &env.switch_case_defer_add_if_true);
+    vec_extend(&a_main, &new_if_children, &switch_case_defer_add_enum_case_part);
+    vec_extend(&a_main, &new_if_children, &switch_case_defer_add_if_true);
     vec_extend(&a_main, &new_if_children, &uast->body->children);
     uast->body->children = new_if_children;
-    vec_reset(&env.switch_case_defer_add_enum_case_part);
-    vec_reset(&env.switch_case_defer_add_if_true);
+    vec_reset(&switch_case_defer_add_enum_case_part);
+    vec_reset(&switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
     if (!(status && try_set_block_types(&new_body, uast->body, false))) {
@@ -2353,13 +2365,13 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
 
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
-        if (env.parent_of == PARENT_OF_CASE) {
-            if (new_body->lang_type.type != LANG_TYPE_VOID && !env.break_in_case) {
+        if (parent_of == PARENT_OF_CASE) {
+            if (new_body->lang_type.type != LANG_TYPE_VOID && !break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
                 msg_invalid_yield_type(new_body->pos_end, NULL, true);
                 status = false;
             }
-        } else if (env.parent_of == PARENT_OF_IF) {
+        } else if (parent_of == PARENT_OF_IF) {
             todo();
         }
     }
@@ -2536,12 +2548,12 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     }
 
     bool status = true;
-    PARENT_OF old_parent_of = env.parent_of;
-    env.break_in_case = false;
-    if (env.parent_of == PARENT_OF_ASSIGN_RHS) {
-        env.break_type = env.lhs_lang_type;
+    PARENT_OF old_parent_of = parent_of;
+    break_in_case = false;
+    if (parent_of == PARENT_OF_ASSIGN_RHS) {
+        break_type = lhs_lang_type;
     } else {
-        env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
+        break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
     switch (tast_expr_get_lang_type(new_operand).type) {
@@ -2586,7 +2598,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             )));
         }
 
-        vec_append(&a_main, &env.switch_case_defer_add_if_true, old_case->if_true);
+        vec_append(&a_main, &switch_case_defer_add_if_true, old_case->if_true);
         Uast_block* if_true = uast_block_new(
             old_case->pos,
             (Uast_stmt_vec) {0},
@@ -2594,8 +2606,8 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             old_case->scope_id
         );
                 
-        env.parent_of = PARENT_OF_CASE;
-        env.parent_of_operand = lang_switch->operand;
+        parent_of = PARENT_OF_CASE;
+        parent_of_operand = lang_switch->operand;
         Tast_if* new_if = NULL;
         if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
             status = false;
@@ -2603,9 +2615,9 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         }
 
 error_inner:
-        env.parent_of_operand = NULL;
-        env.parent_of = PARENT_OF_NONE;
-        env.break_in_case = false;
+        parent_of_operand = NULL;
+        parent_of = PARENT_OF_NONE;
+        break_in_case = false;
         if (!status) {
             goto error;
         }
@@ -2625,8 +2637,8 @@ error_inner:
     }
 
 error:
-    env.parent_of = old_parent_of;
-    env.break_in_case = false;
+    parent_of = old_parent_of;
+    break_in_case = false;
     return status;
 }
 
@@ -2800,9 +2812,9 @@ error:
     dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
-    if (env.parent_of == PARENT_OF_CASE) {
-        yield_type = env.break_type;
-    } else if (env.parent_of == PARENT_OF_IF) {
+    if (parent_of == PARENT_OF_CASE) {
+        yield_type = break_type;
+    } else if (parent_of == PARENT_OF_IF) {
         todo();
     }
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
