@@ -92,15 +92,6 @@ static inline Strv_col strv_col_consume_until(Pos* pos, Strv_col* strv, char del
     unreachable("delim not found");
 }
 
-// return true when match
-static inline bool strv_col_cstr_is_equal(Strv_col strv, const char* cstr) {
-    return strv_cstr_is_equal(strv.base, cstr);
-}
-
-static inline int strv_col_cmp(Strv_col a, Strv_col b) {
-    return strv_cmp(a.base, b.base);
-}
-
 static inline bool strv_col_is_equal(Strv_col a, Strv_col b) {
     return strv_is_equal(a.base, b.base);
 }

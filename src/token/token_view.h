@@ -58,7 +58,7 @@ static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYP
 }
 
 static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
-    if (!strv_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
+    if (!strv_is_equal(tk_view_front(*tokens).text, sv(cstr))) {
         return false;
     }
     return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);

@@ -1860,13 +1860,13 @@ error:
 }
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
-    if (strv_cstr_is_equal(macro->name, "file")) {
+    if (strv_is_equal(macro->name, sv("file"))) {
         *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
         return true;
-    } else if (strv_cstr_is_equal(macro->name, "line")) {
+    } else if (strv_is_equal(macro->name, sv("line"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
         return true;
-    } else if (strv_cstr_is_equal(macro->name, "column")) {
+    } else if (strv_is_equal(macro->name, sv("column"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos));
         return true;
     } else {

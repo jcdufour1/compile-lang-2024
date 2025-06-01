@@ -12,7 +12,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
         case LANG_TYPE_CHAR: {
             // TODO: remove lang_type_atom from lang_type_char?
             Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             // TODO: remove this if statement
             return atom;
         }
@@ -25,7 +25,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
@@ -38,7 +38,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
@@ -51,14 +51,14 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_OPAQUE: {
             // TODO: remove atom from LANG_TYPE_OPAQUE
             Lang_type_atom atom = lang_type_opaque_const_unwrap(lang_type).atom;
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
@@ -171,19 +171,19 @@ static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_ENUM: {
             Lang_type_atom atom = lang_type_enum_const_unwrap(lang_type).atom;
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_STRUCT: {
             Lang_type_atom atom = lang_type_struct_const_unwrap(lang_type).atom;
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_RAW_UNION: {
             Lang_type_atom atom = lang_type_raw_union_const_unwrap(lang_type).atom;
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             assert(atom.str.base.count > 0);
             return atom;
         }
@@ -192,7 +192,7 @@ static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_FN: {
             Lang_type_atom atom = lang_type_atom_new_from_cstr("", 1, 0);
-            assert(!strv_cstr_is_equal(atom.str.base, "void"));
+            assert(!strv_is_equal(atom.str.base, sv("void")));
             return atom;
         }
         case LANG_TYPE_VOID: {

@@ -27,7 +27,7 @@ typedef struct Tast_type_ {
 static void extend_tast_name_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "TAST");
@@ -41,7 +41,7 @@ static void extend_tast_name_upper(String* output, Tast_name name) {
 static void extend_tast_name_lower(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "tast");
@@ -55,7 +55,7 @@ static void extend_tast_name_lower(String* output, Tast_name name) {
 static void extend_tast_name_first_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Tast");
@@ -70,7 +70,7 @@ static void extend_parent_tast_name_upper(String* output, Tast_name name) {
     todo();
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "TAST");
@@ -84,7 +84,7 @@ static void extend_parent_tast_name_upper(String* output, Tast_name name) {
 static void extend_parent_tast_name_lower(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         string_extend_cstr(&gen_a, output, "tast");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_tast_name_lower(String* output, Tast_name name) {
 static void extend_parent_tast_name_first_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         string_extend_cstr(&gen_a, output, "Tast");
         return;
     }

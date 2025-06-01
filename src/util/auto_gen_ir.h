@@ -28,7 +28,7 @@ typedef struct Ir_type_ {
 static void extend_ir_name_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "IR");
@@ -42,7 +42,7 @@ static void extend_ir_name_upper(String* output, Ir_name name) {
 static void extend_ir_name_lower(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ir");
@@ -56,7 +56,7 @@ static void extend_ir_name_lower(String* output, Ir_name name) {
 static void extend_ir_name_first_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Ir");
@@ -71,7 +71,7 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
     todo();
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "IR");
@@ -85,7 +85,7 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
 static void extend_parent_ir_name_lower(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         string_extend_cstr(&gen_a, output, "ir");
         return;
     }
@@ -100,7 +100,7 @@ static void extend_parent_ir_name_lower(String* output, Ir_name name) {
 static void extend_parent_ir_name_first_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "ir")) {
+    if (strv_is_equal(name.parent, sv("ir"))) {
         string_extend_cstr(&gen_a, output, "Ir");
         return;
     }

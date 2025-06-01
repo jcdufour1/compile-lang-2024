@@ -12,7 +12,7 @@ static inline bool lang_type_is_slice(Ulang_type* gen_arg, Lang_type lang_type) 
     }
     unwrap(lang_type_struct_const_unwrap(lang_type).atom.str.gen_args.info.count == 1);
     *gen_arg = vec_at_const(lang_type_struct_const_unwrap(lang_type).atom.str.gen_args, 0);
-    return strv_cstr_is_equal(lang_type_struct_const_unwrap(lang_type).atom.str.base, "Slice");
+    return strv_is_equal(lang_type_struct_const_unwrap(lang_type).atom.str.base, sv("Slice"));
 }
 
 #endif // LANG_TYPE_IS

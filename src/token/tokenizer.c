@@ -99,47 +99,47 @@ static bool get_next_token(
 
     if (isalpha(strv_col_front(*file_text_rem))) {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
-        if (strv_cstr_is_equal(text, "unsafe_cast")) {
+        if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
-        } else if (strv_cstr_is_equal(text, "defer")) {
+        } else if (strv_is_equal(text, sv("defer"))) {
             token->type = TOKEN_DEFER;
-        } else if (strv_cstr_is_equal(text, "fn")) {
+        } else if (strv_is_equal(text, sv("fn"))) {
             token->type = TOKEN_FN;
-        } else if (strv_cstr_is_equal(text, "for")) {
+        } else if (strv_is_equal(text, sv("for"))) {
             token->type = TOKEN_FOR;
-        } else if (strv_cstr_is_equal(text, "if")) {
+        } else if (strv_is_equal(text, sv("if"))) {
             token->type = TOKEN_IF;
-        } else if (strv_cstr_is_equal(text, "switch")) {
+        } else if (strv_is_equal(text, sv("switch"))) {
             token->type = TOKEN_SWITCH;
-        } else if (strv_cstr_is_equal(text, "case")) {
+        } else if (strv_is_equal(text, sv("case"))) {
             token->type = TOKEN_CASE;
-        } else if (strv_cstr_is_equal(text, "default")) {
+        } else if (strv_is_equal(text, sv("default"))) {
             token->type = TOKEN_DEFAULT;
-        } else if (strv_cstr_is_equal(text, "else")) {
+        } else if (strv_is_equal(text, sv("else"))) {
             token->type = TOKEN_ELSE;
-        } else if (strv_cstr_is_equal(text, "return")) {
+        } else if (strv_is_equal(text, sv("return"))) {
             token->type = TOKEN_RETURN;
-        } else if (strv_cstr_is_equal(text, "extern")) {
+        } else if (strv_is_equal(text, sv("extern"))) {
             token->type = TOKEN_EXTERN;
-        } else if (strv_cstr_is_equal(text, "struct")) {
+        } else if (strv_is_equal(text, sv("struct"))) {
             token->type = TOKEN_STRUCT;
-        } else if (strv_cstr_is_equal(text, "let")) {
+        } else if (strv_is_equal(text, sv("let"))) {
             token->type = TOKEN_LET;
-        } else if (strv_cstr_is_equal(text, "in")) {
+        } else if (strv_is_equal(text, sv("in"))) {
             token->type = TOKEN_IN;
-        } else if (strv_cstr_is_equal(text, "break")) {
+        } else if (strv_is_equal(text, sv("break"))) {
             token->type = TOKEN_BREAK;
-        } else if (strv_cstr_is_equal(text, "raw_union")) {
+        } else if (strv_is_equal(text, sv("raw_union"))) {
             token->type = TOKEN_RAW_UNION;
-        } else if (strv_cstr_is_equal(text, "enum")) {
+        } else if (strv_is_equal(text, sv("enum"))) {
             token->type = TOKEN_ENUM;
-        } else if (strv_cstr_is_equal(text, "continue")) {
+        } else if (strv_is_equal(text, sv("continue"))) {
             token->type = TOKEN_CONTINUE;
-        } else if (strv_cstr_is_equal(text, "type")) {
+        } else if (strv_is_equal(text, sv("type"))) {
             token->type = TOKEN_TYPE_DEF;
-        } else if (strv_cstr_is_equal(text, "import")) {
+        } else if (strv_is_equal(text, sv("import"))) {
             token->type = TOKEN_IMPORT;
-        } else if (strv_cstr_is_equal(text, "def")) {
+        } else if (strv_is_equal(text, sv("def"))) {
             token->type = TOKEN_DEF;
         } else {
             token->text = text;
@@ -218,7 +218,7 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '%')) {
         token->type = TOKEN_MODULO;
         return true;
-    } else if (file_text_rem->base.count > 1 && strv_cstr_is_equal(strv_slice(file_text_rem->base, 0, 2), "//")) {
+    } else if (file_text_rem->base.count > 1 && strv_is_equal(strv_slice(file_text_rem->base, 0, 2), sv("//"))) {
         strv_col_consume_until(pos, file_text_rem, '\n');
         trim_non_newline_whitespace(file_text_rem, pos);
         token->type = TOKEN_COMMENT;

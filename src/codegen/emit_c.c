@@ -506,9 +506,9 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     // TODO: remove these two if statements, and fix the actual underlying issues
     // we may need to make system to identify location of node generation, etc.
     // NOTE: this seems to be related to function callbacks for some reason
-    if (strv_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
+    if (strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv("void"))) {
         string_extend_cstr(&a_main, output, " uint64_t ");
-    } else if (strv_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
+    } else if (strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv(""))) {
         string_extend_cstr(&a_main, output, " uint64_t ");
     } else {
         c_extend_type_call_str(output, alloca->lang_type, true);

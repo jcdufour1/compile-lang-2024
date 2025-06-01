@@ -273,7 +273,7 @@ static void emit_function_call(String* output, String* literals, const Ir_functi
         ir_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!strv_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
+        assert(!strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, sv("void")));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);

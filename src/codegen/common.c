@@ -32,7 +32,7 @@ void ir_extend_name(String* output, Name name) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         name.scope_id = SCOPE_BUILTIN;
         assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
-    } else if (strv_cstr_is_equal(name.base, "main")) {
+    } else if (strv_is_equal(name.base, sv("main"))) {
         name.scope_id = SCOPE_BUILTIN;
     } else if (name.mod_path.count < 1) {
         name.mod_path = sv("PREFIX"); // TODO: make variable or similar for this

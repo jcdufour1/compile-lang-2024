@@ -74,23 +74,11 @@ static inline char strv_consume(Strv* strv) {
     return strv_front(strv_consume_count(strv, 1));
 }
 
-// return true when match
-static inline bool strv_cstr_is_equal(Strv strv, const char* cstr) {
-    if (strlen(cstr) != strv.count) {
+static inline bool strv_is_equal(Strv a, Strv b) {
+    if (a.count != b.count) {
         return false;
     }
-    return 0 == strncmp(strv.str, cstr, strv.count);
-}
-
-static inline int strv_cmp(Strv a, Strv b) {
-    if (a.count != b.count) {
-        return 100;
-    }
-    return strncmp(a.str, b.str, a.count);
-}
-
-static inline bool strv_is_equal(Strv a, Strv b) {
-    return 0 == strv_cmp(a, b);
+    return 0 == strncmp(a.str, b.str, a.count);
 }
 
 static inline bool strv_starts_with(Strv base, Strv prefix) {

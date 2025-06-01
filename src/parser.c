@@ -1578,7 +1578,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
         msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_STRING_LITERAL);
         goto error;
     }
-    if (!strv_cstr_is_equal(extern_type_token.text, "c")) {
+    if (!strv_is_equal(extern_type_token.text, sv("c"))) {
         msg(
             DIAG_INVALID_EXTERN_TYPE, extern_type_token.pos,
             "invalid extern type `"FMT"`\n", strv_print(extern_type_token.text)

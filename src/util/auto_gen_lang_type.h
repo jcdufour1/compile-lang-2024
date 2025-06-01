@@ -27,7 +27,7 @@ typedef struct Lang_type_type_ {
 static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -41,7 +41,7 @@ static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
 static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "lang_type");
@@ -55,7 +55,7 @@ static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
 static void extend_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Lang_type");
@@ -70,7 +70,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
     todo();
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -84,7 +84,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         string_extend_cstr(&gen_a, output, "lang_type");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_lang_type_name_lower(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (strv_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         string_extend_cstr(&gen_a, output, "Lang_type");
         return;
     }
