@@ -137,7 +137,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"missing-close-multiline", DIAG_MISSING_CLOSE_MULTILINE, LOG_ERROR, true},
     {"invalid-count-struct-lit-args", DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, LOG_ERROR, true},
     {"missing-enum-arg", DIAG_MISSING_ENUM_ARG, LOG_ERROR, true},
-    {"enum-case-too-many-args", DIAG_ENUM_CASE_TOO_MANY_ARGS, LOG_ERROR, true},
+    {"enum-case-too-mopaque-args", DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, LOG_ERROR, true},
     {"void-enum-case-has-arg", DIAG_VOID_ENUM_CASE_HAS_ARG, LOG_ERROR, true},
     {"invalid-stmt-top-level", DIAG_INVALID_STMT_TOP_LEVEL, LOG_ERROR, true},
     {"invalid-function-callee", DIAG_INVALID_FUNCTION_CALLEE, LOG_ERROR, true},

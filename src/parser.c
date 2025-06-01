@@ -96,9 +96,9 @@ static bool prev_is_newline(void) {
 }
 
 // TODO: inline this function?
-static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type, bool rm_newlines) {
+static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_opaque_type, TOKEN_TYPE type, bool rm_newlines) {
     Token temp = {0};
-    if (allow_any_type) {
+    if (allow_opaque_type) {
         temp = tk_view_consume(tokens);
     } else {
         if (!tk_view_try_consume(&temp, tokens, type)) {
@@ -966,7 +966,7 @@ static PARSE_STATUS parse_function_decl_common(
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
-    // nessessary because if return type in decl is any*, * is not considered to end stmt
+    // nessessary because if return type in decl is opaque*, * is not considered to end stmt
     try_consume_newlines(tokens);
 
     return PARSE_OK;
@@ -2174,7 +2174,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
-                // TODO: remove this if if it causes too many issues
+                // TODO: remove this if if it causes too mopaque issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
                         DIAG_MISSING_CLOSE_PAR, open_par_token.pos, 

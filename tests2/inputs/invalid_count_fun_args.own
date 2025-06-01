@@ -1,5 +1,5 @@
 
-extern("c") fn printf(format_string: u8*, args: any...) i32
+extern("c") fn printf(format_string: u8*, args: opaque...) i32
 
 fn main() i32 {
     printf()

@@ -1658,7 +1658,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
             if (fun_call->args.info.count > 1) {
                 msg(
-                    DIAG_ENUM_CASE_TOO_MANY_ARGS, tast_enum_callee_unwrap(new_callee)->pos,
+                    DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_callee_unwrap(new_callee)->pos,
                     "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
@@ -1728,7 +1728,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
             if (fun_call->args.info.count > 1) {
                 msg(
-                    DIAG_ENUM_CASE_TOO_MANY_ARGS, tast_enum_case_unwrap(new_callee)->pos,
+                    DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_case_unwrap(new_callee)->pos,
                     "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
@@ -1803,7 +1803,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(POS_BUILTIN, lang_type_atom_new_from_cstr("any", 0, 0)))))) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
             if (param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t arg_idx = param_idx; arg_idx < fun_call->args.info.count; arg_idx++) {

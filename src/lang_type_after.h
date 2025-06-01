@@ -55,9 +55,9 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             assert(atom.str.base.count > 0);
             return atom;
         }
-        case LANG_TYPE_ANY: {
-            // TODO: remove atom from LANG_TYPE_ANY
-            Lang_type_atom atom = lang_type_any_const_unwrap(lang_type).atom;
+        case LANG_TYPE_OPAQUE: {
+            // TODO: remove atom from LANG_TYPE_OPAQUE
+            Lang_type_atom atom = lang_type_opaque_const_unwrap(lang_type).atom;
             assert(!strv_cstr_is_equal(atom.str.base, "void"));
             assert(atom.str.base.count > 0);
             return atom;
@@ -140,10 +140,10 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
         }
-        case LANG_TYPE_ANY:
+        case LANG_TYPE_OPAQUE:
             return lang_type_atom_new(
                 name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
-                lang_type_any_const_unwrap(lang_type).atom.pointer_depth
+                lang_type_opaque_const_unwrap(lang_type).atom.pointer_depth
             );
     }
     unreachable("");
@@ -230,8 +230,8 @@ static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, 
             );
             lang_type_float_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
-        case LANG_TYPE_ANY:
-            lang_type_any_unwrap(lang_type)->atom = atom;
+        case LANG_TYPE_OPAQUE:
+            lang_type_opaque_unwrap(lang_type)->atom = atom;
             return;
     }
     unreachable("");
@@ -283,7 +283,7 @@ static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang
             return lang_type_signed_int_const_unwrap(lang_type).bit_width;
         case LANG_TYPE_FLOAT:
             return lang_type_float_const_unwrap(lang_type).bit_width;
-        case LANG_TYPE_ANY:
+        case LANG_TYPE_OPAQUE:
             unreachable("");
     }
     unreachable("");

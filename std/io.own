@@ -1,10 +1,10 @@
 
 extern("c") fn puts(format_string u8*) i32
-extern("c") fn printf(format_string u8*, args any...) i32
+extern("c") fn printf(format_string u8*, args opaque...) i32
 extern("c") fn isdigit(character i32) i32
 extern("c") fn abort()
-extern("c") fn fopen(file_path u8*, flags u8*) any*
-extern("c") fn malloc(size u64) any*
+extern("c") fn fopen(file_path u8*, flags u8*) opaque*
+extern("c") fn malloc(size u64) opaque*
 
 type Token struct {
     num i32

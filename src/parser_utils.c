@@ -368,7 +368,7 @@ bool lang_type_is_number_like(Lang_type lang_type) {
             return true;
         case LANG_TYPE_FLOAT:
             return true;
-        case LANG_TYPE_ANY:
+        case LANG_TYPE_OPAQUE:
             return false;
     }
     unreachable("");
@@ -385,7 +385,7 @@ bool lang_type_primitive_is_number(Lang_type_primitive lang_type) {
             return true;
         case LANG_TYPE_FLOAT:
             return true;
-        case LANG_TYPE_ANY:
+        case LANG_TYPE_OPAQUE:
             return false;
     }
     unreachable("");

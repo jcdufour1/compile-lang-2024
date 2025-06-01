@@ -21,10 +21,10 @@
 //
 // TODO: expected success test for \r, \t, etc. in source file
 
-static void add_any(const char* base_name, int16_t pointer_depth) {
+static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
-        lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(
+        lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
             POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
         )))
     );
@@ -36,7 +36,7 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_any("any", 0);
+    add_opaque("opaque", 0);
     add_void();
 }
 
@@ -94,7 +94,7 @@ Ir_block* compile_file_to_ir(void) {
         log(LOG_DEBUG, FMT, ir_print(curr));
         log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
     }
-    // TODO: for this to actually do anything, we need to iterate on scope_id SCOPE_BUILTIN
+    // TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
     log(LOG_DEBUG, FMT, ir_block_print(ir_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
