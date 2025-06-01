@@ -14,6 +14,12 @@ static inline Lang_type lang_type_new_u1(void) {
     ));
 }
 
+static inline Lang_type lang_type_new_usize(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 64 /* TODO: change based on target */, 0)
+    ));
+}
+
 size_t get_count_excape_seq(Strv strv);
 
 // \n excapes are actually stored as is in tokens, uast, tasts, and irs, but should be printed as \0a (depending on the backend)

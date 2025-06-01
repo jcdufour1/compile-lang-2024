@@ -1701,8 +1701,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     unreachable("");
             }
 
-            // TODO: set tag size based on target platform
-            enum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
+            enum_callee->tag->lang_type = lang_type_new_usize();
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 enum_callee->pos,
@@ -2025,7 +2024,7 @@ bool try_set_member_access_types_finish_enum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
+            new_callee->tag->lang_type = lang_type_new_usize();
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 new_callee->pos,
@@ -2170,9 +2169,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             new_inner_index,
             tast_expr_get_pos(new_inner_index),
             UNARY_UNSAFE_CAST,
-            lang_type_primitive_const_wrap(
-                lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, 64, 0))
-            )
+            lang_type_new_usize()
         ));
     } else {
         unreachable("");

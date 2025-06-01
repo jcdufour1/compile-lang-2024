@@ -63,6 +63,10 @@ typedef struct {
     Name is_rtning;
 } Defer_colls;
 
+//
+// globals
+//
+
 static Tast_variable_def* rtn_def;
 
 static Defer_colls defered_collections;
@@ -77,10 +81,6 @@ static Name struct_rtn_name_parent_function;
 
 static Name name_parent_fn;
 
-// TODO: remove serialize functions in this file
-
-// forward declarations
-
 #define if_for_add_cond_goto(old_oper, new_block, label_name_if_true, label_name_if_false) \
     if_for_add_cond_goto_internal(loc_new(), old_oper, new_block, label_name_if_true, label_name_if_false)
 
@@ -88,6 +88,10 @@ static Name name_parent_fn;
 
 #define load_assignment(new_block, old_assign) \
     load_assignment_internal(__FILE__, __LINE__, new_block, old_assign)
+
+//
+// forward declarations
+//
 
 static void if_for_add_cond_goto_internal(
     Loc loc,
@@ -512,7 +516,7 @@ static Lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type
     unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
     Tast_variable_def_vec members = {0};
 
-    Lang_type tag_lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0)));
+    Lang_type tag_lang_type = lang_type_new_usize();
     size_t largest_idx = struct_def_base_get_idx_largest_member(tast_enum_def_unwrap(lang_type_def_)->base);
     if (vec_at(&tast_enum_def_unwrap(lang_type_def_)->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
         return tag_lang_type;
@@ -565,9 +569,7 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             Tast_variable_def* tag = tast_variable_def_new(
                 lang_type_pos,
-                // TODO: make helper functions, etc. for line below, because this is too much to do every time
-                // TODO: change singed here to unsigned
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
+                lang_type_new_usize(),
                 false,
                 util_literal_name_new_prefix(sv("rm_tuple_lang_type_raw_union_tag"))
             );
@@ -1442,7 +1444,7 @@ static Name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_ac
 
     Ir_load_element_ptr* new_tag = ir_load_element_ptr_new(
         old_access->pos,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
+        lang_type_new_usize(),
         0,
         new_enum,
         util_literal_name_new()
@@ -1457,7 +1459,7 @@ static Name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         load_ptr_enum_get_tag(new_block, old_access),
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
+        lang_type_new_usize(),
         util_literal_name_new()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
