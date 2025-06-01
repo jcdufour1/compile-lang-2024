@@ -5,7 +5,7 @@
 
 typedef struct {
     Vec_base info;
-    Str_view* buf;
-} Str_view_vec;
+    Strv* buf;
+} Strv_vec;
 
 #endif // STR_VIEW_VEC_H

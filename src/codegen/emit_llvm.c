@@ -273,7 +273,7 @@ static void emit_function_call(String* output, String* literals, const Ir_functi
         ir_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
+        assert(!strv_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
@@ -987,7 +987,7 @@ static void emit_sometimes(String* struct_defs, String* output, String* literals
 }
 
 static void emit_symbol_normal(String* literals, Name key, const Ir_literal* lit) {
-    Str_view data = {0};
+    Strv data = {0};
     switch (lit->type) {
         case IR_STRING:
             data = ir_string_const_unwrap(lit)->data;
@@ -1025,7 +1025,7 @@ void emit_llvm_from_tree(const Ir_block* root) {
     if (!file) {
         msg(
             DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
-            str_view_print(params.input_file_path), strerror(errno)
+            strv_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
@@ -1036,7 +1036,7 @@ void emit_llvm_from_tree(const Ir_block* root) {
 
     msg(
         DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
-        str_view_print(params.input_file_path)
+        strv_print(params.input_file_path)
     );
 
     fclose(file);

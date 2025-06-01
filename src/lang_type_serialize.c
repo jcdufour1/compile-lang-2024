@@ -1,6 +1,6 @@
 #include <lang_type_serialize.h>
 
-Str_view serialize_struct_def_base(Struct_def_base base) {
+Strv serialize_struct_def_base(Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Lang_type curr = vec_at(&base.members, idx)->lang_type;
@@ -14,7 +14,7 @@ Str_view serialize_struct_def_base(Struct_def_base base) {
     return string_to_strv(name);
 }
 
-Str_view serialize_lang_type_get_prefix(Lang_type lang_type) {
+Strv serialize_lang_type_get_prefix(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_RAW_UNION:
             return sv("RAW_UNION");
@@ -34,7 +34,7 @@ Str_view serialize_lang_type_get_prefix(Lang_type lang_type) {
     unreachable("");
 }
 
-Str_view serialize_lang_type_struct_thing(Lang_type lang_type) {
+Strv serialize_lang_type_struct_thing(Lang_type lang_type) {
     String name = {0};
     string_extend_strv(&a_main, &name, serialize_lang_type_get_prefix(lang_type));
 
@@ -45,7 +45,7 @@ Str_view serialize_lang_type_struct_thing(Lang_type lang_type) {
     return string_to_strv(name);
 }
 
-Str_view serialize_lang_type_tuple(Lang_type_tuple lang_type) {
+Strv serialize_lang_type_tuple(Lang_type_tuple lang_type) {
     String name = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
         Lang_type curr = vec_at_const(lang_type.lang_types, idx);
@@ -54,7 +54,7 @@ Str_view serialize_lang_type_tuple(Lang_type_tuple lang_type) {
     return string_to_strv(name);
 }
 
-Str_view serialize_lang_type_fn(Lang_type_fn lang_type) {
+Strv serialize_lang_type_fn(Lang_type_fn lang_type) {
     String name = {0};
     string_extend_strv(&a_main, &name, serialize_lang_type_tuple( lang_type.params));
     string_extend_strv(&a_main, &name, serialize_lang_type( *lang_type.return_type));
@@ -62,7 +62,7 @@ Str_view serialize_lang_type_fn(Lang_type_fn lang_type) {
 }
 
 // TODO: make separate function for Tast_lang_type and Lang_type
-Str_view serialize_lang_type(Lang_type lang_type) {
+Strv serialize_lang_type(Lang_type lang_type) {
     // TODO: think about memory allocation strategy here
     // TODO: make function to serialize lang_type, and call it from here
     //
@@ -91,7 +91,7 @@ Str_view serialize_lang_type(Lang_type lang_type) {
     unreachable("");
 }
 
-Lang_type deserialize_lang_type(Str_view* serialized) {
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+Lang_type deserialize_lang_type(Strv* serialized) {
+    log(LOG_DEBUG, TAST_FMT"\n", strv_print(*serialized));
     todo();
 }

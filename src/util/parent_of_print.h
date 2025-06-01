@@ -2,10 +2,10 @@
 #define PARENT_OF_PRINT_H
 
 #include <env.h>
-#include <str_view.h>
+#include <strv.h>
 #include <util.h>
 
-static inline Str_view parent_of_print_internal(PARENT_OF parent_of) {
+static inline Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
         case PARENT_OF_NONE:
             return sv("PARENT_OF_NONE");
@@ -23,7 +23,7 @@ static inline Str_view parent_of_print_internal(PARENT_OF parent_of) {
     unreachable("");
 }
 
-#define parent_of_print(parent_of) str_view_print(parent_of_print_internal(parent_of))
+#define parent_of_print(parent_of) strv_print(parent_of_print_internal(parent_of))
 
 #endif // PARENT_OF_PRINT_H
 

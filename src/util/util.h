@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <str_view_struct.h>
+#include <strv_struct.h>
 #include <diag_type.h>
 
 typedef enum {
@@ -35,7 +35,7 @@ struct Env_;
 typedef struct Env_ Env;
 
 typedef struct {
-    Str_view file_path;
+    Strv file_path;
     uint32_t line;
     uint32_t column;
 } Pos;

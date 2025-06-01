@@ -1841,7 +1841,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
             add_label((*new_block), next_if, vec_at(&if_else->tasts, idx)->pos);
             assert(alloca_lookup(&dummy, next_if));
         } else {
-            //assert(str_view_is_equal(next_if, env.label_if_break));
+            //assert(strv_is_equal(next_if, env.label_if_break));
         }
     }
 

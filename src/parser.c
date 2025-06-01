@@ -221,7 +221,7 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
             }
         }
         string_extend_cstr(&a_print, &message, "`");
-        string_extend_strv(&a_print, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
+        string_extend_strv(&a_print, &message, token_type_to_strv(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
         string_extend_cstr(&a_print, &message, "` ");
     }
 
@@ -231,7 +231,7 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
     if (got.type == TOKEN_NONTYPE) {
         expect_fail_type = DIAG_INVALID_TOKEN;
     }
-    msg_internal(file, line, expect_fail_type, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
+    msg_internal(file, line, expect_fail_type, got.pos, STR_VIEW_FMT"\n", strv_print(string_to_strv(message)));
 
     va_end(args);
 }
@@ -257,13 +257,13 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     return PARSE_ERROR;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
+static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
     bool status = true;
     Uast_def* prev_def = NULL;
     String file_path = {0};
-    Str_view old_mod_path = env.curr_mod_path;
+    Strv old_mod_path = env.curr_mod_path;
     env.curr_mod_path = mod_path;
-    if (usymbol_lookup(&prev_def, name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
+    if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
 
@@ -278,7 +278,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
-        name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+        name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     ))));
 
 finish:
@@ -715,7 +715,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
     (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-    Str_view mod_alias = {0};
+    Strv mod_alias = {0};
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
@@ -1355,7 +1355,7 @@ static PARSE_STATUS parse_for_range_internal(
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, user_name.scope_id),
-        name_new(user_name.mod_path, util_literal_str_view_new(), user_name.gen_args, user_name.scope_id)
+        name_new(user_name.mod_path, util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
@@ -1566,10 +1566,10 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
         msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_STRING_LITERAL);
         goto error;
     }
-    if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
+    if (!strv_cstr_is_equal(extern_type_token.text, "c")) {
         msg(
             DIAG_INVALID_EXTERN_TYPE, extern_type_token.pos,
-            "invalid extern type `"STR_VIEW_FMT"`\n", str_view_print(extern_type_token.text)
+            "invalid extern type `"STR_VIEW_FMT"`\n", strv_print(extern_type_token.text)
         );
         goto error;
     }
@@ -2596,19 +2596,19 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-bool parse_file(Uast_block** block, Str_view file_path) {
+bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();
 #endif // DNDEBUG
 
-    Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
+    Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
         msg(
             DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
             "could not open file `"STR_VIEW_FMT"`: %s\n",
-            str_view_print(file_path), strerror(errno)
+            strv_print(file_path), strerror(errno)
         );
         status = false;
         goto error;
@@ -2636,11 +2636,11 @@ static void parser_test_parse_expr(const char* input, int test) {
     (void) test;
     todo();
     //Env env = {0};
-    //Str_view file_text = sv(input);
+    //Strv file_text = sv(input);
     //env.file_path_to_text = file_text;
 
     //Token_vec tokens_ = {0};
-    //unwrap(tokenize(&tokens_, & (Str_view) {0}));
+    //unwrap(tokenize(&tokens_, & (Strv) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);
     //Uast_expr* result = NULL;
@@ -2659,11 +2659,11 @@ static void parser_test_parse_stmt(const char* input, int test) {
     (void) test;
     log(LOG_DEBUG, "start parser_test_%d:\n", test);
     //Env env = {0};
-    //Str_view file_text = sv(input);
+    //Strv file_text = sv(input);
     //env.file_text = file_text;
 
     //Token_vec tokens_ = {0};
-    //unwrap(tokenize(&tokens_, & (Str_view) {0}));
+    //unwrap(tokenize(&tokens_, & (Strv) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);
     //Uast_stmt* result = NULL;

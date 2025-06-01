@@ -14,8 +14,8 @@ typedef struct {
 
 typedef struct {
     bool is_topmost;
-    Str_view parent;
-    Str_view base;
+    Strv parent;
+    Strv base;
 } Uast_name;
 
 typedef struct Uast_type_ {
@@ -27,7 +27,7 @@ typedef struct Uast_type_ {
 static void extend_uast_name_upper(String* output, Uast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "UAST");
@@ -41,7 +41,7 @@ static void extend_uast_name_upper(String* output, Uast_name name) {
 static void extend_uast_name_lower(String* output, Uast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "uast");
@@ -55,7 +55,7 @@ static void extend_uast_name_lower(String* output, Uast_name name) {
 static void extend_uast_name_first_upper(String* output, Uast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Uast");
@@ -70,7 +70,7 @@ static void extend_parent_uast_name_upper(String* output, Uast_name name) {
     todo();
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "UAST");
@@ -84,7 +84,7 @@ static void extend_parent_uast_name_upper(String* output, Uast_name name) {
 static void extend_parent_uast_name_lower(String* output, Uast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         string_extend_cstr(&gen_a, output, "uast");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_uast_name_lower(String* output, Uast_name name) {
 static void extend_parent_uast_name_first_upper(String* output, Uast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "uast")) {
+    if (strv_cstr_is_equal(name.parent, "uast")) {
         string_extend_cstr(&gen_a, output, "Uast");
         return;
     }
@@ -234,7 +234,7 @@ static Uast_type uast_gen_float(const char* prefix) {
 static Uast_type uast_gen_string(const char* prefix) {
     Uast_type string = {.name = uast_name_new(prefix, "string", false)};
 
-    append_member(&string.members, "Str_view", "data");
+    append_member(&string.members, "Strv", "data");
 
     return string;
 }
@@ -302,7 +302,7 @@ static Uast_type uast_gen_tuple(const char* prefix) {
 static Uast_type uast_gen_macro(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "macro", false)};
 
-    append_member(&lit.members, "Str_view", "name");
+    append_member(&lit.members, "Strv", "name");
     append_member(&lit.members, "Pos", "value");
 
     return lit;
@@ -783,7 +783,7 @@ static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
@@ -823,7 +823,7 @@ static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void uast_gen_uast_unwrap(Uast_type uast) {
@@ -850,11 +850,11 @@ static void uast_gen_print_forward_decl(Uast_type type) {
 
     string_extend_cstr(&gen_a, &function, "#define ");
     extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(uast) str_view_print(");
+    string_extend_cstr(&gen_a, &function, "_print(uast) strv_print(");
     extend_uast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(uast, 0))\n");
 
-    string_extend_cstr(&gen_a, &function, "Str_view ");
+    string_extend_cstr(&gen_a, &function, "Strv ");
     extend_uast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_uast_name_first_upper(&function, type.name);
@@ -943,7 +943,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
@@ -999,7 +999,7 @@ static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_uast_new_forward_decl(Uast_type uast) {

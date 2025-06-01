@@ -51,7 +51,7 @@ static void msg_invalid_count_generic_args_internal(
     string_extend_cstr(&a_print, &message, " generic arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
-        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+        STR_VIEW_FMT, strv_print(string_to_strv(message))
     );
 
     msg_internal(

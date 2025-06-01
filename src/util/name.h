@@ -17,34 +17,34 @@ typedef enum {
 } NAME_MODE;
 
 typedef struct {
-    Str_view mod_path;
-    Str_view base;
+    Strv mod_path;
+    Strv base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
 } Name;
 
 typedef struct {
     Name mod_alias; // TODO: do not use Name for mod_alias; come up with a better system
-    Str_view base;
+    Strv base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
 } Uname;
 
-Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
-Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 void extend_name_ir(String* buf, Name name);
 
-void serialize_str_view(String* buf, Str_view str_view);
+void serialize_strv(String* buf, Strv strv);
 
-Str_view serialize_name_symbol_table(Name name);
+Strv serialize_name_symbol_table(Name name);
 
-Str_view serialize_name(Name name);
+Strv serialize_name(Name name);
 
-Str_view name_print_internal(NAME_MODE mode, bool serialize, Name name);
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name);
 
-Str_view uname_print_internal(UNAME_MODE mode, Uname name);
+Strv uname_print_internal(UNAME_MODE mode, Uname name);
 
 void extend_name_msg(String* buf, Name name);
 
@@ -58,8 +58,8 @@ Name name_clone(Name name, Scope_id scope_id);
 
 Uname uname_clone(Uname name, Scope_id scope_id);
 
-#define name_print(mode, name) str_view_print(name_print_internal(mode, false, name))
+#define name_print(mode, name) strv_print(name_print_internal(mode, false, name))
 
-#define uname_print(mode, name) str_view_print(uname_print_internal(mode, name))
+#define uname_print(mode, name) strv_print(uname_print_internal(mode, name))
 
 #endif // NAME_H

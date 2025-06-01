@@ -12,12 +12,12 @@ static void extend_child_name(String* buf, const char* location, Name child_name
     string_extend_cstr(&a_print, buf, " *) ");
 }
 
-Str_view ir_binary_print_internal(const Ir_binary* binary, int indent) {
+Strv ir_binary_print_internal(const Ir_binary* binary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "binary", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
-    string_extend_strv(&a_print, &buf, binary_type_to_str_view(binary->token_type));
+    string_extend_strv(&a_print, &buf, binary_type_to_strv(binary->token_type));
     extend_name(NAME_LOG, &buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
     extend_child_name(&buf, "rhs", binary->rhs);
@@ -26,12 +26,12 @@ Str_view ir_binary_print_internal(const Ir_binary* binary, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_unary_print_internal(const Ir_unary* unary, int indent) {
+Strv ir_unary_print_internal(const Ir_unary* unary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "unary", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
-    string_extend_strv(&a_print, &buf, unary_type_to_str_view(unary->token_type));
+    string_extend_strv(&a_print, &buf, unary_type_to_strv(unary->token_type));
     extend_name(NAME_LOG, &buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -45,7 +45,7 @@ void ir_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&a_print, string, "\n");
 }
 
-Str_view ir_literal_print_internal(const Ir_literal* lit, int indent) {
+Strv ir_literal_print_internal(const Ir_literal* lit, int indent) {
     switch (lit->type) {
         case IR_INT:
             return ir_int_print_internal(ir_int_const_unwrap(lit), indent);
@@ -61,7 +61,7 @@ Str_view ir_literal_print_internal(const Ir_literal* lit, int indent) {
     unreachable("");
 }
 
-Str_view ir_function_call_print_internal(const Ir_function_call* fun_call, int indent) {
+Strv ir_function_call_print_internal(const Ir_function_call* fun_call, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_call", indent);
@@ -79,7 +79,7 @@ Str_view ir_function_call_print_internal(const Ir_function_call* fun_call, int i
     return string_to_strv(buf);
 }
 
-Str_view ir_int_print_internal(const Ir_int* num, int indent) {
+Strv ir_int_print_internal(const Ir_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "number", indent);
@@ -91,7 +91,7 @@ Str_view ir_int_print_internal(const Ir_int* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_float_print_internal(const Ir_float* num, int indent) {
+Strv ir_float_print_internal(const Ir_float* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "float", indent);
@@ -103,7 +103,7 @@ Str_view ir_float_print_internal(const Ir_float* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_string_print_internal(const Ir_string* lit, int indent) {
+Strv ir_string_print_internal(const Ir_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "string", indent);
@@ -114,7 +114,7 @@ Str_view ir_string_print_internal(const Ir_string* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_void_print_internal(const Ir_void* num, int indent) {
+Strv ir_void_print_internal(const Ir_void* num, int indent) {
     (void) num;
     String buf = {0};
 
@@ -123,7 +123,7 @@ Str_view ir_void_print_internal(const Ir_void* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_function_name_print_internal(const Ir_function_name* name, int indent) {
+Strv ir_function_name_print_internal(const Ir_function_name* name, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_name", indent);
@@ -134,7 +134,7 @@ Str_view ir_function_name_print_internal(const Ir_function_name* name, int inden
     return string_to_strv(buf);
 }
 
-Str_view ir_load_element_ptr_print_internal(const Ir_load_element_ptr* load, int indent) {
+Strv ir_load_element_ptr_print_internal(const Ir_load_element_ptr* load, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "load_element_ptr", indent);
@@ -147,7 +147,7 @@ Str_view ir_load_element_ptr_print_internal(const Ir_load_element_ptr* load, int
     return string_to_strv(buf);
 }
 
-Str_view ir_array_access_print_internal(const Ir_array_access* load, int indent) {
+Strv ir_array_access_print_internal(const Ir_array_access* load, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "array_access", indent);
@@ -160,7 +160,7 @@ Str_view ir_array_access_print_internal(const Ir_array_access* load, int indent)
     return string_to_strv(buf);
 }
 
-Str_view ir_block_print_internal(const Ir_block* block, int indent) {
+Strv ir_block_print_internal(const Ir_block* block, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
@@ -175,20 +175,20 @@ Str_view ir_block_print_internal(const Ir_block* block, int indent) {
     alloca_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = ir_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = ir_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view ir_function_params_print_internal(const Ir_function_params* function_params, int indent) {
+Strv ir_function_params_print_internal(const Ir_function_params* function_params, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Str_view arg_text = ir_variable_def_print_internal(vec_at(&function_params->params, idx), indent);
+        Strv arg_text = ir_variable_def_print_internal(vec_at(&function_params->params, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -196,7 +196,7 @@ Str_view ir_function_params_print_internal(const Ir_function_params* function_pa
     return string_to_strv(buf);
 }
 
-Str_view ir_return_print_internal(const Ir_return* lang_rtn, int indent) {
+Strv ir_return_print_internal(const Ir_return* lang_rtn, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "return", indent);
@@ -206,7 +206,7 @@ Str_view ir_return_print_internal(const Ir_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_goto_print_internal(const Ir_goto* lang_goto, int indent) {
+Strv ir_goto_print_internal(const Ir_goto* lang_goto, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "goto", indent);
@@ -217,7 +217,7 @@ Str_view ir_goto_print_internal(const Ir_goto* lang_goto, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) {
+Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "cond_goto", indent);
@@ -229,7 +229,7 @@ Str_view ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
+Strv ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "alloca", indent);
@@ -240,7 +240,7 @@ Str_view ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int indent) {
+Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "load_another_ir", indent);
@@ -252,7 +252,7 @@ Str_view ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int i
     return string_to_strv(buf);
 }
 
-Str_view ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int indent) {
+Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "store_another_ir", indent);
@@ -265,7 +265,7 @@ Str_view ir_store_another_ir_print_internal(const Ir_store_another_ir* store, in
     return string_to_strv(buf);
 }
 
-Str_view ir_function_decl_print_internal(const Ir_function_decl* fun_decl, int indent) {
+Strv ir_function_decl_print_internal(const Ir_function_decl* fun_decl, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_decl", indent);
@@ -279,7 +279,7 @@ Str_view ir_function_decl_print_internal(const Ir_function_decl* fun_decl, int i
     return string_to_strv(buf);
 }
 
-Str_view ir_function_def_print_internal(const Ir_function_def* fun_def, int indent) {
+Strv ir_function_def_print_internal(const Ir_function_def* fun_def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_def\n", indent);
@@ -297,12 +297,12 @@ static void extend_ir_struct_def_base(String* buf, const char* type_name, Ir_str
     string_extend_cstr(&a_print, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = ir_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = ir_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, buf, memb_text);
     }
 }
 
-Str_view ir_struct_def_print_internal(const Ir_struct_def* def, int indent) {
+Strv ir_struct_def_print_internal(const Ir_struct_def* def, int indent) {
     String buf = {0};
 
     extend_ir_struct_def_base(&buf, "struct_def", def->base, indent);
@@ -310,7 +310,7 @@ Str_view ir_struct_def_print_internal(const Ir_struct_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_primitive_def_print_internal(const Ir_primitive_def* def, int indent) {
+Strv ir_primitive_def_print_internal(const Ir_primitive_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "primitive_def\n", indent);
@@ -322,7 +322,7 @@ Str_view ir_primitive_def_print_internal(const Ir_primitive_def* def, int indent
     return string_to_strv(buf);
 }
 
-Str_view ir_string_def_print_internal(const Ir_string_def* def, int indent) {
+Strv ir_string_def_print_internal(const Ir_string_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "string_def", indent);
@@ -335,7 +335,7 @@ Str_view ir_string_def_print_internal(const Ir_string_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) {
+Strv ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) {
     String buf = {0};
 
     indent += INDENT_WIDTH;
@@ -345,7 +345,7 @@ Str_view ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int inde
     string_extend_cstr(&a_print, &buf, "\n");
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Str_view memb_text = ir_expr_print_internal(vec_at(&def->members, idx), indent);
+        Strv memb_text = ir_expr_print_internal(vec_at(&def->members, idx), indent);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
@@ -354,7 +354,7 @@ Str_view ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int inde
     return string_to_strv(buf);
 }
 
-Str_view ir_label_print_internal(const Ir_label* label, int indent) {
+Strv ir_label_print_internal(const Ir_label* label, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "label", indent);
@@ -364,7 +364,7 @@ Str_view ir_label_print_internal(const Ir_label* label, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view ir_literal_def_print_internal(const Ir_literal_def* def, int indent) {
+Strv ir_literal_def_print_internal(const Ir_literal_def* def, int indent) {
     switch (def->type) {
         case IR_STRING_DEF:
             return ir_string_def_print_internal(ir_string_def_const_unwrap(def), indent);
@@ -374,7 +374,7 @@ Str_view ir_literal_def_print_internal(const Ir_literal_def* def, int indent) {
     unreachable("");
 }
 
-Str_view ir_variable_def_print_internal(const Ir_variable_def* def, int indent) {
+Strv ir_variable_def_print_internal(const Ir_variable_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "variable_def", indent);
@@ -386,7 +386,7 @@ Str_view ir_variable_def_print_internal(const Ir_variable_def* def, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view ir_operator_print_internal(const Ir_operator* operator, int indent) {
+Strv ir_operator_print_internal(const Ir_operator* operator, int indent) {
     switch (operator->type) {
         case IR_BINARY:
             return ir_binary_print_internal(ir_binary_const_unwrap(operator), indent);
@@ -396,7 +396,7 @@ Str_view ir_operator_print_internal(const Ir_operator* operator, int indent) {
     unreachable("");
 }
 
-Str_view ir_def_print_internal(const Ir_def* def, int indent) {
+Strv ir_def_print_internal(const Ir_def* def, int indent) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             return ir_function_def_print_internal(ir_function_def_const_unwrap(def), indent);
@@ -416,7 +416,7 @@ Str_view ir_def_print_internal(const Ir_def* def, int indent) {
     unreachable("");
 }
 
-Str_view ir_expr_print_internal(const Ir_expr* expr, int indent) {
+Strv ir_expr_print_internal(const Ir_expr* expr, int indent) {
     switch (expr->type) {
         case IR_OPERATOR:
             return ir_operator_print_internal(ir_operator_const_unwrap(expr), indent);
@@ -428,7 +428,7 @@ Str_view ir_expr_print_internal(const Ir_expr* expr, int indent) {
     unreachable("");
 }
 
-Str_view ir_print_internal(const Ir* ir, int indent) {
+Strv ir_print_internal(const Ir* ir, int indent) {
     switch (ir->type) {
         case IR_BLOCK:
             return ir_block_print_internal(ir_block_const_unwrap(ir), indent);

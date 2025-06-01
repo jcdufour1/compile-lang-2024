@@ -6,42 +6,42 @@
 #include <parameters.h>
 
 static void show_location_error(Pos pos) {
-    Str_view* file_con_ = NULL;
+    Strv* file_con_ = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
-    Str_view file_con = *file_con_;
+    Strv file_con = *file_con_;
     assert(pos.line > 0);
 
     if (pos.line > 1) {
         uint32_t line = 1;
         for (; file_con.count > 0 && line + 1 < pos.line; line++) {
-            while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+            while (file_con.count > 0 && strv_consume(&file_con) != '\n');
         }
         size_t count_prev = 0;
         {
-            Str_view temp_file_text = file_con;
-            while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
+            Strv temp_file_text = file_con;
+            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
                 count_prev++;
-                str_view_consume(&temp_file_text);
+                strv_consume(&temp_file_text);
             }
         }
 
-        Str_view prev_line = str_view_slice(file_con, 0, count_prev);
-        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line - 1, str_view_print(prev_line));
+        Strv prev_line = strv_slice(file_con, 0, count_prev);
+        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line - 1, strv_print(prev_line));
 
-        while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+        while (file_con.count > 0 && strv_consume(&file_con) != '\n');
     }
 
     size_t count_curr = 0;
     {
-        Str_view temp_file_text = file_con;
-        while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
+        Strv temp_file_text = file_con;
+        while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
             count_curr++;
-            str_view_consume(&temp_file_text);
+            strv_consume(&temp_file_text);
         }
     }
-    Str_view curr_line = str_view_slice(file_con, 0, count_curr);
-    fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(curr_line));
-    while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+    Strv curr_line = strv_slice(file_con, 0, count_curr);
+    fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, strv_print(curr_line));
+    while (file_con.count > 0 && strv_consume(&file_con) != '\n');
 
     fprintf(stderr, "       | ");
     for (uint32_t idx = 1; idx < pos.column; idx++) {
@@ -52,14 +52,14 @@ static void show_location_error(Pos pos) {
     if (file_con.count > 0) {
         size_t count_next = 0;
         {
-            Str_view temp_file_text = file_con;
-            while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
+            Strv temp_file_text = file_con;
+            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
                 count_next++;
-                str_view_consume(&temp_file_text);
+                strv_consume(&temp_file_text);
             }
         }
-        Str_view next_line = str_view_slice(file_con, 0, count_next);
-        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line + 1, str_view_print(next_line));
+        Strv next_line = strv_slice(file_con, 0, count_next);
+        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line + 1, strv_print(next_line));
     }
 }
 
@@ -86,7 +86,7 @@ void msg_internal(
             fprintf(stderr, "%s:", get_log_level_str(log_level));
             vfprintf(stderr, format, args);
         } else {
-            fprintf(stderr, STR_VIEW_FMT":%d:%d:%s:", str_view_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            fprintf(stderr, STR_VIEW_FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
             vfprintf(stderr, format, args);
             show_location_error(pos);
         }

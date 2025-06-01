@@ -214,12 +214,12 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos dest_
     Name new_name = {0};
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
         case EXPAND_NAME_NORMAL:
-            unwrap(str_view_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
+            unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             name->base = new_name.base;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
-            unwrap(str_view_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
+            unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_ERROR:

@@ -28,13 +28,13 @@ Arena gen_a = {0};
     } while(0)
 
 typedef struct {
-    Str_view type_name;
-    Str_view normal_prefix;
-    Str_view internal_prefix;
-    Str_view key_fn_get_name;
-    Str_view symbol_table_name;
-    Str_view ancesters_type;
-    Str_view print_fn;
+    Strv type_name;
+    Strv normal_prefix;
+    Strv internal_prefix;
+    Strv key_fn_get_name;
+    Strv symbol_table_name;
+    Strv ancesters_type;
+    Strv print_fn;
     bool do_primitives;
     bool env_thing;
 } Symbol_tbl_type;
@@ -45,8 +45,8 @@ typedef struct {
 } Sym_tbl_type_vec;
 
 typedef struct {
-    Str_view name;
-    Str_view type;
+    Strv name;
+    Strv type;
 } Member;
 
 typedef struct {
@@ -74,25 +74,25 @@ static void gen_gen_internal(FILE* output, const char* file, int line, const cha
 #define gen_gen(...) \
     gen_gen_internal(global_output, __FILE__, __LINE__, __VA_ARGS__)
 
-static void extend_strv_upper(String* output, Str_view name) {
+static void extend_strv_upper(String* output, Strv name) {
     for (size_t idx = 0; idx < name.count; idx++) {
-        vec_append(&gen_a, output, toupper(str_view_at(name, idx)));
+        vec_append(&gen_a, output, toupper(strv_at(name, idx)));
     }
 }
 
-static void extend_strv_lower(String* output, Str_view name) {
+static void extend_strv_lower(String* output, Strv name) {
     for (size_t idx = 0; idx < name.count; idx++) {
-        vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
+        vec_append(&gen_a, output, tolower(strv_at(name, idx)));
     }
 }
 
-static void extend_strv_first_upper(String* output, Str_view name) {
+static void extend_strv_first_upper(String* output, Strv name) {
     if (name.count < 1) {
         return;
     }
-    vec_append(&gen_a, output, toupper(str_view_front(name)));
+    vec_append(&gen_a, output, toupper(strv_front(name)));
     for (size_t idx = 1; idx < name.count; idx++) {
-        vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
+        vec_append(&gen_a, output, tolower(strv_at(name, idx)));
     }
 }
 

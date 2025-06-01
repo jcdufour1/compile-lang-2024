@@ -95,32 +95,32 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     if (lang_type_atom_is_signed(atom)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
             lang_type.pos,
-            str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
     } else if (lang_type_atom_is_unsigned(atom)) {
         Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(
             lang_type.pos,
-            str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (lang_type_atom_is_float(atom)) {
         Lang_type_float new_float = lang_type_float_new(
             lang_type.pos,
-            str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
-    } else if (str_view_cstr_is_equal(atom.str.base, "void")) {
+    } else if (strv_cstr_is_equal(atom.str.base, "void")) {
         return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0, 0))) {
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
-    } else if (str_view_cstr_is_equal(atom.str.base, "u8")) {
+    } else if (strv_cstr_is_equal(atom.str.base, "u8")) {
         // TODO: does this make sense for u8**, etc.?
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
-    } else if (str_view_cstr_is_equal(atom.str.base, "any")) {
+    } else if (strv_cstr_is_equal(atom.str.base, "any")) {
         // TODO: does this make sense?
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else {
@@ -141,7 +141,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
-    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
+    //log(LOG_DEBUG, TAST_FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
     Name temp_name = {0};
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         return false;

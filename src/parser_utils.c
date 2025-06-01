@@ -1,4 +1,4 @@
-#include <str_view.h>
+#include <strv.h>
 #include <newstring.h>
 #include <string_vec.h>
 #include <uast.h>
@@ -15,15 +15,15 @@
 #include <name.h>
 #include <errno.h>
 
-size_t get_count_excape_seq(Str_view str_view) {
+size_t get_count_excape_seq(Strv strv) {
     size_t count_excapes = 0;
-    while (str_view.count > 0) {
-        if (str_view_consume(&str_view) == '\\') {
-            if (str_view.count < 1) {
+    while (strv.count > 0) {
+        if (strv_consume(&strv) == '\\') {
+            if (strv.count < 1) {
                 unreachable("invalid excape sequence");
             }
 
-            str_view_consume(&str_view); // important in case of // excape sequence
+            strv_consume(&strv); // important in case of // excape sequence
             count_excapes++;
         }
     }
@@ -31,12 +31,12 @@ size_t get_count_excape_seq(Str_view str_view) {
 }
 
 // \n excapes are actually stored as is in tokens and irs, but should be printed as \0a
-void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
-    while (str_view.count > 0) {
-        char front_char = str_view_consume(&str_view);
+void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
+    while (strv.count > 0) {
+        char front_char = strv_consume(&strv);
         if (front_char == '\\') {
             vec_append(arena, string, '\\');
-            switch (str_view_consume(&str_view)) {
+            switch (strv_consume(&strv)) {
                 case 'n':
                     string_extend_hex_2_digits(arena, string, 0x0a);
                     break;
@@ -54,11 +54,11 @@ static bool isdigit_no_underscore(char prev, char curr) {
     return isdigit(curr);
 }
 
-bool try_str_view_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
+bool try_strv_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
     *result = 0;
     size_t idx = 0;
-    for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view_at(str_view, idx);
+    for (idx = 0; idx < strv.count; idx++) {
+        char curr_char = strv_at(strv, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -76,11 +76,11 @@ bool try_str_view_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Str_
     return true;
 }
 
-bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
+bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
     *result = 0;
     size_t idx = 0;
-    for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view_at(str_view, idx);
+    for (idx = 0; idx < strv.count; idx++) {
+        char curr_char = strv_at(strv, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -105,11 +105,11 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_vi
     return true;
 }
 
-bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
+bool try_strv_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
     *result = 0;
     size_t idx = 0;
-    for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view_at(str_view, idx);
+    for (idx = 0; idx < strv.count; idx++) {
+        char curr_char = strv_at(strv, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -127,12 +127,12 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_vi
     return true;
 }
 
-bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
+bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
     *result = 0;
     size_t idx = 0;
     bool first_is_zero = false;
-    for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view_at(str_view, idx);
+    for (idx = 0; idx < strv.count; idx++) {
+        char curr_char = strv_at(strv, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -141,7 +141,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
             first_is_zero = curr_char == '0';
         }
 
-        if (first_is_zero && idx == 1 && isdigit(str_view_at(str_view, 1))) {
+        if (first_is_zero && idx == 1 && isdigit(strv_at(strv, 1))) {
             msg(DIAG_INVALID_OCTAL, pos, "invalid octal literal; octal numbers must use `0o` prefix\n");
             return false;
         }
@@ -154,26 +154,26 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
             }
 
             if (curr_char == 'x') {
-                return try_str_view_hex_after_0x_to_int64_t(
+                return try_strv_hex_after_0x_to_int64_t(
                     result,
                     pos,
-                    str_view_slice(str_view, 2, str_view.count - 2)
+                    strv_slice(strv, 2, strv.count - 2)
                 );
             }
 
             if (curr_char == 'b') {
-                return try_str_view_bin_after_0b_to_int64_t(
+                return try_strv_bin_after_0b_to_int64_t(
                     result,
                     pos,
-                    str_view_slice(str_view, 2, str_view.count - 2)
+                    strv_slice(strv, 2, strv.count - 2)
                 );
             }
 
             if (curr_char == 'o') {
-                return try_str_view_octal_after_0o_to_int64_t(
+                return try_strv_octal_after_0o_to_int64_t(
                     result,
                     pos,
-                    str_view_slice(str_view, 2, str_view.count - 2)
+                    strv_slice(strv, 2, strv.count - 2)
                 );
             }
 
@@ -192,12 +192,12 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
     return idx > 0;
 }
 
-bool try_str_view_to_double(double* result, const Pos pos, Str_view str_view) {
+bool try_strv_to_double(double* result, const Pos pos, Strv strv) {
     static Arena a_temp = {0};
     bool status = true;
 
     String buf = {0};
-    string_extend_strv(&a_temp, &buf, str_view);
+    string_extend_strv(&a_temp, &buf, strv);
     string_extend_cstr(&a_temp, &buf, "\0");
 
     char* buf_after = NULL;
@@ -208,7 +208,7 @@ bool try_str_view_to_double(double* result, const Pos pos, Str_view str_view) {
         status = false;
         goto error;
     }
-    if ((buf_after - buf.buf) != (ptrdiff_t)str_view.count) {
+    if ((buf_after - buf.buf) != (ptrdiff_t)strv.count) {
         // conversion unsuccessful
         msg_todo("actual error message for this problem", pos);
         status = false;
@@ -222,29 +222,29 @@ error:
     return status;
 }
 
-bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
-    if (!str_view_try_consume(&str_view, '\\')) {
-        if (str_view.count != 1) {
+bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
+    if (!strv_try_consume(&strv, '\\')) {
+        if (strv.count != 1) {
             msg(
                 DIAG_INVALID_CHAR_LIT, pos,
                 "expected exactly one character in char literal without excapes, but got %zu\n",
-                str_view.count
+                strv.count
             );
             return false;
         }
-        *result = str_view_front(str_view);
+        *result = strv_front(strv);
         return true;
     }
 
-    if (str_view.count != 1) {
+    if (strv.count != 1) {
         msg(
             DIAG_INVALID_CHAR_LIT, pos,
             "expected exactly one character in char literal after `\\`, but got %zu\n",
-            str_view.count
+            strv.count
         );
         return false;
     }
-    char esc_char = str_view_consume(&str_view);
+    char esc_char = strv_consume(&strv);
     switch (esc_char) {
         case 'n':
             *result = '\n';
@@ -263,11 +263,11 @@ bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
     unreachable("");
 }
 
-bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
+bool try_strv_to_size_t(size_t* result, Strv strv) {
     *result = 0;
     size_t idx = 0;
-    for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view_at(str_view, idx);
+    for (idx = 0; idx < strv.count; idx++) {
+        char curr_char = strv_at(strv, idx);
         if (!isdigit(curr_char)) {
             break;
         }
@@ -282,17 +282,17 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     return true;
 }
 
-bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore) {
+bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore) {
     assert(!ignore_underscore && "not implemented");
-    Str_view num = str_view_consume_while(str_view, isdigit_no_underscore);
-    return try_str_view_to_size_t(result, num);
+    Strv num = strv_consume_while(strv, isdigit_no_underscore);
+    return try_strv_to_size_t(result, num);
 }
 
-int64_t str_view_to_int64_t(const Pos pos, Str_view str_view) {
+int64_t strv_to_int64_t(const Pos pos, Strv strv) {
     int64_t result = INT64_MAX;
 
-    if (!try_str_view_to_int64_t(&result,  pos, str_view)) {
-        unreachable(STR_VIEW_FMT, str_view_print(str_view));
+    if (!try_strv_to_int64_t(&result,  pos, strv)) {
+        unreachable(STR_VIEW_FMT, strv_print(strv));
     }
     return result;
 }
@@ -302,12 +302,12 @@ static bool lang_type_atom_is_number_finish(Lang_type_atom atom, bool allow_deci
     size_t idx = 0;
     bool decimal_enc = false;
     for (idx = 1; idx < atom.str.base.count; idx++) {
-        if (str_view_at(atom.str.base, idx) == '.') {
+        if (strv_at(atom.str.base, idx) == '.') {
             if (!allow_decimal || decimal_enc) {
                 return false;
             }
             decimal_enc = true;
-        } else if (!isdigit(str_view_at(atom.str.base, idx))) {
+        } else if (!isdigit(strv_at(atom.str.base, idx))) {
             return false;
         }
     }
@@ -320,7 +320,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
     if (atom.str.base.count < 1) {
         return false;
     }
-    if (str_view_at(atom.str.base, 0) != 'i') {
+    if (strv_at(atom.str.base, 0) != 'i') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom, false);
@@ -331,7 +331,7 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
     if (atom.str.base.count < 1) {
         return false;
     }
-    if (str_view_at(atom.str.base, 0) != 'u') {
+    if (strv_at(atom.str.base, 0) != 'u') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom, false);
@@ -341,7 +341,7 @@ bool lang_type_atom_is_float(Lang_type_atom atom) {
     if (atom.str.base.count < 1) {
         return false;
     }
-    if (str_view_at(atom.str.base, 0) != 'f') {
+    if (strv_at(atom.str.base, 0) != 'f') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom, true);
@@ -415,7 +415,7 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
 
 int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
-    return str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1));
+    return strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1));
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
@@ -429,11 +429,11 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
 
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
-    string_extend_strv(&a_main, &string, str_view_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
-    return lang_type_atom_new(name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
+    string_extend_strv(&a_main, &string, strv_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
+    return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
-Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix) {
+Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix) {
     (void) file;
     (void) line;
     static String_vec literal_strings = {0};
@@ -444,7 +444,7 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view
 
     // TODO: use better solution for debugging
     //string_extend_cstr(&a_main, &var_name, "file____");
-    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Str_view) {0}, (Ulang_type_vec) {0}, 0)));
+    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Strv) {0}, (Ulang_type_vec) {0}, 0)));
     //string_extend_cstr(&a_main, &var_name, "_");
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
@@ -461,16 +461,16 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view
     count++;
 
     String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
-    Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
-    return str_view;
+    Strv strv = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
+    return strv;
 }
 
-Str_view util_literal_name_new_prefix_internal(const char* file, int line, Str_view debug_prefix) {
-    return util_literal_str_view_new_internal(file, line, debug_prefix);
+Strv util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
+    return util_literal_strv_new_internal(file, line, debug_prefix);
 }
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_view debug_prefix, Str_view mod_path) {
-    return name_new(mod_path, util_literal_str_view_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, Strv debug_prefix, Strv mod_path) {
+    return name_new(mod_path, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 }
 
 // TODO: inline this function
@@ -505,11 +505,11 @@ Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {
 }
 
 // will print error on failure
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view value, TOKEN_TYPE token_type, Pos pos) {
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             int64_t raw = 0;
-            if (!try_str_view_to_int64_t(&raw,  pos, value)) {
+            if (!try_strv_to_int64_t(&raw,  pos, value)) {
                 return false;
             }
             Uast_int* literal = uast_int_new(pos, raw);
@@ -518,7 +518,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
         }
         case TOKEN_FLOAT_LITERAL: {
             double raw = 0;
-            if (!try_str_view_to_double(&raw,  pos, value)) {
+            if (!try_strv_to_double(&raw,  pos, value)) {
                 return false;
             }
             Uast_float* literal = uast_float_new(pos, raw);
@@ -537,7 +537,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
         }
         case TOKEN_CHAR_LITERAL: {
             char raw = '\0';
-            if (!try_str_view_to_char(&raw, pos, value)) {
+            if (!try_strv_to_char(&raw, pos, value)) {
                 return false;
             }
             Uast_char* lang_char = uast_char_new(pos, raw);
@@ -552,7 +552,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
     return true;
 }
 
-Uast_literal* util_uast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos) {
+Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* lit = NULL;
     unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
     return lit;

@@ -228,7 +228,7 @@ static void msg_invalid_count_function_args_internal(
     string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
-        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+        STR_VIEW_FMT, strv_print(string_to_strv(message))
     );
 
     msg_internal(
@@ -261,7 +261,7 @@ static void msg_invalid_count_struct_literal_args_internal(
     string_extend_cstr(&a_print, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
-        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+        STR_VIEW_FMT, strv_print(string_to_strv(message))
     );
 }
 
@@ -1148,7 +1148,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 msg(
                     DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                    str_view_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
+                    strv_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
                 );
                 return false;
             }
@@ -1809,13 +1809,13 @@ error:
 }
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
-    if (str_view_cstr_is_equal(macro->name, "file")) {
+    if (strv_cstr_is_equal(macro->name, "file")) {
         *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
         return true;
-    } else if (str_view_cstr_is_equal(macro->name, "line")) {
+    } else if (strv_cstr_is_equal(macro->name, "line")) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
         return true;
-    } else if (str_view_cstr_is_equal(macro->name, "column")) {
+    } else if (strv_cstr_is_equal(macro->name, "column")) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos));
         return true;
     } else {
@@ -1876,7 +1876,7 @@ static void msg_invalid_member_internal(
         file, line, DIAG_INVALID_MEMBER_ACCESS,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
+        strv_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
     );
 }
 
@@ -2782,7 +2782,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new((Strv) {0}, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN, POS_BUILTIN, "no main function\n");
             goto error;
         }

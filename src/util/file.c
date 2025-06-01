@@ -9,9 +9,9 @@
 #include <newstring.h>
 #include <msg_todo.h>
 
-bool read_file(Str_view* result, Str_view file_path) {
+bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
-    FILE* file = fopen(str_view_dup(&a_main, file_path), "rb");
+    FILE* file = fopen(strv_dup(&a_main, file_path), "rb");
     if (!file) {
         return false;
     }
@@ -33,12 +33,13 @@ bool read_file(Str_view* result, Str_view file_path) {
     return true;
 }
 
-void write_file(const char* file_path, Str_view text_to_write) {
+// TODO: use Strv as parameter
+void write_file(const char* file_path, Strv text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
         msg(
             DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
-            str_view_print(params.input_file_path), strerror(errno)
+            strv_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
@@ -47,11 +48,11 @@ void write_file(const char* file_path, Str_view text_to_write) {
     fclose(file);
 }
 
-bool get_file_extension(Str_view* extension, Str_view file_path) {
+bool get_file_extension(Strv* extension, Strv file_path) {
     for (size_t idx_ = file_path.count; idx_ > 0; idx_--) {
         size_t idx = idx_ - 1;
-        if (str_view_at(file_path, idx) == '.') {
-            *extension = str_view_slice(file_path, idx + 1, file_path.count - idx - 1);
+        if (strv_at(file_path, idx) == '.') {
+            *extension = strv_slice(file_path, idx + 1, file_path.count - idx - 1);
             return true;
         }
     }
@@ -74,8 +75,8 @@ File_type_pair file_type_pairs[] = {
     {"S", FILE_TYPE_UPPER_S},
 };
 
-FILE_TYPE get_file_type(Str_view file_path) {
-    Str_view ext = {0};
+FILE_TYPE get_file_type(Strv file_path) {
+    Strv ext = {0};
     if (!get_file_extension(&ext, file_path)) {
         // TODO: print what user command line option caused this, etc.
         msg_todo("executable file passed on the command line", POS_BUILTIN);
@@ -84,7 +85,7 @@ FILE_TYPE get_file_type(Str_view file_path) {
 
     for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
         File_type_pair curr = file_type_pairs[idx];
-        if (str_view_is_equal(sv(curr.text), ext)) {
+        if (strv_is_equal(sv(curr.text), ext)) {
             return curr.type;
         }
     }
@@ -96,9 +97,9 @@ FILE_TYPE get_file_type(Str_view file_path) {
     exit(EXIT_CODE_FAIL);
 }
 
-void file_extend_strv(FILE* file, Str_view str_view) {
-    for (size_t idx = 0; idx < str_view.count; idx++) {
-        if (EOF == fputc(str_view_at(str_view, idx), file)) {
+void file_extend_strv(FILE* file, Strv strv) {
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        if (EOF == fputc(strv_at(strv, idx), file)) {
             todo();
         }
     }

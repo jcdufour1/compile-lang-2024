@@ -1,11 +1,11 @@
 #ifndef SUBPROCESS_H
 #define SUBPROCESS_H
 
-#include <str_view_vec.h>
+#include <strv_vec.h>
 
-Str_view cmd_to_strv(Arena* arena, Str_view_vec cmd);
+Strv cmd_to_strv(Arena* arena, Strv_vec cmd);
 
 // returns return code
-int subprocess_call(Str_view_vec cmd);
+int subprocess_call(Strv_vec cmd);
 
 #endif // SUBPROCESS_H

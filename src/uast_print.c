@@ -14,11 +14,11 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&a_print, buf, " ))");
 }
 
-Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
+Strv uast_binary_print_internal(const Uast_binary* binary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "binary", indent);
-    string_extend_strv(&a_print, &buf, binary_type_to_str_view(binary->token_type));
+    string_extend_strv(&a_print, &buf, binary_type_to_strv(binary->token_type));
     extend_pos(&buf, binary->pos);
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -30,11 +30,11 @@ Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
+Strv uast_unary_print_internal(const Uast_unary* unary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "unary", indent);
-    string_extend_strv(&a_print, &buf, unary_type_to_str_view(unary->token_type));
+    string_extend_strv(&a_print, &buf, unary_type_to_strv(unary->token_type));
     extend_pos(&buf, unary->pos);
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -50,7 +50,7 @@ void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&a_print, string, "\n");
 }
 
-Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
+Strv uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "symbol_untyped", indent);
@@ -64,7 +64,7 @@ Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_member_access_print_internal(const Uast_member_access* access, int indent) {
+Strv uast_member_access_print_internal(const Uast_member_access* access, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "member_access_untyped", indent);
@@ -76,7 +76,7 @@ Str_view uast_member_access_print_internal(const Uast_member_access* access, int
     return string_to_strv(buf);
 }
 
-Str_view uast_index_print_internal(const Uast_index* index, int indent) {
+Strv uast_index_print_internal(const Uast_index* index, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "index_untyped", indent);
@@ -88,7 +88,7 @@ Str_view uast_index_print_internal(const Uast_index* index, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
+Strv uast_literal_print_internal(const Uast_literal* lit, int indent) {
     switch (lit->type) {
         case UAST_INT:
             return uast_int_print_internal(uast_int_const_unwrap(lit), indent);
@@ -104,63 +104,63 @@ Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
     unreachable("");
 }
 
-Str_view uast_function_call_print_internal(const Uast_function_call* fun_call, int indent) {
+Strv uast_function_call_print_internal(const Uast_function_call* fun_call, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_call\n", indent);
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Str_view arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
+        Strv arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int indent) {
+Strv uast_struct_literal_print_internal(const Uast_struct_literal* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "struct_literal", indent);
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view uast_array_literal_print_internal(const Uast_array_literal* lit, int indent) {
+Strv uast_array_literal_print_internal(const Uast_array_literal* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "array_literal", indent);
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
+Strv uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "tuple", indent);
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view uast_enum_access_print_internal(const Uast_enum_access* access, int indent) {
+Strv uast_enum_access_print_internal(const Uast_enum_access* access, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "enum_access", indent);
@@ -171,7 +171,7 @@ Str_view uast_enum_access_print_internal(const Uast_enum_access* access, int ind
     return string_to_strv(buf);
 }
 
-Str_view uast_enum_get_tag_print_internal(const Uast_enum_get_tag* access, int indent) {
+Strv uast_enum_get_tag_print_internal(const Uast_enum_get_tag* access, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "enum_get_tag", indent);
@@ -181,7 +181,7 @@ Str_view uast_enum_get_tag_print_internal(const Uast_enum_get_tag* access, int i
     return string_to_strv(buf);
 }
 
-Str_view uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
+Strv uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
     (void) unknown;
     String buf = {0};
 
@@ -190,7 +190,7 @@ Str_view uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_int_print_internal(const Uast_int* num, int indent) {
+Strv uast_int_print_internal(const Uast_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "number", indent);
@@ -200,7 +200,7 @@ Str_view uast_int_print_internal(const Uast_int* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_float_print_internal(const Uast_float* num, int indent) {
+Strv uast_float_print_internal(const Uast_float* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "float", indent);
@@ -210,7 +210,7 @@ Str_view uast_float_print_internal(const Uast_float* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_string_print_internal(const Uast_string* lit, int indent) {
+Strv uast_string_print_internal(const Uast_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "string", indent);
@@ -220,7 +220,7 @@ Str_view uast_string_print_internal(const Uast_string* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_void_print_internal(const Uast_void* num, int indent) {
+Strv uast_void_print_internal(const Uast_void* num, int indent) {
     (void) num;
     String buf = {0};
 
@@ -229,7 +229,7 @@ Str_view uast_void_print_internal(const Uast_void* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_char_print_internal(const Uast_char* num, int indent) {
+Strv uast_char_print_internal(const Uast_char* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "char", indent);
@@ -239,7 +239,7 @@ Str_view uast_char_print_internal(const Uast_char* num, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_block_print_internal(const Uast_block* block, int indent) {
+Strv uast_block_print_internal(const Uast_block* block, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
@@ -254,20 +254,20 @@ Str_view uast_block_print_internal(const Uast_block* block, int indent) {
     alloca_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = uast_stmt_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = uast_stmt_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
     return string_to_strv(buf);
 }
 
-Str_view uast_function_params_print_internal(const Uast_function_params* function_params, int indent) {
+Strv uast_function_params_print_internal(const Uast_function_params* function_params, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Str_view arg_text = uast_param_print_internal(vec_at(&function_params->params, idx), indent);
+        Strv arg_text = uast_param_print_internal(vec_at(&function_params->params, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -275,7 +275,7 @@ Str_view uast_function_params_print_internal(const Uast_function_params* functio
     return string_to_strv(buf);
 }
 
-Str_view uast_for_lower_bound_print_internal(const Uast_for_lower_bound* lower, int indent) {
+Strv uast_for_lower_bound_print_internal(const Uast_for_lower_bound* lower, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "for_lower_bound\n", indent);
@@ -286,7 +286,7 @@ Str_view uast_for_lower_bound_print_internal(const Uast_for_lower_bound* lower, 
     return string_to_strv(buf);
 }
 
-Str_view uast_for_upper_bound_print_internal(const Uast_for_upper_bound* upper, int indent) {
+Strv uast_for_upper_bound_print_internal(const Uast_for_upper_bound* upper, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "for_upper_bound\n", indent);
@@ -297,7 +297,7 @@ Str_view uast_for_upper_bound_print_internal(const Uast_for_upper_bound* upper, 
     return string_to_strv(buf);
 }
 
-Str_view uast_condition_print_internal(const Uast_condition* cond, int indent) {
+Strv uast_condition_print_internal(const Uast_condition* cond, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "condition\n", indent);
@@ -308,7 +308,7 @@ Str_view uast_condition_print_internal(const Uast_condition* cond, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_for_with_cond_print_internal(const Uast_for_with_cond* for_cond, int indent) {
+Strv uast_for_with_cond_print_internal(const Uast_for_with_cond* for_cond, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "for_with_cond\n", indent);
@@ -320,7 +320,7 @@ Str_view uast_for_with_cond_print_internal(const Uast_for_with_cond* for_cond, i
     return string_to_strv(buf);
 }
 
-Str_view uast_switch_print_internal(const Uast_switch* lang_switch, int indent) {
+Strv uast_switch_print_internal(const Uast_switch* lang_switch, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "switch\n", indent);
@@ -332,7 +332,7 @@ Str_view uast_switch_print_internal(const Uast_switch* lang_switch, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view uast_defer_print_internal(const Uast_defer* defer, int indent) {
+Strv uast_defer_print_internal(const Uast_defer* defer, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "defer", indent);
@@ -341,7 +341,7 @@ Str_view uast_defer_print_internal(const Uast_defer* defer, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_break_print_internal(const Uast_break* lang_break, int indent) {
+Strv uast_break_print_internal(const Uast_break* lang_break, int indent) {
     (void) lang_break;
     String buf = {0};
 
@@ -350,7 +350,7 @@ Str_view uast_break_print_internal(const Uast_break* lang_break, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_continue_print_internal(const Uast_continue* lang_continue, int indent) {
+Strv uast_continue_print_internal(const Uast_continue* lang_continue, int indent) {
     (void) lang_continue;
     String buf = {0};
 
@@ -359,7 +359,7 @@ Str_view uast_continue_print_internal(const Uast_continue* lang_continue, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_assignment_print_internal(const Uast_assignment* assign, int indent) {
+Strv uast_assignment_print_internal(const Uast_assignment* assign, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "assignment\n", indent);
@@ -371,7 +371,7 @@ Str_view uast_assignment_print_internal(const Uast_assignment* assign, int inden
     return string_to_strv(buf);
 }
 
-Str_view uast_if_print_internal(const Uast_if* lang_if, int indent) {
+Strv uast_if_print_internal(const Uast_if* lang_if, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "if\n", indent);
@@ -383,7 +383,7 @@ Str_view uast_if_print_internal(const Uast_if* lang_if, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_case_print_internal(const Uast_case* lang_case, int indent) {
+Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "case\n", indent);
@@ -397,7 +397,7 @@ Str_view uast_case_print_internal(const Uast_case* lang_case, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_param_print_internal(const Uast_param* param, int indent) {
+Strv uast_param_print_internal(const Uast_param* param, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "param\n", indent);
@@ -412,7 +412,7 @@ Str_view uast_param_print_internal(const Uast_param* param, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_import_path_print_internal(const Uast_import_path* import, int indent) {
+Strv uast_import_path_print_internal(const Uast_import_path* import, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "import_path", indent);
@@ -423,7 +423,7 @@ Str_view uast_import_path_print_internal(const Uast_import_path* import, int ind
     return string_to_strv(buf);
 }
 
-Str_view uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) {
+Strv uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "mod_alias", indent);
@@ -438,7 +438,7 @@ Str_view uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view uast_generic_param_print_internal(const Uast_generic_param* params, int indent) {
+Strv uast_generic_param_print_internal(const Uast_generic_param* params, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "generic_params\n", indent);
@@ -447,7 +447,7 @@ Str_view uast_generic_param_print_internal(const Uast_generic_param* params, int
     return string_to_strv(buf);
 }
 
-Str_view uast_poison_def_print_internal(const Uast_poison_def* poison, int indent) {
+Strv uast_poison_def_print_internal(const Uast_poison_def* poison, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "poison_def", indent);
@@ -457,7 +457,7 @@ Str_view uast_poison_def_print_internal(const Uast_poison_def* poison, int inden
     return string_to_strv(buf);
 }
 
-Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
+Strv uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "lang_def", indent);
@@ -469,7 +469,7 @@ Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
+Strv uast_void_def_print_internal(const Uast_void_def* def, int indent) {
     (void) def;
     String buf = {0};
 
@@ -478,7 +478,7 @@ Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
+Strv uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "return\n", indent);
@@ -489,7 +489,7 @@ Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_macro_print_internal(const Uast_macro* macro, int indent) {
+Strv uast_macro_print_internal(const Uast_macro* macro, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "macro", indent);
@@ -499,13 +499,13 @@ Str_view uast_macro_print_internal(const Uast_macro* macro, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int indent) {
+Strv uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "if_else_chain\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-        Str_view arg_text = uast_if_print_internal(vec_at(&if_else->uasts, idx), indent);
+        Strv arg_text = uast_if_print_internal(vec_at(&if_else->uasts, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -513,7 +513,7 @@ Str_view uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, in
     return string_to_strv(buf);
 }
 
-Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, int indent) {
+Strv uast_function_decl_print_internal(const Uast_function_decl* fun_decl, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_decl", indent);
@@ -525,7 +525,7 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
     return string_to_strv(buf);
 }
 
-Str_view uast_function_def_print_internal(const Uast_function_def* fun_def, int indent) {
+Strv uast_function_def_print_internal(const Uast_function_def* fun_def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "function_def\n", indent);
@@ -544,18 +544,18 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
     string_extend_cstr(&a_print, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, buf, memb_text);
     }
 }
 
-Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent) {
+Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent) {
     String buf = {0};
     extend_ustruct_def_base(&buf, "<unknown>", base, indent, (Pos) {0});
     return string_to_strv(buf);
 }
 
-Str_view uast_struct_def_print_internal(const Uast_struct_def* def, int indent) {
+Strv uast_struct_def_print_internal(const Uast_struct_def* def, int indent) {
     String buf = {0};
 
     extend_ustruct_def_base(&buf, "struct_def", def->base, indent, def->pos);
@@ -563,7 +563,7 @@ Str_view uast_struct_def_print_internal(const Uast_struct_def* def, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int indent) {
+Strv uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int indent) {
     String buf = {0};
 
     extend_ustruct_def_base(&buf, "raw_union_def", def->base, indent, def->pos);
@@ -571,7 +571,7 @@ Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
+Strv uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
     String buf = {0};
 
     extend_ustruct_def_base(&buf, "enum_def", def->base, indent, def->pos);
@@ -579,7 +579,7 @@ Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_primitive_def_print_internal(const Uast_primitive_def* def, int indent) {
+Strv uast_primitive_def_print_internal(const Uast_primitive_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "primitive_def\n", indent);
@@ -591,7 +591,7 @@ Str_view uast_primitive_def_print_internal(const Uast_primitive_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int indent) {
+Strv uast_variable_def_print_internal(const Uast_variable_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "variable_def", indent);
@@ -602,7 +602,7 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
     return string_to_strv(buf);
 }
 
-Str_view uast_operator_print_internal(const Uast_operator* operator, int indent) {
+Strv uast_operator_print_internal(const Uast_operator* operator, int indent) {
     switch (operator->type) {
         case UAST_BINARY:
             return uast_binary_print_internal(uast_binary_const_unwrap(operator), indent);
@@ -612,7 +612,7 @@ Str_view uast_operator_print_internal(const Uast_operator* operator, int indent)
     unreachable("");
 }
 
-Str_view uast_def_print_internal(const Uast_def* def, int indent) {
+Strv uast_def_print_internal(const Uast_def* def, int indent) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             return uast_function_def_print_internal(uast_function_def_const_unwrap(def), indent);
@@ -644,7 +644,7 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
     unreachable("");
 }
 
-Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
+Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
     if (!expr) {
         return sv("<nothing>\n");
     }
@@ -683,7 +683,7 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     unreachable("");
 }
 
-Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
+Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     switch (stmt->type) {
         case UAST_BLOCK:
             return uast_block_print_internal(uast_block_const_unwrap(stmt), indent);
@@ -707,7 +707,7 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     unreachable("");
 }
 
-Str_view uast_print_internal(const Uast* uast, int indent) {
+Strv uast_print_internal(const Uast* uast, int indent) {
     switch (uast->type) {
         case UAST_STMT:
             return uast_stmt_print_internal(uast_stmt_const_unwrap(uast), indent);

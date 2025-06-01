@@ -17,14 +17,14 @@ typedef enum {
     FILE_TYPE_COUNT,
 } FILE_TYPE;
 
-void write_file(const char* file_path, Str_view text_to_write);
+void write_file(const char* file_path, Strv text_to_write);
 
-bool read_file(Str_view* result, Str_view input_file_name);
+bool read_file(Strv* result, Strv input_file_name);
 
-bool get_file_extension(Str_view* extension, Str_view file_path);
+bool get_file_extension(Strv* extension, Strv file_path);
 
-FILE_TYPE get_file_type(Str_view file_path);
+FILE_TYPE get_file_type(Strv file_path);
 
-void file_extend_strv(FILE* file, Str_view str_view);
+void file_extend_strv(FILE* file, Strv strv);
 
 #endif // FILE_H

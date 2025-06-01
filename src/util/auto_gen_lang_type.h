@@ -14,8 +14,8 @@ typedef struct {
 
 typedef struct {
     bool is_topmost;
-    Str_view parent;
-    Str_view base;
+    Strv parent;
+    Strv base;
 } Lang_type_name;
 
 typedef struct Lang_type_type_ {
@@ -27,7 +27,7 @@ typedef struct Lang_type_type_ {
 static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -41,7 +41,7 @@ static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
 static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "lang_type");
@@ -55,7 +55,7 @@ static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
 static void extend_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Lang_type");
@@ -70,7 +70,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
     todo();
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -84,7 +84,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         string_extend_cstr(&gen_a, output, "lang_type");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_lang_type_name_lower(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_cstr_is_equal(name.parent, "lang_type")) {
         string_extend_cstr(&gen_a, output, "Lang_type");
         return;
     }
@@ -421,7 +421,7 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
@@ -470,7 +470,7 @@ static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void lang_type_gen_lang_type_unwrap(Lang_type_type lang_type) {
@@ -497,11 +497,11 @@ static void lang_type_gen_print_forward_decl(Lang_type_type type) {
 
     string_extend_cstr(&gen_a, &function, "#define ");
     extend_lang_type_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(lang_type) str_view_print(");
+    string_extend_cstr(&gen_a, &function, "_print(lang_type) strv_print(");
     extend_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(lang_type, 0))\n");
 
-    string_extend_cstr(&gen_a, &function, "Str_view ");
+    string_extend_cstr(&gen_a, &function, "Strv ");
     extend_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_lang_type_name_first_upper(&function, type.name);
@@ -567,7 +567,7 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {

@@ -15,8 +15,8 @@ typedef struct {
 
 typedef struct {
     bool is_topmost;
-    Str_view parent;
-    Str_view base;
+    Strv parent;
+    Strv base;
 } Ir_name;
 
 typedef struct Ir_type_ {
@@ -28,7 +28,7 @@ typedef struct Ir_type_ {
 static void extend_ir_name_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "IR");
@@ -42,7 +42,7 @@ static void extend_ir_name_upper(String* output, Ir_name name) {
 static void extend_ir_name_lower(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ir");
@@ -56,7 +56,7 @@ static void extend_ir_name_lower(String* output, Ir_name name) {
 static void extend_ir_name_first_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Ir");
@@ -71,7 +71,7 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
     todo();
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "IR");
@@ -85,7 +85,7 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
 static void extend_parent_ir_name_lower(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         string_extend_cstr(&gen_a, output, "ir");
         return;
     }
@@ -100,7 +100,7 @@ static void extend_parent_ir_name_lower(String* output, Ir_name name) {
 static void extend_parent_ir_name_first_upper(String* output, Ir_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "ir")) {
+    if (strv_cstr_is_equal(name.parent, "ir")) {
         string_extend_cstr(&gen_a, output, "Ir");
         return;
     }
@@ -182,7 +182,7 @@ static Ir_type ir_gen_float(void) {
 static Ir_type ir_gen_string(void) {
     Ir_type string = {.name = ir_name_new("literal", "string", false)};
 
-    append_member(&string.members, "Str_view", "data");
+    append_member(&string.members, "Strv", "data");
     append_member(&string.members, "Name", "name");
 
     return string;
@@ -298,7 +298,7 @@ static Ir_type ir_gen_string_def(void) {
     Ir_type def = {.name = ir_name_new("literal_def", "string_def", false)};
 
     append_member(&def.members, "Name", "name");
-    append_member(&def.members, "Str_view", "data");
+    append_member(&def.members, "Strv", "data");
 
     return def;
 }
@@ -609,7 +609,7 @@ static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
@@ -648,7 +648,7 @@ static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void ir_gen_ir_unwrap(Ir_type ir) {
@@ -670,19 +670,19 @@ static void ir_gen_print_forward_decl(Ir_type type) {
 
     if (type.name.is_topmost) {
         string_extend_cstr(&gen_a, &function, "#define ");
-        string_extend_cstr(&gen_a, &function, "ir_print(ir) str_view_print(");
+        string_extend_cstr(&gen_a, &function, "ir_print(ir) strv_print(");
         string_extend_cstr(&gen_a, &function, "ir_print_internal(ir, 0))\n");
 
-        string_extend_cstr(&gen_a, &function, "Str_view ");
+        string_extend_cstr(&gen_a, &function, "Strv ");
         string_extend_cstr(&gen_a, &function, "ir_print_internal(const Ir* ir, int recursion_depth);\n");
     } else {
         string_extend_cstr(&gen_a, &function, "#define ");
         extend_ir_name_lower(&function, type.name);
-        string_extend_cstr(&gen_a, &function, "_print(ir) str_view_print(");
+        string_extend_cstr(&gen_a, &function, "_print(ir) strv_print(");
         extend_ir_name_lower(&function, type.name);
         string_extend_cstr(&gen_a, &function, "_print_internal(ir, 0))\n");
 
-        string_extend_cstr(&gen_a, &function, "Str_view ");
+        string_extend_cstr(&gen_a, &function, "Strv ");
         extend_ir_name_lower(&function, type.name);
         string_extend_cstr(&gen_a, &function, "_print_internal(const ");
         extend_ir_name_first_upper(&function, type.name);
@@ -813,7 +813,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
@@ -868,7 +868,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(STR_VIEW_FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_ir_new_forward_decl(Ir_type ir) {

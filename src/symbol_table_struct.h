@@ -13,7 +13,7 @@ typedef enum {
 
 typedef struct {
     Uast_def* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Usymbol_table_tast;
 
@@ -26,7 +26,7 @@ typedef struct {
 
 typedef struct {
     Tast_def* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Symbol_table_tast;
 
@@ -39,7 +39,7 @@ typedef struct {
 
 typedef struct {
     Ir* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Alloca_table_tast;
 
@@ -55,7 +55,7 @@ typedef struct {
 
 typedef struct {
     Uast_function_decl* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Function_decl_tbl_tast;
 
@@ -68,7 +68,7 @@ typedef struct {
 
 typedef struct {
     Tast_raw_union_def* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Raw_union_of_enum_tast;
 
@@ -81,7 +81,7 @@ typedef struct {
 
 typedef struct {
     Tast_struct_def* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Struct_to_struct_tast;
 
@@ -94,7 +94,7 @@ typedef struct {
 
 typedef struct {
     Name* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } C_forward_struct_tbl_tast;
 
@@ -106,8 +106,8 @@ typedef struct {
 
 
 typedef struct {
-    Str_view* item;
-    Str_view key;
+    Strv* item;
+    Strv key;
     SYM_TBL_STATUS status;
 } File_path_to_text_tast;
 
@@ -120,7 +120,7 @@ typedef struct {
 
 typedef struct {
     void* tast;
-    Str_view key;
+    Strv key;
     SYM_TBL_STATUS status;
 } Generic_symbol_table_tast;
 

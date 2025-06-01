@@ -4,15 +4,15 @@
 #include <uast.h>
 #include <util.h>
 #include <tast_utils.h>
-#include <str_view.h>
-#include <str_view_struct.h>
+#include <strv.h>
+#include <strv_struct.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
 #include <ulang_type_get_pos.h>
 
 // TODO: figure out where to put these things
-Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
-#define ustruct_def_base_print(base) str_view_print(ustruct_def_base_print_internal(base, 0))
+Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
+#define ustruct_def_base_print(base) strv_print(ustruct_def_base_print_internal(base, 0))
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
@@ -20,7 +20,7 @@ Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
 #define UAST_FMT STR_VIEW_FMT
 #endif // UAST_FMT
 
-Str_view uast_print_internal(const Uast* uast, int recursion_depth);
+Strv uast_print_internal(const Uast* uast, int recursion_depth);
 
 Ulang_type uast_get_ulang_type_def(const Uast_def* def);
 
@@ -28,7 +28,7 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
-#define uast_print(root) str_view_print(uast_print_internal(root, 0))
+#define uast_print(root) strv_print(uast_print_internal(root, 0))
 
 #define uast_printf(uast) \
     do { \
@@ -276,7 +276,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
     unreachable("");
 }
 
-static inline Str_view uast_get_name(const Uast* uast) {
+static inline Strv uast_get_name(const Uast* uast) {
     (void) uast;
     todo();
     //switch (uast->type) {

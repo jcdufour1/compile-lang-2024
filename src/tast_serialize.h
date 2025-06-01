@@ -21,6 +21,6 @@ static inline Name serialize_tast_enum_def(const Tast_enum_def* def) {
     return name_new(env.curr_mod_path, serialize_lang_type( tast_enum_def_get_lang_type(def)), (Ulang_type_vec) {0} /* TODO */, def->base.name.scope_id);
 }
 
-Str_view serialize_tast_def(const Tast_def* def);
+Strv serialize_tast_def(const Tast_def* def);
 
 #endif // TAST_SERIALIZE_H

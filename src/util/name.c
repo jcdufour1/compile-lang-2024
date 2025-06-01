@@ -4,11 +4,11 @@
 #include <ulang_type_serialize.h>
 #include <ulang_type_clone.h>
 
-Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
@@ -20,27 +20,27 @@ void extend_name_c(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
 
-void serialize_str_view(String* buf, Str_view str_view) {
+void serialize_strv(String* buf, Strv strv) {
     string_extend_cstr(&a_main, buf, "_");
-    string_extend_size_t(&a_main, buf, str_view.count);
+    string_extend_size_t(&a_main, buf, strv.count);
     string_extend_cstr(&a_main, buf, "_");
-    string_extend_strv(&a_main, buf, str_view);
+    string_extend_strv(&a_main, buf, strv);
     string_extend_cstr(&a_main, buf, "_");
 }
 
 // TODO: remove this
-bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
+bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore);
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
-Str_view serialize_name_symbol_table(Name name) {
+Strv serialize_name_symbol_table(Name name) {
     String buf = {0};
 
     String new_mod_path = {0};
     for (size_t idx = 0; idx < name.mod_path.count; idx++) {
-        if (str_view_at(name.mod_path, idx) == '.') {
+        if (strv_at(name.mod_path, idx) == '.') {
             vec_append(&a_main, &new_mod_path, '_');
         } else {
-            vec_append(&a_main, &new_mod_path, str_view_at(name.mod_path, idx));
+            vec_append(&a_main, &new_mod_path, strv_at(name.mod_path, idx));
         }
     }
     name.mod_path = string_to_strv(new_mod_path);
@@ -48,10 +48,10 @@ Str_view serialize_name_symbol_table(Name name) {
     if (name.mod_path.count > 0) {
         size_t path_count = 1;
         {
-            Str_view mod_path = name.mod_path;
-            Str_view dummy = {0};
-            while (str_view_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
-                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
+            Strv mod_path = name.mod_path;
+            Strv dummy = {0};
+            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
                 path_count++;
             }
         }
@@ -61,13 +61,13 @@ Str_view serialize_name_symbol_table(Name name) {
         string_extend_cstr(&a_main, &buf, "_");
 
         {
-            Str_view mod_path = name.mod_path;
-            Str_view dir_name = {0};
-            while (str_view_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
-                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
-                serialize_str_view(&buf, dir_name);
+            Strv mod_path = name.mod_path;
+            Strv dir_name = {0};
+            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
+                serialize_strv(&buf, dir_name);
             }
-            serialize_str_view(&buf, mod_path);
+            serialize_strv(&buf, mod_path);
         }
     }
 
@@ -85,7 +85,7 @@ Str_view serialize_name_symbol_table(Name name) {
     return string_to_strv(buf);
 }
 
-Str_view serialize_name(Name name) {
+Strv serialize_name(Name name) {
     String buf = {0};
 
     if (name.scope_id > 0) {
@@ -100,7 +100,7 @@ Str_view serialize_name(Name name) {
 }
 
 // TODO: move this macro
-Str_view name_print_internal(NAME_MODE mode, bool serialize, Name name) {
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
     if (serialize) {
         return serialize_name(name);
     }
@@ -110,7 +110,7 @@ Str_view name_print_internal(NAME_MODE mode, bool serialize, Name name) {
     return string_to_strv(buf);
 }
 
-Str_view uname_print_internal(UNAME_MODE mode, Uname name) {
+Strv uname_print_internal(UNAME_MODE mode, Uname name) {
     String buf = {0};
     extend_uname(mode, &buf, name);
     return string_to_strv(buf);

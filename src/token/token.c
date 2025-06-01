@@ -1,7 +1,7 @@
 #include "token.h"
 #include "assert.h"
 
-Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
+Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
             return sv("nontype");
@@ -146,7 +146,7 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
     unreachable("%d\n", token_type);
 }
 
-Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
+Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
             return sv("nontype");
@@ -290,16 +290,16 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
     unreachable("%d\n", token_type);
 }
 
-Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
+Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     String buf = {0};
     vec_reset(&buf);
 
     switch (mode) {
         case TOKEN_MODE_LOG:
-            string_extend_strv(arena, &buf, token_type_to_str_view_log(token.type));
+            string_extend_strv(arena, &buf, token_type_to_strv_log(token.type));
             break;
         case TOKEN_MODE_MSG:
-            string_extend_strv(arena, &buf, token_type_to_str_view_msg(token.type));
+            string_extend_strv(arena, &buf, token_type_to_strv_msg(token.type));
             break;
         default:
             unreachable("");
@@ -402,7 +402,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         string_add_int(arena, &buf, token.pos.line);
     }
 
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
+    Strv strv = {.str = buf.buf, .count = buf.info.count};
+    return strv;
 }
 

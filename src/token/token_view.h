@@ -58,13 +58,13 @@ static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYP
 }
 
 static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
-    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
+    if (!strv_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
         return false;
     }
     return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
 }
 
-static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
+static inline Strv tk_view_print_internal(Arena* arena, Tk_view tk_view) {
     String buf = {0};
     vec_reset(&buf);
 
@@ -73,8 +73,8 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
         string_extend_cstr(&a_print, &buf, ";    ");
     }
 
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
+    Strv strv = {.str = buf.buf, .count = buf.info.count};
+    return strv;
 }
 
 static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_view b, bool do_log) {
@@ -118,6 +118,6 @@ static inline bool tk_view_is_equal_log(LOG_LEVEL log_level, Tk_view a, Tk_view 
 
 #define TK_VIEW_FMT STR_VIEW_FMT
 
-#define tk_view_print(tk_view) str_view_print(tk_view_print_internal(tk_view))
+#define tk_view_print(tk_view) strv_print(tk_view_print_internal(tk_view))
 
 #endif // TOKEN_VIEW_H

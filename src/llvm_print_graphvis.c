@@ -8,7 +8,7 @@
 #include <util.h>
 #include <parser_utils.h>
 
-static Str_view ir_expr_graphvis_internal(const Ir_expr* expr);
+static Strv ir_expr_graphvis_internal(const Ir_expr* expr);
 
 // idea: edge from return_stmt -> child should be drawn in the ir_return_graphvis_internal, not ir_expr_graphvis_internal or whatever
 
@@ -22,7 +22,7 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
     string_extend_cstr(&a_print, buf, "\n");
 }
 
-static Str_view ir_graphvis_internal(Name ir_name, const Ir* ir);
+static Strv ir_graphvis_internal(Name ir_name, const Ir* ir);
 
 static void extend_name_graphvis(String* buf, Name name) {
     extend_name_log_internal(false, buf, name);
@@ -35,7 +35,7 @@ static void arrow_names(String* buf, Name parent, Name child) {
     string_extend_cstr(&a_print, buf, ";\n");
 }
 
-static void arrow_names_label(String* buf, Name lhs, Name rhs, Str_view label) {
+static void arrow_names_label(String* buf, Name lhs, Name rhs, Strv label) {
     extend_name_graphvis(buf, lhs);
     string_extend_cstr(&a_print, buf, " -> ");
     extend_name_graphvis(buf, rhs);
@@ -64,7 +64,7 @@ static void arrow_names_label(String* buf, Name lhs, Name rhs, Str_view label) {
     } while (0)
 
 // draw child and draw arrow to that child
-// (String* buf, Name parent_name, void* child, <Fun*> child_fun, Str_view label)
+// (String* buf, Name parent_name, void* child, <Fun*> child_fun, Strv label)
 #define child_with_arrow_label(buf, parent_name, child, child_fun, label) \
     do { \
         Name child_name = util_literal_name_new2(); \
@@ -80,14 +80,14 @@ static void lang_type_with_arrow(String* buf, Name parent, Lang_type child) {
     string_extend_cstr(&a_print, buf, ";\n");
 }
 
-static void label(String* buf, Name name, Str_view label) {
+static void label(String* buf, Name name, Strv label) {
     extend_name_graphvis(buf, name);
     string_extend_cstr(&a_print, buf, " [label = \"");
     string_extend_strv(&a_print, buf, label);
     string_extend_cstr(&a_print, buf, "\"];\n");
 }
 
-static void label_ex(String* buf, Name name, Str_view label, Name actual_name) {
+static void label_ex(String* buf, Name name, Strv label, Name actual_name) {
     extend_name_graphvis(buf, name);
     string_extend_cstr(&a_print, buf, " [label = \"");
     string_extend_strv(&a_print, buf, label);
@@ -104,7 +104,7 @@ static void label_ex(String* buf, Name name, Str_view label, Name actual_name) {
 //    todo();
 //}
 
-static Str_view ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
+static Strv ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -129,7 +129,7 @@ static Str_view ir_block_graphvis_internal(Name block_name, const Ir_block* bloc
     return string_to_strv(buf);
 }
 
-static Str_view ir_variable_def_graphvis_internal(const Ir_variable_def* def) {
+static Strv ir_variable_def_graphvis_internal(const Ir_variable_def* def) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -140,7 +140,7 @@ static Str_view ir_variable_def_graphvis_internal(const Ir_variable_def* def) {
     return string_to_strv(buf);
 }
 
-static Str_view ir_function_params_graphvis_internal(Name params_name, const Ir_function_params* params) {
+static Strv ir_function_params_graphvis_internal(Name params_name, const Ir_function_params* params) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -152,7 +152,7 @@ static Str_view ir_function_params_graphvis_internal(Name params_name, const Ir_
     return string_to_strv(buf);
 }
 
-static Str_view ir_function_decl_graphvis_internal(const Ir_function_decl* decl) {
+static Strv ir_function_decl_graphvis_internal(const Ir_function_decl* decl) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -169,7 +169,7 @@ static Str_view ir_function_decl_graphvis_internal(const Ir_function_decl* decl)
     return string_to_strv(buf);
 }
 
-static Str_view ir_function_def_graphvis_internal(Name def_name, const Ir_function_def* def) {
+static Strv ir_function_def_graphvis_internal(Name def_name, const Ir_function_def* def) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -183,7 +183,7 @@ static Str_view ir_function_def_graphvis_internal(Name def_name, const Ir_functi
     return string_to_strv(buf);
 }
 
-static Str_view ir_int_graphvis_internal(const Ir_int* lit) {
+static Strv ir_int_graphvis_internal(const Ir_int* lit) {
     String num_buf = {0};
     String buf = {0};
     extend_source_loc(&buf);
@@ -197,7 +197,7 @@ static Str_view ir_int_graphvis_internal(const Ir_int* lit) {
     return string_to_strv(buf);
 }
 
-static Str_view ir_function_name_graphvis_internal(const Ir_function_name* lit) {
+static Strv ir_function_name_graphvis_internal(const Ir_function_name* lit) {
     String buf = {0};
     String buf_fun_name = {0};
 
@@ -207,7 +207,7 @@ static Str_view ir_function_name_graphvis_internal(const Ir_function_name* lit) 
     return string_to_strv(buf);
 }
 
-static Str_view ir_literal_graphvis_internal(const Ir_literal* lit) {
+static Strv ir_literal_graphvis_internal(const Ir_literal* lit) {
     switch (lit->type) {
         case IR_INT:
             return ir_int_graphvis_internal(ir_int_const_unwrap(lit));
@@ -226,7 +226,7 @@ static Str_view ir_literal_graphvis_internal(const Ir_literal* lit) {
     unreachable("");
 }
 
-static Str_view ir_function_call_graphvis_internal(const Ir_function_call* call) {
+static Strv ir_function_call_graphvis_internal(const Ir_function_call* call) {
     String buf = {0};
 
     label(&buf, call->name_self, sv("fun_call"));
@@ -244,7 +244,7 @@ static Str_view ir_function_call_graphvis_internal(const Ir_function_call* call)
     return string_to_strv(buf);
 }
 
-static Str_view ir_expr_graphvis_internal(const Ir_expr* expr) {
+static Strv ir_expr_graphvis_internal(const Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
             todo();
@@ -256,7 +256,7 @@ static Str_view ir_expr_graphvis_internal(const Ir_expr* expr) {
     unreachable("");
 }
 
-static Str_view ir_def_graphvis_internal(Name def_name, const Ir_def* def) {
+static Strv ir_def_graphvis_internal(Name def_name, const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             return ir_function_def_graphvis_internal(def_name, ir_function_def_const_unwrap(def));
@@ -276,7 +276,7 @@ static Str_view ir_def_graphvis_internal(Name def_name, const Ir_def* def) {
     unreachable("");
 }
 
-static Str_view ir_return_graphvis_internal(Name rtn_name, const Ir_return* rtn) {
+static Strv ir_return_graphvis_internal(Name rtn_name, const Ir_return* rtn) {
     String buf = {0};
     extend_source_loc(&buf);
 
@@ -287,7 +287,7 @@ static Str_view ir_return_graphvis_internal(Name rtn_name, const Ir_return* rtn)
     return string_to_strv(buf);
 }
 
-static Str_view ir_alloca_graphvis_internal(Name all_name, const Ir_alloca* alloca) {
+static Strv ir_alloca_graphvis_internal(Name all_name, const Ir_alloca* alloca) {
     String buf = {0};
 
     label(&buf, all_name, sv("return"));
@@ -295,7 +295,7 @@ static Str_view ir_alloca_graphvis_internal(Name all_name, const Ir_alloca* allo
     return string_to_strv(buf);
 }
 
-static Str_view ir_store_another_ir_graphvis_internal(Name store_name, const Ir_store_another_ir* store) {
+static Strv ir_store_another_ir_graphvis_internal(Name store_name, const Ir_store_another_ir* store) {
     String buf = {0};
 
     label(&buf, store_name, sv("store_another_ir"));
@@ -304,7 +304,7 @@ static Str_view ir_store_another_ir_graphvis_internal(Name store_name, const Ir_
     return string_to_strv(buf);
 }
 
-static Str_view ir_load_another_ir_graphvis_internal(Name load_name, const Ir_load_another_ir* load) {
+static Strv ir_load_another_ir_graphvis_internal(Name load_name, const Ir_load_another_ir* load) {
     String buf = {0};
 
     label(&buf, load_name, sv("load_another_ir"));
@@ -313,7 +313,7 @@ static Str_view ir_load_another_ir_graphvis_internal(Name load_name, const Ir_lo
     return string_to_strv(buf);
 }
 
-static Str_view ir_graphvis_internal(Name ir_name, const Ir* ir) {
+static Strv ir_graphvis_internal(Name ir_name, const Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
             return ir_block_graphvis_internal(ir_name, ir_block_const_unwrap(ir));
@@ -343,7 +343,7 @@ static Str_view ir_graphvis_internal(Name ir_name, const Ir* ir) {
     unreachable("");
 }
 
-Str_view ir_graphvis(const Ir_block* block) {
+Strv ir_graphvis(const Ir_block* block) {
     String buf = {0};
     extend_source_loc(&buf);
 

@@ -4,7 +4,7 @@
 
 #include <auto_gen_util.h>
 
-static void gen_vec_from_strv(Str_view vec_name, Str_view item_name) {
+static void gen_vec_from_strv(Strv vec_name, Strv item_name) {
     String function = {0};
 
     string_extend_cstr(&gen_a, &function, "typedef struct {\n");

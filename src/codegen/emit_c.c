@@ -12,7 +12,7 @@
 #include <lang_type_serialize.h>
 #include <parser_utils.h>
 #include <sizeof.h>
-#include <str_view_vec.h>
+#include <strv_vec.h>
 #include <subprocess.h>
 #include <file.h>
 
@@ -260,7 +260,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
         ir_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
-        //assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
+        //assert(!strv_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Ir* callee = NULL;
@@ -502,14 +502,14 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
 
     string_extend_cstr(&a_main, output, "    ");
     log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
     // TODO: remove these two if statements, and fix the actual underlying issues
     // we may need to make system to identify location of node generation, etc.
     // NOTE: this seems to be related to function callbacks for some reason
-    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
+    if (strv_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
         todo();
     }
-    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
+    if (strv_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
         string_extend_cstr(&a_main, output, " uint64_t ");
     } else {
         c_extend_type_call_str(output, alloca->lang_type, true);
@@ -744,7 +744,7 @@ void emit_c_from_tree(const Ir_block* root) {
         if (!file) {
             msg(
                 DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
-                str_view_print(params.input_file_path), strerror(errno)
+                strv_print(params.input_file_path), strerror(errno)
             );
             exit(EXIT_CODE_FAIL);
         }
@@ -755,7 +755,7 @@ void emit_c_from_tree(const Ir_block* root) {
         file_extend_strv(file, string_to_strv(strs.literals));
         file_extend_strv(file, string_to_strv(strs.output));
 
-        msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
+        msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", strv_print(params.input_file_path));
         fclose(file);
     }
 
@@ -765,7 +765,7 @@ void emit_c_from_tree(const Ir_block* root) {
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
-        Str_view_vec cmd = {0};
+        Strv_vec cmd = {0};
         vec_append(&a_main, &cmd, sv("clang"));
         vec_append(&a_main, &cmd, sv("-std=c99"));
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
@@ -842,7 +842,7 @@ void emit_c_from_tree(const Ir_block* root) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             exit(EXIT_CODE_FAIL);
         }
     }

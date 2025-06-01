@@ -2,7 +2,7 @@
 #include <parser_utils.h>
 #include <file.h>
 
-Str_view stop_after_print_internal(STOP_AFTER stop_after) {
+Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
         case STOP_AFTER_NONE:
             return sv("none");
@@ -52,7 +52,7 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
-static Str_view consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
+static Strv consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
         msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
@@ -153,9 +153,9 @@ static const Expect_fail_pair expect_fail_pair[] = {
 static Expect_fail_str_to_curr_log_level 
 expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
 
-bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Str_view strv) {
+bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) {
     for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
-        if (str_view_is_equal(sv(expect_fail_pair[idx].str), strv)) {
+        if (strv_is_equal(sv(expect_fail_pair[idx].str), strv)) {
             *type = expect_fail_pair[idx].type;
             *idx_result = idx;
             return true;
@@ -173,7 +173,7 @@ static size_t expect_fail_type_get_idx(DIAG_TYPE type) {
     unreachable("expect_fail_pair does not cover this DIAG_TYPE");
 }
 
-Str_view expect_fail_type_print_internal(DIAG_TYPE type) {
+Strv expect_fail_type_print_internal(DIAG_TYPE type) {
     return sv(expect_fail_pair[expect_fail_type_get_idx(type)].str);
 }
 
@@ -189,14 +189,14 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 }
 
 static void parse_normal_option(int* argc, char*** argv) {
-    Str_view curr_opt = consume_arg(argc, argv, "arg expected");
+    Strv curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
         PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
-    if (str_view_is_equal(curr_opt, sv("dump-dot"))) {
+    if (strv_is_equal(curr_opt, sv("dump-dot"))) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
@@ -267,40 +267,40 @@ static void set_backend(BACKEND backend) {
 
 // TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
-    Str_view curr_opt = consume_arg(argc, argv, "arg expected");
+    Strv curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
         PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
-    if (str_view_is_equal(curr_opt, sv("emit-llvm"))) {
+    if (strv_is_equal(curr_opt, sv("emit-llvm"))) {
         params.emit_llvm = true;
-    } else if (str_view_is_equal(curr_opt, sv("l"))) {
+    } else if (strv_is_equal(curr_opt, sv("l"))) {
         vec_append(&a_main, &params.l_flags, consume_arg(argc, argv, "library name was expected after `-l`"));
-    } else if (str_view_starts_with(curr_opt, sv("backend"))) {
-        Str_view backend = curr_opt;
-        str_view_consume_count(&backend, sv("backend").count);
-        if (!str_view_try_consume(&backend, '=') || backend.count < 1) {
+    } else if (strv_starts_with(curr_opt, sv("backend"))) {
+        Strv backend = curr_opt;
+        strv_consume_count(&backend, sv("backend").count);
+        if (!strv_try_consume(&backend, '=') || backend.count < 1) {
             log(LOG_FATAL, "expected =<backend> after `backend`");
             exit(EXIT_CODE_FAIL);
         }
 
-        if (str_view_is_equal(backend, sv("c"))) {
+        if (strv_is_equal(backend, sv("c"))) {
             set_backend(BACKEND_C);
-        } else if (str_view_is_equal(backend, sv("llvm"))) {
+        } else if (strv_is_equal(backend, sv("llvm"))) {
             set_backend(BACKEND_LLVM);
         } else {
-            log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", str_view_print(backend));
+            log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", strv_print(backend));
             exit(EXIT_CODE_FAIL);
         }
-    } else if (str_view_is_equal(curr_opt, sv("all-errors-fatal"))) {
+    } else if (strv_is_equal(curr_opt, sv("all-errors-fatal"))) {
         params.all_errors_fatal = true;
-    } else if (str_view_is_equal(curr_opt, sv("S"))) {
+    } else if (strv_is_equal(curr_opt, sv("S"))) {
         params.stop_after = STOP_AFTER_LOWER_S;
-    } else if (str_view_is_equal(curr_opt, sv("c"))) {
+    } else if (strv_is_equal(curr_opt, sv("c"))) {
         params.stop_after = STOP_AFTER_OBJ;
-    } else if (str_view_is_equal(curr_opt, sv("run"))) {
+    } else if (strv_is_equal(curr_opt, sv("run"))) {
         static_assert(
             PARAMETERS_COUNT == 18,
             "exhausive handling of params for if statement below "
@@ -320,16 +320,16 @@ static void parse_long_option(int* argc, char*** argv) {
         }
         params.stop_after = STOP_AFTER_RUN;
         // TODO: args after `--run` should be passed to the program being compiled and run
-    } else if (str_view_is_equal(curr_opt, sv("o"))) {
+    } else if (strv_is_equal(curr_opt, sv("o"))) {
         params.output_file_path = consume_arg(argc, argv, "output file path was expected after `-o`");
-    } else if (str_view_is_equal(curr_opt, sv("O0"))) {
+    } else if (strv_is_equal(curr_opt, sv("O0"))) {
         params.opt_level = OPT_LEVEL_O0;
-    } else if (str_view_is_equal(curr_opt, sv("O2"))) {
+    } else if (strv_is_equal(curr_opt, sv("O2"))) {
         params.opt_level = OPT_LEVEL_O2;
-    } else if (str_view_starts_with(curr_opt, sv("error"))) {
-        Str_view error = curr_opt;
-        str_view_consume_count(&error, sv("error").count);
-        if (!str_view_try_consume(&error, '=') || error.count < 1) {
+    } else if (strv_starts_with(curr_opt, sv("error"))) {
+        Strv error = curr_opt;
+        strv_consume_count(&error, sv("error").count);
+        if (!strv_try_consume(&error, '=') || error.count < 1) {
             log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
             exit(EXIT_CODE_FAIL);
         }
@@ -339,40 +339,40 @@ static void parse_long_option(int* argc, char*** argv) {
         if (!expect_fail_type_from_strv(&idx, &type, error)) {
             msg(
                 DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
-                "invalid fail type `"STR_VIEW_FMT"`\n", str_view_print(error)
+                "invalid fail type `"STR_VIEW_FMT"`\n", strv_print(error)
             );
             exit(EXIT_CODE_FAIL);
         }
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
         params.error_opts_changed = true;
-    } else if (str_view_starts_with(curr_opt, sv("log-level"))) {
-        Str_view log_level = curr_opt;
-        str_view_consume_count(&log_level, sv("log-level").count);
-        if (!str_view_try_consume(&log_level, '=')) {
+    } else if (strv_starts_with(curr_opt, sv("log-level"))) {
+        Strv log_level = curr_opt;
+        strv_consume_count(&log_level, sv("log-level").count);
+        if (!strv_try_consume(&log_level, '=')) {
             log(LOG_FATAL, "expected =<log level> after `log-level`");
             exit(EXIT_CODE_FAIL);
         }
 
-        if (str_view_is_equal(log_level, sv("FETAL"))) {
+        if (strv_is_equal(log_level, sv("FETAL"))) {
             params_log_level = LOG_FATAL;
-        } else if (str_view_is_equal(log_level, sv("ERROR"))) {
+        } else if (strv_is_equal(log_level, sv("ERROR"))) {
             params_log_level = LOG_ERROR;
-        } else if (str_view_is_equal(log_level, sv("WARNING"))) {
+        } else if (strv_is_equal(log_level, sv("WARNING"))) {
             params_log_level = LOG_WARNING;
-        } else if (str_view_is_equal(log_level, sv("NOTE"))) {
+        } else if (strv_is_equal(log_level, sv("NOTE"))) {
             params_log_level = LOG_NOTE;
-        } else if (str_view_is_equal(log_level, sv("VERBOSE"))) {
+        } else if (strv_is_equal(log_level, sv("VERBOSE"))) {
             params_log_level = LOG_VERBOSE;
-        } else if (str_view_is_equal(log_level, sv("DEBUG"))) {
+        } else if (strv_is_equal(log_level, sv("DEBUG"))) {
             params_log_level = LOG_DEBUG;
-        } else if (str_view_is_equal(log_level, sv("TRACE"))) {
+        } else if (strv_is_equal(log_level, sv("TRACE"))) {
             params_log_level = LOG_TRACE;
         } else {
-            log(LOG_FATAL, "log level `"STR_VIEW_FMT"` is not a supported log level\n", str_view_print(log_level));
+            log(LOG_FATAL, "log level `"STR_VIEW_FMT"` is not a supported log level\n", strv_print(log_level));
             exit(EXIT_CODE_FAIL);
         }
     } else {
-        log(LOG_FATAL, "invalid option: "STR_VIEW_FMT"\n", str_view_print(curr_opt));
+        log(LOG_FATAL, "invalid option: "STR_VIEW_FMT"\n", strv_print(curr_opt));
         exit(EXIT_CODE_FAIL);
     }
 }

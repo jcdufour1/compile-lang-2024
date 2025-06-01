@@ -15,7 +15,7 @@
 //
 // util
 //
-static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
+static size_t sym_tbl_calculate_idx(Strv key, size_t capacity) {
     assert(capacity > 0);
     return stbds_hash_bytes(key.str, key.count, 0)%capacity;
 }
@@ -28,19 +28,19 @@ typedef bool(*Symbol_add_fn)(void* tast_to_add);
 
 typedef Generic_symbol_table*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
-bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
+bool generic_symbol_lookup(void** result, Strv key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key);
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
 
 // TODO: symbol_add should call symbol_update to reduce duplication
-bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Str_view key, void* item) {
+bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Strv key, void* item) {
     assert(key.count > 0 && "invalid item");
 
     assert(capacity > 0);
     size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(sym_tbl_tasts[curr_table_idx].key, key)) {
+        if (strv_is_equal(sym_tbl_tasts[curr_table_idx].key, key)) {
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
@@ -87,7 +87,7 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
 }
 
 // return false if symbol is not found
-bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Str_view query) {
+bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Strv query) {
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         return false;
     }
@@ -98,7 +98,7 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
         Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[curr_table_idx];
 
         if (curr_tast->status == SYM_TBL_OCCUPIED) {
-            if (str_view_is_equal(curr_tast->key, query)) {
+            if (strv_is_equal(curr_tast->key, query)) {
                 *result = curr_tast;
                 return true;
             }
@@ -118,7 +118,7 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 }
 
 // returns false if symbol has already been added to the table
-bool generic_tbl_add(Generic_symbol_table* sym_table, Str_view key, void* item) {
+bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     generic_tbl_expand_if_nessessary(sym_table);
     assert(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
@@ -132,7 +132,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Str_view key, void* item) 
 }
 
 bool generic_symbol_add(
-    Str_view key,
+    Strv key,
     void* item,
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
@@ -146,7 +146,7 @@ bool generic_symbol_add(
     return true;
 }
 
-void generic_tbl_update(Generic_symbol_table* sym_table, Str_view key, void* item) {
+void generic_tbl_update(Generic_symbol_table* sym_table, Strv key, void* item) {
     Generic_symbol_table_tast* sym_tast;
     if (generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
         sym_tast->tast = item;
@@ -155,7 +155,7 @@ void generic_tbl_update(Generic_symbol_table* sym_table, Str_view key, void* ite
     unwrap(generic_tbl_add(sym_table, key, item));
 }
 
-void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
+void generic_symbol_update(Strv key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
     if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
         return;
     }
@@ -176,7 +176,7 @@ void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn 
     unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
 }
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key) {
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key) {
     Generic_symbol_table_tast* sym_tast;
     if (!generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
         return false;
@@ -187,7 +187,7 @@ bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, St
 
 bool generic_symbol_lookup(
     void** result,
-    Str_view key,
+    Strv key,
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
 ) {
@@ -319,7 +319,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
             return true;
         }
         if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
-            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
+            int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
             );
@@ -327,7 +327,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
             *result = uast_primitive_def_wrap(def);
             return true;
         } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
-            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
+            int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
             );
@@ -335,7 +335,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
             *result = uast_primitive_def_wrap(def);
             return true;
         } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
-            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
+            int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new((Pos) {0}, bit_width, 0)))
             );
@@ -421,12 +421,12 @@ bool alloca_lookup(Ir** result, Name key) {
 // File_path_to_text implementation
 //
 
-bool file_path_to_text_tbl_lookup(Str_view** result, Str_view key) {
+bool file_path_to_text_tbl_lookup(Strv** result, Strv key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.file_path_to_text, key);
 }
 
 // returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(Str_view* file_text, Str_view key) {
+bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
     return generic_tbl_add((Generic_symbol_table*)&env.file_path_to_text, key, file_text);
 }
 

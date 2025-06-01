@@ -41,10 +41,10 @@ typedef struct {
 } Defer_pair;
 
 // TODO: move this macro?
-#define defer_pair_print(pair) str_view_print(defer_pair_print_internal(pair))
+#define defer_pair_print(pair) strv_print(defer_pair_print_internal(pair))
 
 // TODO: move this function?
-static inline Str_view defer_pair_print_internal(Defer_pair pair) {
+static inline Strv defer_pair_print_internal(Defer_pair pair) {
     String buf = {0};
     string_extend_strv(&a_print, &buf, tast_defer_print_internal(pair.defer, 0));
     string_extend_strv(&a_print, &buf, tast_label_print_internal(pair.label, 0));
@@ -88,7 +88,7 @@ typedef struct Env_ {
     int recursion_depth;
     File_path_to_text file_path_to_text;
 
-    Str_view curr_mod_path;
+    Strv curr_mod_path;
 
     bool type_checking_is_in_struct_base_def;
 

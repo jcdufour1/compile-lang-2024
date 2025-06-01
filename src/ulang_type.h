@@ -83,12 +83,12 @@ static inline Ulang_type ulang_type_regular_const_wrap(Ulang_type_regular ulang_
     new_ulang_type.as.ulang_type_regular = ulang_type;
     return new_ulang_type;
 }
-#define ulang_type_tuple_print(ulang_type) str_view_print(ulang_type_tuple_print_internal(ulang_type, 0))
-Str_view ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, int recursion_depth);
-#define ulang_type_fn_print(ulang_type) str_view_print(ulang_type_fn_print_internal(ulang_type, 0))
-Str_view ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, int recursion_depth);
-#define ulang_type_regular_print(ulang_type) str_view_print(ulang_type_regular_print_internal(ulang_type, 0))
-Str_view ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, int recursion_depth);
+#define ulang_type_tuple_print(ulang_type) strv_print(ulang_type_tuple_print_internal(ulang_type, 0))
+Strv ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, int recursion_depth);
+#define ulang_type_fn_print(ulang_type) strv_print(ulang_type_fn_print_internal(ulang_type, 0))
+Strv ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, int recursion_depth);
+#define ulang_type_regular_print(ulang_type) strv_print(ulang_type_regular_print_internal(ulang_type, 0))
+Strv ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, int recursion_depth);
 static inline Ulang_type_tuple ulang_type_tuple_new(Ulang_type_vec ulang_types, Pos pos){
     return (Ulang_type_tuple) { .ulang_types = ulang_types, .pos = pos};
 }
@@ -124,9 +124,9 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
     unreachable("");
 }
 
-#define ulang_type_print(mode, lang_type) str_view_print(ulang_type_print_internal((mode), (lang_type)))
+#define ulang_type_print(mode, lang_type) strv_print(ulang_type_print_internal((mode), (lang_type)))
 
-Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
+Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type);
 

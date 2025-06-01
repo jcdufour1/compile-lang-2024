@@ -10,7 +10,7 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
-#include <str_view_vec.h>
+#include <strv_vec.h>
 #include <subprocess.h>
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
@@ -160,7 +160,7 @@ void do_passes(void) {
     static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop_after states (not all are explicitly handled");
     if (params.stop_after == STOP_AFTER_RUN) {
         // TODO: add logic in parse_args to catch below error:
-        Str_view_vec cmd = {0};
+        Strv_vec cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_main, &output_path, "./");
         string_extend_strv(&a_main, &output_path, params.output_file_path);
@@ -168,7 +168,7 @@ void do_passes(void) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             // exit with the child process return status
             exit(status);
         }

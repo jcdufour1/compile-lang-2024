@@ -2,7 +2,7 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
-#include "str_view.h"
+#include "strv.h"
 #include <newstring.h>
 #include "symbol_table_struct.h"
 #include <do_passes.h>
@@ -22,7 +22,7 @@ void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, in
 // returns false if symbol is already added to the table
 bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol);
 
-bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key);
+bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Strv key);
 
 bool usym_tbl_lookup(Uast_def** result, Name key);
 
@@ -48,7 +48,7 @@ void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int 
 // returns false if symbol is already added to the table
 bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol);
 
-bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key);
+bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Strv key);
 
 bool sym_tbl_lookup(Tast_def** result, Name key);
 
@@ -74,7 +74,7 @@ void alloca_log_table_internal(int log_level, const Alloca_table sym_table, int 
 // returns false if symbol is already added to the table
 bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
 
-bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Str_view key);
+bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Strv key);
 
 bool all_tbl_lookup(Ir** result, Name key);
 
@@ -105,10 +105,10 @@ bool c_forward_struct_tbl_lookup(Name** result, Name key);
 // returns false if value has already been added to the table
 bool c_forward_struct_tbl_add(Name* value, Name key);
 
-bool file_path_to_text_tbl_lookup(Str_view** result, Str_view key);
+bool file_path_to_text_tbl_lookup(Strv** result, Strv key);
 
 // returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(Str_view* file_text, Str_view key);
+bool file_path_to_text_tbl_add(Strv* file_text, Strv key);
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key);

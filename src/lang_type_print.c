@@ -30,7 +30,7 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-Str_view lang_type_vec_print_internal(Lang_type_vec types) {
+Strv lang_type_vec_print_internal(Lang_type_vec types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -82,7 +82,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     }
 }
 
-Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
+Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     String buf = {0};
     extend_lang_type_to_string(&buf, mode, lang_type);
     switch (mode) {
@@ -101,7 +101,7 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     return string_to_strv(buf);
 }
 
-Str_view lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
+Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
     String buf = {0};
     extend_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
@@ -156,7 +156,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             // fallthrough
         case LANG_TYPE_STRUCT:
             // fallthrough
-            assert(!str_view_cstr_is_equal(lang_type_get_atom(mode, lang_type).str.base, "void"));
+            assert(!strv_cstr_is_equal(lang_type_get_atom(mode, lang_type).str.base, "void"));
         case LANG_TYPE_VOID:
             // fallthrough
         case LANG_TYPE_PRIMITIVE:

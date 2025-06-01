@@ -1,7 +1,7 @@
 #ifndef OPERATOR_TYPE_H
 #define OPERATOR_TYPE_H
 
-#include <str_view.h>
+#include <strv.h>
 #include <token.h>
 
 typedef enum {
@@ -26,7 +26,7 @@ typedef enum {
     BINARY_SHIFT_RIGHT,
 } BINARY_TYPE;
 
-static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
+static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
     switch (bin_type) {
         case BINARY_SINGLE_EQUAL:
             return sv("=");
@@ -71,7 +71,7 @@ static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
     unreachable("");
 }
 
-#define binary_type_print(bin_type) str_view_print(binary_type_to_str_view(bin_type))
+#define binary_type_print(bin_type) strv_print(binary_type_to_strv(bin_type))
 
 typedef enum {
     UNARY_DEREF,
@@ -80,7 +80,7 @@ typedef enum {
     UNARY_NOT,
 } UNARY_TYPE;
 
-static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
+static inline Strv unary_type_to_strv(UNARY_TYPE unary_type) {
     switch (unary_type) {
         case UNARY_DEREF:
             return sv("deref");
@@ -96,6 +96,6 @@ static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
 
 BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type);
 
-#define unary_type_print(unary_type) str_view_print(unary_type_to_str_view(unary_type))
+#define unary_type_print(unary_type) strv_print(unary_type_to_strv(unary_type))
 
 #endif // OPERATOR_TYPE_H

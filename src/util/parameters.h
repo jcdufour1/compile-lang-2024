@@ -4,7 +4,7 @@
 #include <util.h>
 #include <newstring.h>
 #include <diag_type.h>
-#include <str_view_vec.h>
+#include <strv_vec.h>
 
 typedef struct {
     Vec_base info;
@@ -46,15 +46,15 @@ typedef enum {
 // PARAMETERS_COUNT should be set to the number of members in Parameters
 #define PARAMETERS_COUNT 18
 typedef struct {
-    Str_view input_file_path;
-    Str_view output_file_path;
-    Str_view_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
-    Str_view_vec static_libs;
-    Str_view_vec dynamic_libs;
-    Str_view_vec c_input_files;
-    Str_view_vec object_files;
-    Str_view_vec lower_s_files;
-    Str_view_vec upper_s_files;
+    Strv input_file_path;
+    Strv output_file_path;
+    Strv_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
+    Strv_vec static_libs;
+    Strv_vec dynamic_libs;
+    Strv_vec c_input_files;
+    Strv_vec object_files;
+    Strv_vec lower_s_files;
+    Strv_vec upper_s_files;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     STOP_AFTER stop_after : 4;
@@ -66,21 +66,21 @@ typedef struct {
     Backend_info backend_info;
 } Parameters;
 
-#define stop_after_print(stop_after) str_view_print(stop_after_print_internal(stop_after))
+#define stop_after_print(stop_after) strv_print(stop_after_print_internal(stop_after))
 
-Str_view stop_after_print_internal(STOP_AFTER stop_after);
+Strv stop_after_print_internal(STOP_AFTER stop_after);
 
 bool is_compiling(void);
 
 void parse_args(int argc, char** argv);
 
-bool expect_fail_type_from_strv(size_t* idx, DIAG_TYPE* type, Str_view strv);
+bool expect_fail_type_from_strv(size_t* idx, DIAG_TYPE* type, Strv strv);
 
 LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type);
 
-Str_view expect_fail_type_print_internal(DIAG_TYPE type);
+Strv expect_fail_type_print_internal(DIAG_TYPE type);
 
-#define expect_fail_type_print(type) str_view_print(expect_fail_type_print_internal(type))
+#define expect_fail_type_print(type) strv_print(expect_fail_type_print_internal(type))
 
 extern Parameters params;
 

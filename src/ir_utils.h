@@ -5,9 +5,9 @@
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
-Str_view lang_type_vec_print_internal(Lang_type_vec types);
+Strv lang_type_vec_print_internal(Lang_type_vec types);
 
-#define lang_type_vec_print(types) str_view_print(lang_type_vec_print_internal((types), false))
+#define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))
 
 #define IR_FMT STR_VIEW_FMT
 
