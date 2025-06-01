@@ -524,7 +524,6 @@ static Lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type
 
     Tast_variable_def* tag = tast_variable_def_new(
         lang_type_pos,
-        // TODO: make helper functions, etc. for line below, because this is too much to do every time
         tag_lang_type,
         false,
         util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_tag"))
@@ -549,7 +548,6 @@ static Lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type
     vec_append(&a_main, &members, item);
     
     Tast_struct_def* struct_def = enum_get_struct_def(tast_enum_def_unwrap(lang_type_def_)->base.name, members, item->pos);
-    // TODO: consider collisions with generated structs and user defined structs
     Tast_def* dummy = NULL;
     unwrap(sym_tbl_lookup(&dummy, struct_def->base.name));
 
@@ -733,7 +731,7 @@ static Ir_function_params* do_function_def_alloca(
     if (params.backend_info.struct_rtn_through_param && is_struct_like(rtn_type.type)) {
         lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
-            (Pos) {0} /* TODO */,
+            old_params,
             rtn_lang_type,
             false,
             util_literal_name_new()
@@ -1852,6 +1850,7 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
 }
 
 static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if_else) {
+    assert(if_else->tasts.info.count > 0);
     Name old_label_if_after = label_if_after;
 
     *new_block = ir_block_new(
@@ -1859,7 +1858,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         util_literal_name_new(),
         (Ir_vec) {0},
         (Pos) {0},
-        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0 /* TODO: consider empty if_else_chain */)->body->scope_id))
+        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id))
     );
 
     Tast_variable_def* yield_dest = NULL;
