@@ -69,10 +69,6 @@ static size_t trim_non_newline_whitespace(Strv_col* file_text, Pos* pos) {
     }
     char curr = strv_col_front(*file_text);
     while (file_text->base.count > 0 && (isspace(curr) || iscntrl(curr)) && (curr != '\n')) {
-        if (file_text->base.count < 1) {
-            unreachable("");// TODO: remove this if statement (unless there is a reason for it)
-            return count;
-        }
         count++;
         strv_col_consume(pos, file_text);
         curr = strv_col_front(*file_text);
@@ -356,8 +352,8 @@ static bool get_next_token(
 
         Strv_col result = {0};
         if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
-            // TODO: expected failure case
-            todo();
+            msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
+            return false;
         }
         unwrap(strv_col_consume(pos, file_text_rem));
 
@@ -384,7 +380,11 @@ static bool get_next_token(
         token->type = TOKEN_NEW_LINE;
         return true;
     } else {
-        unreachable("unknown symbol: %c (%x)\n", strv_col_front(*file_text_rem), strv_col_front(*file_text_rem));
+        String buf = {0};
+        string_extend_strv(&a_token, &buf, sv("unknown symbol: "));
+        vec_append(&a_token, &buf, strv_col_front(*file_text_rem));
+        msg_todo_strv(string_to_strv(buf), *pos);
+        return false;
     }
 }
 

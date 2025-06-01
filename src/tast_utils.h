@@ -352,31 +352,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
     unreachable("");
 }
 
-// TODO: remove
-static inline Name tast_literal_get_name(const Tast_literal* lit) {
-    switch (lit->type) {
-        case TAST_INT:
-            unreachable("");
-        case TAST_FLOAT:
-            unreachable("");
-        case TAST_STRING:
-            unreachable("");
-        case TAST_VOID:
-            unreachable("");
-        case TAST_ENUM_TAG_LIT:
-            unreachable("");
-        case TAST_CHAR:
-            unreachable("");
-        case TAST_ENUM_LIT:
-            unreachable("");
-        case TAST_RAW_UNION_LIT:
-            unreachable("");
-        case TAST_FUNCTION_LIT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Name tast_expr_get_name(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
@@ -393,7 +368,7 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
         case TAST_FUNCTION_CALL:
             return tast_expr_get_name(tast_function_call_const_unwrap(expr)->callee);
         case TAST_LITERAL:
-            return tast_literal_get_name(tast_literal_const_unwrap(expr));
+            todo();
         case TAST_TUPLE:
             unreachable("");
         case TAST_ENUM_CALLEE:

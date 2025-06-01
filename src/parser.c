@@ -2425,8 +2425,10 @@ static PARSE_STATUS parse_expr_index(
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
-            // TODO: expected expr
-            todo();
+            msg_expected_expr(*tokens, "after opening `[`");
+            return PARSE_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
         default:
             todo();
     }
