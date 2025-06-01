@@ -44,7 +44,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 17
+#define PARAMETERS_COUNT 18
 typedef struct {
     Str_view input_file_path;
     Str_view output_file_path;
@@ -54,6 +54,7 @@ typedef struct {
     Str_view_vec c_input_files;
     Str_view_vec object_files;
     Str_view_vec lower_s_files;
+    Str_view_vec upper_s_files;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     STOP_AFTER stop_after : 4;

@@ -786,7 +786,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 17,
+            PARAMETERS_COUNT == 18,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
@@ -859,6 +859,9 @@ void emit_c_from_tree(const Ir_block* root) {
         }
         for (size_t idx = 0; idx < params.lower_s_files.info.count; idx++) {
             vec_append(&a_main, &cmd, vec_at(&params.lower_s_files, idx));
+        }
+        for (size_t idx = 0; idx < params.upper_s_files.info.count; idx++) {
+            vec_append(&a_main, &cmd, vec_at(&params.upper_s_files, idx));
         }
 
         int status = subprocess_call(cmd);

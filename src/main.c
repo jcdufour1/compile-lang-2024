@@ -153,7 +153,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

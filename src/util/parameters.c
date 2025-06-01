@@ -192,7 +192,7 @@ static void parse_normal_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -200,7 +200,7 @@ static void parse_normal_option(int* argc, char*** argv) {
         params.dump_dot = true;
         params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
     } else {
-        static_assert(FILE_TYPE_COUNT == 6, "exhaustive handling of file types");
+        static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
         switch (get_file_type(curr_opt)) {
             case FILE_TYPE_OWN:
                 if (is_compiling()) {
@@ -239,6 +239,10 @@ static void parse_normal_option(int* argc, char*** argv) {
                 stop_after_set_if_none(STOP_AFTER_BIN);
                 vec_append(&a_main, &params.lower_s_files, curr_opt);
                 break;
+            case FILE_TYPE_UPPER_S:
+                stop_after_set_if_none(STOP_AFTER_BIN);
+                vec_append(&a_main, &params.upper_s_files, curr_opt);
+                break;
             default:
                 unreachable("");
         }
@@ -266,7 +270,7 @@ static void parse_long_option(int* argc, char*** argv) {
     Str_view curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -298,7 +302,7 @@ static void parse_long_option(int* argc, char*** argv) {
         params.stop_after = STOP_AFTER_OBJ;
     } else if (str_view_is_equal(curr_opt, sv("run"))) {
         static_assert(
-            PARAMETERS_COUNT == 17,
+            PARAMETERS_COUNT == 18,
             "exhausive handling of params for if statement below "
             "(not all parameters are explicitly handled)"
         );
@@ -399,7 +403,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -407,7 +411,8 @@ void parse_args(int argc, char** argv) {
         params.static_libs.info.count == 0 &&
         params.c_input_files.info.count == 0 &&
         params.object_files.info.count == 0 &&
-        params.lower_s_files.info.count == 0
+        params.lower_s_files.info.count == 0 &&
+        params.upper_s_files.info.count == 0
     ) {
         msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
         exit(EXIT_CODE_FAIL);

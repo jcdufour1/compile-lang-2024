@@ -11,6 +11,7 @@ typedef enum {
     FILE_TYPE_C,
     FILE_TYPE_OBJECT,
     FILE_TYPE_LOWER_S,
+    FILE_TYPE_UPPER_S,
 
     // count for static asserts
     FILE_TYPE_COUNT,
