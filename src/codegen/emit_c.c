@@ -14,6 +14,7 @@
 #include <sizeof.h>
 #include <str_view_vec.h>
 #include <subprocess.h>
+#include <file.h>
 
 static const char* TEST_OUTPUT = "test.c";
 
@@ -748,41 +749,15 @@ void emit_c_from_tree(const Ir_block* root) {
             exit(EXIT_CODE_FAIL);
         }
         
-        // TODO: make function for for loop to compress code
-        for (size_t idx = 0; idx < header.info.count; idx++) {
-            if (EOF == fputc(vec_at(&header, idx), file)) {
-                todo();
-            }
-        }
-
-        for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
-            if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
-                todo();
-            }
-        }
-
-        for (size_t idx = 0; idx < strs.forward_decls.info.count; idx++) {
-            if (EOF == fputc(vec_at(&strs.forward_decls, idx), file)) {
-                todo();
-            }
-        }
-
-        for (size_t idx = 0; idx < strs.literals.info.count; idx++) {
-            if (EOF == fputc(vec_at(&strs.literals, idx), file)) {
-                todo();
-            }
-        }
-
-        for (size_t idx = 0; idx < strs.output.info.count; idx++) {
-            if (EOF == fputc(vec_at(&strs.output, idx), file)) {
-                todo();
-            }
-        }
+        file_extend_strv(file, string_to_strv(header));
+        file_extend_strv(file, string_to_strv(strs.struct_defs));
+        file_extend_strv(file, string_to_strv(strs.forward_decls));
+        file_extend_strv(file, string_to_strv(strs.literals));
+        file_extend_strv(file, string_to_strv(strs.output));
 
         msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
         fclose(file);
     }
-
 
     {
         static_assert(

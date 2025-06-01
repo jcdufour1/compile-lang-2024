@@ -25,4 +25,6 @@ bool get_file_extension(Str_view* extension, Str_view file_path);
 
 FILE_TYPE get_file_type(Str_view file_path);
 
+void file_extend_strv(FILE* file, Str_view str_view);
+
 #endif // FILE_H

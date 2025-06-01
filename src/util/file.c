@@ -43,12 +43,7 @@ void write_file(const char* file_path, Str_view text_to_write) {
         exit(EXIT_CODE_FAIL);
     }
 
-    for (size_t idx = 0; idx < text_to_write.count; idx++) {
-        if (EOF == fputc(str_view_at(text_to_write, idx), file)) {
-            todo();
-        }
-    }
-
+    file_extend_strv(file, text_to_write);
     fclose(file);
 }
 
@@ -100,4 +95,13 @@ FILE_TYPE get_file_type(Str_view file_path) {
     string_extend_strv(&a_main, &buf, ext);
     msg_todo_strv(string_to_strv(buf), POS_BUILTIN);
     exit(EXIT_CODE_FAIL);
+}
+
+void file_extend_strv(FILE* file, Str_view str_view) {
+    for (size_t idx = 0; idx < str_view.count; idx++) {
+        if (EOF == fputc(str_view_at(str_view, idx), file)) {
+            todo();
+        }
+    }
+
 }

@@ -1030,23 +1030,9 @@ void emit_llvm_from_tree(const Ir_block* root) {
         exit(EXIT_CODE_FAIL);
     }
 
-    for (size_t idx = 0; idx < struct_defs.info.count; idx++) {
-        if (EOF == fputc(vec_at(&struct_defs, idx), file)) {
-            todo();
-        }
-    }
-
-    for (size_t idx = 0; idx < output.info.count; idx++) {
-        if (EOF == fputc(vec_at(&output, idx), file)) {
-            todo();
-        }
-    }
-
-    for (size_t idx = 0; idx < literals.info.count; idx++) {
-        if (EOF == fputc(vec_at(&literals, idx), file)) {
-            todo();
-        }
-    }
+    file_extend_strv(file, string_to_strv(struct_defs));
+    file_extend_strv(file, string_to_strv(output));
+    file_extend_strv(file, string_to_strv(literals));
 
     msg(
         DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
