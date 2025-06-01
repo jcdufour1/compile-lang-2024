@@ -210,17 +210,12 @@ static void parse_normal_option(int* argc, char*** argv) {
                     msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
                     exit(EXIT_CODE_FAIL);
                 }
+                stop_after_set_if_none(STOP_AFTER_BIN);
                 params.compile_own = true;
-                if (params.stop_after == STOP_AFTER_NONE) {
-                    params.stop_after = STOP_AFTER_BIN;
-                }
                 params.input_file_path = curr_opt;
                 break;
             case FILE_TYPE_STATIC_LIB:
-                if (is_compiling()) {
-                    // TODO
-                    todo();
-                }
+                stop_after_set_if_none(STOP_AFTER_BIN);
                 vec_append(&a_main, &params.static_libs, curr_opt);
                 break;
             case FILE_TYPE_DYNAMIC_LIB:

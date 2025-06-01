@@ -99,10 +99,7 @@ static inline bool strv_starts_with(Strv base, Strv prefix) {
 
 // only cstrs with a long enough lifetime can be passed here
 static inline Strv sv(const char* cstr) {
-    Strv strv;
-    strv.str = cstr;
-    strv.count = strlen(cstr);
-    return strv;
+    return (Strv) {.str = cstr, .count = strlen(cstr)};
 }
 
 static inline bool strv_try_consume(Strv* strv, char ch) {
