@@ -58,6 +58,22 @@ bool get_file_extension(Str_view* extension, Str_view file_path) {
     return false;
 }
 
+typedef struct {
+    const char* text;
+    FILE_TYPE type;
+} File_type_pair;
+
+static_assert(FILE_TYPE_COUNT == 7, "exhausive handling of file types");
+File_type_pair file_type_pairs[] = {
+    {"own", FILE_TYPE_OWN},
+    {"a", FILE_TYPE_STATIC_LIB},
+    {"so", FILE_TYPE_DYNAMIC_LIB},
+    {"c", FILE_TYPE_C},
+    {"o", FILE_TYPE_OBJECT},
+    {"s", FILE_TYPE_LOWER_S},
+    {"S", FILE_TYPE_UPPER_S},
+};
+
 FILE_TYPE get_file_type(Str_view file_path) {
     Str_view ext = {0};
     if (!get_file_extension(&ext, file_path)) {
@@ -66,28 +82,11 @@ FILE_TYPE get_file_type(Str_view file_path) {
         exit(EXIT_CODE_FAIL);
     }
 
-    static_assert(FILE_TYPE_COUNT == 7, "exhausive handling of file types");
-
-    if (str_view_is_equal(ext, sv("own"))) {
-        return FILE_TYPE_OWN;
-    }
-    if (str_view_is_equal(ext, sv("a"))) {
-        return FILE_TYPE_STATIC_LIB;
-    }
-    if (str_view_is_equal(ext, sv("so"))) {
-        return FILE_TYPE_DYNAMIC_LIB;
-    }
-    if (str_view_is_equal(ext, sv("c"))) {
-        return FILE_TYPE_C;
-    }
-    if (str_view_is_equal(ext, sv("o"))) {
-        return FILE_TYPE_OBJECT;
-    }
-    if (str_view_is_equal(ext, sv("s"))) {
-        return FILE_TYPE_LOWER_S;
-    }
-    if (str_view_is_equal(ext, sv("S"))) {
-        return FILE_TYPE_UPPER_S;
+    for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
+        File_type_pair curr = file_type_pairs[idx];
+        if (str_view_is_equal(sv(curr.text), ext)) {
+            return curr.type;
+        }
     }
 
     String buf = {0};
