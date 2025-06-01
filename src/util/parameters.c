@@ -192,59 +192,53 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
     return expect_fail_str_to_curr_log_level_pair[expect_fail_type_get_idx(type)].curr_level;
 }
 
-static void parse_normal_option(int* argc, char*** argv) {
+static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, "arg expected");
 
     static_assert(
         PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
-
-    if (strv_is_equal(curr_opt, sv("dump-dot"))) {
-        params.dump_dot = true;
-        params.input_file_path = consume_arg(argc, argv, "input file path was expected after `compile-run`");
-    } else {
-        static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
-        switch (get_file_type(curr_opt)) {
-            case FILE_TYPE_OWN:
-                if (is_compiling()) {
-                    msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
-                    exit(EXIT_CODE_FAIL);
-                }
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                params.compile_own = true;
-                params.input_file_path = curr_opt;
-                break;
-            case FILE_TYPE_STATIC_LIB:
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                vec_append(&a_main, &params.static_libs, curr_opt);
-                break;
-            case FILE_TYPE_DYNAMIC_LIB:
-                if (is_compiling()) {
-                    // TODO
-                    todo();
-                }
-                vec_append(&a_main, &params.dynamic_libs, curr_opt);
-                break;
-            case FILE_TYPE_C:
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                vec_append(&a_main, &params.c_input_files, curr_opt);
-                break;
-            case FILE_TYPE_OBJECT:
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                vec_append(&a_main, &params.object_files, curr_opt);
-                break;
-            case FILE_TYPE_LOWER_S:
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                vec_append(&a_main, &params.lower_s_files, curr_opt);
-                break;
-            case FILE_TYPE_UPPER_S:
-                stop_after_set_if_none(STOP_AFTER_BIN);
-                vec_append(&a_main, &params.upper_s_files, curr_opt);
-                break;
-            default:
-                unreachable("");
-        }
+    static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
+    switch (get_file_type(curr_opt)) {
+        case FILE_TYPE_OWN:
+            if (is_compiling()) {
+                msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
+                exit(EXIT_CODE_FAIL);
+            }
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            params.compile_own = true;
+            params.input_file_path = curr_opt;
+            break;
+        case FILE_TYPE_STATIC_LIB:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.static_libs, curr_opt);
+            break;
+        case FILE_TYPE_DYNAMIC_LIB:
+            if (is_compiling()) {
+                // TODO
+                todo();
+            }
+            vec_append(&a_main, &params.dynamic_libs, curr_opt);
+            break;
+        case FILE_TYPE_C:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.c_input_files, curr_opt);
+            break;
+        case FILE_TYPE_OBJECT:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.object_files, curr_opt);
+            break;
+        case FILE_TYPE_LOWER_S:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.lower_s_files, curr_opt);
+            break;
+        case FILE_TYPE_UPPER_S:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.upper_s_files, curr_opt);
+            break;
+        default:
+            unreachable("");
     }
 }
 
@@ -299,6 +293,9 @@ static void parse_long_option(int* argc, char*** argv) {
         params.stop_after = STOP_AFTER_LOWER_S;
     } else if (strv_is_equal(curr_opt, sv("c"))) {
         params.stop_after = STOP_AFTER_OBJ;
+    } else if (strv_is_equal(curr_opt, sv("dump-dot"))) {
+        params.stop_after = STOP_AFTER_GEN_IR;
+        params.dump_dot = true;
     } else if (strv_is_equal(curr_opt, sv("run"))) {
         static_assert(
             PARAMETERS_COUNT == 18,
@@ -392,12 +389,10 @@ void parse_args(int argc, char** argv) {
     consume_arg(&argc, &argv, "internal error");
 
     while (argc > 0) {
-        if (is_short_option(argv)) {
-            parse_long_option(&argc, &argv);
-        } else if (is_long_option(argv)) {
+        if (is_short_option(argv) || is_long_option(argv)) {
             parse_long_option(&argc, &argv);
         } else {
-            parse_normal_option(&argc, &argv);
+            parse_file_option(&argc, &argv);
         }
     }
 
