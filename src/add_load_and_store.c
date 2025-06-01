@@ -2422,7 +2422,6 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
                 return;
             }
 
-
             Tast_break* brk = tast_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
                 Tast_assignment* new_assign = tast_assignment_new(

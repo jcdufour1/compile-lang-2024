@@ -64,6 +64,8 @@ typedef enum {
     DIAG_CHILD_PROCESS_FAILURE,
     DIAG_NO_INPUT_FILES,
     DIAG_RETURN_IN_DEFER,
+    DIAG_BREAK_OUT_OF_DEFER,
+    DIAG_CONTINUE_OUT_OF_DEFER,
 
     // count of cases for static asserts
     DIAG_COUNT,

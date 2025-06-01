@@ -36,6 +36,12 @@ typedef enum {
     PARENT_OF_IF,
 } PARENT_OF;
 
+typedef enum {
+    PARENT_OF_DEFER_NONE = 0,
+    PARENT_OF_DEFER_DEFER,
+    PARENT_OF_DEFER_FOR,
+} PARENT_OF_DEFER;
+
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
         case PARENT_OF_NONE:
@@ -71,6 +77,8 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
 static PARENT_OF parent_of;
 static Uast_expr* parent_of_operand;
+
+static PARENT_OF_DEFER parent_of_defer;
 
 static bool is_in_struct_base_def;
 
@@ -2332,10 +2340,38 @@ error:
     return status;
 }
 
+bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            *new_tast = tast_continue_new(cont->pos);
+            return true;
+        case PARENT_OF_DEFER_NONE:
+            *new_tast = tast_continue_new(cont->pos);
+            return true;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_CONTINUE_OUT_OF_DEFER, cont->pos, "cannot continue out of defer\n");
+            return false;
+    }
+    unreachable("");
+}
+
 bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     parent_of = PARENT_OF_BREAK;
+
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            break;
+        case PARENT_OF_DEFER_NONE:
+            break;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_BREAK_OUT_OF_DEFER, lang_break->pos, "cannot break out of defer\n");
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
 
     Tast_expr* new_child = NULL;
     if (lang_break->do_break_expr) {
@@ -2364,6 +2400,8 @@ error:
 }
 
 bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
+    PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
+    parent_of_defer = PARENT_OF_DEFER_FOR;
     bool status = true;
 
     Tast_condition* new_cond = NULL;
@@ -2377,6 +2415,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     }
 
     *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body, uast->continue_label, uast->do_cont_label);
+    parent_of_defer = old_parent_of_defer;
     return status;
 }
 
@@ -2686,6 +2725,8 @@ bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
     is_in_defer = true;
     Pos old_defer_pos = parent_defer_pos;
     parent_defer_pos = defer->pos;
+    PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
+    parent_of_defer = PARENT_OF_DEFER_DEFER;
 
     Tast_stmt* new_child = NULL;
     switch (try_set_stmt_types(&new_child, defer->child, false)) {
@@ -2704,6 +2745,7 @@ bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
 error:
     is_in_defer = old_is_in_defer;
     parent_defer_pos = old_defer_pos;
+    parent_of_defer = old_parent_of_defer;
     return status;
 }
 
@@ -2952,9 +2994,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_break_wrap(new_break);
             return STMT_OK;
         }
-        case UAST_CONTINUE:
-            *new_tast = tast_continue_wrap(tast_continue_new(uast_continue_unwrap(stmt)->pos));
+        case UAST_CONTINUE: {
+            Tast_continue* new_cont = NULL;
+            if (!try_set_continue_types(&new_cont, uast_continue_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_continue_wrap(new_cont);
             return STMT_OK;
+        }
         case UAST_BLOCK: {
             assert(uast_block_unwrap(stmt)->pos_end.line > 0);
             Tast_block* new_for = NULL;

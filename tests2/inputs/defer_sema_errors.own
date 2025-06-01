@@ -6,5 +6,30 @@ fn main() i32 {
         return 2
     }
     defer return 1
+
+    // this should not be an error (TODO: move to tests2/inputs/defer.own)
+    defer {
+        for idx i32 in 0..5 {
+            io.printf("%d\n", idx)
+            break
+        }
+    }
+
+    defer {
+        break
+    }
+
+    for idx i32 in 0..3 {
+        defer {
+            break
+        }
+    }
+
+    for idx i32 in 0..3 {
+        defer {
+            continue
+        }
+    }
+
     return 0
 }
