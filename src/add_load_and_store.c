@@ -410,7 +410,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 
     Struct_def_base base = {
         .members = members,
-        .name = util_literal_name_new_mod_path2(env.curr_mod_path)
+        .name = util_literal_name_new2()
     };
     // todo: remove untyped things here
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
@@ -626,7 +626,7 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) 
         old_var_def->pos,
         rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
         old_var_def->is_variadic,
-        util_literal_name_new_mod_path2(env.curr_mod_path),
+        util_literal_name_new2(),
         old_var_def->name
     );
 }
@@ -684,7 +684,7 @@ static Ir_function_params* do_function_def_alloca(
             (Pos) {0} /* TODO */,
             rtn_lang_type,
             false,
-            util_literal_name_new_mod_path2(env.curr_mod_path)
+            util_literal_name_new2()
         );
         Ir_variable_def* param = load_variable_def_clone(new_def);
         do_function_def_alloca_param(new_params, new_block, param);
@@ -741,7 +741,7 @@ static Name load_function_call(Ir_block* new_block, Tast_function_call* old_call
     Name def_name = {0};
     Lang_type fun_lang_type = rm_tuple_lang_type(old_call->lang_type, old_call->pos);
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
-        def_name = util_literal_name_new_mod_path2(env.curr_mod_path);
+        def_name = util_literal_name_new2();
         Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
         unwrap(sym_tbl_add(tast_variable_def_wrap(def)));
         
@@ -791,7 +791,7 @@ static Name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_
         old_call->pos,
         old_call->lang_type,
         false,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -814,7 +814,7 @@ static Tast_variable_def* load_struct_literal_internal(
         old_lit->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -866,7 +866,7 @@ static Name load_string(Tast_string* old_lit) {
 }
 
 static Name load_void(Pos pos) {
-    Ir_void* new_void = ir_void_new(pos, util_literal_name_new_mod_path2(env.curr_mod_path));
+    Ir_void* new_void = ir_void_new(pos, util_literal_name_new2());
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_void_wrap(new_void)))));
     return new_void->name;
 }
@@ -876,7 +876,7 @@ static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(enum_tag_lit)))));
     return enum_tag_lit->name;
@@ -887,7 +887,7 @@ static Name load_number(Tast_int* old_lit) {
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(number)))));
     return number->name;
@@ -898,7 +898,7 @@ static Name load_float(Tast_float* old_lit) {
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_float_wrap(number)))));
     return number->name;
@@ -908,7 +908,7 @@ static Name load_char(
     Tast_char* old_lit
 ) {
     Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
-    Ir_int* lang_char = ir_int_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new_mod_path2(env.curr_mod_path));
+    Ir_int* lang_char = ir_int_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new2());
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(lang_char)))));
     return lang_char->name;
 }
@@ -919,7 +919,7 @@ static Name load_function_lit(
     Ir_function_name* name = ir_function_name_new(
         old_lit->pos,
         old_lit->name,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_expr_wrap(ir_literal_wrap(ir_function_name_wrap(name)))));
     return name->name_self;
@@ -958,7 +958,7 @@ static Name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
         members,
-        util_literal_name_new_mod_path2(env.curr_mod_path),
+        util_literal_name_new2(),
         new_lang_type
     ));
 }
@@ -976,7 +976,7 @@ static Name load_raw_union_lit(
         union_def->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -1092,7 +1092,7 @@ static Name load_symbol(
         pos,
         ptr,
         rm_tuple_lang_type(old_sym->base.lang_type, old_sym->pos),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1121,7 +1121,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
         old_bin->pos,
         lang_type_new_u1(),
         false,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(sym_tbl_add(tast_variable_def_wrap(new_var)));
 
@@ -1208,7 +1208,7 @@ static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
         load_expr(new_block, old_bin->rhs),
         old_bin->token_type,
         old_bin->lang_type,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
 
     unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_binary_wrap(new_bin)))));
@@ -1225,7 +1225,7 @@ static Name load_deref(Ir_block* new_block, Tast_unary* old_unary) {
         old_unary->pos,
         ptr,
         old_unary->lang_type,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1268,7 +1268,7 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
                 new_child,
                 old_unary->token_type,
                 old_unary->lang_type,
-                util_literal_name_new_mod_path2(env.curr_mod_path)
+                util_literal_name_new2()
             );
             unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary)))));
 
@@ -1320,7 +1320,7 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         struct_index,
         new_callee,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_element_ptr_wrap(new_load)));
 
@@ -1334,7 +1334,7 @@ static Name load_ptr_index(Ir_block* new_block, Tast_index* old_index) {
         old_index->lang_type,
         load_expr(new_block, old_index->index),
         load_expr(new_block, old_index->callee),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_array_access_wrap(new_load)));
 
@@ -1352,7 +1352,7 @@ static Name load_member_access(
         old_access->pos,
         ptr,
         lang_type_from_get_name(ptr),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1370,7 +1370,7 @@ static Name load_index(
         old_index->pos,
         ptr,
         lang_type_from_get_name(ptr),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1395,7 +1395,7 @@ static Name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_ac
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         0,
         new_enum,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_element_ptr_wrap(new_tag)));
     vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_tag));
@@ -1408,7 +1408,7 @@ static Name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access
         old_access->pos,
         load_ptr_enum_get_tag(new_block, old_access),
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1428,7 +1428,7 @@ static Name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_acce
         tast_raw_union_def_get_lang_type(union_def),
         1,
         new_callee,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_element_ptr_wrap(new_union)));
     vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_union));
@@ -1438,7 +1438,7 @@ static Name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_acce
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         0,
         new_union->name_self,
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_element_ptr_wrap(new_item)));
     vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_item));
@@ -1453,7 +1453,7 @@ static Name load_enum_access(Ir_block* new_block, Tast_enum_access* old_access) 
         old_access->pos,
         ptr,
         lang_type_from_get_name(ptr),
-        util_literal_name_new_mod_path2(env.curr_mod_path)
+        util_literal_name_new2()
     );
     unwrap(alloca_add(ir_load_another_ir_wrap(new_load)));
     vec_append(&a_main, &new_block->children, ir_load_another_ir_wrap(new_load));
@@ -1469,7 +1469,7 @@ static Name load_tuple(Ir_block* new_block, Tast_tuple* old_tuple) {
          old_tuple->lang_type, old_tuple->pos
     ));
     Name new_lit = load_struct_literal(new_block, tast_struct_literal_new(
-        old_tuple->pos, old_tuple->members, util_literal_name_new_mod_path2(env.curr_mod_path), new_lang_type
+        old_tuple->pos, old_tuple->members, util_literal_name_new2(), new_lang_type
     ));
 
     Ir* dummy = NULL;

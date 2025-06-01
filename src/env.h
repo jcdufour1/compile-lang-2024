@@ -83,8 +83,6 @@ typedef struct Env_ {
 
     Uast_def_vec udefered_symbols_to_add; // TODO: remove
 
-    Strv curr_mod_path; // TODO: remove
-
     bool type_checking_is_in_struct_base_def;
 
     Ulang_type parent_fn_rtn_type;

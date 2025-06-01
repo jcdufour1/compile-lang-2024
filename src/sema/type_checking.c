@@ -1238,7 +1238,7 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        util_literal_name_new_mod_path2(env.curr_mod_path),
+        util_literal_name_new2(),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1300,19 +1300,19 @@ bool try_set_array_literal_types(
             lit->pos,
             gen_arg,
             false,
-            util_literal_name_new_mod_path2(env.curr_mod_path)
+            util_literal_name_new2()
         ));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new_mod_path2(env.curr_mod_path)}
+        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new2()}
     );
     sym_tbl_add(tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        util_literal_name_new_mod_path2(env.curr_mod_path),
+        util_literal_name_new2(),
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
     Ulang_type dummy = {0};
@@ -1339,7 +1339,7 @@ bool try_set_array_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
         new_lit_membs,
-        util_literal_name_new_mod_path2(env.curr_mod_path),
+        util_literal_name_new2(),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1539,7 +1539,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
             Uast_variable_def* new_def = uast_variable_def_new(
                 enum_case->pos,
                 lang_type_to_ulang_type(enum_case->tag->lang_type),
-                name_new(env.curr_mod_path, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
+                name_new((Strv) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
                 // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -1567,7 +1567,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
 }
 
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
-    Name name = serialize_ulang_type(env.curr_mod_path, ulang_type_fn_const_wrap(lang_type), true /* TODO */);
+    Name name = serialize_ulang_type((Strv) {0}, ulang_type_fn_const_wrap(lang_type), true /* TODO */);
     Uast_def* fun_decl_ = NULL;
     if (usym_tbl_lookup(&fun_decl_, name)) {
         return uast_function_decl_unwrap(fun_decl_);
@@ -1577,7 +1577,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
             pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new_mod_path2(env.curr_mod_path)),
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new2()),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
