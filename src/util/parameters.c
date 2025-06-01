@@ -52,9 +52,9 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
-static Strv consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
+static Strv consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     if (*argc < 1) {
-        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, "%s\n", msg_if_missing);
+        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, FMT"\n", strv_print(msg_if_missing));
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -68,7 +68,7 @@ static Strv consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
         return sv(curr_arg);
     }
 
-    return consume_arg(argc, argv, "stray - or -- is not permitted");
+    return consume_arg(argc, argv, sv("stray - or -- is not permitted"));
 }
 
 typedef struct {
@@ -193,7 +193,7 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 }
 
 static void parse_file_option(int* argc, char*** argv) {
-    Strv curr_opt = consume_arg(argc, argv, "arg expected");
+    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
         PARAMETERS_COUNT == 18,
@@ -266,12 +266,160 @@ typedef struct {
     bool arg_expected;
 } Long_option_pair;
 
+static void long_option_emit_llvm(Strv curr_opt) {
+    (void) curr_opt;
+    params.emit_llvm = true;
+}
+
+static void long_option_l(Strv curr_opt) {
+    vec_append(&a_main, &params.l_flags, curr_opt);
+}
+
+static void long_option_backend(Strv curr_opt) {
+    Strv backend = curr_opt;
+    if (!strv_try_consume(&backend, '=') || backend.count < 1) {
+        log(LOG_FATAL, "expected =<backend> after `backend`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (strv_is_equal(backend, sv("c"))) {
+        set_backend(BACKEND_C);
+    } else if (strv_is_equal(backend, sv("llvm"))) {
+        set_backend(BACKEND_LLVM);
+    } else {
+        log(LOG_FATAL, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
+        exit(EXIT_CODE_FAIL);
+    }
+}
+
+static void long_option_all_errors_fetal(Strv curr_opt) {
+    (void) curr_opt;
+    params.all_errors_fatal = true;
+}
+
+static void long_option_upper_s(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_LOWER_S;
+}
+
+static void long_option_upper_c(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_OBJ;
+}
+
+static void long_option_dump_dot(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_GEN_IR;
+    params.dump_dot = true;
+}
+
+static void long_option_run(Strv curr_opt) {
+    (void) curr_opt;
+    static_assert(
+        PARAMETERS_COUNT == 18,
+        "exhausive handling of params for if statement below "
+        "(not all parameters are explicitly handled)"
+    );
+    // TODO: make enum for dump_lower_s, compile, etc.
+    if (params.stop_after == STOP_AFTER_NONE) {
+        log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!is_compiling()) {
+        log(
+            LOG_FATAL,
+            "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+    params.stop_after = STOP_AFTER_RUN;
+    // TODO: args after `--run` should be passed to the program being compiled and run
+}
+
+static void long_option_lower_o(Strv curr_opt) {
+    params.output_file_path = curr_opt;
+}
+
+static void long_option_upper_o0(Strv curr_opt) {
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O0;
+}
+
+static void long_option_upper_o2(Strv curr_opt) {
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O2;
+}
+
+static void long_option_error(Strv curr_opt) {
+    Strv error = curr_opt;
+    if (!strv_try_consume(&error, '=') || error.count < 1) {
+        log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    DIAG_TYPE type = {0};
+    size_t idx = 0;
+    if (!expect_fail_type_from_strv(&idx, &type, error)) {
+        msg(
+            DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
+            "invalid fail type `"FMT"`\n", strv_print(error)
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+    expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
+    params.error_opts_changed = true;
+}
+
+static void long_option_log_level(Strv curr_opt) {
+    Strv log_level = curr_opt;
+    if (!strv_try_consume(&log_level, '=')) {
+        log(LOG_FATAL, "expected =<log level> after `log-level`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (strv_is_equal(log_level, sv("FETAL"))) {
+        params_log_level = LOG_FATAL;
+    } else if (strv_is_equal(log_level, sv("ERROR"))) {
+        params_log_level = LOG_ERROR;
+    } else if (strv_is_equal(log_level, sv("WARNING"))) {
+        params_log_level = LOG_WARNING;
+    } else if (strv_is_equal(log_level, sv("NOTE"))) {
+        params_log_level = LOG_NOTE;
+    } else if (strv_is_equal(log_level, sv("VERBOSE"))) {
+        params_log_level = LOG_VERBOSE;
+    } else if (strv_is_equal(log_level, sv("DEBUG"))) {
+        params_log_level = LOG_DEBUG;
+    } else if (strv_is_equal(log_level, sv("TRACE"))) {
+        params_log_level = LOG_TRACE;
+    } else {
+        log(LOG_FATAL, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
+        exit(EXIT_CODE_FAIL);
+    }
+}
+
+static_assert(
+    PARAMETERS_COUNT == 18,
+    "exhausive handling of params (not all parameters are explicitly handled)"
+);
 Long_option_pair long_options[] = {
+    {"emit-llvm", long_option_emit_llvm, false},
+    {"l", long_option_l, true},
+    {"backend", long_option_backend, true},
+    {"all-errors-fetal", long_option_all_errors_fetal, false},
+    {"S", long_option_upper_s, false},
+    {"c", long_option_upper_c, false},
+    {"dump-dot", long_option_dump_dot, false},
+    {"run", long_option_run, false},
+    {"o", long_option_lower_o, true},
+    {"O0", long_option_upper_o0, false},
+    {"O2", long_option_upper_o2, false},
+    {"error", long_option_error, true},
+    {"set-log-level", long_option_log_level, true},
 };
 
 // TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
-    Strv curr_opt = consume_arg(argc, argv, "arg expected");
+    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
         PARAMETERS_COUNT == 18,
@@ -280,121 +428,24 @@ static void parse_long_option(int* argc, char*** argv) {
 
     for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
         Long_option_pair curr = long_options[idx];
-        if (strv_starts_with(sv(curr.text), curr_opt)) {
+        if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
             if (curr.arg_expected && curr_opt.count < 1) {
-                curr.action(consume_arg(argc, argv, "argument expected"));
+                // TODO: try to avoid building string everytime
+                String buf = {0};
+                string_extend_strv(&a_print, &buf, sv("argument expected after `"));
+                string_extend_strv(&a_print, &buf, sv(curr.text));
+                string_extend_strv(&a_print, &buf, sv("`"));
+                curr.action(consume_arg(argc, argv, string_to_strv(buf)));
             } else {
                 curr.action(curr_opt);
             }
+            return;
         }
     }
 
-    {"emit-llvm", long_option_emit_llvm, false}
-    if (strv_is_equal(curr_opt, sv("emit-llvm"))) {
-        params.emit_llvm = true;
-    } else if (strv_is_equal(curr_opt, sv("l"))) {
-        vec_append(&a_main, &params.l_flags, consume_arg(argc, argv, "library name was expected after `-l`"));
-    } else if (strv_starts_with(curr_opt, sv("backend"))) {
-        Strv backend = curr_opt;
-        strv_consume_count(&backend, sv("backend").count);
-        if (!strv_try_consume(&backend, '=') || backend.count < 1) {
-            log(LOG_FATAL, "expected =<backend> after `backend`");
-            exit(EXIT_CODE_FAIL);
-        }
-
-        if (strv_is_equal(backend, sv("c"))) {
-            set_backend(BACKEND_C);
-        } else if (strv_is_equal(backend, sv("llvm"))) {
-            set_backend(BACKEND_LLVM);
-        } else {
-            log(LOG_FATAL, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
-            exit(EXIT_CODE_FAIL);
-        }
-    } else if (strv_is_equal(curr_opt, sv("all-errors-fatal"))) {
-        params.all_errors_fatal = true;
-    } else if (strv_is_equal(curr_opt, sv("S"))) {
-        params.stop_after = STOP_AFTER_LOWER_S;
-    } else if (strv_is_equal(curr_opt, sv("c"))) {
-        params.stop_after = STOP_AFTER_OBJ;
-    } else if (strv_is_equal(curr_opt, sv("dump-dot"))) {
-        params.stop_after = STOP_AFTER_GEN_IR;
-        params.dump_dot = true;
-    } else if (strv_is_equal(curr_opt, sv("run"))) {
-        static_assert(
-            PARAMETERS_COUNT == 18,
-            "exhausive handling of params for if statement below "
-            "(not all parameters are explicitly handled)"
-        );
-        // TODO: make enum for dump_lower_s, compile, etc.
-        if (params.stop_after == STOP_AFTER_NONE) {
-            log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
-            exit(EXIT_CODE_FAIL);
-        }
-        if (!is_compiling()) {
-            log(
-                LOG_FATAL,
-                "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
-            );
-            exit(EXIT_CODE_FAIL);
-        }
-        params.stop_after = STOP_AFTER_RUN;
-        // TODO: args after `--run` should be passed to the program being compiled and run
-    } else if (strv_is_equal(curr_opt, sv("o"))) {
-        params.output_file_path = consume_arg(argc, argv, "output file path was expected after `-o`");
-    } else if (strv_is_equal(curr_opt, sv("O0"))) {
-        params.opt_level = OPT_LEVEL_O0;
-    } else if (strv_is_equal(curr_opt, sv("O2"))) {
-        params.opt_level = OPT_LEVEL_O2;
-    } else if (strv_starts_with(curr_opt, sv("error"))) {
-        Strv error = curr_opt;
-        strv_consume_count(&error, sv("error").count);
-        if (!strv_try_consume(&error, '=') || error.count < 1) {
-            log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
-            exit(EXIT_CODE_FAIL);
-        }
-
-        DIAG_TYPE type = {0};
-        size_t idx = 0;
-        if (!expect_fail_type_from_strv(&idx, &type, error)) {
-            msg(
-                DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
-                "invalid fail type `"FMT"`\n", strv_print(error)
-            );
-            exit(EXIT_CODE_FAIL);
-        }
-        expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
-        params.error_opts_changed = true;
-    } else if (strv_starts_with(curr_opt, sv("log-level"))) {
-        Strv log_level = curr_opt;
-        strv_consume_count(&log_level, sv("log-level").count);
-        if (!strv_try_consume(&log_level, '=')) {
-            log(LOG_FATAL, "expected =<log level> after `log-level`");
-            exit(EXIT_CODE_FAIL);
-        }
-
-        if (strv_is_equal(log_level, sv("FETAL"))) {
-            params_log_level = LOG_FATAL;
-        } else if (strv_is_equal(log_level, sv("ERROR"))) {
-            params_log_level = LOG_ERROR;
-        } else if (strv_is_equal(log_level, sv("WARNING"))) {
-            params_log_level = LOG_WARNING;
-        } else if (strv_is_equal(log_level, sv("NOTE"))) {
-            params_log_level = LOG_NOTE;
-        } else if (strv_is_equal(log_level, sv("VERBOSE"))) {
-            params_log_level = LOG_VERBOSE;
-        } else if (strv_is_equal(log_level, sv("DEBUG"))) {
-            params_log_level = LOG_DEBUG;
-        } else if (strv_is_equal(log_level, sv("TRACE"))) {
-            params_log_level = LOG_TRACE;
-        } else {
-            log(LOG_FATAL, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
-            exit(EXIT_CODE_FAIL);
-        }
-    } else {
-        log(LOG_FATAL, "invalid option: "FMT"\n", strv_print(curr_opt));
-        exit(EXIT_CODE_FAIL);
-    }
+    log(LOG_FATAL, "invalid option: "FMT"\n", strv_print(curr_opt));
+    exit(EXIT_CODE_FAIL);
 }
 
 static void set_params_to_defaults(void) {
@@ -410,7 +461,7 @@ void parse_args(int argc, char** argv) {
     expect_fail_str_to_curr_log_level_init();
 
     // consume compiler executable name
-    consume_arg(&argc, &argv, "internal error");
+    consume_arg(&argc, &argv, sv("internal error"));
 
     while (argc > 0) {
         if (is_short_option(argv) || is_long_option(argv)) {
