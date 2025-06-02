@@ -457,8 +457,6 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static void set_params_to_defaults(void) {
-    params.output_file_path = sv("a.out");
-
     set_backend(BACKEND_C);
 }
 
@@ -508,6 +506,38 @@ void parse_args(int argc, char** argv) {
         print_usage();
         msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
         exit(EXIT_CODE_FAIL);
+    }
+
+    // set default output file path
+    if (params.output_file_path.count < 1) {
+        static_assert(
+            STOP_AFTER_COUNT == 7,
+            "exhausive handling of stop after states (not all states are explicitly handled)"
+        );
+        switch (params.stop_after) {
+            case STOP_AFTER_NONE:
+                unreachable("");
+            case STOP_AFTER_GEN_IR:
+                todo();
+            case STOP_AFTER_GEN_BACKEND_IR:
+                params.output_file_path = sv("test.c");
+                break;
+            case STOP_AFTER_LOWER_S:
+                params.output_file_path = sv("test.s");
+                break;
+            case STOP_AFTER_OBJ:
+                params.output_file_path = sv("test.o");
+                break;
+            case STOP_AFTER_BIN:
+                // fallthrough
+            case STOP_AFTER_RUN:
+                params.output_file_path = sv("a.out");
+                break;
+            case STOP_AFTER_COUNT:
+                unreachable("");
+            default:
+                unreachable("");
+        }
     }
 }
 
