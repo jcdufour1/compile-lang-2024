@@ -1,0 +1,6 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
