@@ -12,8 +12,8 @@ Strv stop_after_print_internal(STOP_AFTER stop_after) {
             return sv("none");
         case STOP_AFTER_GEN_IR:
             return sv("gen_ir");
-        case STOP_AFTER_EMIT_BACKEND_IR:
-            return sv("emit_backend_ir");
+        case STOP_AFTER_GEN_BACKEND_IR:
+            return sv("gen_backend_ir");
         case STOP_AFTER_LOWER_S:
             return sv("lower_s");
         case STOP_AFTER_OBJ:
@@ -304,6 +304,11 @@ static void long_option_all_errors_fetal(Strv curr_opt) {
     params.all_errors_fatal = true;
 }
 
+static void long_option_dump_backend_ir(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_GEN_BACKEND_IR;
+}
+
 static void long_option_upper_s(Strv curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_LOWER_S;
@@ -413,6 +418,7 @@ Long_option_pair long_options[] = {
     {"l", "library name to link", long_option_l, true},
     {"backend", "c or llvm", long_option_backend, true},
     {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, false},
+    {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, false},
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
     {"dump-dot", "stop compiling after IR has been generated, and dump .dot file", long_option_dump_dot, false},

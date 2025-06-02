@@ -16,8 +16,6 @@
 #include <subprocess.h>
 #include <file.h>
 
-static const char* TEST_OUTPUT = "test.c";
-
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {
     String struct_defs;
@@ -720,6 +718,11 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 }
 
 void emit_c_from_tree(const Ir_block* root) {
+    Strv test_output = sv("test.c");
+    if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
+        test_output = params.output_file_path;
+    }
+
     if (params.compile_own) {
         String header = {0};
         Emit_c_strs strs = {0};
@@ -739,7 +742,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
         emit_c_block(&strs, root);
 
-        FILE* file = fopen(TEST_OUTPUT, "w");
+        FILE* file = fopen(strv_to_cstr(&a_main, test_output), "w");
         if (!file) {
             msg(
                 DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT" %s\n",
@@ -756,6 +759,10 @@ void emit_c_from_tree(const Ir_block* root) {
 
         msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "FMT" built\n", strv_print(params.input_file_path));
         fclose(file);
+    }
+
+    if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
+        return;
     }
 
     {
@@ -811,7 +818,7 @@ void emit_c_from_tree(const Ir_block* root) {
 
         // .own file, compiled to .c
         if (params.compile_own) {
-            vec_append(&a_main, &cmd, sv(TEST_OUTPUT));
+            vec_append(&a_main, &cmd, test_output);
         }
 
         // non-.own files to build
