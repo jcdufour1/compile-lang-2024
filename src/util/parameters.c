@@ -2,6 +2,10 @@
 #include <parser_utils.h>
 #include <file.h>
 
+static Strv compiler_exe_name;
+
+static void print_usage(void);
+
 Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
         case STOP_AFTER_NONE:
@@ -83,8 +87,9 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 65, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 66, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
+    {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
     {"missing-command-line-arg", DIAG_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true},
@@ -262,9 +267,16 @@ typedef void(*Long_option_action)(Strv curr_opt);
 
 typedef struct {
     const char* text;
+    const char* description;
     Long_option_action action;
     bool arg_expected;
 } Long_option_pair;
+
+static void long_option_help(Strv curr_opt) {
+    (void) curr_opt;
+    print_usage();
+    exit(EXIT_CODE_SUCCESS);
+}
 
 static void long_option_l(Strv curr_opt) {
     vec_append(&a_main, &params.l_flags, curr_opt);
@@ -397,18 +409,19 @@ static_assert(
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
-    {"l", long_option_l, true},
-    {"backend", long_option_backend, true},
-    {"all-errors-fetal", long_option_all_errors_fetal, false},
-    {"S", long_option_upper_s, false},
-    {"c", long_option_upper_c, false},
-    {"dump-dot", long_option_dump_dot, false},
-    {"run", long_option_run, false},
-    {"o", long_option_lower_o, true},
-    {"O0", long_option_upper_o0, false},
-    {"O2", long_option_upper_o2, false},
-    {"error", long_option_error, true},
-    {"set-log-level", long_option_log_level, true},
+    {"help", "display usage", long_option_help, false},
+    {"l", "library name to link", long_option_l, true},
+    {"backend", "c or llvm", long_option_backend, true},
+    {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, false},
+    {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
+    {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
+    {"dump-dot", "stop compiling after IR has been generated, and dump .dot file", long_option_dump_dot, false},
+    {"run", "compile and run the program (TODO: remaining args will be passed to the program)", long_option_run, false},
+    {"o", "output file path", long_option_lower_o, true},
+    {"O0", "disable most optimizations", long_option_upper_o0, false},
+    {"O2", "enable optimizations", long_option_upper_o2, false},
+    {"error", "TODO", long_option_error, true},
+    {"set-log-level", "TODO", long_option_log_level, true},
 };
 
 // TODO: allow `-ooutput` as well as `-o output`
@@ -443,12 +456,27 @@ static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
 }
 
+static void print_usage(void) {
+    log(LOG_DEBUG, "%d\n", params_log_level);
+    msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
+    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options]\n", strv_print(compiler_exe_name));
+    msg(DIAG_INFO, POS_BUILTIN, "\n");
+    msg(DIAG_INFO, POS_BUILTIN, "options:\n");
+    // TODO: show `-o <file>` instead of `-o`, etc.
+    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
+        Long_option_pair curr = long_options[idx];
+        msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
+        msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
+        msg(DIAG_INFO, POS_BUILTIN, "\n");
+    }
+}
+
 void parse_args(int argc, char** argv) {
     set_params_to_defaults();
     expect_fail_str_to_curr_log_level_init();
 
     // consume compiler executable name
-    consume_arg(&argc, &argv, sv("internal error"));
+    compiler_exe_name = consume_arg(&argc, &argv, sv("internal error"));
 
     while (argc > 0) {
         if (is_short_option(argv) || is_long_option(argv)) {
@@ -470,6 +498,8 @@ void parse_args(int argc, char** argv) {
         params.lower_s_files.info.count == 0 &&
         params.upper_s_files.info.count == 0
     ) {
+        log(LOG_DEBUG, "%d\n", params_log_level);
+        print_usage();
         msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
         exit(EXIT_CODE_FAIL);
     }

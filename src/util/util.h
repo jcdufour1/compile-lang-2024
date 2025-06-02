@@ -11,7 +11,7 @@
 #include <diag_type.h>
 
 typedef enum {
-    LOG_NEVER   = 0,
+    LOG_NEVER = 0,
     LOG_TRACE,
     LOG_DEBUG,
     LOG_VERBOSE,

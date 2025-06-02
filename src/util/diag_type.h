@@ -2,6 +2,7 @@
 #define DIAG_TYPE_H
 
 typedef enum {
+    DIAG_INFO,
     DIAG_NOTE,
     DIAG_FILE_BUILT,
     DIAG_MISSING_COMMAND_LINE_ARG,
