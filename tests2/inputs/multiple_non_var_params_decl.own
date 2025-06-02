@@ -3,9 +3,9 @@ type io import = std.io
 
 
 fn main() i32 {
-    let NULL_ANY any* = unsafe_cast<any*>0
+    let NULL_ANY opaque* = unsafe_cast<opaque*>0
 
-    let file any* = io.fopen("tests2/inputs/multiple_non_var_params_decl.own", "r")
+    let file opaque* = io.fopen("tests2/inputs/multiple_non_var_params_decl.own", "r")
     if NULL_ANY == file {
         io.printf("error: could not open file\n")
         return 1

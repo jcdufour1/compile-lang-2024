@@ -4,8 +4,27 @@
 #include "util.h"
 #include "newstring.h"
 
-void write_file(const char* file_path, Str_view text_to_write);
+typedef enum {
+    FILE_TYPE_OWN,
+    FILE_TYPE_STATIC_LIB,
+    FILE_TYPE_DYNAMIC_LIB,
+    FILE_TYPE_C,
+    FILE_TYPE_OBJECT,
+    FILE_TYPE_LOWER_S,
+    FILE_TYPE_UPPER_S,
 
-bool read_file(Str_view* result, Str_view input_file_name);
+    // count for static asserts
+    FILE_TYPE_COUNT,
+} FILE_TYPE;
+
+void write_file(const char* file_path, Strv text_to_write);
+
+bool read_file(Strv* result, Strv input_file_name);
+
+bool get_file_extension(Strv* extension, Strv file_path);
+
+FILE_TYPE get_file_type(Strv file_path);
+
+void file_extend_strv(FILE* file, Strv strv);
 
 #endif // FILE_H

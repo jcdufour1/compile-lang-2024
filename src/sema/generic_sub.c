@@ -123,7 +123,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_ENUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
-            log(LOG_DEBUG, TAST_FMT, uast_def_print(def));
             todo();
         case UAST_FUNCTION_DECL:
             todo();
@@ -137,12 +136,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_continue(Uast_continue* cont) {
     (void) cont;
-}
-
-void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
-    (void) label;
-    (void) gen_param;
-    (void) gen_arg;
 }
 
 void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
@@ -170,9 +163,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
-        case UAST_LABEL:
-            generic_sub_label(uast_label_unwrap(stmt), gen_param, gen_arg);
-            return;
+        case UAST_DEFER:
+            todo();
     }
     unreachable("");
 }

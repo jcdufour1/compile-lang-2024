@@ -1,12 +1,12 @@
 
-#include <llvm.h>
+#include <ir.h>
 #include <newstring.h>
 #include <do_passes.h>
 #include <symbol_table.h>
 #include <parameters.h>
 #include <file.h>
 #include <parser_utils.h>
-#include <llvm_utils.h>
+#include <ir_utils.h>
 #include <errno.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
@@ -14,35 +14,36 @@
 #include <lang_type_get_pos.h>
 #include <symbol_iter.h>
 #include <common.h>
+#include <do_passes.h>
 
-static void emit_block(String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
+static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* fun_block);
 
-static void emit_sometimes(String* struct_defs, String* output, String* literals, const Llvm* llvm);
+static void emit_sometimes(String* struct_defs, String* output, String* literals, const Ir* ir);
 
-static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* lit);
+static void emit_symbol_normal(String* literals, Name key, const Ir_literal* lit);
 
-static bool llvm_is_literal(const Llvm* llvm) {
-    if (llvm->type != LLVM_EXPR) {
+static bool ir_is_literal(const Ir* ir) {
+    if (ir->type != IR_EXPR) {
         return false;
     }
-    return llvm_expr_const_unwrap(llvm)->type == LLVM_LITERAL;
+    return ir_expr_const_unwrap(ir)->type == IR_LITERAL;
 }
 
-static void extend_literal(String* output, const Llvm_literal* literal) {
+static void extend_literal(String* output, const Ir_literal* literal) {
     switch (literal->type) {
-        case LLVM_STRING:
-            string_extend_strv(&a_main, output, llvm_string_const_unwrap(literal)->data);
+        case IR_STRING:
+            string_extend_strv(&a_main, output, ir_string_const_unwrap(literal)->data);
             return;
-        case LLVM_INT:
-            string_extend_int64_t(&a_main, output, llvm_int_const_unwrap(literal)->data);
+        case IR_INT:
+            string_extend_int64_t(&a_main, output, ir_int_const_unwrap(literal)->data);
             return;
-        case LLVM_FLOAT:
-            string_extend_double(&a_main, output, llvm_int_const_unwrap(literal)->data);
+        case IR_FLOAT:
+            string_extend_double(&a_main, output, ir_int_const_unwrap(literal)->data);
             return;
-        case LLVM_VOID:
+        case IR_VOID:
             return;
-        case LLVM_FUNCTION_NAME:
-            llvm_extend_name(output, llvm_function_name_const_unwrap(literal)->fun_name);
+        case IR_FUNCTION_NAME:
+            ir_extend_name(output, ir_function_name_const_unwrap(literal)->fun_name);
             return;
     }
     unreachable("");
@@ -61,11 +62,11 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             unreachable("");
         case LANG_TYPE_STRUCT:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_RAW_UNION:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
@@ -80,89 +81,88 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             return;
         case LANG_TYPE_ENUM:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
+            ir_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
             return;
     }
     unreachable("");
 }
 
-static bool llvm_is_variadic(const Llvm* llvm) {
-    if (llvm->type == LLVM_EXPR) {
-        switch (llvm_expr_const_unwrap(llvm)->type) {
-            case LLVM_LITERAL:
+static bool ir_is_variadic(const Ir* ir) {
+    if (ir->type == IR_EXPR) {
+        switch (ir_expr_const_unwrap(ir)->type) {
+            case IR_LITERAL:
                 return false;
             default:
-                unreachable(LLVM_FMT, llvm_print(llvm));
+                unreachable(FMT, ir_print(ir));
         }
     } else {
-        const Llvm_def* def = llvm_def_const_unwrap(llvm);
+        const Ir_def* def = ir_def_const_unwrap(ir);
         switch (def->type) {
-            case LLVM_VARIABLE_DEF:
-                return llvm_variable_def_const_unwrap(llvm_def_const_unwrap(llvm))->is_variadic;
+            case IR_VARIABLE_DEF:
+                return ir_variable_def_const_unwrap(ir_def_const_unwrap(ir))->is_variadic;
             default:
-                unreachable(LLVM_FMT, llvm_print(llvm));
+                unreachable(FMT, ir_print(ir));
         }
     }
 }
 
-static void llvm_extend_type_decl_str(String* output, const Llvm* var_def_or_lit, bool noundef) {
-    if (llvm_is_variadic(var_def_or_lit)) {
+static void ir_extend_type_decl_str(String* output, const Ir* var_def_or_lit, bool noundef) {
+    if (ir_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(output, llvm_get_lang_type(var_def_or_lit));
+    extend_type_call_str(output, ir_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
 }
 
-static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
-    if (literal->type == LLVM_FUNCTION_NAME) {
+static void extend_literal_decl_prefix(String* output, String* literals, const Ir_literal* literal) {
+    if (literal->type == IR_FUNCTION_NAME) {
         string_extend_cstr(&a_main, output, " @");
-        llvm_extend_name(output, llvm_function_name_const_unwrap(literal)->fun_name);
+        ir_extend_name(output, ir_function_name_const_unwrap(literal)->fun_name);
     } else if (
-        llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE &&
-        lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR &&
-        lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) > 0
+        ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE &&
+        lang_type_primitive_const_unwrap(ir_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR &&
+        lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) > 0
     ) {
-        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
+        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        llvm_extend_name(output, llvm_literal_get_name(literal));
-    } else if (lang_type_atom_is_signed(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)))) {
-        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
-        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
+        ir_extend_name(output, ir_literal_get_name(literal));
+    } else if (lang_type_atom_is_signed(lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_literal_get_lang_type(literal)))) {
+        assert(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
-    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)))) {
-        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
-        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
+    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_literal_get_lang_type(literal)))) {
+        assert(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)));
-        unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(llvm_literal_const_wrap(literal))));
+        unreachable(FMT"\n", ir_print(ir_expr_const_wrap(ir_literal_const_wrap(literal))));
     }
 
-    if (literal->type == LLVM_STRING) {
-        emit_symbol_normal(literals, llvm_literal_get_name(literal), literal);
+    if (literal->type == IR_STRING) {
+        emit_symbol_normal(literals, ir_literal_get_name(literal), literal);
     }
 }
 
-static void extend_literal_decl(String* output, String* literals, const Llvm_literal* literal, bool noundef) {
-    llvm_extend_type_decl_str(output, llvm_expr_const_wrap(llvm_literal_const_wrap(literal)), noundef);
+static void extend_literal_decl(String* output, String* literals, const Ir_literal* literal, bool noundef) {
+    ir_extend_type_decl_str(output, ir_expr_const_wrap(ir_literal_const_wrap(literal)), noundef);
     extend_literal_decl_prefix(output, literals, literal);
 }
 
-static void emit_function_params(String* output, const Llvm_function_params* fun_params) {
+static void emit_function_params(String* output, const Ir_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-        const Llvm_variable_def* curr_param = vec_at(&fun_params->params, idx);
+        const Ir_variable_def* curr_param = vec_at(&fun_params->params, idx);
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -179,67 +179,67 @@ static void emit_function_params(String* output, const Llvm_function_params* fun
                 string_extend_cstr(&a_main, output, ")");
             }
         } else {
-            llvm_extend_type_decl_str(output, llvm_def_const_wrap(llvm_variable_def_const_wrap(curr_param)), true);
+            ir_extend_type_decl_str(output, ir_def_const_wrap(ir_variable_def_const_wrap(curr_param)), true);
         }
 
         if (curr_param->is_variadic) {
             return;
         }
         string_extend_cstr(&a_main, output, " %");
-        llvm_extend_name(output, curr_param->name_self);
+        ir_extend_name(output, curr_param->name_self);
     }
 }
 
-static void emit_function_call_arg_load_another_llvm(
+static void emit_function_call_arg_load_another_ir(
      
     String* output,
     String* literals,
-    const Llvm_load_another_llvm* load
+    const Ir_load_another_ir* load
 ) {
-    Llvm* src = NULL;
+    Ir* src = NULL;
     unwrap(alloca_lookup(&src, load->name));
 
-    if (llvm_is_literal(src)) {
-        extend_literal_decl(output, literals, llvm_literal_const_unwrap(llvm_expr_const_unwrap(src)), true);
+    if (ir_is_literal(src)) {
+        extend_literal_decl(output, literals, ir_literal_const_unwrap(ir_expr_const_unwrap(src)), true);
     } else {
         if (is_struct_like(load->lang_type.type)) {
             string_extend_cstr(&a_main, output, "ptr noundef byval(");
             extend_type_call_str(output, load->lang_type);
             string_extend_cstr(&a_main, output, ")");
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, load->llvm_src);
+            ir_extend_name(output, load->ir_src);
         } else {
             extend_type_call_str(output, load->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, load->name);
+            ir_extend_name(output, load->name);
         }
     }
 }
 
-static void emit_function_arg_expr(String* output, String* literals, const Llvm_expr* argument) {
+static void emit_function_arg_expr(String* output, String* literals, const Ir_expr* argument) {
     switch (argument->type) {
-        case LLVM_LITERAL:
-            extend_literal_decl(output, literals, llvm_literal_const_unwrap(argument), true);
+        case IR_LITERAL:
+            extend_literal_decl(output, literals, ir_literal_const_unwrap(argument), true);
             break;
-        case LLVM_FUNCTION_CALL:
-            extend_type_call_str(output, llvm_expr_get_lang_type(argument));
+        case IR_FUNCTION_CALL:
+            extend_type_call_str(output, ir_expr_get_lang_type(argument));
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_expr_get_name(argument));
+            ir_extend_name(output, ir_expr_get_name(argument));
             break;
-        case LLVM_OPERATOR:
-            extend_type_call_str(output, llvm_expr_get_lang_type(argument));
+        case IR_OPERATOR:
+            extend_type_call_str(output, ir_expr_get_lang_type(argument));
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_expr_get_name(argument));
+            ir_extend_name(output, ir_expr_get_name(argument));
             break;
         default:
             unreachable("");
     }
 }
 
-static void emit_function_call_arguments(String* output, String* literals, const Llvm_function_call* fun_call) {
+static void emit_function_call_arguments(String* output, String* literals, const Ir_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Name arg_name = vec_at(&fun_call->args, idx);
-        Llvm* argument = NULL;
+        Ir* argument = NULL;
         unwrap(alloca_lookup(&argument, arg_name));
 
         if (idx > 0) {
@@ -247,47 +247,47 @@ static void emit_function_call_arguments(String* output, String* literals, const
         }
 
         switch (argument->type) {
-            case LLVM_EXPR:
-                emit_function_arg_expr(output, literals, llvm_expr_const_unwrap(argument));
+            case IR_EXPR:
+                emit_function_arg_expr(output, literals, ir_expr_const_unwrap(argument));
                 break;
-            case LLVM_LOAD_ANOTHER_LLVM:
-                emit_function_call_arg_load_another_llvm(output, literals, llvm_load_another_llvm_const_unwrap(argument));
+            case IR_LOAD_ANOTHER_IR:
+                emit_function_call_arg_load_another_ir(output, literals, ir_load_another_ir_const_unwrap(argument));
                 break;
-            case LLVM_ALLOCA:
+            case IR_ALLOCA:
                 string_extend_cstr(&a_main, output, "ptr %");
-                llvm_extend_name(output, llvm_tast_get_name(argument));
+                ir_extend_name(output, ir_tast_get_name(argument));
                 break;
             default:
-                unreachable(TAST_FMT"\n", llvm_print(argument));
+                unreachable(FMT"\n", ir_print(argument));
         }
     }
 }
 
-static void emit_function_call(String* output, String* literals, const Llvm_function_call* fun_call) {
-    //assert(fun_call->llvm_id == 0);
+static void emit_function_call(String* output, String* literals, const Ir_function_call* fun_call) {
+    //assert(fun_call->ir_id == 0);
 
     // start of actual function call
     string_extend_cstr(&a_main, output, "    ");
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
         string_extend_cstr(&a_main, output, "%");
-        llvm_extend_name(output, fun_call->name_self);
+        ir_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
+        assert(!strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, sv("void")));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
-    Llvm* callee = NULL;
+    Ir* callee = NULL;
     unwrap(alloca_lookup(&callee, fun_call->callee));
 
     switch (callee->type) {
-        case LLVM_EXPR:
+        case IR_EXPR:
             string_extend_cstr(&a_main, output, " @");
-            llvm_extend_name(output, llvm_function_name_unwrap(llvm_literal_unwrap(llvm_expr_unwrap(((callee)))))->fun_name);
+            ir_extend_name(output, ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(((callee)))))->fun_name);
             break;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_LOAD_ANOTHER_IR:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_load_another_llvm_const_unwrap(callee)->name);
+            ir_extend_name(output, ir_load_another_ir_const_unwrap(callee)->name);
             break;
         default:
             unreachable("");
@@ -302,16 +302,16 @@ static void emit_function_call(String* output, String* literals, const Llvm_func
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_alloca(String* output, const Llvm_alloca* alloca) {
+static void emit_alloca(String* output, const Ir_alloca* alloca) {
     string_extend_cstr(&a_main, output, "    %");
-    llvm_extend_name(output, alloca->name);
+    ir_extend_name(output, alloca->name);
     string_extend_cstr(&a_main, output, " = alloca ");
     extend_type_call_str(output, alloca->lang_type);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_unary_type(String* output, const Llvm_unary* unary) {
+static void emit_unary_type(String* output, const Ir_unary* unary) {
     switch (unary->token_type) {
         case UNARY_UNSAFE_CAST:
             if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_get_name(unary->child))) {
@@ -341,16 +341,16 @@ static void emit_unary_type(String* output, const Llvm_unary* unary) {
                 extend_type_call_str(output, lang_type_from_get_name(unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
-                log(LOG_DEBUG, TAST_FMT, llvm_unary_print(unary));
+                log(LOG_DEBUG, FMT, ir_unary_print(unary));
                 todo();
             }
             break;
         default:
-            unreachable(LLVM_FMT"\n", llvm_unary_print(unary));
+            unreachable(FMT"\n", ir_unary_print(unary));
     }
 }
 
-static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
+static void emit_binary_type_signed(String* output, const Ir_binary* binary) {
     switch (binary->token_type) {
         case BINARY_SINGLE_EQUAL:
             unreachable("= should not still be a binary expr at this point");
@@ -409,7 +409,7 @@ static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
     unreachable("");
 }
 
-static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary) {
+static void emit_binary_type_unsigned(String* output, const Ir_binary* binary) {
     switch (binary->token_type) {
         case BINARY_SINGLE_EQUAL:
             unreachable("= should not still be a binary expr at this point");
@@ -470,7 +470,7 @@ static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary)
     unreachable("");
 }
 
-static void emit_binary_type(String* output, const Llvm_binary* binary) {
+static void emit_binary_type(String* output, const Ir_binary* binary) {
     if (lang_type_is_signed(lang_type_from_get_name(binary->lhs))) {
         emit_binary_type_signed(output, binary);
     } else {
@@ -481,7 +481,7 @@ static void emit_binary_type(String* output, const Llvm_binary* binary) {
     string_extend_cstr(&a_main, output, " ");
 }
 
-static void emit_unary_suffix(String* output, const Llvm_unary* unary) {
+static void emit_unary_suffix(String* output, const Ir_unary* unary) {
     switch (unary->token_type) {
         case UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, output, " to ");
@@ -498,58 +498,58 @@ static void emit_unary_suffix(String* output, const Llvm_unary* unary) {
     unreachable("");
 }
 
-static void emit_operator_operand_expr(String* output, const Llvm_expr* operand) {
+static void emit_operator_operand_expr(String* output, const Ir_expr* operand) {
     switch (operand->type) {
-        case LLVM_LITERAL:
-            extend_literal(output, llvm_literal_const_unwrap(operand));
+        case IR_LITERAL:
+            extend_literal(output, ir_literal_const_unwrap(operand));
             break;
-        case LLVM_FUNCTION_CALL:
+        case IR_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_expr_get_name(operand));
+            ir_extend_name(output, ir_expr_get_name(operand));
             break;
-        case LLVM_OPERATOR:
+        case IR_OPERATOR:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_expr_get_name(operand));
+            ir_extend_name(output, ir_expr_get_name(operand));
             break;
         default:
-            unreachable(LLVM_FMT, llvm_expr_print(operand));
+            unreachable(FMT, ir_expr_print(operand));
     }
 }
 
 static void emit_operator_operand(String* output, const Name operand_name) {
-    Llvm* operand = NULL;
+    Ir* operand = NULL;
     unwrap(alloca_lookup(&operand, operand_name));
 
     switch (operand->type) {
-        case LLVM_EXPR:
-            emit_operator_operand_expr(output, llvm_expr_const_unwrap(operand));
+        case IR_EXPR:
+            emit_operator_operand_expr(output, ir_expr_const_unwrap(operand));
             break;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_LOAD_ANOTHER_IR:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_tast_get_name(operand));
+            ir_extend_name(output, ir_tast_get_name(operand));
             break;
         default:
-            unreachable(LLVM_FMT, llvm_print(operand));
+            unreachable(FMT, ir_print(operand));
     }
 }
 
-static void emit_operator(String* output, const Llvm_operator* operator) {
+static void emit_operator(String* output, const Ir_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
-    llvm_extend_name(output, llvm_operator_get_name(operator));
+    ir_extend_name(output, ir_operator_get_name(operator));
     string_extend_cstr(&a_main, output, " = ");
 
-    if (operator->type == LLVM_UNARY) {
-        emit_unary_type(output, llvm_unary_const_unwrap(operator));
-    } else if (operator->type == LLVM_BINARY) {
-        emit_binary_type(output, llvm_binary_const_unwrap(operator));
+    if (operator->type == IR_UNARY) {
+        emit_unary_type(output, ir_unary_const_unwrap(operator));
+    } else if (operator->type == IR_BINARY) {
+        emit_binary_type(output, ir_binary_const_unwrap(operator));
     } else {
         unreachable("");
     }
 
-    if (operator->type == LLVM_UNARY) {
-        emit_operator_operand(output, llvm_unary_const_unwrap(operator)->child);
-    } else if (operator->type == LLVM_BINARY) {
-        const Llvm_binary* binary = llvm_binary_const_unwrap(operator);
+    if (operator->type == IR_UNARY) {
+        emit_operator_operand(output, ir_unary_const_unwrap(operator)->child);
+    } else if (operator->type == IR_BINARY) {
+        const Ir_binary* binary = ir_binary_const_unwrap(operator);
         emit_operator_operand(output, binary->lhs);
         string_extend_cstr(&a_main, output, ", ");
         emit_operator_operand(output, binary->rhs);
@@ -557,9 +557,9 @@ static void emit_operator(String* output, const Llvm_operator* operator) {
         unreachable("");
     }
 
-    if (operator->type == LLVM_UNARY) {
-        emit_unary_suffix(output, llvm_unary_const_unwrap(operator));
-    } else if (operator->type == LLVM_BINARY) {
+    if (operator->type == IR_UNARY) {
+        emit_unary_suffix(output, ir_unary_const_unwrap(operator));
+    } else if (operator->type == IR_BINARY) {
     } else {
         unreachable("");
     }
@@ -567,111 +567,111 @@ static void emit_operator(String* output, const Llvm_operator* operator) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_load_another_llvm(String* output, const Llvm_load_another_llvm* load_llvm) {
+static void emit_load_another_ir(String* output, const Ir_load_another_ir* load_ir) {
     string_extend_cstr(&a_main, output, "    %");
-    llvm_extend_name(output, load_llvm->name);
+    ir_extend_name(output, load_ir->name);
     string_extend_cstr(&a_main, output, " = load ");
-    extend_type_call_str(output, load_llvm->lang_type);
+    extend_type_call_str(output, load_ir->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
     string_extend_cstr(&a_main, output, " %");
-    llvm_extend_name(output, load_llvm->llvm_src);
+    ir_extend_name(output, load_ir->ir_src);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_store_another_llvm_src_literal(String* output, const Llvm_literal* literal) {
+static void emit_store_another_ir_src_literal(String* output, const Ir_literal* literal) {
     string_extend_cstr(&a_main, output, " ");
 
     switch (literal->type) {
-        case LLVM_STRING:
+        case IR_STRING:
             string_extend_cstr(&a_main, output, " @.");
-            llvm_extend_name(output, llvm_string_const_unwrap(literal)->name);
+            ir_extend_name(output, ir_string_const_unwrap(literal)->name);
             return;
-        case LLVM_INT:
-            string_extend_int64_t(&a_main, output, llvm_int_const_unwrap(literal)->data);
+        case IR_INT:
+            string_extend_int64_t(&a_main, output, ir_int_const_unwrap(literal)->data);
             return;
-        case LLVM_FLOAT:
-            string_extend_double(&a_main, output, llvm_int_const_unwrap(literal)->data);
+        case IR_FLOAT:
+            string_extend_double(&a_main, output, ir_int_const_unwrap(literal)->data);
             return;
-        case LLVM_VOID:
+        case IR_VOID:
             return;
-        case LLVM_FUNCTION_NAME:
+        case IR_FUNCTION_NAME:
             unreachable("");
     }
     unreachable("");
 }
 
-static void emit_store_another_llvm_src_expr(String* output, String* literals, const Llvm_expr* expr) {
+static void emit_store_another_ir_src_expr(String* output, String* literals, const Ir_expr* expr) {
     (void) env;
 
     switch (expr->type) {
-        case LLVM_LITERAL: {
-            const Llvm_literal* lit = llvm_literal_const_unwrap(expr);
-            if (lit->type == LLVM_STRING) {
-                emit_symbol_normal(literals, llvm_literal_get_name(lit), lit);
+        case IR_LITERAL: {
+            const Ir_literal* lit = ir_literal_const_unwrap(expr);
+            if (lit->type == IR_STRING) {
+                emit_symbol_normal(literals, ir_literal_get_name(lit), lit);
             }
-            emit_store_another_llvm_src_literal(output, lit);
+            emit_store_another_ir_src_literal(output, lit);
             return;
         }
-        case LLVM_FUNCTION_CALL:
+        case IR_FUNCTION_CALL:
             // fallthrough
-        case LLVM_OPERATOR:
+        case IR_OPERATOR:
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, llvm_expr_get_name(expr));
+            ir_extend_name(output, ir_expr_get_name(expr));
             break;
         default:
-            unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(expr)));
+            unreachable(FMT"\n", ir_print(ir_expr_const_wrap(expr)));
     }
 }
 
-static void emit_store_another_llvm(String* output, String* literals, const Llvm_store_another_llvm* store) {
-    Llvm* src = NULL;
-    unwrap(alloca_lookup(&src, store->llvm_src));
+static void emit_store_another_ir(String* output, String* literals, const Ir_store_another_ir* store) {
+    Ir* src = NULL;
+    unwrap(alloca_lookup(&src, store->ir_src));
 
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(output, store->lang_type);
     string_extend_cstr(&a_main, output, " ");
 
     switch (src->type) {
-        case LLVM_DEF: {
-            const Llvm_def* src_def = llvm_def_const_unwrap(src);
-            const Llvm_variable_def* src_var_def = llvm_variable_def_const_unwrap(src_def);
+        case IR_DEF: {
+            const Ir_def* src_def = ir_def_const_unwrap(src);
+            const Ir_variable_def* src_var_def = ir_variable_def_const_unwrap(src_def);
             (void) src_var_def;
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, llvm_tast_get_name(src));
+            ir_extend_name(output, ir_tast_get_name(src));
             break;
         }
-        case LLVM_EXPR:
-            emit_store_another_llvm_src_expr(output, literals, llvm_expr_const_unwrap(src));
+        case IR_EXPR:
+            emit_store_another_ir_src_expr(output, literals, ir_expr_const_unwrap(src));
             break;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_LOAD_ANOTHER_IR:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_tast_get_name(src));
+            ir_extend_name(output, ir_tast_get_name(src));
             break;
-        case LLVM_ALLOCA:
+        case IR_ALLOCA:
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, llvm_tast_get_name(src));
+            ir_extend_name(output, ir_tast_get_name(src));
             break;
         default:
-            unreachable(LLVM_FMT"\n", llvm_print(src));
+            unreachable(FMT"\n", ir_print(src));
     }
     //string_extend_cstr(&a_main, output, " %");
-    //llvm_extend_name(output, llvm_tast_get_name(store->llvm_src.llvm));
+    //ir_extend_name(output, ir_tast_get_name(store->ir_src.ir));
 
     string_extend_cstr(&a_main, output, ", ptr %");
-    llvm_extend_name(output, store->llvm_dest);
+    ir_extend_name(output, store->ir_dest);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_function_def(String* struct_defs, String* output, String* literals, const Llvm_function_def* fun_def) {
+static void emit_function_def(String* struct_defs, String* output, String* literals, const Ir_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
     extend_type_call_str(output, fun_def->decl->return_type);
 
     string_extend_cstr(&a_main, output, " @");
-    llvm_extend_name(output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
+    ir_extend_name(output, ir_tast_get_name(ir_def_const_wrap(ir_function_def_const_wrap(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(output, fun_def->decl->params);
@@ -682,63 +682,63 @@ static void emit_function_def(String* struct_defs, String* output, String* liter
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return_expr(String* output, const Llvm_expr* child) {
+static void emit_return_expr(String* output, const Ir_expr* child) {
     switch (child->type) {
-        case LLVM_LITERAL: {
-            const Llvm_literal* literal = llvm_literal_const_unwrap(child);
+        case IR_LITERAL: {
+            const Ir_literal* literal = ir_literal_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, llvm_literal_get_lang_type(literal));
+            extend_type_call_str(output, ir_literal_get_lang_type(literal));
             string_extend_cstr(&a_main, output, " ");
             extend_literal(output, literal);
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case LLVM_OPERATOR: {
-            const Llvm_operator* operator = llvm_operator_const_unwrap(child);
+        case IR_OPERATOR: {
+            const Ir_operator* operator = ir_operator_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, llvm_operator_get_lang_type(operator));
+            extend_type_call_str(output, ir_operator_get_lang_type(operator));
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, llvm_expr_get_name(child));
+            ir_extend_name(output, ir_expr_get_name(child));
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case LLVM_FUNCTION_CALL: {
-            const Llvm_function_call* function_call = llvm_function_call_const_unwrap(child);
+        case IR_FUNCTION_CALL: {
+            const Ir_function_call* function_call = ir_function_call_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, function_call->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, llvm_expr_get_name(child));
+            ir_extend_name(output, ir_expr_get_name(child));
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
         default:
-            unreachable(TAST_FMT"\n", llvm_expr_print(child));
+            unreachable(FMT"\n", ir_expr_print(child));
     }
 }
 
-static void emit_return(String* output, const Llvm_return* fun_return) {
-    Llvm* sym_to_return = NULL;
+static void emit_return(String* output, const Ir_return* fun_return) {
+    Ir* sym_to_return = NULL;
     unwrap(alloca_lookup(&sym_to_return, fun_return->child));
 
     switch (sym_to_return->type) {
-        case LLVM_EXPR:
-            emit_return_expr(output, llvm_expr_const_unwrap(sym_to_return));
+        case IR_EXPR:
+            emit_return_expr(output, ir_expr_const_unwrap(sym_to_return));
             return;
-        case LLVM_LOAD_ANOTHER_LLVM: {
-            const Llvm_load_another_llvm* load = llvm_load_another_llvm_const_unwrap(sym_to_return);
+        case IR_LOAD_ANOTHER_IR: {
+            const Ir_load_another_ir* load = ir_load_another_ir_const_unwrap(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, load->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            llvm_extend_name(output, load->name);
+            ir_extend_name(output, load->name);
             string_extend_cstr(&a_main, output, "\n");
             return;
         }
         default:
-            unreachable(TAST_FMT"\n", llvm_print(sym_to_return));
+            unreachable(FMT"\n", ir_print(sym_to_return));
     }
 }
 
-static void emit_function_decl(String* output, const Llvm_function_decl* fun_decl) {
+static void emit_function_decl(String* output, const Ir_function_decl* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
@@ -750,30 +750,30 @@ static void emit_function_decl(String* output, const Llvm_function_decl* fun_dec
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_label(String* output, const Llvm_label* label) {
+static void emit_label(String* output, const Ir_label* label) {
     string_extend_cstr(&a_main, output, "\n");
-    llvm_extend_name(output, label->name);
+    ir_extend_name(output, label->name);
     string_extend_cstr(&a_main, output, ":\n");
 }
 
-static void emit_goto(String* output, const Llvm_goto* lang_goto) {
+static void emit_goto(String* output, const Ir_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    llvm_extend_name(output, lang_goto->label);
+    ir_extend_name(output, lang_goto->label);
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_cond_goto(String* output, const Llvm_cond_goto* cond_goto) {
+static void emit_cond_goto(String* output, const Ir_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    llvm_extend_name(output, cond_goto->condition);
+    ir_extend_name(output, cond_goto->condition);
     string_extend_cstr(&a_main, output, ", label %");
-    llvm_extend_name(output, cond_goto->if_true);
+    ir_extend_name(output, cond_goto->if_true);
     string_extend_cstr(&a_main, output, ", label %");
-    llvm_extend_name(output, cond_goto->if_false);
+    ir_extend_name(output, cond_goto->if_false);
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_llvm_struct_def_base(String* output, const Llvm_struct_def_base* base) {
-    llvm_extend_name(output, base->name);
+static void emit_ir_struct_def_base(String* output, const Ir_struct_def_base* base) {
+    ir_extend_name(output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
 
@@ -781,37 +781,37 @@ static void emit_llvm_struct_def_base(String* output, const Llvm_struct_def_base
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        llvm_extend_type_decl_str(output, llvm_def_wrap(llvm_variable_def_wrap(vec_at(&base->members, idx))), false);
+        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(&base->members, idx))), false);
         is_first = false;
     }
 
     string_extend_cstr(&a_main, output, " }\n");
 }
 
-static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
+static void emit_struct_def(String* output, const Ir_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%");
-    emit_llvm_struct_def_base(output, &struct_def->base);
+    emit_ir_struct_def_base(output, &struct_def->base);
 }
 
-static void emit_load_element_ptr(String* output, const Llvm_load_element_ptr* load) {
+static void emit_load_element_ptr(String* output, const Ir_load_element_ptr* load) {
     string_extend_cstr(&a_main, output, "    %"); 
-    llvm_extend_name(output, load->name_self);
+    ir_extend_name(output, load->name_self);
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
-    Lang_type lang_type = lang_type_from_get_name( load->llvm_src);
+    Lang_type lang_type = lang_type_from_get_name( load->ir_src);
     lang_type_set_pointer_depth( &lang_type, 0);
     extend_type_call_str( output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    llvm_extend_name(output, load->llvm_src);
+    ir_extend_name(output, load->ir_src);
     string_extend_cstr(&a_main, output, ", i32 0, i32 ");
     string_extend_size_t(&a_main, output, load->memb_idx);
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_array_access(String* output, const Llvm_array_access* load) {
+static void emit_array_access(String* output, const Ir_array_access* load) {
     string_extend_cstr(&a_main, output, "    %"); 
-    llvm_extend_name(output, load->name_self);
+    ir_extend_name(output, load->name_self);
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
@@ -819,16 +819,16 @@ static void emit_array_access(String* output, const Llvm_array_access* load) {
     lang_type_set_pointer_depth( &lang_type, 0);
     extend_type_call_str( output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    llvm_extend_name(output, load->callee);
+    ir_extend_name(output, load->callee);
     string_extend_cstr(&a_main, output, ", ");
     extend_type_call_str( output, lang_type_from_get_name( load->index));
     string_extend_cstr(&a_main, output, " ");
 
-    Llvm* struct_index = NULL;
+    Ir* struct_index = NULL;
     unwrap(alloca_lookup(&struct_index,  load->index));
-    if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
+    if (struct_index->type == IR_LOAD_ANOTHER_IR) {
         string_extend_cstr(&a_main, output, "%");
-        llvm_extend_name(output, llvm_tast_get_name(struct_index));
+        ir_extend_name(output, ir_tast_get_name(struct_index));
     } else {
         emit_operator_operand( output, load->index);
     }
@@ -836,161 +836,161 @@ static void emit_array_access(String* output, const Llvm_array_access* load) {
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_expr(String* output, String* literals, const Llvm_expr* expr) {
+static void emit_expr(String* output, String* literals, const Ir_expr* expr) {
     switch (expr->type) {
-        case LLVM_OPERATOR:
-            emit_operator(output, llvm_operator_const_unwrap(expr));
+        case IR_OPERATOR:
+            emit_operator(output, ir_operator_const_unwrap(expr));
             return;
-        case LLVM_FUNCTION_CALL:
-            emit_function_call(output, literals, llvm_function_call_const_unwrap(expr));
+        case IR_FUNCTION_CALL:
+            emit_function_call(output, literals, ir_function_call_const_unwrap(expr));
             return;
-        case LLVM_LITERAL:
-            extend_literal_decl(output, literals, llvm_literal_const_unwrap(expr), true);
+        case IR_LITERAL:
+            extend_literal_decl(output, literals, ir_literal_const_unwrap(expr), true);
             return;
     }
     unreachable("");
 }
 
-static void emit_def(String* struct_defs, String* output, String* literals, const Llvm_def* def) {
+static void emit_def(String* struct_defs, String* output, String* literals, const Ir_def* def) {
     switch (def->type) {
-        case LLVM_FUNCTION_DEF:
-            emit_function_def(struct_defs, output, literals, llvm_function_def_const_unwrap(def));
+        case IR_FUNCTION_DEF:
+            emit_function_def(struct_defs, output, literals, ir_function_def_const_unwrap(def));
             return;
-        case LLVM_VARIABLE_DEF:
+        case IR_VARIABLE_DEF:
             return;
-        case LLVM_FUNCTION_DECL:
+        case IR_FUNCTION_DECL:
             todo();
-            emit_function_decl(output, llvm_function_decl_const_unwrap(def));
+            emit_function_decl(output, ir_function_decl_const_unwrap(def));
             return;
-        case LLVM_LABEL:
-            emit_label(output, llvm_label_const_unwrap(def));
+        case IR_LABEL:
+            emit_label(output, ir_label_const_unwrap(def));
             return;
-        case LLVM_STRUCT_DEF:
-            emit_struct_def(struct_defs, llvm_struct_def_const_unwrap(def));
+        case IR_STRUCT_DEF:
+            emit_struct_def(struct_defs, ir_struct_def_const_unwrap(def));
             return;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             todo();
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             todo();
     }
     unreachable("");
 }
 
-static void emit_block(String* struct_defs, String* output, String* literals, const Llvm_block* block) {
+static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Llvm* stmt = vec_at(&block->children, idx);
+        const Ir* stmt = vec_at(&block->children, idx);
         switch (stmt->type) {
-            case LLVM_EXPR:
-                emit_expr(output, literals, llvm_expr_const_unwrap(stmt));
+            case IR_EXPR:
+                emit_expr(output, literals, ir_expr_const_unwrap(stmt));
                 break;
-            case LLVM_DEF:
-                emit_def(struct_defs, output, literals, llvm_def_const_unwrap(stmt));
+            case IR_DEF:
+                emit_def(struct_defs, output, literals, ir_def_const_unwrap(stmt));
                 break;
-            case LLVM_RETURN:
-                emit_return(output, llvm_return_const_unwrap(stmt));
+            case IR_RETURN:
+                emit_return(output, ir_return_const_unwrap(stmt));
                 break;
-            case LLVM_BLOCK:
-                emit_block(struct_defs, output, literals, llvm_block_const_unwrap(stmt));
+            case IR_BLOCK:
+                emit_block(struct_defs, output, literals, ir_block_const_unwrap(stmt));
                 break;
-            case LLVM_COND_GOTO:
-                emit_cond_goto(output, llvm_cond_goto_const_unwrap(stmt));
+            case IR_COND_GOTO:
+                emit_cond_goto(output, ir_cond_goto_const_unwrap(stmt));
                 break;
-            case LLVM_GOTO:
-                emit_goto(output, llvm_goto_const_unwrap(stmt));
+            case IR_GOTO:
+                emit_goto(output, ir_goto_const_unwrap(stmt));
                 break;
-            case LLVM_ALLOCA:
-                emit_alloca(output, llvm_alloca_const_unwrap(stmt));
+            case IR_ALLOCA:
+                emit_alloca(output, ir_alloca_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_ELEMENT_PTR:
-                emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
+            case IR_LOAD_ELEMENT_PTR:
+                emit_load_element_ptr(output, ir_load_element_ptr_const_unwrap(stmt));
                 break;
-            case LLVM_ARRAY_ACCESS:
-                emit_array_access(output, llvm_array_access_const_unwrap(stmt));
+            case IR_ARRAY_ACCESS:
+                emit_array_access(output, ir_array_access_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_ANOTHER_LLVM:
-                emit_load_another_llvm(output, llvm_load_another_llvm_const_unwrap(stmt));
+            case IR_LOAD_ANOTHER_IR:
+                emit_load_another_ir(output, ir_load_another_ir_const_unwrap(stmt));
                 break;
-            case LLVM_STORE_ANOTHER_LLVM:
-                emit_store_another_llvm(output, literals, llvm_store_another_llvm_const_unwrap(stmt));
+            case IR_STORE_ANOTHER_IR:
+                emit_store_another_ir(output, literals, ir_store_another_ir_const_unwrap(stmt));
                 break;
             default:
-                log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
-                llvm_printf(stmt);
+                log(LOG_ERROR, FMT"\n", string_print(*output));
+                ir_printf(stmt);
                 todo();
         }
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_sometimes(struct_defs, output, literals, curr);
     }
 }
 
 // this is only intended for alloca_table, etc.
-static void emit_def_sometimes(String* struct_defs, String* output, String* literals, const Llvm_def* def) {
+static void emit_def_sometimes(String* struct_defs, String* output, String* literals, const Ir_def* def) {
     switch (def->type) {
-        case LLVM_FUNCTION_DEF:
-            emit_function_def(struct_defs, output, literals, llvm_function_def_const_unwrap(def));
+        case IR_FUNCTION_DEF:
+            emit_function_def(struct_defs, output, literals, ir_function_def_const_unwrap(def));
             return;
-        case LLVM_VARIABLE_DEF:
+        case IR_VARIABLE_DEF:
             return;
-        case LLVM_FUNCTION_DECL:
-            emit_function_decl(output, llvm_function_decl_const_unwrap(def));
+        case IR_FUNCTION_DECL:
+            emit_function_decl(output, ir_function_decl_const_unwrap(def));
             return;
-        case LLVM_LABEL:
+        case IR_LABEL:
             return;
-        case LLVM_STRUCT_DEF:
-            emit_struct_def(struct_defs, llvm_struct_def_const_unwrap(def));
+        case IR_STRUCT_DEF:
+            emit_struct_def(struct_defs, ir_struct_def_const_unwrap(def));
             return;
-        case LLVM_PRIMITIVE_DEF:
+        case IR_PRIMITIVE_DEF:
             todo();
-        case LLVM_LITERAL_DEF:
+        case IR_LITERAL_DEF:
             todo();
     }
     unreachable("");
 }
 
 // this is only intended for alloca_table, etc.
-static void emit_sometimes(String* struct_defs, String* output, String* literals, const Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_DEF:
-            emit_def_sometimes(struct_defs, output, literals, llvm_def_const_unwrap(llvm));
+static void emit_sometimes(String* struct_defs, String* output, String* literals, const Ir* ir) {
+    switch (ir->type) {
+        case IR_DEF:
+            emit_def_sometimes(struct_defs, output, literals, ir_def_const_unwrap(ir));
             return;
-        case LLVM_BLOCK:
+        case IR_BLOCK:
             unreachable("");
-        case LLVM_EXPR:
+        case IR_EXPR:
             return;
-        case LLVM_LOAD_ELEMENT_PTR:
+        case IR_LOAD_ELEMENT_PTR:
             return;
-        case LLVM_ARRAY_ACCESS:
+        case IR_ARRAY_ACCESS:
             return;
-        case LLVM_FUNCTION_PARAMS:
+        case IR_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_RETURN:
-            unreachable("");
-            return;
-        case LLVM_GOTO:
+        case IR_RETURN:
             unreachable("");
             return;
-        case LLVM_ALLOCA:
-            return;
-        case LLVM_COND_GOTO:
+        case IR_GOTO:
             unreachable("");
             return;
-        case LLVM_STORE_ANOTHER_LLVM:
+        case IR_ALLOCA:
             return;
-        case LLVM_LOAD_ANOTHER_LLVM:
+        case IR_COND_GOTO:
+            unreachable("");
+            return;
+        case IR_STORE_ANOTHER_IR:
+            return;
+        case IR_LOAD_ANOTHER_IR:
             return;
     }
     unreachable("");
 }
 
-static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* lit) {
-    Str_view data = {0};
+static void emit_symbol_normal(String* literals, Name key, const Ir_literal* lit) {
+    Strv data = {0};
     switch (lit->type) {
-        case LLVM_STRING:
-            data = llvm_string_const_unwrap(lit)->data;
+        case IR_STRING:
+            data = ir_string_const_unwrap(lit)->data;
             break;
         default:
             todo();
@@ -999,7 +999,7 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     size_t literal_width = data.count + 1 - get_count_excape_seq(data);
 
     string_extend_cstr(&a_main, literals, "@.");
-    llvm_extend_name(literals, key);
+    ir_extend_name(literals, key);
     string_extend_cstr(&a_main, literals, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, literals, literal_width);
     string_extend_cstr(&a_main, literals, " x i8] c\"");
@@ -1008,13 +1008,13 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     string_extend_cstr(&a_main, literals, "\n");
 }
 
-void emit_llvm_from_tree(const Llvm_block* root) {
+void emit_llvm_from_tree(const Ir_block* root) {
     String struct_defs = {0};
     String output = {0};
     String literals = {0};
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
-    Llvm* curr = NULL;
+    Ir* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_sometimes(&struct_defs, &output, &literals, curr);
     }
@@ -1024,33 +1024,19 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     FILE* file = fopen("test.ll", "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
-            str_view_print(params.input_file_path), strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT": %s\n",
+            strv_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
 
-    for (size_t idx = 0; idx < struct_defs.info.count; idx++) {
-        if (EOF == fputc(vec_at(&struct_defs, idx), file)) {
-            todo();
-        }
-    }
-
-    for (size_t idx = 0; idx < output.info.count; idx++) {
-        if (EOF == fputc(vec_at(&output, idx), file)) {
-            todo();
-        }
-    }
-
-    for (size_t idx = 0; idx < literals.info.count; idx++) {
-        if (EOF == fputc(vec_at(&literals, idx), file)) {
-            todo();
-        }
-    }
+    file_extend_strv(file, string_to_strv(struct_defs));
+    file_extend_strv(file, string_to_strv(output));
+    file_extend_strv(file, string_to_strv(literals));
 
     msg(
-        DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
-        str_view_print(params.input_file_path)
+        DIAG_FILE_BUILT, POS_BUILTIN, "file "FMT" built\n",
+        strv_print(params.input_file_path)
     );
 
     fclose(file);

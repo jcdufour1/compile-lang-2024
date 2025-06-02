@@ -22,7 +22,7 @@ static inline Token tk_view_front(Tk_view tk_view) {
 static inline void log_tokens_internal(const char* file, int line, LOG_LEVEL log_level, Tk_view tk_view) {
     log_internal(log_level, file, line, 0, "tokens:\n");
     for (size_t idx = 0; idx < tk_view.count; idx++) {
-        log_internal(log_level, file, line, 0, TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
+        log_internal(log_level, file, line, 0, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
     }
     log_internal(log_level, file, line, 0, "\n");
 }
@@ -58,13 +58,13 @@ static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYP
 }
 
 static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
-    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
+    if (!strv_is_equal(tk_view_front(*tokens).text, sv(cstr))) {
         return false;
     }
     return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
 }
 
-static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
+static inline Strv tk_view_print_internal(Arena* arena, Tk_view tk_view) {
     String buf = {0};
     vec_reset(&buf);
 
@@ -73,8 +73,8 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
         string_extend_cstr(&a_print, &buf, ";    ");
     }
 
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
+    Strv strv = {.str = buf.buf, .count = buf.info.count};
+    return strv;
 }
 
 static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_view b, bool do_log) {
@@ -86,7 +86,7 @@ static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_
                 log(log_level, "TOKENS expected:\n");
                 log_tokens(log_level, b);
                 log(
-                    log_level, "idx %zu: "TOKEN_FMT" is not equal to "TOKEN_FMT"\n",
+                    log_level, "idx %zu: "FMT" is not equal to "FMT"\n",
                     idx, token_print(TOKEN_MODE_LOG, tk_view_at(a, idx)), token_print(TOKEN_MODE_LOG, tk_view_at(b, idx))
                 );
             }
@@ -116,8 +116,6 @@ static inline bool tk_view_is_equal_log(LOG_LEVEL log_level, Tk_view a, Tk_view 
     return tk_view_is_equal_internal(log_level, a, b, true);
 }
 
-#define TK_VIEW_FMT STR_VIEW_FMT
-
-#define tk_view_print(tk_view) str_view_print(tk_view_print_internal(tk_view))
+#define tk_view_print(tk_view) strv_print(tk_view_print_internal(tk_view))
 
 #endif // TOKEN_VIEW_H

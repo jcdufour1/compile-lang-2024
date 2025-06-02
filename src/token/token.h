@@ -4,12 +4,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "str_view.h"
+#include "strv.h"
 #include "newstring.h"
 
-#define token_print(mode, token) str_view_print(token_print_internal(&a_print, mode, token))
-
-#define TOKEN_FMT STR_VIEW_FMT
+#define token_print(mode, token) strv_print(token_print_internal(&a_print, mode, token))
 
 typedef enum {
     // nontype
@@ -103,7 +101,7 @@ typedef enum {
 } TOKEN_TYPE;
 
 typedef struct {
-    Str_view text;
+    Strv text;
     TOKEN_TYPE type;
 
     Pos pos;
@@ -114,7 +112,7 @@ typedef enum {
     TOKEN_MODE_MSG,
 } TOKEN_MODE;
 
-Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token);
+Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token);
 
 static inline bool token_is_literal(Token token) {
     switch (token.type) {
@@ -402,39 +400,37 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_COUNT:
             unreachable("");
     }
-    unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
+    unreachable(FMT"\n", token_print(TOKEN_MODE_LOG, token));
 }
 
 static const uint32_t TOKEN_MAX_PRECEDENCE = 20;
 
-#define TOKEN_TYPE_FMT STR_VIEW_FMT
+Strv token_type_to_strv_msg(TOKEN_TYPE token_type);
 
-Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type);
+Strv token_type_to_strv_log(TOKEN_TYPE token_type);
 
-Str_view token_type_to_str_view_log(TOKEN_TYPE token_type);
-
-static inline Str_view token_type_to_str_view(TOKEN_MODE mode, TOKEN_TYPE token_type) {
+static inline Strv token_type_to_strv(TOKEN_MODE mode, TOKEN_TYPE token_type) {
     switch (mode) {
         case TOKEN_MODE_LOG:
-            return token_type_to_str_view_log(token_type);
+            return token_type_to_strv_log(token_type);
         case TOKEN_MODE_MSG:
-            return token_type_to_str_view_msg(token_type);
+            return token_type_to_strv_msg(token_type);
     }
     unreachable("");
 }
 
-#define token_type_print(mode, token_type) str_view_print(token_type_to_str_view(mode, token_type))
+#define token_type_print(mode, token_type) strv_print(token_type_to_strv(mode, token_type))
 
 static inline bool token_is_equal(const Token a, const Token b) {
     if (a.type != b.type) {
         return false;
     }
-    return str_view_is_equal(a.text, b.text);
+    return strv_is_equal(a.text, b.text);
 }
 
 // TODO: rename this function
 static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE token_type) {
-    Token b = {.text = str_view_from_cstr(cstr), .type = token_type};
+    Token b = {.text = sv(cstr), .type = token_type};
     return token_is_equal(a, b);
 }
 

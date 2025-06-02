@@ -1,17 +1,29 @@
 #ifndef PARSER_UTIL_H
 #define PARSER_UTIL_H
 
-#include "str_view.h"
+#include "strv.h"
 #include "symbol_table.h"
 #include "tast_utils.h"
 #include "uast_utils.h"
-#include "llvm_utils.h"
+#include "ir_utils.h"
 #include "ctype.h"
 
-size_t get_count_excape_seq(Str_view str_view);
+static inline Lang_type lang_type_new_u1(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+}
 
-// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a (depending on the backend)
-void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view);
+static inline Lang_type lang_type_new_usize(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 64 /* TODO: change based on target */, 0)
+    ));
+}
+
+size_t get_count_excape_seq(Strv strv);
+
+// \n excapes are actually stored as is in tokens, uast, tasts, and irs, but should be printed as \0a (depending on the backend)
+void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv);
 
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
@@ -42,40 +54,28 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
 int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom);
 
-int64_t str_view_to_int64_t(const Pos pos, Str_view str_view);
+int64_t strv_to_int64_t(const Pos pos, Strv strv);
 
-bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);
+bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 
-bool try_str_view_to_size_t(size_t* result, Str_view str_view);
+bool try_strv_to_size_t(size_t* result, Strv strv);
 
-bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
+bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore);
 
-Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix);
+Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix);
 
-#define util_literal_str_view_new() \
-    util_literal_str_view_new_internal(__FILE__, __LINE__, str_view_from_cstr(""))
+#define util_literal_strv_new() \
+    util_literal_strv_new_internal(__FILE__, __LINE__, sv(""))
 
-Str_view util_literal_name_new_prefix_internal(const char* file, int line, Str_view debug_prefix);
+Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_view debug_prefix, Str_view mod_path);
-
-// TODO: remove this macro?
 #define util_literal_name_new_prefix(debug_prefix) \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
 
-#define util_literal_name_new_prefix2(debug_prefix) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix, (Str_view) {0})
+#define util_literal_name_new() \
+    util_literal_name_new_prefix_internal(__FILE__, __LINE__, sv(""))
 
-// TODO: remove 2 suffix
-#define util_literal_name_new2() \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), (Str_view) {0})
-
-#define util_literal_name_new_mod_path2(mod_path) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), mod_path)
-
-Name get_storage_location(Name sym_name);
-
-bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);
+bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 
 static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
@@ -84,13 +84,13 @@ static inline bool ishex(int c) {
 // lhs and rhs should not be used for other tasks after this
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs);
 
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view value, TOKEN_TYPE token_type, Pos pos);
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
 
 Tast_literal* util_tast_literal_new_from_double(double value, Pos pos);
     
-Uast_literal* util_uast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos);
+Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
@@ -105,10 +105,10 @@ const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
 // TODO: move to another file
-static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
+static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name.base, member_name)) {
+        if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }
     }
@@ -116,10 +116,10 @@ static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, S
 }
 
 // TODO: move to another file
-static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name.base, member_name)) {
+        if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }
     }
@@ -129,11 +129,11 @@ static inline size_t tast_get_member_index(const Struct_def_base* struct_def, St
 static inline bool uast_try_get_member_def(
     Uast_variable_def** member_def,
     const Ustruct_def_base* struct_def,
-    Str_view member_name
+    Strv member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name.base, member_name)) {
+        if (strv_is_equal(curr_member->name.base, member_name)) {
             *member_def = curr_member;
             return true;
         }
@@ -157,7 +157,6 @@ static inline bool tast_try_get_member_def(
 }
 
 bool try_set_variable_def_types(
-     
     Tast_variable_def** new_tast,
     Uast_variable_def* uast,
     bool add_to_sym_tbl,
@@ -166,22 +165,22 @@ bool try_set_variable_def_types(
 
 bool try_get_struct_def(Tast_struct_def** struct_def, Tast_stmt* stmt);
 
-bool llvm_try_get_struct_def(Tast_struct_def** struct_def, Llvm* tast);
+bool ir_try_get_struct_def(Tast_struct_def** struct_def, Ir* tast);
     
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
-static inline Tast_struct_def* llvm_get_struct_def(Llvm* tast) {
+static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
     Tast_struct_def* struct_def;
-    if (!llvm_try_get_struct_def( &struct_def, tast)) {
-        unreachable("could not find struct definition for "TAST_FMT"\n", llvm_print(tast));
+    if (!ir_try_get_struct_def( &struct_def, tast)) {
+        unreachable("could not find struct definition for "FMT"\n", ir_print(tast));
     }
     return struct_def;
 }
 
-static inline const Tast_struct_def* llvm_get_struct_def_const(const Llvm* tast) {
-    return llvm_get_struct_def( (Llvm*)tast);
+static inline const Tast_struct_def* ir_get_struct_def_const(const Ir* tast) {
+    return ir_get_struct_def((Ir*)tast);
 }
 
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {

@@ -4,11 +4,11 @@ CC_COMPILER ?= clang
 
 # TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
-C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
+C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
-C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
+C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
 			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
@@ -39,13 +39,13 @@ OBJS=\
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
-	 ${BUILD_DIR}/llvm_print.o \
+	 ${BUILD_DIR}/ir_print.o \
 	 ${BUILD_DIR}/lang_type_print.o \
 	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/uast_utils.o \
 	 ${BUILD_DIR}/symbol_table.o \
-	 ${BUILD_DIR}/file.o \
+	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
@@ -69,8 +69,8 @@ OBJS=\
 	 ${BUILD_DIR}/codegen/common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
-	 ${BUILD_DIR}/llvm_utils.o \
-	 ${BUILD_DIR}/llvm_graphvis.o \
+	 ${BUILD_DIR}/ir_utils.o \
+	 ${BUILD_DIR}/ir_graphvis.o \
 	 ${BUILD_DIR}/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -136,8 +136,8 @@ ${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c
 ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
 
-${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_print.o src/llvm_print.c
+${BUILD_DIR}/ir_print.o: ${DEP_COMMON} src/ir_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_print.o src/ir_print.c
 
 ${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
@@ -160,8 +160,8 @@ ${BUILD_DIR}/sema/check_struct_recursion.o: ${DEP_COMMON} src/sema/check_struct_
 ${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c
 
-${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
+${BUILD_DIR}/util/file.o: ${DEP_COMMON} src/util/file.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/file.o src/util/file.c
 
 ${BUILD_DIR}/util/parameters.o: ${DEP_COMMON} src/util/parameters.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/parameters.o src/util/parameters.c
@@ -193,11 +193,11 @@ ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clon
 ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
 
-${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
+${BUILD_DIR}/ir_utils.o: ${DEP_COMMON} src/ir_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_utils.o src/ir_utils.c
 
-${BUILD_DIR}/llvm_graphvis.o: ${DEP_COMMON} src/llvm_graphvis.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_graphvis.o src/llvm_graphvis.c
+${BUILD_DIR}/ir_graphvis.o: ${DEP_COMMON} src/ir_graphvis.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_graphvis.o src/ir_graphvis.c
 
 ${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c

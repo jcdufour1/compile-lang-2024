@@ -14,8 +14,8 @@ typedef struct {
 
 typedef struct {
     bool is_topmost;
-    Str_view parent;
-    Str_view base;
+    Strv parent;
+    Strv base;
 } Lang_type_name;
 
 typedef struct Lang_type_type_ {
@@ -27,7 +27,7 @@ typedef struct Lang_type_type_ {
 static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -41,7 +41,7 @@ static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
 static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "lang_type");
@@ -55,7 +55,7 @@ static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
 static void extend_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Lang_type");
@@ -70,7 +70,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
     todo();
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
@@ -84,7 +84,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_lower(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         string_extend_cstr(&gen_a, output, "lang_type");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_lang_type_name_lower(String* output, Lang_type_name na
 static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "lang_type")) {
+    if (strv_is_equal(name.parent, sv("lang_type"))) {
         string_extend_cstr(&gen_a, output, "Lang_type");
         return;
     }
@@ -112,7 +112,7 @@ static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_n
 }
 
 static Lang_type_name lang_type_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Lang_type_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Lang_type_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Lang_type_type lang_type_gen_signed_int(const char* prefix) {
@@ -154,8 +154,8 @@ static Lang_type_type lang_type_gen_char(const char* prefix) {
     return sym;
 }
 
-static Lang_type_type lang_type_gen_any(const char* prefix) {
-    const char* base_name = "any";
+static Lang_type_type lang_type_gen_opaque(const char* prefix) {
+    const char* base_name = "opaque";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     // TODO: get rid of these unneeded atoms
@@ -172,7 +172,7 @@ static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_unsigned_int(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_any(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_opaque(base_name));
 
     return lang_type;
 }
@@ -262,7 +262,7 @@ static void lang_type_gen_lang_type_forward_decl(Lang_type_type lang_type) {
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void lang_type_gen_lang_type_struct_as(String* output, Lang_type_type lang_type) {
@@ -352,7 +352,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
 
     if (lang_type.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
     }
 
@@ -360,7 +360,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
@@ -421,7 +421,7 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
@@ -470,7 +470,7 @@ static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void lang_type_gen_lang_type_unwrap(Lang_type_type lang_type) {
@@ -483,7 +483,7 @@ void lang_type_gen_lang_type_wrap(Lang_type_type lang_type) {
     lang_type_gen_internal_wrap(lang_type, true);
 }
 
-// TODO: deduplicate these functions (use same function for Llvm and Lang_type)
+// TODO: deduplicate these functions (use same function for Ir and Lang_type)
 static void lang_type_gen_print_forward_decl(Lang_type_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         lang_type_gen_print_forward_decl(vec_at(&type.sub_types, idx));
@@ -497,17 +497,17 @@ static void lang_type_gen_print_forward_decl(Lang_type_type type) {
 
     string_extend_cstr(&gen_a, &function, "#define ");
     extend_lang_type_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(lang_type) str_view_print(");
+    string_extend_cstr(&gen_a, &function, "_print(lang_type) strv_print(");
     extend_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(lang_type, 0))\n");
 
-    string_extend_cstr(&gen_a, &function, "Str_view ");
+    string_extend_cstr(&gen_a, &function, "Strv ");
     extend_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_lang_type_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* lang_type, int recursion_depth);");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void lang_type_gen_new_internal(Lang_type_type type, bool implementation) {
@@ -567,7 +567,7 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {

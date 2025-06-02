@@ -12,6 +12,8 @@
 #include <msg_todo.h>
 #include <symbol_iter.h>
 
+static bool is_in_struct_base_def;
+
 #define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
 
@@ -24,7 +26,7 @@ static void msg_undefined_type_internal(
 ) {
     msg_internal(
         file, line, DIAG_UNDEFINED_TYPE, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+        "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
     );
 }
 
@@ -51,7 +53,7 @@ static void msg_invalid_count_generic_args_internal(
     string_extend_cstr(&a_print, &message, " generic arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
-        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+        FMT, strv_print(string_to_strv(message))
     );
 
     msg_internal(
@@ -61,7 +63,7 @@ static void msg_invalid_count_generic_args_internal(
 }
 
 static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
-    env.type_checking_is_in_struct_base_def = true;
+    is_in_struct_base_def = true;
     bool success = true;
     Tast_variable_def_vec new_members = {0};
 
@@ -89,7 +91,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
         .name = base->name
     };
 
-    env.type_checking_is_in_struct_base_def = false;
+    is_in_struct_base_def = false;
     return success;
 }
 
@@ -303,9 +305,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     memset(&name_before.gen_args, 0, sizeof(name_before.gen_args));
     unwrap(usym_tbl_lookup(&before_res, name_before));
     Ulang_type dummy = {0};
-    log(LOG_DEBUG, TAST_FMT, uast_def_print(before_res));
     Ulang_type lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(name_to_uname(name), 0), uast_def_get_pos(before_res)));
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 
     Uast_def* after_res = NULL;
     if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
@@ -432,7 +432,7 @@ static bool resolve_generics_serialize_function_decl(
 }
 
 bool resolve_generics_function_def_call(
-    Lang_type_fn* rtn_type, // TODO: rename this parameter
+    Lang_type_fn* type_res,
     Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
@@ -457,7 +457,7 @@ bool resolve_generics_function_def_call(
             ulang_type_rtn_type,
             def->decl->pos
         );
-        if (!try_lang_type_from_ulang_type_fn(rtn_type, new_fn, def->decl->pos)) {
+        if (!try_lang_type_from_ulang_type_fn(type_res, new_fn, def->decl->pos)) {
             return false;
         }
         *new_name = name;
@@ -504,7 +504,7 @@ bool resolve_generics_function_def_call(
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
         return false;
     }
-    *rtn_type = rtn_type_;
+    *type_res = rtn_type_;
     *new_name = name;
 
     vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);

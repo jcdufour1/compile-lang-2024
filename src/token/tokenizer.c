@@ -2,7 +2,7 @@
 #include <util.h>
 #include <token.h>
 #include <token_view.h>
-#include <str_view_col.h>
+#include <strv_col.h>
 #include <parameters.h>
 #include <env.h>
 #include <do_passes.h>
@@ -12,8 +12,8 @@
 
 static Arena a_token = {0};
 
-static void msg_tokenizer_invalid_token(Str_view_col token_text, Pos pos) {
-    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
+static void msg_tokenizer_invalid_token(Strv_col token_text, Pos pos) {
+    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"FMT"`\n", strv_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -21,9 +21,9 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
     return isalnum(curr) || curr == '_';
 }
 
-static Str_view consume_int(Pos* pos, Str_view_col* file_text) {
-    Str_view_col num = {0};
-    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isalnum_or_underscore));
+static Strv consume_int(Pos* pos, Strv_col* file_text) {
+    Strv_col num = {0};
+    unwrap(strv_col_try_consume_while(&num, pos, file_text, local_isalnum_or_underscore));
     return num.base;
 }
 
@@ -62,20 +62,16 @@ static bool not_single_quote(char prev, char curr) {
 }
 
 // returns count of characters trimmed
-static size_t trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
+static size_t trim_non_newline_whitespace(Strv_col* file_text, Pos* pos) {
     size_t count = 0;
     if (file_text->base.count < 1) {
         return count;
     }
-    char curr = str_view_col_front(*file_text);
+    char curr = strv_col_front(*file_text);
     while (file_text->base.count > 0 && (isspace(curr) || iscntrl(curr)) && (curr != '\n')) {
-        if (file_text->base.count < 1) {
-            unreachable("");// TODO: remove this if statement (unless there is a reason for it)
-            return count;
-        }
         count++;
-        str_view_col_consume(pos, file_text);
-        curr = str_view_col_front(*file_text);
+        strv_col_consume(pos, file_text);
+        curr = strv_col_front(*file_text);
     }
     return count;
 }
@@ -84,8 +80,8 @@ static bool get_next_token(
     Pos* pos,
     bool* is_preced_space,
     Token* token,
-    Str_view_col* file_text_rem,
-    Str_view file_path
+    Strv_col* file_text_rem,
+    Strv file_path
 ) {
     memset(token, 0, sizeof(*token));
     arena_reset(&a_token);
@@ -101,116 +97,116 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    if (isalpha(str_view_col_front(*file_text_rem))) {
-        Str_view text = str_view_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
-        if (str_view_cstr_is_equal(text, "unsafe_cast")) {
+    if (isalpha(strv_col_front(*file_text_rem))) {
+        Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
+        if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
-        } else if (str_view_cstr_is_equal(text, "defer")) {
+        } else if (strv_is_equal(text, sv("defer"))) {
             token->type = TOKEN_DEFER;
-        } else if (str_view_cstr_is_equal(text, "fn")) {
+        } else if (strv_is_equal(text, sv("fn"))) {
             token->type = TOKEN_FN;
-        } else if (str_view_cstr_is_equal(text, "for")) {
+        } else if (strv_is_equal(text, sv("for"))) {
             token->type = TOKEN_FOR;
-        } else if (str_view_cstr_is_equal(text, "if")) {
+        } else if (strv_is_equal(text, sv("if"))) {
             token->type = TOKEN_IF;
-        } else if (str_view_cstr_is_equal(text, "switch")) {
+        } else if (strv_is_equal(text, sv("switch"))) {
             token->type = TOKEN_SWITCH;
-        } else if (str_view_cstr_is_equal(text, "case")) {
+        } else if (strv_is_equal(text, sv("case"))) {
             token->type = TOKEN_CASE;
-        } else if (str_view_cstr_is_equal(text, "default")) {
+        } else if (strv_is_equal(text, sv("default"))) {
             token->type = TOKEN_DEFAULT;
-        } else if (str_view_cstr_is_equal(text, "else")) {
+        } else if (strv_is_equal(text, sv("else"))) {
             token->type = TOKEN_ELSE;
-        } else if (str_view_cstr_is_equal(text, "return")) {
+        } else if (strv_is_equal(text, sv("return"))) {
             token->type = TOKEN_RETURN;
-        } else if (str_view_cstr_is_equal(text, "extern")) {
+        } else if (strv_is_equal(text, sv("extern"))) {
             token->type = TOKEN_EXTERN;
-        } else if (str_view_cstr_is_equal(text, "struct")) {
+        } else if (strv_is_equal(text, sv("struct"))) {
             token->type = TOKEN_STRUCT;
-        } else if (str_view_cstr_is_equal(text, "let")) {
+        } else if (strv_is_equal(text, sv("let"))) {
             token->type = TOKEN_LET;
-        } else if (str_view_cstr_is_equal(text, "in")) {
+        } else if (strv_is_equal(text, sv("in"))) {
             token->type = TOKEN_IN;
-        } else if (str_view_cstr_is_equal(text, "break")) {
+        } else if (strv_is_equal(text, sv("break"))) {
             token->type = TOKEN_BREAK;
-        } else if (str_view_cstr_is_equal(text, "raw_union")) {
+        } else if (strv_is_equal(text, sv("raw_union"))) {
             token->type = TOKEN_RAW_UNION;
-        } else if (str_view_cstr_is_equal(text, "enum")) {
+        } else if (strv_is_equal(text, sv("enum"))) {
             token->type = TOKEN_ENUM;
-        } else if (str_view_cstr_is_equal(text, "continue")) {
+        } else if (strv_is_equal(text, sv("continue"))) {
             token->type = TOKEN_CONTINUE;
-        } else if (str_view_cstr_is_equal(text, "type")) {
+        } else if (strv_is_equal(text, sv("type"))) {
             token->type = TOKEN_TYPE_DEF;
-        } else if (str_view_cstr_is_equal(text, "import")) {
+        } else if (strv_is_equal(text, sv("import"))) {
             token->type = TOKEN_IMPORT;
-        } else if (str_view_cstr_is_equal(text, "def")) {
+        } else if (strv_is_equal(text, sv("def"))) {
             token->type = TOKEN_DEF;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;
         }
         return true;
-    } else if (isdigit(str_view_col_front(*file_text_rem))) {
+    } else if (isdigit(strv_col_front(*file_text_rem))) {
         Pos temp_pos = {0};
-        Str_view_col temp_text = *file_text_rem;
-        Str_view before_dec = consume_int(&temp_pos, &temp_text);
+        Strv_col temp_text = *file_text_rem;
+        Strv before_dec = consume_int(&temp_pos, &temp_text);
         // right hand side of || is to account for .. in for loop, variadic args, etc.
-        if (!str_view_col_try_consume(&temp_pos, &temp_text, '.') || str_view_col_try_consume(&temp_pos, &temp_text, '.')) {
-            token->text = str_view_col_consume_count(pos, file_text_rem, before_dec.count).base;
+        if (!strv_col_try_consume(&temp_pos, &temp_text, '.') || strv_col_try_consume(&temp_pos, &temp_text, '.')) {
+            token->text = strv_col_consume_count(pos, file_text_rem, before_dec.count).base;
             token->type = TOKEN_INT_LITERAL;
             return true;
         }
-        Str_view_col after_dec = {0};
-        unwrap(str_view_col_try_consume_while(&after_dec, &temp_pos, &temp_text, local_isalnum_or_underscore));
-        token->text = str_view_col_consume_count(pos, file_text_rem, before_dec.count + 1 + after_dec.base.count).base;
+        Strv_col after_dec = {0};
+        unwrap(strv_col_try_consume_while(&after_dec, &temp_pos, &temp_text, local_isalnum_or_underscore));
+        token->text = strv_col_consume_count(pos, file_text_rem, before_dec.count + 1 + after_dec.base.count).base;
         token->type = TOKEN_FLOAT_LITERAL;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '(')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '<')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '(')) {
+        if (strv_col_try_consume(pos, file_text_rem, '<')) {
             token->type = TOKEN_OPEN_GENERIC;
         } else {
             token->type = TOKEN_OPEN_PAR;
         }
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ')')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, ')')) {
         token->type = TOKEN_CLOSE_PAR;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '{')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '{')) {
         token->type = TOKEN_OPEN_CURLY_BRACE;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '}')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '}')) {
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '#')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '#')) {
         token->type = TOKEN_MACRO;
-        token->text = str_view_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
+        token->text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '"')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '"')) {
         token->type = TOKEN_STRING_LITERAL;
-        Str_view_col quote_str = {0};
-        if (!str_view_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
+        Strv_col quote_str = {0};
+        if (!strv_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
             msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
-        unwrap(str_view_col_try_consume(pos, file_text_rem, '"'));
+        unwrap(strv_col_try_consume(pos, file_text_rem, '"'));
         token->text = quote_str.base;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ';')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, ';')) {
         token->type = TOKEN_SEMICOLON;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ',')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, ',')) {
         token->type = TOKEN_COMMA;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '+')) {
-        unwrap((file_text_rem->base.count < 1 || str_view_col_front(*file_text_rem) != '+') && "double + not implemented");
+    } else if (strv_col_try_consume(pos, file_text_rem, '+')) {
+        unwrap((file_text_rem->base.count < 1 || strv_col_front(*file_text_rem) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '-')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '-')) {
         token->type = TOKEN_SINGLE_MINUS;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '*')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '/')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '*')) {
+        if (strv_col_try_consume(pos, file_text_rem, '/')) {
             msg(
                 DIAG_MISSING_CLOSE_MULTILINE, 
                 *pos, "unmatched closing `/*`\n"
@@ -219,20 +215,20 @@ static bool get_next_token(
         }
         token->type = TOKEN_ASTERISK;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '%')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '%')) {
         token->type = TOKEN_MODULO;
         return true;
-    } else if (file_text_rem->base.count > 1 && str_view_cstr_is_equal(str_view_slice(file_text_rem->base, 0, 2), "//")) {
-        str_view_col_consume_until(pos, file_text_rem, '\n');
+    } else if (file_text_rem->base.count > 1 && strv_is_equal(strv_slice(file_text_rem->base, 0, 2), sv("//"))) {
+        strv_col_consume_until(pos, file_text_rem, '\n');
         trim_non_newline_whitespace(file_text_rem, pos);
         token->type = TOKEN_COMMENT;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '/')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '*')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '/')) {
+        if (strv_col_try_consume(pos, file_text_rem, '*')) {
             Pos_vec pos_stack = {0};
             vec_append(&a_token, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {
-                Str_view temp_text = file_text_rem->base;
+                Strv temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
                     msg(
                         DIAG_MISSING_CLOSE_MULTILINE, 
@@ -241,14 +237,14 @@ static bool get_next_token(
                     return false;
                 }
 
-                if (str_view_try_consume(&temp_text, '/') && str_view_try_consume(&temp_text, '*')) {
+                if (strv_try_consume(&temp_text, '/') && strv_try_consume(&temp_text, '*')) {
                     vec_append(&a_token, &pos_stack, *pos);
-                    str_view_col_consume_count(pos, file_text_rem, 2);
-                } else if (str_view_try_consume(&temp_text, '*') && str_view_try_consume(&temp_text, '/')) {
+                    strv_col_consume_count(pos, file_text_rem, 2);
+                } else if (strv_try_consume(&temp_text, '*') && strv_try_consume(&temp_text, '/')) {
                     vec_rem_last(&pos_stack);
-                    str_view_col_consume_count(pos, file_text_rem, 2);
+                    strv_col_consume_count(pos, file_text_rem, 2);
                 } else {
-                    str_view_col_consume(pos, file_text_rem);
+                    strv_col_consume(pos, file_text_rem);
                 }
             }
 
@@ -257,8 +253,8 @@ static bool get_next_token(
             token->type = TOKEN_SLASH;
         }
         return true;
-    } else if (str_view_col_front(*file_text_rem) == '&') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_and);
+    } else if (strv_col_front(*file_text_rem) == '&') {
+        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_and);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_AND;
             return true;
@@ -270,8 +266,8 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_front(*file_text_rem) == '^') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_xor);
+    } else if (strv_col_front(*file_text_rem) == '^') {
+        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_xor);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_XOR;
             return true;
@@ -284,8 +280,8 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_front(*file_text_rem) == '|') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_or);
+    } else if (strv_col_front(*file_text_rem) == '|') {
+        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_or);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_OR;
             return true;
@@ -297,18 +293,18 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, ':')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, ':')) {
         token->type = TOKEN_COLON;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '!')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '!')) {
+        if (strv_col_try_consume(pos, file_text_rem, '=')) {
             token->type = TOKEN_NOT_EQUAL;
             return true;
         }
         token->type = TOKEN_NOT;
         return true;
-    } else if (str_view_col_front(*file_text_rem) == '=') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_equal);
+    } else if (strv_col_front(*file_text_rem) == '=') {
+        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_equal);
         if (equals.base.count == 1) {
             token->type = TOKEN_SINGLE_EQUAL;
             return true;
@@ -320,52 +316,52 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '>')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '>')) {
+        if (strv_col_try_consume(pos, file_text_rem, '=')) {
             token->type = TOKEN_GREATER_OR_EQUAL;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, '>')) {
+        } else if (strv_col_try_consume(pos, file_text_rem, '>')) {
             token->type = TOKEN_SHIFT_RIGHT;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, ')')) {
+        } else if (strv_col_try_consume(pos, file_text_rem, ')')) {
             token->type = TOKEN_CLOSE_GENERIC;
             return true;
         } else {
             token->type = TOKEN_GREATER_THAN;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '<')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '<')) {
+        if (strv_col_try_consume(pos, file_text_rem, '=')) {
             token->type = TOKEN_LESS_OR_EQUAL;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, '<')) {
+        } else if (strv_col_try_consume(pos, file_text_rem, '<')) {
             token->type = TOKEN_SHIFT_LEFT;
             return true;
         } else {
             token->type = TOKEN_LESS_THAN;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '[')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '[')) {
         token->type = TOKEN_OPEN_SQ_BRACKET;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ']')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, ']')) {
         token->type = TOKEN_CLOSE_SQ_BRACKET;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '\'')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '\'')) {
         token->type = TOKEN_CHAR_LITERAL;
 
-        Str_view_col result = {0};
-        if (!str_view_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
-            // TODO: expected failure case
-            todo();
+        Strv_col result = {0};
+        if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
+            msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
+            return false;
         }
-        unwrap(str_view_col_consume(pos, file_text_rem));
+        unwrap(strv_col_consume(pos, file_text_rem));
 
         token->text = result.base;
 
         return true;
-    } else if (str_view_col_front(*file_text_rem) == '.') {
-        Str_view_col dots = str_view_col_consume_while(pos, file_text_rem, is_dot);
+    } else if (strv_col_front(*file_text_rem) == '.') {
+        Strv_col dots = strv_col_consume_while(pos, file_text_rem, is_dot);
         if (dots.base.count == 1) {
             token->type = TOKEN_SINGLE_DOT;
             return true;
@@ -380,16 +376,20 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '\n')) {
+    } else if (strv_col_try_consume(pos, file_text_rem, '\n')) {
         token->type = TOKEN_NEW_LINE;
         return true;
     } else {
-        unreachable("unknown symbol: %c (%x)\n", str_view_col_front(*file_text_rem), str_view_col_front(*file_text_rem));
+        String buf = {0};
+        string_extend_strv(&a_token, &buf, sv("unknown symbol: "));
+        vec_append(&a_token, &buf, strv_col_front(*file_text_rem));
+        msg_todo_strv(string_to_strv(buf), *pos);
+        return false;
     }
 }
 
 static Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = str_view_from_cstr(text), .type = token_type};
+    Token token = {.text = sv(text), .type = token_type};
     return token;
 }
 
@@ -397,10 +397,10 @@ static void test(const char* file_text, Tk_view expected) {
     (void) file_text;
     (void) expected;
     todo();
-    //Env env = {.file_text = str_view_from_cstr(file_text)};
+    //Env env = {.file_text = sv(file_text)};
 
     //Token_vec tokens = {0};
-    //if (!tokenize(&tokens, & (Str_view){0})) {
+    //if (!tokenize(&tokens, & (Strv){0})) {
     //    unreachable("");
     //}
     //Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
@@ -613,13 +613,13 @@ void tokenize_do_test(void) {
     test8();
 }
 
-bool tokenize(Token_vec* result, Str_view file_path) {
+bool tokenize(Token_vec* result, Strv file_path) {
     size_t prev_err_count = error_count;
     Token_vec tokens = {0};
 
-    Str_view* file_con = NULL;
+    Strv* file_con = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
-    Str_view_col curr_file_text = {.base = *file_con};
+    Strv_col curr_file_text = {.base = *file_con};
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token = {0};
@@ -641,12 +641,12 @@ bool tokenize(Token_vec* result, Str_view file_path) {
         if (token_is_binary(curr_token.type)) {
             Token next_token = {0};
             Pos temp_pos = pos;
-            Str_view_col temp_file_text = curr_file_text;
+            Strv_col temp_file_text = curr_file_text;
             if (get_next_token(&pos, &is_preced_space, &next_token, &curr_file_text, file_path)) {
                 if (!is_preced_space && next_token.type == TOKEN_SINGLE_EQUAL) {
                     // +=, *=, etc.
                     // append TOKEN_ASSIGN_BY_BIN, which will be followed by the binary operator
-                    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
+                    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
                 } else {
                     // put back the next token
                     pos = temp_pos;
@@ -658,7 +658,7 @@ bool tokenize(Token_vec* result, Str_view file_path) {
         vec_append(&a_main, &tokens, curr_token);
     }
 
-    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), TOKEN_EOF, pos}));
+    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
 
     *result = tokens;
     return error_count == prev_err_count;

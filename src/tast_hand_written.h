@@ -6,11 +6,7 @@
 #include <tast_forward_decl.h>
 #include <lang_type.h>
 
-#define LLVM_REGISTER_SYM_FMT LANG_TYPE_FMT"    "TAST_FMT
-
-#define TAST_FMT STR_VIEW_FMT
-
-#define llvm_register_sym_print(reg_sym) \
+#define ir_register_sym_print(reg_sym) \
     lang_type_print((reg_sym).lang_type), tast_print((reg_sym).tast)
 
 typedef struct {
@@ -19,9 +15,9 @@ typedef struct {
 } Struct_def_base;
 
 typedef struct {
-    Llvm_variable_def_vec members;
+    Ir_variable_def_vec members;
     Name name;
-} Llvm_struct_def_base;
+} Ir_struct_def_base;
 
 typedef struct {
     Lang_type lang_type;

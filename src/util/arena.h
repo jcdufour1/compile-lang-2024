@@ -39,12 +39,12 @@ size_t arena_get_total_capacity(const Arena* arena);
 
 size_t arena_get_total_usage(const Arena* arena);
 
-// will not return null string, unless count is one extra
+// will return null string (by allocating one byte more than count)
 static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t count) {
     if (!cstr) {
         return NULL;
     }
-    char* new_cstr = arena_alloc(arena, count);
+    char* new_cstr = arena_alloc(arena, count + 1);
     memcpy(new_cstr, cstr, count);
     return new_cstr;
 }
@@ -58,7 +58,7 @@ static inline char* arena_strndup_mut(Arena* arena, const char* cstr, size_t cou
 
 // will return null string
 static inline const char* arena_strdup(Arena* arena, const char* cstr) {
-    return arena_strndup(arena, cstr, strlen(cstr) + 1);
+    return arena_strndup(arena, cstr, strlen(cstr));
 }
 
 // will return null string

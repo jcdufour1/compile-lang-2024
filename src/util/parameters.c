@@ -1,5 +1,47 @@
-#include "parameters.h"
-#include "parser_utils.h"
+#include <parameters.h>
+#include <parser_utils.h>
+#include <file.h>
+
+static Strv compiler_exe_name;
+
+static void print_usage(void);
+
+Strv stop_after_print_internal(STOP_AFTER stop_after) {
+    switch (stop_after) {
+        case STOP_AFTER_NONE:
+            return sv("none");
+        case STOP_AFTER_GEN_IR:
+            return sv("gen_ir");
+        case STOP_AFTER_GEN_BACKEND_IR:
+            return sv("gen_backend_ir");
+        case STOP_AFTER_LOWER_S:
+            return sv("lower_s");
+        case STOP_AFTER_OBJ:
+            return sv("obj");
+        case STOP_AFTER_BIN:
+            return sv("bin");
+        case STOP_AFTER_RUN:
+            return sv("run");
+        case STOP_AFTER_COUNT:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+// TODO: remove this function?
+bool is_compiling(void) {
+    static_assert(
+        STOP_AFTER_COUNT == 7,
+        "exhausive handling of stop after states (not all states are explicitly handled)"
+    );
+    return params.stop_after == STOP_AFTER_RUN || params.stop_after == STOP_AFTER_BIN;
+}
+
+static void stop_after_set_if_none(STOP_AFTER set_to) {
+    if (params.stop_after == STOP_AFTER_NONE) {
+        params.stop_after = set_to;
+    }
+}
 
 static bool is_long_option(char** argv) {
     if (strlen(argv[0]) < 2) {
@@ -14,9 +56,9 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
-static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
+static Strv consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     if (*argc < 1) {
-        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, "%s\n", msg_if_missing);
+        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, FMT"\n", strv_print(msg_if_missing));
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -27,10 +69,10 @@ static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missi
     (*argc)--;
 
     if (curr_arg[0]) {
-        return curr_arg;
+        return sv(curr_arg);
     }
 
-    return consume_arg(argc, argv, "stray - or -- is not permitted");
+    return consume_arg(argc, argv, sv("stray - or -- is not permitted"));
 }
 
 typedef struct {
@@ -45,13 +87,15 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 60, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 67, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
+    {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
     {"missing-command-line-arg", DIAG_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true},
     {"file-could-not-open", DIAG_FILE_COULD_NOT_OPEN, LOG_ERROR, true},
     {"missing-close-double-quote", DIAG_MISSING_CLOSE_DOUBLE_QUOTE, LOG_ERROR, true},
+    {"missing-close-single-quote", DIAG_MISSING_CLOSE_SINGLE_QUOTE, LOG_ERROR, true},
     {"no-new-line-after-statement", DIAG_NO_NEW_LINE_AFTER_STATEMENT, LOG_ERROR, true},
     {"missing-close-par", DIAG_MISSING_CLOSE_PAR, LOG_ERROR, true},
     {"missing-close-curly-brace", DIAG_MISSING_CLOSE_CURLY_BRACE, LOG_ERROR, true},
@@ -98,7 +142,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"missing-close-multiline", DIAG_MISSING_CLOSE_MULTILINE, LOG_ERROR, true},
     {"invalid-count-struct-lit-args", DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, LOG_ERROR, true},
     {"missing-enum-arg", DIAG_MISSING_ENUM_ARG, LOG_ERROR, true},
-    {"enum-case-too-many-args", DIAG_ENUM_CASE_TOO_MANY_ARGS, LOG_ERROR, true},
+    {"enum-case-too-mopaque-args", DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, LOG_ERROR, true},
     {"void-enum-case-has-arg", DIAG_VOID_ENUM_CASE_HAS_ARG, LOG_ERROR, true},
     {"invalid-stmt-top-level", DIAG_INVALID_STMT_TOP_LEVEL, LOG_ERROR, true},
     {"invalid-function-callee", DIAG_INVALID_FUNCTION_CALLEE, LOG_ERROR, true},
@@ -107,6 +151,11 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"no-main-function", DIAG_NO_MAIN/*TODO: rename this to match string*/, LOG_WARNING, false},
     {"struct-like-recursion", DIAG_STRUCT_LIKE_RECURSION, LOG_ERROR, true},
     {"child-process-failure", DIAG_CHILD_PROCESS_FAILURE, LOG_FATAL, true},
+    {"no-input-files", DIAG_NO_INPUT_FILES, LOG_FATAL, true},
+    {"return-in-defer", DIAG_RETURN_IN_DEFER, LOG_ERROR, true},
+    {"break-out-of-defer", DIAG_BREAK_OUT_OF_DEFER, LOG_ERROR, true},
+    {"continue-out-of-defer", DIAG_CONTINUE_OUT_OF_DEFER, LOG_ERROR, true},
+    {"assignment-to-void", DIAG_ASSIGNMENT_TO_VOID, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -114,9 +163,9 @@ static const Expect_fail_pair expect_fail_pair[] = {
 static Expect_fail_str_to_curr_log_level 
 expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
 
-bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Str_view strv) {
+bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) {
     for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
-        if (str_view_is_equal(str_view_from_cstr(expect_fail_pair[idx].str), strv)) {
+        if (strv_is_equal(sv(expect_fail_pair[idx].str), strv)) {
             *type = expect_fail_pair[idx].type;
             *idx_result = idx;
             return true;
@@ -134,8 +183,8 @@ static size_t expect_fail_type_get_idx(DIAG_TYPE type) {
     unreachable("expect_fail_pair does not cover this DIAG_TYPE");
 }
 
-Str_view expect_fail_type_print_internal(DIAG_TYPE type) {
-    return str_view_from_cstr(expect_fail_pair[expect_fail_type_get_idx(type)].str);
+Strv expect_fail_type_print_internal(DIAG_TYPE type) {
+    return sv(expect_fail_pair[expect_fail_type_get_idx(type)].str);
 }
 
 static void expect_fail_str_to_curr_log_level_init(void) {
@@ -149,22 +198,53 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
     return expect_fail_str_to_curr_log_level_pair[expect_fail_type_get_idx(type)].curr_level;
 }
 
-static void parse_normal_option(int* argc, char*** argv) {
-    const char* curr_opt = consume_arg(argc, argv, "arg expected");
+static void parse_file_option(int* argc, char*** argv) {
+    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
-    if (0 == strcmp(curr_opt, "compile")) {
-        params.compile = true;
-        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile`"));
-    } else if (0 == strcmp(curr_opt, "compile-run")) {
-        params.compile = true;
-        params.run = true;
-        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
-    } else if (0 == strcmp(curr_opt, "dump-dot")) {
-        params.dump_dot = true;
-        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
-    } else {
-        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
-        exit(EXIT_CODE_FAIL);
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
+    switch (get_file_type(curr_opt)) {
+        case FILE_TYPE_OWN:
+            if (is_compiling()) {
+                msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
+                exit(EXIT_CODE_FAIL);
+            }
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            params.compile_own = true;
+            params.input_file_path = curr_opt;
+            break;
+        case FILE_TYPE_STATIC_LIB:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.static_libs, curr_opt);
+            break;
+        case FILE_TYPE_DYNAMIC_LIB:
+            if (is_compiling()) {
+                // TODO
+                todo();
+            }
+            vec_append(&a_main, &params.dynamic_libs, curr_opt);
+            break;
+        case FILE_TYPE_C:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.c_input_files, curr_opt);
+            break;
+        case FILE_TYPE_OBJECT:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.object_files, curr_opt);
+            break;
+        case FILE_TYPE_LOWER_S:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.lower_s_files, curr_opt);
+            break;
+        case FILE_TYPE_UPPER_S:
+            stop_after_set_if_none(STOP_AFTER_BIN);
+            vec_append(&a_main, &params.upper_s_files, curr_opt);
+            break;
+        default:
+            unreachable("");
     }
 }
 
@@ -184,85 +264,216 @@ static void set_backend(BACKEND backend) {
     unreachable("");
 }
 
-static void parse_long_option(int* argc, char*** argv) {
-    const char* curr_opt = consume_arg(argc, argv, "arg expected");
+typedef void(*Long_option_action)(Strv curr_opt);
 
-    if (0 == strcmp(curr_opt, "emit-llvm")) {
-        params.emit_llvm = true;
-    } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
-        Str_view backend = str_view_from_cstr(&curr_opt[strlen("backend")]);
-        if (!str_view_try_consume(&backend, '=') || backend.count < 1) {
-            log(LOG_FATAL, "expected =<backend> after `backend`");
-            exit(EXIT_CODE_FAIL);
-        }
+typedef struct {
+    const char* text;
+    const char* description;
+    Long_option_action action;
+    bool arg_expected;
+} Long_option_pair;
 
-        if (str_view_is_equal(backend, str_view_from_cstr("c"))) {
-            set_backend(BACKEND_C);
-        } else if (str_view_is_equal(backend, str_view_from_cstr("llvm"))) {
-            set_backend(BACKEND_LLVM);
-        } else {
-            log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", str_view_print(backend));
-            exit(EXIT_CODE_FAIL);
-        }
-    } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
-        params.all_errors_fatal = true;
-    } else if (0 == strcmp(curr_opt, "o")) {
-        params.output_file_path = str_view_from_cstr(consume_arg(argc, argv, "output file path was expected after `-o`"));
-    } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
-        Str_view error = str_view_from_cstr(&curr_opt[strlen("error")]);
-        if (!str_view_try_consume(&error, '=') || error.count < 1) {
-            log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
-            exit(EXIT_CODE_FAIL);
-        }
-        DIAG_TYPE type = {0};
-        size_t idx = 0;
-        if (!expect_fail_type_from_strv(&idx, &type, error)) {
-            msg(
-                DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
-                "invalid fail type `"STR_VIEW_FMT"`\n", str_view_print(error)
-            );
-            exit(EXIT_CODE_FAIL);
-        }
-        expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
-        params.error_opts_changed = true;
-    } else if (0 == strncmp(curr_opt, "log-level", strlen("log-level"))) {
-        Str_view log_level = str_view_from_cstr(&curr_opt[strlen("log-level")]);
-        if (!str_view_try_consume(&log_level, '=')) {
-            log(LOG_FATAL, "expected =<log level> after `log-level`");
-            exit(EXIT_CODE_FAIL);
-        }
-        if (str_view_is_equal(log_level, str_view_from_cstr("FETAL"))) {
-            params_log_level = LOG_FATAL;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("ERROR"))) {
-            params_log_level = LOG_ERROR;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("WARNING"))) {
-            params_log_level = LOG_WARNING;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("NOTE"))) {
-            params_log_level = LOG_NOTE;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("NOTE"))) {
-            params_log_level = LOG_NOTE;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("VERBOSE"))) {
-            params_log_level = LOG_VERBOSE;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("DEBUG"))) {
-            params_log_level = LOG_DEBUG;
-        } else if (str_view_is_equal(log_level, str_view_from_cstr("TRACE"))) {
-            params_log_level = LOG_TRACE;
-        } else {
-            log(LOG_FATAL, "log level `"STR_VIEW_FMT"` is not a supported log level\n", str_view_print(log_level));
-            exit(EXIT_CODE_FAIL);
-        }
+static void long_option_help(Strv curr_opt) {
+    (void) curr_opt;
+    print_usage();
+    exit(EXIT_CODE_SUCCESS);
+}
+
+static void long_option_l(Strv curr_opt) {
+    vec_append(&a_main, &params.l_flags, curr_opt);
+}
+
+static void long_option_backend(Strv curr_opt) {
+    Strv backend = curr_opt;
+    if (!strv_try_consume(&backend, '=') || backend.count < 1) {
+        log(LOG_FATAL, "expected =<backend> after `backend`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (strv_is_equal(backend, sv("c"))) {
+        set_backend(BACKEND_C);
+    } else if (strv_is_equal(backend, sv("llvm"))) {
+        set_backend(BACKEND_LLVM);
     } else {
-        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
+        log(LOG_FATAL, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
         exit(EXIT_CODE_FAIL);
     }
 }
 
-static void set_params_to_defaults(void) {
-    params.emit_llvm = false;
-    params.compile = false;
-    params.output_file_path = str_view_from_cstr("a.out");
+static void long_option_all_errors_fetal(Strv curr_opt) {
+    (void) curr_opt;
+    params.all_errors_fatal = true;
+}
 
+static void long_option_dump_backend_ir(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_GEN_BACKEND_IR;
+}
+
+static void long_option_upper_s(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_LOWER_S;
+}
+
+static void long_option_upper_c(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_OBJ;
+}
+
+static void long_option_dump_dot(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_GEN_IR;
+    params.dump_dot = true;
+}
+
+static void long_option_run(Strv curr_opt) {
+    (void) curr_opt;
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params for if statement below "
+        "(not all parameters are explicitly handled)"
+    );
+    // TODO: make enum for dump_lower_s, compile, etc.
+    if (params.stop_after == STOP_AFTER_NONE) {
+        log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!is_compiling()) {
+        log(
+            LOG_FATAL,
+            "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+    params.stop_after = STOP_AFTER_RUN;
+    // TODO: args after `--run` should be passed to the program being compiled and run
+}
+
+static void long_option_lower_o(Strv curr_opt) {
+    params.output_file_path = curr_opt;
+}
+
+static void long_option_upper_o0(Strv curr_opt) {
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O0;
+}
+
+static void long_option_upper_o2(Strv curr_opt) {
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O2;
+}
+
+static void long_option_error(Strv curr_opt) {
+    Strv error = curr_opt;
+    if (!strv_try_consume(&error, '=') || error.count < 1) {
+        log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    DIAG_TYPE type = {0};
+    size_t idx = 0;
+    if (!expect_fail_type_from_strv(&idx, &type, error)) {
+        msg(
+            DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
+            "invalid fail type `"FMT"`\n", strv_print(error)
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+    expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
+    params.error_opts_changed = true;
+}
+
+static void long_option_log_level(Strv curr_opt) {
+    Strv log_level = curr_opt;
+    if (!strv_try_consume(&log_level, '=')) {
+        log(LOG_FATAL, "expected =<log level> after `log-level`");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (strv_is_equal(log_level, sv("FETAL"))) {
+        params_log_level = LOG_FATAL;
+    } else if (strv_is_equal(log_level, sv("ERROR"))) {
+        params_log_level = LOG_ERROR;
+    } else if (strv_is_equal(log_level, sv("WARNING"))) {
+        params_log_level = LOG_WARNING;
+    } else if (strv_is_equal(log_level, sv("NOTE"))) {
+        params_log_level = LOG_NOTE;
+    } else if (strv_is_equal(log_level, sv("VERBOSE"))) {
+        params_log_level = LOG_VERBOSE;
+    } else if (strv_is_equal(log_level, sv("DEBUG"))) {
+        params_log_level = LOG_DEBUG;
+    } else if (strv_is_equal(log_level, sv("TRACE"))) {
+        params_log_level = LOG_TRACE;
+    } else {
+        log(LOG_FATAL, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
+        exit(EXIT_CODE_FAIL);
+    }
+}
+
+static_assert(
+    PARAMETERS_COUNT == 17,
+    "exhausive handling of params (not all parameters are explicitly handled)"
+);
+Long_option_pair long_options[] = {
+    {"help", "display usage", long_option_help, false},
+    {"l", "library name to link", long_option_l, true},
+    {"backend", "c or llvm", long_option_backend, true},
+    {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, false},
+    {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, false},
+    {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
+    {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
+    {"dump-dot", "stop compiling after IR has been generated, and dump .dot file", long_option_dump_dot, false},
+    {"run", "compile and run the program (TODO: remaining args will be passed to the program)", long_option_run, false},
+    {"o", "output file path", long_option_lower_o, true},
+    {"O0", "disable most optimizations", long_option_upper_o0, false},
+    {"O2", "enable optimizations", long_option_upper_o2, false},
+    {"error", "TODO", long_option_error, true},
+    {"set-log-level", "TODO", long_option_log_level, true},
+};
+
+// TODO: allow `-ooutput` as well as `-o output`
+static void parse_long_option(int* argc, char*** argv) {
+    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
+
+    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
+        Long_option_pair curr = long_options[idx];
+        if (strv_starts_with(curr_opt, sv(curr.text))) {
+            strv_consume_count(&curr_opt, sv(curr.text).count);
+            if (curr.arg_expected && curr_opt.count < 1) {
+                // TODO: try to avoid building string everytime
+                String buf = {0};
+                string_extend_strv(&a_print, &buf, sv("argument expected after `"));
+                string_extend_strv(&a_print, &buf, sv(curr.text));
+                string_extend_strv(&a_print, &buf, sv("`"));
+                curr.action(consume_arg(argc, argv, string_to_strv(buf)));
+            } else {
+                curr.action(curr_opt);
+            }
+            return;
+        }
+    }
+
+    log(LOG_FATAL, "invalid option: "FMT"\n", strv_print(curr_opt));
+    exit(EXIT_CODE_FAIL);
+}
+
+static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
+}
+
+static void print_usage(void) {
+    log(LOG_DEBUG, "%d\n", params_log_level);
+    msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
+    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options]\n", strv_print(compiler_exe_name));
+    msg(DIAG_INFO, POS_BUILTIN, "\n");
+    msg(DIAG_INFO, POS_BUILTIN, "options:\n");
+    // TODO: show `-o <file>` instead of `-o`, etc.
+    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
+        Long_option_pair curr = long_options[idx];
+        msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
+        msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
+        msg(DIAG_INFO, POS_BUILTIN, "\n");
+    }
 }
 
 void parse_args(int argc, char** argv) {
@@ -270,15 +481,63 @@ void parse_args(int argc, char** argv) {
     expect_fail_str_to_curr_log_level_init();
 
     // consume compiler executable name
-    consume_arg(&argc, &argv, "internal error");
+    compiler_exe_name = consume_arg(&argc, &argv, sv("internal error"));
 
     while (argc > 0) {
-        if (is_short_option(argv)) {
-            parse_long_option(&argc, &argv);
-        } else if (is_long_option(argv)) {
+        if (is_short_option(argv) || is_long_option(argv)) {
             parse_long_option(&argc, &argv);
         } else {
-            parse_normal_option(&argc, &argv);
+            parse_file_option(&argc, &argv);
+        }
+    }
+
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    if (
+        !params.compile_own &&
+        params.static_libs.info.count == 0 &&
+        params.c_input_files.info.count == 0 &&
+        params.object_files.info.count == 0 &&
+        params.lower_s_files.info.count == 0 &&
+        params.upper_s_files.info.count == 0
+    ) {
+        log(LOG_DEBUG, "%d\n", params_log_level);
+        print_usage();
+        msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    // set default output file path
+    if (params.output_file_path.count < 1) {
+        static_assert(
+            STOP_AFTER_COUNT == 7,
+            "exhausive handling of stop after states (not all states are explicitly handled)"
+        );
+        switch (params.stop_after) {
+            case STOP_AFTER_NONE:
+                unreachable("");
+            case STOP_AFTER_GEN_IR:
+                todo();
+            case STOP_AFTER_GEN_BACKEND_IR:
+                params.output_file_path = sv("test.c");
+                break;
+            case STOP_AFTER_LOWER_S:
+                params.output_file_path = sv("test.s");
+                break;
+            case STOP_AFTER_OBJ:
+                params.output_file_path = sv("test.o");
+                break;
+            case STOP_AFTER_BIN:
+                // fallthrough
+            case STOP_AFTER_RUN:
+                params.output_file_path = sv("a.out");
+                break;
+            case STOP_AFTER_COUNT:
+                unreachable("");
+            default:
+                unreachable("");
         }
     }
 }

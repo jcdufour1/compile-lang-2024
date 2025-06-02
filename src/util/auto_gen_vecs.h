@@ -4,7 +4,7 @@
 
 #include <auto_gen_util.h>
 
-static void gen_vec_from_strv(Str_view vec_name, Str_view item_name) {
+static void gen_vec_from_strv(Strv vec_name, Strv item_name) {
     String function = {0};
 
     string_extend_cstr(&gen_a, &function, "typedef struct {\n");
@@ -16,11 +16,11 @@ static void gen_vec_from_strv(Str_view vec_name, Str_view item_name) {
     extend_strv_first_upper(&function, vec_name);
     string_extend_cstr(&gen_a, &function, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void gen_vec_from_cstr(const char* vec_name, const char* item_name) {
-    gen_vec_from_strv(str_view_from_cstr(vec_name), str_view_from_cstr(item_name));
+    gen_vec_from_strv(sv(vec_name), sv(item_name));
 }
 
 static void gen_all_vecs_internal(void) {
@@ -43,7 +43,7 @@ static void gen_all_vecs(const char* file_path) {
     gen_gen("#include <vector.h>\n");
     gen_gen("#include <uast_forward_decl.h>\n");
     gen_gen("#include <tast_forward_decl.h>\n");
-    gen_gen("#include <llvm_forward_decl.h>\n");
+    gen_gen("#include <ir_forward_decl.h>\n");
 
     //gen_all_vecs_internal();
 

@@ -2,7 +2,7 @@
 #include <auto_gen_util.h>
 #include <auto_gen_tast.h>
 #include <auto_gen_uast.h>
-#include <auto_gen_llvm.h>
+#include <auto_gen_ir.h>
 #include <auto_gen_lang_type.h>
 
 // TODO: move todos to somewhere else
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     assert(!global_output);
     gen_all_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
     assert(!global_output);
-    gen_all_llvms(get_path(argv[1], "llvm_forward_decl.h"), false);
+    gen_all_irs(get_path(argv[1], "ir_forward_decl.h"), false);
     assert(!global_output);
 
     gen_all_vecs(get_path(argv[1], "vecs.h"));
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     gen_all_uasts(get_path(argv[1], "uast.h"), true);
     assert(!global_output);
 
-    gen_all_llvms(get_path(argv[1], "llvm.h"), true);
+    gen_all_irs(get_path(argv[1], "ir.h"), true);
     assert(!global_output);
 }
 

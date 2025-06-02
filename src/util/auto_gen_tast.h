@@ -14,8 +14,8 @@ typedef struct {
 
 typedef struct {
     bool is_topmost;
-    Str_view parent;
-    Str_view base;
+    Strv parent;
+    Strv base;
 } Tast_name;
 
 typedef struct Tast_type_ {
@@ -27,7 +27,7 @@ typedef struct Tast_type_ {
 static void extend_tast_name_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "TAST");
@@ -41,7 +41,7 @@ static void extend_tast_name_upper(String* output, Tast_name name) {
 static void extend_tast_name_lower(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_lower(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "tast");
@@ -55,7 +55,7 @@ static void extend_tast_name_lower(String* output, Tast_name name) {
 static void extend_tast_name_first_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         extend_strv_first_upper(output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "Tast");
@@ -70,7 +70,7 @@ static void extend_parent_tast_name_upper(String* output, Tast_name name) {
     todo();
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         unreachable("");
     } else {
         string_extend_cstr(&gen_a, output, "TAST");
@@ -84,7 +84,7 @@ static void extend_parent_tast_name_upper(String* output, Tast_name name) {
 static void extend_parent_tast_name_lower(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         string_extend_cstr(&gen_a, output, "tast");
         return;
     }
@@ -99,7 +99,7 @@ static void extend_parent_tast_name_lower(String* output, Tast_name name) {
 static void extend_parent_tast_name_first_upper(String* output, Tast_name name) {
     assert(name.parent.count > 0);
 
-    if (str_view_cstr_is_equal(name.parent, "tast")) {
+    if (strv_is_equal(name.parent, sv("tast"))) {
         string_extend_cstr(&gen_a, output, "Tast");
         return;
     }
@@ -112,7 +112,7 @@ static void extend_parent_tast_name_first_upper(String* output, Tast_name name) 
 }
 
 static Tast_name tast_name_new(const char* parent, const char* base, bool is_topmost) {
-    return (Tast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
+    return (Tast_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost};
 }
 
 static Tast_type tast_gen_block(const char* prefix) {
@@ -219,7 +219,7 @@ static Tast_type tast_gen_member_access(const char* prefix) {
     Tast_type access = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&access.members, "Lang_type", "lang_type");
-    append_member(&access.members, "Str_view", "member_name");
+    append_member(&access.members, "Strv", "member_name");
     append_member(&access.members, "Tast_expr*", "callee");
 
     return access;
@@ -270,8 +270,7 @@ static Tast_type tast_gen_string(const char* prefix) {
     const char* base_name = "string";
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Name", "name");
+    append_member(&string.members, "Strv", "data");
 
     return string;
 }
@@ -438,7 +437,7 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&chain.members, "Name", "alias_name");
-    append_member(&chain.members, "Str_view", "mod_path");
+    append_member(&chain.members, "Strv", "mod_path");
 
     return chain;
 }
@@ -448,7 +447,7 @@ static Tast_type tast_gen_import(const char* prefix) {
 
     append_member(&import.members, "Tast_block*", "block");
     append_member(&import.members, "Name", "alias_name");
-    append_member(&import.members, "Str_view", "path");
+    append_member(&import.members, "Strv", "path");
 
     return import;
 }
@@ -692,7 +691,7 @@ static void tast_gen_tast_forward_decl(Tast_type tast) {
     extend_tast_name_first_upper(&output, tast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void tast_gen_tast_struct_as(String* output, Tast_type tast) {
@@ -782,7 +781,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
 
     if (tast.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+            .type = sv("Pos"), .name = sv("pos")
         });
     }
 
@@ -790,7 +789,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
     extend_tast_name_first_upper(&output, tast.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
-    gen_gen(STRING_FMT"\n", string_print(output));
+    gen_gen(FMT"\n", string_print(output));
 }
 
 static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
@@ -836,7 +835,7 @@ static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
@@ -875,7 +874,7 @@ static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
     //} 
     string_extend_cstr(&gen_a, &function, "}");
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 void tast_gen_tast_unwrap(Tast_type tast) {
@@ -888,7 +887,7 @@ void tast_gen_tast_wrap(Tast_type tast) {
     tast_gen_internal_wrap(tast, true);
 }
 
-// TODO: deduplicate these functions (use same function for Llvm and Tast)
+// TODO: deduplicate these functions (use same function for Ir and Tast)
 static void tast_gen_print_forward_decl(Tast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         tast_gen_print_forward_decl(vec_at(&type.sub_types, idx));
@@ -902,17 +901,17 @@ static void tast_gen_print_forward_decl(Tast_type type) {
 
     string_extend_cstr(&gen_a, &function, "#define ");
     extend_tast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(tast) str_view_print(");
+    string_extend_cstr(&gen_a, &function, "_print(tast) strv_print(");
     extend_tast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(tast, 0))\n");
 
-    string_extend_cstr(&gen_a, &function, "Str_view ");
+    string_extend_cstr(&gen_a, &function, "Strv ");
     extend_tast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_tast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* tast, int recursion_depth);");
 
-    gen_gen(STRING_FMT"\n", string_print(function));
+    gen_gen(FMT"\n", string_print(function));
 }
 
 static void tast_gen_new_internal(Tast_type type, bool implementation) {
@@ -993,7 +992,7 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
@@ -1049,7 +1048,7 @@ static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";");
     }
 
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_tast_new_forward_decl(Tast_type tast) {

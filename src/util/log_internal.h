@@ -3,6 +3,7 @@
 
 extern LOG_LEVEL params_log_level;
 
+#define LOG_GREEN "\033[1;32m"
 #define LOG_BLUE "\033[1;34m"
 #define LOG_YELLOW "\033[1;33m"
 #define LOG_RED "\033[1;31m"
@@ -16,6 +17,8 @@ static inline const char* get_log_level_str(int log_level) {
             return "debug";
         case LOG_VERBOSE:
             return "debug";
+        case LOG_INFO:
+            return LOG_GREEN"info"LOG_NORMAL;
         case LOG_NOTE:
             return LOG_BLUE"note"LOG_NORMAL;
         case LOG_WARNING:
@@ -24,9 +27,9 @@ static inline const char* get_log_level_str(int log_level) {
             return LOG_RED"error"LOG_NORMAL;
         case LOG_FATAL:
             return LOG_RED"fatal error"LOG_NORMAL;
-        default:
-            abort();
     }
+    fprintf(stderr, "unreachable: uncovered log_level\n");
+    abort();
 }
 
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {

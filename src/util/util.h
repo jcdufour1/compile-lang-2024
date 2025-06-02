@@ -7,18 +7,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <str_view_struct.h>
+#include <strv_struct.h>
 #include <diag_type.h>
 
 typedef enum {
-    LOG_NEVER   = 0,
-    LOG_TRACE   = 1,
-    LOG_DEBUG   = 2,
-    LOG_VERBOSE = 3,
-    LOG_NOTE    = 4,
-    LOG_WARNING = 5,
-    LOG_ERROR   = 6,
-    LOG_FATAL   = 7,
+    LOG_NEVER = 0,
+    LOG_TRACE,
+    LOG_DEBUG,
+    LOG_VERBOSE,
+    LOG_INFO,
+    LOG_NOTE,
+    LOG_WARNING,
+    LOG_ERROR,
+    LOG_FATAL,
 } LOG_LEVEL;
 
 #ifndef MIN_LOG_LEVEL
@@ -27,21 +28,18 @@ typedef enum {
 
 typedef enum {
     EXIT_CODE_SUCCESS = 0,
-    EXIT_CODE_FAIL = 1,
-    EXIT_CODE_EXPECTED_FAIL = 2,
+    EXIT_CODE_FAIL,
+    EXIT_CODE_EXPECTED_FAIL,
 } EXIT_CODE;
 
 struct Env_;
 typedef struct Env_ Env;
 
 typedef struct {
-    Str_view file_path;
+    Strv file_path;
     uint32_t line;
     uint32_t column;
 } Pos;
-
-// TODO: make these constants upper case
-#define dummy_env (&(Env){0})
 
 #define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
 
@@ -79,14 +77,13 @@ __attribute__((format (printf, 5, 6)));
         abort(); \
     } while (0)
 
-#define BOOL_FMT "%s"
-
-static inline const char* bool_print(bool condition) {
-    if (condition) {
-        return "true";
-    }
-    return "false";
-}
+// TODO
+//static inline Strv bool_print(bool condition) {
+//    if (condition) {
+//        return sv("true");
+//    }
+//    return sv("false");
+//}
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -119,5 +116,7 @@ typedef size_t Scope_id;
 #define SCOPE_BUILTIN 0
 #define SCOPE_TOP_LEVEL 1
 #define SCOPE_NOT SIZE_MAX
+
+#define FMT "%.*s"
 
 #endif // UTIL_H

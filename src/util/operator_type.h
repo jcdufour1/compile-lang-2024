@@ -1,7 +1,7 @@
 #ifndef OPERATOR_TYPE_H
 #define OPERATOR_TYPE_H
 
-#include <str_view.h>
+#include <strv.h>
 #include <token.h>
 
 typedef enum {
@@ -26,52 +26,52 @@ typedef enum {
     BINARY_SHIFT_RIGHT,
 } BINARY_TYPE;
 
-static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
+static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
     switch (bin_type) {
         case BINARY_SINGLE_EQUAL:
-            return str_view_from_cstr("=");
+            return sv("=");
         case BINARY_SUB:
-            return str_view_from_cstr("-");
+            return sv("-");
         case BINARY_ADD:
-            return str_view_from_cstr("+");
+            return sv("+");
         case BINARY_MULTIPLY:
-            return str_view_from_cstr("*");
+            return sv("*");
         case BINARY_DIVIDE:
-            return str_view_from_cstr("/");
+            return sv("/");
         case BINARY_MODULO:
-            return str_view_from_cstr("%");
+            return sv("%");
         case BINARY_LESS_THAN:
-            return str_view_from_cstr("<");
+            return sv("<");
         case BINARY_LESS_OR_EQUAL:
-            return str_view_from_cstr("<=");
+            return sv("<=");
         case BINARY_GREATER_OR_EQUAL:
-            return str_view_from_cstr(">=");
+            return sv(">=");
         case BINARY_GREATER_THAN:
-            return str_view_from_cstr(">");
+            return sv(">");
         case BINARY_DOUBLE_EQUAL:
-            return str_view_from_cstr("==");
+            return sv("==");
         case BINARY_NOT_EQUAL:
-            return str_view_from_cstr("!=");
+            return sv("!=");
         case BINARY_BITWISE_XOR:
             // TODO: change to "^"
-            return str_view_from_cstr("xor");
+            return sv("xor");
         case BINARY_BITWISE_AND:
-            return str_view_from_cstr("&");
+            return sv("&");
         case BINARY_BITWISE_OR:
-            return str_view_from_cstr("|");
+            return sv("|");
         case BINARY_LOGICAL_AND:
-            return str_view_from_cstr("&&");
+            return sv("&&");
         case BINARY_LOGICAL_OR:
-            return str_view_from_cstr("||");
+            return sv("||");
         case BINARY_SHIFT_LEFT:
-            return str_view_from_cstr("<<");
+            return sv("<<");
         case BINARY_SHIFT_RIGHT:
-            return str_view_from_cstr(">>");
+            return sv(">>");
     }
     unreachable("");
 }
 
-#define binary_type_print(bin_type) str_view_print(binary_type_to_str_view(bin_type))
+#define binary_type_print(bin_type) strv_print(binary_type_to_strv(bin_type))
 
 typedef enum {
     UNARY_DEREF,
@@ -80,22 +80,22 @@ typedef enum {
     UNARY_NOT,
 } UNARY_TYPE;
 
-static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
+static inline Strv unary_type_to_strv(UNARY_TYPE unary_type) {
     switch (unary_type) {
         case UNARY_DEREF:
-            return str_view_from_cstr("deref");
+            return sv("deref");
         case UNARY_REFER:
-            return str_view_from_cstr("refer");
+            return sv("refer");
         case UNARY_UNSAFE_CAST:
-            return str_view_from_cstr("unsafe_cast");
+            return sv("unsafe_cast");
         case UNARY_NOT:
-            return str_view_from_cstr("!");
+            return sv("!");
     }
     unreachable("");
 }
 
 BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type);
 
-#define unary_type_print(unary_type) str_view_print(unary_type_to_str_view(unary_type))
+#define unary_type_print(unary_type) strv_print(unary_type_to_strv(unary_type))
 
 #endif // OPERATOR_TYPE_H

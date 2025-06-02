@@ -1,7 +1,7 @@
 #ifndef ULANG_TYPE_HAND_WRITTEN
 #define ULANG_TYPE_HAND_WRITTEN
 
-#include <str_view.h>
+#include <strv.h>
 #include <vector.h>
 #include <name.h>
 
@@ -21,7 +21,7 @@ static inline Ulang_type_atom ulang_type_atom_new(Uname str, int16_t pointer_dep
 
 static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth) {
     return ulang_type_atom_new(
-        uname_new((Name) {0}/* TODO */, str_view_from_cstr(cstr), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+        uname_new((Name) {0}/* TODO */, sv(cstr), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
         pointer_depth
     );
 }

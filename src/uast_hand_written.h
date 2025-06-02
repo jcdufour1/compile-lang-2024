@@ -6,9 +6,7 @@
 #include <tast_forward_decl.h>
 #include <lang_type.h>
 
-#define UAST_FMT STR_VIEW_FMT
-
-#define llvm_register_sym_print(reg_sym) \
+#define ir_register_sym_print(reg_sym) \
     lang_type_print((reg_sym).lang_type), tast_print((reg_sym).tast)
 
 typedef struct {
@@ -17,6 +15,6 @@ typedef struct {
     Name name;
 } Ustruct_def_base;
 
-#define ustruct_def_base_print(base) str_view_print(ustruct_def_base_print_internal(base, 0))
+#define ustruct_def_base_print(base) strv_print(ustruct_def_base_print_internal(base, 0))
 
 #endif // UAST_HAND_WRITTEN_H

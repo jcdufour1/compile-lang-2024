@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <util.h>
-#include <str_view.h>
+#include <strv.h>
 #include <vector.h>
 #include <assert.h>
 #include <inttypes.h>
@@ -16,9 +16,7 @@ typedef struct {
     char* buf;
 } String;
 
-#define STRING_FMT STR_VIEW_FMT
-
-#define string_print(string) str_view_print(string_to_strv(string))
+#define string_print(string) strv_print(string_to_strv(string))
 
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
@@ -78,30 +76,30 @@ static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     return string;
 }
 
-static inline String string_new_from_strv(Arena* arena, Str_view str_view) {
+static inline String string_new_from_strv(Arena* arena, Strv strv) {
     String string = {0};
-    for (size_t idx = 0; idx < str_view.count; idx++) {
-        vec_append(arena, &string, str_view_at(str_view, idx));
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        vec_append(arena, &string, strv_at(strv, idx));
     }
     return string;
 }
 
-static inline void string_extend_strv(Arena* arena, String* string, Str_view str_view) {
-    for (size_t idx = 0; idx < str_view.count; idx++) {
-        vec_append(arena, string, str_view_at(str_view, idx));
+static inline void string_extend_strv(Arena* arena, String* string, Strv strv) {
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        vec_append(arena, string, strv_at(strv, idx));
     }
 }
 
-static inline void string_extend_strv_indent(Arena* arena, String* string, Str_view str_view, size_t indent) {
+static inline void string_extend_strv_indent(Arena* arena, String* string, Strv strv, size_t indent) {
     for (size_t idx = 0; idx < indent; idx++) {
         // TODO: should this always be done this way?
         vec_append(arena, string, '-');
     }
-    string_extend_strv(arena, string, str_view);
+    string_extend_strv(arena, string, strv);
 }
 
 static inline void string_extend_cstr_indent(Arena* arena, String* string, const char* cstr, size_t indent) {
-    string_extend_strv_indent(arena, string, str_view_from_cstr(cstr), indent);
+    string_extend_strv_indent(arena, string, sv(cstr), indent);
 }
 
 static inline void string_add_int(Arena* arena, String* string, int num) {
@@ -111,23 +109,23 @@ static inline void string_add_int(Arena* arena, String* string, int num) {
     string_extend_cstr(arena, string, num_str);
 }
 
-static inline void string_extend_strv_in_sym(Arena* arena, String* string, Str_view str_view, char opening_symbol, char closing_symbol) {
+static inline void string_extend_strv_in_sym(Arena* arena, String* string, Strv strv, char opening_symbol, char closing_symbol) {
     vec_append(arena, string, opening_symbol);
-    string_extend_strv(arena, string, str_view);
+    string_extend_strv(arena, string, strv);
     vec_append(arena, string, closing_symbol);
 }
 
-static inline void string_extend_strv_in_par(Arena* arena, String* string, Str_view str_view) {
-    string_extend_strv_in_sym(arena, string, str_view, '(', ')');
+static inline void string_extend_strv_in_par(Arena* arena, String* string, Strv strv) {
+    string_extend_strv_in_sym(arena, string, strv, '(', ')');
 }
 
-static inline void string_extend_strv_in_gtlt(Arena* arena, String* string, Str_view str_view) {
-    string_extend_strv_in_sym(arena, string, str_view, '<', '>');
+static inline void string_extend_strv_in_gtlt(Arena* arena, String* string, Strv strv) {
+    string_extend_strv_in_sym(arena, string, strv, '<', '>');
 }
 
-static inline Str_view string_to_strv(const String string) {
-    Str_view str_view = {.str = string.buf, .count = string.info.count};
-    return str_view;
+static inline Strv string_to_strv(const String string) {
+    Strv strv = {.str = string.buf, .count = string.info.count};
+    return strv;
 }
 
 static inline String string_clone(Arena* new_arena, String string) {
@@ -137,7 +135,7 @@ static inline String string_clone(Arena* new_arena, String string) {
 }
 
 static inline const char* string_to_cstr(Arena* arena, String string) {
-    return str_view_to_cstr(arena, string_to_strv(string));
+    return strv_to_cstr(arena, string_to_strv(string));
 }
 
 #endif // NEWSTRING_H

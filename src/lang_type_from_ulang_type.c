@@ -39,8 +39,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 bool name_from_uname(Name* new_name, Uname name) {
     if (name.mod_alias.base.count < 1) {
         Uast_def* result = NULL;
-        if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
-            *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
+        if (usymbol_lookup(&result, name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
+            *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
             return true;
         }
         *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.mod_alias.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
@@ -49,9 +49,6 @@ bool name_from_uname(Name* new_name, Uname name) {
 
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
-        log(LOG_DEBUG, "name_from_uname path 2\n");
-        log(LOG_DEBUG, TAST_FMT"\n", uname_print(UNAME_MSG, name));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
         todo();
     }
 
@@ -94,12 +91,12 @@ Uname name_to_uname(Name name) {
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         (Pos) {0} /* TODO */,
         name_new(
-            (Str_view) {0},
-            util_literal_str_view_new(),
+            (Strv) {0},
+            util_literal_strv_new(),
             (Ulang_type_vec) {0},
             name.scope_id /* TODO */
         ),
-        name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
+        name_new((Strv) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return uname_new(new_alias->name, name.base, name.gen_args, name.scope_id);

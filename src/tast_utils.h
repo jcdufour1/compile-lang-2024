@@ -6,8 +6,6 @@
 #include <ulang_type.h>
 #include <ulang_type_get_pos.h>
 
-#define LANG_TYPE_FMT STR_VIEW_FMT
-
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
@@ -73,15 +71,15 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
     return vec;
 }
 
-Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
+Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
-Str_view tast_print_internal(const Tast* tast, int recursion_depth);
+Strv tast_print_internal(const Tast* tast, int recursion_depth);
 
-#define tast_print(root) str_view_print(tast_print_internal(root, 0))
+#define tast_print(root) strv_print(tast_print_internal(root, 0))
 
 #define tast_printf(tast) \
     do { \
-        log(LOG_NOTE, TAST_FMT"\n", tast_print(tast)); \
+        log(LOG_NOTE, FMT"\n", tast_print(tast)); \
     } while (0);
 
 static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operator) {
@@ -354,30 +352,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
     unreachable("");
 }
 
-static inline Name tast_literal_get_name(const Tast_literal* lit) {
-    switch (lit->type) {
-        case TAST_INT:
-            unreachable("");
-        case TAST_FLOAT:
-            unreachable("");
-        case TAST_STRING:
-            return tast_string_const_unwrap(lit)->name;
-        case TAST_VOID:
-            unreachable("");
-        case TAST_ENUM_TAG_LIT:
-            unreachable("");
-        case TAST_CHAR:
-            unreachable("");
-        case TAST_ENUM_LIT:
-            unreachable("");
-        case TAST_RAW_UNION_LIT:
-            unreachable("");
-        case TAST_FUNCTION_LIT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Name tast_expr_get_name(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
@@ -394,7 +368,7 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
         case TAST_FUNCTION_CALL:
             return tast_expr_get_name(tast_function_call_const_unwrap(expr)->callee);
         case TAST_LITERAL:
-            return tast_literal_get_name(tast_literal_const_unwrap(expr));
+            todo();
         case TAST_TUPLE:
             unreachable("");
         case TAST_ENUM_CALLEE:

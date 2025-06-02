@@ -6,6 +6,6 @@
 typedef struct {
     const char* str;
     size_t count;
-} Str_view;
+} Strv;
 
 #endif // STR_VIEW_STRUCT_H

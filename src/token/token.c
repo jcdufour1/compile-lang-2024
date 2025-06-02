@@ -1,305 +1,305 @@
 #include "token.h"
 #include "assert.h"
 
-Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
+Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
-            return str_view_from_cstr("nontype");
+            return sv("nontype");
         case TOKEN_SYMBOL:
             // TODO: change "`symbol`" in msg errors to "symbol"
-            return str_view_from_cstr("symbol");
+            return sv("symbol");
         case TOKEN_OPEN_PAR:
-            return str_view_from_cstr("(");
+            return sv("(");
         case TOKEN_CLOSE_PAR:
-            return str_view_from_cstr(")");
+            return sv(")");
         case TOKEN_OPEN_CURLY_BRACE:
-            return str_view_from_cstr("{");
+            return sv("{");
         case TOKEN_CLOSE_CURLY_BRACE:
-            return str_view_from_cstr("}");
+            return sv("}");
         case TOKEN_DOUBLE_QUOTE:
-            return str_view_from_cstr("\"");
+            return sv("\"");
         case TOKEN_SEMICOLON:
-            return str_view_from_cstr(";");
+            return sv(";");
         case TOKEN_COMMA:
-            return str_view_from_cstr(",");
+            return sv(",");
         case TOKEN_SINGLE_PLUS:
-            return str_view_from_cstr("+");
+            return sv("+");
         case TOKEN_SINGLE_MINUS:
-            return str_view_from_cstr("-");
+            return sv("-");
         case TOKEN_ASTERISK:
-            return str_view_from_cstr("*");
+            return sv("*");
         case TOKEN_STRING_LITERAL:
-            return str_view_from_cstr("string");
+            return sv("string");
         case TOKEN_INT_LITERAL:
-            return str_view_from_cstr("int literal");
+            return sv("int literal");
         case TOKEN_FLOAT_LITERAL:
-            return str_view_from_cstr("float literal");
+            return sv("float literal");
         case TOKEN_COLON:
-            return str_view_from_cstr(":");
+            return sv(":");
         case TOKEN_SINGLE_EQUAL:
-            return str_view_from_cstr("=");
+            return sv("=");
         case TOKEN_DOUBLE_EQUAL:
-            return str_view_from_cstr("==");
+            return sv("==");
         case TOKEN_SINGLE_DOT:
-            return str_view_from_cstr(".");
+            return sv(".");
         case TOKEN_DOUBLE_DOT:
-            return str_view_from_cstr("..");
+            return sv("..");
         case TOKEN_TRIPLE_DOT:
-            return str_view_from_cstr("...");
+            return sv("...");
         case TOKEN_LESS_THAN:
-            return str_view_from_cstr("<");
+            return sv("<");
         case TOKEN_LESS_OR_EQUAL:
-            return str_view_from_cstr("<=");
+            return sv("<=");
         case TOKEN_GREATER_THAN:
-            return str_view_from_cstr(">");
+            return sv(">");
         case TOKEN_SLASH:
-            return str_view_from_cstr("/");
+            return sv("/");
         case TOKEN_COMMENT:
-            return str_view_from_cstr("comment");
+            return sv("comment");
         case TOKEN_NOT_EQUAL:
-            return str_view_from_cstr("!=");
+            return sv("!=");
         case TOKEN_NOT:
-            return str_view_from_cstr("!");
+            return sv("!");
         case TOKEN_BITWISE_XOR:
-            return str_view_from_cstr("xor");
+            return sv("xor");
         case TOKEN_UNSAFE_CAST:
-            return str_view_from_cstr("unsafe_cast");
+            return sv("unsafe_cast");
         case TOKEN_VOID:
-            return str_view_from_cstr("void");
+            return sv("void");
         case TOKEN_FN:
-            return str_view_from_cstr("fn");
+            return sv("fn");
         case TOKEN_FOR:
-            return str_view_from_cstr("for");
+            return sv("for");
         case TOKEN_IF:
-            return str_view_from_cstr("if");
+            return sv("if");
         case TOKEN_RETURN:
-            return str_view_from_cstr("return");
+            return sv("return");
         case TOKEN_EXTERN:
-            return str_view_from_cstr("extern");
+            return sv("extern");
         case TOKEN_STRUCT:
-            return str_view_from_cstr("struct");
+            return sv("struct");
         case TOKEN_LET:
-            return str_view_from_cstr("let");
+            return sv("let");
         case TOKEN_IN:
-            return str_view_from_cstr("in");
+            return sv("in");
         case TOKEN_BREAK:
-            return str_view_from_cstr("break");
+            return sv("break");
         case TOKEN_NEW_LINE:
-            return str_view_from_cstr("newline");
+            return sv("newline");
         case TOKEN_RAW_UNION:
-            return str_view_from_cstr("unsafe_union");
+            return sv("unsafe_union");
         case TOKEN_ELSE:
-            return str_view_from_cstr("else");
+            return sv("else");
         case TOKEN_OPEN_SQ_BRACKET:
-            return str_view_from_cstr("[");
+            return sv("[");
         case TOKEN_CLOSE_SQ_BRACKET:
-            return str_view_from_cstr("]");
+            return sv("]");
         case TOKEN_CHAR_LITERAL:
-            return str_view_from_cstr("char");
+            return sv("char");
         case TOKEN_CONTINUE:
-            return str_view_from_cstr("continue");
+            return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
-            return str_view_from_cstr(">=");
+            return sv(">=");
         case TOKEN_TYPE_DEF:
-            return str_view_from_cstr("type");
+            return sv("type");
         case TOKEN_SWITCH:
-            return str_view_from_cstr("switch");
+            return sv("switch");
         case TOKEN_CASE:
-            return str_view_from_cstr("case");
+            return sv("case");
         case TOKEN_DEFAULT:
-            return str_view_from_cstr("default");
+            return sv("default");
         case TOKEN_ENUM:
-            return str_view_from_cstr("enum");
+            return sv("enum");
         case TOKEN_MODULO:
-            return str_view_from_cstr("%");
+            return sv("%");
         case TOKEN_BITWISE_AND:
-            return str_view_from_cstr("&");
+            return sv("&");
         case TOKEN_BITWISE_OR:
-            return str_view_from_cstr("|");
+            return sv("|");
         case TOKEN_LOGICAL_AND:
-            return str_view_from_cstr("&&");
+            return sv("&&");
         case TOKEN_LOGICAL_OR:
-            return str_view_from_cstr("||");
+            return sv("||");
         case TOKEN_SHIFT_LEFT:
-            return str_view_from_cstr("<<");
+            return sv("<<");
         case TOKEN_SHIFT_RIGHT:
-            return str_view_from_cstr(">>");
+            return sv(">>");
         case TOKEN_OPEN_GENERIC:
-            return str_view_from_cstr("(<");
+            return sv("(<");
         case TOKEN_CLOSE_GENERIC:
-            return str_view_from_cstr(">)");
+            return sv(">)");
         case TOKEN_IMPORT:
-            return str_view_from_cstr("import");
+            return sv("import");
         case TOKEN_DEF:
-            return str_view_from_cstr("def");
+            return sv("def");
         case TOKEN_EOF:
-            return str_view_from_cstr("end-of-file");
+            return sv("end-of-file");
         case TOKEN_ASSIGN_BY_BIN:
-            return str_view_from_cstr("assign-by-binary");
+            return sv("assign-by-binary");
         case TOKEN_MACRO:
-            return str_view_from_cstr("#");
+            return sv("#");
         case TOKEN_DEFER:
-            return str_view_from_cstr("defer");
+            return sv("defer");
         case TOKEN_COUNT:
             unreachable("");
     }
     unreachable("%d\n", token_type);
 }
 
-Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
+Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
-            return str_view_from_cstr("nontype");
+            return sv("nontype");
         case TOKEN_SYMBOL:
-            return str_view_from_cstr("sym");
+            return sv("sym");
         case TOKEN_OPEN_PAR:
-            return str_view_from_cstr("(");
+            return sv("(");
         case TOKEN_CLOSE_PAR:
-            return str_view_from_cstr(")");
+            return sv(")");
         case TOKEN_OPEN_CURLY_BRACE:
-            return str_view_from_cstr("{");
+            return sv("{");
         case TOKEN_CLOSE_CURLY_BRACE:
-            return str_view_from_cstr("}");
+            return sv("}");
         case TOKEN_DOUBLE_QUOTE:
-            return str_view_from_cstr("\"");
+            return sv("\"");
         case TOKEN_SEMICOLON:
-            return str_view_from_cstr(";");
+            return sv(";");
         case TOKEN_COMMA:
-            return str_view_from_cstr(",");
+            return sv(",");
         case TOKEN_SINGLE_PLUS:
-            return str_view_from_cstr("+");
+            return sv("+");
         case TOKEN_SINGLE_MINUS:
-            return str_view_from_cstr("-");
+            return sv("-");
         case TOKEN_ASTERISK:
-            return str_view_from_cstr("*");
+            return sv("*");
         case TOKEN_STRING_LITERAL:
-            return str_view_from_cstr("str");
+            return sv("str");
         case TOKEN_INT_LITERAL:
-            return str_view_from_cstr("int");
+            return sv("int");
         case TOKEN_FLOAT_LITERAL:
-            return str_view_from_cstr("float");
+            return sv("float");
         case TOKEN_COLON:
-            return str_view_from_cstr(":");
+            return sv(":");
         case TOKEN_SINGLE_EQUAL:
-            return str_view_from_cstr("=");
+            return sv("=");
         case TOKEN_DOUBLE_EQUAL:
-            return str_view_from_cstr("==");
+            return sv("==");
         case TOKEN_SINGLE_DOT:
-            return str_view_from_cstr(".");
+            return sv(".");
         case TOKEN_DOUBLE_DOT:
-            return str_view_from_cstr("..");
+            return sv("..");
         case TOKEN_TRIPLE_DOT:
-            return str_view_from_cstr("...");
+            return sv("...");
         case TOKEN_LESS_THAN:
-            return str_view_from_cstr("<");
+            return sv("<");
         case TOKEN_LESS_OR_EQUAL:
-            return str_view_from_cstr("<=");
+            return sv("<=");
         case TOKEN_GREATER_THAN:
-            return str_view_from_cstr(">");
+            return sv(">");
         case TOKEN_SLASH:
-            return str_view_from_cstr("/");
+            return sv("/");
         case TOKEN_COMMENT:
-            return str_view_from_cstr("comment");
+            return sv("comment");
         case TOKEN_NOT_EQUAL:
-            return str_view_from_cstr("!=");
+            return sv("!=");
         case TOKEN_NOT:
-            return str_view_from_cstr("!");
+            return sv("!");
         case TOKEN_BITWISE_XOR:
-            return str_view_from_cstr("xor");
+            return sv("xor");
         case TOKEN_UNSAFE_CAST:
-            return str_view_from_cstr("unsafe_cast");
+            return sv("unsafe_cast");
         case TOKEN_VOID:
-            return str_view_from_cstr("void");
+            return sv("void");
         case TOKEN_FN:
-            return str_view_from_cstr("fn");
+            return sv("fn");
         case TOKEN_FOR:
-            return str_view_from_cstr("for");
+            return sv("for");
         case TOKEN_IF:
-            return str_view_from_cstr("if");
+            return sv("if");
         case TOKEN_RETURN:
-            return str_view_from_cstr("return");
+            return sv("return");
         case TOKEN_EXTERN:
-            return str_view_from_cstr("extern");
+            return sv("extern");
         case TOKEN_STRUCT:
-            return str_view_from_cstr("struct");
+            return sv("struct");
         case TOKEN_LET:
-            return str_view_from_cstr("let");
+            return sv("let");
         case TOKEN_IN:
-            return str_view_from_cstr("in");
+            return sv("in");
         case TOKEN_BREAK:
-            return str_view_from_cstr("break");
+            return sv("break");
         case TOKEN_NEW_LINE:
-            return str_view_from_cstr("newline");
+            return sv("newline");
         case TOKEN_RAW_UNION:
-            return str_view_from_cstr("unsafe_union");
+            return sv("unsafe_union");
         case TOKEN_ELSE:
-            return str_view_from_cstr("else");
+            return sv("else");
         case TOKEN_OPEN_SQ_BRACKET:
-            return str_view_from_cstr("[");
+            return sv("[");
         case TOKEN_CLOSE_SQ_BRACKET:
-            return str_view_from_cstr("]");
+            return sv("]");
         case TOKEN_CHAR_LITERAL:
-            return str_view_from_cstr("char");
+            return sv("char");
         case TOKEN_CONTINUE:
-            return str_view_from_cstr("continue");
+            return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
-            return str_view_from_cstr(">=");
+            return sv(">=");
         case TOKEN_TYPE_DEF:
-            return str_view_from_cstr("type");
+            return sv("type");
         case TOKEN_SWITCH:
-            return str_view_from_cstr("switch");
+            return sv("switch");
         case TOKEN_CASE:
-            return str_view_from_cstr("case");
+            return sv("case");
         case TOKEN_DEFAULT:
-            return str_view_from_cstr("default");
+            return sv("default");
         case TOKEN_ENUM:
-            return str_view_from_cstr("enum");
+            return sv("enum");
         case TOKEN_MODULO:
-            return str_view_from_cstr("%");
+            return sv("%");
         case TOKEN_BITWISE_AND:
-            return str_view_from_cstr("&");
+            return sv("&");
         case TOKEN_BITWISE_OR:
-            return str_view_from_cstr("|");
+            return sv("|");
         case TOKEN_LOGICAL_AND:
-            return str_view_from_cstr("&&");
+            return sv("&&");
         case TOKEN_LOGICAL_OR:
-            return str_view_from_cstr("||");
+            return sv("||");
         case TOKEN_SHIFT_LEFT:
-            return str_view_from_cstr("<<");
+            return sv("<<");
         case TOKEN_SHIFT_RIGHT:
-            return str_view_from_cstr(">>");
+            return sv(">>");
         case TOKEN_OPEN_GENERIC:
-            return str_view_from_cstr("(<");
+            return sv("(<");
         case TOKEN_CLOSE_GENERIC:
-            return str_view_from_cstr(">)");
+            return sv(">)");
         case TOKEN_IMPORT:
-            return str_view_from_cstr("import");
+            return sv("import");
         case TOKEN_DEF:
-            return str_view_from_cstr("def");
+            return sv("def");
         case TOKEN_EOF:
-            return str_view_from_cstr("eof");
+            return sv("eof");
         case TOKEN_ASSIGN_BY_BIN:
-            return str_view_from_cstr("assign-by-binary");
+            return sv("assign-by-binary");
         case TOKEN_MACRO:
-            return str_view_from_cstr("#");
+            return sv("#");
         case TOKEN_DEFER:
-            return str_view_from_cstr("defer");
+            return sv("defer");
         case TOKEN_COUNT:
             unreachable("");
     }
     unreachable("%d\n", token_type);
 }
 
-Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
+Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     String buf = {0};
     vec_reset(&buf);
 
     switch (mode) {
         case TOKEN_MODE_LOG:
-            string_extend_strv(arena, &buf, token_type_to_str_view_log(token.type));
+            string_extend_strv(arena, &buf, token_type_to_strv_log(token.type));
             break;
         case TOKEN_MODE_MSG:
-            string_extend_strv(arena, &buf, token_type_to_str_view_msg(token.type));
+            string_extend_strv(arena, &buf, token_type_to_strv_msg(token.type));
             break;
         default:
             unreachable("");
@@ -402,7 +402,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         string_add_int(arena, &buf, token.pos.line);
     }
 
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
+    Strv strv = {.str = buf.buf, .count = buf.info.count};
+    return strv;
 }
 

@@ -6,7 +6,12 @@
 // TODO: alignment in arena
 // TODO: use mmap instead of malloc
 
+// TODO: fix bug when set to 1
+#ifdef NDEBUG
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
+#else
+#define ARENA_DEFAULT_CAPACITY 1 // this is to catch bugs with the arena, strv functions, etc.
+#endif // NDEBUG
 
 /*
 static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_items, size_t size_each_item) {

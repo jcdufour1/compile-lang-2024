@@ -45,7 +45,7 @@ static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
 
 // TODO: move this function
 static inline bool name_is_equal(Name a, Name b) {
-    if (!str_view_is_equal(a.mod_path, b.mod_path) || !str_view_is_equal(a.base, b.base)) {
+    if (!strv_is_equal(a.mod_path, b.mod_path) || !strv_is_equal(a.base, b.base)) {
         return false;
     }
 
@@ -62,7 +62,7 @@ static inline bool name_is_equal(Name a, Name b) {
 }
 
 static inline bool uname_is_equal(Uname a, Uname b) {
-    if (!name_is_equal(a.mod_alias, b.mod_alias) || !str_view_is_equal(a.base, b.base)) {
+    if (!name_is_equal(a.mod_alias, b.mod_alias) || !strv_is_equal(a.base, b.base)) {
         return false;
     }
 

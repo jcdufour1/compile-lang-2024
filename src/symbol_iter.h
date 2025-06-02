@@ -66,7 +66,7 @@ static inline Alloca_iter all_tbl_iter_new(Scope_id scope_id) {
     return (Alloca_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->alloca_table};
 }
 
-static inline bool all_tbl_iter_next(Llvm** result, Alloca_iter* iter) {
+static inline bool all_tbl_iter_next(Ir** result, Alloca_iter* iter) {
     bool was_found = false;
     while (!was_found && iter->bucket_idx < iter->tbl.capacity) {
         if (iter->tbl.table_tasts[iter->bucket_idx].status == SYM_TBL_OCCUPIED) {
