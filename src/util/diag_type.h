@@ -68,6 +68,7 @@ typedef enum {
     DIAG_RETURN_IN_DEFER,
     DIAG_BREAK_OUT_OF_DEFER,
     DIAG_CONTINUE_OUT_OF_DEFER,
+    DIAG_ASSIGNMENT_TO_VOID,
 
     // count of cases for static asserts
     DIAG_COUNT,

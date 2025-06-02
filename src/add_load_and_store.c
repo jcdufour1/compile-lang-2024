@@ -1065,7 +1065,9 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 }
 
 static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
-    (void) new_block;
+    if (old_sym->base.lang_type.type == LANG_TYPE_VOID) {
+        msg(DIAG_ASSIGNMENT_TO_VOID, old_sym->pos, "cannot assign to void\n");
+    }
 
     Tast_def* var_def_ = NULL;
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
