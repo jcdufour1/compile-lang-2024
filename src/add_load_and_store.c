@@ -283,23 +283,23 @@ static void load_block_stmts(
             old_rtn_def = rtn_def;
             rtn_def = local_rtn_def;
 
-            Tast_return* actual_rtn = tast_return_new(pos /* TODO*/, rtn_val, true);
+            Tast_return* actual_rtn = tast_return_new(pos, rtn_val, true);
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, rtn_val);
+                Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
                 defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             }
             break;
@@ -315,7 +315,6 @@ static void load_block_stmts(
             todo();
     }
 
-    // TODO: have one is_rtning per stack item instead of per function?
     if (defered_collections.coll_stack.info.count < 1) {
         defered_collections.is_rtning = is_rtning->name;
     }
@@ -456,9 +455,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
         .members = members,
         .name = util_literal_name_new()
     };
-    // todo: remove untyped things here
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-    // TODO: consider collisions with generated structs and user defined structs
     sym_tbl_add(tast_struct_def_wrap(struct_def));
     return lang_type_struct_new(lang_type_pos, lang_type_atom_new(base.name, 0));
 }
@@ -692,7 +689,7 @@ static Ir_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
     }
     return ir_struct_def_new(
         old_def->pos,
-        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
+        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name})
     );
 }
 
@@ -702,7 +699,7 @@ static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def
     vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
     return ir_struct_def_new(
         old_def->pos,
-        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
+        ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name})
     );
 }
 
