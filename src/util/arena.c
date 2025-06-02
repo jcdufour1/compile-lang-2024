@@ -6,6 +6,7 @@
 // TODO: alignment in arena
 // TODO: use mmap instead of malloc
 
+// TODO: fix bug when set to 1
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
 
 /*

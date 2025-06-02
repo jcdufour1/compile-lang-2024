@@ -177,7 +177,8 @@ bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
                 );
             }
 
-            msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix 0x%c\n", curr_char);
+            msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix `0%c`\n", curr_char);
+            // TODO: expected failure case
             return false;
         }
 
@@ -468,29 +469,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
 Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
     return name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-}
-
-// TODO: inline this function
-Name get_storage_location(Name sym_name) {
-    Tast_def* sym_def_;
-    if (!symbol_lookup(&sym_def_, sym_name)) {
-        symbol_log(LOG_DEBUG, sym_name.scope_id);
-        unreachable("symbol definition for symbol "FMT" not found\n", name_print(NAME_LOG, sym_name));
-    }
-
-    switch (sym_def_->type) {
-        case TAST_VARIABLE_DEF: {
-            Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
-            Ir* result = NULL;
-            if (!alloca_lookup(&result,  sym_def->name)) {
-                unreachable("");
-            }
-            return ir_tast_get_name(result);
-        }
-        default:
-            unreachable(FMT, tast_def_print(sym_def_));
-    }
-    unreachable("");
 }
 
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {

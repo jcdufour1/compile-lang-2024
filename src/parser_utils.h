@@ -75,8 +75,6 @@ Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debu
 #define util_literal_name_new() \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, sv(""))
 
-Name get_storage_location(Name sym_name);
-
 bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 
 static inline bool ishex(int c) {

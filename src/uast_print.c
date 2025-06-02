@@ -43,13 +43,6 @@ Strv uast_unary_print_internal(const Uast_unary* unary, int indent) {
     return string_to_strv(buf);
 }
 
-// TODO: remove
-void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
-    extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
-    string_extend_strv(&a_print, string, serialize_name( base.name));
-    string_extend_cstr(&a_print, string, "\n");
-}
-
 Strv uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     String buf = {0};
 

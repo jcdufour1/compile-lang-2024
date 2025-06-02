@@ -1,0 +1,8 @@
+
+fn get_void() {
+}
+
+fn main() i32 {
+    let num void = get_void()
+    return 0
+}
