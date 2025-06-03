@@ -57,16 +57,6 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
-uint64_t sizeof_expr(const Tast_expr* expr) {
-    (void) env;
-    switch (expr->type) {
-        case TAST_LITERAL:
-            return sizeof_lang_type( tast_literal_get_lang_type(tast_literal_const_unwrap(expr)));
-        default:
-            unreachable("");
-    }
-}
-
 uint64_t sizeof_def(const Tast_def* def) {
     (void) env;
     switch (def->type) {
@@ -78,18 +68,6 @@ uint64_t sizeof_def(const Tast_def* def) {
             return sizeof_struct_def_base( &tast_enum_def_const_unwrap(def)->base);
         case TAST_RAW_UNION_DEF:
             return sizeof_struct_def_base( &tast_raw_union_def_const_unwrap(def)->base);
-        default:
-            unreachable("");
-    }
-}
-
-uint64_t sizeof_stmt(const Tast_stmt* stmt) {
-    (void) env;
-    switch (stmt->type) {
-        case TAST_EXPR:
-            return sizeof_expr( tast_expr_const_unwrap(stmt));
-        case TAST_DEF:
-            return sizeof_def( tast_def_const_unwrap(stmt));
         default:
             unreachable("");
     }

@@ -11,6 +11,7 @@
 #include <token_type_to_operator_type.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
+#include <sizeof.h>
 
 typedef enum {
     DEFER_PARENT_OF_FUN,
@@ -930,6 +931,7 @@ static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
     return enum_tag_lit->name;
 }
 
+// TODO: rename to load_int
 static Name load_number(Tast_int* old_lit) {
     Ir_int* number = ir_int_new(
         old_lit->pos,
@@ -1277,6 +1279,12 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             return load_deref(new_block, old_unary);
         case UNARY_REFER:
             return load_ptr_expr(new_block, old_unary->child);
+        case UNARY_SIZEOF: {
+            uint32_t size = sizeof_lang_type(rm_tuple_lang_type(
+                tast_expr_get_lang_type(old_unary->child), old_unary->pos
+            ));
+            return load_number(tast_int_new(old_unary->pos, size, lang_type_new_usize()));
+        }
         case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {
                 case LANG_TYPE_ENUM:

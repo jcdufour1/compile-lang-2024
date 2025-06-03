@@ -2530,7 +2530,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 ulang_type_new_usize()
             )));
             assert(*result);
-            todo();
+            break;
         default:
             unreachable(FMT, token_print(TOKEN_MODE_LOG, oper));
     }
