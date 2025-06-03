@@ -1734,14 +1734,11 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
     }
 }
 
-static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens, Scope_id scope_id) {
-    Token if_start_token;
-    unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
-
+static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_chain, Token if_token, Tk_view* tokens, Scope_id scope_id) {
     Uast_if_vec ifs = {0};
 
-    Uast_if* if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
-    if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
+    Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
+    if_stmt = uast_if_new(if_token.pos, NULL, NULL);
     
     switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
         case PARSE_EXPR_OK:
@@ -1761,9 +1758,9 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
 
     if_else_chain_consume_newline(tokens);
     while (try_consume(NULL, tokens, TOKEN_ELSE)) {
-        if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
+        if_stmt = uast_if_new(if_token.pos, NULL, NULL);
 
-        if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
+        if (try_consume(&if_token, tokens, TOKEN_IF)) {
             switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
                 case PARSE_EXPR_OK:
                     break;
@@ -1776,9 +1773,9 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
                     unreachable("");
             }
         } else {
-            if_stmt->condition = uast_condition_new(if_start_token.pos, NULL);
+            if_stmt->condition = uast_condition_new(if_token.pos, NULL);
             if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
-                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
+                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
             ));
         }
 
@@ -1790,8 +1787,68 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
         if_else_chain_consume_newline(tokens);
     }
 
-    *if_else_chain = uast_if_else_chain_new(if_start_token.pos, ifs);
+    *if_else_chain = uast_if_else_chain_new(if_token.pos, ifs);
     return PARSE_OK;
+}
+
+static PARSE_STATUS parse_if_let_internal(Uast_if_else_chain** if_else_chain, Token if_token, Tk_view* tokens, Scope_id scope_id) {
+    unwrap(try_consume(NULL, tokens, TOKEN_LET));
+    Scope_id case_scope = symbol_collection_new(scope_id);
+
+    Uast_expr* case_operand = NULL;
+    switch (parse_generic_binary(&case_operand, tokens, scope_id, 0, 0)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "");
+            return PARSE_ERROR;
+    }
+
+    Token eq_token = {0};
+    if (!try_consume(&eq_token, tokens, TOKEN_SINGLE_EQUAL)) {
+        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SINGLE_EQUAL);
+        return PARSE_ERROR;
+    }
+
+    Uast_expr* operand = NULL;
+    switch (parse_expr(&operand, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "");
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(case_operand));
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(operand));
+    // TODO
+
+    Uast_case* curr_case = uast_case_new(
+        if_token.pos,
+        false,
+        case_operand,
+        uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))))/*TODO*/,
+        case_scope
+    );
+    //vec_append(&a_main, &cases, curr_case);
+
+    todo()
+}
+
+static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens, Scope_id scope_id) {
+    Token if_start_token;
+    unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
+
+    if (tk_view_front(*tokens).type == TOKEN_LET) {
+        return parse_if_let_internal(if_else_chain, if_start_token, tokens, scope_id);
+    }
+    return parse_if_else_chain_internal(if_else_chain, if_start_token, tokens, scope_id);
 }
 
 
