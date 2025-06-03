@@ -617,30 +617,18 @@ static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos)
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
             unwrap(symbol_lookup(&lang_type_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            Tast_variable_def_vec members = {0};
 
-            Tast_variable_def* tag = tast_variable_def_new(
-                lang_type_pos,
-                lang_type_new_usize(),
-                false,
-                util_literal_name_new_prefix(sv("rm_tuple_lang_type_raw_union_tag"))
-            );
-            vec_append(&a_main, &members, tag);
+            sym_tbl_add(lang_type_def_);
 
-            Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
-                lang_type_pos,
-                tast_raw_union_def_unwrap(lang_type_def_)->base
-            );
-            item_type_def->base.name = item_type_def->base.name;
-            sym_tbl_add(tast_raw_union_def_wrap(item_type_def));
+            load_raw_union_def(tast_raw_union_def_unwrap(lang_type_def_));
 
-            load_raw_union_def(item_type_def);
-            return llvm_lang_type_raw_union_const_wrap(llvm_lang_type_raw_union_new(
+            Tast_def* new_def = NULL;
+            unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
+            //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_type_def)));
+            log(LOG_DEBUG, FMT"\n", tast_def_print(new_def));
+            return llvm_lang_type_struct_const_wrap(llvm_lang_type_struct_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(lang_type_get_atom(
-                    LANG_TYPE_MODE_LOG,
-                    tast_raw_union_def_get_lang_type(item_type_def)
-                ))
+                rm_tuple_lang_type_atom(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type))
             ));
         }
         case LANG_TYPE_TUPLE:

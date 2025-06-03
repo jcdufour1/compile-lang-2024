@@ -23,8 +23,6 @@ static inline Pos llvm_lang_type_get_pos(Llvm_lang_type llvm_lang_type) {
             return llvm_lang_type_primitive_get_pos(llvm_lang_type_primitive_const_unwrap(llvm_lang_type));
         case LLVM_LANG_TYPE_STRUCT:
             return llvm_lang_type_struct_const_unwrap(llvm_lang_type).pos;
-        case LLVM_LANG_TYPE_RAW_UNION:
-            return llvm_lang_type_raw_union_const_unwrap(llvm_lang_type).pos;
         case LLVM_LANG_TYPE_TUPLE:
             return llvm_lang_type_tuple_const_unwrap(llvm_lang_type).pos;
         case LLVM_LANG_TYPE_VOID:

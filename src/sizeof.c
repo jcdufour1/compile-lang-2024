@@ -88,11 +88,6 @@ uint64_t sizeof_llvm_lang_type(Llvm_lang_type lang_type) {
             unwrap(symbol_lookup(&def, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def(def);
         }
-        case LLVM_LANG_TYPE_RAW_UNION: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
         case LLVM_LANG_TYPE_VOID:
             return 0;
         case LLVM_LANG_TYPE_TUPLE:

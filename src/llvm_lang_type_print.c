@@ -11,9 +11,6 @@ void extend_llvm_lang_type_tag_to_string(String* buf, LLVM_LANG_TYPE_TYPE type) 
         case LLVM_LANG_TYPE_STRUCT:
             string_extend_cstr(&a_print, buf, "struct");
             return;
-        case LLVM_LANG_TYPE_RAW_UNION:
-            string_extend_cstr(&a_print, buf, "raw_union");
-            return;
         case LLVM_LANG_TYPE_TUPLE:
             string_extend_cstr(&a_print, buf, "tuple");
             return;
@@ -147,8 +144,6 @@ void extend_llvm_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Llvm_l
             extend_llvm_lang_type_to_string(string, mode, *fn.return_type);
             goto end;
         }
-        case LLVM_LANG_TYPE_RAW_UNION:
-            // fallthrough
         case LLVM_LANG_TYPE_STRUCT:
             // fallthrough
             assert(!strv_is_equal(llvm_lang_type_get_atom(mode, llvm_lang_type).str.base, sv("void")));

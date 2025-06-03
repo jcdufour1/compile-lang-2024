@@ -166,12 +166,6 @@ static inline Llvm_lang_type_atom llvm_lang_type_get_atom(LANG_TYPE_MODE mode, L
             assert(atom.str.base.count > 0);
             return atom;
         }
-        case LLVM_LANG_TYPE_RAW_UNION: {
-            Llvm_lang_type_atom atom = llvm_lang_type_raw_union_const_unwrap(llvm_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
         case LLVM_LANG_TYPE_TUPLE: {
             unreachable("");
         }
@@ -226,9 +220,6 @@ static inline void llvm_lang_type_set_atom(Llvm_lang_type* llvm_lang_type, Llvm_
             return;
         case LLVM_LANG_TYPE_STRUCT:
             llvm_lang_type_struct_unwrap(llvm_lang_type)->atom = atom;
-            return;
-        case LLVM_LANG_TYPE_RAW_UNION:
-            llvm_lang_type_raw_union_unwrap(llvm_lang_type)->atom = atom;
             return;
         case LLVM_LANG_TYPE_TUPLE:
             unreachable("");

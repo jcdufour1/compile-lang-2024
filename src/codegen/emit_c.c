@@ -70,12 +70,6 @@ static void c_extend_type_call_str(String* output, Llvm_lang_type llvm_lang_type
                 string_extend_cstr(&a_main, output, "*");
             }
             return;
-        case LLVM_LANG_TYPE_RAW_UNION:
-            ir_extend_name(output, llvm_lang_type_raw_union_const_unwrap(llvm_lang_type).atom.str);
-            for (size_t idx = 0; idx < (size_t)llvm_lang_type_raw_union_const_unwrap(llvm_lang_type).atom.pointer_depth; idx++) {
-                string_extend_cstr(&a_main, output, "*");
-            }
-            return;
         case LLVM_LANG_TYPE_VOID:
             llvm_lang_type = llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(llvm_lang_type_get_pos(llvm_lang_type)));
             string_extend_strv(&a_main, output, sv("void"));

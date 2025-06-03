@@ -221,8 +221,6 @@ static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
             return true;
         case LLVM_LANG_TYPE_PRIMITIVE:
             return false;
-        case LLVM_LANG_TYPE_RAW_UNION:
-            return true;
         case LLVM_LANG_TYPE_VOID:
             return false;
         case LLVM_LANG_TYPE_TUPLE:
