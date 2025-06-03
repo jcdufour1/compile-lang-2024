@@ -23,12 +23,12 @@ Llvm_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
         case IR_FLOAT:
             return ir_float_const_unwrap(lit)->lang_type;
         case IR_STRING:
-            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(ir_literal_get_pos(lit), llvm_lang_type_atom_new_from_cstr("u8", 1, 0))));
+            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 8, 1)));
         case IR_VOID:
             return llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(ir_literal_get_pos(lit)));
         case IR_FUNCTION_NAME:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
-            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(ir_literal_get_pos(lit), llvm_lang_type_atom_new_from_cstr("ptr", 1, 0))));
+            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 64/* TODO */, 1)));
     }
     unreachable("");
 }

@@ -145,15 +145,6 @@ static Llvm_lang_type_type llvm_lang_type_gen_float(const char* prefix) {
     return sym;
 }
 
-static Llvm_lang_type_type llvm_lang_type_gen_char(const char* prefix) {
-    const char* base_name = "char";
-    Llvm_lang_type_type sym = {.name = llvm_lang_type_name_new(prefix, base_name, false)};
-
-    append_member(&sym.members, "Llvm_lang_type_atom", "atom");
-
-    return sym;
-}
-
 static Llvm_lang_type_type llvm_lang_type_gen_opaque(const char* prefix) {
     const char* base_name = "opaque";
     Llvm_lang_type_type sym = {.name = llvm_lang_type_name_new(prefix, base_name, false)};
@@ -168,7 +159,6 @@ static Llvm_lang_type_type llvm_lang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Llvm_lang_type_type llvm_lang_type = {.name = llvm_lang_type_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_char(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_signed_int(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_unsigned_int(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_float(base_name));

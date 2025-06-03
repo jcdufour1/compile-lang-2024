@@ -5,8 +5,6 @@
 
 static inline Pos llvm_lang_type_primitive_get_pos(Llvm_lang_type_primitive llvm_lang_type) {
     switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_CHAR:
-            return llvm_lang_type_char_const_unwrap(llvm_lang_type).pos;
         case LLVM_LANG_TYPE_SIGNED_INT:
             return llvm_lang_type_signed_int_const_unwrap(llvm_lang_type).pos;
         case LLVM_LANG_TYPE_UNSIGNED_INT:

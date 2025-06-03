@@ -37,15 +37,13 @@ uint64_t sizeof_llvm_primitive(Llvm_lang_type_primitive primitive) {
     }
 
     switch (primitive.type) {
-        case LANG_TYPE_SIGNED_INT:
+        case LLVM_LANG_TYPE_SIGNED_INT:
             return llvm_lang_type_signed_int_const_unwrap(primitive).bit_width/8;
-        case LANG_TYPE_UNSIGNED_INT:
+        case LLVM_LANG_TYPE_UNSIGNED_INT:
             return llvm_lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
-        case LANG_TYPE_FLOAT:
+        case LLVM_LANG_TYPE_FLOAT:
             return llvm_lang_type_float_const_unwrap(primitive).bit_width/8;
-        case LANG_TYPE_CHAR:
-            return 1;
-        case LANG_TYPE_OPAQUE:
+        case LLVM_LANG_TYPE_OPAQUE:
             unreachable("");
     }
     unreachable("");

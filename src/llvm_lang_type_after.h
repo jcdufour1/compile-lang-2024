@@ -9,13 +9,6 @@ int64_t strv_to_int64_t(const Pos pos, Strv strv);
 
 static inline Llvm_lang_type_atom llvm_lang_type_primitive_get_atom_normal(Llvm_lang_type_primitive llvm_lang_type) {
     switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_CHAR: {
-            // TODO: remove llvm_lang_type_atom from llvm_lang_type_char?
-            Llvm_lang_type_atom atom = llvm_lang_type_char_const_unwrap(llvm_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            // TODO: remove this if statement
-            return atom;
-        }
         case LLVM_LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
@@ -68,8 +61,6 @@ static inline Llvm_lang_type_atom llvm_lang_type_primitive_get_atom_normal(Llvm_
 
 static inline Llvm_lang_type_atom llvm_lang_type_primitive_get_atom_c(Llvm_lang_type_primitive llvm_lang_type) {
     switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_CHAR:
-            return llvm_lang_type_char_const_unwrap(llvm_lang_type).atom;
         case LLVM_LANG_TYPE_FLOAT: {
             String string = {0};
             uint32_t bit_width = llvm_lang_type_float_const_unwrap(llvm_lang_type).bit_width;
@@ -206,9 +197,6 @@ static inline Llvm_lang_type_atom llvm_lang_type_get_atom(LANG_TYPE_MODE mode, L
 // TODO: remove this function?
 static inline void llvm_lang_type_primitive_set_atom(Llvm_lang_type_primitive* llvm_lang_type, Llvm_lang_type_atom atom) {
     switch (llvm_lang_type->type) {
-        case LLVM_LANG_TYPE_CHAR:
-            llvm_lang_type_char_unwrap(llvm_lang_type)->atom = atom;
-            return;
         case LLVM_LANG_TYPE_SIGNED_INT:
             llvm_lang_type_signed_int_unwrap(llvm_lang_type)->bit_width = strv_to_int64_t(
                 POS_BUILTIN,
@@ -275,8 +263,6 @@ static inline int16_t llvm_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE 
 
 static inline int32_t llvm_lang_type_primitive_get_bit_width(Llvm_lang_type_primitive llvm_lang_type) {
     switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_CHAR:
-            unreachable("");
         case LLVM_LANG_TYPE_UNSIGNED_INT:
             return llvm_lang_type_unsigned_int_const_unwrap(llvm_lang_type).bit_width;
         case LLVM_LANG_TYPE_SIGNED_INT:

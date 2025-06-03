@@ -550,10 +550,12 @@ static Llvm_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
 static Llvm_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR: {
+            // TODO: should this always be signed
             Lang_type_char lang_char = lang_type_char_const_unwrap(lang_type);
-            return llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(
+            return llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(lang_char.atom)
+                8,
+                rm_tuple_lang_type_atom(lang_char.atom).pointer_depth
             ));
         }
         case LANG_TYPE_SIGNED_INT: {
