@@ -1,4 +1,4 @@
-compile::stdout 15
+compile::stdout 21
 sizeof nothing = 0
 sizeof num = 4
 sizeof(num) = 4
@@ -14,6 +14,12 @@ sizeof token2 = 24
 sizeof token3 = 16
 sizeof token4 = 16
 sizeof token5 = 16
+sizeof raw1 = 16
+sizeof raw2 = 16
+sizeof raw3 = 4
+sizeof raw4 = 4
+sizeof raw5 = 4
+sizeof raw6 = 1
 
 compile::stderr 0
 
