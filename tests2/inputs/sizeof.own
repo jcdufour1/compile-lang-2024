@@ -61,6 +61,36 @@ type Token5 enum {
     num2 i32
 }
 
+type Raw1 raw_union {
+    num1 i64
+    num2 Div1
+}
+
+type Raw2 raw_union {
+    num2 Div1
+    num1 i64
+}
+
+type Raw3 raw_union {
+    num1 i32
+    num2 i16
+}
+
+type Raw4 raw_union {
+    num1 i16
+    num2 i32
+}
+
+type Raw5 raw_union {
+    num1 i32
+    num2 i32
+}
+
+type Raw6 raw_union {
+    num1 i1
+    num2 i3
+}
+
 type Token enum {
     num i64
     num i64
@@ -100,6 +130,19 @@ fn main() i32 {
     io.printf("sizeof token4 = %zu\n", sizeof token4)
     let token5 Token5 = .num1(8)
     io.printf("sizeof token5 = %zu\n", sizeof token5)
+
+    let raw1 Raw1
+    io.printf("sizeof raw1 = %zu\n", sizeof raw1)
+    let raw2 Raw2
+    io.printf("sizeof raw2 = %zu\n", sizeof raw2)
+    let raw3 Raw3
+    io.printf("sizeof raw3 = %zu\n", sizeof raw3)
+    let raw4 Raw4
+    io.printf("sizeof raw4 = %zu\n", sizeof raw4)
+    let raw5 Raw5
+    io.printf("sizeof raw5 = %zu\n", sizeof raw5)
+    let raw6 Raw6
+    io.printf("sizeof raw6 = %zu\n", sizeof raw6)
 
     return 0
 }
