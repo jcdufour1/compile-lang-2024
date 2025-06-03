@@ -3,15 +3,77 @@
 
 #include <tast.h>
 #include <lang_type_after.h>
+#include <llvm_lang_type_after.h>
 #include <ulang_type.h>
 #include <ulang_type_get_pos.h>
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
+static inline bool llvm_lang_type_is_equal(Llvm_lang_type a, Llvm_lang_type b);
+
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
 static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type);
     
+static inline bool llvm_lang_type_atom_is_equal(Llvm_lang_type_atom a, Llvm_lang_type_atom b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
+    return name_is_equal(a.str, b.str);
+}
+
+static inline bool llvm_lang_type_vec_is_equal(Llvm_lang_type_vec a, Llvm_lang_type_vec b) {
+    if (a.info.count != b.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < a.info.count; idx++) {
+        if (!llvm_lang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static inline bool llvm_lang_type_tuple_is_equal(Llvm_lang_type_tuple a, Llvm_lang_type_tuple b) {
+    return llvm_lang_type_vec_is_equal(a.llvm_lang_types, b.llvm_lang_types);
+}
+
+static inline bool llvm_lang_type_fn_is_equal(Llvm_lang_type_fn a, Llvm_lang_type_fn b) {
+    return llvm_lang_type_tuple_is_equal(a.params, b.params) && llvm_lang_type_is_equal(*a.return_type, *b.return_type);
+}
+
+static inline bool llvm_lang_type_is_equal(Llvm_lang_type a, Llvm_lang_type b) {
+    if (a.type != b.type) {
+        return false;
+    }
+    
+    switch (a.type) {
+        case LLVM_LANG_TYPE_PRIMITIVE:
+            // fallthrough
+        case LLVM_LANG_TYPE_STRUCT:
+            // fallthrough
+        case LLVM_LANG_TYPE_RAW_UNION:
+            // fallthrough
+        case LLVM_LANG_TYPE_ENUM:
+            // fallthrough
+        case LLVM_LANG_TYPE_VOID:
+            return llvm_lang_type_atom_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
+        case LLVM_LANG_TYPE_TUPLE:
+            return llvm_lang_type_tuple_is_equal(llvm_lang_type_tuple_const_unwrap(a), llvm_lang_type_tuple_const_unwrap(b));
+        case LLVM_LANG_TYPE_FN:
+            return llvm_lang_type_fn_is_equal(llvm_lang_type_fn_const_unwrap(a), llvm_lang_type_fn_const_unwrap(b));
+    }
+    unreachable("");
+}
+
+static inline Llvm_lang_type_vec llvm_lang_type_vec_from_llvm_lang_type(Llvm_lang_type llvm_lang_type) {
+    Llvm_lang_type_vec vec = {0};
+    vec_append(&a_main, &vec, llvm_lang_type);
+    return vec;
+}
+
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;

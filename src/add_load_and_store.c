@@ -572,8 +572,14 @@ static Llvm_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive
                 num.pointer_depth
             ));
         }
-        case LANG_TYPE_FLOAT:
-            todo();
+        case LANG_TYPE_FLOAT: {
+            Lang_type_float num = lang_type_float_const_unwrap(lang_type);
+            return llvm_lang_type_float_const_wrap(llvm_lang_type_float_new(
+                lang_type_pos,
+                num.bit_width,
+                num.pointer_depth
+            ));
+        }
         case LANG_TYPE_OPAQUE: {
             Lang_type_opaque opaque = lang_type_opaque_const_unwrap(lang_type);
             return llvm_lang_type_opaque_const_wrap(llvm_lang_type_opaque_new(
@@ -583,6 +589,22 @@ static Llvm_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive
         }
     }
     unreachable("");
+}
+
+static Llvm_lang_type_fn rm_tuple_lang_type_fn(Lang_type_fn lang_type, Pos lang_type_pos) {
+    Llvm_lang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
+    *new_rtn_type = rm_tuple_lang_type(*lang_type.return_type, lang_type_pos);
+
+    Llvm_lang_type_vec params = {0};
+    for (size_t idx = 0; idx < lang_type.params.lang_types.info.count; idx++) {
+        vec_append(&a_main, &params, rm_tuple_lang_type(vec_at(&lang_type.params.lang_types, idx), lang_type_pos));
+    }
+
+    return llvm_lang_type_fn_new(
+        lang_type_pos,
+        llvm_lang_type_tuple_new(lang_type_pos, params),
+        new_rtn_type
+    );
 }
 
 static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
@@ -632,7 +654,7 @@ static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos)
         case LANG_TYPE_VOID:
             return llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(lang_type_pos));
         case LANG_TYPE_FN:
-            todo();
+            return llvm_lang_type_fn_const_wrap(rm_tuple_lang_type_fn(lang_type_fn_const_unwrap(lang_type), lang_type_pos));
         default:
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
@@ -911,12 +933,12 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     load_variable_def(new_block, new_var);
 
     Tast_def* struct_def_ = NULL;
-    unwrap(symbol_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->lang_type)));
-    Tast_struct_def* struct_def = tast_struct_def_unwrap(struct_def_);
+    unwrap(symbol_lookup(&struct_def_, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos))));
+    Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
-        Name memb_name = vec_at(&struct_def->base.members, idx)->name;
-        Lang_type memb_lang_type = vec_at(&struct_def->base.members, idx)->lang_type;
+        Name memb_name = vec_at(&base.members, idx)->name;
+        Lang_type memb_lang_type = vec_at(&base.members, idx)->lang_type;
         Tast_member_access* access = tast_member_access_new(
             old_lit->pos,
             memb_lang_type,
@@ -1039,6 +1061,13 @@ static Name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
         )
     )));
 
+    log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(tast_struct_literal_new(
+        old_lit->pos,
+        members,
+        util_literal_name_new(),
+        new_lang_type
+    )));
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
     // this is an actual tagged enum
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
@@ -1341,26 +1370,25 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
 
             Name new_child = load_expr(new_block, old_unary->child);
             (void) new_child;
-            todo();
-            //if (lang_type_is_equal(old_unary->lang_type, lang_type_from_get_name(new_child))) {
-            //    return new_child;
-            //}
+            if (llvm_lang_type_is_equal(rm_tuple_lang_type(old_unary->lang_type, old_unary->pos), lang_type_from_get_name(new_child))) {
+                return new_child;
+            }
 
-            //if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
-            //    return new_child;
-            //}
+            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
+                return new_child;
+            }
 
-            //Ir_unary* new_unary = ir_unary_new(
-            //    old_unary->pos,
-            //    new_child,
-            //    old_unary->token_type,
-            //    old_unary->lang_type,
-            //    util_literal_name_new()
-            //);
-            //unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary)))));
+            Ir_unary* new_unary = ir_unary_new(
+                old_unary->pos,
+                new_child,
+                old_unary->token_type,
+                rm_tuple_lang_type(old_unary->lang_type, old_unary->pos),
+                util_literal_name_new()
+            );
+            unwrap(alloca_add(ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary)))));
 
-            //vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary))));
-            //return new_unary->name;
+            vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary))));
+            return new_unary->name;
         case UNARY_NOT:
             unreachable("not should not still be present here");
     }
@@ -1387,6 +1415,8 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
     switch (def->type) {
         case TAST_STRUCT_DEF: {
             Tast_struct_def* struct_def = tast_struct_def_unwrap(def);
+            log(LOG_DEBUG, FMT"\n", tast_struct_def_print(struct_def));
+            log(LOG_DEBUG, FMT"\n", strv_print(old_access->member_name));
             struct_index = tast_get_member_index(&struct_def->base, old_access->member_name);
             break;
         }
@@ -1764,6 +1794,7 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 
     Pos pos = old_assign->pos;
 
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(old_assign->lhs));
     Name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Name new_rhs = load_expr(new_block, old_assign->rhs);
 
