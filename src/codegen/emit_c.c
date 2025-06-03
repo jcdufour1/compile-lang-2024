@@ -83,9 +83,6 @@ static void c_extend_type_call_str(String* output, Llvm_lang_type llvm_lang_type
         case LLVM_LANG_TYPE_PRIMITIVE:
             extend_llvm_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, llvm_lang_type);
             return;
-        case LLVM_LANG_TYPE_ENUM:
-            ir_extend_name(output, llvm_lang_type_enum_const_unwrap(llvm_lang_type).atom.str);
-            return;
     }
     unreachable("");
 }

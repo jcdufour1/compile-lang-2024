@@ -160,12 +160,6 @@ static inline Llvm_lang_type_atom llvm_lang_type_get_atom(LANG_TYPE_MODE mode, L
             Llvm_lang_type_atom atom = llvm_lang_type_primitive_get_atom(mode, llvm_lang_type_primitive_const_unwrap(llvm_lang_type));
             return atom;
         }
-        case LLVM_LANG_TYPE_ENUM: {
-            Llvm_lang_type_atom atom = llvm_lang_type_enum_const_unwrap(llvm_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
         case LLVM_LANG_TYPE_STRUCT: {
             Llvm_lang_type_atom atom = llvm_lang_type_struct_const_unwrap(llvm_lang_type).atom;
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -229,9 +223,6 @@ static inline void llvm_lang_type_set_atom(Llvm_lang_type* llvm_lang_type, Llvm_
     switch (llvm_lang_type->type) {
         case LLVM_LANG_TYPE_PRIMITIVE:
             llvm_lang_type_primitive_set_atom( llvm_lang_type_primitive_unwrap(llvm_lang_type), atom);
-            return;
-        case LLVM_LANG_TYPE_ENUM:
-            llvm_lang_type_enum_unwrap(llvm_lang_type)->atom = atom;
             return;
         case LLVM_LANG_TYPE_STRUCT:
             llvm_lang_type_struct_unwrap(llvm_lang_type)->atom = atom;

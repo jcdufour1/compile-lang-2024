@@ -56,8 +56,6 @@ static inline bool llvm_lang_type_is_equal(Llvm_lang_type a, Llvm_lang_type b) {
             // fallthrough
         case LLVM_LANG_TYPE_RAW_UNION:
             // fallthrough
-        case LLVM_LANG_TYPE_ENUM:
-            // fallthrough
         case LLVM_LANG_TYPE_VOID:
             return llvm_lang_type_atom_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
         case LLVM_LANG_TYPE_TUPLE:

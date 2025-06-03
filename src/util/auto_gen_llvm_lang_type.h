@@ -195,15 +195,6 @@ static Llvm_lang_type_type llvm_lang_type_gen_raw_union(const char* prefix) {
     return sym;
 }
 
-static Llvm_lang_type_type llvm_lang_type_gen_enum(const char* prefix) {
-    const char* base_name = "enum";
-    Llvm_lang_type_type sym = {.name = llvm_lang_type_name_new(prefix, base_name, false)};
-
-    append_member(&sym.members, "Llvm_lang_type_atom", "atom");
-
-    return sym;
-}
-
 static Llvm_lang_type_type llvm_lang_type_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Llvm_lang_type_type sym = {.name = llvm_lang_type_name_new(prefix, base_name, false)};
@@ -227,7 +218,6 @@ static Llvm_lang_type_type llvm_lang_type_gen_llvm_lang_type(void) {
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_primitive(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_struct(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_raw_union(base_name));
-    vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_enum(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_tuple(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_void(base_name));
     vec_append(&gen_a, &llvm_lang_type.sub_types, llvm_lang_type_gen_fn(base_name));

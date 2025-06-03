@@ -225,8 +225,6 @@ static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
             return true;
         case LLVM_LANG_TYPE_VOID:
             return false;
-        case LLVM_LANG_TYPE_ENUM:
-            return true;
         case LLVM_LANG_TYPE_TUPLE:
             return true;
         case LLVM_LANG_TYPE_FN:
