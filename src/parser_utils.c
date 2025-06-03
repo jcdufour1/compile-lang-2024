@@ -613,12 +613,28 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
+// TODO: remove this function?
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     size_t result = 0;
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type( vec_at(&base.members, idx)->lang_type);
+        uint64_t curr_size = sizeof_lang_type(vec_at(&base.members, idx)->lang_type);
+        if (curr_size > size_result) {
+            size_result = curr_size;
+            result = idx;
+        }
+    }
+
+    return result;
+}
+
+size_t ir_struct_def_base_get_idx_largest_member(Ir_struct_def_base base) {
+    size_t result = 0;
+    uint64_t size_result = 0;
+
+    for (size_t idx = 0; idx < base.members.info.count; idx++) {
+        uint64_t curr_size = sizeof_llvm_lang_type(vec_at(&base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

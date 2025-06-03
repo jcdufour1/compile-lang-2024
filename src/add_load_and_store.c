@@ -102,7 +102,7 @@ static void if_for_add_cond_goto_internal(
     Name label_name_if_false
 );
 
-static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
+static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
 static Name load_symbol(Ir_block* new_block, Tast_symbol* old_symbol);
 
@@ -553,7 +553,7 @@ static Lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type
     return tast_struct_def_get_lang_type(struct_def);
 }
 
-static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
+static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_ENUM: {
             return rm_tuple_lang_type_enum(lang_type_enum_const_unwrap(lang_type), lang_type_pos);
@@ -646,7 +646,7 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
     Ir_alloca* alloca = ir_alloca_new(
         var_def->pos,
-        rm_tuple_lang_type(var_def->lang_type, var_def->pos),
+        var_def->lang_type,
         var_def->name_corr_param
     );
     alloca_add(ir_alloca_wrap(alloca));

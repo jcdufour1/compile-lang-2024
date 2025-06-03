@@ -6,6 +6,8 @@
 
 uint64_t sizeof_lang_type(Lang_type lang_type);
 
+uint64_t sizeof_llvm_lang_type(Llvm_lang_type lang_type);
+
 uint64_t sizeof_item(const Tast* item);
 
 uint64_t sizeof_struct(const Tast* struct_literal);
@@ -18,7 +20,7 @@ uint64_t ir_sizeof_item(const Ir* item);
 
 uint64_t sizeof_def(const Tast_def* def);
 
-uint64_t sizeof_lang_type(Lang_type lang_type);
+uint64_t sizeof_llvm_lang_type(Llvm_lang_type lang_type);
 
 uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base);
 

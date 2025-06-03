@@ -114,6 +114,8 @@ const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
+size_t ir_struct_def_base_get_idx_largest_member(Ir_struct_def_base base);
+
 // TODO: move to another file
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
