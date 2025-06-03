@@ -20,6 +20,16 @@ static inline Lang_type lang_type_new_usize(void) {
     ));
 }
 
+static inline Ulang_type ulang_type_new_usize(void) {
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(
+        (Ulang_type_atom) {
+            .str = uname_new((Name) {0}, sv("u64"/* TODO */), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+            .pointer_depth = 0
+        },
+        POS_BUILTIN
+    ));
+}
+
 size_t get_count_excape_seq(Strv strv);
 
 // \n excapes are actually stored as is in tokens, uast, tasts, and irs, but should be printed as \0a (depending on the backend)
