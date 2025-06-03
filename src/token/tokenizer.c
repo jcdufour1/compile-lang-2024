@@ -98,6 +98,7 @@ static bool get_next_token(
     token->pos.file_path = pos->file_path;
 
     if (isalpha(strv_col_front(*file_text_rem))) {
+        static_assert(TOKEN_COUNT == 69, "exhausive handling of token types (only keywords are explicitly handled)");
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
@@ -141,6 +142,8 @@ static bool get_next_token(
             token->type = TOKEN_IMPORT;
         } else if (strv_is_equal(text, sv("def"))) {
             token->type = TOKEN_DEF;
+        } else if (strv_is_equal(text, sv("sizeof"))) {
+            token->type = TOKEN_SIZEOF;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

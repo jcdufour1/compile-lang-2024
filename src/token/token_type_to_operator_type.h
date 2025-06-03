@@ -5,6 +5,7 @@
 #include <operator_type.h>
 
 static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
+    static_assert(TOKEN_COUNT == 69, "exhausive handling of token types (only binary tokens are handled)");
     switch (token_type) {
         case TOKEN_DOUBLE_EQUAL:
             return BINARY_DOUBLE_EQUAL;
@@ -51,6 +52,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
 }
 
 static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
+    static_assert(TOKEN_COUNT == 69, "exhausive handling of token types (only unary tokens are handled)");
     switch (token_type) {
         case TOKEN_UNSAFE_CAST:
             return UNARY_UNSAFE_CAST;
@@ -60,6 +62,8 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
             return UNARY_REFER;
         case TOKEN_NOT:
             return UNARY_NOT;
+        case TOKEN_SIZEOF:
+            return UNARY_SIZEOF;
         default:
             unreachable(FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }

@@ -494,6 +494,8 @@ static void emit_unary_suffix(String* output, const Ir_unary* unary) {
             unreachable("suffix not needed for UNARY_REFER");
         case UNARY_NOT:
             unreachable("not should not still be present here");
+        case UNARY_SIZEOF:
+            unreachable("sizeof should not still be present here");
     }
     unreachable("");
 }

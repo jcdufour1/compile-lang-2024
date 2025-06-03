@@ -1030,6 +1030,14 @@ bool try_set_unary_types_finish(
                 new_lang_type
             )));
             return true;
+        case UNARY_SIZEOF:
+            *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                unary_pos,
+                new_child,
+                unary_token_type,
+                lang_type_new_usize()
+            )));
+            return true;
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
             assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);

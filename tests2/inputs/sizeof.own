@@ -1,0 +1,105 @@
+
+type io import = std.io
+
+type TokenType enum {
+    num
+    str
+}
+
+type Div1 struct {
+    num1 i64
+    num2 i16
+}
+
+type Div2 struct {
+    num1 i16
+    num2 i64
+}
+
+type Div3 struct {
+    num1 i32
+    num2 i16
+}
+
+type Div4 struct {
+    num1 i16
+    num2 i32
+}
+
+type Div5 struct {
+    num1 i32
+    num2 i32
+}
+
+type Div6 struct {
+    num1 Div1
+    num2 i32
+}
+
+type Token1 enum {
+    num1 i64
+    num2 Div1
+}
+
+type Token2 enum {
+    num2 Div1
+    num1 i64
+}
+
+type Token3 enum {
+    num1 i32
+    num2 i16
+}
+
+type Token4 enum {
+    num1 i16
+    num2 i32
+}
+
+type Token5 enum {
+    num1 i32
+    num2 i32
+}
+
+type Token enum {
+    num i64
+    num i64
+}
+
+fn main() i32 {
+    let nothing void
+    io.printf("sizeof nothing = %zu\n", sizeof nothing)
+
+    let num i32 = 91
+    io.printf("sizeof num = %zu\n", sizeof num)
+    io.printf("sizeof(num) = %zu\n", sizeof(num))
+
+    let token_type TokenType = .num
+    io.printf("sizeof token_type = %zu\n", sizeof token_type)
+
+    let div1 Div1 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div1 = %zu\n", sizeof div1)
+    let div2 Div2 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div2 = %zu\n", sizeof div2)
+    let div3 Div3 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div3 = %zu\n", sizeof div3)
+    let div4 Div4 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div4 = %zu\n", sizeof div4)
+    let div5 Div5 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div5 = %zu\n", sizeof div5)
+    let div6 Div6 = {.num1 = {.num1 = 9, .num2 = 0}, .num2 = 6}
+    io.printf("sizeof div6 = %zu\n", sizeof div6)
+
+    let token1 Token1 = .num1(8)
+    io.printf("sizeof token1 = %zu\n", sizeof token1)
+    let token2 Token2 = .num1(8)
+    io.printf("sizeof token2 = %zu\n", sizeof token2)
+    let token3 Token3 = .num1(8)
+    io.printf("sizeof token3 = %zu\n", sizeof token3)
+    let token4 Token4 = .num1(8)
+    io.printf("sizeof token4 = %zu\n", sizeof token4)
+    let token5 Token5 = .num1(8)
+    io.printf("sizeof token5 = %zu\n", sizeof token5)
+
+    return 0
+}

@@ -115,6 +115,10 @@ main hello.own
 main hello.own --run arg1 arg2 ..
 - consider renaming Llvm_store_another_llvm to Llvm_store
 - consider renaming Llvm_load_another_llvm to Llvm_load
+- expected failure case for redefiniton of members in enum and struct
+- expected failure case for:
+    // Div is a struct
+    let div Div = .num(9)
     
 
 
