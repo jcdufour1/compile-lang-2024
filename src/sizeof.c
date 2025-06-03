@@ -34,17 +34,18 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def( def);
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
         }
         case LANG_TYPE_ENUM: {
+            // TODO: put `unreachable("")` here
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def( def);
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
@@ -58,16 +59,15 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
 }
 
 uint64_t sizeof_def(const Tast_def* def) {
-    (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type( tast_variable_def_const_unwrap(def)->lang_type);
+            return sizeof_lang_type(tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
-            return sizeof_struct_def_base( &tast_struct_def_const_unwrap(def)->base);
+            return sizeof_struct_def_base(&tast_struct_def_const_unwrap(def)->base, false);
         case TAST_ENUM_DEF:
-            return sizeof_struct_def_base( &tast_enum_def_const_unwrap(def)->base);
+            return sizeof_struct_def_base(&tast_enum_def_const_unwrap(def)->base, true);
         case TAST_RAW_UNION_DEF:
-            return sizeof_struct_def_base( &tast_raw_union_def_const_unwrap(def)->base);
+            return sizeof_struct_def_base(&tast_raw_union_def_const_unwrap(def)->base, true);
         default:
             unreachable("");
     }
@@ -75,21 +75,30 @@ uint64_t sizeof_def(const Tast_def* def) {
 
 uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
     Tast_def* def_ = NULL;
-    unwrap(symbol_lookup(&def_,  lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
-    return sizeof_struct_def_base( &tast_struct_def_unwrap(def_)->base);
+    unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
+    return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 
-uint64_t sizeof_struct_def_base(const Struct_def_base* base) {
+uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type( memb_def->lang_type);
+        uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
-            total += required_alignment - total%required_alignment;
+            if (is_sum_type) {
+                total += required_alignment - total%required_alignment;
+                //total = MAX(total, required_alignment - total%required_alignment);
+            } else {
+                total += required_alignment - total%required_alignment;
+            }
         }
-        total += sizeof_curr_item;
+        if (is_sum_type) {
+            total = MAX(total, sizeof_curr_item);
+        } else {
+            total += sizeof_curr_item;
+        }
     }
     return total;
 }
@@ -97,7 +106,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base) {
 uint64_t sizeof_struct_expr(const Tast_expr* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
         case TAST_STRUCT_LITERAL:
-            return sizeof_struct_literal( tast_struct_literal_const_unwrap(struct_literal_or_def));
+            return sizeof_struct_literal(tast_struct_literal_const_unwrap(struct_literal_or_def));
         default:
             unreachable("");
     }
@@ -108,7 +117,7 @@ static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
     (void) env;
     switch (expr->type) {
         case IR_LITERAL:
-            return sizeof_lang_type( ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
+            return sizeof_lang_type(ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -118,7 +127,7 @@ static uint64_t ir_sizeof_def(const Ir_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type( ir_variable_def_const_unwrap(def)->lang_type);
+            return sizeof_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
         default:
             unreachable("");
     }
@@ -128,9 +137,9 @@ uint64_t ir_sizeof_item(const Ir* item) {
     (void) env;
     switch (item->type) {
         case TAST_EXPR:
-            return ir_sizeof_expr( ir_expr_const_unwrap(item));
+            return ir_sizeof_expr(ir_expr_const_unwrap(item));
         case TAST_DEF:
-            return ir_sizeof_def( ir_def_const_unwrap(item));
+            return ir_sizeof_def(ir_def_const_unwrap(item));
         default:
             unreachable("");
     }
@@ -142,7 +151,7 @@ uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type( memb_def->lang_type);
+        uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }

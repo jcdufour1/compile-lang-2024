@@ -10,7 +10,7 @@ uint64_t sizeof_item(const Tast* item);
 
 uint64_t sizeof_struct(const Tast* struct_literal);
 
-uint64_t sizeof_struct_def_base(const Struct_def_base* base);
+uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type);
 
 uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal);
 
