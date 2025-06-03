@@ -1,0 +1,21 @@
+compile::stdout 15
+sizeof nothing = 0
+sizeof num = 4
+sizeof(num) = 4
+sizeof token_type = 8
+sizeof div1 = 16
+sizeof div2 = 16
+sizeof div3 = 8
+sizeof div4 = 8
+sizeof div5 = 8
+sizeof div6 = 24
+sizeof token1 = 24
+sizeof token2 = 24
+sizeof token3 = 16
+sizeof token4 = 16
+sizeof token5 = 16
+
+compile::stderr 0
+
+compile::return_code 0
+
