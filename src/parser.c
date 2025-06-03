@@ -1831,6 +1831,22 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         return PARSE_ERROR;
     }
 
+    Uast_stmt* if_false = uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))));
+    if (try_consume(NULL, tokens, TOKEN_ELSE)) {
+        if (try_consume(&if_token, tokens, TOKEN_IF)) {
+            // TODO: print error message (expected failure case)
+            todo();
+        }
+
+        Uast_block* if_false_block = NULL;
+        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(scope_id))) {
+            return PARSE_ERROR;
+        }
+        if_false = uast_block_wrap(if_false_block);
+
+        if_else_chain_consume_newline(tokens);
+    }
+
     log(LOG_DEBUG, FMT"\n", uast_expr_print(is_true));
     log(LOG_DEBUG, FMT"\n", uast_expr_print(operand));
     // TODO
@@ -1850,7 +1866,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if_token.pos,
         true,
         NULL,
-        uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos)))),
+        if_false,
         if_false_scope
     );
     vec_append(&a_main, &cases, if_false_case);
