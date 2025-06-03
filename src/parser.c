@@ -1797,7 +1797,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     Scope_id if_false_scope = symbol_collection_new(scope_id);
 
     Uast_expr* is_true = NULL;
-    switch (parse_generic_binary(&is_true, tokens, scope_id, 0, 0)) {
+    switch (parse_generic_binary(&is_true, tokens, if_true_scope, 0, 0)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
