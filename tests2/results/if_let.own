@@ -1,6 +1,7 @@
-compile::stdout 2
+compile::stdout 3
 yes 1: 7
-yes 2
+yes 2: 7
+yes 3
 
 compile::stderr 0
 

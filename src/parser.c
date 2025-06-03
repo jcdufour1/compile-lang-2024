@@ -1834,8 +1834,8 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     Uast_stmt* if_false = uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))));
     if (try_consume(NULL, tokens, TOKEN_ELSE)) {
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
-            // TODO: print error message (expected failure case)
-            todo();
+            msg(DIAG_IF_ELSE_IN_IF_LET, if_token.pos, "`else if` causes of `if let` statements are not supported\n");
+            return PARSE_ERROR;
         }
 
         Uast_block* if_false_block = NULL;
@@ -1846,10 +1846,6 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
 
         if_else_chain_consume_newline(tokens);
     }
-
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(is_true));
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(operand));
-    // TODO
 
     Uast_case_vec cases = {0};
 
