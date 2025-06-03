@@ -9,6 +9,10 @@
 #include <lang_type_print.h>
 #include <llvm_lang_type_print.h>
 
+static uint64_t bit_width_to_bytes(uint64_t bit_width) {
+    return (bit_width + 7)/8;
+}
+
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
     if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
@@ -17,11 +21,11 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 
     switch (primitive.type) {
         case LANG_TYPE_SIGNED_INT:
-            return lang_type_signed_int_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(lang_type_signed_int_const_unwrap(primitive).bit_width);
         case LANG_TYPE_UNSIGNED_INT:
-            return lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(lang_type_unsigned_int_const_unwrap(primitive).bit_width);
         case LANG_TYPE_FLOAT:
-            return lang_type_float_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(lang_type_float_const_unwrap(primitive).bit_width);
         case LANG_TYPE_CHAR:
             return 1;
         case LANG_TYPE_OPAQUE:
@@ -38,11 +42,11 @@ uint64_t sizeof_llvm_primitive(Llvm_lang_type_primitive primitive) {
 
     switch (primitive.type) {
         case LLVM_LANG_TYPE_SIGNED_INT:
-            return llvm_lang_type_signed_int_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(llvm_lang_type_signed_int_const_unwrap(primitive).bit_width);
         case LLVM_LANG_TYPE_UNSIGNED_INT:
-            return llvm_lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(llvm_lang_type_unsigned_int_const_unwrap(primitive).bit_width);
         case LLVM_LANG_TYPE_FLOAT:
-            return llvm_lang_type_float_const_unwrap(primitive).bit_width/8;
+            return bit_width_to_bytes(llvm_lang_type_float_const_unwrap(primitive).bit_width);
         case LLVM_LANG_TYPE_OPAQUE:
             unreachable("");
     }
