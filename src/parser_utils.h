@@ -114,6 +114,8 @@ const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
+size_t ir_struct_def_base_get_idx_largest_member(Ir_struct_def_base base);
+
 // TODO: move to another file
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
@@ -208,6 +210,22 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
         case LANG_TYPE_TUPLE:
             return true;
         case LANG_TYPE_FN:
+            return false;
+    }
+    unreachable("");
+}
+
+static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LLVM_LANG_TYPE_STRUCT:
+            return true;
+        case LLVM_LANG_TYPE_PRIMITIVE:
+            return false;
+        case LLVM_LANG_TYPE_VOID:
+            return false;
+        case LLVM_LANG_TYPE_TUPLE:
+            return true;
+        case LLVM_LANG_TYPE_FN:
             return false;
     }
     unreachable("");

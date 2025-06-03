@@ -24,6 +24,11 @@ typedef struct {
     Name name;
 } Sym_typed_base;
 
+typedef struct {
+    Llvm_lang_type lang_type;
+    Name name;
+} Llvm_sym_typed_base;
+
 struct Tast_expr_;
 typedef struct Tast_expr_ Tast_expr;
 

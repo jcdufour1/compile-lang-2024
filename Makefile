@@ -41,6 +41,7 @@ OBJS=\
 	 ${BUILD_DIR}/tast_print.o \
 	 ${BUILD_DIR}/ir_print.o \
 	 ${BUILD_DIR}/lang_type_print.o \
+	 ${BUILD_DIR}/llvm_lang_type_print.o \
 	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/uast_utils.o \
@@ -141,6 +142,9 @@ ${BUILD_DIR}/ir_print.o: ${DEP_COMMON} src/ir_print.c
 
 ${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
+
+${BUILD_DIR}/llvm_lang_type_print.o: ${DEP_COMMON} src/llvm_lang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_lang_type_print.o src/llvm_lang_type_print.c
 
 ${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_print.o src/ulang_type_print.c

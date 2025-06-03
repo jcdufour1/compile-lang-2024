@@ -4,6 +4,7 @@
 #include <auto_gen_uast.h>
 #include <auto_gen_ir.h>
 #include <auto_gen_lang_type.h>
+#include <auto_gen_llvm_lang_type.h>
 
 // TODO: move todos to somewhere else
 //
@@ -49,6 +50,9 @@ int main(int argc, char** argv) {
     assert(argc == 2 && "invalid count of arguments provided");
 
     gen_lang_type(get_path(argv[1], "lang_type.h"), true);
+    assert(!global_output);
+
+    gen_llvm_lang_type(get_path(argv[1], "llvm_lang_type.h"), true);
     assert(!global_output);
 
     gen_all_tasts(get_path(argv[1], "tast_forward_decl.h"), false);

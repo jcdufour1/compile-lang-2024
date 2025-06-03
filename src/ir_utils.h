@@ -3,7 +3,7 @@
 
 #include <ir.h>
 
-Strv lang_type_vec_print_internal(Lang_type_vec types);
+Strv lang_type_vec_print_internal(Llvm_lang_type_vec types);
 
 #define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))
 
@@ -12,23 +12,23 @@ Strv lang_type_vec_print_internal(Lang_type_vec types);
         log(LOG_NOTE, FMT"\n", ir_print(ir)); \
     } while (0);
 
-Lang_type ir_operator_get_lang_type(const Ir_operator* operator);
+Llvm_lang_type ir_operator_get_lang_type(const Ir_operator* operator);
 
-Lang_type* ir_get_operator_lang_type_ref(Ir_operator* operator);
+Llvm_lang_type* ir_get_operator_lang_type_ref(Ir_operator* operator);
 
-Lang_type ir_literal_get_lang_type(const Ir_literal* lit);
+Llvm_lang_type ir_literal_get_lang_type(const Ir_literal* lit);
 
-Lang_type ir_expr_get_lang_type(const Ir_expr* expr);
+Llvm_lang_type ir_expr_get_lang_type(const Ir_expr* expr);
 
-Lang_type ir_def_get_lang_type(const Ir_def* def);
+Llvm_lang_type ir_def_get_lang_type(const Ir_def* def);
 
-Lang_type* ir_expr_ref_get_lang_type(Ir_expr* expr);
+Llvm_lang_type* ir_expr_ref_get_lang_type(Ir_expr* expr);
 
-Lang_type ir_get_lang_type(const Ir* ir);
+Llvm_lang_type ir_get_lang_type(const Ir* ir);
 
-Lang_type* ir_def_ref_get_lang_type(Ir_def* def);
+Llvm_lang_type* ir_def_ref_get_lang_type(Ir_def* def);
 
-Lang_type* ir_ref_get_lang_type(Ir* ir);
+Llvm_lang_type* ir_ref_get_lang_type(Ir* ir);
 
 Ir* ir_get_expr_src(Ir_expr* expr);
 
@@ -56,9 +56,9 @@ const Ir* get_ir_src_const(const Ir* ir);
 
 const Ir* get_ir_dest_const(const Ir* ir);
 
-Lang_type* ir_literal_ref_get_lang_type(Ir_literal* lit);
+Llvm_lang_type* ir_literal_ref_get_lang_type(Ir_literal* lit);
 
-Lang_type lang_type_from_get_name(Name name);
+Llvm_lang_type lang_type_from_get_name(Name name);
 
 Ir* ir_from_get_name(Name name);
 

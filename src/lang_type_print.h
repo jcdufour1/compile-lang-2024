@@ -5,6 +5,7 @@
 #include <newstring.h>
 #include <strv.h>
 #include <lang_type_mode.h>
+#include <lang_type.h>
 
 #define lang_type_print(mode, lang_type) strv_print(lang_type_print_internal((mode), (lang_type)))
 
