@@ -1,0 +1,27 @@
+type io import = std.io
+
+fn main() i32 {
+    let opt io.Optional(<i32>) = .some(7)
+    if let .some(num) = opt {
+        io.printf("yes 1: %d\n", num)
+    }
+
+    if let .some(num) = opt {
+        io.printf("yes 2: %d\n", num)
+    } else {
+        io.printf("no 2\n")
+    }
+
+    opt = .none
+    if let .some(num) = opt {
+        io.printf("no 3: %d\n", num)
+    } else {
+        io.printf("yes 3\n")
+    }
+
+    if let .some(num) = opt {
+        io.printf("no 4: %d\n", num)
+    }
+
+    return 0
+}

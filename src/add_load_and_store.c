@@ -1070,6 +1070,7 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
 
     Tast_def* var_def_ = NULL;
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, old_sym->base.name));
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Ir* alloca = NULL;

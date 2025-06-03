@@ -1,0 +1,9 @@
+compile::stdout 3
+yes 1: 7
+yes 2: 7
+yes 3
+
+compile::stderr 0
+
+compile::return_code 0
+

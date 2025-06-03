@@ -1,0 +1,10 @@
+
+
+fn main() i32 {
+    let opt io.Optional(<i32>) = .some(7)
+    if let .some(num) = opt {
+    } else if 1 {
+    }
+
+    return 0
+}
