@@ -51,6 +51,36 @@ uint64_t sizeof_llvm_primitive(Llvm_lang_type_primitive primitive) {
     unreachable("");
 }
 
+uint64_t sizeof_lang_type(Lang_type lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_PRIMITIVE:
+            return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
+        case LANG_TYPE_STRUCT: {
+            Tast_def* def = NULL;
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
+        }
+        case LANG_TYPE_ENUM: {
+            // TODO: put `unreachable("")` here
+            Tast_def* def = NULL;
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
+        }
+        case LANG_TYPE_RAW_UNION: {
+            Tast_def* def = NULL;
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
+        }
+        case LANG_TYPE_VOID:
+            return 0;
+        case LANG_TYPE_TUPLE:
+            unreachable("tuple should not be here");
+        case LANG_TYPE_FN:
+            todo();
+    }
+    unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+}
+
 uint64_t sizeof_llvm_lang_type(Llvm_lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:

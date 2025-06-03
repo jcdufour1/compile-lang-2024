@@ -440,7 +440,6 @@ static void load_block_stmts(
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
-    todo();
     Tast_variable_def_vec members = {0};
 
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
@@ -544,6 +543,48 @@ static Llvm_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang
     return rm_tuple_lang_type(tast_struct_def_get_lang_type(struct_def), lang_type_pos);
 }
 
+static Llvm_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
+    return llvm_lang_type_atom_new(atom.str, atom.pointer_depth);
+}
+
+static Llvm_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
+    switch (lang_type.type) {
+        case LANG_TYPE_CHAR: {
+            Lang_type_char lang_char = lang_type_char_const_unwrap(lang_type);
+            return llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(
+                lang_type_pos,
+                rm_tuple_lang_type_atom(lang_char.atom)
+            ));
+        }
+        case LANG_TYPE_SIGNED_INT: {
+            Lang_type_signed_int num = lang_type_signed_int_const_unwrap(lang_type);
+            return llvm_lang_type_signed_int_const_wrap(llvm_lang_type_signed_int_new(
+                lang_type_pos,
+                num.bit_width,
+                num.pointer_depth
+            ));
+        }
+        case LANG_TYPE_UNSIGNED_INT: {
+            Lang_type_unsigned_int num = lang_type_unsigned_int_const_unwrap(lang_type);
+            return llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(
+                lang_type_pos,
+                num.bit_width,
+                num.pointer_depth
+            ));
+        }
+        case LANG_TYPE_FLOAT:
+            todo();
+        case LANG_TYPE_OPAQUE: {
+            Lang_type_opaque opaque = lang_type_opaque_const_unwrap(lang_type);
+            return llvm_lang_type_opaque_const_wrap(llvm_lang_type_opaque_new(
+                lang_type_pos,
+                rm_tuple_lang_type_atom(opaque.atom)
+            ));
+        }
+    }
+    unreachable("");
+}
+
 static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_ENUM: {
@@ -570,18 +611,28 @@ static Llvm_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos)
             sym_tbl_add(tast_raw_union_def_wrap(item_type_def));
 
             load_raw_union_def(item_type_def);
-            return rm_tuple_lang_type(tast_raw_union_def_get_lang_type(item_type_def), lang_type_pos);
+            return llvm_lang_type_raw_union_const_wrap(llvm_lang_type_raw_union_new(
+                lang_type_pos,
+                rm_tuple_lang_type_atom(lang_type_get_atom(
+                    LANG_TYPE_MODE_LOG,
+                    tast_raw_union_def_get_lang_type(item_type_def)
+                ))
+            ));
         }
         case LANG_TYPE_TUPLE:
             return rm_tuple_lang_type(lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(lang_type_tuple_const_unwrap(lang_type), lang_type_pos)), lang_type_pos);
         case LANG_TYPE_PRIMITIVE:
-            return rm_tuple_lang_type(lang_type, lang_type_pos);
-        case LANG_TYPE_STRUCT:
-            return rm_tuple_lang_type(lang_type, lang_type_pos);
+            return llvm_lang_type_primitive_const_wrap(rm_tuple_lang_type_primitive(lang_type_primitive_const_unwrap(lang_type), lang_type_pos));
+        case LANG_TYPE_STRUCT: {
+            return llvm_lang_type_struct_const_wrap(llvm_lang_type_struct_new(
+                lang_type_pos,
+                rm_tuple_lang_type_atom(lang_type_struct_const_unwrap(lang_type).atom)
+            ));
+        }
         case LANG_TYPE_VOID:
-            return rm_tuple_lang_type(lang_type, lang_type_pos);
+            return llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(lang_type_pos));
         case LANG_TYPE_FN:
-            return rm_tuple_lang_type(lang_type, lang_type_pos);
+            todo();
         default:
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
