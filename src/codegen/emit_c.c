@@ -150,8 +150,8 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         Ir_variable_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
         Llvm_lang_type llvm_lang_type = {0};
-        if (is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
-            Name ori_name = llvm_lang_type_get_str(LLVM_LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
+        if (llvm_is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
+            Name ori_name = llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -264,7 +264,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     unwrap(alloca_lookup(&callee, fun_call->callee));
     string_extend_cstr(&a_main, &strs->output, "(");
     if (callee->type != IR_EXPR) {
-        c_extend_type_call_str(&strs->output, llvm_lang_type_from_get_name(fun_call->callee), false);
+        c_extend_type_call_str(&strs->output, lang_type_from_get_name(fun_call->callee), false);
     }
     string_extend_cstr(&a_main, &strs->output, "(");
     emit_c_expr_piece(strs, fun_call->callee);
@@ -289,16 +289,18 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm
     (void) strs;
     switch (unary_type) {
         case UNARY_DEREF:
-            todo();
+            unreachable("defer should not make it here");
         case UNARY_REFER:
-            todo();
+            unreachable("refer should not make it here");
         case UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, &strs->output, "(");
             c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
         case UNARY_NOT:
-            todo();
+            unreachable("not should not make it here");
+        case UNARY_SIZEOF:
+            unreachable("sizeof should not make it here");
     }
     unreachable("");
 }
@@ -368,7 +370,7 @@ static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
 
 static void emit_c_operator(Emit_c_strs* strs, const Ir_operator* oper) {
     string_extend_cstr(&a_main, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, ir_operator_get_llvm_lang_type(oper), true);
+    c_extend_type_call_str(&strs->output, ir_operator_get_lang_type(oper), true);
     string_extend_cstr(&a_main, &strs->output, " ");
     ir_extend_name(&strs->output, ir_operator_get_name(oper));
     string_extend_cstr(&a_main, &strs->output, " = ");
@@ -511,9 +513,9 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
         c_extend_type_call_str(output, alloca->lang_type, true);
         // this line below should be kept though
     }
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LLVM_LANG_TYPE_MODE_LOG, alloca->lang_type));
+    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
     log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LLVM_LANG_TYPE_MODE_MSG, alloca->lang_type));
+    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -608,16 +610,16 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
     Ir* struct_def_ = NULL;
-    unwrap(alloca_lookup(&struct_def_, llvm_lang_type_get_str(LLVM_LANG_TYPE_MODE_LOG, llvm_lang_type_from_get_name(load->ir_src))));
+    unwrap(alloca_lookup(&struct_def_, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     ir_extend_name(&strs->output, load->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, llvm_lang_type_from_get_name(load->ir_src), false);
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
     // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
-    if (llvm_lang_type_get_pointer_depth(llvm_lang_type_from_get_name(load->ir_src)) < 1) {
+    if (llvm_lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
         string_extend_cstr(&a_main, &strs->output, "*");
     }
     string_extend_cstr(&a_main, &strs->output, ")");
@@ -634,7 +636,7 @@ static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, llvm_lang_type_from_get_name(access->callee), false);
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee), false);
     string_extend_cstr(&a_main, &strs->output, ")");
     ir_extend_name(&strs->output, access->callee);
     string_extend_cstr(&a_main, &strs->output, ")[");

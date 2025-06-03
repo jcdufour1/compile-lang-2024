@@ -1,6 +1,8 @@
 #include <ir_utils.h>
 #include <lang_type.h>
+#include <llvm_lang_type.h>
 #include <lang_type_after.h>
+#include <llvm_lang_type_after.h>
 #include <name.h>
 #include <ulang_type_get_pos.h>
 
@@ -23,10 +25,10 @@ Llvm_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
         case IR_STRING:
             return llvm_lang_type_primitive_const_wrap(llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(ir_literal_get_pos(lit), llvm_lang_type_atom_new_from_cstr("u8", 1, 0))));
         case IR_VOID:
-            return lang_type_void_const_wrap(lang_type_void_new(ir_literal_get_pos(lit)));
+            return llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(ir_literal_get_pos(lit)));
         case IR_FUNCTION_NAME:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(ir_literal_get_pos(lit), lang_type_atom_new_from_cstr("ptr", 1, 0))));
+            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_char_const_wrap(llvm_lang_type_char_new(ir_literal_get_pos(lit), llvm_lang_type_atom_new_from_cstr("ptr", 1, 0))));
     }
     unreachable("");
 }
@@ -52,7 +54,7 @@ Llvm_lang_type ir_def_get_lang_type(const Ir_def* def) {
         case IR_FUNCTION_DECL:
             unreachable("");
         case IR_STRUCT_DEF:
-            return lang_type_struct_const_wrap(lang_type_struct_new(ir_def_get_pos(def), lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
+            return llvm_lang_type_struct_const_wrap(llvm_lang_type_struct_new(ir_def_get_pos(def), llvm_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
         case IR_PRIMITIVE_DEF:
             unreachable("");
         case IR_LABEL:
@@ -144,7 +146,7 @@ Name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
 Name ir_def_get_name(const Ir_def* def) {
     switch (def->type) {
         case IR_PRIMITIVE_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
+            return llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:

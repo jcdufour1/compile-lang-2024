@@ -215,4 +215,24 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
+static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LLVM_LANG_TYPE_STRUCT:
+            return true;
+        case LLVM_LANG_TYPE_PRIMITIVE:
+            return false;
+        case LLVM_LANG_TYPE_RAW_UNION:
+            return true;
+        case LLVM_LANG_TYPE_VOID:
+            return false;
+        case LLVM_LANG_TYPE_ENUM:
+            return true;
+        case LLVM_LANG_TYPE_TUPLE:
+            return true;
+        case LLVM_LANG_TYPE_FN:
+            return false;
+    }
+    unreachable("");
+}
+
 #endif // PARSER_UTIL_H
