@@ -81,18 +81,15 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
+    uint64_t end_alignment = 0;
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
-        if (total%required_alignment + sizeof_curr_item > required_alignment) {
-            if (is_sum_type) {
-                total += required_alignment - total%required_alignment;
-                //total = MAX(total, required_alignment - total%required_alignment);
-            } else {
-                total += required_alignment - total%required_alignment;
-            }
+        end_alignment = MAX(end_alignment, MIN(8/* TODO */, sizeof_curr_item));
+        if ((total%required_alignment + sizeof_curr_item)%required_alignment > required_alignment) {
+            total += required_alignment - total%required_alignment;
         }
         if (is_sum_type) {
             total = MAX(total, sizeof_curr_item);
@@ -100,6 +97,10 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
             total += sizeof_curr_item;
         }
     }
+
+    assert(end_alignment <= 8/*TODO*/);
+    total += (end_alignment - total%end_alignment)%end_alignment;
+    log(LOG_DEBUG, FMT": %zu\n", name_print(NAME_LOG, base->name), end_alignment);
     return total;
 }
 
