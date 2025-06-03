@@ -1791,12 +1791,13 @@ static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_ch
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_if_let_internal(Uast_if_else_chain** if_else_chain, Token if_token, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_token, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_LET));
-    Scope_id case_scope = symbol_collection_new(scope_id);
+    Scope_id if_true_scope = symbol_collection_new(scope_id);
+    Scope_id if_false_scope = symbol_collection_new(scope_id);
 
-    Uast_expr* case_operand = NULL;
-    switch (parse_generic_binary(&case_operand, tokens, scope_id, 0, 0)) {
+    Uast_expr* is_true = NULL;
+    switch (parse_generic_binary(&is_true, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1825,30 +1826,58 @@ static PARSE_STATUS parse_if_let_internal(Uast_if_else_chain** if_else_chain, To
             unreachable("");
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(case_operand));
+    Uast_block* if_true = NULL;
+    if (PARSE_OK != parse_block(&if_true, tokens, false, if_true_scope)) {
+        return PARSE_ERROR;
+    }
+
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(is_true));
     log(LOG_DEBUG, FMT"\n", uast_expr_print(operand));
     // TODO
 
-    Uast_case* curr_case = uast_case_new(
+    Uast_case_vec cases = {0};
+
+    Uast_case* if_true_case = uast_case_new(
         if_token.pos,
         false,
-        case_operand,
-        uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))))/*TODO*/,
-        case_scope
+        is_true,
+        uast_block_wrap(if_true),
+        if_true_scope
     );
-    //vec_append(&a_main, &cases, curr_case);
+    vec_append(&a_main, &cases, if_true_case);
 
-    todo()
+    Uast_case* if_false_case = uast_case_new(
+        if_token.pos,
+        true,
+        NULL,
+        uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos)))),
+        if_false_scope
+    );
+    vec_append(&a_main, &cases, if_false_case);
+
+    *lang_switch = uast_switch_new(if_token.pos, operand, cases);
+    return PARSE_OK;
 }
 
-static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope_id scope_id) {
     Token if_start_token;
     unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
     if (tk_view_front(*tokens).type == TOKEN_LET) {
-        return parse_if_let_internal(if_else_chain, if_start_token, tokens, scope_id);
+        Uast_switch* lang_switch = NULL;
+        if (PARSE_OK != parse_if_let_internal(&lang_switch, if_start_token, tokens, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *expr = uast_switch_wrap(lang_switch);
+        return PARSE_OK;
     }
-    return parse_if_else_chain_internal(if_else_chain, if_start_token, tokens, scope_id);
+
+    Uast_if_else_chain* if_else = NULL;
+    if (PARSE_OK != parse_if_else_chain_internal(&if_else, if_start_token, tokens, scope_id)) {
+        return PARSE_ERROR;
+    }
+    *expr = uast_if_else_chain_wrap(if_else);
+    return PARSE_OK;
 }
 
 
@@ -2269,11 +2298,11 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
         *result = uast_switch_wrap(lang_switch);
     } else if (starts_with_if(*tokens)) {
-        Uast_if_else_chain* if_else = NULL;
-        if (PARSE_OK != parse_if_else_chain(&if_else, tokens ,scope_id)) {
+        Uast_expr* expr = NULL;
+        if (PARSE_OK != parse_if_else_chain(&expr, tokens ,scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = uast_if_else_chain_wrap(if_else);
+        *result = expr;
     } else if (starts_with_struct_literal(*tokens)) {
         Uast_struct_literal* struct_lit;
         if (PARSE_OK != parse_struct_literal(&struct_lit, tokens ,scope_id)) {
