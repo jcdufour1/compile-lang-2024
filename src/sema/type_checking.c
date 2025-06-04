@@ -1787,6 +1787,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
         case TAST_MEMBER_ACCESS:
             //fun_name = tast_symbol_unwrap(new_callee)->base.name;
+            if (tast_expr_get_lang_type(new_callee).type != LANG_TYPE_FN) {
+                msg(
+                    DIAG_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
+                    "callee is not callable\n"
+                );
+                return false;
+            }
             fun_decl = uast_function_decl_from_ulang_type_fn(
                 fun_name,
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_expr_get_lang_type(new_callee))),
