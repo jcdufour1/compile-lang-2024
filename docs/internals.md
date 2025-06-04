@@ -1,5 +1,9 @@
 # node types
 ## Uast
+### UAST_LABEL_DEF
+- the name of the label is placed in the parent scope of the block after the label
+- the label has a separate field `block_scope` that contains the actual scope that the label breaks out of
+- `block_scope` is equal to SCOPE_NOT if label does not actually point to anything
 ## Tast
 ### TAST_ENUM_CALLEE
 - in right hand side of assignment (after expr to left of () is checked)

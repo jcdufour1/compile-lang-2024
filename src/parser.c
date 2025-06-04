@@ -366,6 +366,10 @@ static bool starts_with_break(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_BREAK;
 }
 
+static bool starts_with_yield(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_YIELD;
+}
+
 static bool starts_with_continue(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_CONTINUE;
 }
@@ -1553,19 +1557,58 @@ static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_i
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_id scope_id) {
+    Token yield_token = consume(tokens);
+
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_OPEN_PAR);
+        return PARSE_ERROR;
+    }
+
+    Token token = {0};
+    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+        return PARSE_ERROR;
+    }
+    Name break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
+        return PARSE_ERROR;
+    }
+
+    Uast_expr* break_expr = NULL;
+    bool do_break_expr = true;
+    switch (parse_expr(&break_expr, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            do_break_expr = true;
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            do_break_expr = false;
+            break;
+        default:
+            unreachable("");
+    }
+
+    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of);
+    return PARSE_OK;
+}
+
 static Uast_continue* parse_continue(Tk_view* tokens) {
     Token continue_token = consume(tokens);
     Uast_continue* cont_stmt = uast_continue_new(continue_token.pos);
     return cont_stmt;
 }
 
-static Name parse_label(Tk_view* tokens) {
+static Name parse_label(Tk_view* tokens, Scope_id scope_id) {
     Token sym_name = {0};
     unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(NULL, tokens, TOKEN_COLON));
     // scope will be updated when parsing the statement
-    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, SCOPE_NOT);
-    if (!usymbol_add(uast_dummy_wrap(uast_dummy_new(sym_name.pos, label_name)))) {
+    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id);
+    if (!usymbol_add(uast_label_wrap(uast_label_new(sym_name.pos, label_name, SCOPE_NOT)))) {
         // TODO: expected failure case for redefinition of label
         todo();
     }
@@ -2017,7 +2060,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
-        new_scope_name = parse_label(tokens);
+        new_scope_name = parse_label(tokens, scope_id);
     }
 
     Uast_stmt* lhs = NULL;
@@ -2063,6 +2106,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_break_wrap(rtn_stmt);
+    } else if (starts_with_yield(*tokens)) {
+        Uast_yield* rtn_stmt = NULL;
+        if (PARSE_OK != parse_yield(&rtn_stmt, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_yield_wrap(rtn_stmt);
     } else if (starts_with_continue(*tokens)) {
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
@@ -2129,6 +2178,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
+
+    if (new_scope_name.base.count > 0) {
+        Uast_def* label_ = NULL;
+        unwrap(usymbol_lookup(&label_, new_scope_name));
+        uast_label_unwrap(label_)->block_scope = new_scope;
+    }
 
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
