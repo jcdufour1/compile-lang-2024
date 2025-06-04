@@ -41,6 +41,8 @@ static inline Strv defer_pair_print_internal(Defer_pair pair) {
     return string_to_strv(buf);
 }
 
+static void add_label_internal(Loc loc, Ir_block* block, Name label_name, Pos pos);
+
 // all defered statements in one scope
 typedef struct {
     Vec_base info;
@@ -429,7 +431,7 @@ static void load_block_stmts(
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
-            //Name goto_cond = ir_
+            Name check_is_cont = util_literal_name_new_prefix(sv("check_is_cont"));
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not breaking right now
                 tast_binary_wrap(tast_binary_new(
@@ -443,13 +445,14 @@ static void load_block_stmts(
                     lang_type_new_u1()
                 )),
                 new_block,
-                label_if_continue,
+                check_is_cont,
                 label_if_break
             );
+            add_label(new_block, check_is_cont, new_block->pos/*TODO*/);
 
-            //Name goto_cond = ir_
+            Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
             if_for_add_cond_goto(
-                // if this condition evaluates to true, we are not breaking right now
+                // if this condition evaluates to true, we are not continuing right now
                 tast_binary_wrap(tast_binary_new(
                     pos,
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
@@ -461,7 +464,25 @@ static void load_block_stmts(
                     lang_type_new_u1()
                 )),
                 new_block,
-                label_if_continue,
+                check_is_yield,
+                label_if_continue
+            );
+            add_label(new_block, check_is_yield, new_block->pos/*TODO*/);
+
+            if_for_add_cond_goto(
+                // if this condition evaluates to true, we are not yield right now
+                tast_binary_wrap(tast_binary_new(
+                    pos,
+                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
+                        .name = vec_top(&defered_collections.coll_stack).is_yielding
+                    })),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
+                    BINARY_DOUBLE_EQUAL,
+                    lang_type_new_u1()
+                )),
+                new_block,
+                label_if_continue/*TODO*/,
                 label_if_break
             );
         }
@@ -2464,21 +2485,31 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of for
-    size_t for_pos = 0;
-    (void) for_pos;
-    //// these two for loops exclude the top of defered_collections.coll_stack
-    //assert(defered_collections.coll_stack.info.count > 0 && "will underflow");
 
     Scope_id curr_scope = new_block->scope_id;
+    assert(defered_collections.coll_stack.info.count > 0);
+    size_t idx = defered_collections.coll_stack.info.count - 1;
     while (1) {
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
 
+        Tast_assignment* is_yield_assign_aux = tast_assignment_new(
+            old_yield->pos,
+            tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
+                .lang_type = lang_type_new_u1(),
+                .name = vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(old_yield->pos, 1, lang_type_new_u1())))
+        );
+        load_assignment(new_block, is_yield_assign_aux);
+
         if (curr_scope == tast_label_unwrap(tast_def_from_name(old_yield->break_out_of))->block_scope) {
-            todo();
+            break;
         }
 
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+        assert(idx > 1);
+        idx--;
     }
     //for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
     //    size_t idx = idx_ - 1;
@@ -2487,7 +2518,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
     //        for_pos = idx;
     //    }
     //}
-    todo();
     //if (is_for) {
     //    for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
     //        size_t idx = idx_ - 1;
@@ -2506,12 +2536,11 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
     //}
 
 
-    todo();
-    //if (pairs->info.count > 0) {
-    //    // jump to the top of the defer stack to execute the defered statements
-    //    Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
-    //    vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
-    //}
+    if (pairs->info.count > 0) {
+        // jump to the top of the defer stack to execute the defered statements
+        Ir_goto* new_goto = ir_goto_new(old_yield->pos, util_literal_name_new(), vec_top(pairs).label->name);
+        vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+    }
 }
 
 static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {

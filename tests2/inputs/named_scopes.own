@@ -1,11 +1,14 @@
+type io import = std.io
 
 fn main() i32 {
     thing: for 1 {
-    //    //io.printf("hello\n")
-        yield(thing)
-    //    //io.printf("no\n")
+        io.printf("hello\n")
+        for 1 {
+            yield(thing)
+        }
+        io.printf("no\n")
     }
-    //io.printf("bye\n")
+    io.printf("bye\n")
 
     return 0
 }
