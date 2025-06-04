@@ -1,14 +1,19 @@
 *
-! .gitignore
-! docs/
-! do_test.py
-! Makefile
-! src/
-! std/
-! std_parse_error.own
-! tests2/
-! third_party/
-! todo.txt
+!.gitignore
+!docs/
+!docs/**
+!do_test.py
+!Makefile
+!src/
+!src/**
+!std/
+!std/**
+!std_parse_error.own
+!tests2/
+!tests2/**
+!third_party/
+!third_party/**
+!todo.txt
 
 
 
