@@ -1,9 +1,11 @@
 
-
 fn main() i32 {
     thing: for 1 {
+    //    //io.printf("hello\n")
         yield(thing)
+    //    //io.printf("no\n")
     }
+    //io.printf("bye\n")
 
     return 0
 }

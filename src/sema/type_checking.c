@@ -1568,7 +1568,10 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
         case UAST_LABEL:
-            todo();
+            if (!try_set_label_def_types(uast_label_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
         case UAST_LANG_DEF:
             return STMT_NO_STMT;
     }
@@ -2272,7 +2275,11 @@ bool try_set_primitive_def_types(Uast_primitive_def* tast) {
 
 bool try_set_void_def_types(Uast_void_def* tast) {
     (void) tast;
-    //symbol_add(tast_void_def_wrap(tast_void_def_new(POS_BUILTIN)));
+    return true;
+}
+
+bool try_set_label_def_types(Uast_label* tast) {
+    symbol_add(tast_label_wrap(tast_label_new(tast->pos, tast->name, tast->block_scope)));
     return true;
 }
 
@@ -2902,7 +2909,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;
@@ -3014,6 +3021,7 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
         case UAST_FOR_WITH_COND:
             return false;
         case UAST_BREAK:
+            todo();
             return false;
         case UAST_YIELD:
             return false;
@@ -3121,11 +3129,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     bool status = true;
 
-    // TODO: consider if this def iteration should be abstracted to a separate function (try_set_block_types has similar)
+    // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     Usymbol_iter iter = usym_tbl_iter_new(0);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+        // TODO: make switch for this if for exhausive checking
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;

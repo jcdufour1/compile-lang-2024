@@ -371,28 +371,28 @@ static void load_block_stmts(
         case DEFER_PARENT_OF_FUN: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")))
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")), new_block->scope_id)
             }));
             break;
         }
         case DEFER_PARENT_OF_FOR: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")))
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")), new_block->scope_id)
             }));
             break;
         }
         case DEFER_PARENT_OF_IF: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")))
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")), new_block->scope_id)
             }));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")))
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id)
             }));
             break;
         }
@@ -2371,6 +2371,9 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
             unreachable("");
         case TAST_IMPORT:
             todo();
+        case TAST_LABEL:
+            load_label(new_block, tast_label_unwrap(old_def));
+            return;
     }
     unreachable("");
 }
@@ -2441,29 +2444,74 @@ static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_s
 }
 
 // TODO: consider if this can be combined with load_brking_or_conting_set_etc
-static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt) {
+static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
+    (void) pairs;
 
     // TODO: extract this into separate function? (and for can use same function as continue, etc.
     Tast_assignment* is_cont_assign = tast_assignment_new(
-        tast_stmt_get_pos(old_stmt),
-        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+        old_yield->pos,
+        tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
             .lang_type = tast_lang_type_from_name(coll.is_yielding),
             .name = coll.is_yielding
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(old_yield->pos, 1, lang_type_new_u1())))
     );
     load_assignment(new_block, is_cont_assign);
 
-    todo();
-    // TODO: do the assignments for is_yielding
+    //// TODO: do the assignments for is_yielding
+    //// the purpose of these two for loops: 
+    ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
+    ////   we need to set is_brking of multiple scopes to break/continue out of for
+    size_t for_pos = 0;
+    (void) for_pos;
+    //// these two for loops exclude the top of defered_collections.coll_stack
+    //assert(defered_collections.coll_stack.info.count > 0 && "will underflow");
 
-    if (pairs->info.count > 0) {
-        // jump to the top of the defer stack to execute the defered statements
-        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
-        vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+    Scope_id curr_scope = new_block->scope_id;
+    while (1) {
+        unwrap(curr_scope != SCOPE_BUILTIN);
+        unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
+
+        if (curr_scope == tast_label_unwrap(tast_def_from_name(old_yield->break_out_of))->block_scope) {
+            todo();
+        }
+
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
+    //for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+    //    size_t idx = idx_ - 1;
+    //    if (vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+    //        is_for = true;
+    //        for_pos = idx;
+    //    }
+    //}
+    todo();
+    //if (is_for) {
+    //    for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+    //        size_t idx = idx_ - 1;
+    //        if (vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR || vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_IF) {
+    //            Tast_assignment* is_cont_assign_aux = tast_assignment_new(
+    //                tast_stmt_get_pos(old_stmt),
+    //                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+    //                    .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, for_pos))),
+    //                    .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
+    //                })),
+    //                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+    //            );
+    //            load_assignment(new_block, is_cont_assign_aux);
+    //        }
+    //    }
+    //}
+
+
+    todo();
+    //if (pairs->info.count > 0) {
+    //    // jump to the top of the defer stack to execute the defered statements
+    //    Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
+    //    vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+    //}
 }
 
 static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
@@ -2574,7 +2622,7 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
                 load_assignment(new_block, new_assign);
             }
 
-            load_yielding_set_etc(new_block, old_stmt);
+            load_yielding_set_etc(new_block, tast_yield_unwrap(old_stmt));
             return;
         }
         case TAST_CONTINUE: {
@@ -2600,16 +2648,16 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
                 ir_block_wrap(load_block(rtn_in_block, tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
             );
             return;
-        case TAST_LABEL:
-            load_label(new_block, tast_label_unwrap(old_stmt));
-            return;
         case TAST_DEFER: {
             Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
-            vec_append(&a_main, pairs, ((Defer_pair) {
-                defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")))
-            }));
+            (void) pairs;
+            (void) defer;
+            todo();
+            //vec_append(&a_main, pairs, ((Defer_pair) {
+            //    defer,
+            //    tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), )
+            //}));
             return;
         }
     }
@@ -2638,6 +2686,8 @@ static void load_def_sometimes(Tast_def* old_def) {
             unreachable("");
         case TAST_IMPORT:
             todo();
+        case TAST_LABEL:
+            return;
     }
     unreachable("");
 }

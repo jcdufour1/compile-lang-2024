@@ -543,10 +543,21 @@ static Tast_type tast_gen_primitive_def(const char* prefix) {
     return def;
 }
 
+static Tast_type tast_gen_label(const char* prefix) {
+    const char* base_name = "label";
+    Tast_type lang_label = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&lang_label.members, "Name", "name");
+    append_member(&lang_label.members, "Scope_id", "block_scope");
+
+    return lang_label;
+}
+
 static Tast_type tast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, tast_gen_label(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_import(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_variable_def(base_name));
@@ -587,15 +598,6 @@ static Tast_type tast_gen_for_with_cond(const char* prefix) {
     append_member(&for_cond.members, "bool", "do_cont_label");
 
     return for_cond;
-}
-
-static Tast_type tast_gen_label(const char* prefix) {
-    const char* base_name = "label";
-    Tast_type lang_label = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&lang_label.members, "Name", "name");
-
-    return lang_label;
 }
 
 static Tast_type tast_gen_defer(const char* prefix) {
@@ -661,7 +663,6 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, tast_gen_defer(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));

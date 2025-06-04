@@ -286,6 +286,8 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             unreachable("");
         case TAST_IMPORT:
             unreachable("");
+        case TAST_LABEL:
+            unreachable("");
     }
     unreachable("");
 }
@@ -349,8 +351,6 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_CONTINUE:
             unreachable("");
-        case TAST_LABEL:
-            unreachable("");
         case TAST_YIELD:
             unreachable("");
     }
@@ -380,6 +380,8 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
             unreachable("");
         case TAST_IMPORT:
             unreachable("");
+        case TAST_LABEL:
+            unreachable("");
     }
     unreachable("");
 }
@@ -405,8 +407,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_CONTINUE:
-            unreachable("");
-        case TAST_LABEL:
             unreachable("");
         case TAST_YIELD:
             unreachable("");
@@ -469,6 +469,8 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT:
             todo();
+        case TAST_LABEL:
+            return tast_label_const_unwrap(def)->name;
     }
     unreachable("");
 }
@@ -490,8 +492,6 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_BREAK:
             unreachable("");
         case TAST_CONTINUE:
-            unreachable("");
-        case TAST_LABEL:
             unreachable("");
         case TAST_YIELD:
             unreachable("");
@@ -517,14 +517,21 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             unreachable("");
         case TAST_IMPORT:
             todo();
+        case TAST_LABEL:
+            unreachable("");
     }
     unreachable("");
 }
 
-static inline Lang_type tast_lang_type_from_name(Name name) {
+static inline Tast_def* tast_def_from_name(Name name) {
     Tast_def* def = NULL;
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
     unwrap(symbol_lookup(&def, name));
-    return tast_def_get_lang_type(def);
+    return def;
+}
+
+static inline Lang_type tast_lang_type_from_name(Name name) {
+    return tast_def_get_lang_type(tast_def_from_name(name));
 }
 
 #endif // TAST_UTIL_H

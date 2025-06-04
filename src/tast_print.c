@@ -581,6 +581,8 @@ Strv tast_def_print_internal(const Tast_def* def, int indent) {
             return tast_enum_def_print_internal(tast_enum_def_const_unwrap(def), indent);
         case TAST_IMPORT:
             todo();
+        case TAST_LABEL:
+            return tast_label_print_internal(tast_label_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -639,8 +641,6 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
         case TAST_RETURN:
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
-        case TAST_LABEL:
-            return tast_label_print_internal(tast_label_const_unwrap(stmt), indent);
         case TAST_DEFER:
             return tast_defer_print_internal(tast_defer_const_unwrap(stmt), indent);
     }

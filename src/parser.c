@@ -981,6 +981,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope));
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
+        todo();
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
@@ -1162,6 +1163,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
 
     *struct_def = uast_struct_def_new(name.pos, base);
     if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_struct_def_wrap(*struct_def));
         return PARSE_ERROR;
     }
@@ -1178,6 +1180,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
     if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_raw_union_def_wrap(*raw_union_def));
         return PARSE_ERROR;
     }
@@ -1201,6 +1204,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
     }
