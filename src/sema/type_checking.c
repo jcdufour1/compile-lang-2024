@@ -1614,12 +1614,8 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
     }
 }
 
-static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
-    Name name = serialize_ulang_type((Strv) {0}, ulang_type_fn_const_wrap(lang_type), true /* TODO */);
-    Uast_def* fun_decl_ = NULL;
-    if (usym_tbl_lookup(&fun_decl_, name)) {
-        return uast_function_decl_unwrap(fun_decl_);
-    }
+static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, Ulang_type_fn lang_type, Pos pos) {
+    Name name = sym_name;
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
@@ -1633,7 +1629,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
     }
 
     Uast_function_decl* fun_decl = uast_function_decl_new(
-        pos,
+        lang_type.pos,
         (Uast_generic_param_vec) {0},
         uast_function_params_new(pos, params),
         *lang_type.return_type,
@@ -1769,6 +1765,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case TAST_SYMBOL: {
             fun_name = tast_symbol_unwrap(new_callee)->base.name;
             fun_decl = uast_function_decl_from_ulang_type_fn(
+                fun_name,
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
                 tast_symbol_unwrap(new_callee)->pos
             );
