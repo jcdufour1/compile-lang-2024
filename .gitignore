@@ -1,6 +1,14 @@
-src/main
-build/
-*.ll
-*.out
-test
-tags
+*
+! .gitignore
+! docs/
+! do_test.py
+! Makefile
+! src/
+! std/
+! std_parse_error.own
+! tests2/
+! third_party/
+! todo.txt
+
+
+
