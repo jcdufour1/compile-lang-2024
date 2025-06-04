@@ -242,23 +242,40 @@ static void msg_invalid_function_arg_internal(
     const char* file,
     int line,
     const Tast_expr* argument,
-    const Uast_variable_def* corres_param
+    const Uast_variable_def* corres_param,
+    bool is_fun_callback
 ) {
-    msg_internal(
-        file, line,
-        DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
-        "argument is of type `"FMT"`, "
-        "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
-        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-        name_print(NAME_MSG, corres_param->name),
-        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
-    );
-    msg_internal(
-        file, line,
-        DIAG_NOTE, corres_param->pos,
-        "corresponding parameter `"FMT"` defined here\n",
-        name_print(NAME_MSG, corres_param->name)
-    );
+    if (is_fun_callback) {
+        msg_internal(
+            file, line,
+            DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
+            "argument is of type `"FMT"`, "
+            "but the corresponding parameter is of type `"FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
+            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+        );
+        msg_internal(
+            file, line,
+            DIAG_NOTE, corres_param->pos,
+            "function callback type defined here\n"
+        );
+    } else {
+        msg_internal(
+            file, line,
+            DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
+            "argument is of type `"FMT"`, "
+            "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
+            name_print(NAME_MSG, corres_param->name),
+            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+        );
+        msg_internal(
+            file, line,
+            DIAG_NOTE, corres_param->pos,
+            "corresponding parameter `"FMT"` defined here\n",
+            name_print(NAME_MSG, corres_param->name)
+        );
+    }
 }
 
 static void msg_invalid_count_function_args_internal(
@@ -290,8 +307,8 @@ static void msg_invalid_count_function_args_internal(
     );
 }
 
-#define msg_invalid_function_arg(argument, corres_param) \
-    msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param)
+#define msg_invalid_function_arg(argument, corres_param, is_fun_callback) \
+    msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param, is_fun_callback)
 
 #define msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args) \
     msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl, min_args, max_args)
@@ -788,8 +805,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         }
     }
             
-    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).base.count > 0);
-
     // precalcuate binary in some situations
     if (new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL) {
         Tast_literal* lhs_lit = tast_literal_unwrap(new_lhs);
@@ -834,7 +849,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 Tast_enum_lit* rhs = tast_enum_lit_unwrap(rhs_lit);
                 if (!lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type)) {
                     // binary operators with mismatched enum types
-                    todo();
+                    return false;
                 }
 
                 Uast_def* enum_def_ = NULL;
@@ -843,7 +858,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     vec_at(&uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
                     lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
                 )) {
-                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
                     // overloaded binary operators not defined for non-void inner types of enum
                     msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
                     todo();
@@ -945,7 +959,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
     }
 
-    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_tast)).base.count > 0);
     assert(*new_tast);
     return true;
 }
@@ -1407,6 +1420,16 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
+            if (lhs_lang_type.type != LANG_TYPE_ENUM) {
+                msg(
+                    DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
+                    uast_expr_get_pos(uast),
+                    "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                );
+                return false;
+            }
+
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
                 lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type)
@@ -1614,18 +1637,14 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
     }
 }
 
-static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
-    Name name = serialize_ulang_type((Strv) {0}, ulang_type_fn_const_wrap(lang_type), true /* TODO */);
-    Uast_def* fun_decl_ = NULL;
-    if (usym_tbl_lookup(&fun_decl_, name)) {
-        return uast_function_decl_unwrap(fun_decl_);
-    }
+static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, Ulang_type_fn lang_type, Pos pos) {
+    Name name = sym_name;
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
-            pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
+            lang_type.pos,
+            uast_variable_def_new(lang_type.pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
@@ -1633,13 +1652,12 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
     }
 
     Uast_function_decl* fun_decl = uast_function_decl_new(
-        pos,
+        lang_type.pos,
         (Uast_generic_param_vec) {0},
         uast_function_params_new(pos, params),
         *lang_type.return_type,
         name
     );
-    usym_tbl_add(uast_function_decl_wrap(fun_decl));
     return fun_decl;
 }
 
@@ -1654,6 +1672,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Name fun_name = {0};
     Uast_function_decl* fun_decl = NULL;
+    bool is_fun_callback = false;
     switch (new_callee->type) {
         case TAST_ENUM_CALLEE: {
             // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
@@ -1769,14 +1788,24 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case TAST_SYMBOL: {
             fun_name = tast_symbol_unwrap(new_callee)->base.name;
             fun_decl = uast_function_decl_from_ulang_type_fn(
+                fun_name,
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
                 tast_symbol_unwrap(new_callee)->pos
             );
+            is_fun_callback = true;
             break;
         }
         case TAST_MEMBER_ACCESS:
-            unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
-            todo();
+            if (tast_expr_get_lang_type(new_callee).type != LANG_TYPE_FN) {
+                todo();
+            }
+            fun_decl = uast_function_decl_from_ulang_type_fn(
+                fun_name,
+                ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_expr_get_lang_type(new_callee))),
+                tast_expr_get_pos(new_callee)
+            );
+            is_fun_callback = true;
+            break;
         default:
             unreachable(FMT, tast_expr_print(new_callee));
     }
@@ -1803,7 +1832,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
         } else {
-            // TODO: print max count correctly for variadic fucntions
+            // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
@@ -1836,7 +1865,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    msg_invalid_function_arg(new_arg, param->base);
+                    msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
                     status = false;
                     goto error;
                 case CHECK_ASSIGN_ERROR:
@@ -1943,7 +1972,7 @@ static void msg_invalid_member_internal(
     msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
-    Tast_stmt** new_tast,
+    Tast_stmt** new_tast, // TODO: change to tast_expr
     Uast_member_access* access,
     Ustruct_def_base def_base,
     Tast_expr* new_callee
@@ -2132,15 +2161,14 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             }
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
-
         }
         case TAST_FUNCTION_CALL: {
             Tast_function_call* call = tast_function_call_unwrap(new_callee);
             Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
             Uast_def* lang_type_def = NULL;
             unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
         case TAST_MODULE_ALIAS: {
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
@@ -2154,6 +2182,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 return false;
             }
             *new_tast = tast_expr_wrap(new_expr);
+
             return true;
         }
         default:
@@ -3008,7 +3037,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_BLOCK: {
-            assert(uast_block_unwrap(stmt)->pos_end.line > 0);
             Tast_block* new_for = NULL;
             if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false)) {
                 return STMT_ERROR;

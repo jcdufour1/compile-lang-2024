@@ -40,14 +40,14 @@ static inline bool try_lang_type_from_ulang_type_fn(
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Ulang_type_tuple lang_type) {
     Lang_type_tuple new_tuple = {0};
-    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type, lang_type.pos));
     return lang_type_tuple_const_wrap(new_tuple);
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_fn(Ulang_type_fn lang_type) {
     Lang_type_fn new_fn = {0};
-    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type, lang_type.pos));
     return lang_type_fn_const_wrap(new_fn);
 }
 
@@ -173,7 +173,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
 
 static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lang_type) {
     Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type, lang_type.pos));
     return new_lang_type;
 }
 
