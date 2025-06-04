@@ -257,7 +257,7 @@ static void msg_invalid_function_arg_internal(
         msg_internal(
             file, line,
             DIAG_NOTE, corres_param->pos,
-            "function callback defined here\n"
+            "function callback type defined here\n"
         );
     } else {
         msg_internal(
@@ -805,8 +805,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         }
     }
             
-    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).base.count > 0);
-
     // precalcuate binary in some situations
     if (new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL) {
         Tast_literal* lhs_lit = tast_literal_unwrap(new_lhs);
@@ -851,7 +849,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 Tast_enum_lit* rhs = tast_enum_lit_unwrap(rhs_lit);
                 if (!lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type)) {
                     // binary operators with mismatched enum types
-                    todo();
+                    return false;
                 }
 
                 Uast_def* enum_def_ = NULL;
@@ -860,7 +858,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     vec_at(&uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
                     lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
                 )) {
-                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
                     // overloaded binary operators not defined for non-void inner types of enum
                     msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
                     todo();
@@ -962,7 +959,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
     }
 
-    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_tast)).base.count > 0);
     assert(*new_tast);
     return true;
 }
@@ -1857,11 +1853,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    if (is_fun_callback) {
-                        log(LOG_DEBUG, "yes\n");
-                    } else {
-                        log(LOG_DEBUG, "no\n");
-                    }
                     msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
                     status = false;
                     goto error;
@@ -1969,7 +1960,7 @@ static void msg_invalid_member_internal(
     msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
-    Tast_stmt** new_tast,
+    Tast_stmt** new_tast, // TODO: change to tast_expr
     Uast_member_access* access,
     Ustruct_def_base def_base,
     Tast_expr* new_callee
@@ -2158,15 +2149,14 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             }
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
-
         }
         case TAST_FUNCTION_CALL: {
             Tast_function_call* call = tast_function_call_unwrap(new_callee);
             Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
             Uast_def* lang_type_def = NULL;
             unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
         case TAST_MODULE_ALIAS: {
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
@@ -2180,6 +2170,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 return false;
             }
             *new_tast = tast_expr_wrap(new_expr);
+
             return true;
         }
         default:
@@ -3034,7 +3025,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_BLOCK: {
-            assert(uast_block_unwrap(stmt)->pos_end.line > 0);
             Tast_block* new_for = NULL;
             if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false)) {
                 return STMT_ERROR;

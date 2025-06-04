@@ -393,7 +393,9 @@ Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
 Strv uast_param_print_internal(const Uast_param* param, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "param\n", indent);
+    string_extend_cstr_indent(&a_print, &buf, "param", indent);
+    extend_pos(&buf, param->pos);
+    string_extend_cstr_indent(&a_print, &buf, "\n", indent);
     string_extend_strv(&a_print, &buf, uast_variable_def_print_internal(param->base, indent + INDENT_WIDTH));
     if (param->is_optional) {
         string_extend_strv(&a_print, &buf, uast_expr_print_internal(param->optional_default, indent + INDENT_WIDTH));
