@@ -2680,13 +2680,10 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
         case TAST_DEFER: {
             Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
-            (void) pairs;
-            (void) defer;
-            todo();
-            //vec_append(&a_main, pairs, ((Defer_pair) {
-            //    defer,
-            //    tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), )
-            //}));
+            vec_append(&a_main, pairs, ((Defer_pair) {
+                defer,
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), new_block->scope_id)
+            }));
             return;
         }
     }
