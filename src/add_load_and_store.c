@@ -14,6 +14,8 @@
 #include <symbol_iter.h>
 #include <sizeof.h>
 
+// TODO: remove is_brking (use is_yielding instead) and remove Tast_break
+
 typedef enum {
     DEFER_PARENT_OF_FUN,
     DEFER_PARENT_OF_FOR,
@@ -52,6 +54,7 @@ typedef struct {
     Tast_expr* rtn_val;
     Name is_brking;
     Name is_conting;
+    Name is_yielding;
 } Defer_collection;
 
 // stack of scope defered statements
@@ -225,6 +228,33 @@ static void load_block_stmts(
             unreachable("");
     }
 
+    Name is_yielding_name = {0};
+    switch (parent_of) {
+        case DEFER_PARENT_OF_FUN: {
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_fun"));
+            break;
+        }
+        case DEFER_PARENT_OF_FOR: {
+            assert(label_if_continue.base.count > 0);
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_for"));
+            break;
+        }
+        case DEFER_PARENT_OF_IF: {
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_if"));
+            break;
+        }
+        case DEFER_PARENT_OF_BLOCK: {
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_block"));
+            break;
+        }
+        case DEFER_PARENT_OF_TOP_LEVEL: {
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_top_level"));
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
     Name is_conting_name = {0};
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -261,6 +291,15 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
+    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
+    Tast_assignment* is_yield_assign = tast_assignment_new(
+        pos,
+        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+            .lang_type = is_yielding->lang_type, .name = is_yielding->name
+        })),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
+    );
+
     Tast_variable_def* is_conting = tast_variable_def_new(pos, lang_type_new_u1(), false, is_conting_name);
     Tast_assignment* is_cont_assign = tast_assignment_new(
         pos,
@@ -269,7 +308,6 @@ static void load_block_stmts(
         })),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
-
 
     Tast_expr* rtn_val = {0};
 
@@ -325,6 +363,7 @@ static void load_block_stmts(
         .parent_of = parent_of,
         .rtn_val = rtn_val,
         .is_brking = is_brking->name,
+        .is_yielding = is_yielding->name,
         .is_conting = is_conting->name
     }));
 
@@ -370,11 +409,14 @@ static void load_block_stmts(
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
+    unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
     unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
     load_variable_def(new_block, is_rtning);
+    load_variable_def(new_block, is_yielding);
     load_variable_def(new_block, is_conting);
     load_assignment(new_block, is_rtn_assign);
     load_assignment(new_block, is_brk_assign);
+    load_assignment(new_block, is_yield_assign);
     load_assignment(new_block, is_cont_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
@@ -2398,6 +2440,32 @@ static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_s
     }
 }
 
+// TODO: consider if this can be combined with load_brking_or_conting_set_etc
+static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt) {
+    Defer_collection coll = vec_top(&defered_collections.coll_stack);
+    Defer_pair_vec* pairs = &coll.pairs;
+
+    // TODO: extract this into separate function? (and for can use same function as continue, etc.
+    Tast_assignment* is_cont_assign = tast_assignment_new(
+        tast_stmt_get_pos(old_stmt),
+        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+            .lang_type = tast_lang_type_from_name(coll.is_yielding),
+            .name = coll.is_yielding
+        })),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+    );
+    load_assignment(new_block, is_cont_assign);
+
+    todo();
+    // TODO: do the assignments for is_yielding
+
+    if (pairs->info.count > 0) {
+        // jump to the top of the defer stack to execute the defered statements
+        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
+        vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+    }
+}
+
 static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
@@ -2476,6 +2544,37 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
             }
 
             load_brking_or_conting_set_etc(new_block, old_stmt, true);
+            return;
+        }
+        case TAST_YIELD: {
+            if (is_defered) {
+                load_break(new_block, tast_break_unwrap(old_stmt));
+                return;
+            }
+
+            if (label_if_break.base.count < 1) {
+                msg(
+                    DIAG_BREAK_INVALID_LOCATION, tast_break_unwrap(old_stmt)->pos,
+                    "break statement outside of a for loop\n"
+                );
+                return;
+            }
+
+            // TODO: this will not always work for custom scopes
+            Tast_yield* brk = tast_yield_unwrap(old_stmt);
+            if (brk->do_yield_expr) {
+                Tast_assignment* new_assign = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(load_break_symbol_name),
+                        .name = load_break_symbol_name
+                    })),
+                    brk->yield_expr
+                );
+                load_assignment(new_block, new_assign);
+            }
+
+            load_yielding_set_etc(new_block, old_stmt);
             return;
         }
         case TAST_CONTINUE: {
