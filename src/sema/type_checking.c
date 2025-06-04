@@ -1420,6 +1420,16 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
+            if (lhs_lang_type.type != LANG_TYPE_ENUM) {
+                msg(
+                    DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
+                    uast_expr_get_pos(uast),
+                    "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                );
+                return false;
+            }
+
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
                 lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type)
@@ -1786,13 +1796,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             break;
         }
         case TAST_MEMBER_ACCESS:
-            //fun_name = tast_symbol_unwrap(new_callee)->base.name;
             if (tast_expr_get_lang_type(new_callee).type != LANG_TYPE_FN) {
-                msg(
-                    DIAG_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
-                    "callee is not callable\n"
-                );
-                return false;
+                todo();
             }
             fun_decl = uast_function_decl_from_ulang_type_fn(
                 fun_name,

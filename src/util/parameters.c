@@ -87,7 +87,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 68, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 69, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -157,6 +157,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"continue-out-of-defer", DIAG_CONTINUE_OUT_OF_DEFER, LOG_ERROR, true},
     {"assignment-to-void", DIAG_ASSIGNMENT_TO_VOID, LOG_ERROR, true},
     {"if-else-in-if-let", DIAG_IF_ELSE_IN_IF_LET, LOG_ERROR, true},
+    {"unknown-on-non-enum-type", DIAG_UNKNOWN_ON_NON_ENUM_TYPE, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

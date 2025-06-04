@@ -70,6 +70,7 @@ typedef enum {
     DIAG_CONTINUE_OUT_OF_DEFER,
     DIAG_ASSIGNMENT_TO_VOID,
     DIAG_IF_ELSE_IN_IF_LET,
+    DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
 
     // count of cases for static asserts
     DIAG_COUNT,
