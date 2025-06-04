@@ -461,10 +461,19 @@ static Uast_type uast_gen_poison_def(const char* prefix) {
     return def;
 }
 
+static Uast_type uast_gen_label(const char* prefix) {
+    Uast_type bound = {.name = uast_name_new(prefix, "label", false)};
+
+    append_member(&bound.members, "Name", "name");
+
+    return bound;
+}
+
 static Uast_type uast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, uast_gen_label(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_void_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_poison_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_import_path(base_name));

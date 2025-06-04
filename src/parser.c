@@ -20,7 +20,7 @@ static Strv curr_mod_path;
 
 static Token prev_token;
 
-static Str_view new_scope_name;
+static Name new_scope_name;
 
 // TODO: make consume_expect function to print error automatically
 
@@ -1559,11 +1559,17 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
     return cont_stmt;
 }
 
-static Str_view parse_label(Tk_view* tokens) {
+static Name parse_label(Tk_view* tokens) {
     Token sym_name = {0};
     unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(NULL, tokens, TOKEN_COLON));
-    return sym_name.text;
+    // scope will be updated when parsing the statement
+    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, SCOPE_NOT);
+    if (!usymbol_add(uast_dummy_wrap(uast_dummy_new(sym_name.pos, label_name)))) {
+        // TODO: expected failure case for redefinition of label
+        todo();
+    }
+    return label_name;
 }
 
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
@@ -2011,7 +2017,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
-        new_scope_name = parse_label(&fun_decl, tokens, scope_id);
+        new_scope_name = parse_label(tokens);
     }
 
     Uast_stmt* lhs = NULL;

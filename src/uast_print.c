@@ -407,6 +407,15 @@ Strv uast_param_print_internal(const Uast_param* param, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_label_print_internal(const Uast_label* label, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "label", indent);
+    extend_pos(&buf, label->pos);
+    extend_name(NAME_LOG, &buf, label->name);
+
+    return string_to_strv(buf);
+}
 Strv uast_import_path_print_internal(const Uast_import_path* import, int indent) {
     String buf = {0};
 
@@ -635,6 +644,8 @@ Strv uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_lang_def_print_internal(uast_lang_def_const_unwrap(def), indent);
         case UAST_VOID_DEF:
             return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
+        case UAST_LABEL:
+            return uast_label_print_internal(uast_label_const_unwrap(def), indent);
     }
     unreachable("");
 }

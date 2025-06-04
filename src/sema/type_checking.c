@@ -609,6 +609,9 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
+        case UAST_LABEL:
+            // TODO
+            todo();
         case UAST_GENERIC_PARAM:
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
@@ -1564,6 +1567,8 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         }
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
+        case UAST_LABEL:
+            todo();
         case UAST_LANG_DEF:
             return STMT_NO_STMT;
     }
@@ -2102,6 +2107,9 @@ bool try_set_member_access_types_finish(
         case UAST_PRIMITIVE_DEF:
             msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
             return false;
+        case UAST_LABEL: {
+            todo();
+        }
         case UAST_FUNCTION_DECL:
             unreachable("");
         case UAST_GENERIC_PARAM:
