@@ -242,23 +242,40 @@ static void msg_invalid_function_arg_internal(
     const char* file,
     int line,
     const Tast_expr* argument,
-    const Uast_variable_def* corres_param
+    const Uast_variable_def* corres_param,
+    bool is_fun_callback
 ) {
-    msg_internal(
-        file, line,
-        DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
-        "argument is of type `"FMT"`, "
-        "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
-        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-        name_print(NAME_MSG, corres_param->name),
-        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
-    );
-    msg_internal(
-        file, line,
-        DIAG_NOTE, corres_param->pos,
-        "corresponding parameter `"FMT"` defined here\n",
-        name_print(NAME_MSG, corres_param->name)
-    );
+    if (is_fun_callback) {
+        msg_internal(
+            file, line,
+            DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
+            "argument is of type `"FMT"`, "
+            "but the corresponding parameter is of type `"FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
+            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+        );
+        msg_internal(
+            file, line,
+            DIAG_NOTE, corres_param->pos,
+            "function callback defined here\n"
+        );
+    } else {
+        msg_internal(
+            file, line,
+            DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
+            "argument is of type `"FMT"`, "
+            "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
+            name_print(NAME_MSG, corres_param->name),
+            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+        );
+        msg_internal(
+            file, line,
+            DIAG_NOTE, corres_param->pos,
+            "corresponding parameter `"FMT"` defined here\n",
+            name_print(NAME_MSG, corres_param->name)
+        );
+    }
 }
 
 static void msg_invalid_count_function_args_internal(
@@ -290,8 +307,8 @@ static void msg_invalid_count_function_args_internal(
     );
 }
 
-#define msg_invalid_function_arg(argument, corres_param) \
-    msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param)
+#define msg_invalid_function_arg(argument, corres_param, is_fun_callback) \
+    msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param, is_fun_callback)
 
 #define msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args) \
     msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl, min_args, max_args)
@@ -1620,8 +1637,8 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
-            pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
+            lang_type.pos,
+            uast_variable_def_new(lang_type.pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
@@ -1650,6 +1667,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Name fun_name = {0};
     Uast_function_decl* fun_decl = NULL;
+    bool is_fun_callback = false;
     switch (new_callee->type) {
         case TAST_ENUM_CALLEE: {
             // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
@@ -1769,6 +1787,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
                 tast_symbol_unwrap(new_callee)->pos
             );
+            is_fun_callback = true;
             break;
         }
         case TAST_MEMBER_ACCESS:
@@ -1800,7 +1819,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
         } else {
-            // TODO: print max count correctly for variadic fucntions
+            // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
@@ -1833,7 +1852,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    msg_invalid_function_arg(new_arg, param->base);
+                    if (is_fun_callback) {
+                        log(LOG_DEBUG, "yes\n");
+                    } else {
+                        log(LOG_DEBUG, "no\n");
+                    }
+                    msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
                     status = false;
                     goto error;
                 case CHECK_ASSIGN_ERROR:
