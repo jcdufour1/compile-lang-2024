@@ -482,7 +482,7 @@ static void load_block_stmts(
                     lang_type_new_u1()
                 )),
                 new_block,
-                label_if_continue/*TODO*/,
+                label_if_continue,
                 label_if_break
             );
         }
@@ -2048,6 +2048,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 
     // is_brk_check
     Name after_is_brk = util_literal_name_new_prefix(sv("after_is_brk_check_if_else_chain_to_branch"));
+    Name after_is_cont = util_literal_name_new_prefix(sv("after_is_cont_check_if_else_chain_to_branch"));
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not breaking right now
@@ -2076,6 +2077,27 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
             tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
                 .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_conting),
                 .name = vec_top(&defered_collections.coll_stack).is_conting
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
+            BINARY_DOUBLE_EQUAL,
+            lang_type_new_u1()
+        )),
+        *new_block,
+        after_is_cont,
+        vec_top(pairs).label->name
+    );
+    add_label((*new_block), after_is_cont, if_else->pos);
+    assert(alloca_lookup(&dummy, after_is_cont));
+
+    // is_yield_check
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not breaking right now
+        tast_binary_wrap(tast_binary_new(
+            if_else->pos,
+            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
+                .name = vec_top(&defered_collections.coll_stack).is_yielding
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
@@ -2502,6 +2524,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
             tast_literal_wrap(tast_int_wrap(tast_int_new(old_yield->pos, 1, lang_type_new_u1())))
         );
         load_assignment(new_block, is_yield_assign_aux);
+        log(LOG_DEBUG, "thing thing\n");
 
         if (curr_scope == tast_label_unwrap(tast_def_from_name(old_yield->break_out_of))->block_scope) {
             break;

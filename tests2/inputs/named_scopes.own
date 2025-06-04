@@ -3,7 +3,7 @@ type io import = std.io
 fn main() i32 {
     thing: for 1 {
         io.printf("hello\n")
-        for 1 {
+        if 1 {
             yield(thing)
         }
         io.printf("no\n")
