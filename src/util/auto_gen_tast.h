@@ -617,6 +617,17 @@ static Tast_type tast_gen_break(const char* prefix) {
     return lang_break;
 }
 
+static Tast_type tast_gen_yield(const char* prefix) {
+    const char* base_name = "yield";
+    Tast_type yield = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&yield.members, "bool", "do_yield_expr");
+    append_member(&yield.members, "Tast_expr*", "yield_expr");
+    append_member(&yield.members, "Name", "break_out_of");
+
+    return yield;
+}
+
 static Tast_type tast_gen_continue(const char* prefix) {
     const char* base_name = "continue";
     Tast_type lang_cont = {.name = tast_name_new(prefix, base_name, false)};
@@ -656,6 +667,7 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_break(base_name));
+    vec_append(&gen_a, &stmt.sub_types, tast_gen_yield(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_def(base_name));
 

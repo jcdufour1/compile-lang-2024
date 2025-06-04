@@ -351,6 +351,8 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_LABEL:
             unreachable("");
+        case TAST_YIELD:
+            unreachable("");
     }
     unreachable("");
 }
@@ -405,6 +407,8 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_CONTINUE:
             unreachable("");
         case TAST_LABEL:
+            unreachable("");
+        case TAST_YIELD:
             unreachable("");
     }
     unreachable("");
@@ -488,6 +492,8 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_CONTINUE:
             unreachable("");
         case TAST_LABEL:
+            unreachable("");
+        case TAST_YIELD:
             unreachable("");
     }
     unreachable("");

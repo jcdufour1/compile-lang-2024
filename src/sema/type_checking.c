@@ -2441,6 +2441,50 @@ error:
     return status;
 }
 
+bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
+    bool status = true;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_BREAK; // TODO
+
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            break;
+        case PARENT_OF_DEFER_NONE:
+            break;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, yield->pos, "cannot yield out of defer\n");
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
+
+    Tast_expr* new_child = NULL;
+    if (yield->do_yield_expr) {
+        switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg_invalid_yield_type(yield->pos, new_child, false);
+                status = false;
+                goto error;
+            case CHECK_ASSIGN_ERROR:
+                todo();
+                status = false;
+                goto error;
+            default:
+                unreachable("");
+        }
+    }
+
+    *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
+
+    break_in_case = true;
+error:
+    parent_of = old_parent_of;
+    return status;
+}
+
 bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
     PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
     parent_of_defer = PARENT_OF_DEFER_FOR;
@@ -2971,6 +3015,8 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_BREAK:
             return false;
+        case UAST_YIELD:
+            return false;
         case UAST_CONTINUE:
             return false;
         case UAST_ASSIGNMENT:
@@ -3058,6 +3104,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_defer_wrap(new_defer);
+            return STMT_OK;
+        }
+        case UAST_YIELD: {
+            Tast_yield* new_yield = NULL;
+            if (!try_set_yield_types(&new_yield, uast_yield_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_yield_wrap(new_yield);
             return STMT_OK;
         }
     }

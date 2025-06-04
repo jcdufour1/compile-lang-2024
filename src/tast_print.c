@@ -301,6 +301,10 @@ Strv tast_block_print_internal(const Tast_block* block, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
 
+    string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
+    string_extend_size_t(&a_print, &buf, block->scope_id);
+    string_extend_cstr(&a_print, &buf, "\n");
+
     string_extend_cstr_indent(&a_print, &buf, "alloca_table\n", indent + INDENT_WIDTH);
     alloca_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
@@ -360,6 +364,18 @@ Strv tast_break_print_internal(const Tast_break* lang_break, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "break\n", indent);
+
+    return string_to_strv(buf);
+}
+
+Strv tast_yield_print_internal(const Tast_yield* yield, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "yield\n", indent);
+    // TODO: print break expr
+    string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
+    extend_name(NAME_LOG, &buf, yield->break_out_of);
+    string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -617,6 +633,8 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_for_with_cond_print_internal(tast_for_with_cond_const_unwrap(stmt), indent);
         case TAST_BREAK:
             return tast_break_print_internal(tast_break_const_unwrap(stmt), indent);
+        case TAST_YIELD:
+            return tast_yield_print_internal(tast_yield_const_unwrap(stmt), indent);
         case TAST_CONTINUE:
             return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
         case TAST_RETURN:
