@@ -1,0 +1,16 @@
+
+fn add(a i32, b i32) i32 {
+    return a + b
+}
+
+
+fn main() i32 {
+    let ptr fn(i32, i32)i32 = add
+    ptr(8)
+    ptr(9, 10, 11)
+    ptr(12.1, 13)
+
+    let num i16 = ptr(12, 13)
+
+    return 0
+}

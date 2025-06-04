@@ -1652,7 +1652,6 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
         *lang_type.return_type,
         name
     );
-    usym_tbl_add(uast_function_decl_wrap(fun_decl));
     return fun_decl;
 }
 
@@ -1791,8 +1790,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             break;
         }
         case TAST_MEMBER_ACCESS:
-            unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
-            todo();
+            //fun_name = tast_symbol_unwrap(new_callee)->base.name;
+            fun_decl = uast_function_decl_from_ulang_type_fn(
+                fun_name,
+                ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_expr_get_lang_type(new_callee))),
+                tast_expr_get_pos(new_callee)
+            );
+            is_fun_callback = true;
+            break;
         default:
             unreachable(FMT, tast_expr_print(new_callee));
     }

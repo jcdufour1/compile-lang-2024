@@ -1,5 +1,7 @@
-compile::stdout 1
+compile::stdout 3
 10
+-418
+-89
 
 compile::stderr 0
 
