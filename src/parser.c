@@ -20,6 +20,8 @@ static Strv curr_mod_path;
 
 static Token prev_token;
 
+static Str_view new_scope_name;
+
 // TODO: make consume_expect function to print error automatically
 
 // TODO: use parent block for scope_ids instead of function calls everytime
@@ -326,6 +328,10 @@ static bool starts_with_type_def_in_def(Tk_view tokens) {
 
 static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
+}
+
+static bool starts_with_label(Tk_view tokens) {
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
 }
 
 static bool starts_with_defer(Tk_view tokens) {
@@ -1553,6 +1559,13 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
     return cont_stmt;
 }
 
+static Str_view parse_label(Tk_view* tokens) {
+    Token sym_name = {0};
+    unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
+    unwrap(try_consume(NULL, tokens, TOKEN_COLON));
+    return sym_name.text;
+}
+
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
     // TODO: expected failure case for return in defer block
     Token defer_tk = {0};
@@ -1995,6 +2008,11 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
+
+    memset(&new_scope_name, 0, sizeof(new_scope_name));
+    if (starts_with_label(*tokens)) {
+        new_scope_name = parse_label(&fun_decl, tokens, scope_id);
+    }
 
     Uast_stmt* lhs = NULL;
     if (starts_with_type_def_in_def(*tokens)) {
