@@ -21,6 +21,7 @@ static Strv curr_mod_path;
 static Token prev_token;
 
 static Name new_scope_name;
+static Pos new_scope_name_pos;
 
 // TODO: make consume_expect function to print error automatically
 
@@ -180,10 +181,10 @@ static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) 
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
     }
+    prev_token = consume(tokens);
     if (result) {
-        *result = consume(tokens);
+        *result = prev_token;
     }
-    prev_token = *result;
     return true;
 }
 
@@ -1606,7 +1607,7 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
     return cont_stmt;
 }
 
-static Name parse_label(Tk_view* tokens, Scope_id scope_id) {
+static void parse_label(Tk_view* tokens, Scope_id scope_id) {
     Token sym_name = {0};
     unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(NULL, tokens, TOKEN_COLON));
@@ -1616,7 +1617,9 @@ static Name parse_label(Tk_view* tokens, Scope_id scope_id) {
         // TODO: expected failure case for redefinition of label
         todo();
     }
-    return label_name;
+
+    new_scope_name_pos = sym_name.pos;
+    new_scope_name = label_name;
 }
 
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
@@ -2062,9 +2065,19 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
+    if (new_scope_name.base.count > 0) {
+        msg(
+            DIAG_INVALID_LABEL_POS, new_scope_name_pos,
+            "label should not be here; "
+            "label must be placed before block or statement that contains block "
+            "(if this is a variable definition, then `let` should be placed before the name)\n"
+        );
+        memset(&new_scope_name, 0, sizeof(new_scope_name));
+        return PARSE_EXPR_ERROR;
+    }
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
-        new_scope_name = parse_label(tokens, scope_id);
+        parse_label(tokens, scope_id);
     }
 
     Uast_stmt* lhs = NULL;
@@ -2188,6 +2201,8 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         unwrap(usymbol_lookup(&label_, new_scope_name));
         uast_label_unwrap(label_)->block_scope = new_scope;
     }
+    // zero out new_scope_name so that we can tell if scope was incorrect 
+    memset(&new_scope_name, 0, sizeof(new_scope_name));
 
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
