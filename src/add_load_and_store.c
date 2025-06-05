@@ -403,7 +403,8 @@ static void load_block_stmts(
         .rtn_val = rtn_val,
         .is_brking = is_brking->name,
         .is_yielding = is_yielding->name,
-        .is_conting = is_conting->name
+        .is_conting = is_conting->name,
+        .is_cont2ing = is_cont2ing->name
     }));
 
     switch (parent_of) {
