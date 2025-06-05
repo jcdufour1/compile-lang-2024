@@ -1,6 +1,6 @@
 type io import = std.io
 
-fn main() i32 {
+fn break_stmts() {
     defer io.printf("bye\n")
 
     thing: for 1 {
@@ -47,6 +47,64 @@ fn main() i32 {
         defer io.printf("no 3.598\n")
         io.printf("no 3.498\n")
     }
+}
+
+fn continue_stmts() {
+    defer io.printf("bye\n")
+
+    thing: for 1 {
+        defer io.printf("yes 4.4\n")
+        io.printf("yes 4.1\n")
+        let idx i32 = 0
+        thing2: for 1 {
+            defer idx += 1
+            if idx > 0 {
+                yield(thing)
+            }
+            defer io.printf("yes 4.3\n")
+            io.printf("yes 4.2\n")
+            continue2(thing)
+            defer io.printf("no 4.2\n")
+            io.printf("no 4.1\n")
+        }
+        defer io.printf("no 4.3\n")
+        io.printf("no 4.4\n")
+    }
+
+    //thing3: for 1 {
+    //    defer io.printf("yes 2.6\n")
+    //    io.printf("yes 2.1\n")
+    //    thing4: for 1 {
+    //        defer io.printf("yes 2.3\n")
+    //        io.printf("yes 2.2\n")
+    //        yield(thing4)
+    //        defer io.printf("no 2.3\n")
+    //        io.printf("no 2.4\n")
+    //    }
+    //    defer io.printf("yes 2.5\n")
+    //    io.printf("yes 2.4\n")
+    //    yield(thing3)
+    //    defer io.printf("no 2.2\n")
+    //    io.printf("no 2.1\n")
+    //}
+
+    //thing5: for 1 {
+    //    defer io.printf("yes 3.4\n")
+    //    io.printf("yes 3.1\n")
+    //    thing6: if 1 {
+    //        defer io.printf("yes 3.3\n")
+    //        io.printf("yes 3.2\n")
+    //        yield(thing5)
+    //        defer io.printf("no 3.3\n")
+    //        io.printf("no 3.4\n")
+    //    }
+    //    defer io.printf("no 3.598\n")
+    //    io.printf("no 3.498\n")
+    //}
+}
+fn main() i32 {
+    break_stmts()
+    continue_stmts()
 
     return 0
 }

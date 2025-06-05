@@ -554,6 +554,14 @@ static Uast_type uast_gen_yield(const char* prefix) {
     return yield;
 }
 
+static Uast_type uast_gen_continue2(const char* prefix) {
+    Uast_type continue2 = {.name = uast_name_new(prefix, "continue2", false)};
+
+    append_member(&continue2.members, "Name", "break_out_of");
+
+    return continue2;
+}
+
 static Uast_type uast_gen_continue(const char* prefix) {
     Uast_type lang_cont = {.name = uast_name_new(prefix, "continue", false)};
 
@@ -620,6 +628,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_yield(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_continue2(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));

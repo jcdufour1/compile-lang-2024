@@ -360,6 +360,17 @@ Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_continue2_print_internal(const Uast_continue2* cont, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "continue2\n", indent);
+    string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
+    extend_name(NAME_LOG, &buf, cont->break_out_of);
+    string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv uast_continue_print_internal(const Uast_continue* lang_continue, int indent) {
     (void) lang_continue;
     String buf = {0};
@@ -732,6 +743,8 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_DEFER:
             return uast_defer_print_internal(uast_defer_const_unwrap(stmt), indent);
+        case UAST_CONTINUE2:
+            return uast_continue2_print_internal(uast_continue2_const_unwrap(stmt), indent);
     }
     unreachable("");
 }

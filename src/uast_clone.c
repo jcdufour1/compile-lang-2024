@@ -312,6 +312,10 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
         case UAST_BREAK:
             return uast_break_wrap(uast_break_clone(uast_break_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_YIELD:
+            // TODO
+            todo();
+        case UAST_CONTINUE2:
+            // TODO
             todo();
         case UAST_CONTINUE:
             return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt)));

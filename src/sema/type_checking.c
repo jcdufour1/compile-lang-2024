@@ -3028,11 +3028,12 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
         case UAST_FOR_WITH_COND:
             return false;
         case UAST_BREAK:
-            todo();
             return false;
         case UAST_YIELD:
             return false;
         case UAST_CONTINUE:
+            return false;
+        case UAST_CONTINUE2:
             return false;
         case UAST_ASSIGNMENT:
             return false;
@@ -3127,6 +3128,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_yield_wrap(new_yield);
+            return STMT_OK;
+        }
+        case UAST_CONTINUE2: {
+            Tast_continue2* new_cont = NULL;
+            if (!try_set_continue2_types(&new_cont, uast_continue2_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_continue2_wrap(new_cont);
             return STMT_OK;
         }
     }
