@@ -511,6 +511,9 @@ static void load_block_stmts(
             add_label(new_block, check_is_cont2, new_block->pos/*TODO*/);
 
             Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
+            //Name if_is_cont2 = {0};
+            //if (vec_top(&defered_collections.coll_stack).is_cont2ing)) {
+            //}
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not continuing right now
                 tast_binary_wrap(tast_binary_new(
@@ -525,7 +528,7 @@ static void load_block_stmts(
                 )),
                 new_block,
                 check_is_yield,
-                label_if_continue
+                label_if_continue // NOTE: is_cont2ing should only be set at scope of cont2ing; nested scopes will have is_yielding set to true instead
             );
             add_label(new_block, check_is_yield, new_block->pos/*TODO*/);
 
@@ -2312,6 +2315,7 @@ static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond*
     );
     add_label(new_branch_block, after_check_rtn, old_for->pos);
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
+    Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
 
     // is_yield_check
     unwrap(pairs->info.count > 0 && "not implemented");
@@ -2332,6 +2336,26 @@ static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond*
         vec_top(pairs).label->name
     );
     add_label(new_branch_block, after_yield_check, old_for->pos);
+
+    // is_cont2_check
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not continuing right now
+        tast_binary_wrap(tast_binary_new(
+            pos,
+            tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+                .name = vec_top(&defered_collections.coll_stack).is_cont2ing
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
+            BINARY_DOUBLE_EQUAL,
+            lang_type_new_u1()
+        )),
+        new_branch_block,
+        after_cont2_check,
+        vec_top(pairs).label->name
+    );
+    add_label(new_branch_block, after_cont2_check, old_for->pos);
 
     label_if_continue = old_if_continue;
     label_after_for = old_after_for;
@@ -2607,11 +2631,12 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     (void) pairs;
 
     // TODO: extract this into separate function? (and for can use same function as continue, etc.
+    // TODO: eliminate this particular assignment
     Tast_assignment* is_cont_assign = tast_assignment_new(
         tast_stmt_get_pos(old_stmt),
         tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
             .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
-            .name = get_is_brking_or_conting(&coll)
+            .name = coll.is_yielding
         })),
         tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
     );
@@ -2629,15 +2654,31 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
 
-        Tast_assignment* is_djslkfajfd_assign_aux = tast_assignment_new(
-            tast_stmt_get_pos(old_stmt),
-            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                .lang_type = lang_type_new_u1(),
-                .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
-        );
-        load_assignment(new_block, is_djslkfajfd_assign_aux);
+        if (curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
+            // this is the last scope; if we are cont2ing, this is the only one that should actually
+            //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
+            //  defers, etc. to run properly
+
+            Tast_assignment* is_brk_assign_aux = tast_assignment_new(
+                tast_stmt_get_pos(old_stmt),
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    .lang_type = lang_type_new_u1(),
+                    .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
+                })),
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+            );
+            load_assignment(new_block, is_brk_assign_aux);
+        } else {
+            Tast_assignment* is_brk_assign_aux = tast_assignment_new(
+                tast_stmt_get_pos(old_stmt),
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    .lang_type = lang_type_new_u1(),
+                    .name = vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding
+                })),
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+            );
+            load_assignment(new_block, is_brk_assign_aux);
+        }
 
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
         if (curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {

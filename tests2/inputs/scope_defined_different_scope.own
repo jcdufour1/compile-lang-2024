@@ -1,0 +1,13 @@
+
+
+fn main() i32 {
+    thing: for 1 {
+        yield(thing)
+    }
+
+    thing2: for 1 {
+        yield(thing)
+    }
+
+    return 0
+}
