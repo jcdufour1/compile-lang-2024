@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests2/inputs/label_redef.own:5:9:[1;31merror[0;39m:redefinition of symbol `hello`
+     4 |     hello: {
+     5 |         hello: for 1 {
+       |         ^
+     6 |         }
+tests2/inputs/label_redef.own:4:5:[1;34mnote[0;39m:`hello` originally defined here
+     3 | fn main() i32 {
+     4 |     hello: {
+       |     ^
+     5 |         hello: for 1 {
+
+compile::return_code 1
+
