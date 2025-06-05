@@ -156,6 +156,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_BREAK:
             todo();
+        case UAST_CONTINUE2:
+            todo();
         case UAST_CONTINUE:
             generic_sub_continue(uast_continue_unwrap(stmt));
             return;

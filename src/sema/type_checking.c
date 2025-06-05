@@ -2499,6 +2499,39 @@ error:
     return status;
 }
 
+bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
+    bool status = true;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_BREAK; // TODO
+
+    Uast_def* dummy = NULL;
+    if (!usymbol_lookup(&dummy, cont->break_out_of)) {
+        msg_undefined_symbol(uast_symbol_new(cont->pos, cont->break_out_of));
+        status = false;
+        goto error;
+    }
+
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            break;
+        case PARENT_OF_DEFER_NONE:
+            break;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue2 out of defer\n");
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
+
+    *new_tast = tast_continue2_new(cont->pos, cont->break_out_of);
+
+    break_in_case = true;
+error:
+    parent_of = old_parent_of;
+    return status;
+}
+
 bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
     PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
     parent_of_defer = PARENT_OF_DEFER_FOR;
