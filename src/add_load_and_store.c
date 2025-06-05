@@ -2444,6 +2444,7 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
 }
 
 typedef Name (*Get_is_brking_or_conting)(const Defer_collection* item);
+typedef Name (*Get_is_yielding_or_cont2ing)(const Defer_collection* item);
 
 Name get_is_brking(const Defer_collection* item) {
     return item->is_brking;
@@ -2451,6 +2452,15 @@ Name get_is_brking(const Defer_collection* item) {
 
 Name get_is_conting(const Defer_collection* item) {
     return item->is_conting;
+}
+
+Name get_is_yielding(const Defer_collection* item) {
+    return item->is_yielding;
+}
+
+Name get_is_cont2ing(const Defer_collection* item) {
+    todo();
+    //return item->is_cont2ing;
 }
 
 // TODO: try to come up with a better name for this function
@@ -2509,23 +2519,24 @@ static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_s
 }
 
 // TODO: consider if this can be combined with load_brking_or_conting_set_etc
-static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
+static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name break_out_of, bool is_yielding) {
+    Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
     (void) pairs;
 
     // TODO: extract this into separate function? (and for can use same function as continue, etc.
     Tast_assignment* is_cont_assign = tast_assignment_new(
-        old_yield->pos,
-        tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
-            .lang_type = tast_lang_type_from_name(coll.is_yielding),
-            .name = coll.is_yielding
+        tast_stmt_get_pos(old_stmt),
+        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+            .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
+            .name = get_is_brking_or_conting(&coll)
         })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(old_yield->pos, 1, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
     );
     load_assignment(new_block, is_cont_assign);
 
-    //// TODO: do the assignments for is_yielding
+    //// TODO: do the assignments for is_djslkfajfding
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of for
@@ -2537,18 +2548,18 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
 
-        Tast_assignment* is_yield_assign_aux = tast_assignment_new(
-            old_yield->pos,
-            tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
+        Tast_assignment* is_djslkfajfd_assign_aux = tast_assignment_new(
+            tast_stmt_get_pos(old_stmt),
+            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
-                .name = vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding
+                .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(old_yield->pos, 1, lang_type_new_u1())))
+            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
         );
-        load_assignment(new_block, is_yield_assign_aux);
+        load_assignment(new_block, is_djslkfajfd_assign_aux);
 
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
-        if (curr_scope == tast_label_unwrap(tast_def_from_name(old_yield->break_out_of))->block_scope) {
+        if (curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
             break;
         }
 
@@ -2559,7 +2570,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
 
     if (pairs->info.count > 0) {
         // jump to the top of the defer stack to execute the defered statements
-        Ir_goto* new_goto = ir_goto_new(old_yield->pos, util_literal_name_new(), vec_top(pairs).label->name);
+        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
 }
@@ -2646,15 +2657,8 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
         }
         case TAST_YIELD: {
             if (is_defered) {
-                load_break(new_block, tast_break_unwrap(old_stmt));
-                return;
-            }
-
-            if (label_if_break.base.count < 1) {
-                msg(
-                    DIAG_BREAK_INVALID_LOCATION, tast_break_unwrap(old_stmt)->pos,
-                    "break statement outside of a for loop\n"
-                );
+                todo();
+                //load_break(new_block, tast_break_unwrap(old_stmt));
                 return;
             }
 
@@ -2672,7 +2676,17 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
                 load_assignment(new_block, new_assign);
             }
 
-            load_yielding_set_etc(new_block, tast_yield_unwrap(old_stmt));
+            load_yielding_set_etc(new_block, old_stmt, brk->break_out_of, true);
+            return;
+        }
+        case TAST_CONTINUE2: {
+            if (is_defered) {
+                todo();
+                //load_continue(new_block, tast_break_unwrap(old_stmt));
+                return;
+            }
+
+            load_yielding_set_etc(new_block, old_stmt, tast_continue2_unwrap(old_stmt)->break_out_of, false);
             return;
         }
         case TAST_CONTINUE: {

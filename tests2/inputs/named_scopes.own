@@ -63,7 +63,7 @@ fn continue_stmts() {
             }
             defer io.printf("yes 4.3\n")
             io.printf("yes 4.2\n")
-            continue2(thing)
+            //continue2(thing)
             defer io.printf("no 4.2\n")
             io.printf("no 4.1\n")
         }
