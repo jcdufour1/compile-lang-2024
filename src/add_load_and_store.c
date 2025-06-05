@@ -2547,12 +2547,12 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_yield* old_yield) {
         );
         load_assignment(new_block, is_yield_assign_aux);
 
+        // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
         if (curr_scope == tast_label_unwrap(tast_def_from_name(old_yield->break_out_of))->block_scope) {
             break;
         }
 
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-        // TODO: expected failure case for label not in current scope, but available elsewhere in the program
         unwrap(idx > 1);
         idx--;
     }

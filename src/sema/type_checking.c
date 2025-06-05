@@ -2453,6 +2453,13 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     PARENT_OF old_parent_of = parent_of;
     parent_of = PARENT_OF_BREAK; // TODO
 
+    Uast_def* dummy = NULL;
+    if (!usymbol_lookup(&dummy, yield->break_out_of)) {
+        msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        status = false;
+        goto error;
+    }
+
     switch (parent_of_defer) {
         case PARENT_OF_DEFER_FOR:
             break;
