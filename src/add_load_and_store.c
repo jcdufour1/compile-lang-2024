@@ -57,6 +57,7 @@ typedef struct {
     Name is_brking;
     Name is_conting;
     Name is_yielding;
+    Name is_cont2ing;
 } Defer_collection;
 
 // stack of scope defered statements
@@ -284,6 +285,33 @@ static void load_block_stmts(
             todo();
     }
 
+    Name is_cont2ing_name = {0};
+    switch (parent_of) {
+        case DEFER_PARENT_OF_FUN: {
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_fun"));
+            break;
+        }
+        case DEFER_PARENT_OF_FOR: {
+            assert(label_if_continue.base.count > 0);
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_for"));
+            break;
+        }
+        case DEFER_PARENT_OF_IF: {
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_if"));
+            break;
+        }
+        case DEFER_PARENT_OF_BLOCK: {
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_block"));
+            break;
+        }
+        case DEFER_PARENT_OF_TOP_LEVEL: {
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_top_level"));
+            break;
+        }
+        default:
+            todo();
+    }
+
     Tast_variable_def* is_brking = tast_variable_def_new(pos, lang_type_new_u1(), false, is_brking_name);
     Tast_assignment* is_brk_assign = tast_assignment_new(
         pos,
@@ -307,6 +335,15 @@ static void load_block_stmts(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
             .lang_type = is_conting->lang_type, .name = is_conting->name
+        })),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
+    );
+
+    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(), false, is_cont2ing_name);
+    Tast_assignment* is_cont2_assign = tast_assignment_new(
+        pos,
+        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+            .lang_type = is_cont2ing->lang_type, .name = is_cont2ing->name
         })),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
@@ -413,13 +450,16 @@ static void load_block_stmts(
     unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
     unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
     unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
+    unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
     load_variable_def(new_block, is_rtning);
     load_variable_def(new_block, is_yielding);
     load_variable_def(new_block, is_conting);
+    load_variable_def(new_block, is_cont2ing);
     load_assignment(new_block, is_rtn_assign);
     load_assignment(new_block, is_brk_assign);
     load_assignment(new_block, is_yield_assign);
     load_assignment(new_block, is_cont_assign);
+    load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
         load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false);
@@ -450,7 +490,7 @@ static void load_block_stmts(
             );
             add_label(new_block, check_is_cont, new_block->pos/*TODO*/);
 
-            Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
+            Name check_is_cont2 = util_literal_name_new_prefix(sv("check_is_cont2"));
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not continuing right now
                 tast_binary_wrap(tast_binary_new(
@@ -458,6 +498,25 @@ static void load_block_stmts(
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
                         .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_conting),
                         .name = vec_top(&defered_collections.coll_stack).is_conting
+                    })),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
+                    BINARY_DOUBLE_EQUAL,
+                    lang_type_new_u1()
+                )),
+                new_block,
+                check_is_cont2,
+                label_if_continue
+            );
+            add_label(new_block, check_is_cont2, new_block->pos/*TODO*/);
+
+            Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
+            if_for_add_cond_goto(
+                // if this condition evaluates to true, we are not continuing right now
+                tast_binary_wrap(tast_binary_new(
+                    pos,
+                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+                        .name = vec_top(&defered_collections.coll_stack).is_cont2ing
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
                     BINARY_DOUBLE_EQUAL,
@@ -2050,6 +2109,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     // is_brk_check
     Name after_is_brk = util_literal_name_new_prefix(sv("after_is_brk_check_if_else_chain_to_branch"));
     Name after_is_cont = util_literal_name_new_prefix(sv("after_is_cont_check_if_else_chain_to_branch"));
+    Name after_is_cont2 = util_literal_name_new_prefix(sv("after_is_cont2_check_if_else_chain_to_branch"));
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not breaking right now
@@ -2076,7 +2136,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         tast_binary_wrap(tast_binary_new(
             if_else->pos,
             tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_conting),
+                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_conting), // TODO: change to lang_type_new_u1()
                 .name = vec_top(&defered_collections.coll_stack).is_conting
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
@@ -2089,6 +2149,27 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     );
     add_label((*new_block), after_is_cont, if_else->pos);
     assert(alloca_lookup(&dummy, after_is_cont));
+
+    // is_cont2_check
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not breaking right now
+        tast_binary_wrap(tast_binary_new(
+            if_else->pos,
+            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+                .name = vec_top(&defered_collections.coll_stack).is_cont2ing
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
+            BINARY_DOUBLE_EQUAL,
+            lang_type_new_u1()
+        )),
+        *new_block,
+        after_is_cont2,
+        vec_top(pairs).label->name
+    );
+    add_label((*new_block), after_is_cont2, if_else->pos);
+    assert(alloca_lookup(&dummy, after_is_cont2));
 
     // is_yield_check
     unwrap(pairs->info.count > 0 && "not implemented");
@@ -2459,8 +2540,7 @@ Name get_is_yielding(const Defer_collection* item) {
 }
 
 Name get_is_cont2ing(const Defer_collection* item) {
-    todo();
-    //return item->is_cont2ing;
+    return item->is_cont2ing;
 }
 
 // TODO: try to come up with a better name for this function
