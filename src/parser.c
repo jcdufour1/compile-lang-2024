@@ -23,6 +23,8 @@ static Token prev_token;
 static Name new_scope_name;
 static Pos new_scope_name_pos;
 
+static Name parent_for_label = {0};
+
 // TODO: make consume_expect function to print error automatically
 
 // TODO: use parent block for scope_ids instead of function calls everytime
@@ -1429,7 +1431,7 @@ static PARSE_STATUS parse_for_range_internal(
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(&inner, tokens, false, block_scope)) {
+    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope))) {
         return PARSE_ERROR;
     }
 
@@ -1492,6 +1494,8 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
+    log(LOG_DEBUG, FMT"\n", uast_block_print(outer));
+
     *result = outer;
     return PARSE_OK;
 }
@@ -1514,6 +1518,9 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
+    assert(new_scope_name.base.count > 0);
+    parent_for_label = new_scope_name;
+
     Token for_token = {0};
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
 
@@ -1612,21 +1619,25 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
 static PARSE_STATUS parse_continue2(Uast_continue2** new_cont, Tk_view* tokens, Scope_id scope_id) {
     Token cont_token = consume(tokens);
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_OPEN_PAR);
-        return PARSE_ERROR;
-    }
+    Name break_out_of = {0};
+    if (try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        Token token = {0};
+        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
 
-    Token token = {0};
-    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
-        return PARSE_ERROR;
-    }
-    Name break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
-
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
-        return PARSE_ERROR;
+        if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+            msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
+            return PARSE_ERROR;
+        }
+    } else {
+        if (parent_for_label.base.count < 1) {
+            // TODO: expected failure case
+            todo();
+        }
+        break_out_of = parent_for_label;
     }
 
     *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
@@ -2099,7 +2110,8 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    if (new_scope_name.base.count > 0) {
+    // TODO: make pos_is_equal function?
+    if (new_scope_name.base.count > 0 && new_scope_name_pos.line != 0) {
         msg(
             DIAG_INVALID_LABEL_POS, new_scope_name_pos,
             "label should not be here; "
@@ -2112,8 +2124,14 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
         if (PARSE_OK != parse_label(tokens, scope_id)) {
+            todo();
             return PARSE_EXPR_ERROR;
         }
+        assert(new_scope_name.base.count > 0);
+    } else {
+        new_scope_name_pos = POS_BUILTIN;
+        new_scope_name = util_literal_name_new_prefix(sv("scope_name"));
+        unwrap(usymbol_add(uast_label_wrap(uast_label_new(POS_BUILTIN, new_scope_name, scope_id))));
     }
 
     Uast_stmt* lhs = NULL;
@@ -2150,6 +2168,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         }
         lhs = uast_return_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
+        assert(new_scope_name.base.count > 0);
         if (PARSE_OK != parse_for_loop(&lhs, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
