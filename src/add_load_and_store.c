@@ -2686,7 +2686,15 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
         }
 
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-        unwrap(idx > 1);
+        if (idx < 1) {
+            msg(
+                DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
+                "label `"FMT"` points to a scope that is not a parent of this statement\n",
+                name_print(NAME_MSG, break_out_of)
+            );
+            break;
+        }
+        unwrap(idx > 0);
         idx--;
     }
 
