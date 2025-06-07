@@ -2293,69 +2293,69 @@ static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond*
     ));
     add_label(new_branch_block, after_for_loop_label, pos);
 
-    // is_rtn_check
-    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-    Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not returning right now
-        tast_binary_wrap(tast_binary_new(
-            old_for->pos,
-            tast_symbol_wrap(tast_symbol_new(old_for->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
-                .name = defered_collections.is_rtning
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(old_for->pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        new_branch_block,
-        after_check_rtn,
-        vec_top(pairs).label->name
-    );
-    add_label(new_branch_block, after_check_rtn, old_for->pos);
+    //// is_rtn_check
+    //Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
+    //Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
+    //unwrap(pairs->info.count > 0 && "not implemented");
+    //if_for_add_cond_goto(
+    //    // if this condition evaluates to true, we are not returning right now
+    //    tast_binary_wrap(tast_binary_new(
+    //        old_for->pos,
+    //        tast_symbol_wrap(tast_symbol_new(old_for->pos, (Sym_typed_base) {
+    //            .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
+    //            .name = defered_collections.is_rtning
+    //        })),
+    //        tast_literal_wrap(tast_int_wrap(tast_int_new(old_for->pos, 0, lang_type_new_u1()))),
+    //        BINARY_DOUBLE_EQUAL,
+    //        lang_type_new_u1()
+    //    )),
+    //    new_branch_block,
+    //    after_check_rtn,
+    //    vec_top(pairs).label->name
+    //);
+    //add_label(new_branch_block, after_check_rtn, old_for->pos);
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
 
-    // is_yield_check
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not continuing right now
-        tast_binary_wrap(tast_binary_new(
-            pos,
-            tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
-                .name = vec_top(&defered_collections.coll_stack).is_yielding
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        new_branch_block,
-        after_yield_check,
-        vec_top(pairs).label->name
-    );
-    add_label(new_branch_block, after_yield_check, old_for->pos);
+    //// is_yield_check
+    //unwrap(pairs->info.count > 0 && "not implemented");
+    //if_for_add_cond_goto(
+    //    // if this condition evaluates to true, we are not continuing right now
+    //    tast_binary_wrap(tast_binary_new(
+    //        pos,
+    //        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+    //            .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
+    //            .name = vec_top(&defered_collections.coll_stack).is_yielding
+    //        })),
+    //        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
+    //        BINARY_DOUBLE_EQUAL,
+    //        lang_type_new_u1()
+    //    )),
+    //    new_branch_block,
+    //    after_yield_check,
+    //    vec_top(pairs).label->name
+    //);
+    //add_label(new_branch_block, after_yield_check, old_for->pos);
 
-    // is_cont2_check
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not continuing right now
-        tast_binary_wrap(tast_binary_new(
-            pos,
-            tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
-                .name = vec_top(&defered_collections.coll_stack).is_cont2ing
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        new_branch_block,
-        after_cont2_check,
-        vec_top(pairs).label->name
-    );
-    add_label(new_branch_block, after_cont2_check, old_for->pos);
+    //// is_cont2_check
+    //unwrap(pairs->info.count > 0 && "not implemented");
+    //if_for_add_cond_goto(
+    //    // if this condition evaluates to true, we are not continuing right now
+    //    tast_binary_wrap(tast_binary_new(
+    //        pos,
+    //        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+    //            .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+    //            .name = vec_top(&defered_collections.coll_stack).is_cont2ing
+    //        })),
+    //        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
+    //        BINARY_DOUBLE_EQUAL,
+    //        lang_type_new_u1()
+    //    )),
+    //    new_branch_block,
+    //    after_cont2_check,
+    //    vec_top(pairs).label->name
+    //);
+    //add_label(new_branch_block, after_cont2_check, old_for->pos);
 
     label_if_continue = old_if_continue;
     label_after_for = old_after_for;
