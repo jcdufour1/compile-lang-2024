@@ -1052,11 +1052,35 @@ bool try_set_unary_types_finish(
             )));
             return true;
         case UNARY_COUNTOF: {
+            Lang_type_atom atom = {0};
+            //if (lang_type.type != ULANG_TYPE_REGULAR) {
+            //    msg(
+            //        DIAG_INVALID_COUNTOF, unary_pos,
+            //        "type `"FMT"` is not a valid operand to `countof`\n",
+            //        ulang_type_print(LANG_TYPE_MODE_LOG, lang_type)
+            //    );
+            //    return false;
+            //}
+            if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
+                msg(
+                    DIAG_INVALID_COUNTOF, unary_pos,
+                    "type `"FMT"` is not a valid operand to `countof`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child))
+                );
+                return false;
+            }
             Uast_def* def = {0};
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))));
-            unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))));
-            // TODO: consider function callbacks, etc.
-            Ustruct_def_base base = uast_def_get_struct_def_base(def);
+            unwrap(usymbol_lookup(&def, atom.str));
+
+            Ustruct_def_base base = {0};
+            if (!try_uast_def_get_struct_def_base(&base, def)) {
+                msg(
+                    DIAG_INVALID_COUNTOF, unary_pos,
+                    "type `"FMT"` is not a valid operand to `countof`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child))
+                );
+                return false;
+            }
             *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
                 unary_pos,
                 base.members.info.count,

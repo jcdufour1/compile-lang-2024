@@ -292,6 +292,8 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm
             unreachable("not should not make it here");
         case UNARY_SIZEOF:
             unreachable("sizeof should not make it here");
+        case UNARY_COUNTOF:
+            unreachable("countof should not make it here");
     }
     unreachable("");
 }
