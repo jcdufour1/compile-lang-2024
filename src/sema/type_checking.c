@@ -1051,6 +1051,19 @@ bool try_set_unary_types_finish(
                 lang_type_new_usize()
             )));
             return true;
+        case UNARY_COUNTOF: {
+            Uast_def* def = {0};
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))));
+            unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))));
+            // TODO: consider function callbacks, etc.
+            Ustruct_def_base base = uast_def_get_struct_def_base(def);
+            *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
+                unary_pos,
+                base.members.info.count,
+                lang_type_new_usize()
+            )));
+            return true;
+        }
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
             assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
@@ -1395,7 +1408,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         new_membs.info.count,
-        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8, 0)))
+        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8/*TODO*/, 0)))
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,

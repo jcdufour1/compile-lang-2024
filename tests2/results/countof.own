@@ -1,0 +1,8 @@
+compile::stdout 2
+countof div = 2
+countof token = 4
+
+compile::stderr 0
+
+compile::return_code 0
+
