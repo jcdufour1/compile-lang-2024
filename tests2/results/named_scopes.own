@@ -1,4 +1,4 @@
-compile::stdout 38
+compile::stdout 48
 yes 1.1
 yes 1.2
 yes 1.3
@@ -36,6 +36,16 @@ yes 6.1
 yes 6.2
 yes 6.3
 yes 6.4
+yes 19.1
+yes 19.2
+yes 19.5
+yes 19.6
+yes 19.1
+yes 19.2
+yes 19.3
+yes 19.4
+yes 19.5
+yes 19.6
 bye
 
 compile::stderr 0

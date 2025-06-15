@@ -112,6 +112,26 @@ fn continue_stmts() {
         io.printf("no 6.4\n")
     }
 
+    let idx_100 i32 = 0
+    thing7: for 1 {
+        defer io.printf("yes 19.6\n")
+        io.printf("yes 19.1\n")
+        thing8: for kdasfdjf i32 in 0..1 {
+            defer idx_100 += 1
+            defer io.printf("yes 19.5\n")
+            io.printf("yes 19.2\n")
+            if idx_100 < 1 {
+                continue2(thing7)
+            }
+            defer io.printf("yes 19.4\n")
+            io.printf("yes 19.3\n")
+        }
+        yield(thing7)
+        defer io.printf("no 19.3\n")
+        io.printf("no 19.4\n")
+    }
+
+
     //let idx_4 i32 = 0
     //thing9: for 1 {
     //    defer io.printf("yes 7.8\n")
