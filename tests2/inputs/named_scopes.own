@@ -107,6 +107,8 @@ fn continue_stmts() {
             defer io.printf("yes 6.3\n")
             io.printf("yes 6.2\n")
             yield(thing5)
+            defer io.printf("no 6.5\n")
+            io.printf("no 6.6\n")
         }
         defer io.printf("no 6.3\n")
         io.printf("no 6.4\n")
