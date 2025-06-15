@@ -1,0 +1,22 @@
+type io import = std.io
+
+fn add(a i32, b i32) i32 {
+    return a + b
+}
+
+fn main() i32 {
+    let add_fn fn(i32, i32)i32 = add
+    io.printf("countof add_fn = %zu\n", countof add_fn)
+
+    let num i32 = 9
+    io.printf("countof num = %zu\n", countof num)
+
+    let undef Thasdf = 9
+    io.printf("countof undef = %zu\n", countof undef)
+
+    let nothing void = 9
+    io.printf("countof undef = %zu\n", countof nothing)
+
+    return 0
+}
+

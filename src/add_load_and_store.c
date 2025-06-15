@@ -1337,6 +1337,8 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             return load_deref(new_block, old_unary);
         case UNARY_REFER:
             return load_ptr_expr(new_block, old_unary->child);
+        case UNARY_COUNTOF:
+            unreachable("this should have been eliminated in the type checking pass");
         case UNARY_SIZEOF: {
             uint32_t size = sizeof_llvm_lang_type(rm_tuple_lang_type(
                 tast_expr_get_lang_type(old_unary->child), old_unary->pos
