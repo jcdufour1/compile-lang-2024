@@ -90,7 +90,6 @@ def get_result_from_test_result(process: TestResult) -> str:
 
 # TODO: try to avoid using do_debug for both function name and parameter name
 def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release_text: str) -> TestResult:
-    debug_release_text: str
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
