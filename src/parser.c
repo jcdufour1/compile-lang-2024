@@ -1528,7 +1528,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
     
     if (starts_with_variable_type_decl(*tokens, false)) {
         PARSE_STATUS status = PARSE_OK;
-        Uast_block* outer = uast_block_new((Pos) {.line = 100}/* TODO: put this back to for_token.pos */, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
@@ -2124,7 +2124,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
         if (PARSE_OK != parse_label(tokens, scope_id)) {
-            todo();
             return PARSE_EXPR_ERROR;
         }
         assert(new_scope_name.base.count > 0);

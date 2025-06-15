@@ -98,44 +98,58 @@ fn continue_stmts() {
         io.printf("no 5.4\n")
     }
 
+    let idx_4 i32 = 0
+    thing5: for 1 {
+        defer io.printf("yes 6.4\n")
+        io.printf("yes 6.1\n")
+        thing6: for kdasfdjf i32 in 0..1 {
+            defer idx_4 += 1
+            defer io.printf("yes 6.3\n")
+            io.printf("yes 6.2\n")
+            yield(thing5)
+        }
+        defer io.printf("no 6.3\n")
+        io.printf("no 6.4\n")
+    }
+
     //let idx_4 i32 = 0
     //thing9: for 1 {
-    //    defer io.printf("yes 6.8\n")
-    //    io.printf("yes 6.1\n")
+    //    defer io.printf("yes 7.8\n")
+    //    io.printf("yes 7.1\n")
     //    thing10: for kdasfdjf i32 in 0..1 {
     //        defer idx_4 += 1
-    //        defer io.printf("yes 6.5\n")
-    //        io.printf("yes 6.2\n")
+    //        defer io.printf("yes 7.5\n")
+    //        io.printf("yes 7.2\n")
     //        if idx_4 > 0 {
     //            io.assert(0)
     //            yield(thing10)
     //        }
-    //        defer io.printf("yes 6.4\n")
-    //        io.printf("yes 6.3\n")
+    //        defer io.printf("yes 7.4\n")
+    //        io.printf("yes 7.3\n")
     //        continue2(thing10)
-    //        defer io.printf("no 6.2\n")
-    //        io.printf("no 6.1\n")
+    //        defer io.printf("no 7.2\n")
+    //        io.printf("no 7.1\n")
     //    }
-    //    defer io.printf("yes 6.7\n")
-    //    io.printf("yes 6.6\n")
+    //    defer io.printf("yes 7.7\n")
+    //    io.printf("yes 7.6\n")
     //    yield(thing9)
-    //    defer io.printf("no 6.3\n")
-    //    io.printf("no 6.4\n")
+    //    defer io.printf("no 7.3\n")
+    //    io.printf("no 7.4\n")
     //}
 
     let idx_5 i32 = 0
     thing100: for kdasfdjf i32 in 0..1 {
     //    defer idx_5 += 1
-    //    defer io.printf("yes 6.5\n")
-    //    io.printf("yes 6.2\n")
+    //    defer io.printf("yes 8.5\n")
+    //    io.printf("yes 8.2\n")
     //    if idx_5 > 0 {
     //        yield(thing)
     //    }
-    //    defer io.printf("yes 6.4\n")
-    //    io.printf("yes 6.3\n")
+    //    defer io.printf("yes 8.4\n")
+    //    io.printf("yes 8.3\n")
     //    continue2(thing100)
-    //    defer io.printf("no 6.2\n")
-    //    io.printf("no 6.1\n")
+    //    defer io.printf("no 8.2\n")
+    //    io.printf("no 8.1\n")
     }
 
 }
