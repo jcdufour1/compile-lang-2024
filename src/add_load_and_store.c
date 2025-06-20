@@ -2892,6 +2892,30 @@ static void load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
+static void load_is_rtn_check(Ir_block* new_block) {
+    // is_rtn_check
+    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
+    Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not returning right now
+        tast_binary_wrap(tast_binary_new(
+            (Pos) {0} /* TODO */,
+            tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
+                .name = defered_collections.is_rtning
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
+            BINARY_DOUBLE_EQUAL,
+            lang_type_new_u1()
+        )),
+        new_block,
+        after_check_rtn,
+        vec_top(pairs).label->name
+    );
+    add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
+}
+
 static Ir_block* load_block(
     bool* rtn_in_block,
     Tast_block* old_block,
@@ -2917,27 +2941,27 @@ static Ir_block* load_block(
     load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type);
 
     if (defered_collections.coll_stack.info.count > 0) {
-        // is_rtn_check
+        load_is_rtn_check(new_block);
         Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-        Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
-        unwrap(pairs->info.count > 0 && "not implemented");
-        if_for_add_cond_goto(
-            // if this condition evaluates to true, we are not returning right now
-            tast_binary_wrap(tast_binary_new(
-                (Pos) {0} /* TODO */,
-                tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                    .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
-                    .name = defered_collections.is_rtning
-                })),
-                tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
-                BINARY_DOUBLE_EQUAL,
-                lang_type_new_u1()
-            )),
-            new_block,
-            after_check_rtn,
-            vec_top(pairs).label->name
-        );
-        add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
+        //Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
+        //unwrap(pairs->info.count > 0 && "not implemented");
+        //if_for_add_cond_goto(
+        //    // if this condition evaluates to true, we are not returning right now
+        //    tast_binary_wrap(tast_binary_new(
+        //        (Pos) {0} /* TODO */,
+        //        tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
+        //            .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
+        //            .name = defered_collections.is_rtning
+        //        })),
+        //        tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
+        //        BINARY_DOUBLE_EQUAL,
+        //        lang_type_new_u1()
+        //    )),
+        //    new_block,
+        //    after_check_rtn,
+        //    vec_top(pairs).label->name
+        //);
+        //add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
         Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
         Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
 
