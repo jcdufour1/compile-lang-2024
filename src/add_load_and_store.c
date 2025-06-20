@@ -102,6 +102,8 @@ static Name name_parent_fn;
 // forward declarations
 //
 
+static void load_is_rtn_check(Ir_block* new_block);
+
 static void if_for_add_cond_goto_internal(
     Loc loc,
     Tast_operator* old_oper,
@@ -2093,32 +2095,16 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 
     assert(!symbol_lookup(&dummy_def, next_if));
 
-    // is_rtn_check
-    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not returning right now
-        tast_binary_wrap(tast_binary_new(
-            if_else->pos,
-            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
-                .name = defered_collections.is_rtning
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        *new_block,
-        if_after,
-        vec_top(pairs).label->name
-    );
     add_label((*new_block), if_after, if_else->pos);
 
-    // TODO: can these checks be abstracted to a separate function (used in multiple places)
+    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
+
+    load_is_rtn_check(*new_block);
+
+    // TODO: remove checks is_brk_check and is_cont_check? (use yield and cont2 instead)
     // is_brk_check
     Name after_is_brk = util_literal_name_new_prefix(sv("after_is_brk_check_if_else_chain_to_branch"));
     Name after_is_cont = util_literal_name_new_prefix(sv("after_is_cont_check_if_else_chain_to_branch"));
-    Name after_is_cont2 = util_literal_name_new_prefix(sv("after_is_cont2_check_if_else_chain_to_branch"));
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not breaking right now
@@ -2159,45 +2145,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     add_label((*new_block), after_is_cont, if_else->pos);
     assert(alloca_lookup(&dummy, after_is_cont));
 
-    // is_cont2_check
     unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not breaking right now
-        tast_binary_wrap(tast_binary_new(
-            if_else->pos,
-            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
-                .name = vec_top(&defered_collections.coll_stack).is_cont2ing
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        *new_block,
-        after_is_cont2,
-        vec_top(pairs).label->name
-    );
-    add_label((*new_block), after_is_cont2, if_else->pos);
-    assert(alloca_lookup(&dummy, after_is_cont2));
-
-    // is_yield_check
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not breaking right now
-        tast_binary_wrap(tast_binary_new(
-            if_else->pos,
-            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
-                .name = vec_top(&defered_collections.coll_stack).is_yielding
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        *new_block,
-        next_if,
-        vec_top(pairs).label->name
-    );
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
 
