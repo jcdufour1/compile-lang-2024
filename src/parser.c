@@ -23,7 +23,7 @@ static Token prev_token;
 static Name new_scope_name;
 static Pos new_scope_name_pos;
 
-static Name parent_for_label = {0};
+static Name default_brk_label = {0};
 
 // TODO: make consume_expect function to print error automatically
 
@@ -1519,7 +1519,8 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
     assert(new_scope_name.base.count > 0);
-    parent_for_label = new_scope_name;
+    Name old_default_brk_label = default_brk_label;
+    default_brk_label = new_scope_name;
 
     Token for_token = {0};
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
@@ -1543,6 +1544,8 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
         *result = uast_block_wrap(new_for);
 
 for_range_error:
+        // TODO: deduplicate `default_brk_label = old_default_brk_label`?
+        default_brk_label = old_default_brk_label;
         return status;
     } else {
         Uast_for_with_cond* new_for = NULL;
@@ -1552,10 +1555,11 @@ for_range_error:
         *result = uast_for_with_cond_wrap(new_for);
     }
 
+    default_brk_label = old_default_brk_label;
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_id scope_id) {
     Token break_token = consume(tokens);
 
     Uast_expr* break_expr = NULL;
@@ -1572,10 +1576,19 @@ static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_i
         default:
             unreachable("");
     }
+
+    if (default_brk_label.base.count < 1/* TODO: consider switch statement, etc.*/) {
+        msg(
+            DIAG_BREAK_INVALID_LOCATION, break_token.pos,
+            "break statement outside of a for loop\n"
+        );
+        return PARSE_ERROR;
+    }
+
     // TODO: print error for break outside of for loop here
 
     // TODO: remove uast_break, and make uast_yield here
-    *new_break = uast_break_new(break_token.pos, do_break_expr, break_expr);
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, default_brk_label);
     return PARSE_OK;
 }
 
@@ -1630,14 +1643,14 @@ static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, S
         }
         break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
     } else {
-        if (parent_for_label.base.count < 1) {
+        if (default_brk_label.base.count < 1) {
             msg(
                 DIAG_CONTINUE_INVALID_LOCATION, cont_token.pos,
                 "continue statement outside of a for loop\n"
             );
             return PARSE_ERROR;
         }
-        break_out_of = parent_for_label;
+        break_out_of = default_brk_label;
     }
 
     *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
@@ -2010,6 +2023,12 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
 
 
 static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Scope_id scope_id) {
+    assert(new_scope_name.base.count > 0);
+    Name old_default_brk_label = default_brk_label;
+    default_brk_label = new_scope_name;
+
+    PARSE_STATUS status = PARSE_OK;
+
     Token start_token = {0};
     unwrap(try_consume(&start_token, tokens, TOKEN_SWITCH));
 
@@ -2018,17 +2037,20 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
-            return PARSE_ERROR;
+            status = PARSE_ERROR;
+            goto error;
         case PARSE_EXPR_NONE:
             msg_expected_expr(*tokens, "");
-            return PARSE_ERROR;
+            status = PARSE_ERROR;
+            goto error;
         default:
             unreachable("");
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), "after switch operand", TOKEN_OPEN_CURLY_BRACE);
-        return PARSE_ERROR;
+        status = PARSE_ERROR;
+        goto error;
     }
     try_consume_newlines(tokens);
 
@@ -2045,10 +2067,12 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
-                    return PARSE_ERROR;
+                    status = PARSE_ERROR;
+                    goto error;
                 case PARSE_EXPR_NONE:
                     msg_expected_expr(*tokens, "");
-                    return PARSE_ERROR;
+                    status = PARSE_ERROR;
+                    goto error;
                 default:
                     unreachable("");
             }
@@ -2065,10 +2089,12 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
-                return PARSE_ERROR;
+                status = PARSE_ERROR;
+                goto error;
             case PARSE_EXPR_NONE:
                 msg_expected_expr(*tokens, "");
-                return PARSE_ERROR;
+                status = PARSE_ERROR;
+                goto error;
             default:
                 unreachable("");
         }
@@ -2086,7 +2112,10 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     // TODO: expeced failure case no close brace
     log_tokens(LOG_DEBUG, *tokens);
     unwrap(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    return PARSE_OK;
+
+error:
+    default_brk_label = old_default_brk_label;
+    return status;
 }
 
 static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
@@ -2166,11 +2195,11 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
     } else if (starts_with_break(*tokens)) {
-        Uast_break* rtn_stmt = NULL;
+        Uast_yield* rtn_stmt = NULL;
         if (PARSE_OK != parse_break(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_break_wrap(rtn_stmt);
+        lhs = uast_yield_wrap(rtn_stmt);
     } else if (starts_with_yield(*tokens)) {
         Uast_yield* rtn_stmt = NULL;
         if (PARSE_OK != parse_yield(&rtn_stmt, tokens, scope_id)) {

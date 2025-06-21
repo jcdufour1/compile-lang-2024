@@ -338,16 +338,6 @@ Strv uast_defer_print_internal(const Uast_defer* defer, int indent) {
     return string_to_strv(buf);
 }
 
-Strv uast_break_print_internal(const Uast_break* lang_break, int indent) {
-    (void) lang_break;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "break\n", indent);
-    // TODO: print break expr
-
-    return string_to_strv(buf);
-}
-
 Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     String buf = {0};
 
@@ -729,8 +719,6 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_expr_print_internal(uast_expr_const_unwrap(stmt), indent);
         case UAST_DEF:
             return uast_def_print_internal(uast_def_const_unwrap(stmt), indent);
-        case UAST_BREAK:
-            return uast_break_print_internal(uast_break_const_unwrap(stmt), indent);
         case UAST_YIELD:
             return uast_yield_print_internal(uast_yield_const_unwrap(stmt), indent);
         case UAST_CONTINUE:

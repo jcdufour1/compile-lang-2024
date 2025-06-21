@@ -2441,50 +2441,6 @@ bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
     unreachable("");
 }
 
-bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
-    bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    parent_of = PARENT_OF_BREAK;
-
-    switch (parent_of_defer) {
-        case PARENT_OF_DEFER_FOR:
-            break;
-        case PARENT_OF_DEFER_NONE:
-            break;
-        case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_BREAK_OUT_OF_DEFER, lang_break->pos, "cannot break out of defer\n");
-            status = false;
-            goto error;
-        default:
-            unreachable("");
-    }
-
-    Tast_expr* new_child = NULL;
-    if (lang_break->do_break_expr) {
-        switch (check_generic_assignment(&new_child, break_type, lang_break->break_expr, lang_break->pos)) {
-            case CHECK_ASSIGN_OK:
-                break;
-            case CHECK_ASSIGN_INVALID:
-                msg_invalid_yield_type(lang_break->pos, new_child, false);
-                status = false;
-                goto error;
-            case CHECK_ASSIGN_ERROR:
-                todo();
-                status = false;
-                goto error;
-            default:
-                unreachable("");
-        }
-    }
-
-    *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
-
-    break_in_case = true;
-error:
-    parent_of = old_parent_of;
-    return status;
-}
-
 bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
@@ -3097,8 +3053,6 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return true;
         case UAST_FOR_WITH_COND:
             return false;
-        case UAST_BREAK:
-            return false;
         case UAST_YIELD:
             return false;
         case UAST_CONTINUE:
@@ -3158,14 +3112,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_return_wrap(new_rtn);
-            return STMT_OK;
-        }
-        case UAST_BREAK: {
-            Tast_break* new_break = NULL;
-            if (!try_set_break_types(&new_break, uast_break_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_break_wrap(new_break);
             return STMT_OK;
         }
         case UAST_CONTINUE: {

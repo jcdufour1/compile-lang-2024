@@ -368,8 +368,6 @@ static bool expand_def_stmt(Uast_stmt* stmt) {
             return expand_def_def(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND:
             todo();
-        case UAST_BREAK:
-            todo();
         case UAST_CONTINUE2:
             todo();
         case UAST_YIELD:

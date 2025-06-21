@@ -259,14 +259,6 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond, Scope_id new_sc
     return uast_condition_new(cond->pos, uast_operator_clone(cond->child, new_scope, dest_pos));
 }
 
-Uast_break* uast_break_clone(const Uast_break* lang_break, Scope_id new_scope, Pos dest_pos) {
-    return uast_break_new(
-        lang_break->pos,
-        lang_break->do_break_expr,
-        uast_expr_clone(lang_break->break_expr, new_scope, dest_pos)
-    );
-}
-
 Uast_continue* uast_continue_clone(const Uast_continue* cont) {
     return uast_continue_new(cont->pos);
 }
@@ -309,8 +301,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
             return uast_def_wrap(uast_def_clone(uast_def_const_unwrap(stmt), new_scope));
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_wrap(uast_for_with_cond_clone(uast_for_with_cond_const_unwrap(stmt), new_scope, dest_pos));
-        case UAST_BREAK:
-            return uast_break_wrap(uast_break_clone(uast_break_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_YIELD:
             // TODO
             todo();

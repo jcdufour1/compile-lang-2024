@@ -2560,13 +2560,7 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
                 return;
             }
 
-            if (label_if_break.base.count < 1) {
-                msg(
-                    DIAG_BREAK_INVALID_LOCATION, tast_break_unwrap(old_stmt)->pos,
-                    "break statement outside of a for loop\n"
-                );
-                return;
-            }
+            unwrap(label_if_break.base.count > 0 && "this should have been caught in the parsing pass");
 
             Tast_break* brk = tast_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
