@@ -592,6 +592,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_COUNTOF:
             return false;
+        case TOKEN_DOUBLE_TICK:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -742,6 +744,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_COUNTOF:
             return true;
+        case TOKEN_DOUBLE_TICK:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -1568,7 +1572,9 @@ static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_i
         default:
             unreachable("");
     }
+    // TODO: print error for break outside of for loop here
 
+    // TODO: remove uast_break, and make uast_yield here
     *new_break = uast_break_new(break_token.pos, do_break_expr, break_expr);
     return PARSE_OK;
 }
@@ -1616,24 +1622,26 @@ static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, S
     Token cont_token = consume(tokens);
 
     Name break_out_of = {0};
-    todo();
-    //if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
-    //    Token token = {0};
-    //    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-    //        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
-    //        return PARSE_ERROR;
-    //    }
-    //    break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
-    //} else {
-    //    if (parent_for_label.base.count < 1) {
-    //        // TODO: expected failure case
-    //        todo();
-    //    }
-    //    break_out_of = parent_for_label;
-    //}
+    if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
+        Token token = {0};
+        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+    } else {
+        if (parent_for_label.base.count < 1) {
+            msg(
+                DIAG_CONTINUE_INVALID_LOCATION, cont_token.pos,
+                "continue statement outside of a for loop\n"
+            );
+            return PARSE_ERROR;
+        }
+        break_out_of = parent_for_label;
+    }
 
-    //*new_cont = uast_continue2_new(cont_token.pos, break_out_of);
-    //return PARSE_OK;
+    *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
@@ -2590,7 +2598,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             break;
@@ -2643,7 +2651,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             // fallthrough
@@ -2757,7 +2765,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 71, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

@@ -2199,14 +2199,7 @@ static void load_label(Ir_block* new_block, Tast_label* old_label) {
 }
 
 static void load_continue(Ir_block* new_block, Tast_continue* old_continue) {
-    if (label_if_continue.base.count < 1) {
-        msg(
-            DIAG_CONTINUE_INVALID_LOCATION, old_continue->pos,
-            "continue statement outside of a for loop\n"
-        );
-        return;
-    }
-
+    unwrap(label_if_continue.base.count > 0 && "this should have been caught in the parsing pass");
     Ir_goto* new_goto = ir_goto_new(old_continue->pos, util_literal_name_new(), label_if_continue);
     vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
 }

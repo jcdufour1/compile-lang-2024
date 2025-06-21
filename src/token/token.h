@@ -72,6 +72,7 @@ typedef enum {
     TOKEN_ASSIGN_BY_BIN,
     TOKEN_MACRO,
     TOKEN_DEFER,
+    TOKEN_DOUBLE_TICK,
 
     // keywords
     TOKEN_FN,
@@ -258,12 +259,14 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DEFER:
             return false;
-        case TOKEN_COUNT:
-            unreachable("");
         case TOKEN_SIZEOF:
             return false;
         case TOKEN_COUNTOF:
             return false;
+        case TOKEN_DOUBLE_TICK:
+            return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -412,6 +415,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_COUNTOF:
             return true;
+        case TOKEN_DOUBLE_TICK:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -592,6 +597,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_YIELD:
             return false;
         case TOKEN_COUNTOF:
+            return false;
+        case TOKEN_DOUBLE_TICK:
             return false;
         case TOKEN_COUNT:
             unreachable("");

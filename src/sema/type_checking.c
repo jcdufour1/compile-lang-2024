@@ -2554,7 +2554,7 @@ bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
         case PARENT_OF_DEFER_NONE:
             break;
         case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue2 out of defer\n");
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue out of defer\n");
             status = false;
             goto error;
         default:
