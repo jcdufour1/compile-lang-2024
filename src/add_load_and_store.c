@@ -479,79 +479,24 @@ static void load_block_stmts(
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
-            Name check_is_cont = util_literal_name_new_prefix(sv("check_is_cont"));
-            if_for_add_cond_goto(
-                // if this condition evaluates to true, we are not breaking right now
-                tast_binary_wrap(tast_binary_new(
-                    pos,
-                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = lang_type_new_u1(),
-                        .name = vec_top(&defered_collections.coll_stack).is_brking
-                    })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-                    BINARY_DOUBLE_EQUAL,
-                    lang_type_new_u1()
-                )),
-                new_block,
-                check_is_cont,
-                label_if_break
-            );
-            add_label(new_block, check_is_cont, new_block->pos/*TODO*/);
+            // is_brk_check
+            Name after_check_brk = util_literal_name_new_prefix(sv("after_check_brk"));
+            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_brking, label_if_break, after_check_brk);
+            add_label(new_block, after_check_brk, (Pos) {0}/*TODO*/);
 
-            Name check_is_cont2 = util_literal_name_new_prefix(sv("check_is_cont2"));
-            if_for_add_cond_goto(
-                // if this condition evaluates to true, we are not continuing right now
-                tast_binary_wrap(tast_binary_new(
-                    pos,
-                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = lang_type_new_u1(),
-                        .name = vec_top(&defered_collections.coll_stack).is_conting
-                    })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-                    BINARY_DOUBLE_EQUAL,
-                    lang_type_new_u1()
-                )),
-                new_block,
-                check_is_cont2,
-                label_if_continue
-            );
-            add_label(new_block, check_is_cont2, new_block->pos/*TODO*/);
+            // is_cont_check
+            Name after_check_cont = util_literal_name_new_prefix(sv("after_check_cont"));
+            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_conting, label_if_continue, after_check_cont);
+            add_label(new_block, after_check_cont, (Pos) {0}/*TODO*/);
 
-            Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
-            if_for_add_cond_goto(
-                // if this condition evaluates to true, we are not continuing right now
-                tast_binary_wrap(tast_binary_new(
-                    pos,
-                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = lang_type_new_u1(),
-                        .name = vec_top(&defered_collections.coll_stack).is_cont2ing
-                    })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-                    BINARY_DOUBLE_EQUAL,
-                    lang_type_new_u1()
-                )),
-                new_block,
-                check_is_yield,
-                label_if_continue // NOTE: is_cont2ing should only be set at scope of cont2ing; nested scopes will have is_yielding set to true instead
-            );
-            add_label(new_block, check_is_yield, new_block->pos/*TODO*/);
+            // is_cont2_check
+            Name after_check_cont2 = util_literal_name_new_prefix(sv("after_check_cont2"));
+            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_cont2ing, label_if_continue, after_check_cont2);
+            add_label(new_block, after_check_cont2, (Pos) {0}/*TODO*/);
 
-            if_for_add_cond_goto(
-                // if this condition evaluates to true, we are not yield right now
-                tast_binary_wrap(tast_binary_new(
-                    pos,
-                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = lang_type_new_u1(),
-                        .name = vec_top(&defered_collections.coll_stack).is_yielding
-                    })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
-                    BINARY_DOUBLE_EQUAL,
-                    lang_type_new_u1()
-                )),
-                new_block,
-                label_if_continue,
-                label_if_break
-            );
+            // is_yield_check
+            Name after_check_yield = util_literal_name_new_prefix(sv("after_check_yield"));
+            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
         }
 
         load_stmt(rtn_in_block, new_block, pair.defer->child, true);
