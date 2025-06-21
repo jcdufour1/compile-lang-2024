@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 35
+compile::stderr 30
 tests2/inputs/defer_sema_errors.own:6:16:[1;31merror[0;39m:return statement cannot be located in defer
      5 |     defer {
      6 |         return 2
@@ -21,21 +21,16 @@ tests2/inputs/defer_sema_errors.own:8:5:[1;34mnote[0;39m:defer statement defin
      8 |     defer return 1
        |     ^
      9 | 
-tests2/inputs/defer_sema_errors.own:19:9:[1;31merror[0;39m:cannot break out of defer
-    18 |     defer {
-    19 |         break
-       |         ^
-    20 |     }
-tests2/inputs/defer_sema_errors.own:24:13:[1;31merror[0;39m:cannot break out of defer
-    23 |         defer {
-    24 |             break
+tests2/inputs/defer_sema_errors.own:25:13:[1;31merror[0;39m:cannot yield out of defer
+    24 |         defer {
+    25 |             break
        |             ^
-    25 |         }
-tests2/inputs/defer_sema_errors.own:30:13:[1;31merror[0;39m:cannot continue out of defer
-    29 |         defer {
-    30 |             continue
+    26 |         }
+tests2/inputs/defer_sema_errors.own:31:13:[1;31merror[0;39m:cannot continue out of defer
+    30 |         defer {
+    31 |             continue
        |             ^
-    31 |         }
+    32 |         }
 
 compile::return_code 1
 

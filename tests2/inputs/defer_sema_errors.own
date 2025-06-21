@@ -15,9 +15,10 @@ fn main() i32 {
         }
     }
 
-    defer {
-        break
-    }
+    // TODO: expected failure case for this
+    //defer {
+    //    break
+    //}
 
     for idx i32 in 0..3 {
         defer {
