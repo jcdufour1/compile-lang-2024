@@ -2,6 +2,7 @@
 
 fn main() i32 {
     break
+    let num i32 = 9
     continue
     return 0
 }

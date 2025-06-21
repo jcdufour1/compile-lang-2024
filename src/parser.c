@@ -1562,6 +1562,14 @@ for_range_error:
 static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_id scope_id) {
     Token break_token = consume(tokens);
 
+    if (default_brk_label.base.count < 1/* TODO: consider switch statement, etc.*/) {
+        msg(
+            DIAG_BREAK_INVALID_LOCATION, break_token.pos,
+            "break statement outside of a for loop\n"
+        );
+        return PARSE_ERROR;
+    }
+
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;
     switch (parse_expr(&break_expr, tokens, scope_id)) {
@@ -1575,14 +1583,6 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
             break;
         default:
             unreachable("");
-    }
-
-    if (default_brk_label.base.count < 1/* TODO: consider switch statement, etc.*/) {
-        msg(
-            DIAG_BREAK_INVALID_LOCATION, break_token.pos,
-            "break statement outside of a for loop\n"
-        );
-        return PARSE_ERROR;
     }
 
     // TODO: print error for break outside of for loop here
