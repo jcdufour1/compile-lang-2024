@@ -102,7 +102,9 @@ static Name name_parent_fn;
 // forward declarations
 //
 
-static void load_is_rtn_check(Ir_block* new_block);
+static void load_all_is_rtn_checks(Ir_block* new_block);
+
+static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise);
 
 static void if_for_add_cond_goto_internal(
     Loc loc,
@@ -2096,7 +2098,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 
     Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
 
-    load_is_rtn_check(*new_block);
+    load_all_is_rtn_checks(*new_block);
 
     // TODO: remove checks is_brk_check and is_cont_check? (use yield and cont2 instead)
     // is_brk_check
@@ -2837,73 +2839,43 @@ static void load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
-// TODO: document what this function does
-static void load_is_rtn_check(Ir_block* new_block) {
-    // is_rtn_check
-    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-    Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
-    unwrap(pairs->info.count > 0 && "not implemented");
+static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise) {
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
             (Pos) {0} /* TODO */,
             tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
-                .name = defered_collections.is_rtning
+                .name = sym_name
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
         )),
         new_block,
-        after_check_rtn,
-        vec_top(pairs).label->name
+        otherwise,
+        if_rtning
     );
+}
+
+// TODO: document what this function does
+static void load_all_is_rtn_checks(Ir_block* new_block) {
+    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
+    unwrap(pairs->info.count > 0 && "not implemented");
+
+    // is_rtn_check
+    Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
+    load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
     add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
 
-    Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-
     // is_yield_check
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not continuing right now
-        tast_binary_wrap(tast_binary_new(
-            (Pos) {0}/*TODO*/,
-            tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                .lang_type = lang_type_new_u1(),
-                .name = vec_top(&defered_collections.coll_stack).is_yielding
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        new_block,
-        after_yield_check,
-        vec_top(pairs).label->name
-    );
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_top(pairs).label->name));
+    Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
+    load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, vec_top(pairs).label->name, after_yield_check);
     add_label(new_block, after_yield_check, (Pos) {0}/*TODO*/);
 
-    Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-
     // is_cont2_check
-    unwrap(pairs->info.count > 0 && "not implemented");
-    if_for_add_cond_goto(
-        // if this condition evaluates to true, we are not continuing right now
-        tast_binary_wrap(tast_binary_new(
-            (Pos) {0}/*TODO*/,
-            tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                .lang_type = lang_type_new_u1(),
-                .name = vec_top(&defered_collections.coll_stack).is_cont2ing
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
-            BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
-        )),
-        new_block,
-        after_cont2_check,
-        vec_top(pairs).label->name
-    );
+    Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
+    load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_cont2ing, vec_top(pairs).label->name, after_cont2_check);
     add_label(new_block, after_cont2_check, (Pos) {0}/*TODO*/);
 }
 
@@ -2932,7 +2904,7 @@ static Ir_block* load_block(
     load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type);
 
     if (defered_collections.coll_stack.info.count > 0) {
-        load_is_rtn_check(new_block);
+        load_all_is_rtn_checks(new_block);
     }
 
     assert(defered_collections.coll_stack.info.count == old_colls_count);
