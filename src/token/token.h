@@ -89,7 +89,6 @@ typedef enum {
     TOKEN_BREAK,
     TOKEN_YIELD,
     TOKEN_CONTINUE,
-    TOKEN_CONTINUE2,
     TOKEN_RAW_UNION,
     TOKEN_TYPE_DEF,
     TOKEN_IMPORT,
@@ -259,8 +258,6 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DEFER:
             return false;
-        case TOKEN_CONTINUE2:
-            return false;
         case TOKEN_COUNT:
             unreachable("");
         case TOKEN_SIZEOF:
@@ -412,8 +409,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_SIZEOF:
             return true;
         case TOKEN_YIELD:
-            return false;
-        case TOKEN_CONTINUE2:
             return false;
         case TOKEN_COUNTOF:
             return true;
@@ -595,8 +590,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_SIZEOF:
             return false;
         case TOKEN_YIELD:
-            return false;
-        case TOKEN_CONTINUE2:
             return false;
         case TOKEN_COUNTOF:
             return false;

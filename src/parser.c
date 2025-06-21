@@ -373,10 +373,6 @@ static bool starts_with_yield(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_YIELD;
 }
 
-static bool starts_with_continue2(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_CONTINUE2;
-}
-
 static bool starts_with_continue(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_CONTINUE;
 }
@@ -594,8 +590,6 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_YIELD:
             return false;
-        case TOKEN_CONTINUE2:
-            return false;
         case TOKEN_COUNTOF:
             return false;
         case TOKEN_COUNT:
@@ -745,8 +739,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_SIZEOF:
             return true;
         case TOKEN_YIELD:
-            return false;
-        case TOKEN_CONTINUE2:
             return false;
         case TOKEN_COUNTOF:
             return true;
@@ -1620,38 +1612,28 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_continue2(Uast_continue2** new_cont, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, Scope_id scope_id) {
     Token cont_token = consume(tokens);
 
     Name break_out_of = {0};
-    if (try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        Token token = {0};
-        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
-            return PARSE_ERROR;
-        }
-        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+    todo();
+    //if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
+    //    Token token = {0};
+    //    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+    //        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+    //        return PARSE_ERROR;
+    //    }
+    //    break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+    //} else {
+    //    if (parent_for_label.base.count < 1) {
+    //        // TODO: expected failure case
+    //        todo();
+    //    }
+    //    break_out_of = parent_for_label;
+    //}
 
-        if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-            msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
-            return PARSE_ERROR;
-        }
-    } else {
-        if (parent_for_label.base.count < 1) {
-            // TODO: expected failure case
-            todo();
-        }
-        break_out_of = parent_for_label;
-    }
-
-    *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
-    return PARSE_OK;
-}
-
-static Uast_continue* parse_continue(Tk_view* tokens) {
-    Token continue_token = consume(tokens);
-    Uast_continue* cont_stmt = uast_continue_new(continue_token.pos);
-    return cont_stmt;
+    //*new_cont = uast_continue2_new(cont_token.pos, break_out_of);
+    //return PARSE_OK;
 }
 
 static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
@@ -2187,14 +2169,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_yield_wrap(rtn_stmt);
-    } else if (starts_with_continue2(*tokens)) {
+    } else if (starts_with_continue(*tokens)) {
         Uast_continue2* rtn_stmt = NULL;
-        if (PARSE_OK != parse_continue2(&rtn_stmt, tokens, scope_id)) {
+        if (PARSE_OK != parse_continue(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_continue2_wrap(rtn_stmt);
-    } else if (starts_with_continue(*tokens)) {
-        lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
         if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id))) {
@@ -2610,7 +2590,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             break;
@@ -2663,7 +2643,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             // fallthrough
@@ -2777,7 +2757,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 71, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

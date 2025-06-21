@@ -144,8 +144,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("sizeof");
         case TOKEN_YIELD:
             return sv("yield");
-        case TOKEN_CONTINUE2:
-            return sv("continue2");
         case TOKEN_COUNTOF:
             return sv("countof");
         case TOKEN_COUNT:
@@ -296,8 +294,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("sizeof");
         case TOKEN_YIELD:
             return sv("yield");
-        case TOKEN_CONTINUE2:
-            return sv("continue2");
         case TOKEN_COUNTOF:
             return sv("countof");
         case TOKEN_COUNT:
@@ -322,7 +318,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -391,7 +387,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_DEFER: // fallthrough
         case TOKEN_SIZEOF: // fallthrough
         case TOKEN_YIELD: // fallthrough
-        case TOKEN_CONTINUE2: // fallthrough
         case TOKEN_COUNTOF: // fallthrough
         case TOKEN_ASSIGN_BY_BIN:
             break;
