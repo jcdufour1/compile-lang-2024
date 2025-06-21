@@ -52,6 +52,8 @@ static inline Strv serialize_uast_def(const Uast_def* def) {
             todo();
         case UAST_VOID_DEF:
             todo();
+        case UAST_LABEL:
+            todo();
     }
     unreachable("");
 }

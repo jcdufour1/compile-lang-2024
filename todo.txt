@@ -119,6 +119,8 @@ main hello.own --run arg1 arg2 ..
 - expected failure case for:
     // Div is a struct
     let div Div = .num(9)
+- expected failure case for invalid label at the end of the file:
+    hello: i32
     
 
 

@@ -609,6 +609,9 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
+        case UAST_LABEL:
+            // TODO
+            todo();
         case UAST_GENERIC_PARAM:
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
@@ -1601,6 +1604,11 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         }
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
+        case UAST_LABEL:
+            if (!try_set_label_def_types(uast_label_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
         case UAST_LANG_DEF:
             return STMT_NO_STMT;
     }
@@ -2139,6 +2147,9 @@ bool try_set_member_access_types_finish(
         case UAST_PRIMITIVE_DEF:
             msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
             return false;
+        case UAST_LABEL: {
+            todo();
+        }
         case UAST_FUNCTION_DECL:
             unreachable("");
         case UAST_GENERIC_PARAM:
@@ -2301,7 +2312,11 @@ bool try_set_primitive_def_types(Uast_primitive_def* tast) {
 
 bool try_set_void_def_types(Uast_void_def* tast) {
     (void) tast;
-    //symbol_add(tast_void_def_wrap(tast_void_def_new(POS_BUILTIN)));
+    return true;
+}
+
+bool try_set_label_def_types(Uast_label* tast) {
+    symbol_add(tast_label_wrap(tast_label_new(tast->pos, tast->name, tast->block_scope)));
     return true;
 }
 
@@ -2463,6 +2478,90 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
     }
 
     *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
+
+    break_in_case = true;
+error:
+    parent_of = old_parent_of;
+    return status;
+}
+
+bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
+    bool status = true;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_BREAK; // TODO
+
+    Uast_def* dummy = NULL;
+    if (!usymbol_lookup(&dummy, yield->break_out_of)) {
+        msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        status = false;
+        goto error;
+    }
+
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            break;
+        case PARENT_OF_DEFER_NONE:
+            break;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, yield->pos, "cannot yield out of defer\n");
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
+
+    Tast_expr* new_child = NULL;
+    if (yield->do_yield_expr) {
+        switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg_invalid_yield_type(yield->pos, new_child, false);
+                status = false;
+                goto error;
+            case CHECK_ASSIGN_ERROR:
+                todo();
+                status = false;
+                goto error;
+            default:
+                unreachable("");
+        }
+    }
+
+    *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
+
+    break_in_case = true;
+error:
+    parent_of = old_parent_of;
+    return status;
+}
+
+bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
+    bool status = true;
+    PARENT_OF old_parent_of = parent_of;
+    parent_of = PARENT_OF_BREAK; // TODO
+
+    Uast_def* dummy = NULL;
+    if (!usymbol_lookup(&dummy, cont->break_out_of)) {
+        msg_undefined_symbol(uast_symbol_new(cont->pos, cont->break_out_of));
+        status = false;
+        goto error;
+    }
+
+    switch (parent_of_defer) {
+        case PARENT_OF_DEFER_FOR:
+            break;
+        case PARENT_OF_DEFER_NONE:
+            break;
+        case PARENT_OF_DEFER_DEFER:
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue2 out of defer\n");
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
+
+    *new_tast = tast_continue2_new(cont->pos, cont->break_out_of);
 
     break_in_case = true;
 error:
@@ -2887,7 +2986,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;
@@ -3000,7 +3099,11 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_BREAK:
             return false;
+        case UAST_YIELD:
+            return false;
         case UAST_CONTINUE:
+            return false;
+        case UAST_CONTINUE2:
             return false;
         case UAST_ASSIGNMENT:
             return false;
@@ -3089,6 +3192,22 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_defer_wrap(new_defer);
             return STMT_OK;
         }
+        case UAST_YIELD: {
+            Tast_yield* new_yield = NULL;
+            if (!try_set_yield_types(&new_yield, uast_yield_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_yield_wrap(new_yield);
+            return STMT_OK;
+        }
+        case UAST_CONTINUE2: {
+            Tast_continue2* new_cont = NULL;
+            if (!try_set_continue2_types(&new_cont, uast_continue2_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_continue2_wrap(new_cont);
+            return STMT_OK;
+        }
     }
     unreachable("");
 }
@@ -3096,11 +3215,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     bool status = true;
 
-    // TODO: consider if this def iteration should be abstracted to a separate function (try_set_block_types has similar)
+    // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     Usymbol_iter iter = usym_tbl_iter_new(0);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+        // TODO: make switch for this if for exhausive checking
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;

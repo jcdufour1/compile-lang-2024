@@ -86,15 +86,18 @@ Ir_block* compile_file_to_ir(void) {
     ir_log_level(LOG_DEBUG, 0);
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    (void) iter;
     Ir* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
-        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
-        log(LOG_DEBUG, FMT, ir_print(curr));
-        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
-    }
-    // TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
-    log(LOG_DEBUG, FMT, ir_block_print(ir_root));
-    log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
+    (void) curr;
+    // TODO
+    //while (all_tbl_iter_next(&curr, &iter)) {
+    //    log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
+    //    log(LOG_DEBUG, FMT, ir_print(curr));
+    //    log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
+    //}
+    //// TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
+    //log(LOG_DEBUG, FMT, ir_block_print(ir_root));
+    //log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }

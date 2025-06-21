@@ -20,6 +20,11 @@ static Strv curr_mod_path;
 
 static Token prev_token;
 
+static Name new_scope_name;
+static Pos new_scope_name_pos;
+
+static Name parent_for_label = {0};
+
 // TODO: make consume_expect function to print error automatically
 
 // TODO: use parent block for scope_ids instead of function calls everytime
@@ -178,10 +183,10 @@ static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) 
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
     }
+    prev_token = consume(tokens);
     if (result) {
-        *result = consume(tokens);
+        *result = prev_token;
     }
-    prev_token = *result;
     return true;
 }
 
@@ -328,6 +333,10 @@ static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
+static bool starts_with_label(Tk_view tokens) {
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
 static bool starts_with_defer(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEFER;
 }
@@ -358,6 +367,14 @@ static bool starts_with_for(Tk_view tokens) {
 
 static bool starts_with_break(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_BREAK;
+}
+
+static bool starts_with_yield(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_YIELD;
+}
+
+static bool starts_with_continue2(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_CONTINUE2;
 }
 
 static bool starts_with_continue(Tk_view tokens) {
@@ -575,6 +592,10 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_SIZEOF:
             return false;
+        case TOKEN_YIELD:
+            return false;
+        case TOKEN_CONTINUE2:
+            return false;
         case TOKEN_COUNTOF:
             return false;
         case TOKEN_COUNT:
@@ -723,6 +744,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_SIZEOF:
             return true;
+        case TOKEN_YIELD:
+            return false;
+        case TOKEN_CONTINUE2:
+            return false;
         case TOKEN_COUNTOF:
             return true;
         case TOKEN_COUNT:
@@ -971,6 +996,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope));
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
+        todo();
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
@@ -1152,6 +1178,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
 
     *struct_def = uast_struct_def_new(name.pos, base);
     if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_struct_def_wrap(*struct_def));
         return PARSE_ERROR;
     }
@@ -1168,6 +1195,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
     if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_raw_union_def_wrap(*raw_union_def));
         return PARSE_ERROR;
     }
@@ -1191,6 +1219,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
+        todo();
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
     }
@@ -1406,7 +1435,7 @@ static PARSE_STATUS parse_for_range_internal(
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(&inner, tokens, false, block_scope)) {
+    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope))) {
         return PARSE_ERROR;
     }
 
@@ -1469,6 +1498,8 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
+    log(LOG_DEBUG, FMT"\n", uast_block_print(outer));
+
     *result = outer;
     return PARSE_OK;
 }
@@ -1491,6 +1522,9 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
+    assert(new_scope_name.base.count > 0);
+    parent_for_label = new_scope_name;
+
     Token for_token = {0};
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
 
@@ -1547,10 +1581,94 @@ static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_i
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_id scope_id) {
+    Token yield_token = consume(tokens);
+
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_OPEN_PAR);
+        return PARSE_ERROR;
+    }
+
+    Token token = {0};
+    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+        return PARSE_ERROR;
+    }
+    Name break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
+        return PARSE_ERROR;
+    }
+
+    Uast_expr* break_expr = NULL;
+    bool do_break_expr = true;
+    switch (parse_expr(&break_expr, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            do_break_expr = true;
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            do_break_expr = false;
+            break;
+        default:
+            unreachable("");
+    }
+
+    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of);
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_continue2(Uast_continue2** new_cont, Tk_view* tokens, Scope_id scope_id) {
+    Token cont_token = consume(tokens);
+
+    Name break_out_of = {0};
+    if (try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        Token token = {0};
+        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+
+        if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+            msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
+            return PARSE_ERROR;
+        }
+    } else {
+        if (parent_for_label.base.count < 1) {
+            // TODO: expected failure case
+            todo();
+        }
+        break_out_of = parent_for_label;
+    }
+
+    *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
+    return PARSE_OK;
+}
+
 static Uast_continue* parse_continue(Tk_view* tokens) {
     Token continue_token = consume(tokens);
     Uast_continue* cont_stmt = uast_continue_new(continue_token.pos);
     return cont_stmt;
+}
+
+static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
+    Token sym_name = {0};
+    unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
+    unwrap(try_consume(NULL, tokens, TOKEN_COLON));
+    // scope will be updated when parsing the statement
+    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id);
+    Uast_label* label = uast_label_new(sym_name.pos, label_name, SCOPE_NOT);
+    if (!usymbol_add(uast_label_wrap(label))) {
+        msg_redefinition_of_symbol(uast_label_wrap(label));
+        return PARSE_ERROR;
+    }
+
+    new_scope_name_pos = sym_name.pos;
+    new_scope_name = label_name;
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
@@ -1996,6 +2114,29 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
+    // TODO: make pos_is_equal function?
+    if (new_scope_name.base.count > 0 && new_scope_name_pos.line != 0) {
+        msg(
+            DIAG_INVALID_LABEL_POS, new_scope_name_pos,
+            "label should not be here; "
+            "label must be placed before block or statement that contains block "
+            "(if this is a variable definition, then `let` should be placed before the name)\n"
+        );
+        memset(&new_scope_name, 0, sizeof(new_scope_name));
+        return PARSE_EXPR_ERROR;
+    }
+    memset(&new_scope_name, 0, sizeof(new_scope_name));
+    if (starts_with_label(*tokens)) {
+        if (PARSE_OK != parse_label(tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        assert(new_scope_name.base.count > 0);
+    } else {
+        new_scope_name_pos = POS_BUILTIN;
+        new_scope_name = util_literal_name_new_prefix(sv("scope_name"));
+        unwrap(usymbol_add(uast_label_wrap(uast_label_new(POS_BUILTIN, new_scope_name, scope_id))));
+    }
+
     Uast_stmt* lhs = NULL;
     if (starts_with_type_def_in_def(*tokens)) {
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -2030,6 +2171,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         }
         lhs = uast_return_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
+        assert(new_scope_name.base.count > 0);
         if (PARSE_OK != parse_for_loop(&lhs, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
@@ -2039,6 +2181,18 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_break_wrap(rtn_stmt);
+    } else if (starts_with_yield(*tokens)) {
+        Uast_yield* rtn_stmt = NULL;
+        if (PARSE_OK != parse_yield(&rtn_stmt, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_yield_wrap(rtn_stmt);
+    } else if (starts_with_continue2(*tokens)) {
+        Uast_continue2* rtn_stmt = NULL;
+        if (PARSE_OK != parse_continue2(&rtn_stmt, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_continue2_wrap(rtn_stmt);
     } else if (starts_with_continue(*tokens)) {
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
@@ -2105,6 +2259,14 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
+
+    if (new_scope_name.base.count > 0) {
+        Uast_def* label_ = NULL;
+        unwrap(usymbol_lookup(&label_, new_scope_name));
+        uast_label_unwrap(label_)->block_scope = new_scope;
+    }
+    // zero out new_scope_name so that we can tell if scope was incorrect 
+    memset(&new_scope_name, 0, sizeof(new_scope_name));
 
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
@@ -2448,7 +2610,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 70, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             break;
@@ -2501,7 +2663,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 70, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             // fallthrough
@@ -2615,7 +2777,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 70, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

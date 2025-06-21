@@ -88,6 +88,8 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
             return true;
         case UAST_FUNCTION_DECL:
             todo();
+        case UAST_LABEL:
+            todo();
     }
     unreachable("");
 }

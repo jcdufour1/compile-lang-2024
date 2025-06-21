@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests2/inputs/undef_label.own:5:9:[1;31merror[0;39m:symbol `inner` is not defined
+     4 |     outer: for 1 {
+     5 |         yield(inner)
+       |         ^
+     6 |     }
+
+compile::return_code 1
+

@@ -2,6 +2,7 @@
 #define MSG_UNDEFINED_SYMBOL_H
 
 // TODO: move this function and macro elsewhere
+// TODO: use name and pos as arguments instead of sym_call
 static inline void msg_undefined_symbol_internal(const char* file, int line, const Uast_symbol* sym_call) {
     msg_internal(
         file, line,

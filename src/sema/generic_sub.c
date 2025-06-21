@@ -130,6 +130,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_VOID_DEF:
             todo();
+        case UAST_LABEL:
+            todo();
     }
     unreachable("");
 }
@@ -154,6 +156,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_BREAK:
             todo();
+        case UAST_CONTINUE2:
+            todo();
         case UAST_CONTINUE:
             generic_sub_continue(uast_continue_unwrap(stmt));
             return;
@@ -164,6 +168,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_DEFER:
+            todo();
+        case UAST_YIELD:
             todo();
     }
     unreachable("");
