@@ -72,6 +72,7 @@ typedef enum {
     DIAG_IF_ELSE_IN_IF_LET,
     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
     DIAG_INVALID_LABEL_POS,
+    DIAG_INVALID_COUNTOF,
 
     // count of cases for static asserts
     DIAG_COUNT,

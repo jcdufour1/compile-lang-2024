@@ -495,7 +495,6 @@ static void load_block_stmts(
             add_label(new_block, after_check_cont2, (Pos) {0}/*TODO*/);
 
             // is_yield_check
-            Name after_check_yield = util_literal_name_new_prefix(sv("after_check_yield"));
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
         }
 
@@ -1414,6 +1413,8 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             return load_deref(new_block, old_unary);
         case UNARY_REFER:
             return load_ptr_expr(new_block, old_unary->child);
+        case UNARY_COUNTOF:
+            unreachable("this should have been eliminated in the type checking pass");
         case UNARY_SIZEOF: {
             uint32_t size = sizeof_llvm_lang_type(rm_tuple_lang_type(
                 tast_expr_get_lang_type(old_unary->child), old_unary->pos

@@ -596,6 +596,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_CONTINUE2:
             return false;
+        case TOKEN_COUNTOF:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -746,6 +748,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_CONTINUE2:
             return false;
+        case TOKEN_COUNTOF:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -2606,7 +2610,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             break;
@@ -2617,6 +2621,8 @@ static PARSE_EXPR_STATUS parse_unary(
         case TOKEN_SINGLE_MINUS:
             break;
         case TOKEN_SIZEOF:
+            break;
+        case TOKEN_COUNTOF:
             break;
         case TOKEN_UNSAFE_CAST: {
             {
@@ -2657,7 +2663,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             // fallthrough
@@ -2684,6 +2690,8 @@ static PARSE_EXPR_STATUS parse_unary(
             assert(*result);
             break;
         }
+        case TOKEN_COUNTOF:
+            // fallthrough
         case TOKEN_SIZEOF:
             *result = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
                 oper.pos,
@@ -2769,7 +2777,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 71, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

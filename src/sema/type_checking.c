@@ -1054,6 +1054,43 @@ bool try_set_unary_types_finish(
                 lang_type_new_usize()
             )));
             return true;
+        case UNARY_COUNTOF: {
+            Lang_type_atom atom = {0};
+            //if (lang_type.type != ULANG_TYPE_REGULAR) {
+            //    msg(
+            //        DIAG_INVALID_COUNTOF, unary_pos,
+            //        "type `"FMT"` is not a valid operand to `countof`\n",
+            //        ulang_type_print(LANG_TYPE_MODE_LOG, lang_type)
+            //    );
+            //    return false;
+            //}
+            if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
+                msg(
+                    DIAG_INVALID_COUNTOF, unary_pos,
+                    "type `"FMT"` is not a valid operand to `countof`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child))
+                );
+                return false;
+            }
+            Uast_def* def = {0};
+            unwrap(usymbol_lookup(&def, atom.str));
+
+            Ustruct_def_base base = {0};
+            if (!try_uast_def_get_struct_def_base(&base, def)) {
+                msg(
+                    DIAG_INVALID_COUNTOF, unary_pos,
+                    "type `"FMT"` is not a valid operand to `countof`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child))
+                );
+                return false;
+            }
+            *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
+                unary_pos,
+                base.members.info.count,
+                lang_type_new_usize()
+            )));
+            return true;
+        }
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
             assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
@@ -1398,7 +1435,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         new_membs.info.count,
-        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8, 0)))
+        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8/*TODO*/, 0)))
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,

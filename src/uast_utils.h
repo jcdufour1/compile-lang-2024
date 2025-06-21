@@ -143,6 +143,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
     unreachable("");
 }
 
+// TODO: this function should call try_uast_def_get_struct_def_base
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def) {
     switch (def->type) {
         case UAST_ENUM_DEF:
@@ -173,6 +174,43 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
             todo();
         case UAST_LABEL:
             unreachable("");
+    }
+    unreachable("");
+}
+
+static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, const Uast_def* def) {
+    switch (def->type) {
+        case UAST_ENUM_DEF:
+            *result = uast_enum_def_const_unwrap(def)->base;
+            return true;
+        case UAST_STRUCT_DEF:
+            *result = uast_struct_def_const_unwrap(def)->base;
+            return true;
+        case UAST_RAW_UNION_DEF:
+            *result = uast_raw_union_def_const_unwrap(def)->base;
+            return true;
+        case UAST_VOID_DEF:
+            return false;
+        case UAST_FUNCTION_DEF:
+            return false;
+        case UAST_VARIABLE_DEF:
+            return false;
+        case UAST_GENERIC_PARAM:
+            return false;
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_FUNCTION_DECL:
+            return false;
+        case UAST_POISON_DEF:
+            return false;
+        case UAST_IMPORT_PATH:
+            return false;
+        case UAST_MOD_ALIAS:
+            return false;
+        case UAST_LANG_DEF:
+            todo();
+        case UAST_LABEL:
+            return false;
     }
     unreachable("");
 }

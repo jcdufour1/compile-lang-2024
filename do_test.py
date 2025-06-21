@@ -89,15 +89,12 @@ def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
 # TODO: try to avoid using do_debug for both function name and parameter name
-def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult:
-    debug_release_text: str
+def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release_text: str) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
-        debug_release_text = "debug"
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
-        debug_release_text = "release"
 
     if output_name == "test.c":
         compile_cmd.append("--backend=c")
@@ -138,7 +135,7 @@ def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action:
     print()
 
     for file in get_files_to_test(files_to_test):
-        if not test_file(file, True, get_expected_output(file), output_name, action, debug_release_text):
+        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text):
             if not keep_going:
                 sys.exit(1)
             success = False
@@ -151,7 +148,7 @@ def normalize(string: str) -> str:
 
 # return true if test was successful
 def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action, debug_release_text: str) -> bool:
-    result: TestResult = compile_test(do_debug, output_name, file)
+    result: TestResult = compile_test(do_debug, output_name, file, debug_release_text)
 
     process_result: str = get_result_from_test_result(result)
     if action == Action.UPDATE:

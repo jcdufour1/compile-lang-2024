@@ -98,7 +98,7 @@ static bool get_next_token(
     token->pos.file_path = pos->file_path;
 
     if (isalpha(strv_col_front(*file_text_rem))) {
-        static_assert(TOKEN_COUNT == 71, "exhausive handling of token types (only keywords are explicitly handled)");
+        static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only keywords are explicitly handled)");
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
@@ -148,6 +148,8 @@ static bool get_next_token(
             token->type = TOKEN_YIELD;
         } else if (strv_is_equal(text, sv("continue2"))) {
             token->type = TOKEN_CONTINUE2;
+        } else if (strv_is_equal(text, sv("countof"))) {
+            token->type = TOKEN_COUNTOF;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

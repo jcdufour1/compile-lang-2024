@@ -86,7 +86,10 @@ Ir_block* compile_file_to_ir(void) {
     ir_log_level(LOG_DEBUG, 0);
 
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    (void) iter;
     Ir* curr = NULL;
+    (void) curr;
+    // TODO
     //while (all_tbl_iter_next(&curr, &iter)) {
     //    log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
     //    log(LOG_DEBUG, FMT, ir_print(curr));
