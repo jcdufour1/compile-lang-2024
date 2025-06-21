@@ -62,6 +62,7 @@ typedef struct {
     Alloca_table tbl;
 } Alloca_iter;
 
+// TODO: rename Alloca_table to Ir_table, etc.
 static inline Alloca_iter all_tbl_iter_new(Scope_id scope_id) {
     return (Alloca_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->alloca_table};
 }

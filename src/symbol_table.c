@@ -574,6 +574,7 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, ir_print_internal(sym_tast->tast, recursion_depth));
         }
     }

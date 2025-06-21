@@ -112,12 +112,46 @@ void do_passes(void) {
         ir = compile_file_to_ir();
     }
 
-    if (params.dump_dot) {
-        // TODO: add logic in parse_args to catch below error:
-        unwrap(params.compile_own && "this should have been caught in parse_args");
-        String graphvis = {0};
-        string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
-        write_file("dump.dot", string_to_strv(graphvis));
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    if (params.stop_after == STOP_AFTER_GEN_IR) {
+        if (params.dump_dot) {
+            // TODO: add logic in parse_args to catch below error:
+            unwrap(params.compile_own && "this should have been caught in parse_args");
+            String graphvis = {0};
+            string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
+            write_file("dump.dot", string_to_strv(graphvis));
+        } else {
+            // print ir
+            // TODO: we need to also iterate on scope_id SCOPE_BUILTIN
+
+            String contents = {0};
+            string_extend_strv(&a_print, &contents, sv("builtin scope:\n"));
+            string_extend_strv(&a_print, &contents, ir_block_print_internal(ir, INDENT_WIDTH));
+            {
+                Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+                Ir* curr = NULL;
+                while (all_tbl_iter_next(&curr, &iter)) {
+                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
+                }
+            }
+            string_extend_strv(&a_print, &contents, sv("\n\n"));
+
+            string_extend_strv(&a_print, &contents, sv("top level scope:\n"));
+            {
+                Alloca_iter iter = all_tbl_iter_new(SCOPE_TOP_LEVEL);
+                Ir* curr = NULL;
+                while (all_tbl_iter_next(&curr, &iter)) {
+                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
+                }
+            }
+            string_extend_strv(&a_print, &contents, sv("\n\n"));
+
+            write_file(strv_dup(&a_print, params.output_file_path), string_to_strv(contents));
+            return;
+        }
     }
 
     if (error_count > 0) {
