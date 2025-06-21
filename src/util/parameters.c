@@ -314,6 +314,11 @@ static void long_option_dump_backend_ir(Strv curr_opt) {
     params.stop_after = STOP_AFTER_GEN_BACKEND_IR;
 }
 
+static void long_option_dump_ir(Strv curr_opt) {
+    (void) curr_opt;
+    params.stop_after = STOP_AFTER_GEN_IR;
+}
+
 static void long_option_upper_s(Strv curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_LOWER_S;
@@ -423,10 +428,11 @@ Long_option_pair long_options[] = {
     {"l", "library name to link", long_option_l, true},
     {"backend", "c or llvm", long_option_backend, true},
     {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, false},
+    {"dump-ir", "stop compiling after IR file(s) have been generated", long_option_dump_ir, false},
     {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, false},
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
-    {"dump-dot", "stop compiling after IR has been generated, and dump .dot file", long_option_dump_dot, false},
+    {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, false},
     {"run", "compile and run the program (TODO: remaining args will be passed to the program)", long_option_run, false},
     {"o", "output file path", long_option_lower_o, true},
     {"O0", "disable most optimizations", long_option_upper_o0, false},
@@ -515,15 +521,17 @@ void parse_args(int argc, char** argv) {
 
     // set default output file path
     if (params.output_file_path.count < 1) {
-        static_assert(
-            STOP_AFTER_COUNT == 7,
-            "exhausive handling of stop after states (not all states are explicitly handled)"
-        );
+        static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states");
         switch (params.stop_after) {
             case STOP_AFTER_NONE:
                 unreachable("");
             case STOP_AFTER_GEN_IR:
-                todo();
+                if (params.dump_dot) {
+                    params.output_file_path = sv("test.dot");
+                } else {
+                    params.output_file_path = sv("test.ownir");
+                }
+                break;
             case STOP_AFTER_GEN_BACKEND_IR:
                 params.output_file_path = sv("test.c");
                 break;
