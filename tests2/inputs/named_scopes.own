@@ -69,7 +69,7 @@ fn continue_stmts() {
             }
             defer io.printf("yes 4.4\n")
             io.printf("yes 4.3\n")
-            continue2(thing)
+            continue(<thing>)
             defer io.printf("no 4.2\n")
             io.printf("no 4.1\n")
         }
@@ -90,7 +90,7 @@ fn continue_stmts() {
             }
             defer io.printf("yes 5.4\n")
             io.printf("yes 5.3\n")
-            continue2(thing4)
+            continue(<thing4>)
             defer io.printf("no 5.2\n")
             io.printf("no 5.1\n")
         }
@@ -123,7 +123,7 @@ fn continue_stmts() {
             defer io.printf("yes 19.5\n")
             io.printf("yes 19.2\n")
             if idx_100 < 1 {
-                continue2(thing7)
+                continue(<thing7>)
             }
             defer io.printf("yes 19.4\n")
             io.printf("yes 19.3\n")
@@ -146,7 +146,7 @@ fn continue_stmts() {
             }
             defer io.printf("yes 20.4\n")
             io.printf("yes 20.3\n")
-            continue2(thing10)
+            continue ''thing10
             defer io.printf("no 20.2\n")
             io.printf("no 20.1\n")
         }
@@ -167,7 +167,7 @@ fn continue_stmts() {
     //    }
     //    defer io.printf("yes 8.4\n")
     //    io.printf("yes 8.3\n")
-    //    continue2(thing100)
+    //    continue(<thing100>)
     //    defer io.printf("no 8.2\n")
     //    io.printf("no 8.1\n")
     }
