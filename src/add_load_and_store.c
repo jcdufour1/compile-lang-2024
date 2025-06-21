@@ -483,7 +483,7 @@ static void load_block_stmts(
                 tast_binary_wrap(tast_binary_new(
                     pos,
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_brking),
+                        .lang_type = lang_type_new_u1(),
                         .name = vec_top(&defered_collections.coll_stack).is_brking
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
@@ -502,7 +502,7 @@ static void load_block_stmts(
                 tast_binary_wrap(tast_binary_new(
                     pos,
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_conting),
+                        .lang_type = lang_type_new_u1(),
                         .name = vec_top(&defered_collections.coll_stack).is_conting
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
@@ -516,15 +516,12 @@ static void load_block_stmts(
             add_label(new_block, check_is_cont2, new_block->pos/*TODO*/);
 
             Name check_is_yield = util_literal_name_new_prefix(sv("check_is_yield"));
-            //Name if_is_cont2 = {0};
-            //if (vec_top(&defered_collections.coll_stack).is_cont2ing)) {
-            //}
             if_for_add_cond_goto(
                 // if this condition evaluates to true, we are not continuing right now
                 tast_binary_wrap(tast_binary_new(
                     pos,
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+                        .lang_type = lang_type_new_u1(),
                         .name = vec_top(&defered_collections.coll_stack).is_cont2ing
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
@@ -542,7 +539,7 @@ static void load_block_stmts(
                 tast_binary_wrap(tast_binary_new(
                     pos,
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
+                        .lang_type = lang_type_new_u1(),
                         .name = vec_top(&defered_collections.coll_stack).is_yielding
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1()))),
@@ -2851,7 +2848,7 @@ static void load_is_rtn_check(Ir_block* new_block) {
         tast_binary_wrap(tast_binary_new(
             (Pos) {0} /* TODO */,
             tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
+                .lang_type = lang_type_new_u1(),
                 .name = defered_collections.is_rtning
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
@@ -2873,7 +2870,7 @@ static void load_is_rtn_check(Ir_block* new_block) {
         tast_binary_wrap(tast_binary_new(
             (Pos) {0}/*TODO*/,
             tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_yielding),
+                .lang_type = lang_type_new_u1(),
                 .name = vec_top(&defered_collections.coll_stack).is_yielding
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
@@ -2896,7 +2893,7 @@ static void load_is_rtn_check(Ir_block* new_block) {
         tast_binary_wrap(tast_binary_new(
             (Pos) {0}/*TODO*/,
             tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(vec_top(&defered_collections.coll_stack).is_cont2ing),
+                .lang_type = lang_type_new_u1(),
                 .name = vec_top(&defered_collections.coll_stack).is_cont2ing
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
