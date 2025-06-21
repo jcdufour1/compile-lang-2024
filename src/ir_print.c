@@ -12,6 +12,12 @@ static void extend_child_name(String* buf, const char* location, Name child_name
     string_extend_cstr(&a_print, buf, " *) ");
 }
 
+static void extend_lhs_and_eq(String* buf, Name lhs_sym, int indent) {
+    string_extend_cstr_indent(&a_print, buf, "%", indent);
+    extend_name(NAME_LOG, buf, lhs_sym);
+    string_extend_cstr(&a_print, buf, " = ");
+}
+
 Strv ir_binary_print_internal(const Ir_binary* binary, int indent) {
     String buf = {0};
 
@@ -232,9 +238,10 @@ Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) {
 Strv ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "alloca", indent);
+    extend_lhs_and_eq(&buf, alloca->name, indent);
+
+    string_extend_cstr(&a_print, &buf, "alloca");
     extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, alloca->lang_type);
-    extend_name(NAME_LOG, &buf, alloca->name);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
@@ -243,10 +250,11 @@ Strv ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
 Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "load_another_ir", indent);
+    extend_lhs_and_eq(&buf, load->ir_src, indent);
+
+    string_extend_cstr(&a_print, &buf, "load_another_ir");
     extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name);
-    extend_child_name(&buf, "src", load->ir_src);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
@@ -255,11 +263,12 @@ Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int inden
 Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "store_another_ir", indent);
+    extend_lhs_and_eq(&buf, store->ir_dest, indent);
+
+    string_extend_cstr(&a_print, &buf, "store_another_ir");
     extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, store->lang_type);
     extend_name(NAME_LOG, &buf, store->name);
     extend_child_name(&buf, "src", store->ir_src);
-    extend_child_name(&buf, "dest", store->ir_dest);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
