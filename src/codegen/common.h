@@ -6,7 +6,7 @@
 
 static inline const Ir_expr* ir_expr_lookup_from_name(Name name) {
     Ir* child = NULL;
-    unwrap(alloca_lookup(&child, name));
+    unwrap(ir_lookup(&child, name));
     return ir_expr_const_unwrap(child);
 }
 

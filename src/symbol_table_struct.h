@@ -41,13 +41,13 @@ typedef struct {
     Ir* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Alloca_table_tast;
+} Ir_table_tast;
 
 typedef struct {
-    Alloca_table_tast* table_tasts;
+    Ir_table_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Alloca_table;
+} Ir_table;
 
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
@@ -138,7 +138,7 @@ typedef struct {
 typedef struct {
     Usymbol_table usymbol_table;
     Symbol_table symbol_table;
-    Alloca_table alloca_table;
+    Ir_table alloca_table;
 } Symbol_collection;
 
 #endif // SYMBOL_TABLE_STRUCT_H

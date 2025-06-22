@@ -63,8 +63,8 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int recursion_depth);
-void alloca_log_table_internal(int log_level, const Alloca_table sym_table, int recursion_depth, const char* file_path, int line);
+void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int recursion_depth);
+void alloca_log_table_internal(int log_level, const Ir_table sym_table, int recursion_depth, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
     do { \
@@ -72,25 +72,25 @@ void alloca_log_table_internal(int log_level, const Alloca_table sym_table, int 
     } while(0)
 
 // returns false if symbol is already added to the table
-bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
+bool ir_tbl_add_internal(Ir_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
 
-bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Strv key);
+bool ir_tbl_lookup_internal(Ir_table_tast** result, const Ir_table* sym_table, Strv key);
 
-bool all_tbl_lookup(Ir** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool all_tbl_add_ex(Alloca_table* tbl, Ir* item);
+bool ir_tbl_lookup(Ir** result, Name key);
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Ir* tast_of_symbol);
+bool ir_tbl_add_ex(Ir_table* tbl, Ir* item);
 
-void all_tbl_update(Ir* tast_of_symbol);
+// returns false if symbol has already been added to the table
+bool ir_tbl_add(Ir* tast_of_symbol);
 
-bool alloca_lookup(Ir** result, Name key);
+void ir_tbl_update(Ir* tast_of_symbol);
 
-bool alloca_add(Ir* tast_of_symbol);
+bool ir_lookup(Ir** result, Name key);
 
-void alloca_update(Ir* tast_of_symbol);
+bool ir_add(Ir* tast_of_symbol);
+
+void ir_update(Ir* tast_of_symbol);
 
 Symbol_table* symbol_get_block(void);
 

@@ -9,7 +9,7 @@
 
 
 static Name ir_graphvis_parent_block_next;
-static Alloca_table already_visited = {0};
+static Ir_table already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
 
@@ -120,7 +120,7 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
 
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
-        if (all_tbl_add_ex(&already_visited, curr)) {
+        if (ir_tbl_add_ex(&already_visited, curr)) {
             Name old_parent_block_next = ir_graphvis_parent_block_next;
             ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_tast_get_name(next);
             ir_graphvis_internal(buf, curr);
@@ -144,10 +144,10 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         }
     }
 
-    Alloca_iter iter = all_tbl_iter_new(block->scope_id);
+    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
-        if (all_tbl_add_ex(&already_visited, curr)) {
+    while (ir_tbl_iter_next(&curr, &iter)) {
+        if (ir_tbl_add_ex(&already_visited, curr)) {
             todo();
             arrow_names(buf, block->name, ir_tast_get_name(curr));
             ir_graphvis_internal(buf, curr);
@@ -488,11 +488,11 @@ Strv ir_graphvis(const Ir_block* block) {
     string_extend_cstr(&a_print, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
-    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
-        // TODO: do scopes correctly (make alloca_add_ex)
-        if (all_tbl_add_ex(&already_visited, curr)) {
+    while (ir_tbl_iter_next(&curr, &iter)) {
+        // TODO: do scopes correctly (make ir_add_ex)
+        if (ir_tbl_add_ex(&already_visited, curr)) {
             ir_graphvis_internal(&buf, curr);
         }
     }
