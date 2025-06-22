@@ -2276,6 +2276,11 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
+    Name old_default_brk_label = default_brk_label;
+
+    if (default_brk_label.base.count < 1) {
+        default_brk_label = new_scope_name;
+    }
 
     if (new_scope_name.base.count > 0) {
         Uast_def* label_ = NULL;
@@ -2341,6 +2346,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     (*block)->pos_end = block_end.pos;
 
 end:
+    default_brk_label = old_default_brk_label;
     return status;
 }
 
