@@ -525,38 +525,6 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
     *vec_at_ref(&scope_id_to_parent, key) = parent;
 }
 
-// TODO: remove Scope_get_name_tbl_add
-//
-// Scope_get_name_tbl_add implementation
-//
-
-//static Name_vec scope_id_to_name;
-//
-//// returns name of scope_id
-//Name scope_get_name_tbl_lookup(Scope_id key) {
-//    return vec_at(&scope_id_to_name, key);
-//}
-//
-//// returns scope_id of name
-//Scope_id scope_from_name_tbl_lookup(Name name) {
-//    for (size_t idx = 0; idx < scope_id_to_name; idx++) {
-//        if (name_is_equal(vec_at(&scope_id_to_name, idx), name)
-//    }
-//    unreachable("");
-//    return vec_at(&scope_id_to_name, key);
-//}
-//
-//void scope_get_name_tbl_add(Scope_id key, Str_view name) {
-//    while (scope_id_to_parent.info.count <= key) {
-//        vec_append(&a_main, &scope_id_to_parent, 0);
-//    }
-//    *vec_at_ref(&scope_id_to_name, key) = name;
-//}
-//
-//void scope_get_name_tbl_update(Scope_id key, Str_view name) {
-//    *vec_at_ref(&scope_id_to_name, key) = name;
-//}
-
 //
 // not generic
 //
