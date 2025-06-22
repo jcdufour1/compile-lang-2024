@@ -199,10 +199,10 @@ Llvm_lang_type lang_type_from_get_name(Name name) {
 }
 
 // TODO: rename this function
-// TODO: use this instead of the verbose `alloca_lookup` in more places
+// TODO: use this instead of the verbose `ir_lookup` in more places
 Ir* ir_from_get_name(Name name) {
     Ir* result = NULL;
-    unwrap(alloca_lookup(&result,  name));
+    unwrap(ir_lookup(&result,  name));
     return result;
 }
 

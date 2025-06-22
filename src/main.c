@@ -85,12 +85,12 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, 0);
 
-    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     (void) iter;
     Ir* curr = NULL;
     (void) curr;
     // TODO
-    //while (all_tbl_iter_next(&curr, &iter)) {
+    //while (ir_tbl_iter_next(&curr, &iter)) {
     //    log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
     //    log(LOG_DEBUG, FMT, ir_print(curr));
     //    log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
@@ -131,9 +131,9 @@ void do_passes(void) {
             string_extend_strv(&a_print, &contents, sv("builtin scope:\n"));
             string_extend_strv(&a_print, &contents, ir_block_print_internal(ir, INDENT_WIDTH));
             {
-                Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+                Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
                 Ir* curr = NULL;
-                while (all_tbl_iter_next(&curr, &iter)) {
+                while (ir_tbl_iter_next(&curr, &iter)) {
                     string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
                 }
             }
@@ -141,9 +141,9 @@ void do_passes(void) {
 
             string_extend_strv(&a_print, &contents, sv("top level scope:\n"));
             {
-                Alloca_iter iter = all_tbl_iter_new(SCOPE_TOP_LEVEL);
+                Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
                 Ir* curr = NULL;
-                while (all_tbl_iter_next(&curr, &iter)) {
+                while (ir_tbl_iter_next(&curr, &iter)) {
                     string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
                 }
             }

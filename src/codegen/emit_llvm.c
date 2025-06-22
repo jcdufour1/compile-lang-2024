@@ -197,7 +197,7 @@
 //    const Ir_load_another_ir* load
 //) {
 //    Ir* src = NULL;
-//    unwrap(alloca_lookup(&src, load->name));
+//    unwrap(ir_lookup(&src, load->name));
 //
 //    if (ir_is_literal(src)) {
 //        extend_literal_decl(output, literals, ir_literal_const_unwrap(ir_expr_const_unwrap(src)), true);
@@ -240,7 +240,7 @@
 //    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
 //        Name arg_name = vec_at(&fun_call->args, idx);
 //        Ir* argument = NULL;
-//        unwrap(alloca_lookup(&argument, arg_name));
+//        unwrap(ir_lookup(&argument, arg_name));
 //
 //        if (idx > 0) {
 //            string_extend_cstr(&a_main, output, ", ");
@@ -278,7 +278,7 @@
 //    string_extend_cstr(&a_main, output, "call ");
 //    extend_type_call_str(output, fun_call->lang_type);
 //    Ir* callee = NULL;
-//    unwrap(alloca_lookup(&callee, fun_call->callee));
+//    unwrap(ir_lookup(&callee, fun_call->callee));
 //
 //    switch (callee->type) {
 //        case IR_EXPR:
@@ -520,7 +520,7 @@
 //
 //static void emit_operator_operand(String* output, const Name operand_name) {
 //    Ir* operand = NULL;
-//    unwrap(alloca_lookup(&operand, operand_name));
+//    unwrap(ir_lookup(&operand, operand_name));
 //
 //    switch (operand->type) {
 //        case IR_EXPR:
@@ -629,7 +629,7 @@
 //
 //static void emit_store_another_ir(String* output, String* literals, const Ir_store_another_ir* store) {
 //    Ir* src = NULL;
-//    unwrap(alloca_lookup(&src, store->ir_src));
+//    unwrap(ir_lookup(&src, store->ir_src));
 //
 //    string_extend_cstr(&a_main, output, "    store ");
 //    extend_type_call_str(output, store->lang_type);
@@ -720,7 +720,7 @@
 //
 //static void emit_return(String* output, const Ir_return* fun_return) {
 //    Ir* sym_to_return = NULL;
-//    unwrap(alloca_lookup(&sym_to_return, fun_return->child));
+//    unwrap(ir_lookup(&sym_to_return, fun_return->child));
 //
 //    switch (sym_to_return->type) {
 //        case IR_EXPR:
@@ -827,7 +827,7 @@
 //    string_extend_cstr(&a_main, output, " ");
 //
 //    Ir* struct_index = NULL;
-//    unwrap(alloca_lookup(&struct_index,  load->index));
+//    unwrap(ir_lookup(&struct_index,  load->index));
 //    if (struct_index->type == IR_LOAD_ANOTHER_IR) {
 //        string_extend_cstr(&a_main, output, "%");
 //        ir_extend_name(output, ir_tast_get_name(struct_index));
@@ -922,9 +922,9 @@
 //        }
 //    }
 //
-//    Alloca_iter iter = all_tbl_iter_new(block->scope_id);
+//    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
 //    Ir* curr = NULL;
-//    while (all_tbl_iter_next(&curr, &iter)) {
+//    while (ir_tbl_iter_next(&curr, &iter)) {
 //        emit_sometimes(struct_defs, output, literals, curr);
 //    }
 //}
@@ -1015,9 +1015,9 @@
 //    String output = {0};
 //    String literals = {0};
 //
-//    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+//    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
 //    Ir* curr = NULL;
-//    while (all_tbl_iter_next(&curr, &iter)) {
+//    while (ir_tbl_iter_next(&curr, &iter)) {
 //        emit_sometimes(&struct_defs, &output, &literals, curr);
 //    }
 //
