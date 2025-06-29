@@ -2026,6 +2026,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
     default_brk_label = new_scope_name;
+    log(LOG_DEBUG, "thing thing: "FMT"\n", name_print(NAME_LOG, default_brk_label));
 
     PARSE_STATUS status = PARSE_OK;
 
@@ -2109,9 +2110,13 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     }
 
     *lang_switch = uast_switch_new(start_token.pos, operand, cases);
-    // TODO: expeced failure case no close brace
     log_tokens(LOG_DEBUG, *tokens);
-    unwrap(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        // TODO: expeced failure case no close brace
+        msg_todo("no close brace", start_token.pos);
+        status = false;
+        goto error;
+    }
 
 error:
     default_brk_label = old_default_brk_label;
@@ -2276,11 +2281,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
-    Name old_default_brk_label = default_brk_label;
-
-    if (default_brk_label.base.count < 1) {
-        default_brk_label = new_scope_name;
-    }
 
     if (new_scope_name.base.count > 0) {
         Uast_def* label_ = NULL;
@@ -2346,7 +2346,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     (*block)->pos_end = block_end.pos;
 
 end:
-    default_brk_label = old_default_brk_label;
     return status;
 }
 
