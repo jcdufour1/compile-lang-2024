@@ -2059,7 +2059,6 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
 
     while (1) {
         Scope_id case_scope = symbol_collection_new(scope_id);
-
         Uast_stmt* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
@@ -2143,7 +2142,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         assert(new_scope_name.base.count > 0);
-    } else {
+    } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
         new_scope_name = util_literal_name_new_prefix(sv("scope_name"));
         unwrap(usymbol_add(uast_label_wrap(uast_label_new(POS_BUILTIN, new_scope_name, scope_id))));
@@ -2275,8 +2274,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         unwrap(usymbol_lookup(&label_, new_scope_name));
         uast_label_unwrap(label_)->block_scope = new_scope;
     }
-    // zero out new_scope_name so that we can tell if scope was incorrect 
-    memset(&new_scope_name, 0, sizeof(new_scope_name));
 
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 

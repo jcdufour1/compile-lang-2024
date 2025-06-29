@@ -2447,6 +2447,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     assert(defered_collections.coll_stack.info.count > 0);
     size_t idx = defered_collections.coll_stack.info.count - 1;
     while (1) {
+        assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
         log(LOG_DEBUG, "%zu\n", curr_scope);
         log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);

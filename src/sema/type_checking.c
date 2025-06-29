@@ -2485,6 +2485,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
+    assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -2518,6 +2519,7 @@ bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
     }
 
     *new_tast = tast_continue2_new(cont->pos, cont->break_out_of);
+    assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -2767,6 +2769,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             status = false;
             goto error;
     }
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
          tast_expr_get_lang_type(new_operand)
