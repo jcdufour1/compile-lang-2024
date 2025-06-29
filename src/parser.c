@@ -2138,18 +2138,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    // TODO: make pos_is_equal function?
-    if (new_scope_name.base.count > 0 && new_scope_name_pos.line != 0) {
-        msg(
-            DIAG_INVALID_LABEL_POS, new_scope_name_pos,
-            "label should not be here; "
-            "label must be placed before block or statement that contains block "
-            "(if this is a variable definition, then `let` should be placed before the name)\n"
-        );
-        memset(&new_scope_name, 0, sizeof(new_scope_name));
-        return PARSE_EXPR_ERROR;
-    }
-    memset(&new_scope_name, 0, sizeof(new_scope_name));
     if (starts_with_label(*tokens)) {
         if (PARSE_OK != parse_label(tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
