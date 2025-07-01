@@ -1863,13 +1863,33 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
     }
 }
 
-static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_chain, Token if_token, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_if_else_chain_internal(
+    Uast_block** if_else_chain,
+    Token if_token,
+    Tk_view* tokens,
+    Scope_id grand_parent
+) {
     Uast_if_vec ifs = {0};
+
+    Scope_id parent = symbol_collection_new(grand_parent);
+    // TODO: (maybe not): extract this if and block_new into separate function
+    if (new_scope_name.base.count > 0) {
+        Uast_def* label_ = NULL;
+        unwrap(usymbol_lookup(&label_, new_scope_name));
+        uast_label_unwrap(label_)->block_scope = parent;
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
+        log(LOG_DEBUG, "%zu\n", parent);
+        log(LOG_DEBUG, "%zu\n", grand_parent);
+        memset(&new_scope_name, 0, sizeof(new_scope_name));
+    } else {
+        todo();
+    }
+    //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
     if_stmt = uast_if_new(if_token.pos, NULL, NULL);
     
-    switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
+    switch (parse_condition(&if_stmt->condition, tokens, parent)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1880,7 +1900,7 @@ static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_ch
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(scope_id))) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent))) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -1890,7 +1910,7 @@ static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_ch
         if_stmt = uast_if_new(if_token.pos, NULL, NULL);
 
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
-            switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
+            switch (parse_condition(&if_stmt->condition, tokens, parent)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -1908,7 +1928,7 @@ static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_ch
             ));
         }
 
-        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(scope_id))) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent))) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -1916,7 +1936,9 @@ static PARSE_STATUS parse_if_else_chain_internal(Uast_if_else_chain** if_else_ch
         if_else_chain_consume_newline(tokens);
     }
 
-    *if_else_chain = uast_if_else_chain_new(if_token.pos, ifs);
+    Uast_stmt_vec chain_ = {0};
+    vec_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
+    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos /* TODO */, parent);
     return PARSE_OK;
 }
 
@@ -2013,11 +2035,11 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
         return PARSE_OK;
     }
 
-    Uast_if_else_chain* if_else = NULL;
+    Uast_block* if_else = NULL;
     if (PARSE_OK != parse_if_else_chain_internal(&if_else, if_start_token, tokens, scope_id)) {
         return PARSE_ERROR;
     }
-    *expr = uast_if_else_chain_wrap(if_else);
+    *expr = uast_block_wrap(if_else);
     return PARSE_OK;
 }
 
@@ -2274,7 +2296,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         unwrap(usymbol_lookup(&label_, new_scope_name));
         uast_label_unwrap(label_)->block_scope = new_scope;
     }
-
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
     Token open_brace_token = {0};
