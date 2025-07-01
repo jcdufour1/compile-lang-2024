@@ -600,6 +600,8 @@ Strv tast_def_print_internal(const Tast_def* def, int indent) {
 
 Strv tast_expr_print_internal(const Tast_expr* expr, int indent) {
     switch (expr->type) {
+        case TAST_BLOCK:
+            return tast_block_print_internal(tast_block_const_unwrap(expr), indent);
         case TAST_OPERATOR:
             return tast_operator_print_internal(tast_operator_const_unwrap(expr), indent);
         case TAST_SYMBOL:
@@ -636,8 +638,6 @@ Strv tast_expr_print_internal(const Tast_expr* expr, int indent) {
 
 Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
     switch (stmt->type) {
-        case TAST_BLOCK:
-            return tast_block_print_internal(tast_block_const_unwrap(stmt), indent);
         case TAST_EXPR:
             return tast_expr_print_internal(tast_expr_const_unwrap(stmt), indent);
         case TAST_DEF:

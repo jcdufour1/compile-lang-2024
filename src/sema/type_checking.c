@@ -1449,6 +1449,14 @@ bool try_set_array_literal_types(
 
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
     switch (uast->type) {
+        case UAST_BLOCK: {
+            Tast_block* new_for = NULL;
+            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false)) {
+                return false;
+            }
+            *new_tast = tast_block_wrap(new_for);
+            return true;
+        }
         case UAST_LITERAL: {
             *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
             return true;
@@ -1599,7 +1607,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            *new_stmt = tast_block_wrap(new_block);
+            *new_stmt = tast_expr_wrap(tast_block_wrap(new_block));
             return STMT_OK;
         }
         case UAST_MOD_ALIAS:
@@ -2976,6 +2984,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
+                log(LOG_DEBUG, FMT, uast_stmt_print(curr_tast));
                 status = false;
                 break;
             default:
@@ -3048,8 +3057,6 @@ error:
 
 static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
     switch (type) {
-        case UAST_BLOCK:
-            return false;
         case UAST_EXPR:
             return false;
         case UAST_DEF:
@@ -3123,14 +3130,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_continue_wrap(new_cont);
-            return STMT_OK;
-        }
-        case UAST_BLOCK: {
-            Tast_block* new_for = NULL;
-            if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false)) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_block_wrap(new_for);
             return STMT_OK;
         }
         case UAST_DEFER: {

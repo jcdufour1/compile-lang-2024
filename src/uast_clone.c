@@ -172,6 +172,8 @@ Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_s
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_pos) {
     switch (expr->type) {
+        case UAST_BLOCK:
+            return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(expr), new_scope, dest_pos));
         case UAST_MACRO:
             return uast_macro_wrap(uast_macro_clone(uast_macro_const_unwrap(expr), new_scope, dest_pos));
         case UAST_OPERATOR:
@@ -295,8 +297,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
     switch (stmt->type) {
         case UAST_EXPR:
             return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt), new_scope, dest_pos));
-        case UAST_BLOCK:
-            return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_DEF:
             return uast_def_wrap(uast_def_clone(uast_def_const_unwrap(stmt), new_scope));
         case UAST_FOR_WITH_COND:

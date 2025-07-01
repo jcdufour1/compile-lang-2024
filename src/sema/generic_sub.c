@@ -142,9 +142,6 @@ void generic_sub_continue(Uast_continue* cont) {
 
 void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
-        case UAST_BLOCK:
-            generic_sub_block(uast_block_unwrap(stmt), gen_param, gen_arg);
-            return;
         case UAST_EXPR:
             generic_sub_expr(uast_expr_unwrap(stmt), gen_param, gen_arg);
             return;
@@ -226,6 +223,9 @@ void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using na
 
 void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
     switch (expr->type) {
+        case UAST_BLOCK:
+            generic_sub_block(uast_block_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_LITERAL:
             generic_sub_literal(uast_literal_unwrap(expr), gen_param, gen_arg);
             return;

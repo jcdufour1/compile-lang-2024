@@ -125,7 +125,6 @@ static void load_raw_union_def(Tast_raw_union_def* old_def);
 static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym);
 
 static Ir_block* load_block(
-    bool* rtn_in_block,
     Tast_block* old_block,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type
@@ -135,7 +134,7 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr);
 
 static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered);
+static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered);
 
 static Name load_operator(Ir_block* new_block, Tast_operator* old_oper);
 
@@ -159,7 +158,6 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 }
 
 static void load_block_stmts(
-    bool* rtn_in_block,
     Ir_block* new_block,
     Tast_stmt_vec children,
     DEFER_PARENT_OF parent_of,
@@ -392,7 +390,7 @@ static void load_block_stmts(
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false);
+                load_stmt(new_block, vec_at(&children, idx), false);
             }
             //assert(vec_top(&defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -470,7 +468,7 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false);
+        load_stmt(new_block, vec_at(&children, idx), false);
     }
 
     Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
@@ -498,7 +496,7 @@ static void load_block_stmts(
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
         }
 
-        load_stmt(rtn_in_block, new_block, pair.defer->child, true);
+        load_stmt(new_block, pair.defer->child, true);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
@@ -1674,6 +1672,13 @@ static Name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
 
 static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
+        case TAST_BLOCK:
+            vec_append(
+                &a_main,
+                &new_block->children,
+                ir_block_wrap(load_block(tast_block_unwrap(old_expr), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
+            );
+            return (Name) {0} /* TODO */;
         case TAST_ASSIGNMENT:
             return load_assignment(new_block, tast_assignment_unwrap(old_expr));
         case TAST_FUNCTION_CALL:
@@ -1777,9 +1782,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
          old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = rm_tuple_lang_type(new_lang_type, old_fun_def->pos);
-    bool rtn_in_block = false;
     load_block_stmts(
-        &rtn_in_block,
         new_fun_def->body,
         old_fun_def->body->children,
         DEFER_PARENT_OF_FUN,
@@ -1915,9 +1918,7 @@ static void load_struct_def(Tast_struct_def* old_def) {
 
 static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
     Tast_block* old_block = if_statement->body;
-    bool rtn_in_block = false;
     Ir_block* inner_block = load_block(
-        &rtn_in_block,
         old_block,
         DEFER_PARENT_OF_IF,
         if_statement->yield_type
@@ -2080,7 +2081,7 @@ static Name load_if_else_chain(Ir_block* new_block, Tast_if_else_chain* old_if_e
     return result;
 }
 
-static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond* old_for) {
+static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     Name old_after_for = label_after_for;
     Name old_if_continue = label_if_continue;
     Name old_if_break = label_if_break;
@@ -2144,7 +2145,6 @@ static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond*
     Name after_inner_block = util_literal_name_new_prefix(sv("after_inner_block"));
 
     load_block_stmts(
-        rtn_in_block,
         new_block,
         old_for->body->children,
         DEFER_PARENT_OF_FOR,
@@ -2167,8 +2167,8 @@ static Ir_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_cond*
     return new_block;
 }
 
-static void load_for_with_cond(bool* rtn_in_block, Ir_block* new_block, Tast_for_with_cond* old_for) {
-    Ir_block* new_for = for_with_cond_to_branch(rtn_in_block, old_for);
+static void load_for_with_cond(Ir_block* new_block, Tast_for_with_cond* old_for) {
+    Ir_block* new_for = for_with_cond_to_branch(old_for);
     vec_append(&a_main, &new_block->children, ir_block_wrap(new_for));
 }
 
@@ -2280,6 +2280,8 @@ static Name load_ptr_operator(Ir_block* new_block, Tast_operator* old_oper) {
 
 static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
+        case TAST_BLOCK:
+            msg_todo("block used as expression (ptr)", tast_block_unwrap(old_expr)->pos);
         case TAST_SYMBOL:
             return load_ptr_symbol(new_block, tast_symbol_unwrap(old_expr));
         case TAST_MEMBER_ACCESS:
@@ -2505,7 +2507,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     }
 }
 
-static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
+static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -2514,8 +2516,6 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
             load_def(new_block, tast_def_unwrap(old_stmt));
             return;
         case TAST_RETURN: {
-            *rtn_in_block = true;
-
             if (is_defered) {
                 load_return(new_block, tast_return_unwrap(old_stmt));
                 return;
@@ -2553,7 +2553,7 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
             return;
         }
         case TAST_FOR_WITH_COND:
-            load_for_with_cond(rtn_in_block, new_block, tast_for_with_cond_unwrap(old_stmt));
+            load_for_with_cond(new_block, tast_for_with_cond_unwrap(old_stmt));
             return;
         case TAST_BREAK: {
             if (is_defered) {
@@ -2629,13 +2629,6 @@ static void load_stmt(bool* rtn_in_block, Ir_block* new_block, Tast_stmt* old_st
             load_brking_or_conting_set_etc(new_block, old_stmt, false);
             return;
         }
-        case TAST_BLOCK:
-            vec_append(
-                &a_main,
-                &new_block->children,
-                ir_block_wrap(load_block(rtn_in_block, tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
-            );
-            return;
         case TAST_DEFER: {
             Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
@@ -2718,7 +2711,6 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
 }
 
 static Ir_block* load_block(
-    bool* rtn_in_block,
     Tast_block* old_block,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type
@@ -2739,7 +2731,7 @@ static Ir_block* load_block(
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type);
+    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type);
 
     if (defered_collections.coll_stack.info.count > 0) {
         load_all_is_rtn_checks(new_block);
@@ -2758,8 +2750,7 @@ Ir_block* add_load_and_store(Tast_block* old_root) {
         load_def_sometimes(curr);
     }
 
-    bool rtn_in_block = false;
-    Ir_block* block = load_block(&rtn_in_block, old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+    Ir_block* block = load_block(old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
 
     assert(defered_collections.coll_stack.info.count == 0);
     return block;

@@ -33,8 +33,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
-        case UAST_BLOCK:
-            unreachable("");
         case UAST_DEF:
             return uast_get_ulang_type_def(uast_def_const_unwrap(stmt));
         case UAST_RETURN:
@@ -60,8 +58,6 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
 static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_vec generics) {
     switch (stmt->type) {
         case UAST_EXPR:
-            unreachable("");
-        case UAST_BLOCK:
             unreachable("");
         case UAST_DEF:
             return uast_def_get_lang_type(result,  uast_def_const_unwrap(stmt), generics);

@@ -677,6 +677,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
         return sv("<nothing>\n");
     }
     switch (expr->type) {
+        case UAST_BLOCK:
+            return uast_block_print_internal(uast_block_const_unwrap(expr), indent);
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_operator_const_unwrap(expr), indent);
         case UAST_SYMBOL:
@@ -713,8 +715,6 @@ Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
 
 Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     switch (stmt->type) {
-        case UAST_BLOCK:
-            return uast_block_print_internal(uast_block_const_unwrap(stmt), indent);
         case UAST_EXPR:
             return uast_expr_print_internal(uast_expr_const_unwrap(stmt), indent);
         case UAST_DEF:

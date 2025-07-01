@@ -1541,7 +1541,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
             status = PARSE_ERROR;
             goto for_range_error;
         }
-        *result = uast_block_wrap(new_for);
+        *result = uast_expr_wrap(uast_block_wrap(new_for));
 
 for_range_error:
         // TODO: deduplicate `default_brk_label = old_default_brk_label`?
@@ -1971,7 +1971,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(scope_id))) {
             return PARSE_ERROR;
         }
-        if_false = uast_block_wrap(if_false_block);
+        if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
 
         if_else_chain_consume_newline(tokens);
     }
@@ -1982,7 +1982,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if_token.pos,
         false,
         is_true,
-        uast_block_wrap(if_true),
+        uast_expr_wrap(uast_block_wrap(if_true)),
         if_true_scope
     );
     vec_append(&a_main, &cases, if_true_case);
@@ -2209,7 +2209,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id))) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_block_wrap(block_def);
+        lhs = uast_expr_wrap(uast_block_wrap(block_def));
     } else if (starts_with_variable_def(*tokens)) {
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {

@@ -349,6 +349,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &expr.sub_types, uast_gen_if_else_chain(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_switch(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_unknown(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
@@ -613,7 +614,6 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));
