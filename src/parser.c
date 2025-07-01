@@ -992,7 +992,6 @@ static PARSE_STATUS parse_function_decl_common(
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope));
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
-        todo();
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
@@ -2044,11 +2043,26 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
 }
 
 
-static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scope_id grand_parent) {
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
     default_brk_label = new_scope_name;
     log(LOG_DEBUG, "thing thing: "FMT"\n", name_print(NAME_LOG, default_brk_label));
+
+    Scope_id parent = symbol_collection_new(grand_parent);
+    // TODO: (maybe not): extract this if and block_new into separate function
+    if (new_scope_name.base.count > 0) {
+        Uast_def* label_ = NULL;
+        unwrap(usymbol_lookup(&label_, new_scope_name));
+        uast_label_unwrap(label_)->block_scope = parent;
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
+        log(LOG_DEBUG, "%zu\n", parent);
+        log(LOG_DEBUG, "%zu\n", grand_parent);
+        memset(&new_scope_name, 0, sizeof(new_scope_name));
+    } else {
+        todo();
+    }
+    //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     PARSE_STATUS status = PARSE_OK;
 
@@ -2056,7 +2070,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     unwrap(try_consume(&start_token, tokens, TOKEN_SWITCH));
 
     Uast_expr* operand = NULL;
-    switch (parse_expr(&operand, tokens, scope_id)) {
+    switch (parse_expr(&operand, tokens, parent)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -2080,7 +2094,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     Uast_case_vec cases = {0};
 
     while (1) {
-        Scope_id case_scope = symbol_collection_new(scope_id);
+        Scope_id case_scope = symbol_collection_new(parent);
         Uast_stmt* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
@@ -2130,7 +2144,10 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
         vec_append(&a_main, &cases, curr_case);
     }
 
-    *lang_switch = uast_switch_new(start_token.pos, operand, cases);
+    Uast_stmt_vec chain_ = {0};
+    vec_append(&a_main, &chain_, uast_expr_wrap(uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases))));
+    *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
+
     log_tokens(LOG_DEBUG, *tokens);
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         // TODO: expeced failure case no close brace
@@ -2502,11 +2519,11 @@ static PARSE_EXPR_STATUS parse_expr_piece(
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens, scope_id));
     } else if (starts_with_switch(*tokens)) {
-        Uast_switch* lang_switch = NULL;
+        Uast_block* lang_switch = NULL;
         if (PARSE_OK != parse_switch(&lang_switch, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = uast_switch_wrap(lang_switch);
+        *result = uast_block_wrap(lang_switch);
     } else if (starts_with_if(*tokens)) {
         Uast_expr* expr = NULL;
         if (PARSE_OK != parse_if_else_chain(&expr, tokens ,scope_id)) {
