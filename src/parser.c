@@ -2312,6 +2312,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         Uast_def* label_ = NULL;
         unwrap(usymbol_lookup(&label_, new_scope_name));
         uast_label_unwrap(label_)->block_scope = new_scope;
+        memset(&new_scope_name, 0, sizeof(new_scope_name));
     }
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
