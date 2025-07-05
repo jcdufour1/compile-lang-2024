@@ -208,7 +208,7 @@ static void emit_c_sometimes(Emit_c_strs* strs, const Ir* ir) {
             emit_c_def_sometimes(strs, ir_def_const_unwrap(ir));
             return;
         case IR_BLOCK:
-            unreachable("");
+            return;
         case IR_EXPR:
             return;
         case IR_LOAD_ELEMENT_PTR:
@@ -476,7 +476,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case IR_COND_GOTO:
             unreachable("");
         case IR_BLOCK:
-            unreachable("");
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
+            return;
     }
     unreachable("");
 }

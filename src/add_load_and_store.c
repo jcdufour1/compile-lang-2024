@@ -126,6 +126,7 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym);
 
 static Ir_block* load_block(
     Tast_block* old_block,
+    Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type
 );
@@ -1672,13 +1673,29 @@ static Name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
 
 static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
-        case TAST_BLOCK:
-            vec_append(
-                &a_main,
-                &new_block->children,
-                ir_block_wrap(load_block(tast_block_unwrap(old_expr), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
+        case TAST_BLOCK: {
+            // TODO: load_block should return Name instead of Ir_block
+            Name yield_dest = {0};
+            Ir_block* new_block_block = load_block(
+                tast_block_unwrap(old_expr),
+                &yield_dest,
+                DEFER_PARENT_OF_BLOCK,
+                (Lang_type) {0} /* TODO */
             );
-            return (Name) {0} /* TODO */;
+            log(LOG_DEBUG, FMT, ir_block_print(new_block_block));
+            for (size_t idx = 0; idx < new_block_block->children.info.count; idx++) {
+                vec_append(
+                    &a_main,
+                    &new_block->children,
+                    vec_at(&new_block_block->children, idx)
+                );
+                log(LOG_DEBUG, FMT, ir_print(vec_at(&new_block_block->children, idx)));
+            }
+            return load_symbol(new_block, tast_symbol_new(new_block_block->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(yield_dest),
+                .name = yield_dest
+            }));
+        }
         case TAST_ASSIGNMENT:
             return load_assignment(new_block, tast_assignment_unwrap(old_expr));
         case TAST_FUNCTION_CALL:
@@ -1866,6 +1883,7 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
     Pos pos = old_assign->pos;
 
     log(LOG_DEBUG, FMT"\n", tast_expr_print(old_assign->lhs));
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(old_assign->rhs));
     Name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Name new_rhs = load_expr(new_block, old_assign->rhs);
 
@@ -1918,8 +1936,10 @@ static void load_struct_def(Tast_struct_def* old_def) {
 
 static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
     Tast_block* old_block = if_statement->body;
+    Name dummy = {0};
     Ir_block* inner_block = load_block(
         old_block,
+        &dummy,
         DEFER_PARENT_OF_IF,
         if_statement->yield_type
     );
@@ -2713,9 +2733,12 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
 
 static Ir_block* load_block(
     Tast_block* old_block,
+    Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type
 ) {
+    memset(yield_dest_name, 0, sizeof(*yield_dest_name));
+
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
     Ir_block* new_block = ir_block_new(
@@ -2725,6 +2748,22 @@ static Ir_block* load_block(
         old_block->pos_end,
         old_block->scope_id
     );
+    unwrap(alloca_add(ir_block_wrap(new_block)));
+
+    // TODO: use same yield_dest variable for here and load_if_else_chain?
+    Tast_variable_def* yield_dest = NULL;
+    if (lang_type.type != LANG_TYPE_VOID) {
+        yield_dest = tast_variable_def_new(
+            old_block->pos,
+            lang_type,
+            false,
+            util_literal_name_new_prefix(sv("yield_dest"))
+        );
+        *yield_dest_name = yield_dest->name;
+        unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
+        load_variable_def(new_block, yield_dest);
+        load_break_symbol_name = yield_dest->name;
+    }
 
     Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
     Tast_def* curr = NULL;
@@ -2751,7 +2790,8 @@ Ir_block* add_load_and_store(Tast_block* old_root) {
         load_def_sometimes(curr);
     }
 
-    Ir_block* block = load_block(old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+    Name dummy = {0};
+    Ir_block* block = load_block(old_root, &dummy, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
 
     assert(defered_collections.coll_stack.info.count == 0);
     return block;
