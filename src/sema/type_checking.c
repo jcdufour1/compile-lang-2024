@@ -2589,6 +2589,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     if (!(status && try_set_block_types(&new_body, uast->body, false))) {
         status = false;
     }
+    log(LOG_DEBUG, FMT, tast_block_print(new_body));
 
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
@@ -3059,6 +3060,7 @@ error:
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     yield_type = break_type;
+    // TODO: remove below if else
     //if (parent_of == PARENT_OF_CASE) {
     //    yield_type = break_type;
     //} else if (parent_of == PARENT_OF_IF) {

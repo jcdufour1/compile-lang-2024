@@ -301,6 +301,9 @@ Strv tast_block_print_internal(const Tast_block* block, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
 
+    string_extend_cstr_indent(&a_print, &buf, "lang_type: ", indent + INDENT_WIDTH);
+    string_extend_strv(&a_print, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, block->lang_type));
+
     string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
     string_extend_size_t(&a_print, &buf, block->scope_id);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -376,10 +379,10 @@ Strv tast_yield_print_internal(const Tast_yield* yield, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "yield\n", indent);
-    // TODO: print break expr
     string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, yield->break_out_of);
     string_extend_cstr(&a_print, &buf, "\n");
+    string_extend_strv(&a_print, &buf, tast_expr_print_internal(yield->yield_expr, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
