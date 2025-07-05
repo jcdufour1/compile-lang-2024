@@ -55,6 +55,7 @@ typedef struct {
     Defer_pair_vec pairs;
     DEFER_PARENT_OF parent_of;
     Tast_expr* rtn_val;
+    Name break_name;
     Name is_brking;
     Name is_conting;
     Name is_yielding;
@@ -161,6 +162,7 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 static void load_block_stmts(
     Ir_block* new_block,
     Tast_stmt_vec children,
+    Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Pos pos,
     Lang_type lang_type
@@ -236,6 +238,35 @@ static void load_block_stmts(
         default:
             unreachable("");
     }
+
+    if (lang_type.type != LANG_TYPE_VOID) {
+        switch (parent_of) {
+            case DEFER_PARENT_OF_FUN: {
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_fun"));
+                break;
+            }
+            case DEFER_PARENT_OF_FOR: {
+                assert(label_if_continue.base.count > 0);
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_for"));
+                break;
+            }
+            case DEFER_PARENT_OF_IF: {
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_if"));
+                break;
+            }
+            case DEFER_PARENT_OF_BLOCK: {
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_block"));
+                break;
+            }
+            case DEFER_PARENT_OF_TOP_LEVEL: {
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_top_level"));
+                break;
+            }
+            default:
+                unreachable("");
+        }
+    }
+    load_break_symbol_name = *yield_dest_name;
 
     Name is_yielding_name = {0};
     switch (parent_of) {
@@ -327,6 +358,19 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
+    Tast_assignment* break_expr_assign = NULL;
+    Tast_variable_def* break_expr = NULL;
+    if (lang_type.type != LANG_TYPE_VOID) {
+        break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
+        break_expr_assign = tast_assignment_new(
+            pos,
+            tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+                .lang_type = break_expr->lang_type, .name = break_expr->name
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type)))
+        );
+    }
+
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
     Tast_assignment* is_yield_assign = tast_assignment_new(
         pos,
@@ -407,6 +451,7 @@ static void load_block_stmts(
         .pairs = (Defer_pair_vec) {0},
         .parent_of = parent_of,
         .rtn_val = rtn_val,
+        .break_name = break_expr ? break_expr->name : (Name) {0},
         .is_brking = is_brking->name,
         .is_yielding = is_yielding->name,
         .is_conting = is_conting->name,
@@ -453,15 +498,26 @@ static void load_block_stmts(
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         load_variable_def(new_block, local_rtn_def);
     }
+    if (lang_type.type != LANG_TYPE_VOID) {
+        unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
+    }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
     unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
     unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
     unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
+
+    if (lang_type.type != LANG_TYPE_VOID) {
+        load_variable_def(new_block, break_expr);
+    }
     load_variable_def(new_block, is_rtning);
     load_variable_def(new_block, is_yielding);
     load_variable_def(new_block, is_conting);
     load_variable_def(new_block, is_cont2ing);
+
+    if (lang_type.type != LANG_TYPE_VOID) {
+        load_assignment(new_block, break_expr_assign);
+    }
     load_assignment(new_block, is_rtn_assign);
     load_assignment(new_block, is_brk_assign);
     load_assignment(new_block, is_yield_assign);
@@ -1799,9 +1855,11 @@ static void load_function_def(Tast_function_def* old_fun_def) {
          old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = rm_tuple_lang_type(new_lang_type, old_fun_def->pos);
+    Name dummy = {0};
     load_block_stmts(
         new_fun_def->body,
         old_fun_def->body->children,
+        &dummy,
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
         old_fun_def->decl->return_type
@@ -2009,6 +2067,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id))
     );
 
+    // TODO: remove?
     Tast_variable_def* yield_dest = NULL;
     if (tast_if_else_chain_get_lang_type(if_else).type != LANG_TYPE_VOID) {
         yield_dest = tast_variable_def_new(
@@ -2164,9 +2223,11 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     add_label(new_block, after_check_label, pos);
     Name after_inner_block = util_literal_name_new_prefix(sv("after_inner_block"));
 
+    Name dummy = {0};
     load_block_stmts(
         new_block,
         old_for->body->children,
+        &dummy,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */
@@ -2490,6 +2551,20 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
             );
             load_assignment(new_block, is_brk_assign_aux);
+
+            // TODO: this will not always work for custom scopes
+            if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
+                assert(is_yielding);
+                Tast_assignment* new_assign = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(load_break_symbol_name),
+                        .name = vec_at(&defered_collections.coll_stack, idx).break_name
+                    })),
+                    tast_yield_unwrap(old_stmt)->yield_expr
+                );
+                load_assignment(new_block, new_assign);
+            }
         } else {
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
@@ -2606,22 +2681,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 return;
             }
 
-            // TODO: this will not always work for custom scopes
-            log(LOG_DEBUG, FMT, tast_yield_print(tast_yield_unwrap(old_stmt)));
-            Tast_yield* brk = tast_yield_unwrap(old_stmt);
-            if (brk->do_yield_expr) {
-                Tast_assignment* new_assign = tast_assignment_new(
-                    tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(load_break_symbol_name),
-                        .name = load_break_symbol_name
-                    })),
-                    brk->yield_expr
-                );
-                load_assignment(new_block, new_assign);
-            }
-
-            load_yielding_set_etc(new_block, old_stmt, brk->break_out_of, true);
+            load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
             return;
         }
         case TAST_CONTINUE2: {
@@ -2762,7 +2822,6 @@ static Ir_block* load_block(
         *yield_dest_name = yield_dest->name;
         unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
         load_variable_def(new_block, yield_dest);
-        load_break_symbol_name = yield_dest->name;
     }
 
     Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
@@ -2771,7 +2830,7 @@ static Ir_block* load_block(
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type);
+    load_block_stmts(new_block, old_block->children, yield_dest_name, parent_of, old_block->pos, lang_type);
 
     if (defered_collections.coll_stack.info.count > 0) {
         load_all_is_rtn_checks(new_block);
