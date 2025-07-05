@@ -346,6 +346,7 @@ Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, yield->break_out_of);
     string_extend_cstr(&a_print, &buf, "\n");
+    string_extend_strv(&a_print, &buf, uast_expr_print_internal(yield->yield_expr, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }

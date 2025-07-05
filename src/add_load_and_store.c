@@ -2587,6 +2587,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             }
 
             // TODO: this will not always work for custom scopes
+            log(LOG_DEBUG, FMT, tast_yield_print(tast_yield_unwrap(old_stmt)));
             Tast_yield* brk = tast_yield_unwrap(old_stmt);
             if (brk->do_yield_expr) {
                 Tast_assignment* new_assign = tast_assignment_new(

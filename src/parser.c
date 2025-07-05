@@ -2145,7 +2145,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     }
 
     Uast_stmt_vec chain_ = {0};
-    vec_append(&a_main, &chain_, uast_expr_wrap(uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases))));
+    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
     log_tokens(LOG_DEBUG, *tokens);

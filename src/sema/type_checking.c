@@ -462,12 +462,23 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         Lang_type old_lhs_lang_type = lhs_lang_type;
         PARENT_OF old_parent_of = parent_of;
         parent_of = PARENT_OF_ASSIGN_RHS;
+        log(LOG_DEBUG, "thing lhs_lang_type 1.1: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
         lhs_lang_type = dest_lang_type;
+        if (parent_of == PARENT_OF_ASSIGN_RHS) {
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
+            break_type = lhs_lang_type;
+        } else {
+            log(LOG_DEBUG, "thing 876\n");
+            break_type = lang_type_void_const_wrap(lang_type_void_new(pos));
+        }
+
         if (!try_set_expr_types(new_src, src)) {
             lhs_lang_type = old_lhs_lang_type;
             parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
+        log(LOG_DEBUG, "thing lhs_lang_type 1.2:\n dest: "FMT" src: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type), lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_src)));
+        msg(DIAG_INFO, pos, "\n");
         lhs_lang_type = old_lhs_lang_type;
         parent_of = old_parent_of;
     }
@@ -996,6 +1007,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
         }
     }
 
+    log(LOG_DEBUG, "thing lhs_lang_type 2: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
     lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
@@ -2475,16 +2487,18 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     Tast_expr* new_child = NULL;
+    Lang_type cached_break_type = break_type;
     if (yield->do_yield_expr) {
         switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, cached_break_type));
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child)));
                 msg_invalid_yield_type(yield->pos, new_child, false);
                 status = false;
                 goto error;
             case CHECK_ASSIGN_ERROR:
-                todo();
                 status = false;
                 goto error;
             default:
@@ -2763,9 +2777,12 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     break_in_case = false;
+    log(LOG_INFO, "thing 875: "FMT"\n", parent_of_print(parent_of));
     if (parent_of == PARENT_OF_ASSIGN_RHS) {
+        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
         break_type = lhs_lang_type;
     } else {
+        log(LOG_DEBUG, "thing 876\n");
         break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
@@ -3041,12 +3058,15 @@ error:
     dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
-    if (parent_of == PARENT_OF_CASE) {
-        yield_type = break_type;
-    } else if (parent_of == PARENT_OF_IF) {
-        todo();
-    }
+    yield_type = break_type;
+    //if (parent_of == PARENT_OF_CASE) {
+    //    yield_type = break_type;
+    //} else if (parent_of == PARENT_OF_IF) {
+    //    todo();
+    //}
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
+    log(LOG_DEBUG, "lang_type of new block: "FMT"", lang_type_print(LANG_TYPE_MODE_LOG, yield_type));
+    msg(DIAG_INFO, block->pos, "\n");
     if (status) {
         assert(*new_tast);
     } else {

@@ -223,7 +223,7 @@ static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chai
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_BLOCK:
-            unreachable("");
+            return tast_block_const_unwrap(expr)->lang_type;
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_const_unwrap(expr)->lang_type;
         case TAST_FUNCTION_CALL:
