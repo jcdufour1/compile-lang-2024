@@ -2703,7 +2703,17 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                     load_expr(new_block, tast_yield_unwrap(old_stmt)->yield_expr);
                 }
             } else {
-                todo();
+                unwrap(tast_yield_unwrap(old_stmt)->do_yield_expr);
+
+                Tast_assignment* new_assign = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(coll->break_name),
+                        .name = coll->break_name
+                    })),
+                    tast_yield_unwrap(old_stmt)->yield_expr
+                );
+                load_assignment(new_block, new_assign);
             }
 
             load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
