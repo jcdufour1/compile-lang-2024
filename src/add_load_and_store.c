@@ -359,24 +359,15 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
-    Tast_assignment* break_expr_assign = NULL;
     Tast_variable_def* break_expr = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
         break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
         log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-        break_expr_assign = tast_assignment_new(
-            pos,
-            tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-                .lang_type = break_expr->lang_type, .name = break_expr->name
-            })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type)))
-        );
         assert(break_expr->name.base.count > 0);
         log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
         log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
                 .lang_type = break_expr->lang_type, .name = break_expr->name
             })));
-        log(LOG_DEBUG, FMT, tast_assignment_print(break_expr_assign));
     }
 
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
@@ -525,10 +516,6 @@ static void load_block_stmts(
     load_variable_def(new_block, is_conting);
     load_variable_def(new_block, is_cont2ing);
 
-    if (lang_type.type != LANG_TYPE_VOID) {
-        log(LOG_DEBUG, FMT, tast_assignment_print(break_expr_assign));
-        load_assignment(new_block, break_expr_assign);
-    }
     load_assignment(new_block, is_rtn_assign);
     load_assignment(new_block, is_brk_assign);
     load_assignment(new_block, is_yield_assign);
