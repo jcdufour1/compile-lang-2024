@@ -2071,6 +2071,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     assert(if_else->tasts.info.count > 0);
     Name old_label_if_after = label_if_after;
 
+    log(LOG_DEBUG, "thing 1876: %zu\n", scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id));
     *new_block = ir_block_new(
         if_else->pos,
         util_literal_name_new(),
@@ -2598,11 +2599,13 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
 
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
         if (idx < 1) {
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
             msg(
                 DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
                 "label `"FMT"` points to a scope that is not a parent of this statement\n",
                 name_print(NAME_MSG, break_out_of)
             );
+            todo();
             break;
         }
         unwrap(idx > 0);
@@ -2614,6 +2617,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
         Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
+    todo();
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
