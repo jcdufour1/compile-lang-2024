@@ -397,6 +397,7 @@ Strv uast_if_print_internal(const Uast_if* lang_if, int indent) {
 }
 
 Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
+    assert(lang_case->expr);
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "case\n", indent);

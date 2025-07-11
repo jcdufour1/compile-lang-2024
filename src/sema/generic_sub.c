@@ -140,6 +140,12 @@ void generic_sub_continue(Uast_continue* cont) {
     (void) cont;
 }
 
+void generic_sub_yield(Uast_yield* yield, Name gen_param, Ulang_type gen_arg) {
+    if (yield->do_yield_expr) {
+        generic_sub_expr(yield->yield_expr, gen_param, gen_arg);
+    }
+}
+
 void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
         case UAST_EXPR:
@@ -165,7 +171,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
         case UAST_DEFER:
             todo();
         case UAST_YIELD:
-            todo();
+            generic_sub_yield(uast_yield_unwrap(stmt), gen_param, gen_arg);
+            return;
     }
     unreachable("");
 }

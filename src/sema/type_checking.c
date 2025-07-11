@@ -1377,7 +1377,6 @@ bool try_set_array_literal_types(
     Uast_array_literal* lit,
     Pos assign_pos
 ) {
-    todo();
     (void) assign_pos;
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
@@ -2099,6 +2098,9 @@ bool try_set_member_access_types_finish_enum_def(
                 return false;
             }
 
+            log(LOG_DEBUG, FMT, uast_variable_def_print(member_def));
+            log(LOG_DEBUG, FMT, uast_enum_def_print(enum_def));
+            msg(DIAG_INFO, member_def->pos, FMT, uast_variable_def_print(member_def));
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
@@ -2597,6 +2599,8 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
 
     Tast_condition* new_cond = NULL;
     if (!try_set_condition_types(&new_cond, uast->condition)) {
+        log(LOG_DEBUG, FMT, uast_condition_print(uast->condition));
+        todo();
         status = false;
     }
 
@@ -2811,7 +2815,6 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
         break_type = lhs_lang_type;
     } else {
-        todo();
         log(LOG_DEBUG, "thing 876\n");
         break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
         log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, break_type));
@@ -2937,7 +2940,6 @@ error:
 
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
-    todo();
     msg(
         DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))

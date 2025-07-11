@@ -1989,7 +1989,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         }
 
         Uast_block* if_false_block = NULL;
-        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(scope_id))) {
+        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(if_false_scope))) {
             return PARSE_ERROR;
         }
         if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
@@ -2011,7 +2011,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     Uast_case* if_false_case = uast_case_new(
         if_token.pos,
         true,
-        NULL,
+        uast_literal_wrap(uast_int_wrap(uast_int_new(tk_view_front(*tokens).pos, 1))),
         if_false,
         if_false_scope
     );
@@ -2113,6 +2113,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
                     unreachable("");
             }
         } else if (try_consume(NULL, tokens, TOKEN_DEFAULT)) {
+            case_operand = uast_literal_wrap(uast_int_wrap(uast_int_new(tk_view_front(*tokens).pos, 1)));
             case_is_default = true;
         } else {
             break;

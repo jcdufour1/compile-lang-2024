@@ -265,6 +265,10 @@ Uast_continue* uast_continue_clone(const Uast_continue* cont) {
     return uast_continue_new(cont->pos);
 }
 
+Uast_yield* uast_yield_clone(const Uast_yield* yield) {
+    return uast_yield_new(yield->pos, yield->do_yield_expr, yield->yield_expr, yield->break_out_of);
+}
+
 Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, Scope_id new_scope, Pos dest_pos) {
     return uast_assignment_new(
         assign->pos,
@@ -302,8 +306,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_wrap(uast_for_with_cond_clone(uast_for_with_cond_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_YIELD:
-            // TODO
-            todo();
+            return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt)));
         case UAST_CONTINUE2:
             // TODO
             todo();
@@ -323,10 +326,7 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope, Pos d
     return uast_case_new(
         lang_case->pos,
         lang_case->is_default,
-        uast_expr_clone(
-            lang_case->expr,
-            new_scope, dest_pos
-        ),
+        uast_expr_clone(lang_case->expr, new_scope, dest_pos),
         uast_stmt_clone(lang_case->if_true, new_scope, dest_pos),
         new_scope
     );
