@@ -167,6 +167,7 @@ static void load_block_stmts(
     Pos pos,
     Lang_type lang_type
 ) {
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
     // TODO: avoid making this def on LANG_TYPE_VOID?
@@ -362,6 +363,7 @@ static void load_block_stmts(
     Tast_variable_def* break_expr = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
         break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
+        log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
         break_expr_assign = tast_assignment_new(
             pos,
             tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
@@ -369,6 +371,12 @@ static void load_block_stmts(
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type)))
         );
+        assert(break_expr->name.base.count > 0);
+        log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
+        log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
+                .lang_type = break_expr->lang_type, .name = break_expr->name
+            })));
+        log(LOG_DEBUG, FMT, tast_assignment_print(break_expr_assign));
     }
 
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
@@ -427,10 +435,8 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
-            if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
-                defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
-            }
+            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
+            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
@@ -481,6 +487,10 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
+            assert(new_block);
+            assert(new_block->scope_id);
+            assert(defer);
+            assert(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id));
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
                 tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id)
@@ -516,6 +526,7 @@ static void load_block_stmts(
     load_variable_def(new_block, is_cont2ing);
 
     if (lang_type.type != LANG_TYPE_VOID) {
+        log(LOG_DEBUG, FMT, tast_assignment_print(break_expr_assign));
         load_assignment(new_block, break_expr_assign);
     }
     load_assignment(new_block, is_rtn_assign);
@@ -1257,6 +1268,7 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 
 static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     if (old_sym->base.lang_type.type == LANG_TYPE_VOID) {
+        todo();
         msg(DIAG_ASSIGNMENT_TO_VOID, old_sym->pos, "cannot assign to void\n");
     }
 
@@ -1736,7 +1748,7 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
                 tast_block_unwrap(old_expr),
                 &yield_dest,
                 DEFER_PARENT_OF_BLOCK,
-                (Lang_type) {0} /* TODO */
+                tast_block_unwrap(old_expr)->lang_type
             );
             log(LOG_DEBUG, FMT, ir_block_print(new_block_block));
             for (size_t idx = 0; idx < new_block_block->children.info.count; idx++) {
@@ -1747,10 +1759,16 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
                 );
                 log(LOG_DEBUG, FMT, ir_print(vec_at(&new_block_block->children, idx)));
             }
-            return load_symbol(new_block, tast_symbol_new(new_block_block->pos, (Sym_typed_base) {
-                .lang_type = tast_lang_type_from_name(yield_dest),
-                .name = yield_dest
-            }));
+            if (tast_block_unwrap(old_expr)->lang_type.type == LANG_TYPE_VOID) {
+                return load_void(new_block_block->pos);
+            } else {
+                // TODO: clone symbol instead of using tast_symbol_new to compress code here
+                return load_symbol(new_block, tast_symbol_new(new_block_block->pos, (Sym_typed_base) {
+                    .lang_type = tast_lang_type_from_name(yield_dest),
+                    .name = yield_dest
+                }));
+            }
+            unreachable("");
         }
         case TAST_ASSIGNMENT:
             return load_assignment(new_block, tast_assignment_unwrap(old_expr));
@@ -2521,7 +2539,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     );
     load_assignment(new_block, is_cont_assign);
 
-    //// TODO: do the assignments for is_djslkfajfding
+    //// TODO: do the assignments for 
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of for
@@ -2558,12 +2576,14 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(load_break_symbol_name),
+                        .lang_type = tast_expr_get_lang_type(tast_yield_unwrap(old_stmt)->yield_expr),
                         .name = vec_at(&defered_collections.coll_stack, idx).break_name
                     })),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
-                load_assignment(new_block, new_assign);
+                if (tast_expr_get_lang_type(tast_yield_unwrap(old_stmt)->yield_expr).type != LANG_TYPE_VOID) {
+                    load_assignment(new_block, new_assign);
+                }
             }
         } else {
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(

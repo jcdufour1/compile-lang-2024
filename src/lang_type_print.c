@@ -66,7 +66,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
                 unreachable("");
         }
     } else {
-        string_extend_cstr(&a_print, string, "void");
+        unreachable("");
     }
     if (atom.pointer_depth < 0) {
         todo();
@@ -127,6 +127,10 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             unreachable("");
     }
 
+    if (lang_type.type == LANG_TYPE_PRIMITIVE) {
+        unwrap(!strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, sv("void")));
+    }
+
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
@@ -158,10 +162,17 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             // fallthrough
             assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
         case LANG_TYPE_VOID:
-            // fallthrough
-        case LANG_TYPE_PRIMITIVE:
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
             goto end;
+        case LANG_TYPE_PRIMITIVE: {
+            Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
+            //unwrap(base.count >= 4 && strv_slice(base, base.count - 4, 4));
+            log(LOG_DEBUG, FMT"\n", string_print(*string));
+            extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
+            log(LOG_DEBUG, FMT"\n", string_print(*string));
+            unwrap(base.count >= 1);
+            goto end;
+        }
     }
     unreachable("");
 

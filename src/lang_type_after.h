@@ -156,8 +156,10 @@ static inline Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, L
         case LANG_TYPE_MODE_MSG:
             return lang_type_primitive_get_atom_normal(lang_type);
         case LANG_TYPE_MODE_EMIT_LLVM:
+            todo();
             return lang_type_primitive_get_atom_normal(lang_type);
         case LANG_TYPE_MODE_EMIT_C:
+            todo();
             return lang_type_primitive_get_atom_c(lang_type);
     }
     unreachable("");
