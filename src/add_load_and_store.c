@@ -167,6 +167,9 @@ static void load_block_stmts(
     Pos pos,
     Lang_type lang_type
 ) {
+    Tast_def* dummy = NULL;
+    unwrap(!symbol_lookup(&dummy, *yield_dest_name));
+
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
@@ -295,6 +298,7 @@ static void load_block_stmts(
         default:
             unreachable("");
     }
+    unwrap(!symbol_lookup(&dummy, *yield_dest_name));
 
     Name is_conting_name = {0};
     switch (parent_of) {
@@ -359,16 +363,13 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
-    Tast_variable_def* break_expr = NULL;
-    if (lang_type.type != LANG_TYPE_VOID) {
-        break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
-        log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-        assert(break_expr->name.base.count > 0);
-        log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
-        log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
-                .lang_type = break_expr->lang_type, .name = break_expr->name
-            })));
-    }
+    Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    assert(break_expr->name.base.count > 0);
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
+    log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
+        .lang_type = break_expr->lang_type, .name = break_expr->name
+    })));
 
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
     Tast_assignment* is_yield_assign = tast_assignment_new(
@@ -431,6 +432,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
+            // TODO: remove this (because this is done later)?
             for (size_t idx = 0; idx < children.info.count; idx++) {
                 load_stmt(new_block, vec_at(&children, idx), false);
             }
@@ -494,23 +496,27 @@ static void load_block_stmts(
         default:
             todo();
     }
+    unwrap(!symbol_lookup(&dummy, break_expr->name));
 
     if (lang_type.type != LANG_TYPE_VOID) {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         load_variable_def(new_block, local_rtn_def);
-    }
-    if (lang_type.type != LANG_TYPE_VOID) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, local_rtn_def->name));
+        unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
+    } else {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
+        assert(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
+    //unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
     unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
     unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
     unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
 
-    if (lang_type.type != LANG_TYPE_VOID) {
-        load_variable_def(new_block, break_expr);
-    }
+    load_variable_def(new_block, break_expr);
     load_variable_def(new_block, is_rtning);
     load_variable_def(new_block, is_yielding);
     load_variable_def(new_block, is_conting);
@@ -1730,7 +1736,7 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_BLOCK: {
             // TODO: load_block should return Name instead of Ir_block
-            Name yield_dest = {0};
+            Name yield_dest = util_literal_name_new();
             Ir_block* new_block_block = load_block(
                 tast_block_unwrap(old_expr),
                 &yield_dest,
@@ -1860,11 +1866,11 @@ static void load_function_def(Tast_function_def* old_fun_def) {
          old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = rm_tuple_lang_type(new_lang_type, old_fun_def->pos);
-    Name dummy = {0};
+    Name yield_name = util_literal_name_new();
     load_block_stmts(
         new_fun_def->body,
         old_fun_def->body->children,
-        &dummy,
+        &yield_name,
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
         old_fun_def->decl->return_type
@@ -2228,11 +2234,11 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     add_label(new_block, after_check_label, pos);
     Name after_inner_block = util_literal_name_new_prefix(sv("after_inner_block"));
 
-    Name dummy = {0};
+    Name yield_name = util_literal_name_new();
     load_block_stmts(
         new_block,
         old_for->body->children,
-        &dummy,
+        &yield_name,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */
@@ -2688,6 +2694,18 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 return;
             }
 
+            Defer_collection* coll = vec_top_ref(&defered_collections.coll_stack);
+            Tast_def* def = NULL; 
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, coll->break_name));
+            unwrap(symbol_lookup(&def, coll->break_name));
+            if (tast_def_get_lang_type(def).type == LANG_TYPE_VOID) {
+                if (tast_yield_unwrap(old_stmt)->do_yield_expr) {
+                    load_expr(new_block, tast_yield_unwrap(old_stmt)->yield_expr);
+                }
+            } else {
+                todo();
+            }
+
             load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
             return;
         }
@@ -2818,18 +2836,15 @@ static Ir_block* load_block(
     unwrap(alloca_add(ir_block_wrap(new_block)));
 
     // TODO: use same yield_dest variable for here and load_if_else_chain?
-    Tast_variable_def* yield_dest = NULL;
-    if (lang_type.type != LANG_TYPE_VOID) {
-        yield_dest = tast_variable_def_new(
-            old_block->pos,
-            lang_type,
-            false,
-            util_literal_name_new_prefix(sv("yield_dest"))
-        );
-        *yield_dest_name = yield_dest->name;
-        unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
-        load_variable_def(new_block, yield_dest);
-    }
+    Tast_variable_def* yield_dest = tast_variable_def_new(
+        old_block->pos,
+        lang_type,
+        false,
+        util_literal_name_new_prefix(sv("yield_dest"))
+    );
+    *yield_dest_name = yield_dest->name;
+    //unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
+    //load_variable_def(new_block, yield_dest);
 
     Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
     Tast_def* curr = NULL;

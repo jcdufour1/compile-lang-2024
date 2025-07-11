@@ -468,7 +468,10 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 }
 
 Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
-    return name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    Name new_name = name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    Tast_def* dummy = NULL;
+    unwrap(!symbol_lookup(&dummy, new_name));
+    return new_name;
 }
 
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {
