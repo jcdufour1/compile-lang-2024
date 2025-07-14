@@ -2617,7 +2617,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
         Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
-    todo();
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {

@@ -2600,7 +2600,6 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     Tast_condition* new_cond = NULL;
     if (!try_set_condition_types(&new_cond, uast->condition)) {
         log(LOG_DEBUG, FMT, uast_condition_print(uast->condition));
-        todo();
         status = false;
     }
 

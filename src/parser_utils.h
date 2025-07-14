@@ -79,8 +79,18 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
 Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
 
+Name util_literal_name_new_prefix_scope_internal(
+    const char* file,
+    int line,
+    Strv debug_prefix,
+    Scope_id scope_id
+);
+
 #define util_literal_name_new_prefix(debug_prefix) \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
+
+#define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
 
 #define util_literal_name_new() \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, sv(""))

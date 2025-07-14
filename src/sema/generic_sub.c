@@ -94,6 +94,10 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
     generic_sub_lang_type(&def->lang_type, def->lang_type, gen_param, gen_arg);
 }
 
+void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
+    generic_sub_name(&label->name, gen_param, gen_arg);
+}
+
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
     generic_sub_name(&base->name, gen_param, gen_arg);
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
@@ -131,7 +135,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_VOID_DEF:
             todo();
         case UAST_LABEL:
-            todo();
+            generic_sub_label(uast_label_unwrap(def), gen_param, gen_arg);
+            return;
     }
     unreachable("");
 }

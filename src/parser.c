@@ -2055,6 +2055,8 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
         Uast_def* label_ = NULL;
         unwrap(usymbol_lookup(&label_, new_scope_name));
         uast_label_unwrap(label_)->block_scope = parent;
+        assert(uast_label_unwrap(label_)->name.scope_id != SCOPE_BUILTIN);
+        assert(uast_label_unwrap(label_)->name.scope_id != SCOPE_TOP_LEVEL);
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
         log(LOG_DEBUG, "%zu\n", parent);
         log(LOG_DEBUG, "%zu\n", grand_parent);
@@ -2147,6 +2149,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
+    log(LOG_DEBUG, "thing 877: %zu\n", parent);
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
     log_tokens(LOG_DEBUG, *tokens);
@@ -2184,7 +2187,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         assert(new_scope_name.base.count > 0);
     } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
-        new_scope_name = util_literal_name_new_prefix(sv("scope_name"));
+        new_scope_name = util_literal_name_new_prefix_scope(sv("scope_name"), scope_id);
         unwrap(usymbol_add(uast_label_wrap(uast_label_new(POS_BUILTIN, new_scope_name, scope_id))));
     }
 

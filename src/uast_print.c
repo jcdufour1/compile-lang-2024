@@ -405,6 +405,11 @@ Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "case\n", indent);
+
+    string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
+    string_extend_size_t(&a_print, &buf, lang_case->scope_id);
+    string_extend_cstr(&a_print, &buf, "\n");
+
     if (lang_case->is_default) {
         string_extend_cstr_indent(&a_print, &buf, "default\n", indent + INDENT_WIDTH);
     } else {
