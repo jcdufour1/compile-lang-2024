@@ -274,6 +274,21 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     return PARSE_ERROR;
 }
 
+// TODO: give this function a better name
+static void label_thing(Scope_id block_scope) {
+    assert(new_scope_name.base.count > 0);
+    // TODO: remove label->block_scope and use label->name.scope_id instead
+    new_scope_name.scope_id = block_scope;
+    if (!usymbol_add(uast_label_wrap(uast_label_new(new_scope_name_pos, new_scope_name, block_scope)))) {
+        todo();
+        //msg_redefinition_of_symbol(uast_label_wrap(label));
+        //return PARSE_ERROR;
+    }
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
+    log(LOG_DEBUG, "%zu\n", block_scope);
+    memset(&new_scope_name, 0, sizeof(new_scope_name));
+}
+
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
     bool status = true;
     Uast_def* prev_def = NULL;
@@ -1662,11 +1677,6 @@ static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_COLON));
     // scope will be updated when parsing the statement
     Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id);
-    Uast_label* label = uast_label_new(sym_name.pos, label_name, SCOPE_NOT);
-    if (!usymbol_add(uast_label_wrap(label))) {
-        msg_redefinition_of_symbol(uast_label_wrap(label));
-        return PARSE_ERROR;
-    }
 
     new_scope_name_pos = sym_name.pos;
     new_scope_name = label_name;
@@ -1872,17 +1882,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
     Scope_id parent = symbol_collection_new(grand_parent);
     // TODO: (maybe not): extract this if and block_new into separate function
-    if (new_scope_name.base.count > 0) {
-        Uast_def* label_ = NULL;
-        unwrap(usymbol_lookup(&label_, new_scope_name));
-        uast_label_unwrap(label_)->block_scope = parent;
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
-        log(LOG_DEBUG, "%zu\n", parent);
-        log(LOG_DEBUG, "%zu\n", grand_parent);
-        memset(&new_scope_name, 0, sizeof(new_scope_name));
-    } else {
-        todo();
-    }
+    label_thing(parent);
     //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
@@ -2051,19 +2051,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     Scope_id parent = symbol_collection_new(grand_parent);
     // TODO: (maybe not): extract this if and block_new into separate function
-    if (new_scope_name.base.count > 0) {
-        Uast_def* label_ = NULL;
-        unwrap(usymbol_lookup(&label_, new_scope_name));
-        uast_label_unwrap(label_)->block_scope = parent;
-        assert(uast_label_unwrap(label_)->name.scope_id != SCOPE_BUILTIN);
-        assert(uast_label_unwrap(label_)->name.scope_id != SCOPE_TOP_LEVEL);
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
-        log(LOG_DEBUG, "%zu\n", parent);
-        log(LOG_DEBUG, "%zu\n", grand_parent);
-        memset(&new_scope_name, 0, sizeof(new_scope_name));
-    } else {
-        todo();
-    }
+    label_thing(parent);
     //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     PARSE_STATUS status = PARSE_OK;
@@ -2188,7 +2176,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
         new_scope_name = util_literal_name_new_prefix_scope(sv("scope_name"), scope_id);
-        unwrap(usymbol_add(uast_label_wrap(uast_label_new(POS_BUILTIN, new_scope_name, scope_id))));
     }
 
     Uast_stmt* lhs = NULL;
@@ -2313,10 +2300,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     PARSE_STATUS status = PARSE_OK;
 
     if (new_scope_name.base.count > 0) {
-        Uast_def* label_ = NULL;
-        unwrap(usymbol_lookup(&label_, new_scope_name));
-        uast_label_unwrap(label_)->block_scope = new_scope;
-        memset(&new_scope_name, 0, sizeof(new_scope_name));
+        label_thing(new_scope);
     }
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
