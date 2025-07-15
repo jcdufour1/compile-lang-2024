@@ -275,7 +275,8 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 }
 
 // TODO: give this function a better name
-static void label_thing(Scope_id block_scope) {
+// returns the modified name of the label
+static Name label_thing(Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
     // TODO: remove label->block_scope and use label->name.scope_id instead
     new_scope_name.scope_id = block_scope;
@@ -286,7 +287,9 @@ static void label_thing(Scope_id block_scope) {
     }
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
     log(LOG_DEBUG, "%zu\n", block_scope);
+    Name old_name = new_scope_name;
     memset(&new_scope_name, 0, sizeof(new_scope_name));
+    return old_name;
 }
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
@@ -1534,6 +1537,7 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
+    // TODO: should default_brk_label be set to label_thing?
     default_brk_label = new_scope_name;
 
     Token for_token = {0};
@@ -2046,12 +2050,11 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
 static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scope_id grand_parent) {
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
-    default_brk_label = new_scope_name;
     log(LOG_DEBUG, "thing thing: "FMT"\n", name_print(NAME_LOG, default_brk_label));
 
     Scope_id parent = symbol_collection_new(grand_parent);
     // TODO: (maybe not): extract this if and block_new into separate function
-    label_thing(parent);
+    default_brk_label = label_thing(parent);
     //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     PARSE_STATUS status = PARSE_OK;

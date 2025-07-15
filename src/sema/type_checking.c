@@ -2493,6 +2493,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
         msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, yield->break_out_of));
         status = false;
         goto error;
     }
