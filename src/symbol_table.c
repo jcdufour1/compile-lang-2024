@@ -515,6 +515,7 @@ Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
 }
 
 void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
+    // TODO: this is actually update, should be add
     while (scope_id_to_parent.info.count <= key) {
         vec_append(&a_main, &scope_id_to_parent, 0);
     }
@@ -522,7 +523,39 @@ void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
 }
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
+    // TODO: uncomment below
+    //while (scope_id_to_parent.info.count <= key) {
+     //   vec_append(&a_main, &scope_id_to_parent, 0);
+    //}
     *vec_at_ref(&scope_id_to_parent, key) = parent;
+}
+
+//
+// old_block_scope_to_new implementation
+//
+
+static Scope_id_vec old_block_scope_to_new;
+
+// returns new
+Scope_id old_block_scope_to_new_lookup(Scope_id old) {
+    return vec_at(&old_block_scope_to_new, old);
+}
+
+void old_block_scope_to_new_add(Scope_id old, Scope_id new) {
+    log(LOG_DEBUG, "old_block_scope_to_new_add: %zu\n", old);
+    // TODO: this is actually update, should be add
+    while (old_block_scope_to_new.info.count <= old) {
+        vec_append(&a_main, &old_block_scope_to_new, 0);
+    }
+    *vec_at_ref(&old_block_scope_to_new, old) = new;
+}
+
+void old_block_scope_to_new_update(Scope_id old, Scope_id new) {
+    // TODO: uncomment below
+    //while (old_block_scope_to_new.info.count <= old) {
+        //vec_append(&a_main, &old_block_scope_to_new, 0);
+    //}
+    *vec_at_ref(&old_block_scope_to_new, old) = new;
 }
 
 // TODO: remove Scope_get_name_tbl_add
