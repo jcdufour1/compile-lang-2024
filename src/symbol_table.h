@@ -135,12 +135,5 @@ bool struct_like_tbl_lookup(Uast_def** def, Name key);
 
 Scope_id symbol_collection_new(Scope_id parent);
 
-Scope_id old_block_scope_to_new_lookup(Scope_id old);
-
-void old_block_scope_to_new_add(Scope_id old, Scope_id new);
-
-void old_block_scope_to_new_update(Scope_id old, Scope_id new);
-
-
 #endif // SYMBOL_TABLE_H
 

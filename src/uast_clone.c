@@ -172,8 +172,10 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 }
 
 Uast_label* uast_label_clone(const Uast_label* label, Scope_id new_scope) {
-    log(LOG_DEBUG, "uast_label_clone 76: %zu\n", label->block_scope);
-    return uast_label_new(label->pos, name_clone(label->name, new_scope), old_block_scope_to_new_lookup(label->block_scope));
+    log(LOG_DEBUG, "thing 974: %zu\n", label->block_scope);
+    log(LOG_DEBUG, "thing 975: %zu\n", new_scope);
+    todo();
+    return uast_label_new(label->pos, name_clone(label->name, new_scope), new_scope /* TODO */);
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
