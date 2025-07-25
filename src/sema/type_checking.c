@@ -1396,7 +1396,6 @@ bool try_set_array_literal_types(
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         Uast_expr* rhs = vec_at(&lit->members, idx);
         Tast_expr* new_rhs = NULL;
-        todo();
         switch (check_generic_assignment(
              &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
         )) {

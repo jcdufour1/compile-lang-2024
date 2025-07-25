@@ -276,20 +276,21 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 // TODO: give this function a better name
 // returns the modified name of the label
-static Name label_thing(Scope_id block_scope) {
+static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
     // TODO: remove label->block_scope and use label->name.scope_id instead
     new_scope_name.scope_id = block_scope;
-    if (!usymbol_add(uast_label_wrap(uast_label_new(new_scope_name_pos, new_scope_name, block_scope)))) {
-        todo();
-        //msg_redefinition_of_symbol(uast_label_wrap(label));
-        //return PARSE_ERROR;
+    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, block_scope);
+    if (!usymbol_add(uast_label_wrap(label))) {
+        msg_redefinition_of_symbol(uast_label_wrap(label));
+        return PARSE_ERROR;
     }
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
     log(LOG_DEBUG, "%zu\n", block_scope);
     Name old_name = new_scope_name;
     memset(&new_scope_name, 0, sizeof(new_scope_name));
-    return old_name;
+    *new_name = old_name;
+    return PARSE_OK;
 }
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
@@ -1887,7 +1888,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
     Scope_id parent = symbol_collection_new(grand_parent);
     // TODO: (maybe not): extract this if and block_new into separate function
-    label_thing(parent);
+    Name dummy = {0};
+    if (PARSE_OK != label_thing(&dummy, parent)) {
+        return PARSE_ERROR;
+    }
     //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
@@ -2055,7 +2059,9 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     Scope_id parent = symbol_collection_new(grand_parent);
     // TODO: (maybe not): extract this if and block_new into separate function
-    default_brk_label = label_thing(parent);
+    if (PARSE_OK != label_thing(&default_brk_label, parent)) {
+        return PARSE_ERROR;
+    }
     //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     PARSE_STATUS status = PARSE_OK;
@@ -2303,8 +2309,9 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
 
-    if (new_scope_name.base.count > 0) {
-        label_thing(new_scope);
+    Name dummy = {0};
+    if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
+        return PARSE_ERROR;
     }
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
