@@ -1606,7 +1606,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
     // TODO: print error for break outside of for loop here
 
     // TODO: remove uast_break, and make uast_yield here
-    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, default_brk_label);
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(default_brk_label, scope_id));
     return PARSE_OK;
 }
 
@@ -1672,6 +1672,7 @@ static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, S
     }
 
     *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
+    *new_cont = uast_continue2_new(cont_token.pos, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
 
