@@ -29,11 +29,10 @@ fn fun3() i32 {
     //for idx i32 in 0..3 {
     //}
     let num i32 = 0
-    // TODO: remove label `if_label`
-    if_label: if 1 {
+    if 1 {
         defer num = 3
         num = 2
-        yield(if_label)
+        break
         defer num = 4
     } else {
         num = 1000

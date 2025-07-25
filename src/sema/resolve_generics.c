@@ -412,7 +412,6 @@ static bool resolve_generics_serialize_function_decl(
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
-        log(LOG_DEBUG, FMT, uast_block_print(new_block));
     }
 
     if (idx_arg < old_decl->generics.info.count) {

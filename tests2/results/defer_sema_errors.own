@@ -1,36 +1,11 @@
 compile::stdout 0
 
-compile::stderr 30
-tests2/inputs/defer_sema_errors.own:6:16:[1;31merror[0;39m:return statement cannot be located in defer
-     5 |     defer {
-     6 |         return 2
-       |                ^
-     7 |     }
-tests2/inputs/defer_sema_errors.own:5:5:[1;34mnote[0;39m:defer statement defined here
-     4 | fn main() i32 {
-     5 |     defer {
-       |     ^
-     6 |         return 2
-tests2/inputs/defer_sema_errors.own:8:18:[1;31merror[0;39m:return statement cannot be located in defer
-     7 |     }
-     8 |     defer return 1
-       |                  ^
-     9 | 
-tests2/inputs/defer_sema_errors.own:8:5:[1;34mnote[0;39m:defer statement defined here
-     7 |     }
-     8 |     defer return 1
-       |     ^
-     9 | 
-tests2/inputs/defer_sema_errors.own:25:13:[1;31merror[0;39m:cannot yield out of defer
-    24 |         defer {
-    25 |             break
-       |             ^
-    26 |         }
-tests2/inputs/defer_sema_errors.own:31:13:[1;31merror[0;39m:cannot continue out of defer
-    30 |         defer {
-    31 |             continue
-       |             ^
-    32 |         }
+compile::stderr 5
+tests2/inputs/defer_sema_errors.own:19:9:[1;31merror[0;39m:break statement outside of a for loop
+    18 |     defer {
+    19 |         break
+       |         ^
+    20 |     }
 
 compile::return_code 1
 

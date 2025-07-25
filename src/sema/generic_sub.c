@@ -214,7 +214,6 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member*/, Ulang_type gen_arg) {
-    //log(LOG_DEBUG, FMT, uast_block_print(block));
     assert(gen_param.scope_id > 0);
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
@@ -225,7 +224,6 @@ void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using na
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
     }
-    //log(LOG_DEBUG, FMT, uast_block_print(block));
 }
 
 void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {

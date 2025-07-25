@@ -173,8 +173,6 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 
 Uast_label* uast_label_clone(const Uast_label* label, Scope_id new_scope) {
     assert(label->name.scope_id == label->block_scope);
-    log(LOG_DEBUG, "thing 974: %zu\n", label->block_scope);
-    log(LOG_DEBUG, "thing 975: %zu\n", new_scope);
     return uast_label_new(label->pos, name_clone(label->name, new_scope), new_scope /* TODO */);
 }
 
@@ -274,8 +272,6 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond, Scope_id new_sc
 }
 
 Uast_yield* uast_yield_clone(const Uast_yield* yield, Scope_id new_scope, Pos dest_pos) {
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, yield->break_out_of));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_clone(yield->break_out_of, new_scope)));
     return uast_yield_new(yield->pos, yield->do_yield_expr, uast_expr_clone(yield->yield_expr, new_scope, dest_pos), name_clone(yield->break_out_of, new_scope));
 }
 
