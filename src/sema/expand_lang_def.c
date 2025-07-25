@@ -374,8 +374,6 @@ static bool expand_def_stmt(Uast_stmt* stmt) {
             todo();
         case UAST_YIELD:
             todo();
-        case UAST_CONTINUE:
-            todo();
         case UAST_ASSIGNMENT:
             todo();
         case UAST_RETURN:

@@ -2468,22 +2468,6 @@ error:
     return status;
 }
 
-bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
-    todo();
-    switch (parent_of_defer) {
-        case PARENT_OF_DEFER_FOR:
-            *new_tast = tast_continue_new(cont->pos);
-            return true;
-        case PARENT_OF_DEFER_NONE:
-            *new_tast = tast_continue_new(cont->pos);
-            return true;
-        case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_CONTINUE_OUT_OF_DEFER, cont->pos, "cannot continue out of defer\n");
-            return false;
-    }
-    unreachable("");
-}
-
 bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
@@ -3121,8 +3105,6 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_YIELD:
             return false;
-        case UAST_CONTINUE:
-            return false;
         case UAST_CONTINUE2:
             return false;
         case UAST_ASSIGNMENT:
@@ -3178,14 +3160,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 return STMT_ERROR;
             }
             *new_tast = tast_return_wrap(new_rtn);
-            return STMT_OK;
-        }
-        case UAST_CONTINUE: {
-            Tast_continue* new_cont = NULL;
-            if (!try_set_continue_types(&new_cont, uast_continue_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_continue_wrap(new_cont);
             return STMT_OK;
         }
         case UAST_DEFER: {

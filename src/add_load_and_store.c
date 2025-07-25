@@ -56,7 +56,6 @@ typedef struct {
     DEFER_PARENT_OF parent_of;
     Tast_expr* rtn_val;
     Name break_name;
-    Name is_conting;
     Name is_yielding;
     Name is_cont2ing;
 } Defer_collection;
@@ -215,33 +214,6 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
-    Name is_brking_name = {0};
-    switch (parent_of) {
-        case DEFER_PARENT_OF_FUN: {
-            is_brking_name = util_literal_name_new_prefix(sv("is_brking_fun"));
-            break;
-        }
-        case DEFER_PARENT_OF_FOR: {
-            assert(label_if_continue.base.count > 0);
-            is_brking_name = util_literal_name_new_prefix(sv("is_brking_for"));
-            break;
-        }
-        case DEFER_PARENT_OF_IF: {
-            is_brking_name = util_literal_name_new_prefix(sv("is_brking_if"));
-            break;
-        }
-        case DEFER_PARENT_OF_BLOCK: {
-            is_brking_name = util_literal_name_new_prefix(sv("is_brking_block"));
-            break;
-        }
-        case DEFER_PARENT_OF_TOP_LEVEL: {
-            is_brking_name = util_literal_name_new_prefix(sv("is_brking_top_level"));
-            break;
-        }
-        default:
-            unreachable("");
-    }
-
     if (lang_type.type != LANG_TYPE_VOID) {
         switch (parent_of) {
             case DEFER_PARENT_OF_FUN: {
@@ -299,33 +271,6 @@ static void load_block_stmts(
     }
     unwrap(!symbol_lookup(&dummy, *yield_dest_name));
 
-    Name is_conting_name = {0};
-    switch (parent_of) {
-        case DEFER_PARENT_OF_FUN: {
-            is_conting_name = util_literal_name_new_prefix(sv("is_conting_fun"));
-            break;
-        }
-        case DEFER_PARENT_OF_FOR: {
-            assert(label_if_continue.base.count > 0);
-            is_conting_name = util_literal_name_new_prefix(sv("is_conting_for"));
-            break;
-        }
-        case DEFER_PARENT_OF_IF: {
-            is_conting_name = util_literal_name_new_prefix(sv("is_conting_if"));
-            break;
-        }
-        case DEFER_PARENT_OF_BLOCK: {
-            is_conting_name = util_literal_name_new_prefix(sv("is_conting_block"));
-            break;
-        }
-        case DEFER_PARENT_OF_TOP_LEVEL: {
-            is_conting_name = util_literal_name_new_prefix(sv("is_conting_top_level"));
-            break;
-        }
-        default:
-            todo();
-    }
-
     Name is_cont2ing_name = {0};
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -353,15 +298,6 @@ static void load_block_stmts(
             todo();
     }
 
-    Tast_variable_def* is_brking = tast_variable_def_new(pos, lang_type_new_u1(), false, is_brking_name);
-    Tast_assignment* is_brk_assign = tast_assignment_new(
-        pos,
-        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-            .lang_type = is_brking->lang_type, .name = is_brking->name
-        })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
-    );
-
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     assert(break_expr->name.base.count > 0);
@@ -375,15 +311,6 @@ static void load_block_stmts(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
             .lang_type = is_yielding->lang_type, .name = is_yielding->name
-        })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
-    );
-
-    Tast_variable_def* is_conting = tast_variable_def_new(pos, lang_type_new_u1(), false, is_conting_name);
-    Tast_assignment* is_cont_assign = tast_assignment_new(
-        pos,
-        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
-            .lang_type = is_conting->lang_type, .name = is_conting->name
         })),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
@@ -451,7 +378,6 @@ static void load_block_stmts(
         .rtn_val = rtn_val,
         .break_name = break_expr ? break_expr->name : (Name) {0},
         .is_yielding = is_yielding->name,
-        .is_conting = is_conting->name,
         .is_cont2ing = is_cont2ing->name
     }));
 
@@ -507,23 +433,17 @@ static void load_block_stmts(
         assert(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
-    //unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
-    unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
     unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
-    unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
     unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
 
     load_variable_def(new_block, break_expr);
     load_variable_def(new_block, is_rtning);
     load_variable_def(new_block, is_yielding);
-    load_variable_def(new_block, is_conting);
     load_variable_def(new_block, is_cont2ing);
 
     load_assignment(new_block, is_rtn_assign);
-    load_assignment(new_block, is_brk_assign);
     load_assignment(new_block, is_yield_assign);
-    load_assignment(new_block, is_cont_assign);
     load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
@@ -536,11 +456,6 @@ static void load_block_stmts(
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
-            // is_cont_check
-            Name after_check_cont = util_literal_name_new_prefix(sv("after_check_cont"));
-            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_conting, label_if_continue, after_check_cont);
-            add_label(new_block, after_check_cont, (Pos) {0}/*TODO*/);
-
             // is_cont2_check
             Name after_check_cont2 = util_literal_name_new_prefix(sv("after_check_cont2"));
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_cont2ing, label_if_continue, after_check_cont2);
@@ -2132,12 +2047,6 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 
     load_all_is_rtn_checks(*new_block);
 
-    // TODO: remove checks is_brk_check and is_cont_check? (use yield and cont2 instead)
-    // is_cont_check
-    Name after_is_cont = util_literal_name_new_prefix(sv("after_check_cont"));
-    load_single_is_rtn_check(*new_block, vec_top(&defered_collections.coll_stack).is_conting, vec_top(pairs).label->name, after_is_cont);
-    add_label(*new_block, after_is_cont, (Pos) {0}/*TODO*/);
-
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
 
@@ -2431,71 +2340,12 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
 typedef Name (*Get_is_brking_or_conting)(const Defer_collection* item);
 typedef Name (*Get_is_yielding_or_cont2ing)(const Defer_collection* item);
 
-Name get_is_conting(const Defer_collection* item) {
-    return item->is_conting;
-}
-
 Name get_is_yielding(const Defer_collection* item) {
     return item->is_yielding;
 }
 
 Name get_is_cont2ing(const Defer_collection* item) {
     return item->is_cont2ing;
-}
-
-// TODO: remove this function when removing is_conting
-static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
-    Get_is_brking_or_conting get_is_brking_or_conting = get_is_conting;
-    Defer_collection coll = vec_top(&defered_collections.coll_stack);
-    Defer_pair_vec* pairs = &coll.pairs;
-
-    // TODO: extract this into separate function? (and for can use same function as continue, etc.
-    Tast_assignment* is_cont_assign = tast_assignment_new(
-        tast_stmt_get_pos(old_stmt),
-        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-            .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
-            .name = get_is_brking_or_conting(&coll)
-        })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
-    );
-    load_assignment(new_block, is_cont_assign);
-
-    // the purpose of these two for loops: 
-    //   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
-    //   we need to set is_brking of multiple scopes to break/continue out of for
-    bool is_for = false;
-    size_t for_pos = 0;
-    // these two for loops exclude the top of defered_collections.coll_stack
-    assert(defered_collections.coll_stack.info.count > 0 && "will underflow");
-    for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-        size_t idx = idx_ - 1;
-        if (vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
-            is_for = true;
-            for_pos = idx;
-        }
-    }
-    if (is_for) {
-        for (size_t idx_ = defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
-            size_t idx = idx_ - 1;
-            if (vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR || vec_at(&defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_IF) {
-                Tast_assignment* is_cont_assign_aux = tast_assignment_new(
-                    tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, for_pos))),
-                        .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
-                    })),
-                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
-                );
-                load_assignment(new_block, is_cont_assign_aux);
-            }
-        }
-    }
-
-    if (pairs->info.count > 0) {
-        // jump to the top of the defer stack to execute the defered statements
-        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
-        vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
-    }
 }
 
 // TODO: try to come up with a better name for this function
@@ -2656,24 +2506,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 load_break(new_block, tast_actual_break_unwrap(old_stmt));
                 return;
             }
-
-            unwrap(label_if_break.base.count > 0 && "this should have been caught in the parsing pass");
-
-            Tast_actual_break* brk = tast_actual_break_unwrap(old_stmt);
-            if (brk->do_break_expr) {
-                Tast_assignment* new_assign = tast_assignment_new(
-                    tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(load_break_symbol_name),
-                        .name = load_break_symbol_name
-                    })),
-                    brk->break_expr
-                );
-                load_assignment(new_block, new_assign);
-            }
-
-            load_brking_or_conting_set_etc(new_block, old_stmt, true);
-            return;
+            unreachable("tast_actual_break should never be passed into load_stmt unless is_defered is true");
         }
         case TAST_YIELD: {
             if (is_defered) {
@@ -2718,20 +2551,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             return;
         }
         case TAST_CONTINUE: {
-            if (is_defered) {
-                return;
-            }
-
-            if (label_if_continue.base.count < 1) {
-                msg(
-                    DIAG_CONTINUE_INVALID_LOCATION, tast_continue_unwrap(old_stmt)->pos,
-                    "continue statement outside of a for loop\n"
-                );
-                return;
-            }
-
-            load_brking_or_conting_set_etc(new_block, old_stmt, false);
-            return;
+            unreachable("tast_continue should never be loaded");
         }
         case TAST_DEFER: {
             Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;

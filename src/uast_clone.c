@@ -273,10 +273,6 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond, Scope_id new_sc
     return uast_condition_new(cond->pos, uast_operator_clone(cond->child, new_scope, dest_pos));
 }
 
-Uast_continue* uast_continue_clone(const Uast_continue* cont) {
-    return uast_continue_new(cont->pos);
-}
-
 Uast_yield* uast_yield_clone(const Uast_yield* yield, Scope_id new_scope, Pos dest_pos) {
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, yield->break_out_of));
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_clone(yield->break_out_of, new_scope)));
@@ -324,8 +320,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
         case UAST_CONTINUE2:
             // TODO
             todo();
-        case UAST_CONTINUE:
-            return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt)));
         case UAST_ASSIGNMENT:
             return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_RETURN:

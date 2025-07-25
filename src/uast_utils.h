@@ -37,8 +37,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             return uast_get_ulang_type_def(uast_def_const_unwrap(stmt));
         case UAST_RETURN:
             unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
         case UAST_ASSIGNMENT:
@@ -62,8 +60,6 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
         case UAST_DEF:
             return uast_def_get_lang_type(result,  uast_def_const_unwrap(stmt), generics);
         case UAST_RETURN:
-            unreachable("");
-        case UAST_CONTINUE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");

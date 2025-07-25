@@ -141,10 +141,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
     unreachable("");
 }
 
-void generic_sub_continue(Uast_continue* cont) {
-    (void) cont;
-}
-
 void generic_sub_yield(Uast_yield* yield, Name gen_param, Ulang_type gen_arg) {
     if (yield->do_yield_expr) {
         generic_sub_expr(yield->yield_expr, gen_param, gen_arg);
@@ -164,9 +160,6 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_CONTINUE2:
             todo();
-        case UAST_CONTINUE:
-            generic_sub_continue(uast_continue_unwrap(stmt));
-            return;
         case UAST_ASSIGNMENT:
             generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
             return;

@@ -367,15 +367,6 @@ Strv uast_continue2_print_internal(const Uast_continue2* cont, int indent) {
     return string_to_strv(buf);
 }
 
-Strv uast_continue_print_internal(const Uast_continue* lang_continue, int indent) {
-    (void) lang_continue;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "continue\n", indent);
-
-    return string_to_strv(buf);
-}
-
 Strv uast_assignment_print_internal(const Uast_assignment* assign, int indent) {
     String buf = {0};
 
@@ -733,8 +724,6 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_def_print_internal(uast_def_const_unwrap(stmt), indent);
         case UAST_YIELD:
             return uast_yield_print_internal(uast_yield_const_unwrap(stmt), indent);
-        case UAST_CONTINUE:
-            return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
         case UAST_ASSIGNMENT:
             return uast_assignment_print_internal(uast_assignment_const_unwrap(stmt), indent);
         case UAST_RETURN:
