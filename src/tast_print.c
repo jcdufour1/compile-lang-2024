@@ -400,15 +400,6 @@ Strv tast_continue2_print_internal(const Tast_continue2* cont, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_continue_print_internal(const Tast_continue* lang_continue, int indent) {
-    (void) lang_continue;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "continue\n", indent);
-
-    return string_to_strv(buf);
-}
-
 Strv tast_assignment_print_internal(const Tast_assignment* assign, int indent) {
     String buf = {0};
 
@@ -657,8 +648,6 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_actual_break_print_internal(tast_actual_break_const_unwrap(stmt), indent);
         case TAST_YIELD:
             return tast_yield_print_internal(tast_yield_const_unwrap(stmt), indent);
-        case TAST_CONTINUE:
-            return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
         case TAST_RETURN:
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
         case TAST_DEFER:

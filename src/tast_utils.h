@@ -351,8 +351,6 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         case TAST_FOR_WITH_COND:
             unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
         case TAST_YIELD:
             unreachable("");
         case TAST_CONTINUE2:
@@ -407,8 +405,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_DEFER:
             unreachable("");
         case TAST_FOR_WITH_COND:
-            unreachable("");
-        case TAST_CONTINUE:
             unreachable("");
         case TAST_YIELD:
             unreachable("");
@@ -494,8 +490,6 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_ACTUAL_BREAK:
-            unreachable("");
-        case TAST_CONTINUE:
             unreachable("");
         case TAST_YIELD:
             unreachable("");

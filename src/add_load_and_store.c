@@ -2188,12 +2188,6 @@ static void load_label(Ir_block* new_block, Tast_label* old_label) {
     alloca_add(ir_def_wrap(ir_label_wrap(new_label)));
 }
 
-static void load_continue(Ir_block* new_block, Tast_continue* old_continue) {
-    unwrap(label_if_continue.base.count > 0 && "this should have been caught in the parsing pass");
-    Ir_goto* new_goto = ir_goto_new(old_continue->pos, util_literal_name_new(), label_if_continue);
-    vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
-}
-
 static void load_raw_union_def(Tast_raw_union_def* old_def) {
     if (!all_tbl_add(ir_def_wrap(ir_struct_def_wrap(load_raw_union_def_clone(old_def))))) {
         return;
@@ -2549,9 +2543,6 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 
             load_yielding_set_etc(new_block, old_stmt, tast_continue2_unwrap(old_stmt)->break_out_of, false);
             return;
-        }
-        case TAST_CONTINUE: {
-            unreachable("tast_continue should never be loaded");
         }
         case TAST_DEFER: {
             Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
