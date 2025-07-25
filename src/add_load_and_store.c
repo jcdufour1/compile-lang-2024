@@ -56,7 +56,6 @@ typedef struct {
     DEFER_PARENT_OF parent_of;
     Tast_expr* rtn_val;
     Name break_name;
-    Name is_brking;
     Name is_conting;
     Name is_yielding;
     Name is_cont2ing;
@@ -451,7 +450,6 @@ static void load_block_stmts(
         .parent_of = parent_of,
         .rtn_val = rtn_val,
         .break_name = break_expr ? break_expr->name : (Name) {0},
-        .is_brking = is_brking->name,
         .is_yielding = is_yielding->name,
         .is_conting = is_conting->name,
         .is_cont2ing = is_cont2ing->name
@@ -538,11 +536,6 @@ static void load_block_stmts(
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
-            // is_brk_check
-            Name after_check_brk = util_literal_name_new_prefix(sv("after_check_brk"));
-            load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_brking, label_if_break, after_check_brk);
-            add_label(new_block, after_check_brk, (Pos) {0}/*TODO*/);
-
             // is_cont_check
             Name after_check_cont = util_literal_name_new_prefix(sv("after_check_cont"));
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_conting, label_if_continue, after_check_cont);
@@ -2140,11 +2133,6 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     load_all_is_rtn_checks(*new_block);
 
     // TODO: remove checks is_brk_check and is_cont_check? (use yield and cont2 instead)
-    // is_brk_check
-    Name after_is_brk = util_literal_name_new_prefix(sv("after_check_brk"));
-    load_single_is_rtn_check(*new_block, vec_top(&defered_collections.coll_stack).is_brking, vec_top(pairs).label->name, after_is_brk);
-    add_label(*new_block, after_is_brk, (Pos) {0}/*TODO*/);
-
     // is_cont_check
     Name after_is_cont = util_literal_name_new_prefix(sv("after_check_cont"));
     load_single_is_rtn_check(*new_block, vec_top(&defered_collections.coll_stack).is_conting, vec_top(pairs).label->name, after_is_cont);
@@ -2443,10 +2431,6 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
 typedef Name (*Get_is_brking_or_conting)(const Defer_collection* item);
 typedef Name (*Get_is_yielding_or_cont2ing)(const Defer_collection* item);
 
-Name get_is_brking(const Defer_collection* item) {
-    return item->is_brking;
-}
-
 Name get_is_conting(const Defer_collection* item) {
     return item->is_conting;
 }
@@ -2459,9 +2443,9 @@ Name get_is_cont2ing(const Defer_collection* item) {
     return item->is_cont2ing;
 }
 
-// TODO: try to come up with a better name for this function
+// TODO: remove this function when removing is_conting
 static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool is_brking) {
-    Get_is_brking_or_conting get_is_brking_or_conting = is_brking ? get_is_brking : get_is_conting;
+    Get_is_brking_or_conting get_is_brking_or_conting = get_is_conting;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
 
@@ -2514,6 +2498,7 @@ static void load_brking_or_conting_set_etc(Ir_block* new_block, Tast_stmt* old_s
     }
 }
 
+// TODO: try to come up with a better name for this function
 // TODO: consider if this can be combined with load_brking_or_conting_set_etc
 static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name break_out_of, bool is_yielding) {
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
