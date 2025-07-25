@@ -344,9 +344,9 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             return tast_stmt_get_lang_type(tast_defer_const_unwrap(stmt)->child);
         case TAST_RETURN:
             return tast_expr_get_lang_type(tast_return_const_unwrap(stmt)->child);
-        case TAST_BREAK:
-            if (tast_break_const_unwrap(stmt)->do_break_expr) {
-                return tast_expr_get_lang_type(tast_break_const_unwrap(stmt)->break_expr);
+        case TAST_ACTUAL_BREAK:
+            if (tast_actual_break_const_unwrap(stmt)->do_break_expr) {
+                return tast_expr_get_lang_type(tast_actual_break_const_unwrap(stmt)->break_expr);
             }
             return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         case TAST_FOR_WITH_COND:
@@ -401,8 +401,8 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_RETURN:
             tast_expr_set_lang_type(tast_return_unwrap(stmt)->child, lang_type);
             return;
-        case TAST_BREAK:
-            tast_expr_set_lang_type(tast_break_unwrap(stmt)->break_expr, lang_type);
+        case TAST_ACTUAL_BREAK:
+            tast_expr_set_lang_type(tast_actual_break_unwrap(stmt)->break_expr, lang_type);
             return;
         case TAST_DEFER:
             unreachable("");
@@ -493,7 +493,7 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
-        case TAST_BREAK:
+        case TAST_ACTUAL_BREAK:
             unreachable("");
         case TAST_CONTINUE:
             unreachable("");

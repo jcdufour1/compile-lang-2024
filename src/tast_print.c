@@ -366,7 +366,7 @@ Strv tast_for_with_cond_print_internal(const Tast_for_with_cond* for_cond, int i
     return string_to_strv(buf);
 }
 
-Strv tast_break_print_internal(const Tast_break* lang_break, int indent) {
+Strv tast_actual_break_print_internal(const Tast_actual_break* lang_break, int indent) {
     (void) lang_break;
     String buf = {0};
 
@@ -653,8 +653,8 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_def_print_internal(tast_def_const_unwrap(stmt), indent);
         case TAST_FOR_WITH_COND:
             return tast_for_with_cond_print_internal(tast_for_with_cond_const_unwrap(stmt), indent);
-        case TAST_BREAK:
-            return tast_break_print_internal(tast_break_const_unwrap(stmt), indent);
+        case TAST_ACTUAL_BREAK:
+            return tast_actual_break_print_internal(tast_actual_break_const_unwrap(stmt), indent);
         case TAST_YIELD:
             return tast_yield_print_internal(tast_yield_const_unwrap(stmt), indent);
         case TAST_CONTINUE:

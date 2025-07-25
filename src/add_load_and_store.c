@@ -14,7 +14,7 @@
 #include <symbol_iter.h>
 #include <sizeof.h>
 
-// TODO: remove is_brking (use is_yielding instead) and remove Tast_break
+// TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
 typedef enum {
     DEFER_PARENT_OF_NONE,
@@ -148,7 +148,7 @@ static void load_label(Ir_block* new_block, Tast_label* old_label);
 
 static Name load_return(Ir_block* new_block, Tast_return* old_return);
 
-static void load_break(Ir_block* new_block, Tast_break* old_break);
+static void load_break(Ir_block* new_block, Tast_actual_break* old_break);
 
 static Name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign);
 
@@ -417,18 +417,18 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
-            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
-            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
-            Tast_break* actual_brk = tast_break_new(pos, false, rtn_val);
-            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
@@ -2265,7 +2265,7 @@ static void load_for_with_cond(Ir_block* new_block, Tast_for_with_cond* old_for)
     vec_append(&a_main, &new_block->children, ir_block_wrap(new_for));
 }
 
-static void load_break(Ir_block* new_block, Tast_break* old_break) {
+static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
     if (label_if_break.base.count < 1) {
         return;
     }
@@ -2666,15 +2666,15 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
         case TAST_FOR_WITH_COND:
             load_for_with_cond(new_block, tast_for_with_cond_unwrap(old_stmt));
             return;
-        case TAST_BREAK: {
+        case TAST_ACTUAL_BREAK: {
             if (is_defered) {
-                load_break(new_block, tast_break_unwrap(old_stmt));
+                load_break(new_block, tast_actual_break_unwrap(old_stmt));
                 return;
             }
 
             unwrap(label_if_break.base.count > 0 && "this should have been caught in the parsing pass");
 
-            Tast_break* brk = tast_break_unwrap(old_stmt);
+            Tast_actual_break* brk = tast_actual_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
@@ -2693,7 +2693,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
         case TAST_YIELD: {
             if (is_defered) {
                 todo();
-                //load_break(new_block, tast_break_unwrap(old_stmt));
+                //load_break(new_block, tast_actual_break_unwrap(old_stmt));
                 return;
             }
 
@@ -2725,7 +2725,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
         case TAST_CONTINUE2: {
             if (is_defered) {
                 todo();
-                //load_continue(new_block, tast_break_unwrap(old_stmt));
+                //load_continue(new_block, tast_actual_break_unwrap(old_stmt));
                 return;
             }
 
