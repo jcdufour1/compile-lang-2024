@@ -1614,8 +1614,8 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
 static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_id scope_id) {
     Token yield_token = consume(tokens);
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_OPEN_PAR);
+    if (!try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
+        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_DOUBLE_TICK);
         return PARSE_ERROR;
     }
 
@@ -1625,11 +1625,6 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
         return PARSE_ERROR;
     }
     Name break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
-
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "after scope name", TOKEN_CLOSE_PAR);
-        return PARSE_ERROR;
-    }
 
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;

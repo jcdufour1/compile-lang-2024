@@ -11,7 +11,7 @@ fn break_stmts() {
             io.printf("yes 1.2\n")
             if 1 {
                 for 1 {
-                    yield(thing)
+                    yield ''thing
                 }
             }
             defer io.printf("no 1.2\n")
@@ -27,13 +27,13 @@ fn break_stmts() {
         thing4: for 1 {
             defer io.printf("yes 2.3\n")
             io.printf("yes 2.2\n")
-            yield(thing4)
+            yield ''thing4
             defer io.printf("no 2.3\n")
             io.printf("no 2.4\n")
         }
         defer io.printf("yes 2.5\n")
         io.printf("yes 2.4\n")
-        yield(thing3)
+        yield ''thing3
         defer io.printf("no 2.2\n")
         io.printf("no 2.1\n")
     }
@@ -44,7 +44,7 @@ fn break_stmts() {
         thing6: if 1 {
             defer io.printf("yes 3.3\n")
             io.printf("yes 3.2\n")
-            yield(thing5)
+            yield ''thing5
             defer io.printf("no 3.3\n")
             io.printf("no 3.4\n")
         }
@@ -65,7 +65,7 @@ fn continue_stmts() {
             defer io.printf("yes 4.5\n")
             io.printf("yes 4.2\n")
             if idx > 0 {
-                yield(thing)
+                yield ''thing
             }
             defer io.printf("yes 4.4\n")
             io.printf("yes 4.3\n")
@@ -86,7 +86,7 @@ fn continue_stmts() {
             io.printf("yes 5.2\n")
             defer idx2 += 1
             if idx2 > 0 {
-                yield(thing3)
+                yield ''thing3
             }
             defer io.printf("yes 5.4\n")
             io.printf("yes 5.3\n")
@@ -106,7 +106,7 @@ fn continue_stmts() {
             defer idx_4 += 1
             defer io.printf("yes 6.3\n")
             io.printf("yes 6.2\n")
-            yield(thing5)
+            yield ''thing5
             defer io.printf("no 6.5\n")
             io.printf("no 6.6\n")
         }
@@ -128,7 +128,7 @@ fn continue_stmts() {
             defer io.printf("yes 19.4\n")
             io.printf("yes 19.3\n")
         }
-        yield(thing7)
+        yield ''thing7
         defer io.printf("no 19.3\n")
         io.printf("no 19.4\n")
     }
@@ -142,7 +142,7 @@ fn continue_stmts() {
             defer io.printf("yes 20.5\n")
             io.printf("yes 20.2\n")
             if idx_20 > 0 {
-                yield(thing10)
+                yield ''thing10
             }
             defer io.printf("yes 20.4\n")
             io.printf("yes 20.3\n")
@@ -152,7 +152,7 @@ fn continue_stmts() {
         }
         defer io.printf("yes 20.7\n")
         io.printf("yes 20.6\n")
-        yield(thing9)
+        yield ''thing9
         defer io.printf("no 20.3\n")
         io.printf("no 20.4\n")
     }
@@ -163,7 +163,7 @@ fn continue_stmts() {
     //    defer io.printf("yes 8.5\n")
     //    io.printf("yes 8.2\n")
     //    if idx_5 > 0 {
-    //        yield(thing)
+    //        yield ''thing
     //    }
     //    defer io.printf("yes 8.4\n")
     //    io.printf("yes 8.3\n")
