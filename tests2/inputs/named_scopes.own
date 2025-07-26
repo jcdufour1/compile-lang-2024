@@ -1,6 +1,6 @@
 type io import = std.io
 
-fn break_stmts() {
+fn yield_stmts() {
     defer io.printf("bye\n")
 
     thing: for 1 {
@@ -174,9 +174,63 @@ fn continue_stmts() {
 
 }
 
+fn break_stmts() {
+    defer io.printf("bye\n")
+
+    thing: for 1 {
+        defer io.printf("yes 30.4\n")
+        io.printf("yes 30.1\n")
+        thing2: for 1 {
+            defer io.printf("yes 30.3\n")
+            io.printf("yes 30.2\n")
+            if 1 {
+                for 1 {
+                    break ''thing
+                }
+            }
+            defer io.printf("no 30.2\n")
+            io.printf("no 30.1\n")
+        }
+        defer io.printf("no 30.3\n")
+        io.printf("no 30.4\n")
+    }
+
+    thing3: for 1 {
+        defer io.printf("yes 31.6\n")
+        io.printf("yes 31.1\n")
+        thing4: for 1 {
+            defer io.printf("yes 31.3\n")
+            io.printf("yes 31.2\n")
+            break ''thing4
+            defer io.printf("no 31.3\n")
+            io.printf("no 31.4\n")
+        }
+        defer io.printf("yes 31.5\n")
+        io.printf("yes 31.4\n")
+        break ''thing3
+        defer io.printf("no 31.2\n")
+        io.printf("no 31.1\n")
+    }
+
+    thing5: for 1 {
+        defer io.printf("yes 32.4\n")
+        io.printf("yes 32.1\n")
+        thing6: if 1 {
+            defer io.printf("yes 32.3\n")
+            io.printf("yes 32.2\n")
+            break ''thing5
+            defer io.printf("no 32.3\n")
+            io.printf("no 32.4\n")
+        }
+        defer io.printf("no 32.598\n")
+        io.printf("no 32.498\n")
+    }
+}
+
 fn main() i32 {
-    break_stmts()
+    yield_stmts()
     continue_stmts()
+    break_stmts()
 
     return 0
 }

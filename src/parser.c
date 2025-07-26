@@ -1589,6 +1589,16 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
         return PARSE_ERROR;
     }
 
+    Name break_out_of = default_brk_label;
+    if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
+        Token token = {0};
+        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+    }
+
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;
     switch (parse_expr(&break_expr, tokens, scope_id)) {
@@ -1607,7 +1617,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
     // TODO: print error for break outside of for loop here
 
     // TODO: remove uast_break, and make uast_yield here
-    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(default_brk_label, scope_id));
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
 
