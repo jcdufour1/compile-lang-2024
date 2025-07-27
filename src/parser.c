@@ -1538,7 +1538,8 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
-    // TODO: should default_brk_label be set to label_thing?
+    // label_thing will be called when parsing the block (which is why label_thing is not called here)
+    // default_brk_label is not set in label_thing, so it needs to be set here (for now)
     default_brk_label = new_scope_name;
 
     Token for_token = {0};
@@ -1624,17 +1625,17 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
 static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_id scope_id) {
     Token yield_token = consume(tokens);
 
-    if (!try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
-        msg_parser_expected(tk_view_front(*tokens), "after `yield`", TOKEN_DOUBLE_TICK);
+    Name break_out_of = {0};
+    if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
+        Token token = {0};
+        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+    } else if (PARSE_OK != label_thing(&break_out_of, scope_id)) {
         return PARSE_ERROR;
     }
-
-    Token token = {0};
-    if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
-        return PARSE_ERROR;
-    }
-    Name break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
 
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;
