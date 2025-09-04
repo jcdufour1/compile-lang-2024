@@ -2610,6 +2610,8 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     unwrap(pairs->info.count > 0 && "not implemented");
 
     // is_rtn_check
+    // TODO: maybe this check should only be done at top level of function
+    //   (and is yield check should be used for child scopes)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
     load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
     add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
