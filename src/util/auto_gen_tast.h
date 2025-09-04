@@ -631,8 +631,8 @@ static Tast_type tast_gen_yield(const char* prefix) {
     return yield;
 }
 
-static Tast_type tast_gen_continue2(const char* prefix) {
-    const char* base_name = "continue2";
+static Tast_type tast_gen_continue(const char* prefix) {
+    const char* base_name = "continue";
     Tast_type cont = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&cont.members, "Name", "break_out_of");
@@ -671,7 +671,7 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_actual_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_yield(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_continue2(base_name));
+    vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_def(base_name));
 
     return stmt;

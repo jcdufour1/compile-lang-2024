@@ -1656,7 +1656,7 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Scope_id scope_id) {
     Token cont_token = consume(tokens);
 
     Name break_out_of = {0};
@@ -1678,8 +1678,8 @@ static PARSE_STATUS parse_continue(Uast_continue2** new_cont, Tk_view* tokens, S
         break_out_of = default_brk_label;
     }
 
-    *new_cont = uast_continue2_new(cont_token.pos, break_out_of);
-    *new_cont = uast_continue2_new(cont_token.pos, name_clone(break_out_of, scope_id));
+    *new_cont = uast_continue_new(cont_token.pos, break_out_of);
+    *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
 
@@ -2245,11 +2245,11 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         }
         lhs = uast_yield_wrap(rtn_stmt);
     } else if (starts_with_continue(*tokens)) {
-        Uast_continue2* rtn_stmt = NULL;
+        Uast_continue* rtn_stmt = NULL;
         if (PARSE_OK != parse_continue(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_continue2_wrap(rtn_stmt);
+        lhs = uast_continue_wrap(rtn_stmt);
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
         if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id))) {

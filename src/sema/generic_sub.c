@@ -158,7 +158,7 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
         case UAST_FOR_WITH_COND:
             generic_sub_for_with_cond(uast_for_with_cond_unwrap(stmt), gen_param, gen_arg);
             return;
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             todo();
         case UAST_ASSIGNMENT:
             generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);

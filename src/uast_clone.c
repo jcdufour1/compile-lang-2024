@@ -313,7 +313,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope, Pos dest_p
             return uast_for_with_cond_wrap(uast_for_with_cond_clone(uast_for_with_cond_const_unwrap(stmt), new_scope, dest_pos));
         case UAST_YIELD:
             return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt), new_scope, dest_pos));
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             // TODO
             todo();
         case UAST_ASSIGNMENT:

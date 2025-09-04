@@ -2534,14 +2534,14 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
             return;
         }
-        case TAST_CONTINUE2: {
+        case TAST_CONTINUE: {
             if (is_defered) {
                 todo();
                 //load_continue(new_block, tast_actual_break_unwrap(old_stmt));
                 return;
             }
 
-            load_yielding_set_etc(new_block, old_stmt, tast_continue2_unwrap(old_stmt)->break_out_of, false);
+            load_yielding_set_etc(new_block, old_stmt, tast_continue_unwrap(old_stmt)->break_out_of, false);
             return;
         }
         case TAST_DEFER: {

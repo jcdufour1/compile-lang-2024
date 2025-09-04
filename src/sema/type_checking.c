@@ -2524,7 +2524,7 @@ error:
     return status;
 }
 
-bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
+bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     parent_of = PARENT_OF_BREAK; // TODO
@@ -2549,7 +2549,7 @@ bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
             unreachable("");
     }
 
-    *new_tast = tast_continue2_new(cont->pos, cont->break_out_of);
+    *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
     assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
@@ -3105,7 +3105,7 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_YIELD:
             return false;
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             return false;
         case UAST_ASSIGNMENT:
             return false;
@@ -3178,12 +3178,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_yield_wrap(new_yield);
             return STMT_OK;
         }
-        case UAST_CONTINUE2: {
-            Tast_continue2* new_cont = NULL;
-            if (!try_set_continue2_types(&new_cont, uast_continue2_unwrap(stmt))) {
+        case UAST_CONTINUE: {
+            Tast_continue* new_cont = NULL;
+            if (!try_set_continue2_types(&new_cont, uast_continue_unwrap(stmt))) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_continue2_wrap(new_cont);
+            *new_tast = tast_continue_wrap(new_cont);
             return STMT_OK;
         }
     }

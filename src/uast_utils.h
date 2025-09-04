@@ -45,7 +45,7 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_YIELD:
             unreachable("");
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -69,7 +69,7 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
             unreachable("");
         case UAST_YIELD:
             unreachable("");
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             unreachable("");
     }
     unreachable("");

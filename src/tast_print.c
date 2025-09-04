@@ -386,7 +386,7 @@ Strv tast_yield_print_internal(const Tast_yield* yield, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_continue2_print_internal(const Tast_continue2* cont, int indent) {
+Strv tast_continue_print_internal(const Tast_continue* cont, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "continue2\n", indent);
@@ -649,8 +649,8 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
         case TAST_DEFER:
             return tast_defer_print_internal(tast_defer_const_unwrap(stmt), indent);
-        case TAST_CONTINUE2:
-            return tast_continue2_print_internal(tast_continue2_const_unwrap(stmt), indent);
+        case TAST_CONTINUE:
+            return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
     }
     unreachable("");
 }
