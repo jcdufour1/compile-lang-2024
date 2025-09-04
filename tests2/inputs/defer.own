@@ -32,7 +32,7 @@ fn fun3() i32 {
     if 1 {
         defer num = 3
         num = 2
-        break
+        yield
         defer num = 4
     } else {
         num = 1000
