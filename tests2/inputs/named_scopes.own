@@ -51,6 +51,20 @@ fn yield_stmts() {
         defer io.printf("no 3.598\n")
         io.printf("no 3.498\n")
     }
+
+    thing7: for 1 {
+        defer io.printf("yes 35.4\n")
+        io.printf("yes 35.1\n")
+        thing8: if 1 {
+            defer io.printf("yes 35.3\n")
+            io.printf("yes 35.2\n")
+            break ''thing7
+            defer io.printf("no 35.3\n")
+            io.printf("no 35.4\n")
+        }
+        defer io.printf("no 35.598\n")
+        io.printf("no 35.498\n")
+    }
 }
 
 fn continue_stmts() {
