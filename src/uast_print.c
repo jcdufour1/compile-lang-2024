@@ -241,6 +241,10 @@ Strv uast_block_print_internal(const Uast_block* block, int indent) {
     string_extend_size_t(&a_print, &buf, block->scope_id);
     string_extend_cstr(&a_print, &buf, "\n");
 
+    string_extend_cstr_indent(&a_print, &buf, "parent_block_scope: ", indent + INDENT_WIDTH);
+    string_extend_size_t(&a_print, &buf, scope_get_parent_tbl_lookup(block->scope_id));
+    string_extend_cstr(&a_print, &buf, "\n");
+
     string_extend_cstr_indent(&a_print, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
     usymbol_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
@@ -338,44 +342,27 @@ Strv uast_defer_print_internal(const Uast_defer* defer, int indent) {
     return string_to_strv(buf);
 }
 
-Strv uast_break_print_internal(const Uast_break* lang_break, int indent) {
-    (void) lang_break;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "break\n", indent);
-    // TODO: print break expr
-
-    return string_to_strv(buf);
-}
-
 Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "yield\n", indent);
-    // TODO: print break expr
     string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, yield->break_out_of);
     string_extend_cstr(&a_print, &buf, "\n");
+    if (yield->do_yield_expr) {
+        string_extend_strv(&a_print, &buf, uast_expr_print_internal(yield->yield_expr, indent + INDENT_WIDTH));
+    }
 
     return string_to_strv(buf);
 }
 
-Strv uast_continue2_print_internal(const Uast_continue2* cont, int indent) {
+Strv uast_continue_print_internal(const Uast_continue* cont, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "continue2\n", indent);
     string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, cont->break_out_of);
     string_extend_cstr(&a_print, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Strv uast_continue_print_internal(const Uast_continue* lang_continue, int indent) {
-    (void) lang_continue;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "continue\n", indent);
 
     return string_to_strv(buf);
 }
@@ -405,9 +392,15 @@ Strv uast_if_print_internal(const Uast_if* lang_if, int indent) {
 }
 
 Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
+    assert(lang_case->expr);
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "case\n", indent);
+
+    string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
+    string_extend_size_t(&a_print, &buf, lang_case->scope_id);
+    string_extend_cstr(&a_print, &buf, "\n");
+
     if (lang_case->is_default) {
         string_extend_cstr_indent(&a_print, &buf, "default\n", indent + INDENT_WIDTH);
     } else {
@@ -687,6 +680,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
         return sv("<nothing>\n");
     }
     switch (expr->type) {
+        case UAST_BLOCK:
+            return uast_block_print_internal(uast_block_const_unwrap(expr), indent);
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_operator_const_unwrap(expr), indent);
         case UAST_SYMBOL:
@@ -723,18 +718,12 @@ Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
 
 Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     switch (stmt->type) {
-        case UAST_BLOCK:
-            return uast_block_print_internal(uast_block_const_unwrap(stmt), indent);
         case UAST_EXPR:
             return uast_expr_print_internal(uast_expr_const_unwrap(stmt), indent);
         case UAST_DEF:
             return uast_def_print_internal(uast_def_const_unwrap(stmt), indent);
-        case UAST_BREAK:
-            return uast_break_print_internal(uast_break_const_unwrap(stmt), indent);
         case UAST_YIELD:
             return uast_yield_print_internal(uast_yield_const_unwrap(stmt), indent);
-        case UAST_CONTINUE:
-            return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
         case UAST_ASSIGNMENT:
             return uast_assignment_print_internal(uast_assignment_const_unwrap(stmt), indent);
         case UAST_RETURN:
@@ -743,8 +732,8 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_DEFER:
             return uast_defer_print_internal(uast_defer_const_unwrap(stmt), indent);
-        case UAST_CONTINUE2:
-            return uast_continue2_print_internal(uast_continue2_const_unwrap(stmt), indent);
+        case UAST_CONTINUE:
+            return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
     }
     unreachable("");
 }

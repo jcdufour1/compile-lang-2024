@@ -222,6 +222,8 @@ static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chai
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     switch (expr->type) {
+        case TAST_BLOCK:
+            return tast_block_const_unwrap(expr)->lang_type;
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_const_unwrap(expr)->lang_type;
         case TAST_FUNCTION_CALL:
@@ -294,6 +296,8 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
 
 static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type) {
     switch (expr->type) {
+        case TAST_BLOCK:
+            unreachable("");
         case TAST_OPERATOR:
             todo();
         case TAST_SYMBOL:
@@ -336,24 +340,20 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             return tast_def_get_lang_type(tast_def_const_unwrap(stmt));
         case TAST_EXPR:
             return tast_expr_get_lang_type(tast_expr_const_unwrap(stmt));
-        case TAST_BLOCK:
-            unreachable("");
         case TAST_DEFER:
             return tast_stmt_get_lang_type(tast_defer_const_unwrap(stmt)->child);
         case TAST_RETURN:
             return tast_expr_get_lang_type(tast_return_const_unwrap(stmt)->child);
-        case TAST_BREAK:
-            if (tast_break_const_unwrap(stmt)->do_break_expr) {
-                return tast_expr_get_lang_type(tast_break_const_unwrap(stmt)->break_expr);
+        case TAST_ACTUAL_BREAK:
+            if (tast_actual_break_const_unwrap(stmt)->do_break_expr) {
+                return tast_expr_get_lang_type(tast_actual_break_const_unwrap(stmt)->break_expr);
             }
             return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         case TAST_FOR_WITH_COND:
             unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
         case TAST_YIELD:
             unreachable("");
-        case TAST_CONTINUE2:
+        case TAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -396,23 +396,19 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_EXPR:
             tast_expr_set_lang_type(tast_expr_unwrap(stmt), lang_type);
             return;
-        case TAST_BLOCK:
-            unreachable("");
         case TAST_RETURN:
             tast_expr_set_lang_type(tast_return_unwrap(stmt)->child, lang_type);
             return;
-        case TAST_BREAK:
-            tast_expr_set_lang_type(tast_break_unwrap(stmt)->break_expr, lang_type);
+        case TAST_ACTUAL_BREAK:
+            tast_expr_set_lang_type(tast_actual_break_unwrap(stmt)->break_expr, lang_type);
             return;
         case TAST_DEFER:
             unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
         case TAST_YIELD:
             unreachable("");
-        case TAST_CONTINUE2:
+        case TAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -420,6 +416,8 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
 
 static inline Name tast_expr_get_name(const Tast_expr* expr) {
     switch (expr->type) {
+        case TAST_BLOCK:
+            unreachable("");
         case TAST_OPERATOR:
             unreachable("");
         case TAST_STRUCT_LITERAL:
@@ -487,19 +485,15 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
             return tast_expr_get_name(tast_expr_const_unwrap(stmt));
         case TAST_DEFER:
             unreachable("");
-        case TAST_BLOCK:
-            unreachable("");
         case TAST_RETURN:
             unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
-        case TAST_BREAK:
-            unreachable("");
-        case TAST_CONTINUE:
+        case TAST_ACTUAL_BREAK:
             unreachable("");
         case TAST_YIELD:
             unreachable("");
-        case TAST_CONTINUE2:
+        case TAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -532,6 +526,7 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
 static inline Tast_def* tast_def_from_name(Name name) {
     Tast_def* def = NULL;
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    // TODO: assert that name.base.count > 0
     unwrap(symbol_lookup(&def, name));
     return def;
 }

@@ -128,7 +128,7 @@ static int64_t bit_width_needed_float(double num) {
 static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
-        unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, (Lang_type) {0}));
+        unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
         assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
@@ -460,15 +460,32 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         *new_src = tast_tuple_wrap(new_src_);
     } else {
         Lang_type old_lhs_lang_type = lhs_lang_type;
+        Lang_type old_break_type = break_type;
         PARENT_OF old_parent_of = parent_of;
         parent_of = PARENT_OF_ASSIGN_RHS;
+        log(LOG_DEBUG, "thing lhs_lang_type 1.1: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
         lhs_lang_type = dest_lang_type;
+        if (parent_of == PARENT_OF_ASSIGN_RHS) {
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
+            if (lhs_lang_type.type == LANG_TYPE_PRIMITIVE && strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type).base, sv("u8"))) {
+                //todo();
+            }
+            break_type = lhs_lang_type;
+        } else {
+            log(LOG_DEBUG, "thing 876\n");
+            break_type = lang_type_void_const_wrap(lang_type_void_new(pos));
+        }
+
         if (!try_set_expr_types(new_src, src)) {
             lhs_lang_type = old_lhs_lang_type;
+            break_type = old_break_type;
             parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
+        log(LOG_DEBUG, "thing lhs_lang_type 1.2:\n dest: "FMT" src: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type), lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_src)));
+        msg(DIAG_INFO, pos, "\n");
         lhs_lang_type = old_lhs_lang_type;
+        break_type = old_break_type;
         parent_of = old_parent_of;
     }
 
@@ -574,6 +591,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
+            log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type.return_type));
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 new_name,
@@ -596,6 +614,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
                 return false;
             }
+            log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Sym_typed_base new_base = {.lang_type = lang_type, sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
@@ -996,6 +1015,8 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
         }
     }
 
+    log(LOG_DEBUG, "thing lhs_lang_type 2: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
+    // TODO: remove below line
     lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
@@ -1162,6 +1183,7 @@ bool try_set_tuple_assignment_types(
     Lang_type dest_lang_type,
     Uast_tuple* tuple
 ) {
+        todo();
     if (lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
         msg(
             DIAG_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
@@ -1181,8 +1203,10 @@ bool try_set_tuple_assignment_types(
     for (size_t idx = 0; idx < lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count; idx++) {
         Uast_expr* curr_src = vec_at(&tuple->members, idx);
         Lang_type curr_dest = vec_at_const(lang_type_tuple_const_unwrap(dest_lang_type).lang_types, idx);
+        todo();
 
         Tast_expr* new_memb = NULL;
+        todo();
         switch (check_generic_assignment(
             &new_memb,
             curr_dest,
@@ -1449,6 +1473,14 @@ bool try_set_array_literal_types(
 
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
     switch (uast->type) {
+        case UAST_BLOCK: {
+            Tast_block* new_for = NULL;
+            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false)) {
+                return false;
+            }
+            *new_tast = tast_block_wrap(new_for);
+            return true;
+        }
         case UAST_LITERAL: {
             *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
             return true;
@@ -1599,7 +1631,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            *new_stmt = tast_block_wrap(new_block);
+            *new_stmt = tast_expr_wrap(tast_block_wrap(new_block));
             return STMT_OK;
         }
         case UAST_MOD_ALIAS:
@@ -1622,6 +1654,7 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
     }
 
     Tast_expr* new_rhs = NULL;
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
     switch (check_generic_assignment(
          &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
     )) {
@@ -1747,6 +1780,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
             Tast_expr* new_item = NULL;
+            log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type)));
             switch (check_generic_assignment(
                 &new_item,
                 lang_type_from_ulang_type(vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
@@ -1901,6 +1935,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 todo();
             }
         } else {
+            log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
             switch (check_generic_assignment(
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),
@@ -1959,6 +1994,7 @@ bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
 }
 
 bool try_set_tuple_types(Tast_tuple** new_tuple, Uast_tuple* tuple) {
+    todo();
     Tast_expr_vec new_members = {0};
     Lang_type_vec new_lang_type = {0};
 
@@ -2061,6 +2097,9 @@ bool try_set_member_access_types_finish_enum_def(
                 return false;
             }
 
+            log(LOG_DEBUG, FMT, uast_variable_def_print(member_def));
+            log(LOG_DEBUG, FMT, uast_enum_def_print(enum_def));
+            msg(DIAG_INFO, member_def->pos, FMT, uast_variable_def_print(member_def));
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
@@ -2306,11 +2345,13 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 }
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
+    todo();
     unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
     return true;
 }
 
 bool try_set_void_def_types(Uast_void_def* tast) {
+    todo();
     (void) tast;
     return true;
 }
@@ -2405,6 +2446,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     }
 
     Tast_expr* new_child = NULL;
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(env.parent_fn_rtn_type)));
     switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
@@ -2426,65 +2468,6 @@ error:
     return status;
 }
 
-bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
-    switch (parent_of_defer) {
-        case PARENT_OF_DEFER_FOR:
-            *new_tast = tast_continue_new(cont->pos);
-            return true;
-        case PARENT_OF_DEFER_NONE:
-            *new_tast = tast_continue_new(cont->pos);
-            return true;
-        case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_CONTINUE_OUT_OF_DEFER, cont->pos, "cannot continue out of defer\n");
-            return false;
-    }
-    unreachable("");
-}
-
-bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
-    bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    parent_of = PARENT_OF_BREAK;
-
-    switch (parent_of_defer) {
-        case PARENT_OF_DEFER_FOR:
-            break;
-        case PARENT_OF_DEFER_NONE:
-            break;
-        case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_BREAK_OUT_OF_DEFER, lang_break->pos, "cannot break out of defer\n");
-            status = false;
-            goto error;
-        default:
-            unreachable("");
-    }
-
-    Tast_expr* new_child = NULL;
-    if (lang_break->do_break_expr) {
-        switch (check_generic_assignment(&new_child, break_type, lang_break->break_expr, lang_break->pos)) {
-            case CHECK_ASSIGN_OK:
-                break;
-            case CHECK_ASSIGN_INVALID:
-                msg_invalid_yield_type(lang_break->pos, new_child, false);
-                status = false;
-                goto error;
-            case CHECK_ASSIGN_ERROR:
-                todo();
-                status = false;
-                goto error;
-            default:
-                unreachable("");
-        }
-    }
-
-    *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
-
-    break_in_case = true;
-error:
-    parent_of = old_parent_of;
-    return status;
-}
-
 bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
@@ -2493,6 +2476,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
         msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, yield->break_out_of));
         status = false;
         goto error;
     }
@@ -2511,16 +2495,19 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     Tast_expr* new_child = NULL;
+    Lang_type cached_break_type = break_type;
+    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_type));
     if (yield->do_yield_expr) {
         switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, cached_break_type));
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child)));
                 msg_invalid_yield_type(yield->pos, new_child, false);
                 status = false;
                 goto error;
             case CHECK_ASSIGN_ERROR:
-                todo();
                 status = false;
                 goto error;
             default:
@@ -2529,6 +2516,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
+    assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -2536,7 +2524,7 @@ error:
     return status;
 }
 
-bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
+bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     parent_of = PARENT_OF_BREAK; // TODO
@@ -2554,14 +2542,15 @@ bool try_set_continue2_types(Tast_continue2** new_tast, Uast_continue2* cont) {
         case PARENT_OF_DEFER_NONE:
             break;
         case PARENT_OF_DEFER_DEFER:
-            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue2 out of defer\n");
+            msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, cont->pos, "cannot continue out of defer\n");
             status = false;
             goto error;
         default:
             unreachable("");
     }
 
-    *new_tast = tast_continue2_new(cont->pos, cont->break_out_of);
+    *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
+    assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -2594,6 +2583,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
 
     Tast_condition* new_cond = NULL;
     if (!try_set_condition_types(&new_cond, uast->condition)) {
+        log(LOG_DEBUG, FMT, uast_condition_print(uast->condition));
         status = false;
     }
 
@@ -2609,12 +2599,16 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     if (!(status && try_set_block_types(&new_body, uast->body, false))) {
         status = false;
     }
+    if (status) {
+        log(LOG_DEBUG, FMT, tast_block_print(new_body));
+    }
 
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
         if (parent_of == PARENT_OF_CASE) {
             if (new_body->lang_type.type != LANG_TYPE_VOID && !break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
+                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, new_body->lang_type));
                 msg_invalid_yield_type(new_body->pos_end, NULL, true);
                 status = false;
             }
@@ -2646,6 +2640,7 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
 }
 
 bool try_set_case_types(Tast_if** new_tast, const Uast_case* lang_case) {
+    todo();
     (void) env;
     (void) new_tast;
     (void) lang_case;
@@ -2797,10 +2792,15 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     break_in_case = false;
+    log(LOG_INFO, "thing 875: "FMT"\n", parent_of_print(parent_of));
+    Lang_type old_break_type = break_type;
     if (parent_of == PARENT_OF_ASSIGN_RHS) {
+        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
         break_type = lhs_lang_type;
     } else {
+        log(LOG_DEBUG, "thing 876\n");
         break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
+        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, break_type));
     }
 
     switch (tast_expr_get_lang_type(new_operand).type) {
@@ -2811,6 +2811,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             status = false;
             goto error;
     }
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
          tast_expr_get_lang_type(new_operand)
@@ -2886,6 +2887,7 @@ error_inner:
 error:
     parent_of = old_parent_of;
     break_in_case = false;
+    break_type = old_break_type;
     return status;
 }
 
@@ -3017,6 +3019,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
+                log(LOG_DEBUG, FMT, uast_stmt_print(curr_tast));
                 status = false;
                 break;
             default:
@@ -3073,12 +3076,17 @@ error:
     dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
-    if (parent_of == PARENT_OF_CASE) {
-        yield_type = break_type;
-    } else if (parent_of == PARENT_OF_IF) {
-        todo();
-    }
+    yield_type = break_type;
+    // TODO: remove below if else
+    //if (parent_of == PARENT_OF_CASE) {
+    //    yield_type = break_type;
+    //} else if (parent_of == PARENT_OF_IF) {
+    //    todo();
+    //}
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, (*new_tast)->lang_type));
+    log(LOG_DEBUG, "lang_type of new block: "FMT"", lang_type_print(LANG_TYPE_MODE_LOG, yield_type));
+    msg(DIAG_INFO, block->pos, "\n");
     if (status) {
         assert(*new_tast);
     } else {
@@ -3089,21 +3097,15 @@ error:
 
 static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
     switch (type) {
-        case UAST_BLOCK:
-            return false;
         case UAST_EXPR:
             return false;
         case UAST_DEF:
             return true;
         case UAST_FOR_WITH_COND:
             return false;
-        case UAST_BREAK:
-            return false;
         case UAST_YIELD:
             return false;
         case UAST_CONTINUE:
-            return false;
-        case UAST_CONTINUE2:
             return false;
         case UAST_ASSIGNMENT:
             return false;
@@ -3160,30 +3162,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_return_wrap(new_rtn);
             return STMT_OK;
         }
-        case UAST_BREAK: {
-            Tast_break* new_break = NULL;
-            if (!try_set_break_types(&new_break, uast_break_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_break_wrap(new_break);
-            return STMT_OK;
-        }
-        case UAST_CONTINUE: {
-            Tast_continue* new_cont = NULL;
-            if (!try_set_continue_types(&new_cont, uast_continue_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_continue_wrap(new_cont);
-            return STMT_OK;
-        }
-        case UAST_BLOCK: {
-            Tast_block* new_for = NULL;
-            if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false)) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_block_wrap(new_for);
-            return STMT_OK;
-        }
         case UAST_DEFER: {
             Tast_defer* new_defer = NULL;
             if (!try_set_defer_types(&new_defer, uast_defer_unwrap(stmt))) {
@@ -3200,12 +3178,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_yield_wrap(new_yield);
             return STMT_OK;
         }
-        case UAST_CONTINUE2: {
-            Tast_continue2* new_cont = NULL;
-            if (!try_set_continue2_types(&new_cont, uast_continue2_unwrap(stmt))) {
+        case UAST_CONTINUE: {
+            Tast_continue* new_cont = NULL;
+            if (!try_set_continue2_types(&new_cont, uast_continue_unwrap(stmt))) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_continue2_wrap(new_cont);
+            *new_tast = tast_continue_wrap(new_cont);
             return STMT_OK;
         }
     }
@@ -3213,6 +3191,9 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(Tast_block** new_tast, Uast_block* block) {
+    lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)

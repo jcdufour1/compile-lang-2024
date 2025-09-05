@@ -134,6 +134,7 @@ def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action:
     print_success("compiling " + debug_release_text + " : done")
     print()
 
+    # TODO: run multiple tests at once
     for file in get_files_to_test(files_to_test):
         if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text):
             if not keep_going:

@@ -1,9 +1,9 @@
 compile::stdout 0
 
 compile::stderr 5
-tests2/inputs/scope_defined_different_scope.own:9:9:[1;31merror[0;39m:label `thing` points to a scope that is not a parent of this statement
+tests2/inputs/scope_defined_different_scope.own:9:9:[1;31merror[0;39m:symbol `thing` is not defined
      8 |     thing2: for 1 {
-     9 |         yield(thing)
+     9 |         yield ''thing
        |         ^
     10 |     }
 

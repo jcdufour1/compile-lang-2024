@@ -2,7 +2,7 @@
 
 fn main() i32 {
     outer: for 1 {
-        yield(inner)
+        yield ''inner
     }
     return 0
 }

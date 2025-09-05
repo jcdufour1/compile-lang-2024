@@ -12,8 +12,10 @@
 
 static Arena a_token = {0};
 
-static void msg_tokenizer_invalid_token(Strv_col token_text, Pos pos) {
-    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"FMT"`\n", strv_col_print(token_text));
+#define msg_tokenizer_invalid_token(token_text, pos) msg_tokenizer_invalid_token_internal(__FILE__, __LINE__, token_text, pos)
+
+static void msg_tokenizer_invalid_token_internal(const char* file, int line, Strv_col token_text, Pos pos) {
+    msg_internal(file, line, DIAG_INVALID_TOKEN, pos, "invalid token `"FMT"`\n", strv_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -44,6 +46,11 @@ static bool is_and(char prev, char curr) {
 static bool is_or(char prev, char curr) {
     (void) prev;
     return curr == '|';
+}
+
+static bool is_tick(char prev, char curr) {
+    (void) prev;
+    return curr == '\'';
 }
 
 static bool is_xor(char prev, char curr) {
@@ -97,8 +104,8 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
+    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem))) {
-        static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only keywords are explicitly handled)");
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
@@ -146,8 +153,6 @@ static bool get_next_token(
             token->type = TOKEN_SIZEOF;
         } else if (strv_is_equal(text, sv("yield"))) {
             token->type = TOKEN_YIELD;
-        } else if (strv_is_equal(text, sv("continue2"))) {
-            token->type = TOKEN_CONTINUE2;
         } else if (strv_is_equal(text, sv("countof"))) {
             token->type = TOKEN_COUNTOF;
         } else {
@@ -290,12 +295,35 @@ static bool get_next_token(
             return true;
         }
     } else if (strv_col_front(*file_text_rem) == '|') {
+        // TODO: rename equals
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_or);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_OR;
             return true;
         } else if (equals.base.count == 2) {
             token->type = TOKEN_LOGICAL_OR;
+            return true;
+        } else {
+            msg_tokenizer_invalid_token(equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
+        }
+    } else if (strv_col_front(*file_text_rem) == '\'') {
+        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_tick);
+        if (equals.base.count == 1) {
+            token->type = TOKEN_CHAR_LITERAL;
+
+            Strv_col result = {0};
+            if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
+                msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
+                return false;
+            }
+
+            unwrap(strv_col_consume(pos, file_text_rem));
+            token->text = result.base;
+            return true;
+        } else if (equals.base.count == 2) {
+            token->type = TOKEN_DOUBLE_TICK;
             return true;
         } else {
             msg_tokenizer_invalid_token(equals, *pos);
@@ -355,19 +383,6 @@ static bool get_next_token(
         return true;
     } else if (strv_col_try_consume(pos, file_text_rem, ']')) {
         token->type = TOKEN_CLOSE_SQ_BRACKET;
-        return true;
-    } else if (strv_col_try_consume(pos, file_text_rem, '\'')) {
-        token->type = TOKEN_CHAR_LITERAL;
-
-        Strv_col result = {0};
-        if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
-            msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
-            return false;
-        }
-        unwrap(strv_col_consume(pos, file_text_rem));
-
-        token->text = result.base;
-
         return true;
     } else if (strv_col_front(*file_text_rem) == '.') {
         Strv_col dots = strv_col_consume_while(pos, file_text_rem, is_dot);

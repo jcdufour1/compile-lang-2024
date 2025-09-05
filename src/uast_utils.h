@@ -33,15 +33,9 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
-        case UAST_BLOCK:
-            unreachable("");
         case UAST_DEF:
             return uast_get_ulang_type_def(uast_def_const_unwrap(stmt));
         case UAST_RETURN:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_CONTINUE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
@@ -51,7 +45,7 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_YIELD:
             unreachable("");
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -63,15 +57,9 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
-        case UAST_BLOCK:
-            unreachable("");
         case UAST_DEF:
             return uast_def_get_lang_type(result,  uast_def_const_unwrap(stmt), generics);
         case UAST_RETURN:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_CONTINUE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
@@ -81,7 +69,7 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
             unreachable("");
         case UAST_YIELD:
             unreachable("");
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             unreachable("");
     }
     unreachable("");

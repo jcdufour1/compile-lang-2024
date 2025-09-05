@@ -456,6 +456,7 @@ static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_module_alias(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_if_else_chain(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_assignment(base_name));
@@ -609,8 +610,8 @@ static Tast_type tast_gen_defer(const char* prefix) {
     return defer;
 }
 
-static Tast_type tast_gen_break(const char* prefix) {
-    const char* base_name = "break";
+static Tast_type tast_gen_actual_break(const char* prefix) {
+    const char* base_name = "actual_break";
     Tast_type lang_break = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lang_break.members, "bool", "do_break_expr");
@@ -630,20 +631,13 @@ static Tast_type tast_gen_yield(const char* prefix) {
     return yield;
 }
 
-static Tast_type tast_gen_continue2(const char* prefix) {
-    const char* base_name = "continue2";
+static Tast_type tast_gen_continue(const char* prefix) {
+    const char* base_name = "continue";
     Tast_type cont = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&cont.members, "Name", "break_out_of");
 
     return cont;
-}
-
-static Tast_type tast_gen_continue(const char* prefix) {
-    const char* base_name = "continue";
-    Tast_type lang_cont = {.name = tast_name_new(prefix, base_name, false)};
-
-    return lang_cont;
 }
 
 static Tast_type tast_gen_if(const char* prefix) {
@@ -672,14 +666,12 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, tast_gen_defer(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_break(base_name));
+    vec_append(&gen_a, &stmt.sub_types, tast_gen_actual_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_yield(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_continue2(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_def(base_name));
 
     return stmt;

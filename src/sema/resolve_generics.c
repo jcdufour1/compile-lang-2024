@@ -285,6 +285,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
+        todo();
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));

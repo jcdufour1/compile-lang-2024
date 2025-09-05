@@ -144,10 +144,10 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("sizeof");
         case TOKEN_YIELD:
             return sv("yield");
-        case TOKEN_CONTINUE2:
-            return sv("continue2");
         case TOKEN_COUNTOF:
             return sv("countof");
+        case TOKEN_DOUBLE_TICK:
+            return sv("''");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -296,10 +296,10 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("sizeof");
         case TOKEN_YIELD:
             return sv("yield");
-        case TOKEN_CONTINUE2:
-            return sv("continue2");
         case TOKEN_COUNTOF:
             return sv("countof");
+        case TOKEN_DOUBLE_TICK:
+            return sv("''");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -391,8 +391,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_DEFER: // fallthrough
         case TOKEN_SIZEOF: // fallthrough
         case TOKEN_YIELD: // fallthrough
-        case TOKEN_CONTINUE2: // fallthrough
         case TOKEN_COUNTOF: // fallthrough
+        case TOKEN_DOUBLE_TICK: // fallthrough
         case TOKEN_ASSIGN_BY_BIN:
             break;
         case TOKEN_MACRO: 

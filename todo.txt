@@ -121,6 +121,8 @@ main hello.own --run arg1 arg2 ..
     let div Div = .num(9)
 - expected failure case for invalid label at the end of the file:
     hello: i32
+- expected failure test for:
+continue(<thing>)
 -tests for ir printing
     
 

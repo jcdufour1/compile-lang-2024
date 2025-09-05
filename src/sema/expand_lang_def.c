@@ -162,6 +162,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
 
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, name.scope_id, dest_pos);
     switch (expr->type) {
+        case UAST_BLOCK:
+            todo();
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
@@ -319,6 +321,8 @@ EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym) {
 
 bool expand_def_expr(Uast_expr* expr) {
     switch (expr->type) {
+        case UAST_BLOCK:
+            todo();
         case UAST_IF_ELSE_CHAIN:
             todo();
         case UAST_SWITCH:
@@ -360,21 +364,15 @@ static bool expand_def_return(Uast_return* rtn) {
 
 static bool expand_def_stmt(Uast_stmt* stmt) {
     switch (stmt->type) {
-        case UAST_BLOCK:
-            todo();
         case UAST_EXPR:
             return expand_def_expr(uast_expr_unwrap(stmt));
         case UAST_DEF:
             return expand_def_def(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND:
             todo();
-        case UAST_BREAK:
-            todo();
-        case UAST_CONTINUE2:
+        case UAST_CONTINUE:
             todo();
         case UAST_YIELD:
-            todo();
-        case UAST_CONTINUE:
             todo();
         case UAST_ASSIGNMENT:
             todo();

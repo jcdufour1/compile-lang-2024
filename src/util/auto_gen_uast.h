@@ -349,6 +349,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &expr.sub_types, uast_gen_if_else_chain(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_switch(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_unknown(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
@@ -535,15 +536,6 @@ static Uast_type uast_gen_for_with_cond(const char* prefix) {
     return for_cond;
 }
 
-static Uast_type uast_gen_break(const char* prefix) {
-    Uast_type lang_break = {.name = uast_name_new(prefix, "break", false)};
-
-    append_member(&lang_break.members, "bool", "do_break_expr");
-    append_member(&lang_break.members, "Uast_expr*", "break_expr");
-
-    return lang_break;
-}
-
 static Uast_type uast_gen_yield(const char* prefix) {
     Uast_type yield = {.name = uast_name_new(prefix, "yield", false)};
 
@@ -554,18 +546,12 @@ static Uast_type uast_gen_yield(const char* prefix) {
     return yield;
 }
 
-static Uast_type uast_gen_continue2(const char* prefix) {
-    Uast_type continue2 = {.name = uast_name_new(prefix, "continue2", false)};
-
-    append_member(&continue2.members, "Name", "break_out_of");
-
-    return continue2;
-}
-
 static Uast_type uast_gen_continue(const char* prefix) {
-    Uast_type lang_cont = {.name = uast_name_new(prefix, "continue", false)};
+    Uast_type cont = {.name = uast_name_new(prefix, "continue", false)};
 
-    return lang_cont;
+    append_member(&cont.members, "Name", "break_out_of");
+
+    return cont;
 }
 
 static Uast_type uast_gen_assignment(const char* prefix) {
@@ -622,13 +608,10 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_yield(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_continue2(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));
