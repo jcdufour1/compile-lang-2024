@@ -146,7 +146,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
             Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
-                unwrap(alloca_lookup(&child_def_, ori_name));
+                unwrap(ir_lookup(&child_def_, ori_name));
                 Ir_struct_def* child_def = ir_struct_def_unwrap(ir_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
                 *struct_to_use = util_literal_name_new();
@@ -252,7 +252,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     }
 
     Ir* callee = NULL;
-    unwrap(alloca_lookup(&callee, fun_call->callee));
+    unwrap(ir_lookup(&callee, fun_call->callee));
     string_extend_cstr(&a_main, &strs->output, "(");
     if (callee->type != IR_EXPR) {
         c_extend_type_call_str(&strs->output, lang_type_from_get_name(fun_call->callee), false);
@@ -444,7 +444,7 @@ static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Ir_expr* expr) {
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
     Ir* result = NULL;
-    unwrap(alloca_lookup(&result, child));
+    unwrap(ir_lookup(&result, child));
 
     switch (result->type) {
         case IR_EXPR:
@@ -561,7 +561,7 @@ static void emit_c_def(Emit_c_strs* strs, const Ir_def* def) {
 static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir* store) {
     emit_c_loc(&strs->output, store->loc, store->pos);
     Ir* src = NULL;
-    unwrap(alloca_lookup(&src, store->ir_src));
+    unwrap(ir_lookup(&src, store->ir_src));
 
     if (true /*src->type == IR_EXPR && ir_expr_const_unwrap(src)->type == IR_LITERAL*/) {
         string_extend_cstr(&a_main, &strs->output, "    *((");
@@ -604,7 +604,7 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
     Ir* struct_def_ = NULL;
-    unwrap(alloca_lookup(&struct_def_, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
+    unwrap(ir_lookup(&struct_def_, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     ir_extend_name(&strs->output, load->name_self);
@@ -705,9 +705,9 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
         }
     }
 
-    Alloca_iter iter = all_tbl_iter_new(block->scope_id);
+    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
+    while (ir_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(strs, curr);
     }
 }
@@ -729,9 +729,9 @@ void emit_c_from_tree(const Ir_block* root) {
         string_extend_cstr(&a_main, &header, "#include <string.h>\n");
         string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
-        Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+        Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
-        while (all_tbl_iter_next(&curr, &iter)) {
+        while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_sometimes(&strs, curr);
         }
 

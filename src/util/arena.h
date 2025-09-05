@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "util.h"
 
 typedef struct Arena_buf_ {
@@ -46,6 +47,7 @@ static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t c
     }
     char* new_cstr = arena_alloc(arena, count + 1);
     memcpy(new_cstr, cstr, count);
+    assert(new_cstr[count] == 0);
     return new_cstr;
 }
 

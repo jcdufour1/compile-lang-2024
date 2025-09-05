@@ -85,12 +85,12 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, 0);
 
-    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     (void) iter;
     Ir* curr = NULL;
     (void) curr;
     // TODO
-    //while (all_tbl_iter_next(&curr, &iter)) {
+    //while (ir_tbl_iter_next(&curr, &iter)) {
     //    log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
     //    log(LOG_DEBUG, FMT, ir_print(curr));
     //    log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
@@ -112,12 +112,46 @@ void do_passes(void) {
         ir = compile_file_to_ir();
     }
 
-    if (params.dump_dot) {
-        // TODO: add logic in parse_args to catch below error:
-        unwrap(params.compile_own && "this should have been caught in parse_args");
-        String graphvis = {0};
-        string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
-        write_file("dump.dot", string_to_strv(graphvis));
+    static_assert(
+        PARAMETERS_COUNT == 17,
+        "exhausive handling of params (not all parameters are explicitly handled)"
+    );
+    if (params.stop_after == STOP_AFTER_GEN_IR) {
+        if (params.dump_dot) {
+            // TODO: add logic in parse_args to catch below error:
+            unwrap(params.compile_own && "this should have been caught in parse_args");
+            String graphvis = {0};
+            string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
+            write_file("dump.dot", string_to_strv(graphvis));
+        } else {
+            // print ir
+            // TODO: we need to also iterate on scope_id SCOPE_BUILTIN
+
+            String contents = {0};
+            string_extend_strv(&a_print, &contents, sv("builtin scope:\n"));
+            string_extend_strv(&a_print, &contents, ir_block_print_internal(ir, INDENT_WIDTH));
+            {
+                Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+                Ir* curr = NULL;
+                while (ir_tbl_iter_next(&curr, &iter)) {
+                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
+                }
+            }
+            string_extend_strv(&a_print, &contents, sv("\n\n"));
+
+            string_extend_strv(&a_print, &contents, sv("top level scope:\n"));
+            {
+                Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+                Ir* curr = NULL;
+                while (ir_tbl_iter_next(&curr, &iter)) {
+                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
+                }
+            }
+            string_extend_strv(&a_print, &contents, sv("\n\n"));
+
+            write_file(strv_dup(&a_print, params.output_file_path), string_to_strv(contents));
+            return;
+        }
     }
 
     if (error_count > 0) {

@@ -123,6 +123,7 @@ main hello.own --run arg1 arg2 ..
     hello: i32
 - expected failure test for:
 continue(<thing>)
+-tests for ir printing
     
 
 

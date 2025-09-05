@@ -358,32 +358,32 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 //
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add_ex(Alloca_table* tbl, Ir* item) {
+bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
     Name name = ir_tast_get_name(item);
     return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(name), item);
 }
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Ir* item) {
+bool ir_tbl_add(Ir* item) {
     Name name = ir_tast_get_name(item);
-    return all_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
+    return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
 }
 
-void* all_get_tbl_from_collection(Symbol_collection* collection) {
+void* ir_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->alloca_table;
 }
 
-bool alloca_add(Ir* item) {
+bool ir_add(Ir* item) {
     Name name = ir_tast_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(name),
         item,
-        (Get_tbl_from_collection_fn)all_get_tbl_from_collection,
+        (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
         name.scope_id
     );
 }
 
-void all_tbl_update(Ir* item) {
+void ir_tbl_update(Ir* item) {
     Name name = ir_tast_get_name(item);
     generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
 }
@@ -398,21 +398,21 @@ void usymbol_update(Uast_def* item) {
     );
 }
 
-void alloca_update(Ir* item) {
+void ir_update(Ir* item) {
     (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(ir_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(ir_tast_get_name(item)), item, (Get_tbl_from_collection_fn)ir_get_tbl_from_collection);
 }
 
-bool all_tbl_lookup(Ir** result, Name key) {
+bool ir_tbl_lookup(Ir** result, Name key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
-bool alloca_lookup(Ir** result, Name key) {
+bool ir_lookup(Ir** result, Name key) {
     return generic_symbol_lookup(
         (void**)result,
         serialize_name_symbol_table(key),
-        (Get_tbl_from_collection_fn)all_get_tbl_from_collection,
+        (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
         key.scope_id
     );
 }
@@ -525,38 +525,6 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
     *vec_at_ref(&scope_id_to_parent, key) = parent;
 }
 
-// TODO: remove Scope_get_name_tbl_add
-//
-// Scope_get_name_tbl_add implementation
-//
-
-//static Name_vec scope_id_to_name;
-//
-//// returns name of scope_id
-//Name scope_get_name_tbl_lookup(Scope_id key) {
-//    return vec_at(&scope_id_to_name, key);
-//}
-//
-//// returns scope_id of name
-//Scope_id scope_from_name_tbl_lookup(Name name) {
-//    for (size_t idx = 0; idx < scope_id_to_name; idx++) {
-//        if (name_is_equal(vec_at(&scope_id_to_name, idx), name)
-//    }
-//    unreachable("");
-//    return vec_at(&scope_id_to_name, key);
-//}
-//
-//void scope_get_name_tbl_add(Scope_id key, Str_view name) {
-//    while (scope_id_to_parent.info.count <= key) {
-//        vec_append(&a_main, &scope_id_to_parent, 0);
-//    }
-//    *vec_at_ref(&scope_id_to_name, key) = name;
-//}
-//
-//void scope_get_name_tbl_update(Scope_id key, Str_view name) {
-//    *vec_at_ref(&scope_id_to_name, key) = name;
-//}
-
 //
 // not generic
 //
@@ -570,10 +538,11 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     }
 }
 
-void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int recursion_depth) {
+void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, ir_print_internal(sym_tast->tast, recursion_depth));
         }
     }

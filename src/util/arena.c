@@ -103,6 +103,8 @@ void arena_free_internal(Arena* arena) {
 void arena_reset(Arena* arena) {
     Arena_buf* curr_buf = arena->next;
     while (curr_buf) {
+        // memset nessessary so that reused buffers will be zero initialized
+        memset(curr_buf + 1, 0, curr_buf->count - sizeof(*curr_buf));
         curr_buf->count = sizeof(*curr_buf);
 
         curr_buf = curr_buf->next;
