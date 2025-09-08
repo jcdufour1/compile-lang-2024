@@ -2,14 +2,14 @@
 A statically typed systems programming language with sum types, generics, and defer for safe resource management.
 
 ## Features
-- [x] Sum types with pattern matching
-- [x] `defer` for automatic cleanup for resources
-- [x] Generics for reusable functions and data structures
-- [x] Functions, conditionals, loops, and recursion
-- [x] Compiles to C for portability
+- :white_check_mark: Sum types with pattern matching
+- :white_check_mark: `defer` for automatic cleanup for resources
+- :white_check_mark: Generics for reusable functions and data structures
+- :white_check_mark: Functions, conditionals, loops, and recursion
+- :white_check_mark: Compiles to C for portability
 
 ## Example Programs
-'''c
+```c
 
 type io import = std.io
 
@@ -27,22 +27,22 @@ fn main() i32 {
     }
     return 0
 }
-'''
+```
 
-# TODO: defer example
+### TODO: defer example
 
 ## Quickstart
 1. clone the repo
-'''sh
+```sh
 git clone https://github.com/jcdufour1/compile-lang-2024
 cd my-lang
-'''
+```
 2. build the compiler
-'''sh
+```sh
 make build
-'''
+```
 3. run a program
-'''sh
+```sh
 ./build/release/main tests2/inputs/char.own --run
-'''
+```
 

@@ -3,39 +3,39 @@
 
 
 hello world 
-'''c
+```c
 fn void main() {
     io::println("hello");
 }
-'''
+```
 
 struct
-'''c
+```c
 struct Token {
     String name;
     int num;
 }
-'''
+```
 
 # struct (generics)
-'''c
+```c
 def Token_types = String | int | uint;
 
 struct Token <T1: Token_types> {
     String name;
     T1 value;
 }
-'''
+```
 ## example 2
-'''c
+```c
 type Optional sum(<ValueType>) {
     String name;
     ValueType value;
 }
-'''
+```
 
 ## example 3
-'''c
+```c
 type vector_int(<ValueType: $int>) {
     String name;
     T1 value;
@@ -46,53 +46,53 @@ type Darr struct (<ValueType, IndexType: $int = usize>) {
     count IndexType
     capacity IndexType
 }
-'''
+```
 
 for loop (index (0 inclusive, 10 exclusive))
-'''c
+```c
 for idx in [0, 10) {
     print(idx);
 }
-'''
+```
 
 for loop (index (0 inclusive, 10 inclusive))
-'''c
+```c
 for idx in [0, 10] {
     print(idx);
 }
-'''
+```
 
 for loop (iterate over each item)
-'''c
+```c
 Vec<int> vector = {89, 1893, 1, 8};
 defer free(vector);
 for num in vector.iter() {
     println(idx);
 }
-'''
+```
 
 for loop (iterate over each item with index)
-'''c
+```c
 Vec<int> vector = {89, 1893, 1, 8};
 defer free(vector);
 for index, num in vector.iter() {
     println("at index ", index, ":", num);
 }
-'''
+```
 
 for loop (index (0 inclusive, 10 inclusive))
-'''c
+```c
 for idx in (0, 10) {
     print(idx);
 }
-'''
+```
 
 function (generics)
-'''c
+```c
 fn Token<Type> get_token_value(Token& token) {
     return token.value;
 }
-'''
+```
 
 # generics idea 2
 # generics idea struct 2.1
@@ -158,17 +158,17 @@ fn at(darr Darr('T, 'S)*, index S) S {
 }
 
 allocate thing (error)
-'''c
+```c
 fn void main() {
     int[1000] items = alloc(int, 1000);
     for item in items {
         io::println("hello");
     }
 }
-'''
+```
 
 allocate thing (correct)
-'''c
+```c
 fn void main() {
     int[1000] items = alloc<int>(1000);
     defer free(items);
@@ -177,10 +177,10 @@ fn void main() {
         println("hello");
     }
 }
-'''
+```
 
 function returning an error (idea 1)
-'''c
+```c
 fn void main() {
     Result<File> file = open("hello.txt", FILE::READ);
     if file.type == err {
@@ -192,10 +192,10 @@ fn void main() {
         io::print("line ", idx, ":", line);
     }
 }
-'''
+```
 
 function returning an error (idea 2)
-'''c
+```c
 fn void main() {
     Result<File> file_result = open("hello.txt", FILE::READ);
     File file = if file_result == {
@@ -209,11 +209,11 @@ fn void main() {
     }
     ...
 }
-'''
+```
 
 
 function returning an error (idea 2.1)
-'''c
+```c
 fn void main() {
     let file_result = open("hello.txt", FILE::READ);
     File file = if file_result == {
@@ -225,11 +225,11 @@ fn void main() {
     }
     ...
 }
-'''
+```
 
 
 function returning an error (idea 2.2)
-'''c
+```c
 fn void main() {
     File file = if open("hello.txt", FILE::READ) == {
         Err (err) {
@@ -240,10 +240,10 @@ fn void main() {
     }
     ...
 }
-'''
+```
 
 function returning an error (idea 3)
-'''c
+```c
 fn void main() {
     File! file = open("hello.txt", FILE::READ);
     if type(file) == err {
@@ -253,10 +253,10 @@ fn void main() {
     // file is now a normal file
     ...
 }
-'''
+```
 
 function returning an error (idea 4)
-'''c
+```c
 fn void main() {
     File file = open("hello.txt", FILE::READ) orelse {
         println("file could not be opened:", err_text(file));
@@ -267,7 +267,7 @@ fn void main() {
 }
 
 function returning an error (idea 5)
-'''c
+```c
 fn void main() {
     File file = open("hello.txt", FILE::READ) orelse(error) {
         println("file could not be opened:", error);
@@ -277,10 +277,10 @@ fn void main() {
     ...
 }
 
-'''
+```
 # constraints
 ## array library
-'''c
+```c
 struct Array {
     int* buf;
     usize count;
@@ -290,10 +290,10 @@ struct Array {
 fn int array_at(Array* array, usize @{idx < array.count} idx) {
     ...
 }
-'''
+```
 
 ## example 1
-'''c
+```c
 struct Array {
     int* buf;
     usize count;
@@ -312,10 +312,10 @@ fn void main() {
     // compiler gives error because idx is not < array.count
     int num = array_at(array, 2);
 }
-'''
+```
 
 ## example 2
-'''c
+```c
 fn void main() {
     Array array = array_get_with_random_count();
 
@@ -325,7 +325,7 @@ fn void main() {
 
 ## example 3
 this compiles
-'''c
+```c
 fn void main() {
     Array array = array_get_with_random_count();
 
@@ -338,7 +338,7 @@ fn void main() {
 
 ## example 4
 this compiles
-'''c
+```c
 fn void main() {
     Array array = array_get_with_random_count();
 
@@ -351,28 +351,28 @@ fn void main() {
 
 
 
-'''
+```
 
 # print formatting
 print num1
-'''c
+```c
 fn main() i32 {
     let num1: i32 = 89;
     println("num1: {num1}");
 }
-'''
+```
 print num1 + num2
-'''c
+```c
 fn main() i32 {
     let num1: i32 = 89;
     let num2: i32 = 76;
     println("num1: {num1 + num2}");
 }
-'''
+```
 
 
 # function overloading (idea 1)
-'''c
+```c
 fn string_append(darray Darray<(u8*)>, character overload u8) {
 }
 
@@ -381,16 +381,16 @@ fn string_append(darray Darray<(u8*)>, string overload Darray<(u8)>) {
 
 fn string_append(darray Darray<(u8*)>, string overload [u8]) {
 }
-'''
+```
 
 # function overloading (idea 2)
-'''c
+```c
 fn string_append<(ItemType = overload)>(string Darray<(u8*)>) {
 }
-'''
+```
 
 # function overloading (idea 3)
-'''c
+```c
 fn string_append overload u8(string Darray<(u8)>, overload item) {
 }
 
@@ -399,10 +399,10 @@ fn string_append overload Darray<(u8)>(string Darray<(u8)>, overload item) {
 
 fn string_append overload [u8](string Darray<(u8)>, overload item) {
 }
-'''
+```
 
 # function overloading (idea 4)
-'''c
+```c
 fn string_append u8(string Darray<(u8)>, overload item) {
 }
 
@@ -411,10 +411,10 @@ fn string_append Darray<(u8)>(string Darray<(u8)>, overload item) {
 
 fn string_append [u8](string Darray<(u8)>, overload item) {
 }
-'''
+```
 
 # function overloading (idea 5)
-'''c
+```c
 @overload
 fn string_append u8(string Darray<(u8)>, overload item) {
 }
@@ -426,10 +426,10 @@ fn string_append Darray<(u8)>(string Darray<(u8)>, overload item) {
 @overload
 fn string_append [u8](string Darray<(u8)>, overload item) {
 }
-'''
+```
 
 # function overloading (idea 6)
-'''c
+```c
 fn string_append u8(string Darray<(u8)>, oload(0) item) {
 }
 
@@ -438,10 +438,10 @@ fn string_append Darray<(u8)>(string Darray<(u8)>, oload(0) item) {
 
 fn string_append [u8](string Darray<(u8)>, oload(0) item) {
 }
-'''
+```
 
 # operator overloading (idea 1)
-'''c
+```c
 fn operator [] (lhs String, rhs i32) {
 }
 
@@ -449,7 +449,7 @@ fn operator [] (lhs String, rhs i32) {
 }
 
 # operator overloading (idea 2)
-'''c
+```c
 fn [] (lhs String, rhs i32) {
 }
 
@@ -457,13 +457,13 @@ fn [] (lhs String, rhs i32) {
 }
 
 # operator overloading (idea 3)
-'''c
+```c
 fn [] String, i32 (lhs, rhs) {
 }
-'''
+```
 
 # operator overloading (idea 4)
-'''c
+```c
 // constraints
 T: (+) | (-) | (*) | (/)
 
@@ -475,10 +475,10 @@ fn binary i32, Vec2 (oper T, lhs, rhs) {
         case (/): return vec2_div(lhs, rhs)
     }
 }
-'''
+```
 
 # operator overloading (idea 4.1)
-'''c
+```c
 // constraints
 T: "+" | "-" | "*" | "/"
 
@@ -490,10 +490,10 @@ fn binary i32, Vec2 ('T, lhs, rhs) {
         case "/": return vec2_div(lhs, rhs)
     }
 }
-'''
+```
 
 # using (put struct members directly in namespace)
-'''c
+```c
 type Token struct {
     string u8*
     pos Pos
@@ -503,18 +503,18 @@ fn token_print(using token Token) {
     pos_print(pos)
     string_print(string)
 }
-'''
+```
 
 # 
 
 # this style of defining types is used for easier grepping
-'''c
+```c
 type Token struct {
 }
-'''
+```
 
 # foreach
-'''c
+```c
 type struct Things {
     items Thing[]
 }
@@ -525,14 +525,14 @@ fn foreach Things(things Things) {
     }
 }
 
-'''
+```
 
 # inout
 // allow count and mut items to be passed to same function
-'''c
+```c
 fn darr_at(darr Darr(inout 'T, 'I), index I) inout T {
 }
-'''
+```
 
 # ownership
 pointer could use generic with associated arena (this could reduce frustrations)
