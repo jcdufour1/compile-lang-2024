@@ -1492,6 +1492,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
+            todo();
             if (lhs_lang_type.type != LANG_TYPE_ENUM) {
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
@@ -1896,6 +1897,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     bool is_variadic = false;
     // TODO: consider case of optional arguments and variadic arguments being used in same function
     for (size_t param_idx = 0; param_idx < params->params.info.count; param_idx++) {
+        // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
         if (param->is_variadic) {
@@ -1915,6 +1917,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
+        }
+
+        if (uast_expr_is_designator(corres_arg)) {
+            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
+            Uast_member_access* lhs = uast_member_access_unwrap(
+                uast_binary_unwrap(uast_operator_unwrap(corres_arg))->lhs // parser should catch invalid assignment
+            );
+            corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
+            if (!name_is_equal(param->base->name, lhs->member_name->name)) {
+                msg(
+                    DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
+                    "expected `."FMT" =`, got `."FMT" =`\n", 
+                    strv_print(param->base->name.base), name_print(NAME_MSG, lhs->member_name->name)
+                );
+                return false;
+            }
         }
 
         Tast_expr* new_arg = NULL;
