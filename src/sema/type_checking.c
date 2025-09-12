@@ -1893,31 +1893,42 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
     Uast_function_params* params = fun_decl->params;
 
+    bool is_variadic = false;
+    for (size_t param_idx = 0; param_idx < params->params.info.count; param_idx++) {
+        if (vec_at(&params->params, param_idx)->is_variadic) {
+            if (param_idx != params->params.info.count - 1) {
+                // TODO: print error for having variadic as not the last parameter
+                todo();
+            }
+            is_variadic = true;
+        }
+    }
+
+    size_t amt_args_needed = MAX(params->params.info.count, fun_call->args.info.count);
+    if (is_variadic) {
+        assert(amt_args_needed > 0);
+        amt_args_needed--;
+    }
+
+    // NOTE: new_args could grow in size because of variadics (but new_args_set stays the same size)
     Tast_expr_vec new_args = {0};
     Bool_vec new_args_set = {0};
-    vec_reserve(&a_main, &new_args, MAX(params->params.info.count, fun_call->args.info.count));
-    while (new_args.info.count < MAX(params->params.info.count, fun_call->args.info.count)) {
+    vec_reserve(&a_main, &new_args, amt_args_needed);
+    while (new_args.info.count < amt_args_needed) {
         vec_append(&a_main, &new_args, NULL);
     }
-    vec_reserve(&a_main, &new_args_set, MAX(params->params.info.count, fun_call->args.info.count));
-    while (new_args_set.info.count < MAX(params->params.info.count, fun_call->args.info.count)) {
+    vec_reserve(&a_main, &new_args_set, amt_args_needed);
+    while (new_args_set.info.count < amt_args_needed) {
         vec_append(&a_main, &new_args_set, false);
     }
-    vec_reserve(&a_main, &new_args, MAX(params->params.info.count, fun_call->args.info.count));
-    while (new_args.info.count < MAX(params->params.info.count, fun_call->args.info.count)) {
-        vec_append(&a_main, &new_args, NULL);
-    }
     log(LOG_DEBUG, "count args: %zu\n", MAX(params->params.info.count, fun_call->args.info.count));
-    bool is_variadic = false;
+
     // TODO: consider case of optional arguments and variadic arguments being used in same function
     for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
-        if (param->is_variadic) {
-            is_variadic = true;
-        }
 
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
@@ -1950,7 +1961,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
                     if (vec_at(&new_args_set, curr_arg_count)) {
                         msg(
-                            DIAG_INVALID_MEMBER_ACCESS,
+                            DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                             uast_expr_get_pos(vec_at(&fun_call->args, actual_arg_count)),
                             "function parameter `"FMT"` has been assigned to more than once\n", 
                             name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
@@ -2069,14 +2080,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     if (is_variadic) {
         assert(params->params.info.count > 0);
+        log(LOG_DEBUG, "thing 8766.0\n");
         for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
-            *vec_at_ref(&new_args_set, idx) = true;
+            log(LOG_DEBUG, "thing 8766.1\n");
             // TODO: do type checking here if this function is not an extern "c" function
-            if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(&fun_call->args, idx))) {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_expr_types(&new_expr, vec_at(&fun_call->args, idx))) {
                 status = false;
                 goto error;
             }
+            log(LOG_DEBUG, FMT" %zu %zu\n", name_print(NAME_LOG, fun_name), new_args.info.count, idx);
+            assert(new_args.info.count == idx);
+            vec_append(&a_main, &new_args, new_expr);
         }
+        log(LOG_DEBUG, "thing 8766.2\n");
     } else {
         assert(new_args_set.info.count == new_args.info.count);
         for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
@@ -2121,10 +2138,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         fun_rtn_type
     ));
 
-
-    for (size_t idx = 0; idx < new_args.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+    for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
+        log(LOG_DEBUG, "thing 315: %zu\n", idx);
         assert(vec_at(&new_args_set, idx));
+        log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
     }
 
 error:
