@@ -1178,23 +1178,6 @@ bool try_set_operator_types(Tast_expr** new_tast, Uast_operator* operator) {
     }
 }
 
-static void msg_invalid_member_internal(
-    const char* file,
-    int line,
-    Name base_name,
-    const Uast_member_access* access
-) {
-    msg_internal(
-        file, line, DIAG_INVALID_MEMBER_ACCESS,
-        access->pos,
-        "`"FMT"` is not a member of `"FMT"`\n", 
-        strv_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
-    );
-}
-
-#define msg_invalid_member(base_name, access) \
-    msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
-
 bool try_set_tuple_assignment_types(
     Tast_tuple** new_tast,
     Lang_type dest_lang_type,
@@ -1960,16 +1943,53 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             bool name_found = false;
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
                 if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                    size_t actual_arg_count = curr_arg_count;
                     param = vec_at(&params->params, idx_param);
                     curr_arg_count = idx_param;
                     name_found = true;
+
+                    if (vec_at(&new_args_set, curr_arg_count)) {
+                        msg(
+                            DIAG_INVALID_MEMBER_ACCESS,
+                            uast_expr_get_pos(vec_at(&fun_call->args, actual_arg_count)),
+                            "function parameter `"FMT"` has been assigned to more than once\n", 
+                            name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            uast_expr_get_pos(vec_at(&fun_call->args, curr_arg_count)),
+                            "original assignment to parameter `"FMT"` here\n",
+                            name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            fun_decl->pos,
+                            "function `"FMT"` defined here\n", 
+                            name_print(NAME_MSG, fun_name)
+                        );
+                        status = false;
+                        goto error;
+                    }
+
                     break;
                 }
             }
             if (!name_found) {
                 // TODO: this will print "member", but should print "parameter"
-                msg_invalid_member(fun_name, lhs);
-                return false;
+                msg(
+                    DIAG_INVALID_MEMBER_ACCESS,
+                    lhs->pos,
+                    "`"FMT"` is not a parameter of function `"FMT"`\n", 
+                    strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    fun_decl->pos,
+                    "function `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, fun_name)
+                );
+                status = false;
+                goto error;
             }
         }
 
@@ -2022,7 +2042,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         log(LOG_DEBUG, "thing 879: %zu\n", curr_arg_count);
         if (vec_at(&new_args_set, curr_arg_count)) {
             // TODO: print error for respecified function arg
-            todo();
+            msg(
+                DIAG_INVALID_MEMBER_ACCESS,
+                tast_expr_get_pos(vec_at(&new_args, curr_arg_count)),
+                "function parameter `"FMT"` has been assigned to more than once\n", 
+                name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+            );
+            msg(
+                DIAG_NOTE,
+                fun_decl->pos,
+                "function `"FMT"` defined here\n", 
+                name_print(NAME_MSG, fun_name)
+            );
+            status = false;
+            goto error;
         }
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
@@ -2038,27 +2071,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         assert(params->params.info.count > 0);
         for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
             *vec_at_ref(&new_args_set, idx) = true;
-            //// TODO: do type checking here if this function is not an extern "c" function
-            //switch (check_generic_assignment(
-            //    vec_at_ref(&new_args, idx),
-            //    lang_type_from_ulang_type(vec_at(&params->params, params->params.info.count - 1)->base->lang_type),
-            //    vec_at(&fun_call->args, idx),
-            //    uast_expr_get_pos(vec_at(&fun_call->args, idx))
-            //)) {
-            //    case CHECK_ASSIGN_OK:
-            //        break;
-            //    case CHECK_ASSIGN_INVALID:
-            //        msg_invalid_function_arg(vec_at(&new_args, idx), vec_at(&params->params, params->params.info.count - 1)->base, is_fun_callback);
-            //        status = false;
-            //        goto error;
-            //    case CHECK_ASSIGN_ERROR:
-            //        status = false;
-            //        goto error;
-            //    default:
-            //        unreachable("");
-            //}
+            // TODO: do type checking here if this function is not an extern "c" function
             if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(&fun_call->args, idx))) {
-                todo();
+                status = false;
+                goto error;
             }
         }
     } else {
@@ -2173,6 +2189,23 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
     *new_access = tast_enum_get_tag_new(access->pos, new_callee);
     return true;
 }
+
+static void msg_invalid_member_internal(
+    const char* file,
+    int line,
+    Name base_name,
+    const Uast_member_access* access
+) {
+    msg_internal(
+        file, line, DIAG_INVALID_MEMBER_ACCESS,
+        access->pos,
+        "`"FMT"` is not a member of `"FMT"`\n", 
+        strv_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
+    );
+}
+
+#define msg_invalid_member(base_name, access) \
+    msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
     Tast_stmt** new_tast, // TODO: change to tast_expr
