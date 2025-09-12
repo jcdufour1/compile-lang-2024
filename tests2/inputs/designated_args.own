@@ -10,6 +10,9 @@ fn main() i32 {
     print(.number = 74)
     print(.number = 76, .string = "thing")
     print(.string = "thing")
+    print(.string = "thing", .number = 76)
+    print(76, .string = "thing")
+    print(.number = 76, "thing")
     
     return 0
 }
