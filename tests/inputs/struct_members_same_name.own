@@ -1,0 +1,18 @@
+
+type io import = std.io
+
+type Thing struct {
+    num i32
+    num i32
+}
+
+type Token enum {
+    num i32
+    num i32
+}
+
+fn main() i32 {
+    let token Token = .num(8)
+    let thing Thing = {43, 78}
+    return 0
+}

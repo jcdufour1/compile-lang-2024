@@ -1233,7 +1233,6 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
-        todo();
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
     }
