@@ -6,7 +6,7 @@
 #include <ir_utils.h>
 #include <llvm_lang_type.h>
 #include <llvm_lang_type_after.h>
-#include <common.h>
+#include <codegen_common.h>
 #include <llvm_lang_type_get_pos.h>
 #include <llvm_lang_type_print.h>
 #include <parser_utils.h>
@@ -23,7 +23,7 @@ typedef struct {
     String forward_decls;
 } Emit_c_strs;
 
-static void emit_c_block(Emit_c_strs* strs,  const Ir_block* block);
+static void emit_c_block(Emit_c_strs* strs, const Ir_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 

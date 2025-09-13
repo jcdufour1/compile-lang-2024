@@ -62,9 +62,9 @@ static void msg_invalid_count_generic_args_internal(
     );
 }
 
-static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
+static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
     is_in_struct_base_def = true;
-    bool success = true;
+    bool status = true;
     Tast_variable_def_vec new_members = {0};
 
     if (base->members.info.count < 1) {
@@ -74,15 +74,27 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(&base->members, idx);
 
-        if (is_enum) {
-            unreachable("");
-        } else {
-            Tast_variable_def* new_memb = NULL;
-            if (try_set_variable_def_types(&new_memb, curr, false, false)) {
-                vec_append(&a_main, &new_members, new_memb);
-            } else {
-                success = false;
+        for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
+            if (name_is_equal(vec_at(&base->members, prev_idx)->name, curr->name)) {
+                msg(
+                    DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                    "redefinition of member `"FMT"`\n",
+                    name_print(NAME_MSG, curr->name)
+                );
+                msg(
+                    DIAG_NOTE, vec_at(&base->members, prev_idx)->pos,
+                    "member `"FMT"` previously defined here\n",
+                    name_print(NAME_MSG, curr->name)
+                );
+                status = false;
             }
+        }
+
+        Tast_variable_def* new_memb = NULL;
+        if (try_set_variable_def_types(&new_memb, curr, false, false)) {
+            vec_append(&a_main, &new_members, new_memb);
+        } else {
+            status = false;
         }
     }
 
@@ -92,7 +104,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     };
 
     is_in_struct_base_def = false;
-    return success;
+    return status;
 }
 
 #define try_set_def_types_internal(after_res, before_res, new_def) \
@@ -103,7 +115,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
 static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
+    bool success = try_set_struct_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_struct_def_wrap(after_res),
         before_res,
@@ -114,7 +126,7 @@ static bool try_set_struct_def_types(Uast_struct_def* after_res) {
 
 static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
+    bool success = try_set_struct_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_raw_union_def_wrap(after_res),
         before_res,
@@ -125,7 +137,7 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
 
 static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
+    bool success = try_set_struct_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_enum_def_wrap(after_res),
         before_res,

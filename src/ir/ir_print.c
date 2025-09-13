@@ -364,6 +364,7 @@ Strv ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) 
 }
 
 Strv ir_label_print_internal(const Ir_label* label, int indent) {
+    (void) indent;
     String buf = {0};
 
     extend_name(NAME_LOG, &buf, label->name);

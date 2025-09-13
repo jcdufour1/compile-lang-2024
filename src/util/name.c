@@ -28,9 +28,6 @@ void serialize_strv(String* buf, Strv strv) {
     string_extend_cstr(&a_main, buf, "_");
 }
 
-// TODO: remove this
-bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore);
-
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 Strv serialize_name_symbol_table(Name name) {
     String buf = {0};

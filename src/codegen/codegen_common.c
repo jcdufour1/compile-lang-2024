@@ -1,6 +1,4 @@
-#include <common.h>
-
-// TODO: rename this file (and corresponding header) because -I /src/codegen could cause conflicts in the future otherwise
+#include <codegen_common.h>
 
 bool is_extern_c(const Ir* ir) {
     if (ir->type != IR_DEF) {

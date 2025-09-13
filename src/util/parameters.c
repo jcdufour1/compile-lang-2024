@@ -28,7 +28,6 @@ Strv stop_after_print_internal(STOP_AFTER stop_after) {
     unreachable("");
 }
 
-// TODO: remove this function?
 bool is_compiling(void) {
     static_assert(
         STOP_AFTER_COUNT == 7,
@@ -87,7 +86,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 71, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 72, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -160,6 +159,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"unknown-on-non-enum-type", DIAG_UNKNOWN_ON_NON_ENUM_TYPE, LOG_ERROR, true},
     {"invalid-label-pos", DIAG_INVALID_LABEL_POS, LOG_ERROR, true},
     {"invalid-countof", DIAG_INVALID_COUNTOF, LOG_ERROR, true},
+    {"DIAG-REDEF-STRUCT-BASE-MEMBER", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -225,10 +225,7 @@ static void parse_file_option(int* argc, char*** argv) {
             vec_append(&a_main, &params.static_libs, curr_opt);
             break;
         case FILE_TYPE_DYNAMIC_LIB:
-            if (is_compiling()) {
-                // TODO
-                todo();
-            }
+            stop_after_set_if_none(STOP_AFTER_BIN);
             vec_append(&a_main, &params.dynamic_libs, curr_opt);
             break;
         case FILE_TYPE_C:
@@ -342,7 +339,6 @@ static void long_option_run(Strv curr_opt) {
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
-    // TODO: make enum for dump_lower_s, compile, etc.
     if (params.stop_after == STOP_AFTER_NONE) {
         log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
         exit(EXIT_CODE_FAIL);
@@ -355,7 +351,6 @@ static void long_option_run(Strv curr_opt) {
         exit(EXIT_CODE_FAIL);
     }
     params.stop_after = STOP_AFTER_RUN;
-    // TODO: args after `--run` should be passed to the program being compiled and run
 }
 
 static void long_option_lower_o(Strv curr_opt) {
@@ -433,15 +428,16 @@ Long_option_pair long_options[] = {
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
     {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, false},
-    {"run", "compile and run the program (TODO: remaining args will be passed to the program)", long_option_run, false},
     {"o", "output file path", long_option_lower_o, true},
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
     {"set-log-level", "TODO", long_option_log_level, true},
+    // run should be at the bottom for now
+    // TODO: consider moving run elsewhere, because run is not a regular option
+    {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
 };
 
-// TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
@@ -474,7 +470,7 @@ static void set_params_to_defaults(void) {
 static void print_usage(void) {
     log(LOG_DEBUG, "%d\n", params_log_level);
     msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
-    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options]\n", strv_print(compiler_exe_name));
+    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
     msg(DIAG_INFO, POS_BUILTIN, "options:\n");
     // TODO: show `-o <file>` instead of `-o`, etc.

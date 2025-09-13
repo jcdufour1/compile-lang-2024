@@ -63,7 +63,6 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             return sizeof_def(def);
         }
         case LANG_TYPE_ENUM: {
-            // TODO: put `unreachable("")` here
             Tast_def* def = NULL;
             unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def(def);
@@ -124,16 +123,16 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
-    uint64_t required_alignment = 8; // TODO: do not hardcode this
+    uint64_t req_align = 8; // TODO: do not hardcode this
     uint64_t end_alignment = 0;
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
-        end_alignment = MAX(end_alignment, MIN(8/* TODO */, sizeof_curr_item));
-        if ((total%required_alignment + sizeof_curr_item)%required_alignment > required_alignment) {
-            total += required_alignment - total%required_alignment;
+        end_alignment = MAX(end_alignment, MIN(req_align, sizeof_curr_item));
+        if ((total%req_align + sizeof_curr_item)%req_align > req_align) {
+            total += req_align - total%req_align;
         }
         if (is_sum_type) {
             total = MAX(total, sizeof_curr_item);
@@ -142,7 +141,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
         }
     }
 
-    assert(end_alignment <= 8/*TODO*/);
+    assert(end_alignment <= req_align);
     total += (end_alignment - total%end_alignment)%end_alignment;
     log(LOG_DEBUG, FMT": %zu\n", name_print(NAME_LOG, base->name), end_alignment);
     return total;

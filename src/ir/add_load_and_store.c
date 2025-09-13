@@ -4,7 +4,6 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <type_checking.h>
-#include <log_env.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
 #include <llvm_lang_type_after.h>

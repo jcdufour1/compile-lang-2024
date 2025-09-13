@@ -33,7 +33,6 @@ bool read_file(Strv* result, Strv file_path) {
     return true;
 }
 
-// TODO: use Strv as parameter
 void write_file(const char* file_path, Strv text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {

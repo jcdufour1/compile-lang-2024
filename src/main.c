@@ -16,8 +16,6 @@
 #include <symbol_iter.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
-//
-// TODO: test case for handling assigning/returning void item
 
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -124,9 +122,6 @@ void do_passes(void) {
             string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
             write_file("dump.dot", string_to_strv(graphvis));
         } else {
-            // print ir
-            // TODO: we need to also iterate on scope_id SCOPE_BUILTIN
-
             String contents = {0};
             string_extend_strv(&a_print, &contents, sv("builtin scope:\n"));
             string_extend_strv(&a_print, &contents, ir_block_print_internal(ir, INDENT_WIDTH));
@@ -179,7 +174,6 @@ void do_passes(void) {
 
     static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop_after states (not all are explicitly handled");
     if (params.stop_after == STOP_AFTER_RUN) {
-        // TODO: add logic in parse_args to catch below error:
         Strv_vec cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_main, &output_path, "./");
