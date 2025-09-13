@@ -286,6 +286,10 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
+            *result = lang_type;
+            *type = lang_type.type;
+            return true;
+            log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
             todo();
         case UAST_LABEL:
             todo();
