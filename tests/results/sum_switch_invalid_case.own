@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/sum_switch_invalid_case.own:17:37:[1;31merror[0;39m:types `Token` and `Thing` are not valid operands to binary expression
+    16 |         case Token.num(num): printf("token is number: %d\n", num)
+    17 |         case Thing.token(token_type): printf("token is Thing.token")
+       |                                     ^
+    18 |     }
+
+compile::return_code 1
+
