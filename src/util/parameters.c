@@ -433,12 +433,14 @@ Long_option_pair long_options[] = {
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, false},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, false},
     {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, false},
-    {"run", "compile and run the program (TODO: remaining args will be passed to the program)", long_option_run, false},
     {"o", "output file path", long_option_lower_o, true},
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
     {"set-log-level", "TODO", long_option_log_level, true},
+    // run should be at the bottom for now
+    // TODO: consider moving run elsewhere, because run is not a regular option
+    {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
 };
 
 // TODO: allow `-ooutput` as well as `-o output`
