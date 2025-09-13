@@ -5,11 +5,11 @@ CC_COMPILER ?= clang
 # TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -40,9 +40,9 @@ OBJS=\
 	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
 	 ${BUILD_DIR}/ir_print.o \
-	 ${BUILD_DIR}/lang_type_print.o \
-	 ${BUILD_DIR}/llvm_lang_type_print.o \
-	 ${BUILD_DIR}/ulang_type_print.o \
+	 ${BUILD_DIR}/lang_type/lang_type_print.o \
+	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
+	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/uast_utils.o \
 	 ${BUILD_DIR}/symbol_table.o \
@@ -52,9 +52,9 @@ OBJS=\
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
-	 ${BUILD_DIR}/lang_type_serialize.o \
-	 ${BUILD_DIR}/ulang_type_serialize.o \
-	 ${BUILD_DIR}/lang_type_from_ulang_type.o \
+	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
+	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
+	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
@@ -98,6 +98,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/sema/
 	mkdir -p ${BUILD_DIR}/token/
 	mkdir -p ${BUILD_DIR}/codegen/
+	mkdir -p ${BUILD_DIR}/lang_type/
 
 # TODO: always run setup before ${BUILD_DIR}/main
 build: setup ${BUILD_DIR}/main
@@ -140,14 +141,14 @@ ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c
 ${BUILD_DIR}/ir_print.o: ${DEP_COMMON} src/ir_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_print.o src/ir_print.c
 
-${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
+${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c
 
-${BUILD_DIR}/llvm_lang_type_print.o: ${DEP_COMMON} src/llvm_lang_type_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_lang_type_print.o src/llvm_lang_type_print.c
+${BUILD_DIR}/lang_type/llvm_lang_type_print.o: ${DEP_COMMON} src/lang_type/llvm_lang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/llvm_lang_type_print.o src/lang_type/llvm_lang_type_print.c
 
-${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_print.o src/ulang_type_print.c
+${BUILD_DIR}/lang_type/ulang_type_print.o: ${DEP_COMMON} src/lang_type/ulang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_print.o src/lang_type/ulang_type_print.c
 
 ${BUILD_DIR}/sema/type_checking.o: ${DEP_COMMON} src/sema/type_checking.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/type_checking.o src/sema/type_checking.c
@@ -179,14 +180,14 @@ ${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c
 ${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c
 
-${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_serialize.o src/lang_type_serialize.c
+${BUILD_DIR}/lang_type/lang_type_serialize.o: ${DEP_COMMON} src/lang_type/lang_type_serialize.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_serialize.o src/lang_type/lang_type_serialize.c
 
-${BUILD_DIR}/ulang_type_serialize.o: ${DEP_COMMON} src/ulang_type_serialize.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_serialize.o src/ulang_type_serialize.c
+${BUILD_DIR}/lang_type/ulang_type_serialize.o: ${DEP_COMMON} src/lang_type/ulang_type_serialize.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_serialize.o src/lang_type/ulang_type_serialize.c
 
-${BUILD_DIR}/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type_from_ulang_type.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_from_ulang_type.o src/lang_type_from_ulang_type.c
+${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/lang_type_from_ulang_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o src/lang_type/lang_type_from_ulang_type.c
 
 ${BUILD_DIR}/uast_utils.o: ${DEP_COMMON} src/uast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_utils.o src/uast_utils.c
