@@ -11,17 +11,14 @@
 // TODO: make print functions check for null and print <null> or something instead of seg fault
 // TODO: figure out if I should de-duplilcate string literals, etc.
 
-// TODO: remove env.global_literals
+// TODO: strings should actually be their own type (not just u8*) (maybe slice with null termination)
 
-// TODO: strings should actually be their own type (not just u8*)
-
-// TODO: support alternative backend (such as qbe, cuik and c)
+// TODO: support alternative backend (such as qbe, cuik)
 
 // TODO: fix printing for lang_type in msg to not put newline
 
 // TODO: actually use newline to end statement depending on last token of line of line
 // TODO: expected failure case for invalid type in extern "c" function
-// TODO: char literal with escape
 //
 //
 // TODO: expected failure test for 

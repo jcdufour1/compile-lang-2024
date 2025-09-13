@@ -13,7 +13,7 @@
 #include <lang_type_print.h>
 #include <lang_type_get_pos.h>
 #include <symbol_iter.h>
-#include <common.h>
+#include <codegen_common.h>
 #include <do_passes.h>
 
 //static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* fun_block);

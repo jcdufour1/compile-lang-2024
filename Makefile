@@ -67,7 +67,7 @@ OBJS=\
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/ir/add_load_and_store.o \
-	 ${BUILD_DIR}/codegen/common.o \
+	 ${BUILD_DIR}/codegen/codegen_common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
 	 ${BUILD_DIR}/ir/ir_utils.o \
@@ -212,8 +212,8 @@ ${BUILD_DIR}/util/subprocess.o: ${DEP_COMMON} src/util/subprocess.c
 ${BUILD_DIR}/ir/add_load_and_store.o: ${DEP_COMMON} src/ir/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/add_load_and_store.o src/ir/add_load_and_store.c
 
-${BUILD_DIR}/codegen/common.o: ${DEP_COMMON} src/codegen/common.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/common.o src/codegen/common.c
+${BUILD_DIR}/codegen/codegen_common.o: ${DEP_COMMON} src/codegen/codegen_common.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/codegen_common.o src/codegen/codegen_common.c
 
 ${BUILD_DIR}/codegen/emit_llvm.o: ${DEP_COMMON} src/codegen/emit_llvm.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/emit_llvm.o src/codegen/emit_llvm.c
@@ -239,6 +239,3 @@ ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c
 ${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/params_log_level.o src/util/params_log_level.c
 
-#clean:
-#	rm -f ${OBJS} build/*/passes/*
-#	rm -f ${OBJS} build/*/*

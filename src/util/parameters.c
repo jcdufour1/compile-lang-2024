@@ -225,10 +225,7 @@ static void parse_file_option(int* argc, char*** argv) {
             vec_append(&a_main, &params.static_libs, curr_opt);
             break;
         case FILE_TYPE_DYNAMIC_LIB:
-            if (is_compiling()) {
-                // TODO
-                todo();
-            }
+            stop_after_set_if_none(STOP_AFTER_BIN);
             vec_append(&a_main, &params.dynamic_libs, curr_opt);
             break;
         case FILE_TYPE_C:
@@ -355,7 +352,6 @@ static void long_option_run(Strv curr_opt) {
         exit(EXIT_CODE_FAIL);
     }
     params.stop_after = STOP_AFTER_RUN;
-    // TODO: args after `--run` should be passed to the program being compiled and run
 }
 
 static void long_option_lower_o(Strv curr_opt) {
@@ -443,7 +439,6 @@ Long_option_pair long_options[] = {
     {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
 };
 
-// TODO: allow `-ooutput` as well as `-o output`
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 

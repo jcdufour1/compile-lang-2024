@@ -121,9 +121,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             // fallthrough
         case LANG_TYPE_ENUM:
             // fallthrough
-            // TODO: change (Pos) {0} below to lang_type_get_pos(lang_type)
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new(name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)), lang_type_get_pointer_depth(lang_type)), (Pos) {0}
+                ulang_type_atom_new(name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)), lang_type_get_pointer_depth(lang_type)), lang_type_get_pos(lang_type)
             ));
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);

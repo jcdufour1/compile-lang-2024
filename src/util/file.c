@@ -33,7 +33,6 @@ bool read_file(Strv* result, Strv file_path) {
     return true;
 }
 
-// TODO: use Strv as parameter
 void write_file(const char* file_path, Strv text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
@@ -69,7 +68,6 @@ File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},
     {"so", FILE_TYPE_DYNAMIC_LIB},
-    {"c", FILE_TYPE_C},
     {"o", FILE_TYPE_OBJECT},
     {"s", FILE_TYPE_LOWER_S},
     {"S", FILE_TYPE_UPPER_S},

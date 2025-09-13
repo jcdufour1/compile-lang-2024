@@ -10,6 +10,7 @@
 #ifdef NDEBUG
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
 #else
+// TODO: use larger default in release?
 #define ARENA_DEFAULT_CAPACITY 1 // this is to catch bugs with the arena, strv functions, etc.
 #endif // NDEBUG
 
