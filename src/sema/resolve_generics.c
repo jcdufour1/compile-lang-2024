@@ -526,6 +526,7 @@ bool resolve_generics_function_def_call(
         def->decl->pos
     );
     Lang_type_fn rtn_type_ = {0};
+    log(LOG_DEBUG, FMT"\n", uast_function_def_print(def));
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
         return false;
     }

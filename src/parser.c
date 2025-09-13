@@ -613,6 +613,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DOUBLE_TICK:
             return false;
+        case TOKEN_GENERIC_TYPE:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -764,6 +766,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_COUNTOF:
             return true;
         case TOKEN_DOUBLE_TICK:
+            return false;
+        case TOKEN_GENERIC_TYPE:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -1375,26 +1379,50 @@ static PARSE_STATUS parse_variable_def(
     try_consume_no_rm_newlines(NULL, tokens, TOKEN_COLON);
 
     Ulang_type lang_type = {0};
-    if (require_type) {
-        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
-            return PARSE_ERROR;
+    Token type_tk = {0};
+
+    Uast_variable_def* var_def = NULL;
+
+    if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
+        Uast_generic_param* var_def_gen = uast_generic_param_new(
+            name_token.pos,
+            uast_symbol_new(name_token.pos, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id))
+        );
+
+        var_def = uast_variable_def_new(
+            name_token.pos,
+            lang_type,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+        );
+
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_generic_param_wrap(var_def_gen))) {
+                msg_redefinition_of_symbol(uast_generic_param_wrap(var_def_gen));
+                return PARSE_ERROR;
+            }
         }
     } else {
-        if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
-            lang_type = default_lang_type;
+        if (require_type) {
+            if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
+                return PARSE_ERROR;
+            }
+        } else {
+            if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
+                lang_type = default_lang_type;
+            }
         }
-    }
 
-    Uast_variable_def* var_def = uast_variable_def_new(
-        name_token.pos,
-        lang_type,
-        name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
-    );
+        var_def = uast_variable_def_new(
+            name_token.pos,
+            lang_type,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+        );
 
-    if (add_to_sym_table) {
-        if (!usymbol_add(uast_variable_def_wrap(var_def))) {
-            msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
-            return PARSE_ERROR;
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_variable_def_wrap(var_def))) {
+                msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
+                return PARSE_ERROR;
+            }
         }
     }
 
@@ -2660,7 +2688,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             break;
@@ -2713,7 +2741,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_NOT:
             // fallthrough
@@ -2827,7 +2855,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 73, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
