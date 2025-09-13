@@ -2112,32 +2112,42 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
+    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
+        log(LOG_DEBUG, "thing 315: %zu\n", idx);
+        if (!vec_at(&new_args_set, idx)) {
+            Name param_name = vec_at(&params->params, idx)->base->name;
+            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+                size_t min_args = params->params.info.count;
+                size_t max_args = params->params.info.count;
+                if (is_variadic) {
+                    max_args = SIZE_MAX; 
+                }
+                msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args);
+            } else {
+                msg(
+                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                    "function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, param_name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(&params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
+                );
+            }
+            status = false;
+        } else {
+            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        }
+    }
+
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,
         new_args,
         new_callee,
         fun_rtn_type
     ));
-
-    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
-        log(LOG_DEBUG, "thing 315: %zu\n", idx);
-        if (!vec_at(&new_args_set, idx)) {
-            msg(
-                DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
-                "function parameter `"FMT"` was not specified\n",
-                name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
-            );
-            msg(
-                DIAG_NOTE,
-                vec_at(&params->params, idx)->pos,
-                "function parameter `"FMT"` defined here\n", 
-                name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
-            );
-            status = false;
-        } else {
-            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
-        }
-    }
 
 error:
     return status;
