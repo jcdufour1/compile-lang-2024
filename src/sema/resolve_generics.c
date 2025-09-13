@@ -286,11 +286,15 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
-            *result = lang_type;
-            *type = lang_type.type;
-            return true;
-            log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
             todo();
+            //log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
+            //// TODO: ulang_type_regular_unwrap could crash (it is a temporary hack)
+            //if (!strv_is_equal(sv("Type"), ulang_type_regular_unwrap(&uast_variable_def_unwrap(before_res)->lang_type)->atom.str.base)) {
+            //    todo();
+            //}
+            //*result = lang_type;
+            //*type = UAST_GENERIC_PARAM;
+            //return true;
         case UAST_LABEL:
             todo();
     }

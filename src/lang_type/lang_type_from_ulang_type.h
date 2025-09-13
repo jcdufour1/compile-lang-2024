@@ -135,6 +135,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     (void) pos;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};
+    //log(LOG_DEBUG, FMT"\n", ulang_type_regular_print(&lang_type));
     if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
         return false;
     }
