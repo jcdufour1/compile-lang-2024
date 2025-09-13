@@ -1892,15 +1892,39 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
     Uast_function_params* params = fun_decl->params;
 
-    Tast_expr_vec new_args = {0};
     bool is_variadic = false;
-    // TODO: consider case of optional arguments and variadic arguments being used in same function
     for (size_t param_idx = 0; param_idx < params->params.info.count; param_idx++) {
-        Uast_param* param = vec_at(&params->params, param_idx);
-        Uast_expr* corres_arg = NULL;
-        if (param->is_variadic) {
+        if (vec_at(&params->params, param_idx)->is_variadic) {
+            if (param_idx != params->params.info.count - 1) {
+                // TODO: print error for having variadic as not the last parameter
+                todo();
+            }
             is_variadic = true;
         }
+    }
+
+    // TODO: word below comment better
+    // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
+    size_t amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
+
+    Tast_expr_vec new_args = {0};
+    Bool_vec new_args_set = {0};
+    vec_reserve(&a_main, &new_args, amt_args_needed);
+    while (new_args.info.count < amt_args_needed) {
+        vec_append(&a_main, &new_args, NULL);
+    }
+    vec_reserve(&a_main, &new_args_set, amt_args_needed);
+    while (new_args_set.info.count < amt_args_needed) {
+        vec_append(&a_main, &new_args_set, false);
+    }
+    log(LOG_DEBUG, "count args: %zu\n", MAX(params->params.info.count, fun_call->args.info.count));
+
+    // TODO: consider case of optional arguments and variadic arguments being used in same function
+    for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
+        size_t curr_arg_count = param_idx;
+        // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
+        Uast_param* param = vec_at(&params->params, param_idx);
+        Uast_expr* corres_arg = NULL;
 
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
@@ -1911,29 +1935,79 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
         } else {
+            todo();
             // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
         }
 
+        if (uast_expr_is_designator(corres_arg)) {
+            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
+            Uast_member_access* lhs = uast_member_access_unwrap(
+                uast_binary_unwrap(uast_operator_unwrap(corres_arg))->lhs // parser should catch invalid assignment
+            );
+            corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
+            bool name_found = false;
+            for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
+                if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                    size_t actual_arg_count = curr_arg_count;
+                    param = vec_at(&params->params, idx_param);
+                    curr_arg_count = idx_param;
+                    name_found = true;
+
+                    if (vec_at(&new_args_set, curr_arg_count)) {
+                        msg(
+                            DIAG_INVALID_MEMBER_ACCESS /* TODO */,
+                            uast_expr_get_pos(vec_at(&fun_call->args, actual_arg_count)),
+                            "function parameter `"FMT"` has been assigned to more than once\n", 
+                            name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            uast_expr_get_pos(vec_at(&fun_call->args, curr_arg_count)),
+                            "original assignment to parameter `"FMT"` here\n",
+                            name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            fun_decl->pos,
+                            "function `"FMT"` defined here\n", 
+                            name_print(NAME_MSG, fun_name)
+                        );
+                        status = false;
+                        goto error;
+                    }
+
+                    break;
+                }
+            }
+            if (!name_found) {
+                // TODO: this will print "member", but should print "parameter"
+                msg(
+                    DIAG_INVALID_MEMBER_ACCESS,
+                    lhs->pos,
+                    "`"FMT"` is not a parameter of function `"FMT"`\n", 
+                    strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    fun_decl->pos,
+                    "function `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, fun_name)
+                );
+                status = false;
+                goto error;
+            }
+        }
+
         Tast_expr* new_arg = NULL;
 
         if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
-            if (param->is_variadic) {
-                // TODO: do type checking here if this function is not an extern "c" function
-                for (size_t arg_idx = param_idx; arg_idx < fun_call->args.info.count; arg_idx++) {
-                    Tast_expr* new_sub_arg = NULL;
-                    if (!try_set_expr_types(&new_sub_arg, vec_at(&fun_call->args, arg_idx))) {
-                        status = false;
-                        continue;
-                    }
-                    vec_append(&a_main, &new_args, new_sub_arg);
-                }
-                break;
-            } else {
-                todo();
-            }
+            // arguments for variadic parameter will be checked later
+            // TODO: uncomment below?:
+            // unreachable();
+            continue;
         } else {
             log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
             switch (check_generic_assignment(
@@ -1956,13 +2030,116 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
-        vec_append(&a_main, &new_args, new_arg);
+        // TODO: print error, etc. if value already assigned
+        log(LOG_DEBUG, "thing 879: %zu\n", curr_arg_count);
+        if (vec_at(&new_args_set, curr_arg_count)) {
+            // TODO: print error for respecified function arg
+            msg(
+                DIAG_INVALID_MEMBER_ACCESS,
+                tast_expr_get_pos(vec_at(&new_args, curr_arg_count)),
+                "function parameter `"FMT"` has been assigned to more than once\n", 
+                name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
+            );
+            msg(
+                DIAG_NOTE,
+                fun_decl->pos,
+                "function `"FMT"` defined here\n", 
+                name_print(NAME_MSG, fun_name)
+            );
+            status = false;
+            goto error;
+        }
+        *vec_at_ref(&new_args, curr_arg_count) = new_arg;
+        *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
         msg_invalid_count_function_args(fun_call, fun_decl, params->params.info.count, params->params.info.count);
         status = false;
         goto error;
+    }
+
+    if (is_variadic) {
+        assert(params->params.info.count > 0);
+        log(LOG_DEBUG, "thing 8766.0\n");
+        for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
+            log(LOG_DEBUG, "thing 8766.1\n");
+            // TODO: do type checking here if this function is not an extern "c" function
+            if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(&fun_call->args, idx))) {
+                status = false;
+                continue;
+            }
+            assert(!vec_at(&new_args_set, idx));
+            *vec_at_ref(&new_args_set, idx) = true;
+            log(LOG_DEBUG, FMT" %zu %zu\n", name_print(NAME_LOG, fun_name), new_args.info.count, idx);
+        }
+        log(LOG_DEBUG, "thing 8766.2\n");
+    } else {
+        assert(new_args_set.info.count == new_args.info.count);
+        for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
+            if (!vec_at(&new_args_set, idx)) {
+                // TODO: move error for function parameter unspecified to here?
+                if (vec_at(&params->params, idx)->is_optional) {
+                    unwrap(!is_variadic);
+                    log(LOG_DEBUG, "thing 9281: %zu\n", idx);
+                    *vec_at_ref(&new_args_set, idx) = true;
+                    // TODO: expected failure case for invalid optional_default
+                    Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+                    switch (check_generic_assignment(
+                        vec_at_ref(&new_args, idx),
+                        lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
+                        new_default_,
+                        uast_expr_get_pos(new_default_)
+                    )) {
+                        case CHECK_ASSIGN_OK:
+                            break;
+                        case CHECK_ASSIGN_INVALID:
+                            msg_invalid_function_arg(
+                                vec_at(&new_args, idx),
+                                vec_at(&params->params, idx)->base,
+                                is_fun_callback
+                            );
+                            status = false;
+                            break;
+                        case CHECK_ASSIGN_ERROR:
+                            status = false;
+                            break;
+                        default:
+                            unreachable("");
+                    }
+                }
+            }
+        }
+    }
+
+    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
+        log(LOG_DEBUG, "thing 315: %zu\n", idx);
+        if (!vec_at(&new_args_set, idx)) {
+            Name param_name = vec_at(&params->params, idx)->base->name;
+            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+                size_t min_args = params->params.info.count;
+                size_t max_args = params->params.info.count;
+                if (is_variadic) {
+                    max_args = SIZE_MAX; 
+                }
+                msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args);
+            } else {
+                msg(
+                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                    "function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, param_name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(&params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
+                );
+            }
+            status = false;
+        } else {
+            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        }
     }
 
     *new_call = tast_function_call_wrap(tast_function_call_new(
