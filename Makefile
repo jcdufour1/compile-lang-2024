@@ -5,11 +5,11 @@ CC_COMPILER ?= clang
 # TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir  \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -39,7 +39,7 @@ OBJS=\
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
-	 ${BUILD_DIR}/ir_print.o \
+	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
@@ -66,12 +66,12 @@ OBJS=\
 	 ${BUILD_DIR}/token/token.o \
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
-	 ${BUILD_DIR}/add_load_and_store.o \
+	 ${BUILD_DIR}/ir/add_load_and_store.o \
 	 ${BUILD_DIR}/codegen/common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
-	 ${BUILD_DIR}/ir_utils.o \
-	 ${BUILD_DIR}/ir_graphvis.o \
+	 ${BUILD_DIR}/ir/ir_utils.o \
+	 ${BUILD_DIR}/ir/ir_graphvis.o \
 	 ${BUILD_DIR}/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -99,6 +99,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/token/
 	mkdir -p ${BUILD_DIR}/codegen/
 	mkdir -p ${BUILD_DIR}/lang_type/
+	mkdir -p ${BUILD_DIR}/ir/
 
 # TODO: always run setup before ${BUILD_DIR}/main
 build: setup ${BUILD_DIR}/main
@@ -138,8 +139,8 @@ ${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c
 ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
 
-${BUILD_DIR}/ir_print.o: ${DEP_COMMON} src/ir_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_print.o src/ir_print.c
+${BUILD_DIR}/ir/ir_print.o: ${DEP_COMMON} src/ir/ir_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_print.o src/ir/ir_print.c
 
 ${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c
@@ -198,17 +199,17 @@ ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clon
 ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
 
-${BUILD_DIR}/ir_utils.o: ${DEP_COMMON} src/ir_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_utils.o src/ir_utils.c
+${BUILD_DIR}/ir/ir_utils.o: ${DEP_COMMON} src/ir/ir_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_utils.o src/ir/ir_utils.c
 
-${BUILD_DIR}/ir_graphvis.o: ${DEP_COMMON} src/ir_graphvis.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir_graphvis.o src/ir_graphvis.c
+${BUILD_DIR}/ir/ir_graphvis.o: ${DEP_COMMON} src/ir/ir_graphvis.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_graphvis.o src/ir/ir_graphvis.c
 
 ${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c
 
-${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c
+${BUILD_DIR}/ir/add_load_and_store.o: ${DEP_COMMON} src/ir/add_load_and_store.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/add_load_and_store.o src/ir/add_load_and_store.c
 
 ${BUILD_DIR}/codegen/common.o: ${DEP_COMMON} src/codegen/common.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/common.o src/codegen/common.c
