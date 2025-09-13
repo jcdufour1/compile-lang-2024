@@ -78,7 +78,7 @@ DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
 # DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen* ${BUILD_DIR}/ast_utils/tast.h
-DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/ast_utils/tast.h third_party/*
+DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own

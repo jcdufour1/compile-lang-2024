@@ -16,8 +16,6 @@
 #include <symbol_iter.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
-//
-// TODO: test case for handling assigning/returning void item
 
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
