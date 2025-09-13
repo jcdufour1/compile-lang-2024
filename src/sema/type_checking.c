@@ -1739,6 +1739,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
 
 
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
+    log(LOG_DEBUG, "thing 875: "FMT"\n", uast_function_call_print(fun_call));
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
