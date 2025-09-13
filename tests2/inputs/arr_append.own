@@ -7,8 +7,8 @@ type Token struct {
 
 fn main() i32 {
     let arr io.Arr(<Token>) = {unsafe_cast<Token*>io.malloc(1000000), 0, 100}
-    //io.assert(arr.buf != unsafe_cast<Token*>0, "out of memory")
-    //arr = io.arr_append(<Token>)(arr, {9187, "hello"})
-    io.arr_first(<Token>)(arr).string;
+    io.assert(arr.buf != unsafe_cast<Token*>0, "out of memory")
+    arr = io.arr_append(<Token>)(arr, {9187, "hello"})
+    io.printf("%s\n", io.arr_first(<Token>)(arr).string);
     return 0
 }

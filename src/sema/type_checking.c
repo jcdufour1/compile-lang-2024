@@ -1492,7 +1492,6 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
-            todo();
             if (lhs_lang_type.type != LANG_TYPE_ENUM) {
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
@@ -1904,13 +1903,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
-    size_t amt_args_needed = MAX(params->params.info.count, fun_call->args.info.count);
-    if (is_variadic) {
-        assert(amt_args_needed > 0);
-        amt_args_needed--;
-    }
+    // TODO: word below comment better
+    // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
+    size_t amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
 
-    // NOTE: new_args could grow in size because of variadics (but new_args_set stays the same size)
     Tast_expr_vec new_args = {0};
     Bool_vec new_args_set = {0};
     vec_reserve(&a_main, &new_args, amt_args_needed);
@@ -1939,6 +1935,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
         } else {
+            todo();
             // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
             status = false;
@@ -2008,25 +2005,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
             // arguments for variadic parameter will be checked later
+            // TODO: uncomment below?:
+            // unreachable();
             continue;
-            if (param->is_variadic) {
-                // TODO: do type checking here if this function is not an extern "c" function
-                for (size_t arg_idx = param_idx; arg_idx < fun_call->args.info.count; arg_idx++) {
-                    Tast_expr* new_sub_arg = NULL;
-                    if (!try_set_expr_types(&new_sub_arg, vec_at(&fun_call->args, arg_idx))) {
-                        status = false;
-                        continue;
-                    }
-                    if (arg_idx == param_idx) {
-                        *vec_at_ref(&new_args, param_idx) = new_sub_arg;
-                    } else {
-                        vec_append(&a_main, &new_args, new_sub_arg);
-                    }
-                }
-                break;
-            } else {
-                todo();
-            }
         } else {
             log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
             switch (check_generic_assignment(
@@ -2084,20 +2065,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
             log(LOG_DEBUG, "thing 8766.1\n");
             // TODO: do type checking here if this function is not an extern "c" function
-            Tast_expr* new_expr = NULL;
-            if (!try_set_expr_types(&new_expr, vec_at(&fun_call->args, idx))) {
+            if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(&fun_call->args, idx))) {
                 status = false;
-                goto error;
+                continue;
             }
+            assert(!vec_at(&new_args_set, idx));
+            *vec_at_ref(&new_args_set, idx) = true;
             log(LOG_DEBUG, FMT" %zu %zu\n", name_print(NAME_LOG, fun_name), new_args.info.count, idx);
-            assert(new_args.info.count == idx);
-            vec_append(&a_main, &new_args, new_expr);
         }
         log(LOG_DEBUG, "thing 8766.2\n");
     } else {
         assert(new_args_set.info.count == new_args.info.count);
         for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
             if (!vec_at(&new_args_set, idx)) {
+                // TODO: move error for function parameter unspecified to here?
                 if (vec_at(&params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
                     log(LOG_DEBUG, "thing 9281: %zu\n", idx);
@@ -2113,19 +2094,19 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         case CHECK_ASSIGN_OK:
                             break;
                         case CHECK_ASSIGN_INVALID:
-                            todo();
-                            //msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
-                            //status = false;
-                            //goto error;
+                            msg_invalid_function_arg(
+                                vec_at(&new_args, idx),
+                                vec_at(&params->params, idx)->base,
+                                is_fun_callback
+                            );
+                            status = false;
+                            break;
                         case CHECK_ASSIGN_ERROR:
                             status = false;
-                            goto error;
+                            break;
                         default:
                             unreachable("");
                     }
-                } else {
-                    // TODO: print error for unspecified function args
-                    todo();
                 }
             }
         }
@@ -2138,10 +2119,24 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         fun_rtn_type
     ));
 
-    for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
+    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
         log(LOG_DEBUG, "thing 315: %zu\n", idx);
-        assert(vec_at(&new_args_set, idx));
-        log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        if (!vec_at(&new_args_set, idx)) {
+            msg(
+                DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                "function parameter `"FMT"` was not specified\n",
+                name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
+            );
+            msg(
+                DIAG_NOTE,
+                vec_at(&params->params, idx)->pos,
+                "function parameter `"FMT"` defined here\n", 
+                name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
+            );
+            status = false;
+        } else {
+            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        }
     }
 
 error:
