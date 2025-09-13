@@ -474,7 +474,7 @@ static void set_params_to_defaults(void) {
 static void print_usage(void) {
     log(LOG_DEBUG, "%d\n", params_log_level);
     msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
-    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options]\n", strv_print(compiler_exe_name));
+    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
     msg(DIAG_INFO, POS_BUILTIN, "options:\n");
     // TODO: show `-o <file>` instead of `-o`, etc.
