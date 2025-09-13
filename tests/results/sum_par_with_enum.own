@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/sum_par_with_enum.own:10:14:[1;31merror[0;39m:inner type is void; remove ()
+     9 |     switch token {
+    10 |         case .num(num): break
+       |              ^
+    11 |     }
+
+compile::return_code 1
+

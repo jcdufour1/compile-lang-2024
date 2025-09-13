@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/assign_struct_literal_to_int.own:6:8:[1;31merror[0;39m:struct literal cannot be assigned to primitive type `u7`
+     5 |     let num i32 = 8
+     6 |     98 = {.num = 34, .string = 32}
+       |        ^
+     7 |     num = {.num = 34, .string = 32}
+tests/inputs/assign_struct_literal_to_int.own:7:9:[1;31merror[0;39m:struct literal cannot be assigned to primitive type `i32`
+     6 |     98 = {.num = 34, .string = 32}
+     7 |     num = {.num = 34, .string = 32}
+       |         ^
+     8 |     return 0
+
+compile::return_code 1
+

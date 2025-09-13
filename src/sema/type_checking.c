@@ -482,8 +482,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
-        log(LOG_DEBUG, "thing lhs_lang_type 1.2:\n dest: "FMT" src: "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type), lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_src)));
-        msg(DIAG_INFO, pos, "\n");
         lhs_lang_type = old_lhs_lang_type;
         break_type = old_break_type;
         parent_of = old_parent_of;
@@ -2274,9 +2272,6 @@ bool try_set_member_access_types_finish_enum_def(
                 return false;
             }
 
-            log(LOG_DEBUG, FMT, uast_variable_def_print(member_def));
-            log(LOG_DEBUG, FMT, uast_enum_def_print(enum_def));
-            msg(DIAG_INFO, member_def->pos, FMT, uast_variable_def_print(member_def));
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
@@ -2969,7 +2964,6 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
     break_in_case = false;
-    log(LOG_INFO, "thing 875: "FMT"\n", parent_of_print(parent_of));
     Lang_type old_break_type = break_type;
     if (parent_of == PARENT_OF_ASSIGN_RHS) {
         log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
@@ -3261,9 +3255,6 @@ error:
     //    todo();
     //}
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, (*new_tast)->lang_type));
-    log(LOG_DEBUG, "lang_type of new block: "FMT"", lang_type_print(LANG_TYPE_MODE_LOG, yield_type));
-    msg(DIAG_INFO, block->pos, "\n");
     if (status) {
         assert(*new_tast);
     } else {

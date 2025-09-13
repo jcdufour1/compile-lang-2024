@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/duplicate_default.own:13:16:[1;31merror[0;39m:duplicate default in switch statement
+    12 |         default: printf("unhandled token_type")
+    13 |         default: printf("unhandled token_type")
+       |                ^
+    14 |     }
+
+compile::return_code 1
+

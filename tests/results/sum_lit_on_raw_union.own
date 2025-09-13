@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/sum_lit_on_raw_union.own:6:20:[1;31merror[0;39m:infered callee is non-enum type `Raw`; only enum types can be infered here
+     5 | fn main() i32 {
+     6 |     let raw2 Raw = .nfaskdf(7)
+       |                    ^
+     7 |     let raw1 Raw = .num(6)
+tests/inputs/sum_lit_on_raw_union.own:7:20:[1;31merror[0;39m:infered callee is non-enum type `Raw`; only enum types can be infered here
+     6 |     let raw2 Raw = .nfaskdf(7)
+     7 |     let raw1 Raw = .num(6)
+       |                    ^
+     8 |     return 0
+
+compile::return_code 1
+
