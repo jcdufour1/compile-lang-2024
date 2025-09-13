@@ -115,7 +115,7 @@ test_quick: run
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c
 
-${BUILD_DIR}/ast_utils/tast.h: ${BUILD_DIR}/auto_gen
+${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general

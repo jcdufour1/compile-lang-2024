@@ -28,7 +28,6 @@ Strv stop_after_print_internal(STOP_AFTER stop_after) {
     unreachable("");
 }
 
-// TODO: remove this function?
 bool is_compiling(void) {
     static_assert(
         STOP_AFTER_COUNT == 7,
@@ -339,7 +338,6 @@ static void long_option_run(Strv curr_opt) {
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
-    // TODO: make enum for dump_lower_s, compile, etc.
     if (params.stop_after == STOP_AFTER_NONE) {
         log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
         exit(EXIT_CODE_FAIL);
