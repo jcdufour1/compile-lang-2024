@@ -5,11 +5,11 @@ CC_COMPILER ?= clang
 # TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir  \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -37,32 +37,32 @@ OBJS=\
 	 ${BUILD_DIR}/util/name.o \
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
-	 ${BUILD_DIR}/uast_print.o \
-	 ${BUILD_DIR}/tast_print.o \
+	 ${BUILD_DIR}/ast_utils/uast_print.o \
+	 ${BUILD_DIR}/ast_utils/tast_print.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
-	 ${BUILD_DIR}/uast_utils.o \
-	 ${BUILD_DIR}/symbol_table.o \
+	 ${BUILD_DIR}/ast_utils/uast_utils.o \
+	 ${BUILD_DIR}/ast_utils/symbol_table.o \
 	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
-	 ${BUILD_DIR}/parser_utils.o \
+	 ${BUILD_DIR}/ast_utils/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
-	 ${BUILD_DIR}/uast_clone.o \
-	 ${BUILD_DIR}/symbol_collection_clone.o \
+	 ${BUILD_DIR}/ast_utils/uast_clone.o \
+	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
 	 ${BUILD_DIR}/sema/resolve_generics.o \
 	 ${BUILD_DIR}/sema/generic_sub.o \
 	 ${BUILD_DIR}/sema/check_struct_recursion.o \
-	 ${BUILD_DIR}/sizeof.o \
+	 ${BUILD_DIR}/ast_utils/sizeof.o \
 	 ${BUILD_DIR}/token/token.o \
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
@@ -72,13 +72,13 @@ OBJS=\
 	 ${BUILD_DIR}/codegen/emit_c.o \
 	 ${BUILD_DIR}/ir/ir_utils.o \
 	 ${BUILD_DIR}/ir/ir_graphvis.o \
-	 ${BUILD_DIR}/subprocess.o
+	 ${BUILD_DIR}/util/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
-# DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen* ${BUILD_DIR}/tast.h
-DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
+# DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen* ${BUILD_DIR}/ast_utils/tast.h
+DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/ast_utils/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
@@ -100,6 +100,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/codegen/
 	mkdir -p ${BUILD_DIR}/lang_type/
 	mkdir -p ${BUILD_DIR}/ir/
+	mkdir -p ${BUILD_DIR}/ast_utils/
 
 # TODO: always run setup before ${BUILD_DIR}/main
 build: setup ${BUILD_DIR}/main
@@ -114,7 +115,7 @@ test_quick: run
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c
 
-${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
+${BUILD_DIR}/ast_utils/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
@@ -127,17 +128,17 @@ ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c
 ${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/util/arena.c
 
-${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
+${BUILD_DIR}/ast_utils/parser_utils.o: ${DEP_COMMON} src/ast_utils/parser_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/parser_utils.o src/ast_utils/parser_utils.c
 
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
 
-${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_print.o src/uast_print.c
+${BUILD_DIR}/ast_utils/uast_print.o: ${DEP_COMMON} src/ast_utils/uast_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_print.o src/ast_utils/uast_print.c
 
-${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
+${BUILD_DIR}/ast_utils/tast_print.o: ${DEP_COMMON} src/ast_utils/tast_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_print.o src/ast_utils/tast_print.c
 
 ${BUILD_DIR}/ir/ir_print.o: ${DEP_COMMON} src/ir/ir_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_print.o src/ir/ir_print.c
@@ -175,11 +176,11 @@ ${BUILD_DIR}/util/parameters.o: ${DEP_COMMON} src/util/parameters.c
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
 
-${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sizeof.o src/sizeof.c
+${BUILD_DIR}/ast_utils/sizeof.o: ${DEP_COMMON} src/ast_utils/sizeof.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/sizeof.o src/ast_utils/sizeof.c
 
-${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c
+${BUILD_DIR}/ast_utils/symbol_table.o: ${DEP_COMMON} src/ast_utils/symbol_table.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_table.o src/ast_utils/symbol_table.c
 
 ${BUILD_DIR}/lang_type/lang_type_serialize.o: ${DEP_COMMON} src/lang_type/lang_type_serialize.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_serialize.o src/lang_type/lang_type_serialize.c
@@ -190,14 +191,14 @@ ${BUILD_DIR}/lang_type/ulang_type_serialize.o: ${DEP_COMMON} src/lang_type/ulang
 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/lang_type_from_ulang_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o src/lang_type/lang_type_from_ulang_type.c
 
-${BUILD_DIR}/uast_utils.o: ${DEP_COMMON} src/uast_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_utils.o src/uast_utils.c
+${BUILD_DIR}/ast_utils/uast_utils.o: ${DEP_COMMON} src/ast_utils/uast_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_utils.o src/ast_utils/uast_utils.c
 
-${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_collection_clone.o src/symbol_collection_clone.c
+${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
 
-${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
+${BUILD_DIR}/ast_utils/uast_clone.o: ${DEP_COMMON} src/ast_utils/uast_clone.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_clone.o src/ast_utils/uast_clone.c
 
 ${BUILD_DIR}/ir/ir_utils.o: ${DEP_COMMON} src/ir/ir_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_utils.o src/ir/ir_utils.c
@@ -205,8 +206,8 @@ ${BUILD_DIR}/ir/ir_utils.o: ${DEP_COMMON} src/ir/ir_utils.c
 ${BUILD_DIR}/ir/ir_graphvis.o: ${DEP_COMMON} src/ir/ir_graphvis.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_graphvis.o src/ir/ir_graphvis.c
 
-${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c
+${BUILD_DIR}/util/subprocess.o: ${DEP_COMMON} src/util/subprocess.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/subprocess.o src/util/subprocess.c
 
 ${BUILD_DIR}/ir/add_load_and_store.o: ${DEP_COMMON} src/ir/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/add_load_and_store.o src/ir/add_load_and_store.c
