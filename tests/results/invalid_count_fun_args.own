@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/invalid_count_fun_args.own:5:5:[1;31merror[0;39m:function parameter `format_string` was not specified
+     4 | fn main() i32 {
+     5 |     printf()
+       |     ^
+     6 | 
+tests/inputs/invalid_count_fun_args.own:2:23:[1;34mnote[0;39m:function parameter `format_string` defined here
+     1 | 
+     2 | extern("c") fn printf(format_string: u8*, args: opaque...) i32
+       |                       ^
+     3 | 
+
+compile::return_code 1
+

@@ -1,0 +1,8 @@
+compile::stdout 2
+tests/inputs/assert.own:5:43
+tests/inputs/assert.own:6:7:assertion failure: hello
+
+compile::stderr 0
+
+compile::return_code 0
+
