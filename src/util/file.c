@@ -68,6 +68,7 @@ File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},
     {"so", FILE_TYPE_DYNAMIC_LIB},
+    {"c", FILE_TYPE_C},
     {"o", FILE_TYPE_OBJECT},
     {"s", FILE_TYPE_LOWER_S},
     {"S", FILE_TYPE_UPPER_S},
