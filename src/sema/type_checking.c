@@ -2167,23 +2167,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Uast_function_decl* fun_decl_temp = uast_function_def_unwrap(fun_decl_temp_)->decl;
     log(LOG_DEBUG, "thing 875: "FMT"\n", uast_function_decl_print(fun_decl_temp));
 
-    vec_append(
-        &a_main,
-        &uast_symbol_unwrap(fun_call->callee)->name.gen_args,
-        ulang_type_regular_const_wrap(ulang_type_regular_new(
-            ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-            (Pos) {0}
-        ))
-    );
-
-    Tast_expr* new_callee = NULL;
-    if (!try_set_expr_types(&new_callee, fun_call->callee)) {
-        return false;
-    }
-
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_callee));
-
-    todo();
+    //vec_append(
+    //    &a_main,
+    //    &uast_symbol_unwrap(fun_call->callee)->name.gen_args,
+    //    ulang_type_regular_const_wrap(ulang_type_regular_new(
+    //        ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
+    //        (Pos) {0}
+    //    ))
+    //);
 
     Uast_function_params* params = fun_decl_temp->params;
     Name fun_name = fun_decl_temp->name;
@@ -2295,35 +2286,40 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
+        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            todo();
+        }
+
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
-            // arguments for variadic parameter will be checked later
-            // TODO: uncomment below?:
-            // unreachable();
-            continue;
-        } else {
-            log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
-            switch (check_generic_assignment(
-                &new_arg,
-                lang_type_from_ulang_type(param->base->lang_type),
-                corres_arg,
-                uast_expr_get_pos(corres_arg)
-            )) {
-                case CHECK_ASSIGN_OK:
-                    break;
-                case CHECK_ASSIGN_INVALID:
-                    todo();
-                    //msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
-                    //status = false;
-                    //goto error;
-                case CHECK_ASSIGN_ERROR:
-                    status = false;
-                    goto error;
-                default:
-                    unreachable("");
-            }
-        }
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param->base->lang_type));
+        //if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
+        //    // arguments for variadic parameter will be checked later
+        //    // TODO: uncomment below?:
+        //    // unreachable();
+        //    continue;
+        //} else {
+        //    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
+        //    switch (check_generic_assignment(
+        //        &new_arg,
+        //        lang_type_from_ulang_type(param->base->lang_type),
+        //        corres_arg,
+        //        uast_expr_get_pos(corres_arg)
+        //    )) {
+        //        case CHECK_ASSIGN_OK:
+        //            break;
+        //        case CHECK_ASSIGN_INVALID:
+        //            todo();
+        //            //msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
+        //            //status = false;
+        //            //goto error;
+        //        case CHECK_ASSIGN_ERROR:
+        //            status = false;
+        //            goto error;
+        //        default:
+        //            unreachable("");
+        //    }
+        //}
 
         // TODO: print error, etc. if value already assigned
         log(LOG_DEBUG, "thing 879: %zu\n", curr_arg_count);
@@ -2348,7 +2344,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
-    new_callee = NULL;
+    Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
     }
