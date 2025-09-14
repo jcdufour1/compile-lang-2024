@@ -974,7 +974,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
         case UAST_GENERIC_PARAM: {
             Uast_variable_def* param_var_def = uast_variable_def_new(
                 uast_def_get_pos(base),
-                (Ulang_type) {0} /* TODO */,
+                ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(uast_def_get_pos(base))),
                 name_new(curr_mod_path, uast_generic_param_unwrap(base)->child->name.base, (Ulang_type_vec) {0}, scope_id)
             );
             *child = uast_param_new(uast_def_get_pos(base), param_var_def, is_optional, is_variadic, opt_default);

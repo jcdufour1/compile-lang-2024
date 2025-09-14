@@ -194,11 +194,13 @@ static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lan
 static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            return lang_type_from_ulang_type_regular( ulang_type_regular_const_unwrap(lang_type));
+            return lang_type_from_ulang_type_regular(ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
-            return lang_type_from_ulang_type_tuple( ulang_type_tuple_const_unwrap(lang_type));
+            return lang_type_from_ulang_type_tuple(ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:
-            return lang_type_from_ulang_type_fn( ulang_type_fn_const_unwrap(lang_type));
+            return lang_type_from_ulang_type_fn(ulang_type_fn_const_unwrap(lang_type));
+        case ULANG_TYPE_GEN_PARAM:
+            unreachable("");
     }
     unreachable("");
 }

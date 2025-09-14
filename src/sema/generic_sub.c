@@ -85,6 +85,8 @@ void generic_sub_lang_type(
         }
         case ULANG_TYPE_TUPLE:
             todo();
+        case ULANG_TYPE_GEN_PARAM:
+            unreachable("cannot perform generic substitution on ulang_type_gen_param");
     }
     unreachable("");
 }

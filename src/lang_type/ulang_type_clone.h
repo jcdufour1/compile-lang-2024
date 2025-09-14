@@ -11,6 +11,10 @@ static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, Scope_id n
     return new_vec;
 }
 
+static inline Ulang_type_gen_param ulang_type_gen_param_clone(Ulang_type_gen_param lang_type) {
+    return ulang_type_gen_param_new(lang_type.pos);
+}
+
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, Scope_id new_scope) {
     return ulang_type_tuple_new(ulang_type_vec_clone(lang_type.ulang_types, new_scope), lang_type.pos);
 }
@@ -41,6 +45,10 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, Scope_id new_sco
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_wrap(ulang_type_regular_clone(
                 ulang_type_regular_const_unwrap(lang_type), new_scope
+            ));
+        case ULANG_TYPE_GEN_PARAM:
+            return ulang_type_gen_param_const_wrap(ulang_type_gen_param_clone(
+                ulang_type_gen_param_const_unwrap(lang_type)
             ));
     }
 }

@@ -64,21 +64,31 @@ typedef struct Ulang_type_regular_ {
     Pos pos;
 }Ulang_type_regular;
 
+typedef struct Ulang_type_gen_param_ {
+    Pos pos;
+}Ulang_type_gen_param;
+
 typedef union Ulang_type_as_ {
     Ulang_type_tuple ulang_type_tuple;
     Ulang_type_fn ulang_type_fn;
     Ulang_type_regular ulang_type_regular;
+    Ulang_type_gen_param ulang_type_gen_param;
 }Ulang_type_as;
 typedef enum ULANG_TYPE_TYPE_ {
     ULANG_TYPE_TUPLE,
     ULANG_TYPE_FN,
     ULANG_TYPE_REGULAR,
+    ULANG_TYPE_GEN_PARAM,
 }ULANG_TYPE_TYPE;
 typedef struct Ulang_type_ {
     Ulang_type_as as;
     ULANG_TYPE_TYPE type;
 }Ulang_type;
 
+static inline Ulang_type_gen_param ulang_type_gen_param_const_unwrap(const Ulang_type ulang_type) {
+    unwrap(ulang_type.type == ULANG_TYPE_GEN_PARAM);
+    return ulang_type.as.ulang_type_gen_param;
+}
 static inline Ulang_type_tuple ulang_type_tuple_const_unwrap(const Ulang_type ulang_type) {
     unwrap(ulang_type.type == ULANG_TYPE_TUPLE);
     return ulang_type.as.ulang_type_tuple;
@@ -94,6 +104,12 @@ static inline Ulang_type_regular ulang_type_regular_const_unwrap(const Ulang_typ
 static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_REGULAR);
     return &ulang_type->as.ulang_type_regular;
+}
+static inline Ulang_type ulang_type_gen_param_const_wrap(Ulang_type_gen_param ulang_type) {
+    Ulang_type new_ulang_type = {0};
+    new_ulang_type.type = ULANG_TYPE_GEN_PARAM;
+    new_ulang_type.as.ulang_type_gen_param = ulang_type;
+    return new_ulang_type;
 }
 static inline Ulang_type ulang_type_tuple_const_wrap(Ulang_type_tuple ulang_type) {
     Ulang_type new_ulang_type = {0};
@@ -113,12 +129,17 @@ static inline Ulang_type ulang_type_regular_const_wrap(Ulang_type_regular ulang_
     new_ulang_type.as.ulang_type_regular = ulang_type;
     return new_ulang_type;
 }
+#define ulang_type_gen_param_print(ulang_type) strv_print(ulang_type_gen_param_print_internal(ulang_type, 0))
+Strv ulang_type_gen_param_print_internal(const Ulang_type_gen_param* ulang_type, int recursion_depth);
 #define ulang_type_tuple_print(ulang_type) strv_print(ulang_type_tuple_print_internal(ulang_type, 0))
 Strv ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, int recursion_depth);
 #define ulang_type_fn_print(ulang_type) strv_print(ulang_type_fn_print_internal(ulang_type, 0))
 Strv ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, int recursion_depth);
 #define ulang_type_regular_print(ulang_type) strv_print(ulang_type_regular_print_internal(ulang_type, 0))
 Strv ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, int recursion_depth);
+static inline Ulang_type_gen_param ulang_type_gen_param_new(Pos pos){
+    return (Ulang_type_gen_param) { .pos = pos};
+}
 static inline Ulang_type_tuple ulang_type_tuple_new(Ulang_type_vec ulang_types, Pos pos){
     return (Ulang_type_tuple) { .ulang_types = ulang_types, .pos = pos};
 }
@@ -131,6 +152,8 @@ static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Po
 
 static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
     switch (lang_type.type) {
+        case ULANG_TYPE_GEN_PARAM:
+            unreachable("");
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:
@@ -143,6 +166,8 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
 
 static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
     switch (lang_type->type) {
+        case ULANG_TYPE_GEN_PARAM:
+            unreachable("");
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:
