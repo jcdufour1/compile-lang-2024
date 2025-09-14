@@ -2181,6 +2181,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         return false;
     }
 
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_callee));
+
     todo();
 
     Uast_function_params* params = fun_decl_temp->params;
