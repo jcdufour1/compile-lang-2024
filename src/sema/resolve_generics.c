@@ -280,7 +280,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         case UAST_MOD_ALIAS:
             todo();
         case UAST_GENERIC_PARAM:
-            todo();
+            // TODO: explain why it is unreachable
+            unreachable("");
         case UAST_FUNCTION_DEF:
             todo();
         case UAST_FUNCTION_DECL:

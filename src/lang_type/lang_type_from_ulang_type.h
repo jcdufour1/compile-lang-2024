@@ -57,8 +57,21 @@ static inline bool try_lang_type_from_ulang_type_tuple(
     Ulang_type_tuple lang_type,
     Pos pos
 ) {
+    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_tuple_const_wrap(lang_type)));
     Lang_type_vec new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
+        if (vec_at(&lang_type.ulang_types, idx).type == ULANG_TYPE_REGULAR) {
+            Ulang_type_regular reg = ulang_type_regular_const_unwrap(vec_at(&lang_type.ulang_types, idx));
+            Uast_def* result = NULL;
+            Name thing = {0};
+            if (!name_from_uname(&thing, reg.atom.str)) {
+                todo();
+            }
+            unwrap(usymbol_lookup(&result, thing));
+            if (result->type == UAST_GENERIC_PARAM) {
+                continue;
+            }
+        }
         Lang_type new_child = {0};
         if (!try_lang_type_from_ulang_type(&new_child, vec_at(&lang_type.ulang_types, idx), pos)) {
             return false;
