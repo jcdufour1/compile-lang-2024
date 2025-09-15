@@ -172,7 +172,6 @@ fn concise() {
         case .none: io.printf("test 44: got nothing")
     }
 
-    let result1000 io.Optional(<i32>) = try_add_one(13, i32)
     switch try_add_one(13, i32) {
         case .some(num): io.printf("test 45: got number: %d\n", num)
         case .none: io.printf("test 45: got nothing")
