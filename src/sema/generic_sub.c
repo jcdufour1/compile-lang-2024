@@ -354,7 +354,14 @@ void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
             // TODO
             todo();
         }
-        *name = gen_param;
+        if (gen_arg.type != ULANG_TYPE_REGULAR) {
+            // TODO
+            todo();
+        }
+        if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str)) {
+            // TODO
+            todo();
+        }
         return;
     }
     for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {
