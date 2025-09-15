@@ -38,7 +38,7 @@ fn token_print(token Token) {
 //    return 52
 //}
 
-fn triangle(<ItemType>)(num ItemType) ItemType {
+fn triangle(num ItemType, ItemType Type) ItemType {
     let result ItemType = 0
     for curr ItemType in 0..num {
         result += curr
@@ -52,12 +52,12 @@ fn triangle(<ItemType>)(num ItemType) ItemType {
     return result
 }
 
-fn try_add_one(<ItemType>)(num ItemType) io.Optional(<ItemType>) {
+fn try_add_one(num ItemType, ItemType Type) io.Optional(<ItemType>) {
     let dummy ItemType = num
     return .some(num + 1)
 }
 
-fn add_one_or_two(<ItemType>)(lhs ItemType, rhs io.Optional(<ItemType>)) ItemType {
+fn add_one_or_two(lhs ItemType, rhs io.Optional(<ItemType>), ItemType Type) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -67,7 +67,7 @@ fn add_one_or_two(<ItemType>)(lhs ItemType, rhs io.Optional(<ItemType>)) ItemTyp
     return lhs
 }
 
-fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs io.Optional(<ItemType>) = .none) ItemType {
+fn add_one_or_two_default(lhs ItemType, rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -77,7 +77,7 @@ fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs io.Optional(<ItemType>) 
     return lhs
 }
 
-fn add_one_or_two_default_verbose(<ItemType>)(lhs ItemType, rhs io.Optional(<ItemType>) = io.Optional(<ItemType>).none) ItemType {
+fn add_one_or_two_default_verbose(lhs ItemType, rhs io.Optional(<ItemType>) = io.Optional(<ItemType>).none, ItemType Type) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -121,81 +121,82 @@ fn verbose() {
 }
 
 fn concise() {
-    let number io.Optional(<i32>) = .some(84)
-    let number2 io.Optional(<i32>) = .some(87)
-    let number3 io.Optional(<i64>) = .none
-    let number4 io.Optional(<i64>) = .some(91)
-    let result Result(<i32, ParseError>) = .error({.dummy = 8})
-    let result2 Result(<Token, ParseError>) = .ok(.number(7))
+    //let number io.Optional(<i32>) = .some(84)
+    //let number2 io.Optional(<i32>) = .some(87)
+    //let number3 io.Optional(<i64>) = .none
+    //let number4 io.Optional(<i64>) = .some(91)
+    //let result Result(<i32, ParseError>) = .error({.dummy = 8})
+    //let result2 Result(<Token, ParseError>) = .ok(.number(7))
 
-    switch number {
-        case .some(num): io.printf("test 21: got number: %d\n", num)
-        case .none: io.printf("test 21: got nothing\n")
-    }
+    //switch number {
+    //    case .some(num): io.printf("test 21: got number: %d\n", num)
+    //    case .none: io.printf("test 21: got nothing\n")
+    //}
 
-    switch number2 {
-        case .some(num): io.printf("test 23: got number: %d\n", num)
-        case .none: io.printf("test 23: got nothing\n")
-    }
+    //switch number2 {
+    //    case .some(num): io.printf("test 23: got number: %d\n", num)
+    //    case .none: io.printf("test 23: got nothing\n")
+    //}
 
-    switch number3 {
-        case .some(num): io.printf("test 25: got number: %d\n", num)
-        case .none: io.printf("test 25: got nothing\n")
-    }
+    //switch number3 {
+    //    case .some(num): io.printf("test 25: got number: %d\n", num)
+    //    case .none: io.printf("test 25: got nothing\n")
+    //}
 
-    switch number4 {
-        case .some(num): io.printf("test 27: got number: %d\n", num)
-        case .none: io.printf("test 27: got nothing\n")
-    }
+    //switch number4 {
+    //    case .some(num): io.printf("test 27: got number: %d\n", num)
+    //    case .none: io.printf("test 27: got nothing\n")
+    //}
 
-    switch result {
-        case .ok(num): io.printf("test 29: got success: %d\n", num)
-        case .error(error): io.printf("test 29: got error: %d\n", error.dummy)
-    }
+    //switch result {
+    //    case .ok(num): io.printf("test 29: got success: %d\n", num)
+    //    case .error(error): io.printf("test 29: got error: %d\n", error.dummy)
+    //}
 
-    switch result2 {
-        case .ok(token): token_print(token)
-        case .error(error): io.printf("test 31: got error: %d\n", error.dummy)
-    }
+    //switch result2 {
+    //    case .ok(token): token_print(token)
+    //    case .error(error): io.printf("test 31: got error: %d\n", error.dummy)
+    //}
 
-    let num3 i32 = 4
-    let num2 i64 = 5
-    let num1 i16 = 6
-    io.printf("test 40: got number: %d\n", triangle(<i32>)(num3))
-    io.printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
-    io.printf("test 42: got number: %d\n", triangle(<i64>)(num2))
-    io.printf("test 43: got number: %d\n", unsafe_cast<i32>(triangle(<i16>)(6)))
+    //let num3 i32 = 4
+    //let num2 i64 = 5
+    //let num1 i16 = 6
+    //io.printf("test 40: got number: %d\n", triangle(num3, i32))
+    //io.printf("test 41: got number: %d\n", triangle(num3 + 2, i32))
+    //io.printf("test 42: got number: %d\n", triangle(num2, i64))
+    //io.printf("test 43: got number: %d\n", unsafe_cast<i32>(triangle(6, i16)))
 
-    let result10 io.Optional(<i32>) = try_add_one(<i32>)(12)
-    switch result10 {
-        case .some(num): io.printf("test 44: got number: %d\n", num)
-        case .none: io.printf("test 44: got nothing")
-    }
+    //let result10 io.Optional(<i32>) = try_add_one(12, i32)
+    //switch result10 {
+    //    case .some(num): io.printf("test 44: got number: %d\n", num)
+    //    case .none: io.printf("test 44: got nothing")
+    //}
 
-    switch try_add_one(<i32>)(13) {
-        case .some(num): io.printf("test 45: got number: %d\n", num)
-        case .none: io.printf("test 45: got nothing")
-    }
+    //let result1000 io.Optional(<i32>) = try_add_one(13, i32)
+    //switch try_add_one(13, i32) {
+    //    case .some(num): io.printf("test 45: got number: %d\n", num)
+    //    case .none: io.printf("test 45: got nothing")
+    //}
 
-    io.printf("test 46: got number: %d\n", triangle(<i64>)(num2))
+    //io.printf("test 46: got number: %d\n", triangle(num2, i64))
 
-    io.printf("test 47: got number %d\n", add_one_or_two(<i32>)(8, .none))
-    io.printf("test 48: got number %d\n", add_one_or_two(<i32>)(6, .some(7)))
-    io.printf("test 49: got number %d\n", add_one_or_two(<i64>)(82, .some(3)))
+    //io.printf("test 47: got number %d\n", add_one_or_two(8, .none, i32))
+    //io.printf("test 48: got number %d\n", add_one_or_two(6, .some(7), i32))
+    //io.printf("test 49: got number %d\n", add_one_or_two(82, .some(3), i64))
 
-    io.printf("test 50: got number %d\n", add_one_or_two_default(<i32>)(71))
-    io.printf("test 51: got number %d\n", add_one_or_two_default(<i32>)(72, .none))
-    io.printf("test 52: got number %d\n", add_one_or_two_default(<i32>)(7, .some(9)))
-    io.printf("test 53: got number %d\n", add_one_or_two_default(<i64>)(828, .some(4)))
+    io.printf("test 50: got number %d\n", add_one_or_two_default(71, .ItemType = i32))
+    //io.printf("test 51: got number %d\n", add_one_or_two_default(72, .none, i32))
+    //io.printf("test 52: got number %d\n", add_one_or_two_default(7, .some(9), i32))
+    //io.printf("test 53: got number %d\n", add_one_or_two_default(828, .some(4), i64))
 
-    io.printf("test 54: got number %d\n", add_one_or_two_default_verbose(<i32>)(78))
-    io.printf("test 55: got number %d\n", add_one_or_two_default_verbose(<i32>)(79, .none))
-    io.printf("test 56: got number %d\n", add_one_or_two_default_verbose(<i32>)(14, .some(16)))
-    io.printf("test 57: got number %d\n", add_one_or_two_default_verbose(<i64>)(835, .some(11)))
+    //io.printf("test 54: got number %d\n", add_one_or_two_default_verbose(78), i32)
+    //io.printf("test 55: got number %d\n", add_one_or_two_default_verbose(79, .none, i32))
+    //io.printf("test 56: got number %d\n", add_one_or_two_default_verbose(14, .some(16), i32))
+    //io.printf("test 57: got number %d\n", add_one_or_two_default_verbose(835, .some(11), i64))
 }
 
 fn main() i32 {
-    verbose()
+    //verbose()
     concise()
     return 0;
 }

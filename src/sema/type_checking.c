@@ -987,6 +987,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 // returns false if unsuccessful
 bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     Tast_expr* new_lhs;
+    log(LOG_DEBUG, FMT"\n", uast_binary_print(operator));
     if (!try_set_expr_types(&new_lhs, operator->lhs)) {
         return false;
     }
@@ -2159,11 +2160,24 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         return try_set_function_call_types_old(new_call, fun_call);
     }
 
+    assert(
+        uast_symbol_unwrap(fun_call->callee)->name.gen_args.info.count == 0 &&
+        "generics are already instanciated, and they should not have been"
+    );
+
     bool status = true;
 
     Uast_def* fun_decl_temp_ = NULL;
     if (!usymbol_lookup(&fun_decl_temp_, uast_symbol_unwrap(fun_call->callee)->name)) {
-        todo();
+        log(LOG_DEBUG, FMT"\n", uast_expr_print(fun_call->callee));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, uast_symbol_unwrap(fun_call->callee)->name));
+        Tast_expr* dummy = NULL;
+        unwrap(
+            !try_set_expr_types(&dummy, fun_call->callee) &&
+            "try_set_expr_types was supposed to fail so that an error will be printed for undefined function"
+        );
+        status = false;
+        goto error;
     }
     Uast_function_decl* fun_decl_temp = uast_function_def_unwrap(fun_decl_temp_)->decl;
     log(LOG_DEBUG, "thing 875: "FMT"\n", uast_function_decl_print(fun_decl_temp));
@@ -2426,6 +2440,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
+    // TODO: remove most code in switch if we will only ever be handling tast_symbol here
     switch (new_callee->type) {
         case TAST_ENUM_CALLEE: {
             // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
@@ -2595,12 +2610,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
 
-        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            prev_gen_count++;
-            // do not append generics to the new list of arguments
-            continue;
-        }
-
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
         } else if (is_variadic) {
@@ -2624,14 +2633,35 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
+            size_t local_gen_count = 0;
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
+                log(LOG_DEBUG, FMT" "FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx_param)->base->name), name_print(NAME_LOG, lhs->member_name->name));
+                if (vec_at(&params->params, idx_param)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                    local_gen_count++;
+                }
+
                 if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
-                    unreachable("this should have been caught in the earlier check");
+                    param = vec_at(&params->params, idx_param);
+                    curr_arg_count = idx_param - local_gen_count;
+                    name_found = true;
+
+                    if (vec_at(&new_args_set, curr_arg_count)) {
+                        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name));
+                        unreachable("this should have been caught in the earlier check");
+                    }
+
+                    break;
                 }
             }
             if (!name_found) {
                 unreachable("this should have been caught in the earlier check");
             }
+        }
+
+        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            prev_gen_count++;
+            // do not append generics to the new list of arguments
+            continue;
         }
 
         Tast_expr* new_arg = NULL;
@@ -3363,6 +3393,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     bool status = true;
 
     Tast_condition* new_cond = NULL;
+    log(LOG_DEBUG, FMT"\n", uast_if_print(uast));
     if (!try_set_condition_types(&new_cond, uast->condition)) {
         log(LOG_DEBUG, FMT, uast_condition_print(uast->condition));
         status = false;
@@ -3565,8 +3596,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
 
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
     Tast_expr* new_operand = NULL;
-    if (!try_set_expr_types(&new_operand, lang_switch->operand)) {
+    if (!try_set_expr_types(&new_operand, uast_expr_clone(lang_switch->operand, vec_at(&lang_switch->cases, 0)->scope_id, lang_switch->pos /* TODO */))) {
         return false;
     }
 
@@ -3606,8 +3638,10 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         switch (tast_expr_get_lang_type(new_operand).type) {
             case LANG_TYPE_ENUM:
                 operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
-                    uast_expr_get_pos(lang_switch->operand), lang_switch->operand
+                    uast_expr_get_pos(lang_switch->operand), uast_expr_clone(lang_switch->operand, old_case->scope_id, lang_switch->pos /* TODO */)
                 ));
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(lang_switch->operand));
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(operand));
                 break;
             default:
                 unreachable("this should have been caught earlier");
