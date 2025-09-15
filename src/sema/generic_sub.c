@@ -46,6 +46,17 @@ void generic_sub_lang_type_regular(
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
+void generic_sub_lang_type_gen_param(
+    Ulang_type* new_lang_type,
+    Ulang_type_gen_param lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    (void) gen_param;
+    (void) gen_arg;
+    *new_lang_type = ulang_type_gen_param_const_wrap(lang_type);
+}
+
 void generic_sub_lang_type_tuple(Ulang_type_tuple* lang_type, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lang_type->ulang_types.info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(&lang_type->ulang_types, idx), gen_param, gen_arg);
@@ -86,7 +97,13 @@ void generic_sub_lang_type(
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_GEN_PARAM:
-            unreachable("cannot perform generic substitution on ulang_type_gen_param");
+            generic_sub_lang_type_gen_param(
+                new_lang_type,
+                ulang_type_gen_param_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            return;
     }
     unreachable("");
 }
@@ -94,6 +111,10 @@ void generic_sub_lang_type(
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg) {
     generic_sub_name(&def->name, gen_param, gen_arg);
     generic_sub_lang_type(&def->lang_type, def->lang_type, gen_param, gen_arg);
+}
+
+void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg) {
+    generic_sub_symbol(def->child, gen_param, gen_arg);
 }
 
 void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
@@ -116,7 +137,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_POISON_DEF:
             todo();
         case UAST_GENERIC_PARAM:
-            todo();
+            generic_sub_generic_param(uast_generic_param_unwrap(def), gen_param, gen_arg);
+            return;
         case UAST_FUNCTION_DEF:
             todo();
         case UAST_VARIABLE_DEF:

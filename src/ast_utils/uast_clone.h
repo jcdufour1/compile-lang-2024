@@ -31,7 +31,7 @@ Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, 
 
 Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, Scope_id new_scope);
 
-Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param);
+Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, Scope_id new_scope);
 
 Uast_function_params* uast_function_params_clone(const Uast_function_params* params, Scope_id scope_id);
 

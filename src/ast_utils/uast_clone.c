@@ -37,10 +37,10 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
-Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec) {
+Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec, Scope_id new_scope) {
     Uast_generic_param_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(&vec, idx)));
+        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(&vec, idx), new_scope));
     }
     return new_vec;
 }
@@ -180,6 +180,10 @@ Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_s
     return uast_mod_alias_new(alias->pos, name_clone(alias->name, new_scope), name_clone(alias->mod_path, new_scope));
 }
 
+Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, Scope_id new_scope) {
+    return uast_generic_param_new(param->pos, uast_symbol_clone(param->child, new_scope));
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_pos) {
     switch (expr->type) {
         case UAST_BLOCK:
@@ -221,7 +225,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_p
 Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
     switch (def->type) {
         case UAST_GENERIC_PARAM:
-            todo();
+            return uast_generic_param_wrap(uast_generic_param_clone(uast_generic_param_const_unwrap(def), new_scope));
         case UAST_FUNCTION_DEF:
             todo();
         case UAST_FUNCTION_DECL:
@@ -343,7 +347,7 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_i
 Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, Scope_id new_scope) {
     return uast_function_decl_new(
         decl->pos,
-        uast_generic_param_vec_clone(decl->generics),
+        uast_generic_param_vec_clone(decl->generics, new_scope),
         uast_function_params_clone(decl->params, new_scope),
         ulang_type_clone(decl->return_type, new_scope),
         name_clone(decl->name, new_scope)
@@ -355,11 +359,6 @@ Uast_function_params* uast_function_params_clone(const Uast_function_params* par
         params->pos,
         uast_param_vec_clone(params->params, scope_id)
     );
-}
-
-Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param) {
-    // WARNING: the variable defs here are given a junk scope_id (for now)
-    return uast_generic_param_new(param->pos, uast_symbol_clone(param->child, SCOPE_NOT));
 }
 
 Uast_block* uast_block_clone(const Uast_block* block, Scope_id parent, Pos dest_pos) {

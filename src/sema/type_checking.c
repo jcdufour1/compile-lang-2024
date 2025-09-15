@@ -2279,7 +2279,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
             }
             if (!name_found) {
-                // TODO: this will print "member", but should print "parameter"
                 msg(
                     DIAG_INVALID_MEMBER_ACCESS,
                     lhs->pos,
@@ -2305,6 +2304,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
                     param->base->name.base
                 )) {
+                    // TODO: put actual type below instead of just i32
                     *vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
                         ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
                         (Pos) {0}
@@ -2377,10 +2377,41 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
+    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
+        log(LOG_DEBUG, "thing 315: %zu\n", idx);
+        if (!vec_at(&new_args_set, idx)) {
+            Name param_name = vec_at(&params->params, idx)->base->name;
+            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+                size_t min_args = params->params.info.count;
+                size_t max_args = params->params.info.count;
+                if (is_variadic) {
+                    max_args = SIZE_MAX; 
+                }
+                msg_invalid_count_function_args(fun_call, fun_decl_temp, min_args, max_args);
+            } else {
+                msg(
+                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                    "function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, param_name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(&params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
+                );
+            }
+            status = false;
+        } else {
+            //log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        }
+    }
+
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
     }
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_callee));
 
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
@@ -2528,8 +2559,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
     //amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
 
+    params = fun_decl->params;
+
     memset(&new_args, 0, sizeof(new_args));
-    memset(&new_args, 0, sizeof(new_args_set));
+    memset(&new_args_set, 0, sizeof(new_args_set));
+    amt_args_needed -= fun_decl->generics.info.count;
     vec_reserve(&a_main, &new_args, amt_args_needed);
     while (new_args.info.count < amt_args_needed) {
         vec_append(&a_main, &new_args, NULL);
@@ -2548,6 +2582,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
+
+        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            // do not append generics to the new list of arguments
+            continue;
+        }
 
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
@@ -2584,12 +2623,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
+        // TODO: remove "0 && " below?
+        if (0 && lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
             // arguments for variadic parameter will be checked later
             // TODO: uncomment below?:
             // unreachable();
             continue;
         } else {
+            log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, param->base->lang_type));
             log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_ulang_type(param->base->lang_type)));
             switch (check_generic_assignment(
                 &new_arg,
@@ -2690,36 +2731,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     }
                 }
             }
-        }
-    }
-
-    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
-        log(LOG_DEBUG, "thing 315: %zu\n", idx);
-        if (!vec_at(&new_args_set, idx)) {
-            Name param_name = vec_at(&params->params, idx)->base->name;
-            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
-                size_t min_args = params->params.info.count;
-                size_t max_args = params->params.info.count;
-                if (is_variadic) {
-                    max_args = SIZE_MAX; 
-                }
-                msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args);
-            } else {
-                msg(
-                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
-                    "function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, param_name)
-                );
-                msg(
-                    DIAG_NOTE,
-                    vec_at(&params->params, idx)->pos,
-                    "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, vec_at(&params->params, idx)->base->name)
-                );
-            }
-            status = false;
-        } else {
-            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
         }
     }
 
@@ -3175,6 +3186,9 @@ bool try_set_function_params_types(
     Tast_variable_def_vec new_params = {0};
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Uast_param* def = vec_at(&params->params, idx);
+        if (def->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            continue;
+        }
 
         Tast_variable_def* new_def = NULL;
         if (try_set_variable_def_types(&new_def, def->base, add_to_sym_tbl, def->is_variadic)) {

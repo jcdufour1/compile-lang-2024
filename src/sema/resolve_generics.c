@@ -429,6 +429,7 @@ static bool resolve_generics_serialize_function_decl(
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
             // TODO: same params are being replaced both here and in generic_sub_block?
+            log(LOG_DEBUG, "%zu "FMT"\n", idx_fun_param, uast_param_print(vec_at(&params, idx_fun_param)));
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;

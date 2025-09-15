@@ -115,8 +115,8 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
             return true;
         }
         case ULANG_TYPE_GEN_PARAM: {
-            todo();
-            //return true;
+            // TODO: actually implement this if needed
+            return true;
         }
     }
     unreachable("");
