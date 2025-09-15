@@ -349,6 +349,14 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
+    if (name_is_equal(*name, gen_param)) {
+        if (name->gen_args.info.count > 0) {
+            // TODO
+            todo();
+        }
+        *name = gen_param;
+        return;
+    }
     for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(&name->gen_args, idx), vec_at(&name->gen_args, idx), gen_param, gen_arg);
     }

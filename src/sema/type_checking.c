@@ -2582,13 +2582,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     log(LOG_DEBUG, FMT"\n", uast_function_decl_print(fun_decl));
 
     // TODO: consider case of optional arguments and variadic arguments being used in same function
+    size_t prev_gen_count = 0;
     for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
-        size_t curr_arg_count = param_idx;
+        size_t curr_arg_count = param_idx - prev_gen_count;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
 
         if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            prev_gen_count++;
             // do not append generics to the new list of arguments
             continue;
         }
