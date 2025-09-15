@@ -893,6 +893,10 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
     if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
         return false;
     }
+    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        atom.pointer_depth++;
+    }
+
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
     return true;
 }
@@ -2750,7 +2754,18 @@ static PARSE_EXPR_STATUS parse_unary(
     Token oper = consume_unary(tokens);
 
     Uast_expr* child = NULL;
-    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
+    Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_atom_new(
+            uname_new(
+                name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+                sv("i32"),
+                (Ulang_type_vec) {0},
+                SCOPE_BUILTIN
+            ),
+            0
+        ),
+        oper.pos
+    )); // this is a placeholder type
 
     static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
@@ -2774,9 +2789,8 @@ static PARSE_EXPR_STATUS parse_unary(
                     return PARSE_EXPR_ERROR;
                 }
             }
-            // TODO: parse just Lang_type instead of Lang_type_atom
             // make expected success case for function pointer casting, etc.
-            if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens, scope_id)) {
+            if (PARSE_OK != parse_lang_type_struct_require(&unary_lang_type, tokens, scope_id)) {
                 return PARSE_EXPR_ERROR;
             }
             {
@@ -2818,7 +2832,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 oper.pos,
                 child,
                 token_type_to_unary_type(oper.type),
-                ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos))
+                unary_lang_type
             )));
             assert(*result);
             break;

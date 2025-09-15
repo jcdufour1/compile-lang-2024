@@ -194,7 +194,6 @@ static bool resolve_generics_ulang_type_internal_struct_like(
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
-            todo();
             return false;
         }
 
