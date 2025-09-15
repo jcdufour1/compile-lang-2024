@@ -2361,7 +2361,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         // TODO: print error, etc. if value already assigned
         log(LOG_DEBUG, "thing 879: %zu\n", curr_arg_count);
-        if (vec_at(&new_args_set, curr_arg_count)) {
+        if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
             // TODO: print error for respecified function arg
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
@@ -2380,6 +2380,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
+    }
+
+    if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
+        msg_invalid_count_function_args(fun_call, fun_decl_temp, params->params.info.count, params->params.info.count);
+        status = false;
+        goto error;
     }
 
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
@@ -2683,9 +2689,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args(fun_call, fun_decl, params->params.info.count, params->params.info.count);
-        status = false;
-        goto error;
+        unreachable("this should have been caught earlier");
     }
 
     if (is_variadic) {
