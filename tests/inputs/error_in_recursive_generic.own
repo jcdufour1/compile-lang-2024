@@ -1,38 +1,38 @@
 type io import = std.io
 
-fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+fn add(lhs NumType, rhs NumType, NumType Type) NumType {
     if rhs < 0 {
-        return add(<NumType>)(lhs - 1, rhs + 1)
+        return add(lhs - 1, rhs + 1, NumType)
     } 
     if rhs > 0 {
-        return add(<i31>)(lhs + 1, rhs - 1)
+        return add(lhs + 1, rhs - 1, i31)
     }
     return lhs
 }
 
-fn add2(<NumType>)(lhs NumType, rhs NumType) NumType {
+fn add2(lhs NumType, rhs NumType, NumType Type) NumType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
     if rhs > 0 {
-        return add2(<NumType>)(lhs + 1, rhs - 1)
+        return add2(lhs + 1, rhs - 1, NumType)
     }
     return lhs
 }
 
-fn add3(<NumType>)(lhs NumType, rhs NumType) NumType {
+fn add3(lhs NumType, rhs NumType, NumType Type) NumType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
     if rhs > 0 {
-        return add2(<NumType>)(lhs + 1, rhs - 1)
+        return add2(lhs + 1, rhs - 1, NumType)
     }
     return lhs
 }
 
 fn main() i32 {
-    io.printf("%d\n", add(<i32>)(56, -34))
-    io.printf("%d\n", add2(<i32>)(57, -3))
+    io.printf("%d\n", add(56, -34, i32))
+    io.printf("%d\n", add2(57, -3, i32))
     io.printf("%d\n", add3(58, -2))
     return 0
 }
