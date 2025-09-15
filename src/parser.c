@@ -1410,7 +1410,7 @@ static PARSE_STATUS parse_variable_def(
         scope_id
     );
     if (status != PARSE_OK) {
-        return false;
+        return PARSE_ERROR;
     }
 
     if (result_->type != UAST_VARIABLE_DEF) {
