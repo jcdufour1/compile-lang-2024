@@ -2,7 +2,6 @@
 
 fn main() i32 {
     switch num {
-        default: break
     }
     return 0
 }

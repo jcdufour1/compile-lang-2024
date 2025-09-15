@@ -86,7 +86,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 72, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 73, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -159,7 +159,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"unknown-on-non-enum-type", DIAG_UNKNOWN_ON_NON_ENUM_TYPE, LOG_ERROR, true},
     {"invalid-label-pos", DIAG_INVALID_LABEL_POS, LOG_ERROR, true},
     {"invalid-countof", DIAG_INVALID_COUNTOF, LOG_ERROR, true},
-    {"DIAG-REDEF-STRUCT-BASE-MEMBER", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
+    {"diag-redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
+    {"diag-switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

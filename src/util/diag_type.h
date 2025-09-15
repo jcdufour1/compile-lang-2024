@@ -74,6 +74,7 @@ typedef enum {
     DIAG_INVALID_LABEL_POS,
     DIAG_INVALID_COUNTOF,
     DIAG_REDEF_STRUCT_BASE_MEMBER,
+    DIAG_SWITCH_NO_CASES,
 
     // count of cases for static asserts
     DIAG_COUNT,

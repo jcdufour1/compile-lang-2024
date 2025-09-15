@@ -2241,13 +2241,19 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
     log(LOG_DEBUG, "thing 877: %zu\n", parent);
+
+    if (cases.info.count < 1) {
+        msg(DIAG_SWITCH_NO_CASES, start_token.pos, "switch statement must have at least one case statement\n");
+        status = PARSE_ERROR;
+        goto error;
+    }
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
     log_tokens(LOG_DEBUG, *tokens);
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         // TODO: expeced failure case no close brace
         msg_todo("no close brace", start_token.pos);
-        status = false;
+        status = PARSE_ERROR;
         goto error;
     }
 
@@ -3002,6 +3008,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
+    log(LOG_DEBUG, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
