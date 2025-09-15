@@ -2287,6 +2287,21 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, param->base->name));
+            bool found_gen = false;
+            for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
+                if (strv_is_equal(
+                    vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
+                    param->base->name.base
+                )) {
+                    found_gen = true;
+                    todo();
+                }
+            }
+
+            if (!found_gen) {
+                todo();
+            }
             todo();
         }
 
