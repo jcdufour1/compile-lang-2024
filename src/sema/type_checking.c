@@ -26,6 +26,7 @@
 #include <msg_undefined_symbol.h>
 #include <pos_vec.h>
 #include <check_struct_recursion.h>
+#include <uast_expr_to_ulang_type.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -2304,11 +2305,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
                     param->base->name.base
                 )) {
-                    // TODO: put actual type below instead of just i32
-                    *vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                        ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-                        (Pos) {0}
-                    ));
+                    if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
+                        status = false;
+                        goto error;
+                    }
+                    // TODO: remove below comment after above works
+                    //*vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
+                    //    ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
+                    //    (Pos) {0}
+                    //));
                     *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
                     break;
