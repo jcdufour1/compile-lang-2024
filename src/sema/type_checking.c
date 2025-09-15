@@ -1164,7 +1164,11 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
         return false;
     }
 
-    return try_set_unary_types_finish(new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, lang_type_from_ulang_type(unary->lang_type));
+    Lang_type cast_to = {0};
+    if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type, unary->pos)) {
+        return false;
+    }
+    return try_set_unary_types_finish(new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, cast_to);
 }
 
 // returns false if unsuccessful

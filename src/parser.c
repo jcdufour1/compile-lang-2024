@@ -2768,9 +2768,9 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         case TOKEN_UNSAFE_CAST: {
             {
-                Token temp;
+                Token temp = {0};
                 if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                    msg_parser_expected(temp, "", TOKEN_LESS_THAN);
+                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_LESS_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }
@@ -2780,9 +2780,9 @@ static PARSE_EXPR_STATUS parse_unary(
                 return PARSE_EXPR_ERROR;
             }
             {
-                Token temp;
+                Token temp = {0};
                 if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                    msg_parser_expected(temp, "", TOKEN_GREATER_THAN);
+                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_GREATER_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }

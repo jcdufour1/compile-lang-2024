@@ -45,6 +45,7 @@ static void msg_invalid_count_generic_args_internal(
     String message = {0};
     string_extend_size_t(&a_print, &message, gen_args.info.count);
     string_extend_cstr(&a_print, &message, " generic arguments are passed");
+    // TODO: print base type (eg. `Token`)
     string_extend_cstr(&a_print, &message, ", but ");
     string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
@@ -193,6 +194,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
+            todo();
             return false;
         }
 
