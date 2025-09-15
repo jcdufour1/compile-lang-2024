@@ -2227,7 +2227,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Bool_vec new_gens_set = {0};
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
     while (new_gens.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &new_gens, (Ulang_type) {0});
+        vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new((Pos) {0} /* TODO */)));
     }
     vec_reserve(&a_main, &new_gens_set, fun_decl_temp->generics.info.count);
     while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
@@ -2436,6 +2436,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 );
             }
             status = false;
+            goto error;
         } else {
             //log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
         }
@@ -3194,6 +3195,7 @@ bool try_set_variable_def_types(
     }
 
     Lang_type new_lang_type = {0};
+    log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update(uast_poison_def_wrap(new_poison));

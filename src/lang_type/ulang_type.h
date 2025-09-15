@@ -153,9 +153,10 @@ static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Po
 static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_GEN_PARAM:
-            unreachable("");
+            // TODO
+            return 0;
         case ULANG_TYPE_TUPLE:
-            todo();
+            return 0;
         case ULANG_TYPE_FN:
             todo();
         case ULANG_TYPE_REGULAR:
@@ -167,9 +168,12 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
 static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
     switch (lang_type->type) {
         case ULANG_TYPE_GEN_PARAM:
-            unreachable("");
+            // TODO
+            //unwrap(pointer_depth == 0);
+            return;
         case ULANG_TYPE_TUPLE:
-            todo();
+            unwrap(pointer_depth == 0);
+            return;
         case ULANG_TYPE_FN:
             todo();
         case ULANG_TYPE_REGULAR:

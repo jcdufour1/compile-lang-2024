@@ -1,10 +1,10 @@
 
-fn sub(<NumType>)(lhs NumType, rhs NumType) {
+fn sub(lhs NumType, rhs NumType, NumType Type) {
     let result NumType = lhs - rhs
     return result
 }
 
-fn add(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
+fn add(lhs NumType, rhs NumType, dummy DummyType, NumType Type, DummyType Type) {
     let result NumType = lhs + rhs
     return result
 }
@@ -15,8 +15,8 @@ type Token struct(<ItemType, PosType>) {
 }
 
 fn main() i32 {
-    let num1 i32 = sub(<i32, i64>)(7, 8)
-    let num2 i32 = add(<i32>)(7, 8, 9)
+    let num1 i32 = sub(7, 8, i32, i64)
+    let num2 i32 = add(7, 8, 9, i32)
     let token1 Token = {.item = 87, .pos = 32}
     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
     return 0
