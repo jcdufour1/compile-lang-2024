@@ -2156,21 +2156,80 @@ error:
 }
 
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
-    if (fun_call->callee->type != UAST_SYMBOL) {
-        return try_set_function_call_types_old(new_call, fun_call);
+    Name* sym_name = NULL;
+    switch (fun_call->callee->type) {
+        case TAST_BLOCK:
+            todo();
+        case TAST_MODULE_ALIAS:
+            todo();
+        case TAST_IF_ELSE_CHAIN:
+            todo();
+        case TAST_ASSIGNMENT:
+            todo();
+        case TAST_OPERATOR:
+            todo();
+        case TAST_SYMBOL:
+            sym_name = &uast_symbol_unwrap(fun_call->callee)->name;
+            break;
+        case TAST_MEMBER_ACCESS: {
+            // TODO: put mod path in sym_name or whatever?
+            // TODO: make helper function for this?
+            //
+            
+            Uast_member_access* access = uast_member_access_unwrap(fun_call->callee);
+            if (access->callee->type == UAST_MEMBER_ACCESS) {
+                // TODO
+                return try_set_function_call_types_old(new_call, fun_call);
+            }
+            if (access->callee->type != UAST_SYMBOL) {
+                return try_set_function_call_types_old(new_call, fun_call);
+            }
+            Uast_def* mod_path_ = NULL;
+            if (!usymbol_lookup(&mod_path_, uast_symbol_unwrap(access->callee)->name)) {
+                // TODO
+                return try_set_function_call_types_old(new_call, fun_call);
+            }
+            sym_name = &access->member_name->name;
+            if (mod_path_->type != UAST_MOD_ALIAS) {
+                // TODO
+                return try_set_function_call_types_old(new_call, fun_call);
+            }
+            sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path.base;
+            break;
+        }
+        case TAST_INDEX:
+            todo();
+        case TAST_LITERAL:
+            return try_set_function_call_types_old(new_call, fun_call);
+        case TAST_FUNCTION_CALL:
+            todo();
+        case TAST_STRUCT_LITERAL:
+            todo();
+        case TAST_TUPLE:
+            todo();
+        case TAST_ENUM_CALLEE:
+            todo();
+        case TAST_ENUM_CASE:
+            todo();
+        case TAST_ENUM_GET_TAG:
+            todo();
+        case TAST_ENUM_ACCESS:
+            todo();
     }
+        //return try_set_function_call_types_old(new_call, fun_call);
+
 
     assert(
-        uast_symbol_unwrap(fun_call->callee)->name.gen_args.info.count == 0 &&
+        sym_name->gen_args.info.count == 0 &&
         "generics are already instanciated, and they should not have been"
     );
 
     bool status = true;
 
     Uast_def* fun_decl_temp_ = NULL;
-    if (!usymbol_lookup(&fun_decl_temp_, uast_symbol_unwrap(fun_call->callee)->name)) {
+    if (!usymbol_lookup(&fun_decl_temp_, *sym_name)) {
         log(LOG_DEBUG, FMT"\n", uast_expr_print(fun_call->callee));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, uast_symbol_unwrap(fun_call->callee)->name));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *sym_name));
         Tast_expr* dummy = NULL;
         unwrap(
             !try_set_expr_types(&dummy, fun_call->callee) &&
@@ -2179,9 +2238,38 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         status = false;
         goto error;
     }
-    if (fun_decl_temp_->type != UAST_FUNCTION_DEF) {
-        // TODO
-        return try_set_function_call_types_old(new_call, fun_call);
+    switch (fun_decl_temp_->type) {
+        case UAST_LABEL:
+            todo();
+        case UAST_VOID_DEF:
+            todo();
+        case UAST_POISON_DEF:
+            todo();
+        case UAST_IMPORT_PATH:
+            todo();
+        case UAST_MOD_ALIAS:
+            todo();
+        case UAST_GENERIC_PARAM:
+            todo();
+        case UAST_FUNCTION_DEF:
+            break;
+        case UAST_VARIABLE_DEF:
+            return try_set_function_call_types_old(new_call, fun_call);
+        case UAST_STRUCT_DEF:
+            todo();
+        case UAST_RAW_UNION_DEF:
+            todo();
+        case UAST_ENUM_DEF:
+            todo();
+        case UAST_LANG_DEF:
+            // TODO
+            return try_set_function_call_types_old(new_call, fun_call);
+        case UAST_PRIMITIVE_DEF:
+            todo();
+        case UAST_FUNCTION_DECL:
+            return try_set_function_call_types_old(new_call, fun_call);
+        default:
+            unreachable("");
     }
     log(LOG_DEBUG, "thing 874: "FMT"\n", uast_def_print(fun_decl_temp_));
     Uast_function_decl* fun_decl_temp = uast_function_def_unwrap(fun_decl_temp_)->decl;
@@ -2345,7 +2433,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         // TODO: check for count generic args here?
-        uast_symbol_unwrap(fun_call->callee)->name.gen_args = new_gens;
+        sym_name->gen_args = new_gens;
 
         Tast_expr* new_arg = NULL;
 
