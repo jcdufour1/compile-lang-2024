@@ -1,11 +1,22 @@
 compile::stdout 0
 
-compile::stderr 5
+compile::stderr 16
+tests/inputs/undefined_type_in_function_param.own:6:5:[1;31merror[0;39m:function parameter `rhs` was not specified
+     5 | fn main() i32 {
+     6 |     add(8)
+       |     ^
+     7 |     return 0
+tests/inputs/undefined_type_in_function_param.own:2:17:[1;34mnote[0;39m:function parameter `rhs` defined here
+     1 | 
+     2 | fn add(lhs i32, rhs Token) {
+       |                 ^
+     3 | }
 tests/inputs/undefined_type_in_function_param.own:2:21:[1;31merror[0;39m:type `Token` is not defined
      1 | 
      2 | fn add(lhs i32, rhs Token) {
        |                     ^
      3 | }
+src/sema/resolve_generics.c:315:[1;31mfatal error[0;39m:not implemented
 
-compile::return_code 1
+compile::return_code -6
 
