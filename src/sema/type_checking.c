@@ -2179,7 +2179,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         status = false;
         goto error;
     }
-    if (fun_decl_temp_->type == UAST_FUNCTION_DECL || fun_decl_temp_->type == UAST_VARIABLE_DEF) {
+    if (fun_decl_temp_->type != UAST_FUNCTION_DEF) {
+        // TODO
         return try_set_function_call_types_old(new_call, fun_call);
     }
     log(LOG_DEBUG, "thing 874: "FMT"\n", uast_def_print(fun_decl_temp_));
