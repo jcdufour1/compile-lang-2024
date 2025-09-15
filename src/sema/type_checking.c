@@ -2203,6 +2203,17 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
+    Ulang_type_vec new_gens = {0};
+    Bool_vec new_gens_set = {0};
+    vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
+    while (new_gens.info.count < fun_decl_temp->generics.info.count) {
+        vec_append(&a_main, &new_gens, (Ulang_type) {0});
+    }
+    vec_reserve(&a_main, &new_gens_set, fun_decl_temp->generics.info.count);
+    while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
+        vec_append(&a_main, &new_gens_set, false);
+    }
+
 
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
@@ -2294,16 +2305,23 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
                     param->base->name.base
                 )) {
+                    *vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
+                        ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
+                        (Pos) {0}
+                    ));
+                    *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
-                    todo();
+                    break;
                 }
             }
 
             if (!found_gen) {
                 todo();
             }
-            todo();
         }
+
+        // TODO: check for count generic args here?
+        uast_symbol_unwrap(fun_call->callee)->name.gen_args = new_gens;
 
         Tast_expr* new_arg = NULL;
 
