@@ -2405,6 +2405,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
         log(LOG_DEBUG, "thing 315: %zu\n", idx);
         if (!vec_at(&new_args_set, idx)) {
+            if (vec_at(&params->params, idx)->is_optional) {
+                continue;
+            }
+
             Name param_name = vec_at(&params->params, idx)->base->name;
             if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
