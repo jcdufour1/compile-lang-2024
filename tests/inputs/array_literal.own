@@ -3,8 +3,8 @@ type io import = std.io
 fn main() i32 {
     let slice io.Slice(<i32>) = [87, 131]
 
-    io.printf("%d\n", io.slice_at(<i32>)(slice, 0))
-    io.printf("%d\n", io.slice_at(<i32>)(slice, 1))
+    io.printf("%d\n", io.slice_at(slice, 0, i32))
+    io.printf("%d\n", io.slice_at(slice, 1, i32))
 
     return 0
 }

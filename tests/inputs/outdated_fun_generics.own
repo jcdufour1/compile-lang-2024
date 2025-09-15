@@ -1,0 +1,9 @@
+fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+    return lhs + rhs
+}
+
+fn main() i32 {
+    add(<i32>)(76, 2)
+
+    return 0
+}

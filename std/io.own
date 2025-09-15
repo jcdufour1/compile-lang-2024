@@ -20,7 +20,7 @@ type Slice struct(<ItemType>) {
     count u64
 }
 
-fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
+fn slice_at(slice Slice(<ItemType>), index u64, ItemType Type) ItemType {
     if (index >= slice.count) {
         abort()
     }
@@ -43,14 +43,14 @@ type Arr struct(<ItemT>) {
 }
 
 // TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
-fn arr_append(<ItemT>)(arr Arr(<ItemT>), item ItemT) Arr(<ItemT>) {
+fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type) Arr(<ItemT>) {
     assert(arr.count < arr.max, "arr overflow");
     arr.buf[arr.count] = item
     arr.count += 1
     return arr
 }
 
-fn arr_first(<ItemT>)(arr Arr(<ItemT>)) ItemT {
+fn arr_first(arr Arr(<ItemT>), ItemT Type) ItemT {
     assert(arr.count > 0, "out of bounds");
     return arr.buf[0];
 }

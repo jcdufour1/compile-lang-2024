@@ -75,6 +75,7 @@ typedef enum {
     DIAG_INVALID_COUNTOF,
     DIAG_REDEF_STRUCT_BASE_MEMBER,
     DIAG_SWITCH_NO_CASES,
+    DIAG_WRONG_GEN_TYPE,
 
     // count of cases for static asserts
     DIAG_COUNT,
