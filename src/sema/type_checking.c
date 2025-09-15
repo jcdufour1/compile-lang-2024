@@ -3187,6 +3187,7 @@ bool try_set_function_params_types(
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Uast_param* def = vec_at(&params->params, idx);
         if (def->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            // do not add generic parameters to the new function parameters
             continue;
         }
 
