@@ -1,0 +1,10 @@
+compile::stdout 4
+test 100: got number 78
+test 101: got number 79
+test 102: got number 30
+test 103: got number 846
+
+compile::stderr 0
+
+compile::return_code 0
+

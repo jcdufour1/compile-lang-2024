@@ -194,20 +194,8 @@ fn concise() {
     io.printf("test 57: got number %d\n", add_one_or_two_default_verbose(835, .some(11), i64))
 }
 
-fn very_concise() {
-    let a i32 = 78
-    let b i32 = 79
-    let c i32 = 14
-    let d i32 = 835
-    io.printf("test 100: got number %d\n", add_one_or_two_default(a))
-    io.printf("test 101: got number %d\n", add_one_or_two_default(b, .none))
-    io.printf("test 102: got number %d\n", add_one_or_two_default(c, .some(16)))
-    io.printf("test 103: got number %d\n", add_one_or_two_default(d, .some(11)))
-}
-
 fn main() i32 {
-    //verbose()
-    //concise()
-    very_concise()
+    verbose()
+    concise()
     return 0;
 }
