@@ -15,8 +15,8 @@ bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg)
         return true;
     }
 
-    // TODO: this could be warning or even debug print only, because generic inference is not vital?
-    msg_todo("bit widths larger than 64 for type inference in generics", pos_arg);
+    // TODO
+    msg(DIAG_GEN_INFER_MORE_THAN_64_WIDE, pos_arg, "bit widths larger than 64 for type inference in generics is not yet implemented\n");
     return false;
 }
 
@@ -75,6 +75,10 @@ bool infer_generic_type(
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg->lang_type);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
+                if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
+                    // TODO
+                    return false;
+                }
                 *infered = lang_type_to_ulang_type(arg_to_infer_from);
                 return true;
             }
@@ -89,26 +93,19 @@ bool infer_generic_type(
                 )) {
                     return true;
                 }
-                //if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                //    *infered = lang_type_to_ulang_type(arg_to_infer_from);
-                //    return true;
-                //}
             }
             *infered = lang_type_to_ulang_type(arg_to_infer_from);
             return true;
         }
         case ULANG_TYPE_TUPLE:
-            todo();
+            // TODO
+            return false;
         case ULANG_TYPE_FN:
-            todo();
+            // TODO
+            return false;
         case ULANG_TYPE_GEN_PARAM:
-            todo();
-            //if (!strv_is_equal(param_corres_to_arg->name.base, name_to_infer.base)) {
-            //    return false;
-            //}
-            //*infered = lang_type_to_ulang_type(arg_to_infer_from);
-            //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *infered));
-            //return true;
+            // TODO
+            return false;
     }
     unreachable("");
 }

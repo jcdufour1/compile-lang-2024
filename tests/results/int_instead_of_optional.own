@@ -1,15 +1,25 @@
 compile::stdout 0
 
-compile::stderr 10
-tests/inputs/int_instead_of_optional.own:36:67:[1;31merror[0;39m:argument is of type `u10`, but the corresponding parameter `lhs` is of type `std/io::Optional(<str20.u32>)`
+compile::stderr 20
+tests/inputs/int_instead_of_optional.own:36:67:[1;31merror[0;39m:argument is of type `u10`, but the corresponding parameter `lhs` is of type `std/io::Optional(<str21.u32>)`
     35 | fn main() i32 {
     36 |     io.printf("test 1: got number %d\n", add_one_or_two_default_2(835, .some(11)))
        |                                                                   ^
-    37 |     return 0
+    37 |     let opt112 io.Optional(<i32>) = .some(838)
 tests/inputs/int_instead_of_optional.own:14:29:[1;34mnote[0;39m:corresponding parameter `lhs` defined here
     13 | 
     14 | fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
        |                             ^
+    15 |     switch rhs {
+tests/inputs/int_instead_of_optional.own:38:80:[1;31merror[0;39m:argument is of type `std/io::Optional(<i32>)`, but the corresponding parameter `rhs` is of type `std/io::Optional(<str21.u32>)`
+    37 |     let opt112 io.Optional(<i32>) = .some(838)
+    38 |     io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt112, u32))
+       |                                                                                ^
+    39 |     return 0
+tests/inputs/int_instead_of_optional.own:14:58:[1;34mnote[0;39m:corresponding parameter `rhs` defined here
+    13 | 
+    14 | fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
+       |                                                          ^
     15 |     switch rhs {
 
 compile::return_code 1
