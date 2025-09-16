@@ -57,6 +57,7 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
+	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
 	 ${BUILD_DIR}/sema/resolve_generics.o \
@@ -130,6 +131,9 @@ ${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c
 
 ${BUILD_DIR}/ast_utils/parser_utils.o: ${DEP_COMMON} src/ast_utils/parser_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/parser_utils.o src/ast_utils/parser_utils.c
+
+${BUILD_DIR}/sema/uast_expr_to_ulang_type.o: ${DEP_COMMON} src/sema/uast_expr_to_ulang_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o src/sema/uast_expr_to_ulang_type.c
 
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c

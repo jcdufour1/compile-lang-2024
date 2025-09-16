@@ -1,7 +1,7 @@
 
 type Token enum(<NumType>) {
     string u8*
-    number Type
+    number NumNumType
 }
 
 fn main() i32 {

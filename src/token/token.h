@@ -92,6 +92,7 @@ typedef enum {
     TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
     TOKEN_TYPE_DEF,
+    TOKEN_GENERIC_TYPE,
     TOKEN_IMPORT,
     TOKEN_DEF,
     TOKEN_SIZEOF,
@@ -265,6 +266,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DOUBLE_TICK:
             return false;
+        case TOKEN_GENERIC_TYPE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -416,6 +419,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_COUNTOF:
             return true;
         case TOKEN_DOUBLE_TICK:
+            return false;
+        case TOKEN_GENERIC_TYPE:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -599,6 +604,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_COUNTOF:
             return false;
         case TOKEN_DOUBLE_TICK:
+            return false;
+        case TOKEN_GENERIC_TYPE:
             return false;
         case TOKEN_COUNT:
             unreachable("");

@@ -1,0 +1,15 @@
+compile::stdout 0
+
+compile::stderr 9
+tests/inputs/outdated_fun_generics.own:1:7:[1;31merror[0;39m:got token `(<`, but expected `(`  in function decl
+     1 | fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+       |       ^
+     2 |     return lhs + rhs
+tests/inputs/outdated_fun_generics.own:6:5:[1;31merror[0;39m:`(<` and `>)` should not be used on function callee
+     5 | fn main() i32 {
+     6 |     add(<i32>)(76, 2)
+       |     ^
+     7 | 
+
+compile::return_code 1
+

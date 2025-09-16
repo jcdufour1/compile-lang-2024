@@ -116,7 +116,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_ENUM_DEF:
             return uast_enum_def_const_unwrap(def)->base.name;
         case UAST_GENERIC_PARAM:
-            unreachable("");
+            return uast_generic_param_const_unwrap(def)->child->name;
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT_PATH:

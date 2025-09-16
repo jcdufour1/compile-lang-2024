@@ -45,6 +45,7 @@ static void msg_invalid_count_generic_args_internal(
     String message = {0};
     string_extend_size_t(&a_print, &message, gen_args.info.count);
     string_extend_cstr(&a_print, &message, " generic arguments are passed");
+    // TODO: print base type (eg. `Token`)
     string_extend_cstr(&a_print, &message, ", but ");
     string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
@@ -280,13 +281,22 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         case UAST_MOD_ALIAS:
             todo();
         case UAST_GENERIC_PARAM:
-            todo();
+            // TODO: explain why it is unreachable
+            unreachable("");
         case UAST_FUNCTION_DEF:
             todo();
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
             todo();
+            //log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
+            //// TODO: ulang_type_regular_unwrap could crash (it is a temporary hack)
+            //if (!strv_is_equal(sv("Type"), ulang_type_regular_unwrap(&uast_variable_def_unwrap(before_res)->lang_type)->atom.str.base)) {
+            //    todo();
+            //}
+            //*result = lang_type;
+            //*type = UAST_GENERIC_PARAM;
+            //return true;
         case UAST_LABEL:
             todo();
     }
@@ -349,6 +359,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_LANG_DEF:
             unreachable("");
         case UAST_PRIMITIVE_DEF:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
             unreachable("");
         case UAST_FUNCTION_DECL:
             unreachable("");
@@ -419,6 +430,7 @@ static bool resolve_generics_serialize_function_decl(
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
             // TODO: same params are being replaced both here and in generic_sub_block?
+            log(LOG_DEBUG, "%zu "FMT"\n", idx_fun_param, uast_param_print(vec_at(&params, idx_fun_param)));
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
@@ -495,7 +507,9 @@ bool resolve_generics_function_def_call(
             generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
             for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
                 Uast_param* param = vec_at(&decl->params->params, idx_param);
-                generic_sub_param(param, gen_param, gen_arg);
+                if (param->base->lang_type.type != ULANG_TYPE_GEN_PARAM) {
+                    generic_sub_param(param, gen_param, gen_arg);
+                }
             }
         }
     }
@@ -518,6 +532,7 @@ bool resolve_generics_function_def_call(
         def->decl->pos
     );
     Lang_type_fn rtn_type_ = {0};
+    log(LOG_DEBUG, FMT"\n", uast_function_def_print(def));
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
         return false;
     }

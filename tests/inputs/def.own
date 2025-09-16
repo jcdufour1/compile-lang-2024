@@ -5,7 +5,7 @@ type Opt def = io.Optional
 //type Token def = io.Token
 type print def = io.printf
 
-fn add_internal(<NumType>)(lhs NumType, rhs NumType) NumType {
+fn add_internal(lhs NumType, rhs NumType, NumType Type) NumType {
     return lhs + rhs
 }
 
@@ -13,7 +13,8 @@ type add def = add_internal
 
 fn main() i32 {
     print("hello\n")
-    print("%d\n", add(<i32>)(54, 3))
+    // TODO: change add_internal on below line to add
+    print("%d\n", add_internal(54, 3, i32))
 
     let opt Opt(<i32>) = .some(43)
 
