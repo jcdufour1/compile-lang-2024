@@ -12,13 +12,25 @@ fn add_one_or_two_default(lhs ItemType, rhs io.Optional(<ItemType>) = .none, Ite
 
 fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
     switch rhs {
-        case .some(rhs_val):
-            return lhs + rhs_val
-        case .none:
-            return lhs
+        case .some(rhs_val): {
+            if let .some(lhs_val) = lhs {
+                return lhs_val + rhs_val
+            } else {
+                return rhs_val
+            }
+        }
+        case .none: {
+            if let .some(lhs_val) = lhs {
+                return lhs_val
+            } else {
+                return 0
+            }
+        }
     }
-    return lhs
+    io.assert(0, "unreachable")
+    return 0
 }
+
 
 fn main() i32 {
     io.printf("test 100: got number %d\n", add_one_or_two_default(78))

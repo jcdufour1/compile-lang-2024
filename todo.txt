@@ -113,6 +113,22 @@ add_fn(<i16>)
 - integers should be i32 by default for type inference in generic functions to have sensible behavior
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
+- figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
+    switch rhs {
+        case .some(rhs_val):
+            if let .some(lhs_val) = lhs {
+                return lhs_val + rhs_val
+            } else {
+                return rhs_val
+            }
+        case .none:
+            if let .some(lhs_val) = lhs {
+                return lhs_val
+            } else {
+                return 0
+            }
+    }
+
     
 
 
