@@ -178,7 +178,8 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     arena_free(&a_temp);
 }
 
-// this is only intended for alloca_table, etc.
+// TODO: rename this function to "emit_c_def_not_inline" or similar to explain its purpose
+// TODO: also do above TODO for emit_c_sometimes, etc.
 static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -278,6 +279,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
 
 static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
     (void) strs;
+    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen
     switch (unary_type) {
         case UNARY_DEREF:
             unreachable("defer should not make it here");
@@ -530,6 +532,7 @@ static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     string_extend_cstr(&a_main, &strs->output, "    dummy = 0;\n");
 }
 
+// TODO: rename this function to "emit_c_def_inline"
 static void emit_c_def(Emit_c_strs* strs, const Ir_def* def) {
     (void) strs;
     switch (def->type) {
@@ -563,6 +566,7 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
 
+    // TODO: remove comment, etc.
     if (true /*src->type == IR_EXPR && ir_expr_const_unwrap(src)->type == IR_LITERAL*/) {
         string_extend_cstr(&a_main, &strs->output, "    *((");
         c_extend_type_call_str(&strs->output, store->lang_type, true);

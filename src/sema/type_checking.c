@@ -2160,6 +2160,7 @@ error:
     return status;
 }
 
+// TODO: there is a lot of duplication between try_set_function_call_types and try_set_function_call_types_old
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
     Name* sym_name = NULL;
     switch (fun_call->callee->type) {
