@@ -3,12 +3,13 @@
 
 #include <util.h>
 #include <ulang_type.h>
+#include <lang_type.h>
 #include <uast.h>
 #include <name.h>
 
 bool infer_generic_type(
     Ulang_type* infered,
-    Ulang_type arg_to_infer_from,
+    Lang_type arg_to_infer_from,
     Uast_variable_def* param_corres_to_arg,
     Name name_to_infer
 );

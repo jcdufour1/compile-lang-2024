@@ -2499,9 +2499,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     size_t idx_gen_param = 0;
+    bool incre_param_next = false;
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
-        if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+        if (incre_param_next) {
             idx_gen_param++;
+        }
+        incre_param_next = false;
+        if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            incre_param_next = true;
         }
 
         if (!vec_at(&new_args_set, idx)) {
@@ -2521,9 +2526,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 log(LOG_DEBUG, FMT"\n", name_print(NAME_MSG, param_name));
                 if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
                     bool infer_success = false;
-                    for (size_t param_idx = 0; status && param_idx < idx; param_idx++) {
+                    for (size_t param_idx = 0; status && param_idx < MIN(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
-                        if (!try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, idx))) {
+                        log(LOG_DEBUG, "thing 923: %zu %zu ""\n", idx_gen_param, param_idx);
+                        if (!try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
                             continue;
                         }
 
@@ -2533,8 +2539,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             vec_at(&params->params, idx)->base,
                             param_name
                         )) {
-                            vec_at_ref(&sym_name->gen_args, idx_gen_param)
-                            vec_at_ref(&new_gens_set, idx_gen_param) = true;
+                            vec_at_ref(&sym_name->gen_args, idx_gen_param);
+                            *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                             infer_success = true;
                             break;
                         }
