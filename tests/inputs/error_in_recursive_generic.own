@@ -1,31 +1,31 @@
 type io import = std.io
 
-fn add(lhs NumType, rhs NumType, NumType Type) NumType {
+fn add(lhs i32, rhs i32, RtnType Type) RtnType {
     if rhs < 0 {
-        return add(lhs - 1, rhs + 1, NumType)
+        return unsafe_cast<RtnType>add(lhs - 1, rhs + 1, RtnType)
     } 
     if rhs > 0 {
-        return add(lhs + 1, rhs - 1, i31)
+        return unsafe_cast<RtnType>add(lhs + 1, rhs - 1, i31)
     }
     return lhs
 }
 
-fn add2(lhs NumType, rhs NumType, NumType Type) NumType {
+fn add2(lhs i32, rhs i32, RtnType Type) RtnType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
     if rhs > 0 {
-        return add2(lhs + 1, rhs - 1, NumType)
+        return add2(lhs + 1, rhs - 1, RtnType)
     }
     return lhs
 }
 
-fn add3(lhs NumType, rhs NumType, NumType Type) NumType {
+fn add3(lhs i32, rhs i32, RtnType Type) RtnType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
     if rhs > 0 {
-        return add2(lhs + 1, rhs - 1, NumType)
+        return add2(lhs + 1, rhs - 1, RtnType)
     }
     return lhs
 }

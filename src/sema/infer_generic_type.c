@@ -3,12 +3,69 @@
 #include <lang_type_print.h>
 #include <lang_type_from_ulang_type.h>
 
+bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
+    if (old_width < 32) {
+        *new_width = 32;
+        return true;
+    }
+
+    if (old_width < 64) {
+        *new_width = 64;
+        return true;
+    }
+
+    // TODO: this could be warning, because generic inference is not vital?
+    msg_todo("bit widths larger than 64 for type inference in generics", pos_arg);
+    return false;
+}
+
 bool infer_generic_type(
     Ulang_type* infered,
     Lang_type arg_to_infer_from,
     Uast_variable_def* param_corres_to_arg,
-    Name name_to_infer
+    Name name_to_infer,
+    Pos pos_arg
 ) {
+    // TODO: make helper function to do this lang_type conversion (to normalize integer bit widths)
+    if (arg_to_infer_from.type == LANG_TYPE_PRIMITIVE) {
+        Lang_type_primitive primitive = lang_type_primitive_const_unwrap(arg_to_infer_from);
+        switch (primitive.type) {
+            case LANG_TYPE_SIGNED_INT: {
+                Lang_type_signed_int sign = lang_type_signed_int_const_unwrap(primitive);
+                if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos_arg)) {
+                    return false;
+                }
+                arg_to_infer_from = lang_type_primitive_const_wrap(
+                    lang_type_signed_int_const_wrap(sign)
+                );
+            } break;
+            case LANG_TYPE_UNSIGNED_INT: {
+                Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
+                if (!bit_width_calculation(&unsign.bit_width, unsign.bit_width, pos_arg)) {
+                    return false;
+                }
+                arg_to_infer_from = lang_type_primitive_const_wrap(
+                    lang_type_unsigned_int_const_wrap(unsign)
+                );
+            } break;
+            case LANG_TYPE_FLOAT: {
+                Lang_type_float lang_float = lang_type_float_const_unwrap(primitive);
+                if (!bit_width_calculation(&lang_float.bit_width, lang_float.bit_width, pos_arg)) {
+                    return false;
+                }
+                arg_to_infer_from = lang_type_primitive_const_wrap(
+                    lang_type_float_const_wrap(lang_float)
+                );
+            } break;
+            case LANG_TYPE_CHAR:
+                break;
+            case LANG_TYPE_OPAQUE:
+                break;
+            default:
+                unreachable("");
+        }
+    }
+
     log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
     log(LOG_DEBUG, FMT"\n", uast_variable_def_print(param_corres_to_arg));
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
