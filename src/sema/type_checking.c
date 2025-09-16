@@ -27,6 +27,7 @@
 #include <pos_vec.h>
 #include <check_struct_recursion.h>
 #include <uast_expr_to_ulang_type.h>
+#include <infer_generic_type.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -2220,8 +2221,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case TAST_ENUM_ACCESS:
             todo();
     }
-        //return try_set_function_call_types_old(new_call, fun_call);
-
 
     assert(
         sym_name->gen_args.info.count == 0 &&
@@ -2315,6 +2314,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
+    // TODO: consider if new_gens_set can be removed
     Ulang_type_vec new_gens = {0};
     Bool_vec new_gens_set = {0};
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
@@ -2436,7 +2436,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
-        // TODO: check for count generic args here?
         sym_name->gen_args = new_gens;
 
         Tast_expr* new_arg = NULL;
@@ -2499,8 +2498,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         goto error;
     }
 
+    size_t idx_gen_param = 0;
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
-        log(LOG_DEBUG, "thing 315: %zu\n", idx);
+        if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+            idx_gen_param++;
+        }
+
         if (!vec_at(&new_args_set, idx)) {
             if (vec_at(&params->params, idx)->is_optional) {
                 continue;
@@ -2515,6 +2518,32 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
                 msg_invalid_count_function_args(fun_call, fun_decl_temp, min_args, max_args);
             } else {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_MSG, param_name));
+                if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                    bool infer_success = false;
+                    for (size_t param_idx = 0; status && param_idx < idx; param_idx++) {
+                        Tast_expr* arg_to_infer_from = NULL;
+                        if (!try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, idx))) {
+                            continue;
+                        }
+
+                        if (infer_generic_type(
+                            vec_at_ref(&sym_name->gen_args, idx_gen_param),
+                            tast_expr_get_lang_type(arg_to_infer_from),
+                            vec_at(&params->params, idx)->base,
+                            param_name
+                        )) {
+                            vec_at_ref(&sym_name->gen_args, idx_gen_param)
+                            vec_at_ref(&new_gens_set, idx_gen_param) = true;
+                            infer_success = true;
+                            break;
+                        }
+                    }
+                    if (infer_success) {
+                        continue;
+                    }
+                }
+
                 msg(
                     DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
                     "function parameter `"FMT"` was not specified\n",

@@ -74,6 +74,7 @@ for generics:
 - fix ./tests2/inputs/test_basic.own (outer loop should break after first iteration, because of num1 = 8 assignment)
 - make ignored tests feature
 - expected failure test for more than one generic parameter with the same name?
+- expected failure case for generic argument having default argument
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
