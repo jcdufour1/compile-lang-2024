@@ -94,8 +94,8 @@ bool infer_generic_type(
                     return true;
                 }
             }
-            *infered = lang_type_to_ulang_type(arg_to_infer_from);
-            return true;
+
+            return false;
         }
         case ULANG_TYPE_TUPLE:
             // TODO

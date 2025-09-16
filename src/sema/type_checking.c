@@ -2519,6 +2519,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
+                                todo();
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
@@ -3442,6 +3443,7 @@ error:
     return status;
 }
 
+// TODO: rename to try_set_continue_types
 bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
     PARENT_OF old_parent_of = parent_of;
@@ -3515,8 +3517,6 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     Tast_block* new_body = NULL;
     if (!(status && try_set_block_types(&new_body, uast->body, false))) {
         status = false;
-    }
-    if (status) {
     }
 
     if (status) {
@@ -3651,6 +3651,7 @@ static bool check_for_exhaustiveness_inner(
     unreachable("");
 }
 
+// TODO: fix indentation in this function
 static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos pos_switch) {
         unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 

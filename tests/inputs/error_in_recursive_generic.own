@@ -33,6 +33,6 @@ fn add3(lhs i32, rhs i32, RtnType Type) RtnType {
 fn main() i32 {
     io.printf("%d\n", add(56, -34, i32))
     io.printf("%d\n", add2(57, -3, i32))
-    io.printf("%d\n", add3(58, -2))
+    add3(58, -2)
     return 0
 }
