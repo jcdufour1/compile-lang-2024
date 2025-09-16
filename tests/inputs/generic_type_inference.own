@@ -40,7 +40,9 @@ fn main() i32 {
 
     io.printf("test 110: got number %d\n", add_one_or_two_default_2(.some(836), .some(12), i32))
     let opt111 io.Optional(<i32>) = .some(837)
-    //io.printf("test 111: got number %d\n", add_one_or_two_default_2(opt111, .some(13)))
+    io.printf("test 111: got number %d\n", add_one_or_two_default_2(opt111, .some(13)))
+    let opt112 io.Optional(<i32>) = .some(838)
+    io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt112))
 
     return 0
 }

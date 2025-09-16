@@ -2,14 +2,15 @@
 #include <infer_generic_type.h>
 #include <lang_type_print.h>
 #include <lang_type_from_ulang_type.h>
+#include <parser_utils.h>
 
 bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
-    if (old_width < 32) {
+    if (old_width <= 32) {
         *new_width = 32;
         return true;
     }
 
-    if (old_width < 64) {
+    if (old_width <= 64) {
         *new_width = 64;
         return true;
     }
@@ -73,8 +74,25 @@ bool infer_generic_type(
     switch (param_corres_to_arg->lang_type.type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg->lang_type);
-            if (!strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                return false;
+            if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
+                *infered = lang_type_to_ulang_type(arg_to_infer_from);
+                return true;
+            }
+
+            for (size_t idx = 0; idx < reg.atom.str.gen_args.info.count; idx++) {
+                if (infer_generic_type(
+                    infered,
+                    lang_type_from_ulang_type(vec_at_const(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
+                    uast_variable_def_new(pos_arg /* TODO */, vec_at(&reg.atom.str.gen_args, idx), util_literal_name_new()),
+                    name_to_infer,
+                    pos_arg
+                )) {
+                    return true;
+                }
+                //if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
+                //    *infered = lang_type_to_ulang_type(arg_to_infer_from);
+                //    return true;
+                //}
             }
             *infered = lang_type_to_ulang_type(arg_to_infer_from);
             return true;
