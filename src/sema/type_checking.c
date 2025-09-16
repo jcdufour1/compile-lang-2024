@@ -1498,6 +1498,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         case UAST_UNKNOWN:
             if (lhs_lang_type.type != LANG_TYPE_ENUM) {
+                todo();
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
                     uast_expr_get_pos(uast),
@@ -2530,21 +2531,21 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     for (size_t param_idx = 0; status && param_idx < MIN(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
                         log(LOG_DEBUG, "thing 923: %zu %zu ""\n", idx_gen_param, param_idx);
-                        if (!try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
-                            continue;
-                        }
 
-                        if (infer_generic_type(
-                            vec_at_ref(&sym_name->gen_args, idx_gen_param),
-                            tast_expr_get_lang_type(arg_to_infer_from),
-                            vec_at(&params->params, idx)->base,
-                            param_name,
-                            tast_expr_get_pos(arg_to_infer_from)
-                        )) {
-                            vec_at_ref(&sym_name->gen_args, idx_gen_param);
-                            *vec_at_ref(&new_gens_set, idx_gen_param) = true;
-                            infer_success = true;
-                            break;
+                        LOG_LEVEL old_log_level = log_level;
+                        if (try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
+                            if (infer_generic_type(
+                                vec_at_ref(&sym_name->gen_args, idx_gen_param),
+                                tast_expr_get_lang_type(arg_to_infer_from),
+                                vec_at(&params->params, idx)->base,
+                                param_name,
+                                tast_expr_get_pos(arg_to_infer_from)
+                            )) {
+                                vec_at_ref(&sym_name->gen_args, idx_gen_param);
+                                *vec_at_ref(&new_gens_set, idx_gen_param) = true;
+                                infer_success = true;
+                                break;
+                            }
                         }
                     }
                     if (infer_success) {

@@ -404,6 +404,8 @@ static void long_option_log_level(Strv curr_opt) {
         params_log_level = LOG_WARNING;
     } else if (strv_is_equal(log_level, sv("NOTE"))) {
         params_log_level = LOG_NOTE;
+    } else if (strv_is_equal(log_level, sv("INFO"))) {
+        params_log_level = LOG_INFO;
     } else if (strv_is_equal(log_level, sv("VERBOSE"))) {
         params_log_level = LOG_VERBOSE;
     } else if (strv_is_equal(log_level, sv("DEBUG"))) {

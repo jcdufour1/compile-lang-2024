@@ -38,7 +38,8 @@ fn main() i32 {
     io.printf("test 102: got number %d\n", add_one_or_two_default(14, .some(16)))
     io.printf("test 103: got number %d\n", add_one_or_two_default(835, .some(11)))
 
-    io.printf("test 110: got number %d\n", add_one_or_two_default_2(835, .some(11)))
+    io.printf("test 110: got number %d\n", add_one_or_two_default_2(.some(836), .some(12), i32))
+    io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(837), .some(13)))
 
     return 0
 }
