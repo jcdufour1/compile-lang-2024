@@ -79,7 +79,7 @@ bool infer_generic_type(
                 return true;
             }
 
-            for (size_t idx = 0; idx < reg.atom.str.gen_args.info.count; idx++) {
+            for (size_t idx = 0; idx < MIN(reg.atom.str.gen_args.info.count, lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args.info.count); idx++) {
                 if (infer_generic_type(
                     infered,
                     lang_type_from_ulang_type(vec_at_const(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),

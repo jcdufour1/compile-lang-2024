@@ -34,6 +34,8 @@ fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemTy
 
 fn main() i32 {
     io.printf("test 1: got number %d\n", add_one_or_two_default_2(835, .some(11)))
+    let opt112 io.Optional(<i32>) = .some(838)
+    io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt112, u32))
     return 0
 }
 
