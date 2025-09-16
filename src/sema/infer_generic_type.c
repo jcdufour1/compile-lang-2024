@@ -14,7 +14,7 @@ bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg)
         return true;
     }
 
-    // TODO: this could be warning, because generic inference is not vital?
+    // TODO: this could be warning or even debug print only, because generic inference is not vital?
     msg_todo("bit widths larger than 64 for type inference in generics", pos_arg);
     return false;
 }
@@ -71,19 +71,26 @@ bool infer_generic_type(
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg->lang_type.type) {
-        case ULANG_TYPE_REGULAR:
-            todo();
+        case ULANG_TYPE_REGULAR: {
+            Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg->lang_type);
+            if (!strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
+                return false;
+            }
+            *infered = lang_type_to_ulang_type(arg_to_infer_from);
+            return true;
+        }
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:
             todo();
         case ULANG_TYPE_GEN_PARAM:
-            if (!strv_is_equal(param_corres_to_arg->name.base, name_to_infer.base)) {
-                return false;
-            }
-            *infered = lang_type_to_ulang_type(arg_to_infer_from);
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *infered));
-            return true;
+            todo();
+            //if (!strv_is_equal(param_corres_to_arg->name.base, name_to_infer.base)) {
+            //    return false;
+            //}
+            //*infered = lang_type_to_ulang_type(arg_to_infer_from);
+            //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *infered));
+            //return true;
     }
     unreachable("");
 }
