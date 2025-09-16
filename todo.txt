@@ -9,16 +9,8 @@ for generics:
     check_<whatever> should see if constraints qualify template parameter
     if assigning template parameter to i32, call get_constraints_lang_type(i32), and compare that way
 
-# directory stucture
-- util
-- tokenizer
-- parser
-- load
-- codegen
-
 ## miscellaneous 
 - lang_type suffix/prefix should be changed to ulang_type in some functions?
-- directory structure above
 - symbol_at function, whatever
 - separate lang_type for Llvm stuff
 - tuple on lhs changed to individual accesses in type_checking pass?
@@ -74,9 +66,12 @@ for generics:
 - fix ./tests2/inputs/test_basic.own (outer loop should break after first iteration, because of num1 = 8 assignment)
 - make ignored tests feature
 - expected failure test for more than one generic parameter with the same name?
+- expected failure case for generic argument having default argument
+- expected failure case for invalid return type or parameter types for main function
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- argv
 - constraints in generics
 - slices
 - orelse, !!, ??, etc.
@@ -96,7 +91,6 @@ for generics:
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
 - implement == for sum with void inner types, or give error for using ==
 - test case for: let num f32 = 7
-- 7_000.001
 - binary operators with f64 literals on both sides (precomputation)
 - fix this to say f32 instead of std/raylib::f32:
     main.own:15:39:error:type `u1` cannot be implicitly converted to `std/raylib::f32`
@@ -104,15 +98,8 @@ for generics:
         15 |         rl.DrawRectangleLinesEx({0.0, 0, 100, 100}, 0x40400000, rl.RED())
            |                                       ^
         16 |
-- make shorter function name for `str_view_from_cstr`, because this function is used so much
-- command line interface idea:
-### compile
-main hello.own
-### run
-main hello.own --run arg1 arg2 ..
 - consider renaming Llvm_store_another_llvm to Llvm_store
 - consider renaming Llvm_load_another_llvm to Llvm_load
-- expected failure case for redefiniton of members in enum and struct
 - expected failure case for:
     // Div is a struct
     let div Div = .num(9)
@@ -123,6 +110,26 @@ continue(<thing>)
 -tests for ir printing
 -consider if this is good enough syntax for passing generic function callback:
 add_fn(<i16>)
+- integers should be i32 by default for type inference in generic functions to have sensible behavior
+- literal suffixes
+- use DIAG_ERROR for things that must be an error?
+- figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
+    switch rhs {
+        case .some(rhs_val):
+            if let .some(lhs_val) = lhs {
+                return lhs_val + rhs_val
+            } else {
+                return rhs_val
+            }
+        case .none:
+            if let .some(lhs_val) = lhs {
+                return lhs_val
+            } else {
+                return 0
+            }
+    }
+- info logs do not seem to be logged when specifying "--set-log-level=INFO" on the command line?
+
     
 
 
@@ -131,8 +138,6 @@ add_fn(<i16>)
 
 # optional things:
 - const, etc.
-- named scopes
-- designated args
 - graphviz (for program control flow, etc.)
 - foreach idea:
   fn foreach_tokens(tokens Token[]) {
@@ -142,6 +147,7 @@ add_fn(<i16>)
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 - when generics are mature, use them to associate custom allocators with things
+- for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 
 # in the far future
 - try catch blocks with the question operator or similar

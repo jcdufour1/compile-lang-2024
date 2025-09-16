@@ -8,6 +8,8 @@
 #include "ir_utils.h"
 #include "ctype.h"
 
+// TODO: consider moving almost all functions from here to elsewhere
+
 static inline Lang_type lang_type_new_u1(void) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
@@ -193,6 +195,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
+// TODO: move this function to another file
 static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
     Tast_struct_def* struct_def;
     if (!ir_try_get_struct_def( &struct_def, tast)) {
@@ -201,10 +204,12 @@ static inline Tast_struct_def* ir_get_struct_def(Ir* tast) {
     return struct_def;
 }
 
+// TODO: move this function to another file
 static inline const Tast_struct_def* ir_get_struct_def_const(const Ir* tast) {
     return ir_get_struct_def((Ir*)tast);
 }
 
+// TODO: move this function to another file
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_STRUCT:
@@ -225,6 +230,9 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
+// TODO: rename Llvm_lang_type to Ir_lang_type
+// TODO: rename to ir_is_struct_like
+// TODO: move this function to another file
 static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
     switch (type) {
         case LLVM_LANG_TYPE_STRUCT:
