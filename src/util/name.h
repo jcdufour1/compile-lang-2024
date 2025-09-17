@@ -35,6 +35,9 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
+// this function will convert `io.i32` to `builtin.i32` (prints as `i32`), etc.
+Uname uname_normalize(Uname name);
+
 void extend_name_ir(String* buf, Name name);
 
 void serialize_strv(String* buf, Strv strv);

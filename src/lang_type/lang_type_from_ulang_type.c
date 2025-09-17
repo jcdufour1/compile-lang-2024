@@ -92,18 +92,13 @@ bool name_from_uname(Name* new_name, Uname name) {
 
 Uname name_to_uname(Name name) {
     // TODO: may be incorrect
-    Uast_mod_alias* new_alias = uast_mod_alias_new(
-        (Pos) {0} /* TODO */,
-        name_new(
-            (Strv) {0},
-            util_literal_strv_new(),
-            (Ulang_type_vec) {0},
-            name.scope_id /* TODO */
-        ),
-        name_new((Strv) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new(new_alias->name, name.base, name.gen_args, name.scope_id);
+    //Uast_mod_alias* new_alias = uast_mod_alias_new(
+    //    (Pos) {0} /* TODO */,
+    //    MOD_ALIAS_BUILTIN,
+    //    name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
+    //);
+    //unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+    return uname_new(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

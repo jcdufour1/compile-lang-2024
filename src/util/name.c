@@ -13,6 +13,17 @@ Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id sco
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
+// this function will convert `io.i32` to `i32`, etc.
+Uname uname_normalize(Uname name) {
+    Uast_def* dummy = NULL;
+    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id);
+    if (usymbol_lookup(&dummy, possible_new)) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, possible_new));
+        return name_to_uname(possible_new);
+    }
+    return name;
+}
+
 void extend_name_ir(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
@@ -147,7 +158,11 @@ void extend_name_msg(String* buf, Name name) {
 // TODO: move this function elsewhere
 // TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name.mod_alias));
+    name = uname_normalize(name);
+
     extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name.mod_alias));
     if (name.mod_alias.base.count > 0 || (mode != UNAME_MSG && name.mod_alias.scope_id > 0)) {
         string_extend_cstr(&a_print, buf, ".");
     }

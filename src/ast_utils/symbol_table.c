@@ -312,7 +312,7 @@ bool usym_tbl_lookup(Uast_def** result, Name key) {
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
-    if (key.mod_path.count < 1) {
+    if (strv_is_equal(key.mod_path, MOD_PATH_BUILTIN)) {
         Name prim_key = key;
         prim_key.scope_id = 0;
         if (usym_tbl_lookup(result, prim_key)) {

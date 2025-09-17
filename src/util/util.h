@@ -121,6 +121,8 @@ typedef size_t Scope_id;
 #define MOD_ALIAS_BUILTIN (name_new(sv("builtin"), sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 #define MOD_ALIAS_TOP_LEVEL (name_new(sv("builtin"), sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
+#define MOD_PATH_BUILTIN ((Strv) {0})
+
 #define FMT "%.*s"
 
 #endif // UTIL_H
