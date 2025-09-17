@@ -6,12 +6,14 @@
 #include <parser_utils.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, ulang_type_regular_const_unwrap(lang_type).atom.str.mod_alias));
     if (!expand_def_ulang_type(&lang_type, pos)) {
         return false;
     }
 
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, ulang_type_regular_const_unwrap(lang_type).atom.str.mod_alias));
             if (!try_lang_type_from_ulang_type_regular(new_lang_type,  ulang_type_regular_const_unwrap(lang_type), pos)) {
                 return false;
             }

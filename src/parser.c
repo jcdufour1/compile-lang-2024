@@ -306,6 +306,8 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
     bool status = true;
+    assert(mod_path.count > 0);
+    assert(alias_tk.text.count > 0);
     Uast_def* prev_def = NULL;
     String file_path = {0};
 
@@ -336,6 +338,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         goto finish;
     }
 
+    // TODO: consider using Strv for mod_path of Uast_import_path
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
@@ -1486,11 +1489,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             lang_type,
             name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
         );
-        log(LOG_DEBUG, FMT"\n", uast_variable_def_print(var_def));
-        log(LOG_DEBUG, "%zu\n", var_def->name.scope_id);
-        log(LOG_DEBUG, "%zu\n", ulang_type_regular_const_unwrap(var_def->lang_type).atom.str.scope_id);
-        log(LOG_DEBUG, "%zu\n", ulang_type_regular_const_unwrap(var_def->lang_type).atom.str.mod_alias.scope_id);
-        log(LOG_DEBUG, "%zu\n", scope_id);
         *result = uast_variable_def_wrap(var_def);
 
         if (add_to_sym_table) {

@@ -24,14 +24,13 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
-    // TODO: using MOD_ALIAS_BUILTIN could cause collisions. make new mod_alias instead.
-    //Uast_mod_alias* new_alias = uast_mod_alias_new(
-    //    (Pos) {0} /* TODO */,
-    //    MOD_ALIAS_BUILTIN,
-    //    name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
-    //);
-    //unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    Uast_mod_alias* new_alias = uast_mod_alias_new(
+        (Pos) {0} /* TODO */,
+        util_literal_name_new(),
+        name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
+    );
+    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+    return uname_new_internal(new_alias->name, name.base, name.gen_args, name.scope_id);
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
