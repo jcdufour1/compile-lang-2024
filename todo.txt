@@ -129,8 +129,7 @@ add_fn(<i16>)
     }
 - info logs do not seem to be logged when specifying "--set-log-level=INFO" on the command line?
 - expected failure test for invalid type in unsafe_cast
-
-    
+- move std/std_dummy* items from std directory to a different directory
 
 
 ## needed tests
