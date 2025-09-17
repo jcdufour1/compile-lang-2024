@@ -100,6 +100,7 @@ static inline void unwrap_internal(bool cond, const char* cond_text, const char*
 
 #define unwrap(cond) unwrap_internal(cond, #cond, __FILE__, __LINE__)
 
+// TODO: move error_count and warning_count to Env struct for consistancy?
 extern size_t error_count;
 extern size_t warning_count;
 extern Env env;
@@ -116,6 +117,8 @@ typedef size_t Scope_id;
 #define SCOPE_BUILTIN 0
 #define SCOPE_TOP_LEVEL 1
 #define SCOPE_NOT SIZE_MAX
+
+#define MOD_ALIAS_BUILTIN ((Name) {.mod_path = sv("builtin"), .base = sv("mod_aliases"), .gen_args = (Ulang_type_vec) {0}, .scope_id = SCOPE_BUILTIN})
 
 #define FMT "%.*s"
 
