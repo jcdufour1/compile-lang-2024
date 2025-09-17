@@ -316,6 +316,10 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         curr_mod_alias,
         name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     );
+    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
+    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.mod_path));
+    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.base));
+    log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
 
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
@@ -341,7 +345,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
 finish:
     curr_mod_path = old_mod_path;
     curr_mod_alias = old_mod_alias;
-    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
     return status;
 }
 
@@ -803,6 +806,10 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         mod_alias.base = lang_type_token.text;
+        Uast_def* dummy = NULL;
+        log(LOG_DEBUG, FMT"\n", strv_print(mod_alias.mod_path));
+        log(LOG_DEBUG, FMT"\n", strv_print(mod_alias.base));
+        assert(usymbol_lookup(&dummy, mod_alias) && "mod_alias is not actually in the symbol table");
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
             // TODO: expected failure test
             todo();
@@ -3068,6 +3075,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
 
     if (curr_mod_alias.base.count < 1) {
+        curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
         curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
         Uast_mod_alias* mod_alias = uast_mod_alias_new(
             POS_BUILTIN,
@@ -3075,6 +3083,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
             name_new((Strv) {0} /* TODO */, curr_mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
+        log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
     }
 
     // TODO: DNDEBUG should be spelled NDEBUG

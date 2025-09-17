@@ -49,17 +49,21 @@ bool name_from_uname(Name* new_name, Uname name) {
         return true;
     }
 
-    Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
+    Uast_def* alias_ = NULL;
+    if (!usymbol_lookup(&alias_, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
         log(LOG_DEBUG, FMT"\n", uname_print(UNAME_LOG, name));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
+        log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.mod_path));
+        log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.base));
+
+        usymbol_log(LOG_DEBUG, name.mod_alias.scope_id);
         // TODO: expected failure case
         todo();
     }
 
-    switch (result->type) {
+    switch (alias_->type) {
         case UAST_MOD_ALIAS: {
-            Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
+            Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
             *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->name.scope_id);
             return true;
         }
