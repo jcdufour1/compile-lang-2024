@@ -45,7 +45,7 @@ bool name_from_uname(Name* new_name, Uname name) {
             *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
             return true;
         }
-        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.mod_alias.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
+        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
         return true;
     }
 
@@ -64,7 +64,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->name.scope_id);
+            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, name.scope_id /* TODO */);
             return true;
         }
         case UAST_IMPORT_PATH:

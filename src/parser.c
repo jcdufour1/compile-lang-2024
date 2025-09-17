@@ -1277,6 +1277,9 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     }
 
     *enum_def = uast_enum_def_new(name.pos, base);
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.base));
+    log(LOG_DEBUG, "%zu\n", (*enum_def)->base.name.scope_id);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
@@ -1483,6 +1486,11 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             lang_type,
             name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
         );
+        log(LOG_DEBUG, FMT"\n", uast_variable_def_print(var_def));
+        log(LOG_DEBUG, "%zu\n", var_def->name.scope_id);
+        log(LOG_DEBUG, "%zu\n", ulang_type_regular_const_unwrap(var_def->lang_type).atom.str.scope_id);
+        log(LOG_DEBUG, "%zu\n", ulang_type_regular_const_unwrap(var_def->lang_type).atom.str.mod_alias.scope_id);
+        log(LOG_DEBUG, "%zu\n", scope_id);
         *result = uast_variable_def_wrap(var_def);
 
         if (add_to_sym_table) {
