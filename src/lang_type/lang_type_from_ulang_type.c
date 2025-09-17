@@ -64,6 +64,8 @@ bool name_from_uname(Name* new_name, Uname name) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias->name));
+            log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path.base));
             *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, name.scope_id /* TODO */);
             return true;
         }

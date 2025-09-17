@@ -566,10 +566,18 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
+            log(LOG_DEBUG, FMT"\n", strv_print(base_name.mod_path));
+            log(LOG_DEBUG, FMT"\n", strv_print(base_name.base));
+            log(LOG_DEBUG, "%zu\n", base_name.scope_id);
             msg_undefined_symbol(sym_untyped);
+            todo();
             return false;
         }
     }
+
+    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).base));
+    log(LOG_DEBUG, "%zu\n", uast_def_get_name(sym_def).scope_id);
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
@@ -988,6 +996,9 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     }
     assert(new_lhs);
 
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
         switch (check_generic_assignment(&new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
@@ -1499,6 +1510,9 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
                 );
                 return false;
             }
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.mod_path));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.base));
 
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
@@ -1651,6 +1665,9 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
         return false;
     }
 
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
          &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
@@ -3416,7 +3433,6 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     Tast_expr* new_child = NULL;
-    Lang_type cached_break_type = break_type;
     if (yield->do_yield_expr) {
         switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
