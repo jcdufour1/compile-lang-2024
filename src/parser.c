@@ -310,7 +310,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     String file_path = {0};
 
     Name old_mod_alias = curr_mod_alias;
-    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
     *mod_alias = uast_mod_alias_new(
         alias_tk.pos,
         curr_mod_alias,
