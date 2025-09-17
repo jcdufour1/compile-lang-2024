@@ -118,7 +118,8 @@ typedef size_t Scope_id;
 #define SCOPE_TOP_LEVEL 1
 #define SCOPE_NOT SIZE_MAX
 
-#define MOD_ALIAS_BUILTIN ((Name) {.mod_path = sv("builtin"), .base = sv("mod_aliases"), .gen_args = (Ulang_type_vec) {0}, .scope_id = SCOPE_BUILTIN})
+#define MOD_ALIAS_BUILTIN (name_new(sv("builtin"), sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
+#define MOD_ALIAS_TOP_LEVEL (name_new(sv("builtin"), sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
 #define FMT "%.*s"
 

@@ -2759,7 +2759,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
         ulang_type_atom_new(
             uname_new(
-                name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+                MOD_ALIAS_BUILTIN,
                 sv("i32"),
                 (Ulang_type_vec) {0},
                 SCOPE_BUILTIN
@@ -3066,6 +3066,18 @@ static void parser_do_tests(void);
 
 bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
+
+    if (curr_mod_alias.base.count < 1) {
+        curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
+        Uast_mod_alias* mod_alias = uast_mod_alias_new(
+            POS_BUILTIN,
+            curr_mod_alias,
+            name_new((Strv) {0} /* TODO */, curr_mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+        );
+        unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
+    }
+
+    // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();
