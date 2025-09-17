@@ -2225,7 +2225,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_VOID_DEF:
             todo();
         case UAST_POISON_DEF:
-            todo();
+            return false;
         case UAST_IMPORT_PATH:
             todo();
         case UAST_MOD_ALIAS:

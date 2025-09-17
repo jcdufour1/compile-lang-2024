@@ -51,6 +51,9 @@ bool name_from_uname(Name* new_name, Uname name) {
 
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
+        log(LOG_DEBUG, FMT"\n", uname_print(UNAME_LOG, name));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
+        // TODO: expected failure case
         todo();
     }
 
@@ -88,17 +91,6 @@ bool name_from_uname(Name* new_name, Uname name) {
             todo();
     }
     unreachable("");
-}
-
-Uname name_to_uname(Name name) {
-    // TODO: may be incorrect
-    //Uast_mod_alias* new_alias = uast_mod_alias_new(
-    //    (Pos) {0} /* TODO */,
-    //    MOD_ALIAS_BUILTIN,
-    //    name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
-    //);
-    //unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

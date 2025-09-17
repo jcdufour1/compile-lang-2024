@@ -8,20 +8,35 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+// this function will convert `io.i32` to `i32`, etc.
+static Uname uname_normalize(Uname name) {
+    Uast_def* dummy = NULL;
+    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id);
+    if (usymbol_lookup(&dummy, possible_new)) {
+        return name_to_uname(possible_new);
+    }
+    return name;
+}
+
+static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     assert(mod_alias.base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-// this function will convert `io.i32` to `i32`, etc.
-Uname uname_normalize(Uname name) {
-    Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id);
-    if (usymbol_lookup(&dummy, possible_new)) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, possible_new));
-        return name_to_uname(possible_new);
-    }
-    return name;
+Uname name_to_uname(Name name) {
+    // TODO: using MOD_ALIAS_BUILTIN could cause collisions. make new mod_alias instead.
+    //Uast_mod_alias* new_alias = uast_mod_alias_new(
+    //    (Pos) {0} /* TODO */,
+    //    MOD_ALIAS_BUILTIN,
+    //    name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
+    //);
+    //unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+    return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+}
+
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    assert(mod_alias.base.count > 0);
+    return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
 }
 
 void extend_name_ir(String* buf, Name name) {
@@ -158,12 +173,8 @@ void extend_name_msg(String* buf, Name name) {
 // TODO: move this function elsewhere
 // TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name.mod_alias));
-    name = uname_normalize(name);
-
-    extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name.mod_alias));
-    if (name.mod_alias.base.count > 0 || (mode != UNAME_MSG && name.mod_alias.scope_id > 0)) {
+    if (mode != UNAME_MSG || !name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN)) {
+        extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_print, buf, ".");
     }
     string_extend_strv(&a_print, buf, name.base);
