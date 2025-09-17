@@ -17,17 +17,7 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
             Name sym_name = uast_symbol_const_unwrap(expr)->name;
             *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
                 ulang_type_atom_new(
-                    uname_new(
-                        name_new(
-                            sv(""), // TODO
-                            sv(""), // TODO
-                            (Ulang_type_vec) {0}, // TODO
-                            SCOPE_BUILTIN // TODO
-                        ),
-                        sym_name.base,
-                        sym_name.gen_args,
-                        sym_name.scope_id
-                    ),
+                    name_to_uname(sym_name),
                     0
                 ),
                 //name_to_uname(uast_symbol_const_unwrap(expr)->name),
