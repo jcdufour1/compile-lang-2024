@@ -110,7 +110,6 @@ continue(<thing>)
 -tests for ir printing
 -consider if this is good enough syntax for passing generic function callback:
 add_fn(<i16>)
-- integers should be i32 by default for type inference in generic functions to have sensible behavior
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
 - figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
@@ -129,6 +128,7 @@ add_fn(<i16>)
             }
     }
 - info logs do not seem to be logged when specifying "--set-log-level=INFO" on the command line?
+- expected failure test for invalid type in unsafe_cast
 
     
 

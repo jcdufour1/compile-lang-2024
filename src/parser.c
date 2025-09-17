@@ -16,7 +16,8 @@
 #include <name.h>
 #include <ulang_type_clone.h>
 
-static Strv curr_mod_path;
+static Strv curr_mod_path; // mod_path of the file that is currently being parsed
+static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
 static Token prev_token;
 
@@ -307,8 +308,18 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     bool status = true;
     Uast_def* prev_def = NULL;
     String file_path = {0};
+
+    Name old_mod_alias = curr_mod_alias;
+    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    *mod_alias = uast_mod_alias_new(
+        alias_tk.pos,
+        curr_mod_alias,
+        name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+    );
+
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
+
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
@@ -329,11 +340,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
 
 finish:
     curr_mod_path = old_mod_path;
-    *mod_alias = uast_mod_alias_new(
-        alias_tk.pos,
-        name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-        name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-    );
+    curr_mod_alias = old_mod_alias;
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
     return status;
 }
@@ -786,18 +793,18 @@ static bool is_unary(TOKEN_TYPE token_type) {
 }
 
 static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-    Strv mod_alias = {0};
+    Name mod_alias = curr_mod_alias;
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        mod_alias = lang_type_token.text;
+        mod_alias.base = lang_type_token.text;
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+            // TODO: expected failure test
             todo();
             return false;
         }
@@ -805,12 +812,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = uname_new(
-        name_new(curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id),
-        lang_type_token.text,
-        (Ulang_type_vec) {0},
-        scope_id
-    );
+    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
