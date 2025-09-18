@@ -43,21 +43,14 @@ bool name_from_uname(Name* new_name, Uname name) {
         Uast_def* result = NULL;
         if (usymbol_lookup(&result, name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
             *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
-            log(LOG_DEBUG, "%zu\n", new_name->scope_id);
             return true;
         }
         *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
-        log(LOG_DEBUG, "%zu\n", new_name->scope_id);
         return true;
     }
 
     Uast_def* alias_ = NULL;
     if (!usymbol_lookup(&alias_, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
-        log(LOG_DEBUG, FMT"\n", uname_print(UNAME_LOG, name));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
-        log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.mod_path));
-        log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.base));
-
         usymbol_log(LOG_DEBUG, name.mod_alias.scope_id);
         // TODO: expected failure case
         todo();
@@ -66,10 +59,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias->name));
-            log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path.base));
             *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->mod_path_scope /* TODO */);
-            log(LOG_DEBUG, "%zu\n", new_name->scope_id);
             return true;
         }
         case UAST_IMPORT_PATH:

@@ -1,12 +1,27 @@
 #include <ulang_type.h>
+#include <lang_type.h>
+#include <lang_type_from_ulang_type.h>
+#include <lang_type_print.h>
+#include <env.h>
 
 // TODO: move this to ulang_type.c, or make ulang_type_print.h header
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
+    bool old_silent_resol_errors = env.silent_generic_resol_errors;
+    env.silent_generic_resol_errors = true;
+    if (mode == LANG_TYPE_MODE_MSG) {
+        Lang_type new_lang_type = {0};
+        if (try_lang_type_from_ulang_type(&new_lang_type, lang_type, (Pos) {0} /* TODO */)) {
+            env.silent_generic_resol_errors = old_silent_resol_errors;
+            return lang_type_print_internal(LANG_TYPE_MODE_MSG, new_lang_type);
+        }
+    }
+
     String buf = {0};
     extend_ulang_type_to_string(&buf, mode, lang_type);
     if (mode == LANG_TYPE_MODE_LOG) {
         string_extend_cstr(&a_print, &buf, "\n");
     }
+    env.silent_generic_resol_errors = old_silent_resol_errors;
     return string_to_strv(buf);
 }
 
