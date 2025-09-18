@@ -43,9 +43,11 @@ bool name_from_uname(Name* new_name, Uname name) {
         Uast_def* result = NULL;
         if (usymbol_lookup(&result, name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
             *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
+            log(LOG_DEBUG, "%zu\n", new_name->scope_id);
             return true;
         }
         *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
+        log(LOG_DEBUG, "%zu\n", new_name->scope_id);
         return true;
     }
 
@@ -66,7 +68,8 @@ bool name_from_uname(Name* new_name, Uname name) {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
             log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias->name));
             log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path.base));
-            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, name.scope_id /* TODO */);
+            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->mod_path.scope_id /* TODO */);
+            log(LOG_DEBUG, "%zu\n", new_name->scope_id);
             return true;
         }
         case UAST_IMPORT_PATH:

@@ -307,6 +307,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         log(LOG_DEBUG, FMT"\n", strv_print(name_base.mod_path));
         log(LOG_DEBUG, FMT"\n", strv_print(name_base.base));
         log(LOG_DEBUG, "%zu\n", name_base.scope_id);
+        log(LOG_DEBUG, "%zu\n", lang_type.atom.str.scope_id);
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         todo();
         return false;
