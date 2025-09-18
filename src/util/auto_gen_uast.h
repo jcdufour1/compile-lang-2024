@@ -130,6 +130,7 @@ static Uast_type uast_gen_mod_alias(const char* prefix) {
 
     append_member(&import.members, "Name", "name");
     append_member(&import.members, "Name", "mod_path");
+    append_member(&import.members, "Scope_id", "mod_path_scope");
 
     return import;
 }

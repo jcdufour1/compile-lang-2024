@@ -27,7 +27,8 @@ Uname name_to_uname(Name name) {
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         (Pos) {0} /* TODO */,
         util_literal_name_new(),
-        name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN)
+        name_new(MOD_PATH_BUILTIN, name.mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+        name.scope_id
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return uname_new_internal(new_alias->name, name.base, name.gen_args, name.scope_id);

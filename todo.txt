@@ -131,6 +131,13 @@ add_fn(<i16>)
 - expected failure test for invalid type in unsafe_cast
 - move std/std_dummy* items from std directory to a different directory
 - improve immediate representation dump so that it is actually readable
+- error message when specifing module that does not exist
+- this should not cause redefinition error:
+    type darr import = arr
+    fn main() i32 {
+        let arr darr.Arr(<i32>)
+        return 0
+    }
 
 
 ## needed tests

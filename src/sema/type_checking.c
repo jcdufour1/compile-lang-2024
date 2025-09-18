@@ -620,6 +620,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_IMPORT_PATH:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             unreachable("");
         case UAST_MOD_ALIAS: {
             assert(uast_mod_alias_unwrap(sym_def)->mod_path.gen_args.info.count < 1);

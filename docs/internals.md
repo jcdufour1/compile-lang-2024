@@ -25,3 +25,7 @@ switch token {
 }
 '''
 ## Llvm
+
+## parsing
+- things in the top level of a file always have SCOPE_TOP_LEVEL
+
