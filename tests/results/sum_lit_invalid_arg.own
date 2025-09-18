@@ -7,7 +7,7 @@ tests/inputs/sum_lit_invalid_arg.own:14:37:[1;31merror[0;39m:cannot assign str
     14 |     let token1 Token = Token.number("hello")
        |                                     ^
     15 |     let token2 Token = Token.number(thing)
-tests/inputs/sum_lit_invalid_arg.own:15:37:[1;31merror[0;39m:cannot assign symbol(( line:15 ))<struct s1_Thing>s2_thing
+tests/inputs/sum_lit_invalid_arg.own:15:37:[1;31merror[0;39m:cannot assign symbol(( line:15 ))<struct s1_Thing>s4_thing
  of type `Thing` to 'i32`
     14 |     let token1 Token = Token.number("hello")
     15 |     let token2 Token = Token.number(thing)

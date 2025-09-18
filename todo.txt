@@ -140,6 +140,14 @@ add_fn(<i16>)
     }
 - when printing msg, use name instead of uname to make types show pretty (and remove uname_normalize function?)
 - make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
+- this should not print s4 prefix, etc.:
+    tests/inputs/sum_lit_invalid_arg.own:15:37:error:cannot assign symbol(( line:15 ))<struct s1_Thing>s4_thing
+     of type `Thing` to 'i32`
+        14 |     let token1 Token = Token.number("hello")
+        15 |     let token2 Token = Token.number(thing)
+           |                                     ^
+        16 |     return 0
+
 
 
 ## needed tests
