@@ -32,8 +32,6 @@ void ir_extend_name(String* output, Name name) {
         assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
     } else if (strv_is_equal(name.base, sv("main"))) {
         name.scope_id = SCOPE_BUILTIN;
-    } else if (name.mod_path.count < 1) {
-        name.mod_path = sv("PREFIX"); // TODO: make variable or similar for this
     }
 
     extend_name(NAME_EMIT_IR, output, name);

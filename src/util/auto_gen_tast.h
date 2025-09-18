@@ -902,7 +902,6 @@ void tast_gen_tast_wrap(Tast_type tast) {
     tast_gen_internal_wrap(tast, true);
 }
 
-// TODO: deduplicate these functions (use same function for Ir and Tast)
 static void tast_gen_print_forward_decl(Tast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         tast_gen_print_forward_decl(vec_at(&type.sub_types, idx));

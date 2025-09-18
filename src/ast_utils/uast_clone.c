@@ -177,6 +177,8 @@ Uast_label* uast_label_clone(const Uast_label* label, Scope_id new_scope) {
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
+    (void) alias;
+    (void) new_scope;
     todo();
     //return uast_mod_alias_new(alias->pos, name_clone(alias->name, new_scope), name_clone(alias->mod_path, new_scope));
 }
