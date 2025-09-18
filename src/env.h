@@ -21,6 +21,9 @@ typedef struct {
 typedef struct Env_ {
     Sym_coll_vec symbol_tables;
 
+    // needed to prevent infinite recursion when printing errors
+    bool silent_generic_resol_errors;
+
     Ulang_type parent_fn_rtn_type;
 
     // TODO: think about functions and structs in different scopes, but with the same name (for both of below objects)

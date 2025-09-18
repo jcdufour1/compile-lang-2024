@@ -23,8 +23,9 @@ typedef struct {
     Scope_id scope_id;
 } Name;
 
+// eg. in symbol `io.Optional`, mod_alias == "io" and base == "Optional"
 typedef struct {
-    Name mod_alias; // TODO: do not use Name for mod_alias; come up with a better system
+    Name mod_alias;
     Strv base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
@@ -33,6 +34,8 @@ typedef struct {
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
+
+Uname name_to_uname(Name name);
 
 void extend_name_ir(String* buf, Name name);
 

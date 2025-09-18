@@ -571,6 +571,10 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
     }
 
+    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).base));
+    log(LOG_DEBUG, "%zu\n", uast_def_get_name(sym_def).scope_id);
+
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
             function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
@@ -616,10 +620,10 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_IMPORT_PATH:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             unreachable("");
         case UAST_MOD_ALIAS: {
-            assert(uast_mod_alias_unwrap(sym_def)->mod_path.gen_args.info.count < 1);
-            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path.base);
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
@@ -1499,6 +1503,9 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
                 );
                 return false;
             }
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.mod_path));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.base));
 
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
@@ -1651,6 +1658,9 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
         return false;
     }
 
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
          &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
@@ -2179,7 +2189,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 // TODO
                 return try_set_function_call_types_old(new_call, fun_call);
             }
-            sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path.base;
+            sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path;
             break;
         }
         case TAST_INDEX:
@@ -2225,7 +2235,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_VOID_DEF:
             todo();
         case UAST_POISON_DEF:
-            todo();
+            return false;
         case UAST_IMPORT_PATH:
             todo();
         case UAST_MOD_ALIAS:
@@ -3416,7 +3426,6 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     Tast_expr* new_child = NULL;
-    Lang_type cached_break_type = break_type;
     if (yield->do_yield_expr) {
         switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
@@ -3967,7 +3976,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new((Strv) {0}, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(MOD_PATH_BUILTIN, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN, POS_BUILTIN, "no main function\n");
             goto error;
         }

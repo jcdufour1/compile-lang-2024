@@ -45,19 +45,21 @@ bool name_from_uname(Name* new_name, Uname name) {
             *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
             return true;
         }
-        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.mod_alias.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
+        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
         return true;
     }
 
-    Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
+    Uast_def* alias_ = NULL;
+    if (!usymbol_lookup(&alias_, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
+        usymbol_log(LOG_DEBUG, name.mod_alias.scope_id);
+        // TODO: expected failure case
         todo();
     }
 
-    switch (result->type) {
+    switch (alias_->type) {
         case UAST_MOD_ALIAS: {
-            Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
-            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->name.scope_id);
+            Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope /* TODO */);
             return true;
         }
         case UAST_IMPORT_PATH:
@@ -88,22 +90,6 @@ bool name_from_uname(Name* new_name, Uname name) {
             todo();
     }
     unreachable("");
-}
-
-Uname name_to_uname(Name name) {
-    // TODO: may be incorrect
-    Uast_mod_alias* new_alias = uast_mod_alias_new(
-        (Pos) {0} /* TODO */,
-        name_new(
-            (Strv) {0},
-            util_literal_strv_new(),
-            (Ulang_type_vec) {0},
-            name.scope_id /* TODO */
-        ),
-        name_new((Strv) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new(new_alias->name, name.base, name.gen_args, name.scope_id);
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

@@ -24,10 +24,12 @@ static void msg_undefined_type_internal(
     Pos pos,
     Ulang_type lang_type
 ) {
-    msg_internal(
-        file, line, DIAG_UNDEFINED_TYPE, pos,
-        "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
-    );
+    if (!env.silent_generic_resol_errors) {
+        msg_internal(
+            file, line, DIAG_UNDEFINED_TYPE, pos,
+            "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+        );
+    }
 }
 
 #define msg_undefined_type(pos, lang_type) \
@@ -42,6 +44,10 @@ static void msg_invalid_count_generic_args_internal(
     size_t min_args,
     size_t max_args
 ) {
+    if (env.silent_generic_resol_errors) {
+        return;
+    }
+
     String message = {0};
     string_extend_size_t(&a_print, &message, gen_args.info.count);
     string_extend_cstr(&a_print, &message, " generic arguments are passed");
@@ -77,6 +83,10 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
         for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
             if (name_is_equal(vec_at(&base->members, prev_idx)->name, curr->name)) {
+                if (env.silent_generic_resol_errors) {
+                    return false;
+                }
+
                 msg(
                     DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
                     "redefinition of member `"FMT"`\n",

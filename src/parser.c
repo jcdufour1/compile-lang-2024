@@ -16,7 +16,8 @@
 #include <name.h>
 #include <ulang_type_clone.h>
 
-static Strv curr_mod_path;
+static Strv curr_mod_path; // mod_path of the file that is currently being parsed
+static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
 static Token prev_token;
 
@@ -305,10 +306,22 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
     bool status = true;
+    assert(mod_path.count > 0);
+    assert(alias_tk.text.count > 0);
     Uast_def* prev_def = NULL;
     String file_path = {0};
+
+    Name old_mod_alias = curr_mod_alias;
+    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
+    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
+    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.mod_path));
+    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.base));
+    log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
+
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
+
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
@@ -321,20 +334,16 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         goto finish;
     }
 
+    // TODO: consider using Strv for mod_path of Uast_import_path
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
-        name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+        mod_path
     ))));
 
 finish:
     curr_mod_path = old_mod_path;
-    *mod_alias = uast_mod_alias_new(
-        alias_tk.pos,
-        name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-        name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
+    curr_mod_alias = old_mod_alias;
     return status;
 }
 
@@ -786,18 +795,18 @@ static bool is_unary(TOKEN_TYPE token_type) {
 }
 
 static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-    Strv mod_alias = {0};
+    Name mod_alias = curr_mod_alias;
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        mod_alias = lang_type_token.text;
+        mod_alias.base = lang_type_token.text;
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+            // TODO: expected failure test
             todo();
             return false;
         }
@@ -805,12 +814,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = uname_new(
-        name_new(curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id),
-        lang_type_token.text,
-        (Ulang_type_vec) {0},
-        scope_id
-    );
+    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -1268,6 +1272,9 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     }
 
     *enum_def = uast_enum_def_new(name.pos, base);
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.base));
+    log(LOG_DEBUG, "%zu\n", (*enum_def)->base.name.scope_id);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
@@ -2757,7 +2764,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
         ulang_type_atom_new(
             uname_new(
-                name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+                MOD_ALIAS_BUILTIN,
                 sv("i32"),
                 (Ulang_type_vec) {0},
                 SCOPE_BUILTIN
@@ -3064,6 +3071,21 @@ static void parser_do_tests(void);
 
 bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
+
+    if (curr_mod_alias.base.count < 1) {
+        curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
+        curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
+        Uast_mod_alias* mod_alias = uast_mod_alias_new(
+            POS_BUILTIN,
+            curr_mod_alias,
+            curr_mod_path,
+            SCOPE_TOP_LEVEL
+        );
+        unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
+        log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
+    }
+
+    // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();

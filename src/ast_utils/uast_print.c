@@ -445,7 +445,7 @@ Strv uast_import_path_print_internal(const Uast_import_path* import, int indent)
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "import_path", indent);
-    extend_name(NAME_LOG, &buf, import->mod_path);
+    string_extend_strv(&a_print, &buf, import->mod_path);
     string_extend_cstr(&a_print, &buf, "\n");
     string_extend_strv(&a_print, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));
 
@@ -460,7 +460,7 @@ Strv uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) {
     extend_name(NAME_LOG, &buf, alias->name);
     string_extend_cstr(&a_print, &buf, ")");
     string_extend_cstr(&a_print, &buf, "(");
-    extend_name(NAME_LOG, &buf, alias->mod_path);
+    string_extend_strv(&a_main, &buf, alias->mod_path);
     string_extend_cstr(&a_print, &buf, ")");
     string_extend_cstr(&a_print, &buf, "\n");
 

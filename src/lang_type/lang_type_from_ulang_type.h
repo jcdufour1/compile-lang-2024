@@ -23,8 +23,6 @@ bool lang_type_atom_is_float(Lang_type_atom atom);
 
 bool name_from_uname(Name* new_name, Uname name);
 
-Uname name_to_uname(Name name);
-
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
     Ulang_type_tuple lang_type,

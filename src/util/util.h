@@ -100,6 +100,7 @@ static inline void unwrap_internal(bool cond, const char* cond_text, const char*
 
 #define unwrap(cond) unwrap_internal(cond, #cond, __FILE__, __LINE__)
 
+// TODO: move error_count and warning_count to Env struct for consistancy?
 extern size_t error_count;
 extern size_t warning_count;
 extern Env env;
@@ -116,6 +117,13 @@ typedef size_t Scope_id;
 #define SCOPE_BUILTIN 0
 #define SCOPE_TOP_LEVEL 1
 #define SCOPE_NOT SIZE_MAX
+
+// TODO: lang_type_get_atom (and maybe other places) need to be refactored before something other than empty string can be used for MOD_PATH_BUILTIN
+#define MOD_PATH_BUILTIN (sv(""))
+
+#define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
+// TODO: MOD_PATH_BUILTIN for top level may not be a good idea
+#define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
 #define FMT "%.*s"
 

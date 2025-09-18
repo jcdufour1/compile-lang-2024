@@ -46,6 +46,15 @@ Ir_block* compile_file_to_ir(void) {
 
     add_primitives();
 
+    // TODO: consider if mod_path member of Uast_mod_alias could be Strv instead of Name
+    Uast_mod_alias* new_alias = uast_mod_alias_new(
+        POS_BUILTIN,
+        MOD_ALIAS_BUILTIN,
+        MOD_PATH_BUILTIN,
+        SCOPE_BUILTIN
+    );
+    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+
     Uast_block* untyped = NULL;
     bool status = parse_file(&untyped, params.input_file_path);
     if (error_count > 0) {
