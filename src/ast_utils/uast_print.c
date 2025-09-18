@@ -460,7 +460,7 @@ Strv uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) {
     extend_name(NAME_LOG, &buf, alias->name);
     string_extend_cstr(&a_print, &buf, ")");
     string_extend_cstr(&a_print, &buf, "(");
-    extend_name(NAME_LOG, &buf, alias->mod_path);
+    string_extend_strv(&a_main, &buf, alias->mod_path);
     string_extend_cstr(&a_print, &buf, ")");
     string_extend_cstr(&a_print, &buf, "\n");
 

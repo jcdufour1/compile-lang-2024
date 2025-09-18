@@ -623,8 +623,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             unreachable("");
         case UAST_MOD_ALIAS: {
-            assert(uast_mod_alias_unwrap(sym_def)->mod_path.gen_args.info.count < 1);
-            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path.base);
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
@@ -2190,7 +2189,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 // TODO
                 return try_set_function_call_types_old(new_call, fun_call);
             }
-            sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path.base;
+            sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path;
             break;
         }
         case TAST_INDEX:

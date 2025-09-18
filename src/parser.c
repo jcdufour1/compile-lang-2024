@@ -313,12 +313,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
 
     Name old_mod_alias = curr_mod_alias;
     curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-    *mod_alias = uast_mod_alias_new(
-        alias_tk.pos,
-        curr_mod_alias,
-        name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-        SCOPE_TOP_LEVEL
-    );
+    *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
     log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.mod_path));
     log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.base));
@@ -3083,7 +3078,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         Uast_mod_alias* mod_alias = uast_mod_alias_new(
             POS_BUILTIN,
             curr_mod_alias,
-            name_new((Strv) {0} /* TODO */, curr_mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+            curr_mod_path,
             SCOPE_TOP_LEVEL
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));

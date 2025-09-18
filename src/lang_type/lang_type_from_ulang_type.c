@@ -59,7 +59,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->mod_path_scope /* TODO */);
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope /* TODO */);
             return true;
         }
         case UAST_IMPORT_PATH:
