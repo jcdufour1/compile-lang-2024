@@ -173,7 +173,7 @@ void extend_name_msg(String* buf, Name name) {
 // TODO: move this function elsewhere
 // TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    if (mode != UNAME_MSG || !name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN)) {
+    if (mode != UNAME_MSG || !(name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) || (name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)))) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_print, buf, ".");
     }
