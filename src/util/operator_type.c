@@ -1,7 +1,7 @@
 #include <operator_type.h>
 
 BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types; only binary operators need to be explicitly handled here");
     switch (type) {
         case TOKEN_SINGLE_EQUAL:
             return BINARY_SINGLE_EQUAL;
@@ -25,7 +25,7 @@ BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
             return BINARY_GREATER_THAN;
         case TOKEN_DOUBLE_EQUAL:
             return BINARY_DOUBLE_EQUAL;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return BINARY_NOT_EQUAL;
         case TOKEN_BITWISE_XOR:
             return BINARY_BITWISE_XOR;

@@ -1,4 +1,4 @@
-compile::stdout 33
+compile::stdout 38
 283
 65
 85
@@ -31,6 +31,11 @@ bitwise or:
 3
 2
 95
+bitwise not:
+ffffffff
+fffffffe
+fffffffe
+0
 num100: 89
 
 compile::stderr 0

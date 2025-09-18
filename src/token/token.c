@@ -24,6 +24,8 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv(",");
         case TOKEN_SINGLE_PLUS:
             return sv("+");
+        case TOKEN_BITWISE_NOT:
+            return sv("~");
         case TOKEN_SINGLE_MINUS:
             return sv("-");
         case TOKEN_ASTERISK:
@@ -56,9 +58,9 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("/");
         case TOKEN_COMMENT:
             return sv("comment");
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return sv("!=");
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return sv("!");
         case TOKEN_BITWISE_XOR:
             return sv("xor");
@@ -160,6 +162,8 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
             return sv("nontype");
+        case TOKEN_BITWISE_NOT:
+            return sv("~");
         case TOKEN_SYMBOL:
             return sv("sym");
         case TOKEN_OPEN_PAR:
@@ -210,9 +214,9 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("/");
         case TOKEN_COMMENT:
             return sv("comment");
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return sv("!=");
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return sv("!");
         case TOKEN_BITWISE_XOR:
             return sv("xor");
@@ -326,7 +330,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -353,8 +357,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_SINGLE_PLUS: // fallthrough
         case TOKEN_LESS_THAN: // fallthrough
         case TOKEN_GREATER_THAN: // fallthrough
-        case TOKEN_NOT_EQUAL: // fallthrough
-        case TOKEN_NOT: // fallthrough
+        case TOKEN_LOGICAL_NOT_EQUAL: // fallthrough
+        case TOKEN_LOGICAL_NOT: // fallthrough
         case TOKEN_ENUM: // fallthrough
         case TOKEN_BITWISE_XOR: // fallthrough
         case TOKEN_VOID: // fallthrough
@@ -381,6 +385,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_GREATER_OR_EQUAL: // fallthrough
         case TOKEN_MODULO: // fallthrough
         case TOKEN_BITWISE_AND: // fallthrough
+        case TOKEN_BITWISE_NOT: // fallthrough
         case TOKEN_BITWISE_OR: // fallthrough
         case TOKEN_LOGICAL_AND: // fallthrough
         case TOKEN_LOGICAL_OR: // fallthrough
