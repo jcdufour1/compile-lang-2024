@@ -119,7 +119,7 @@ static Uast_type uast_gen_import_path(const char* prefix) {
     Uast_type import = {.name = uast_name_new(prefix, "import_path", false)};
 
     append_member(&import.members, "Uast_block*", "block");
-    append_member(&import.members, "Name", "mod_path");
+    append_member(&import.members, "Strv", "mod_path");
 
     return import;
 }
