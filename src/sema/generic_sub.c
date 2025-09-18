@@ -114,7 +114,7 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
 }
 
 void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_symbol(def->child, gen_param, gen_arg);
+    generic_sub_name(&def->name, gen_param, gen_arg);
 }
 
 void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {

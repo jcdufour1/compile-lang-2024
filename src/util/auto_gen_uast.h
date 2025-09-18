@@ -158,7 +158,7 @@ static Uast_type uast_gen_unary(const char* prefix) {
 static Uast_type uast_gen_binary(const char* prefix) {
     Uast_type binary = {.name = uast_name_new(prefix, "binary", false)};
 
-    append_member(&binary.members, "Uast_expr*", "lhs"); // TODO: change this to Uast_expr
+    append_member(&binary.members, "Uast_expr*", "lhs");
     append_member(&binary.members, "Uast_expr*", "rhs");
     append_member(&binary.members, "BINARY_TYPE", "token_type");
 
@@ -449,7 +449,7 @@ static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
     // TODO: change this to just Name?
-    append_member(&param.members, "Uast_symbol*", "child");
+    append_member(&param.members, "Name", "name");
 
     return param;
 }

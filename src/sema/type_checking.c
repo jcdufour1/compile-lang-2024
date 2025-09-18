@@ -2398,7 +2398,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             bool found_gen = false;
             for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
                 if (strv_is_equal(
-                    vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
+                    vec_at(&fun_decl_temp->generics, idx_gen)->name.base,
                     param->base->name.base
                 )) {
                     if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {

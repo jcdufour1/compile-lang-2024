@@ -184,7 +184,7 @@ Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_s
 }
 
 Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, Scope_id new_scope) {
-    return uast_generic_param_new(param->pos, uast_symbol_clone(param->child, new_scope));
+    return uast_generic_param_new(param->pos, name_clone(param->name, new_scope));
 }
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_pos) {
