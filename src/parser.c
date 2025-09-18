@@ -504,11 +504,13 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            return false;
+        case TOKEN_BITWISE_NOT:
             return false;
         case TOKEN_BITWISE_XOR:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return false;
         case TOKEN_UNSAFE_CAST:
             return false;
@@ -658,9 +660,9 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return true;
         case TOKEN_STRING_LITERAL:
             return false;
@@ -788,6 +790,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_GENERIC_TYPE:
             return false;
+        case TOKEN_BITWISE_NOT:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -2774,9 +2778,11 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     )); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT:
+            break;
+        case TOKEN_LOGICAL_NOT:
             break;
         case TOKEN_ASTERISK:
             break;
@@ -2826,9 +2832,23 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT: {
+            Uast_expr_vec args = {0};
+            vec_append(&a_main, &args, child);
+            *result = uast_function_call_wrap(uast_function_call_new(
+                oper.pos,
+                args,
+                uast_symbol_wrap(uast_symbol_new(oper.pos, name_new(
+                    MOD_PATH_RUNTIME,
+                    sv("bitwise_not"),
+                    (Ulang_type_vec) {0},
+                    scope_id
+                )))
+            ));
+        } break;
+        case TOKEN_LOGICAL_NOT:
             // fallthrough
         case TOKEN_ASTERISK:
             // fallthrough
@@ -2940,7 +2960,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 73, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 74, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -2949,7 +2969,7 @@ static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
     {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
     {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
+    {TOKEN_LOGICAL_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
     {TOKEN_LESS_THAN, TOKEN_LESS_OR_EQUAL, TOKEN_GREATER_THAN, TOKEN_GREATER_OR_EQUAL},
     {TOKEN_SHIFT_LEFT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT},
     {TOKEN_SINGLE_PLUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS},

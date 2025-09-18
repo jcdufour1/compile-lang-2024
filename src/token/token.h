@@ -24,7 +24,7 @@ typedef enum {
     TOKEN_GREATER_THAN,
     TOKEN_GREATER_OR_EQUAL,
     TOKEN_DOUBLE_EQUAL,
-    TOKEN_NOT_EQUAL,
+    TOKEN_LOGICAL_NOT_EQUAL,
     TOKEN_BITWISE_AND,
     TOKEN_BITWISE_OR,
     TOKEN_BITWISE_XOR,
@@ -34,7 +34,8 @@ typedef enum {
     TOKEN_SHIFT_RIGHT,
 
     // unary operators
-    TOKEN_NOT,
+    TOKEN_LOGICAL_NOT,
+    TOKEN_BITWISE_NOT,
     TOKEN_UNSAFE_CAST,
 
     // literals
@@ -141,9 +142,11 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
+            return false;
+        case TOKEN_BITWISE_NOT:
             return false;
         case TOKEN_STRING_LITERAL:
             return true;
@@ -290,9 +293,9 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_DOUBLE_EQUAL:
             return true;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return true;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return true;
         case TOKEN_UNSAFE_CAST:
             return true;
@@ -422,6 +425,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_GENERIC_TYPE:
             return false;
+        case TOKEN_BITWISE_NOT:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -477,9 +482,9 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_DOUBLE_EQUAL:
             return true;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return true;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return false;
         case TOKEN_STRING_LITERAL:
             return false;
@@ -515,6 +520,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_BITWISE_XOR:
             return true;
+        case TOKEN_BITWISE_NOT:
+            return false;
         case TOKEN_VOID:
             return false;
         case TOKEN_UNSAFE_CAST:

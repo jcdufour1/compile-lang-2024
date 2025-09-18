@@ -1423,7 +1423,7 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
 
             vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_operator_wrap(ir_unary_wrap(new_unary))));
             return new_unary->name;
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             unreachable("not should not still be present here");
     }
     unreachable("");

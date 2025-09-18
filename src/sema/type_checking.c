@@ -1130,7 +1130,7 @@ bool try_set_unary_types_finish(
                 new_lang_type
             )));
             return true;
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (!lang_type_is_number(new_lang_type)) {
                 msg(
