@@ -178,8 +178,6 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     arena_free(&a_temp);
 }
 
-// TODO: rename this function to "emit_c_def_not_inline" or similar to explain its purpose
-// TODO: also do above TODO for emit_c_out_of_line, etc.
 static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -564,19 +562,6 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     emit_c_loc(&strs->output, store->loc, store->pos);
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
-
-    // TODO: remove comment, etc.
-    if (true /*src->type == IR_EXPR && ir_expr_const_unwrap(src)->type == IR_LITERAL*/) {
-        string_extend_cstr(&a_main, &strs->output, "    *((");
-        c_extend_type_call_str(&strs->output, store->lang_type, true);
-        string_extend_cstr(&a_main, &strs->output, "*)");
-        ir_extend_name(&strs->output, store->ir_dest);
-        string_extend_cstr(&a_main, &strs->output, ") = ");
-
-        emit_c_expr_piece(strs, store->ir_src);
-        string_extend_cstr(&a_main, &strs->output, ";\n");
-        return;
-    }
 
     string_extend_cstr(&a_main, &strs->output, "    memcpy(");
     emit_c_expr_piece(strs, store->ir_dest);
