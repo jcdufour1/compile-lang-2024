@@ -1,4 +1,5 @@
 type io import = std.io
+type rt import = std.runtime
 
 
 fn one() i32 {
@@ -82,7 +83,7 @@ fn bitwise_xor() {
     }
 
     {
-        let num i32 = 2
+        let num i16 = 2
         num = num ^ 1
         io.printf("%d\n", num)
     }
@@ -166,10 +167,39 @@ fn bitwise_or() {
     io.printf("%d\n", 76 | 23)
 }
 
+fn bitwise_not() {
+    io.printf("bitwise not:\n")
+    {
+        let num i32 = 0
+        num = ~num
+        io.printf("%x\n", num)
+    }
+
+    {
+        let num u32 = 0
+        num = ~1
+        io.printf("%x\n", num)
+    }
+
+    {
+        let num i16 = 1
+        num = rt.bitwise_not_i16(num)
+        //num = rt.bitwise_not_i16(num)
+        io.printf("%x\n", unsafe_cast<i32>num)
+    }
+
+    {
+        let num u32 = 0xFFFFFFFF
+        num = ~num
+        io.printf("%x\n", num)
+    }
+}
+
 fn bitwise() {
     bitwise_xor()
     bitwise_and()
     bitwise_or()
+    bitwise_not()
 }
 
 fn main() i32 {

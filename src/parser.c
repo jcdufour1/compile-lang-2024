@@ -2844,7 +2844,7 @@ static PARSE_EXPR_STATUS parse_unary(
                     MOD_PATH_RUNTIME,
                     sv("bitwise_not"),
                     (Ulang_type_vec) {0},
-                    scope_id
+                    SCOPE_TOP_LEVEL
                 )))
             ));
         } break;
