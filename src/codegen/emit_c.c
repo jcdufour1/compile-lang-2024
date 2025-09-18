@@ -179,8 +179,8 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
 }
 
 // TODO: rename this function to "emit_c_def_not_inline" or similar to explain its purpose
-// TODO: also do above TODO for emit_c_sometimes, etc.
-static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
+// TODO: also do above TODO for emit_c_out_of_line, etc.
+static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             emit_c_function_def(strs, ir_function_def_const_unwrap(def));
@@ -203,10 +203,10 @@ static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
     unreachable("");
 }
 
-static void emit_c_sometimes(Emit_c_strs* strs, const Ir* ir) {
+static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
-            emit_c_def_sometimes(strs, ir_def_const_unwrap(ir));
+            emit_c_def_out_of_line(strs, ir_def_const_unwrap(ir));
             return;
         case IR_BLOCK:
             return;
@@ -273,7 +273,6 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
             emit_c_expr_piece(strs, vec_at(&fun_call->args, idx));
         }
     }
-    //emit_function_call_arguments(&strs->output, literals, fun_call);
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
@@ -712,7 +711,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
-        emit_c_sometimes(strs, curr);
+        emit_c_out_of_line(strs, curr);
     }
 }
 
@@ -736,7 +735,7 @@ void emit_c_from_tree(const Ir_block* root) {
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
-            emit_c_sometimes(&strs, curr);
+            emit_c_out_of_line(&strs, curr);
         }
 
         emit_c_block(&strs, root);
