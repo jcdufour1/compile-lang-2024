@@ -1,6 +1,4 @@
 type io import = std.io
-type rt import = std.runtime
-
 
 fn one() i32 {
     return 1

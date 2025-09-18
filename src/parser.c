@@ -315,9 +315,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
-    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.mod_path));
-    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.base));
-    log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
 
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
@@ -334,7 +331,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         goto finish;
     }
 
-    // TODO: consider using Strv for mod_path of Uast_import_path
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
@@ -3092,6 +3088,8 @@ static void parser_do_tests(void);
 bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
 
+    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN);
+
     if (curr_mod_alias.base.count < 1) {
         curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
         curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
@@ -3103,6 +3101,14 @@ bool parse_file(Uast_block** block, Strv file_path) {
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
         log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
+
+        Uast_mod_alias* dummy = NULL;
+        unwrap(get_mod_alias_from_path_token(
+            &dummy,
+            token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+            (Pos) {0} /* TODO */,
+            MOD_PATH_RUNTIME
+        ));
     }
 
     // TODO: DNDEBUG should be spelled NDEBUG
@@ -3129,7 +3135,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
+    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
     }

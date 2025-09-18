@@ -417,11 +417,6 @@ static bool get_next_token(
     }
 }
 
-static Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = sv(text), .type = token_type};
-    return token;
-}
-
 static void test(const char* file_text, Tk_view expected) {
     (void) file_text;
     (void) expected;
