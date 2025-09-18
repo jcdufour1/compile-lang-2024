@@ -38,7 +38,7 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&types, idx));
+        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, vec_at(&types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 

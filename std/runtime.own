@@ -1,0 +1,4 @@
+
+fn bitwise_not(num NumT, NumT Type) NumT {
+    return unsafe_cast<NumT>(-1)^num
+}

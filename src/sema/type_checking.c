@@ -1130,7 +1130,7 @@ bool try_set_unary_types_finish(
                 new_lang_type
             )));
             return true;
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (!lang_type_is_number(new_lang_type)) {
                 msg(
@@ -2525,6 +2525,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
+                                arg_to_infer_from->type == TAST_LITERAL,
                                 vec_at(&params->params, idx_gen_param)->base,
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)

@@ -315,9 +315,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
-    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.mod_path));
-    log(LOG_VERBOSE, FMT"\n", strv_print(curr_mod_alias.base));
-    log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
 
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
@@ -334,7 +331,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         goto finish;
     }
 
-    // TODO: consider using Strv for mod_path of Uast_import_path
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
@@ -504,11 +500,13 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            return false;
+        case TOKEN_BITWISE_NOT:
             return false;
         case TOKEN_BITWISE_XOR:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return false;
         case TOKEN_UNSAFE_CAST:
             return false;
@@ -658,9 +656,9 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return true;
         case TOKEN_STRING_LITERAL:
             return false;
@@ -788,6 +786,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_GENERIC_TYPE:
             return false;
+        case TOKEN_BITWISE_NOT:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -2774,9 +2774,11 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     )); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT:
+            break;
+        case TOKEN_LOGICAL_NOT:
             break;
         case TOKEN_ASTERISK:
             break;
@@ -2826,9 +2828,23 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 73, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT: {
+            Uast_expr_vec args = {0};
+            vec_append(&a_main, &args, child);
+            *result = uast_function_call_wrap(uast_function_call_new(
+                oper.pos,
+                args,
+                uast_symbol_wrap(uast_symbol_new(oper.pos, name_new(
+                    MOD_PATH_RUNTIME,
+                    sv("bitwise_not"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
+                )))
+            ));
+        } break;
+        case TOKEN_LOGICAL_NOT:
             // fallthrough
         case TOKEN_ASTERISK:
             // fallthrough
@@ -2940,7 +2956,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 73, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 74, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -2949,7 +2965,7 @@ static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
     {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
     {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
+    {TOKEN_LOGICAL_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
     {TOKEN_LESS_THAN, TOKEN_LESS_OR_EQUAL, TOKEN_GREATER_THAN, TOKEN_GREATER_OR_EQUAL},
     {TOKEN_SHIFT_LEFT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT},
     {TOKEN_SINGLE_PLUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS},
@@ -3072,6 +3088,8 @@ static void parser_do_tests(void);
 bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
 
+    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN);
+
     if (curr_mod_alias.base.count < 1) {
         curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
         curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
@@ -3083,6 +3101,14 @@ bool parse_file(Uast_block** block, Strv file_path) {
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
         log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
+
+        Uast_mod_alias* dummy = NULL;
+        unwrap(get_mod_alias_from_path_token(
+            &dummy,
+            token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+            (Pos) {0} /* TODO */,
+            MOD_PATH_RUNTIME
+        ));
     }
 
     // TODO: DNDEBUG should be spelled NDEBUG
@@ -3109,7 +3135,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
+    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
     }

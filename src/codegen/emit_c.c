@@ -289,7 +289,7 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm
             c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             unreachable("not should not make it here");
         case UNARY_SIZEOF:
             unreachable("sizeof should not make it here");

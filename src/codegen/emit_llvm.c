@@ -492,7 +492,7 @@
 //            unreachable("suffix not needed for UNARY_DEREF");
 //        case UNARY_REFER:
 //            unreachable("suffix not needed for UNARY_REFER");
-//        case UNARY_NOT:
+//        case UNARY_LOGICAL_NOT:
 //            unreachable("not should not still be present here");
 //        case UNARY_SIZEOF:
 //            unreachable("sizeof should not still be present here");
