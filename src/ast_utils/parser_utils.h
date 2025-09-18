@@ -25,7 +25,7 @@ static inline Lang_type lang_type_new_usize(void) {
 static inline Ulang_type ulang_type_new_usize(void) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
         (Ulang_type_atom) {
-            .str = uname_new((Name) {0}, sv("u64"/* TODO */), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+            .str = uname_new(MOD_ALIAS_BUILTIN, sv("u64"/* TODO */), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
             .pointer_depth = 0
         },
         POS_BUILTIN

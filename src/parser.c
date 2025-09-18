@@ -810,10 +810,6 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         mod_alias.base = lang_type_token.text;
-        Uast_def* dummy = NULL;
-        log(LOG_DEBUG, FMT"\n", strv_print(mod_alias.mod_path));
-        log(LOG_DEBUG, FMT"\n", strv_print(mod_alias.base));
-        assert(usymbol_lookup(&dummy, mod_alias) && "mod_alias is not actually in the symbol table");
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
             // TODO: expected failure test
             todo();

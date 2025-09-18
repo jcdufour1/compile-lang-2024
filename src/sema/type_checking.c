@@ -993,9 +993,6 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     }
     assert(new_lhs);
 
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
         switch (check_generic_assignment(&new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
