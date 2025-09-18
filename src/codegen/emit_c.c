@@ -563,14 +563,14 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
 
-    string_extend_cstr(&a_main, &strs->output, "    memcpy(");
-    emit_c_expr_piece(strs, store->ir_dest);
-    string_extend_cstr(&a_main, &strs->output, ", &");
+    string_extend_cstr(&a_main, &strs->output, "    *((");
+    c_extend_type_call_str(&strs->output, store->lang_type, true);
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    ir_extend_name(&strs->output, store->ir_dest);
+    string_extend_cstr(&a_main, &strs->output, ") = ");
 
     emit_c_expr_piece(strs, store->ir_src);
-    string_extend_cstr(&a_main, &strs->output, ", ");
-    string_extend_size_t(&a_main, &strs->output, sizeof_llvm_lang_type(store->lang_type));
-    string_extend_cstr(&a_main, &strs->output, ");\n");
+    string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {

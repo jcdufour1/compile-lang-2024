@@ -2,16 +2,15 @@
 #define MSG_UNDEFINED_SYMBOL_H
 
 // TODO: move this function and macro elsewhere
-// TODO: use name and pos as arguments instead of sym_call
-static inline void msg_undefined_symbol_internal(const char* file, int line, const Uast_symbol* sym_call) {
+static inline void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Pos sym_pos) {
     msg_internal(
         file, line,
-        DIAG_UNDEFINED_SYMBOL, sym_call->pos,
-        "symbol `"FMT"` is not defined\n", name_print(NAME_MSG, sym_call->name)
+        DIAG_UNDEFINED_SYMBOL, sym_pos,
+        "symbol `"FMT"` is not defined\n", name_print(NAME_MSG, sym_name)
     );
 }
 
-#define msg_undefined_symbol(sym_call) \
-    msg_undefined_symbol_internal(__FILE__, __LINE__, sym_call)
+#define msg_undefined_symbol(sym_name, sym_pos) \
+    msg_undefined_symbol_internal(__FILE__, __LINE__, sym_name, sym_pos)
 
 #endif // MSG_UNDEFINED_SYMBOL_H

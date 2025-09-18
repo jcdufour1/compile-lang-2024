@@ -566,7 +566,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
-            msg_undefined_symbol(sym_untyped);
+            msg_undefined_symbol(sym_untyped->name, sym_untyped->pos);
             return false;
         }
     }
@@ -3408,7 +3408,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
-        msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        msg_undefined_symbol(yield->break_out_of, yield->pos);
         status = false;
         goto error;
     }
@@ -3460,7 +3460,7 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, cont->break_out_of)) {
-        msg_undefined_symbol(uast_symbol_new(cont->pos, cont->break_out_of));
+        msg_undefined_symbol(cont->break_out_of, cont->pos);
         status = false;
         goto error;
     }
