@@ -23,12 +23,13 @@ bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg)
 bool infer_generic_type(
     Ulang_type* infered,
     Lang_type arg_to_infer_from,
+    bool arg_to_infer_is_lit,
     Uast_variable_def* param_corres_to_arg,
     Name name_to_infer,
     Pos pos_arg
 ) {
     // TODO: make helper function to do this lang_type conversion (to normalize integer bit widths)
-    if (arg_to_infer_from.type == LANG_TYPE_PRIMITIVE) {
+    if (arg_to_infer_is_lit && arg_to_infer_from.type == LANG_TYPE_PRIMITIVE) {
         Lang_type_primitive primitive = lang_type_primitive_const_unwrap(arg_to_infer_from);
         switch (primitive.type) {
             case LANG_TYPE_SIGNED_INT: {
@@ -87,6 +88,7 @@ bool infer_generic_type(
                 if (infer_generic_type(
                     infered,
                     lang_type_from_ulang_type(vec_at_const(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
+                    false,
                     uast_variable_def_new(pos_arg /* TODO */, vec_at(&reg.atom.str.gen_args, idx), util_literal_name_new()),
                     name_to_infer,
                     pos_arg

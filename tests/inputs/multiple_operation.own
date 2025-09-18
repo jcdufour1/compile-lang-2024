@@ -183,8 +183,7 @@ fn bitwise_not() {
 
     {
         let num i16 = 1
-        num = rt.bitwise_not_i16(num)
-        //num = rt.bitwise_not_i16(num)
+        num = ~num
         io.printf("%x\n", unsafe_cast<i32>num)
     }
 

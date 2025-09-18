@@ -10,6 +10,7 @@
 bool infer_generic_type(
     Ulang_type* infered,
     Lang_type arg_to_infer_from,
+    bool arg_to_infer_is_lit,
     Uast_variable_def* param_corres_to_arg,
     Name name_to_infer,
     Pos pos_arg
