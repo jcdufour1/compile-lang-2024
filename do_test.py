@@ -50,10 +50,18 @@ def print_success(*base, **kargs) -> None:
 def print_info(*base, **kargs) -> None:
     print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
+def list_files_recursively(dir: str) -> list[str]:
+    result: str[list] = []
+    for root, _, files in os.walk(dir):
+        for file_path in files:
+            result.append(os.path.join(root, file_path))
+    print(result)
+    return result
+
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
     possible_path: str
-    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
+    for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
         possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
         if os.path.isfile(possible_path) and possible_path in files_to_test:
             files.append(FileItem(possible_base))
