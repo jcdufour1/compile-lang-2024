@@ -237,15 +237,67 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         return true;
     }
 
-    if (strv.count != 1) {
-        msg(
-            DIAG_INVALID_CHAR_LIT, pos,
-            "expected exactly one character in char literal after `\\`, but got %zu\n",
-            strv.count
-        );
-        return false;
-    }
     char esc_char = strv_consume(&strv);
+
+    switch (esc_char) {
+        case 'a':
+            // fallthrough
+        case 'b':
+            // fallthrough
+        case 'f':
+            // fallthrough
+        case 'n':
+            // fallthrough
+        case 'r':
+            // fallthrough
+        case 't':
+            // fallthrough
+        case 'v':
+            // fallthrough
+        case '\\':
+            // fallthrough
+        case '\'':
+            // fallthrough
+        case '"':
+            // fallthrough
+        case '?':
+            // fallthrough
+        case '0':
+            if (strv.count != 0) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected exactly one character in char literal after `\\`, but got %zu\n",
+                    strv.count
+                );
+                return false;
+            }
+            break;
+        case 'x':
+            // hexadecimal
+            // fallthrough
+        case 'o':
+            // octal
+            if (strv.count != 2) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected exactly two characters in char literal after `\\x` or `\\o` excape, but got %zu\n",
+                    strv.count
+                );
+                return false;
+            }
+            break;
+        default: {
+            String buf = {0};
+            string_extend_cstr(&a_main, &buf, "excape sequence `\\");
+            vec_append(&a_main, &buf, esc_char);
+            string_extend_cstr(&a_main, &buf, "`");
+            msg_todo_strv(string_to_strv(buf), pos);
+            // TODO: expected failure case
+            todo();
+            return false;
+        }
+    }
+
     switch (esc_char) {
         case 'a':
             *result = '\a';
@@ -289,16 +341,8 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         case 'o':
             // octal
             todo();
-        default: {
-            String buf = {0};
-            string_extend_cstr(&a_main, &buf, "excape sequence `\\");
-            vec_append(&a_main, &buf, esc_char);
-            string_extend_cstr(&a_main, &buf, "`");
-            msg_todo_strv(string_to_strv(buf), pos);
-            // TODO: expected failure case
-            todo();
-            return false;
-        }
+        default:
+            unreachable("");
     }
     unreachable("");
 }

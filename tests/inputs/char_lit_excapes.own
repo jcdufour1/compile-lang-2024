@@ -23,7 +23,8 @@ fn main() i32 {
     ch = '\?'
     io.printf("%c\n", ch);
     ch = '\0'
-    //ch = '\x00'
+    ch = '\x61' // 'a'
+    io.printf("%c\n", ch);
     //ch = '\o000'
 
     //ch = '\t'
