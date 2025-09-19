@@ -448,7 +448,6 @@ static Uast_type uast_gen_void_def(const char* prefix) {
 static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
-    // TODO: change this to just Name?
     append_member(&param.members, "Name", "name");
 
     return param;
@@ -599,7 +598,7 @@ static Uast_type uast_gen_return(const char* prefix) {
     Uast_type rtn = {.name = uast_name_new(prefix, "return", false)};
 
     append_member(&rtn.members, "Uast_expr*", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
+    append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
 }
