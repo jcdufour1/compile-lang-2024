@@ -64,8 +64,7 @@ static bool is_dot(char prev, char curr) {
 }
 
 static bool not_single_quote(char prev, char curr) {
-    (void) prev;
-    return curr != '\'';
+    return prev == '\\' || curr != '\'';
 }
 
 // returns count of characters trimmed
@@ -411,6 +410,7 @@ static bool get_next_token(
     } else {
         String buf = {0};
         string_extend_strv(&a_token, &buf, sv("unknown symbol: "));
+        //log(LOG_DEBUG, "%x\n", 
         vec_append(&a_token, &buf, strv_col_front(*file_text_rem));
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;

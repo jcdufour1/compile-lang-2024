@@ -51,7 +51,7 @@ static inline bool strv_col_try_consume_while(
 ) {
     Strv* base = &strv->base;
     for (size_t idx = 0; base->count > idx; idx++) {
-        char prev_char = idx > 0 ? (strv_at(*base, idx)) : (0);
+        char prev_char = idx > 0 ? (strv_at(*base, idx - 1)) : (0);
         if (!should_continue(prev_char, strv_at(*base, idx))) {
             result->base.str = base->str;
             result->base.count = idx;

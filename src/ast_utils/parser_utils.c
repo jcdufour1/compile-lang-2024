@@ -247,9 +247,48 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
     }
     char esc_char = strv_consume(&strv);
     switch (esc_char) {
+        case 'a':
+            *result = '\a';
+            return true;
+        case 'b':
+            *result = '\b';
+            return true;
+        case 'f':
+            *result = '\f';
+            return true;
         case 'n':
             *result = '\n';
             return true;
+        case 'r':
+            *result = '\r';
+            return true;
+        case 't':
+            *result = '\t';
+            return true;
+        case 'v':
+            *result = '\v';
+            return true;
+        case '\\':
+            *result = '\\';
+            return true;
+        case '\'':
+            *result = '\'';
+            return true;
+        case '"':
+            *result = '"';
+            return true;
+        case '?':
+            *result = '?';
+            return true;
+        case '0':
+            *result = '\0';
+            return true;
+        case 'x':
+            // hexadecimal
+            todo();
+        case 'o':
+            // octal
+            todo();
         default: {
             String buf = {0};
             string_extend_cstr(&a_main, &buf, "excape sequence `\\");
