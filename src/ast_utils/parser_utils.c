@@ -178,7 +178,6 @@ bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
             }
 
             msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix `0%c`\n", curr_char);
-            // TODO: expected failure case
             return false;
         }
 
@@ -257,7 +256,6 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             string_extend_cstr(&a_main, &buf, "`");
             msg_todo_strv(string_to_strv(buf), pos);
             // TODO: expected failure case
-            todo();
             return false;
         }
     }
@@ -465,14 +463,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
     Strv strv = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
     return strv;
-}
-
-// TODO: remove this function (macros should call util_literal_name_new_prefix_scope_internal instead)
-Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
-    Name new_name = name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-    Tast_def* dummy = NULL;
-    unwrap(!symbol_lookup(&dummy, new_name));
-    return new_name;
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
