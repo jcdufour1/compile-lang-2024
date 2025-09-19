@@ -3135,6 +3135,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
+    log_tokens(LOG_DEBUG, token_view);
     if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;

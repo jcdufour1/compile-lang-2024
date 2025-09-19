@@ -314,14 +314,25 @@ static bool get_next_token(
         if (equals.base.count == 1) {
             token->type = TOKEN_CHAR_LITERAL;
 
-            Strv_col result = {0};
-            if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
-                msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
-                return false;
+            char prev = '\0';
+            Strv result = file_text_rem->base;
+            result.count = 0;
+            bool prev_2_is_backsl = false;
+            while (1) {
+                char curr = strv_col_consume(pos, file_text_rem);
+                if ((prev_2_is_backsl || prev != '\\') && curr == '\'') {
+                    break;
+                }
+                if (prev == '\\') {
+                    prev_2_is_backsl = true;
+                } else {
+                    prev_2_is_backsl = false;
+                }
+                prev = curr;
+                result.count++;
             }
 
-            unwrap(strv_col_consume(pos, file_text_rem));
-            token->text = result.base;
+            token->text = result;
             return true;
         } else if (equals.base.count == 2) {
             token->type = TOKEN_DOUBLE_TICK;
@@ -637,6 +648,7 @@ void tokenize_do_test(void) {
     test8();
 }
 
+// TODO: return Tk_view instead of Token_vec
 bool tokenize(Token_vec* result, Strv file_path) {
     size_t prev_err_count = error_count;
     Token_vec tokens = {0};

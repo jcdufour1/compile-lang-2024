@@ -8,14 +8,21 @@ fn main() i32 {
     ch = '\b'
     ch = '\f'
     ch = '\n'
+    io.printf("%c", ch);
     ch = '\r'
     ch = '\t'
+    io.printf("%c\n", ch);
+    ch = '\r'
     ch = '\v'
-    //ch = '\\'
+    ch = '\\'
+    io.printf("%c\n", ch);
     ch = '\''
-    //ch = '\"'
-    //ch = '\?'
-    //ch = '\0'
+    io.printf("%c\n", ch);
+    ch = '\"'
+    io.printf("%c\n", ch);
+    ch = '\?'
+    io.printf("%c\n", ch);
+    ch = '\0'
     //ch = '\x00'
     //ch = '\o000'
 
