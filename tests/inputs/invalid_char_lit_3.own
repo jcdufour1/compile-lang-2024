@@ -3,9 +3,8 @@
 fn main() i32 {
     let char1 u8 = ''
     let char_correct u8 = 'j'
+    let char2 u8 = '\'
     let char3 u8 = 'ab'
-    let char4 u8 = '\bd'
-    let char4 u8 = '\c'
     let char4 u8 = '\cd'
     return 0
 }

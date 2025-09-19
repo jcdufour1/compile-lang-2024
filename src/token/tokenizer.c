@@ -10,6 +10,9 @@
 #include <parser_utils.h>
 #include <pos_vec.h>
 
+// TODO: this is temporary forward decl; try_strv_to_char should eventually be moved elsewhere (eg. to "string_int_utils.h")
+bool try_strv_to_char(char* result, const Pos pos, Strv strv);
+
 static Arena a_token = {0};
 
 #define msg_tokenizer_invalid_token(token_text, pos) msg_tokenizer_invalid_token_internal(__FILE__, __LINE__, token_text, pos)
@@ -341,6 +344,10 @@ static bool get_next_token(
             }
 
             token->text = result;
+            char dummy = '\0';
+            if (!try_strv_to_char(&dummy, pos_open, token->text)) {
+                assert(error_count > 0);
+            }
             return true;
         } else if (equals.base.count == 2) {
             token->type = TOKEN_DOUBLE_TICK;
