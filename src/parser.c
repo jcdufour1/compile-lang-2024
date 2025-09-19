@@ -3116,11 +3116,6 @@ bool parse_file(Uast_block** block, Strv file_path) {
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
-        msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
-            "could not open file `"FMT"`: %s\n",
-            strv_print(file_path), strerror(errno)
-        );
         status = false;
         goto error;
     }

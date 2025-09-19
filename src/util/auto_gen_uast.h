@@ -124,7 +124,6 @@ static Uast_type uast_gen_import_path(const char* prefix) {
     return import;
 }
 
-// TODO: also use this node to make more generized alias, etc.
 static Uast_type uast_gen_mod_alias(const char* prefix) {
     Uast_type import = {.name = uast_name_new(prefix, "mod_alias", false)};
 
