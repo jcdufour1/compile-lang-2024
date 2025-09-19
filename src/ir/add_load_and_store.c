@@ -2360,7 +2360,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     );
     load_assignment(new_block, is_cont_assign);
 
-    //// TODO: do the assignments for 
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of for
@@ -2587,12 +2586,12 @@ static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
-            (Pos) {0} /* TODO */,
-            tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
+            sym_name->pos,
+            tast_symbol_wrap(tast_symbol_new(sym_name->pos, (Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
                 .name = sym_name
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(sym_name->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
         )),
