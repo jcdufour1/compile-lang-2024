@@ -529,8 +529,7 @@ static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     string_extend_cstr(&a_main, &strs->output, "    dummy = 0;\n");
 }
 
-// TODO: rename this function to "emit_c_def_inline"
-static void emit_c_def(Emit_c_strs* strs, const Ir_def* def) {
+static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
     (void) strs;
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -657,7 +656,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 emit_c_expr(strs, ir_expr_const_unwrap(stmt));
                 break;
             case IR_DEF:
-                emit_c_def(strs, ir_def_const_unwrap(stmt));
+                emit_c_def_inline(strs, ir_def_const_unwrap(stmt));
                 break;
             case IR_RETURN:
                 emit_c_return(strs, ir_return_const_unwrap(stmt));
@@ -714,8 +713,10 @@ void emit_c_from_tree(const Ir_block* root) {
         string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
         string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
         string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <string.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
+#       ifndef NDEBUG
+            string_extend_cstr(&a_main, &header, "#include <string.h>\n");
+            string_extend_cstr(&a_main, &header, "#include <assert.h>\n");
+#       endif // NDEBUG
 
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;

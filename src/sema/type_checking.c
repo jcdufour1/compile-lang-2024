@@ -4142,16 +4142,14 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
-        Name curr_name = {0};
-        vec_pop(curr_name, &env.fun_implementations_waiting_to_resolve);
+        Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
         if (!resolve_generics_function_def_implementation(curr_name)) {
             status = false;
         }
     }
 
     while (env.struct_like_waiting_to_resolve.info.count > 0) {
-        Name curr_name = {0};
-        vec_pop(curr_name, &env.struct_like_waiting_to_resolve);
+        Name curr_name = vec_pop(&env.struct_like_waiting_to_resolve);
         if (!resolve_generics_struct_like_def_implementation(curr_name)) {
             status = false;
         }
