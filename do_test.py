@@ -195,8 +195,8 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
         print(stdout_color)
         return False
 
-    print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
-    print()
+    #print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
+    #print()
     return True
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
