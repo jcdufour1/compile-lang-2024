@@ -313,12 +313,20 @@ static bool get_next_token(
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_tick);
         if (equals.base.count == 1) {
             token->type = TOKEN_CHAR_LITERAL;
+            Pos pos_open = *pos;
 
             char prev = '\0';
             Strv result = file_text_rem->base;
             result.count = 0;
             bool prev_2_is_backsl = false;
             while (1) {
+                if (file_text_rem->base.count < 1) {
+                    msg(
+                        DIAG_MISSING_CLOSE_MULTILINE, 
+                        pos_open, "unmatched opening `'`\n"
+                    );
+                    return false;
+                }
                 char curr = strv_col_consume(pos, file_text_rem);
                 if ((prev_2_is_backsl || prev != '\\') && curr == '\'') {
                     break;
@@ -421,7 +429,6 @@ static bool get_next_token(
     } else {
         String buf = {0};
         string_extend_strv(&a_token, &buf, sv("unknown symbol: "));
-        //log(LOG_DEBUG, "%x\n", 
         vec_append(&a_token, &buf, strv_col_front(*file_text_rem));
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;
