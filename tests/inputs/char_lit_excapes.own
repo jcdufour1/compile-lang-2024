@@ -25,16 +25,8 @@ fn main() i32 {
     ch = '\0'
     ch = '\x61' // 'a'
     io.printf("%c\n", ch);
-    //ch = '\o000'
-
-    //ch = '\t'
-    //io.printf("%c", ch);
-    //ch = '\r'
-    //ch = '\"'
-    //io.printf("%c", ch);
-    //ch = '"'
-    //io.printf("%c\n", ch);
-    //ch = '\0'
+    ch = '\o150' // 'h'
+    io.printf("%c\n", ch);
 
     return 0
 }

@@ -274,13 +274,21 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             break;
         case 'x':
             // hexadecimal
-            // fallthrough
-        case 'o':
-            // octal
             if (strv.count != 2) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected exactly two characters in char literal after `\\x` or `\\o` excape, but got %zu\n",
+                    "expected exactly two characters in char literal after `\\x` excape, but got %zu\n",
+                    strv.count
+                );
+                return false;
+            }
+            break;
+        case 'o':
+            // octal
+            if (strv.count != 3) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected exactly three characters in char literal after `\\o` excape, but got %zu\n",
                     strv.count
                 );
                 return false;
@@ -335,12 +343,26 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         case '0':
             *result = '\0';
             return true;
-        case 'x':
+        case 'x': {
             // hexadecimal
-            todo();
-        case 'o':
-            // octal
-            todo();
+            int64_t result_ = 0;
+            if (!try_strv_hex_after_0x_to_int64_t(&result_, pos, strv)) {
+                return false;
+            }
+            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            *result = (char)result_;
+            return true;
+        }
+        case 'o': {
+            // hexadecimal
+            int64_t result_ = 0;
+            if (!try_strv_octal_after_0o_to_int64_t(&result_, pos, strv)) {
+                return false;
+            }
+            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            *result = (char)result_;
+            return true;
+        }
         default:
             unreachable("");
     }
