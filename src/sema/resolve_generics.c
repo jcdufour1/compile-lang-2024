@@ -487,7 +487,7 @@ bool resolve_generics_function_def_call(
             ulang_type_rtn_type,
             def->decl->pos
         );
-        if (!try_lang_type_from_ulang_type_fn(type_res, new_fn, def->decl->pos)) {
+        if (!try_lang_type_from_ulang_type_fn(type_res, new_fn)) {
             return false;
         }
         *new_name = name;
@@ -533,7 +533,7 @@ bool resolve_generics_function_def_call(
         def->decl->pos
     );
     Lang_type_fn rtn_type_ = {0};
-    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
+    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn)) {
         return false;
     }
     *type_res = rtn_type_;

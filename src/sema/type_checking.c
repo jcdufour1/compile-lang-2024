@@ -1188,7 +1188,7 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
     }
 
     Lang_type cast_to = {0};
-    if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type, unary->pos)) {
+    if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type)) {
         return false;
     }
     return try_set_unary_types_finish(new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, cast_to);
@@ -1408,7 +1408,7 @@ bool try_set_array_literal_types(
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
     if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
-        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_, lit->pos)) {
+        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_)) {
             return false;
         }
     } else {
@@ -3333,7 +3333,7 @@ bool try_set_variable_def_types(
     }
 
     Lang_type new_lang_type = {0};
-    if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
+    if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update(uast_poison_def_wrap(new_poison));
         return false;

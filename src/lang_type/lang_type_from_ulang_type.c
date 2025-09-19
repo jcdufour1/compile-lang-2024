@@ -5,20 +5,20 @@
 #include <expand_lang_def.h>
 #include <parser_utils.h>
 
-bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
-    if (!expand_def_ulang_type(&lang_type, pos)) {
+bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
+    if (!expand_def_ulang_type(&lang_type, POS_BUILTIN /* TODO */)) {
         return false;
     }
 
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            if (!try_lang_type_from_ulang_type_regular(new_lang_type,  ulang_type_regular_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type))) {
                 return false;
             }
             return true;
         case ULANG_TYPE_TUPLE: {
             Lang_type_tuple new_tuple = {0};
-            if (!try_lang_type_from_ulang_type_tuple(&new_tuple,  ulang_type_tuple_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_tuple(&new_tuple, ulang_type_tuple_const_unwrap(lang_type))) {
                 return false;
             }
             *new_lang_type = lang_type_tuple_const_wrap(new_tuple);
@@ -26,7 +26,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         }
         case ULANG_TYPE_FN: {
             Lang_type_fn new_fn = {0};
-            if (!try_lang_type_from_ulang_type_fn(&new_fn,  ulang_type_fn_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_fn(&new_fn, ulang_type_fn_const_unwrap(lang_type))) {
                 return false;
             }
             *new_lang_type = lang_type_fn_const_wrap(new_fn);

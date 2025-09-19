@@ -13,7 +13,6 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             // TODO: remove lang_type_atom from lang_type_char?
             Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
             assert(!strv_is_equal(atom.str.base, sv("void")));
-            // TODO: remove this if statement
             return atom;
         }
         case LANG_TYPE_SIGNED_INT: {
