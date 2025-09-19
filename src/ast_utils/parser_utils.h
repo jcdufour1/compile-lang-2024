@@ -10,9 +10,23 @@
 
 // TODO: consider moving almost all functions from here to elsewhere
 
-static inline Lang_type lang_type_new_u1(void) {
+static inline Llvm_lang_type llvm_lang_type_new_ux(int32_t bit_width) {
+    return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(
+        llvm_lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
+    ));
+}
+
+static inline Llvm_lang_type llvm_lang_type_new_u8(void) {
+    return llvm_lang_type_new_ux(8);
+}
+
+static inline Llvm_lang_type llvm_lang_type_new_usize(void) {
+    return llvm_lang_type_new_ux(64 /* TODO: change based on target */);
+}
+
+static inline Lang_type lang_type_new_ux(int32_t bit_width) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+        lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
     ));
 }
 
@@ -22,14 +36,24 @@ static inline Lang_type lang_type_new_usize(void) {
     ));
 }
 
-static inline Ulang_type ulang_type_new_usize(void) {
+static inline Lang_type lang_type_new_u1(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+}
+
+static inline Ulang_type ulang_type_new_int_x(Strv base) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
         (Ulang_type_atom) {
-            .str = uname_new(MOD_ALIAS_BUILTIN, sv("u64"/* TODO */), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+            .str = uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_vec) {0}, SCOPE_BUILTIN),
             .pointer_depth = 0
         },
         POS_BUILTIN
     ));
+}
+
+static inline Ulang_type ulang_type_new_usize(void) {
+    return ulang_type_new_int_x(sv("u64" /* TODO: change based on target */));
 }
 
 size_t get_count_excape_seq(Strv strv);
@@ -79,8 +103,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 #define util_literal_strv_new() \
     util_literal_strv_new_internal(__FILE__, __LINE__, sv(""))
 
-Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix);
-
 Name util_literal_name_new_prefix_scope_internal(
     const char* file,
     int line,
@@ -89,13 +111,13 @@ Name util_literal_name_new_prefix_scope_internal(
 );
 
 #define util_literal_name_new_prefix(debug_prefix) \
-    util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_BUILTIN)
 
 #define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
 
 #define util_literal_name_new() \
-    util_literal_name_new_prefix_internal(__FILE__, __LINE__, sv(""))
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_BUILTIN)
 
 bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 
