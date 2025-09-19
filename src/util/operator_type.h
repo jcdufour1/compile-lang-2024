@@ -53,8 +53,7 @@ static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
         case BINARY_NOT_EQUAL:
             return sv("!=");
         case BINARY_BITWISE_XOR:
-            // TODO: change to "^"
-            return sv("xor");
+            return sv("^");
         case BINARY_BITWISE_AND:
             return sv("&");
         case BINARY_BITWISE_OR:

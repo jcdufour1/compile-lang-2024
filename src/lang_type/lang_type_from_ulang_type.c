@@ -39,27 +39,23 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 }
 
 bool name_from_uname(Name* new_name, Uname name) {
-    if (name.mod_alias.base.count < 1) {
-        Uast_def* result = NULL;
-        if (usymbol_lookup(&result, name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
-            *new_name = name_new((Strv) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
-            return true;
-        }
-        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
-        return true;
-    }
+    assert(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    if (!usymbol_lookup(&alias_, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
-        usymbol_log(LOG_DEBUG, name.mod_alias.scope_id);
-        // TODO: expected failure case
-        todo();
-    }
+    unwrap(usymbol_lookup(
+        &alias_,
+        name_new(
+            name.mod_alias.mod_path,
+            name.mod_alias.base,
+            (Ulang_type_vec) {0},
+            name.mod_alias.scope_id
+        )
+    ));
 
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope /* TODO */);
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
             return true;
         }
         case UAST_IMPORT_PATH:
@@ -110,7 +106,11 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_ENUM:
             // fallthrough
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new(name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)), lang_type_get_pointer_depth(lang_type)), lang_type_get_pos(lang_type)
+                ulang_type_atom_new(
+                    name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)),
+                    lang_type_get_pointer_depth(lang_type)
+                ),
+                lang_type_get_pos(lang_type)
             ));
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
