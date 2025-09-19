@@ -131,41 +131,6 @@ static inline Name uast_def_get_name(const Uast_def* def) {
     unreachable("");
 }
 
-// TODO: this function should call try_uast_def_get_struct_def_base
-static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def) {
-    switch (def->type) {
-        case UAST_ENUM_DEF:
-            return uast_enum_def_const_unwrap(def)->base;
-        case UAST_STRUCT_DEF:
-            return uast_struct_def_const_unwrap(def)->base;
-        case UAST_RAW_UNION_DEF:
-            return uast_raw_union_def_const_unwrap(def)->base;
-        case UAST_VOID_DEF:
-            unreachable("");
-        case UAST_FUNCTION_DEF:
-            unreachable("");
-        case UAST_VARIABLE_DEF:
-            unreachable("");
-        case UAST_GENERIC_PARAM:
-            unreachable("");
-        case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_FUNCTION_DECL:
-            unreachable("");
-        case UAST_POISON_DEF:
-            unreachable("");
-        case UAST_IMPORT_PATH:
-            unreachable("");
-        case UAST_MOD_ALIAS:
-            unreachable("");
-        case UAST_LANG_DEF:
-            todo();
-        case UAST_LABEL:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, const Uast_def* def) {
     switch (def->type) {
         case UAST_ENUM_DEF:
@@ -201,6 +166,12 @@ static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, co
             return false;
     }
     unreachable("");
+}
+
+static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def) {
+    Ustruct_def_base result = {0};
+    unwrap(try_uast_def_get_struct_def_base(&result, def));
+    return result;
 }
 
 bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
