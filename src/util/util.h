@@ -127,7 +127,6 @@ typedef size_t Scope_id;
 #define MOD_PATH_RUNTIME (sv("std/runtime")) /* TODO: try to avoid hardcoding path separator? */
 
 #define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
-// TODO: MOD_PATH_BUILTIN for top level may not be a good idea
 #define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
 #define FMT "%.*s"

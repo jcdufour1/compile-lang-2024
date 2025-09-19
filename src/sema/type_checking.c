@@ -412,6 +412,24 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     Tast_expr* src
 ) {
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
+        if (src->type == TAST_ENUM_CALLEE) {
+            Tast_enum_callee* callee = tast_enum_callee_unwrap(src);
+            Uast_def* enum_def_ = NULL;
+            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, callee->enum_lang_type)));
+            Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
+
+            // TODO: make helper function to print member more easily
+            msg(
+                DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, tast_expr_get_pos(src),
+                "enum case with non-void inner type cannot be assigned without using (); "
+                "use `"FMT"."FMT"()` instead of `"FMT"."FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
+                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name),
+                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
+                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name)
+            );
+            return CHECK_ASSIGN_ERROR;
+        }
         *new_src = src;
         return CHECK_ASSIGN_OK;
     }
@@ -439,7 +457,9 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_struct_literal_types(
-             &new_src_, dest_lang_type, uast_struct_literal_unwrap(src), pos
+             &new_src_,
+             dest_lang_type,
+             uast_struct_literal_unwrap(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -447,7 +467,10 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     } else if (src->type == UAST_ARRAY_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_array_literal_types(
-             &new_src_, dest_lang_type, uast_array_literal_unwrap(src), pos
+             &new_src_,
+             dest_lang_type,
+             uast_array_literal_unwrap(src),
+             pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -455,7 +478,9 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     } else if (src->type == UAST_TUPLE) {
         Tast_tuple* new_src_ = NULL;
         if (!try_set_tuple_assignment_types(
-             &new_src_, dest_lang_type, uast_tuple_unwrap(src)
+             &new_src_,
+             dest_lang_type,
+             uast_tuple_unwrap(src)
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -1658,12 +1683,12 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
         return false;
     }
 
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
-         &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
+         &new_rhs,
+         tast_expr_get_lang_type(new_lhs),
+         assignment->rhs,
+         assignment->pos
     )) {
         case CHECK_ASSIGN_OK:
             break;
@@ -3691,6 +3716,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
+                // TODO: make helper function to print member more easily
                 extend_name(NAME_MSG, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
                 extend_name(NAME_MSG, &string, vec_at(&enum_def.members, idx)->name);

@@ -1692,7 +1692,7 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
         case TAST_TUPLE:
             return load_tuple(new_block, tast_tuple_unwrap(old_expr));
         case TAST_ENUM_CALLEE:
-            todo();
+            unreachable("this should have been caught in the type checking pass");
         case TAST_ENUM_GET_TAG:
             return load_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
