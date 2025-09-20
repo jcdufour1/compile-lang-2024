@@ -1,5 +1,5 @@
 # Compile Lang 2024
-A statically typed systems programming language with sum types, generics, and defer for safe resource management.
+A statically typed systems programming language with modern language features such as sum types, generics, and defer for safe resource management.
 
 ## Features
 - :white_check_mark: Sum types with pattern matching
@@ -13,7 +13,7 @@ A statically typed systems programming language with sum types, generics, and de
 
 type io import = std.io
 
-fn divide(lhs i32, rhs i32) io.Optional(<i32>) {
+fn divide(lhs NumT, rhs NumT, NumT Type) io.Optional(<NumT>) {
     if rhs == 0 {
         return .none
     }
