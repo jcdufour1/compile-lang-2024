@@ -41,3 +41,6 @@ fn main() i32 {
 # parsing
 - things in the top level of a file always have SCOPE_TOP_LEVEL
 
+# test directory
+## test/input/function
+- has most tests relating to function calls, but does not generally contain generic functions
