@@ -1,6 +1,7 @@
 type io import = std.io
+type util import = std.util
 
-fn add_one_or_two_default(lhs ItemType, rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
+fn add_one_or_two_default(lhs ItemType, rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -10,7 +11,7 @@ fn add_one_or_two_default(lhs ItemType, rhs io.Optional(<ItemType>) = .none, Ite
     return lhs
 }
 
-fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemType>) = .none, ItemType Type) ItemType {
+fn add_one_or_two_default_2(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
     switch rhs {
         case .some(rhs_val): {
             if let .some(lhs_val) = lhs {
@@ -27,7 +28,7 @@ fn add_one_or_two_default_2(lhs io.Optional(<ItemType>), rhs io.Optional(<ItemTy
             }
         }
     }
-    io.assert(0, "unreachable")
+    util.assert(0, "unreachable")
     return 0
 }
 
@@ -39,9 +40,9 @@ fn main() i32 {
     io.printf("test 103: got number %d\n", add_one_or_two_default(835, .some(11)))
 
     io.printf("test 110: got number %d\n", add_one_or_two_default_2(.some(836), .some(12), i32))
-    let opt111 io.Optional(<i32>) = .some(837)
+    let opt111 util.Optional(<i32>) = .some(837)
     io.printf("test 111: got number %d\n", add_one_or_two_default_2(opt111, .some(13)))
-    let opt112 io.Optional(<i32>) = .some(838)
+    let opt112 util.Optional(<i32>) = .some(838)
     io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt112))
 
     return 0

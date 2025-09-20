@@ -10,7 +10,7 @@ type Slice struct(<ItemT>) {
 
 fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
     if (index >= slice.count) {
-        abort()
+        util.abort()
     }
     return slice.buf[index]
 }
