@@ -54,6 +54,11 @@ def list_files_recursively(dir: str) -> list[str]:
     result: str[list] = []
     for root, _, files in os.walk(dir):
         for file_path in files:
+            print("thing 98:", end="")
+            print(root)
+            print("thing 99:", end="")
+            print(file_path)
+            print("")
             result.append(os.path.join(root, file_path))
     print(result)
     return result
@@ -62,9 +67,18 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
     possible_path: str
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
-        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
+        print("thing 100:", end="")
+        print(possible_base)
+        possible_path = os.path.realpath(possible_base)
+        actual_base = possible_path[len(os.path.realpath(INPUTS_DIR)) + 1:]
+        print(possible_path)
+        print(files_to_test)
+        print("thing 108:", possible_path)
+        print("thing 109:", files_to_test)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileItem(possible_base))
+            print("thing 110:", actual_base)
+            files.append(FileItem(actual_base))
+    print(files)
     return files
 
 def get_expected_output(file: FileItem) -> str:
@@ -77,7 +91,7 @@ def get_expected_output(file: FileItem) -> str:
         print_warning(
             "result file not found for " +
             os.path.join(INPUTS_DIR, expect_base) +
-            "; if this test input generates correct results, use --test --include=" +
+            "; if this test input generates correct results, use --update --include=" +
             os.path.join(INPUTS_DIR, expect_base)
         )
         print(e)
@@ -162,7 +176,10 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
 
     process_result: str = get_result_from_test_result(result)
     if action == Action.UPDATE:
-        with open(os.path.join(RESULTS_DIR, file.path_base), "w") as newResult:
+        path = os.path.join(RESULTS_DIR, file.path_base)
+        dir = path[:path.rfind('/')]
+        os.makedirs(dir, exist_ok = True)
+        with open(path, "w") as newResult:
             newResult.write(process_result)
         return True
     elif action == Action.TEST:
