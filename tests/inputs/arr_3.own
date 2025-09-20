@@ -46,6 +46,27 @@ fn main() i32 {
     io.printf("%s\n", coll.arr_at(arr, 3).string);
     io.printf("%s\n", coll.arr_at(arr, 4).string);
 
+    io.printf("thing 18\n");
+
+    coll.arr_remove(&arr, 1)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+    io.printf("%s\n", coll.arr_at(arr, 3).string);
+
+    io.printf("thing 20\n");
+
+    coll.arr_remove(&arr, 0)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+
+    io.printf("thing 22\n");
+
+    coll.arr_remove(&arr, 2)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+
     let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, [9, 8])
     io.printf("%d\n", coll.arr_first(arr2));
     io.printf("%d\n", coll.arr_at(arr2, 1));

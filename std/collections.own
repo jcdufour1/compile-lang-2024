@@ -61,6 +61,15 @@ fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file u8* = #fi
     }
 }
 
+fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+    util.assert(arr.count > 0, "attempt to remove element from empty array", .file = file, .line = line, .column = column);
+    arr.count -= 1
+    if (arr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&arr.buf[index], &arr.buf[index + 1], arr.count - index, ItemT);
+    }
+}
+
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return arr.buf[index]
