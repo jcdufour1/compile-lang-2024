@@ -1570,8 +1570,6 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_tuple_wrap(new_call);
             return true;
         }
-        case UAST_STRUCT_LITERAL:
-            unreachable("");
         case UAST_ENUM_ACCESS: {
             Tast_enum_access* new_access = NULL;
             if (!try_set_enum_access_types(&new_access, uast_enum_access_unwrap(uast))) {
@@ -1605,6 +1603,8 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_ARRAY_LITERAL:
+            unreachable("");
+        case UAST_STRUCT_LITERAL:
             unreachable("");
     }
     unreachable("");

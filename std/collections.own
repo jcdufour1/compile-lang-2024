@@ -25,9 +25,10 @@ type Arr struct(<ItemT>) {
 
 fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
     let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
-    util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
-    util.assert(init_elems.count < 1, "not implemented")
-    return {buf, 0, max_capacity}
+    util.assert(buf != unsafe_cast<ItemT*>0, "out of memory", .file = file, .line = line, .column = column)
+    let arr Arr(<ItemT>) = {buf, 0, max_capacity}
+    arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
+    return arr
 }
 
 fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
@@ -52,6 +53,12 @@ fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file u8* = #file, line 
     util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
     arr.buf[arr.count] = item
     arr.count += 1
+}
+
+fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+    for idx u64 in 0..src.count {
+        arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+    }
 }
 
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {

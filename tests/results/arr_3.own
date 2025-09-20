@@ -1,4 +1,4 @@
-compile::stdout 20
+compile::stdout 22
 hello
 hello
 thing 10
@@ -19,6 +19,8 @@ compiler
 hello
 bye
 programming
+9
+8
 
 compile::stderr 0
 
