@@ -1766,7 +1766,6 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
         break_out_of = default_brk_label;
     }
 
-    *new_cont = uast_continue_new(cont_token.pos, break_out_of);
     *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
