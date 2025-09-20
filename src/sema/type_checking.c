@@ -2870,16 +2870,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     } else {
         assert(new_args_set.info.count == new_args.info.count);
-        for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
-            if (!vec_at(&new_args_set, idx)) {
+        size_t gen_arg_count = 0;
+        for (size_t idx = 0; idx < params->params.info.count; idx++) {
+            if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                gen_arg_count++;
+                continue;
+            }
+
+            if (!vec_at(&new_args_set, idx - gen_arg_count)) {
                 // TODO: move error for function parameter unspecified to here?
                 if (vec_at(&params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
-                    *vec_at_ref(&new_args_set, idx) = true;
+                    *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
                     switch (check_generic_assignment(
-                        vec_at_ref(&new_args, idx),
+                        vec_at_ref(&new_args, idx - gen_arg_count),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
                         new_default_,
                         uast_expr_get_pos(new_default_)
@@ -2888,7 +2894,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             break;
                         case CHECK_ASSIGN_INVALID:
                             msg_invalid_function_arg(
-                                vec_at(&new_args, idx),
+                                vec_at(&new_args, idx - gen_arg_count),
                                 vec_at(&params->params, idx)->base,
                                 is_fun_callback
                             );
