@@ -1,4 +1,5 @@
 type io import = std.io
+type util import = std.util
 
 type Bool enum {
     true
@@ -153,14 +154,14 @@ fn fun8() i32 {
 
 
 fn main() i32 {
-    io.assert(fun1() == 1)
-    io.assert(fun2() == 2)
-    io.assert(fun3() == 3)
-    io.assert(fun4() == 4)
-    io.assert(fun5() == 5)
-    io.assert(fun6() == 6)
-    io.assert(fun7() == 7)
-    io.assert(fun8() == 8)
+    util.assert(fun1() == 1)
+    util.assert(fun2() == 2)
+    util.assert(fun3() == 3)
+    util.assert(fun4() == 4)
+    util.assert(fun5() == 5)
+    util.assert(fun6() == 6)
+    util.assert(fun7() == 7)
+    util.assert(fun8() == 8)
 
     //io.printf("thing thing\n");
     //defer io.printf("thing thing 8\n");

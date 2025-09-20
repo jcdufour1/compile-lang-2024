@@ -2,6 +2,7 @@
 //let temp io.Optional(<i32>) = number.some
 
 type io import = std.io
+type util import = std.util
 
 type Optional_int enum {
     some i32

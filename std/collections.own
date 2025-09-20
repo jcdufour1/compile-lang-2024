@@ -1,0 +1,41 @@
+
+type util import = std.util
+
+// TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
+// TODO: count should be usize by default when usize is implemented
+type Slice struct(<ItemT>) {
+    items ItemT*
+    count u64
+}
+
+fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
+    if (index >= slice.count) {
+        abort()
+    }
+    return slice.items[index]
+}
+
+// TODO: count and max should be usize by default when usize is implemented
+type Arr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+    max u64
+}
+
+// TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
+fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+    util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
+    arr.buf[arr.count] = item
+    arr.count += 1
+    return arr
+}
+
+fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return slice.items[index]
+}
+
+fn arr_first(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+    return arr_at(arr, 0, .file = file, .line = line, .column = column)
+}
+

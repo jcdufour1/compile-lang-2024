@@ -1,57 +1,10 @@
 
 extern("c") fn puts(format_string u8*) i32
 extern("c") fn printf(format_string u8*, args opaque...) i32
-extern("c") fn isdigit(character i32) i32
-extern("c") fn abort()
 extern("c") fn fopen(file_path u8*, flags u8*) opaque*
-extern("c") fn malloc(size u64) opaque*
 
+// TODO: remove from std
 type Token struct {
     num i32
-}
-
-type Optional enum(<ItemType>) {
-    some ItemType
-    none
-}
-
-type Slice struct(<ItemType>) {
-    items ItemType*
-    count u64
-}
-
-fn slice_at(slice Slice(<ItemType>), index u64, ItemType Type) ItemType {
-    if (index >= slice.count) {
-        abort()
-    }
-    return slice.items[index]
-}
-
-fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, line i32 = #line, column i32 = #column) {
-    if (!condition) {
-        printf("%s:%d:%d:assertion failure: %s\n", file, line, column, message)
-        if (!keep_going) {
-            abort()
-        }
-    }
-}
-
-type Arr struct(<ItemT>) {
-    buf ItemT*
-    count u64
-    max u64
-}
-
-// TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
-fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type) Arr(<ItemT>) {
-    assert(arr.count < arr.max, "arr overflow");
-    arr.buf[arr.count] = item
-    arr.count += 1
-    return arr
-}
-
-fn arr_first(arr Arr(<ItemT>), ItemT Type) ItemT {
-    assert(arr.count > 0, "out of bounds");
-    return arr.buf[0];
 }
 
