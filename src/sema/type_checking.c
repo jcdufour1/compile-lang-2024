@@ -1829,8 +1829,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 case CHECK_ASSIGN_INVALID:
                     msg(
                         DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
-                        "cannot assign "FMT" of type `"FMT"` to '"FMT"`\n", 
-                        tast_expr_print(new_item),
+                        "cannot assign expression of type `"FMT"` to '"FMT"`\n", 
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
                              vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
