@@ -1,26 +1,26 @@
 compile::stdout 0
 
 compile::stderr 20
-tests/inputs/invalid_char_lit_2.own:4:20:[1;31merror[0;39m:expected expression 
-     3 | fn main() i32 {
-     4 |     let char1 u8 = ''
-       |                    ^
+tests/inputs/invalid_char_lit_2.own:6:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
      5 |     let char_correct u8 = 'j'
-tests/inputs/invalid_char_lit_2.own:6:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 0
-     5 |     let char_correct u8 = 'j'
-     6 |     let char2 u8 = '\'
+     6 |     let char3 u8 = 'ab'
        |                    ^
-     7 |     let char3 u8 = 'ab'
-tests/inputs/invalid_char_lit_2.own:7:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
-     6 |     let char2 u8 = '\'
-     7 |     let char3 u8 = 'ab'
+     7 |     let char4 u8 = '\bd'
+tests/inputs/invalid_char_lit_2.own:7:20:[1;31merror[0;39m:expected 0 characters in char literal after `\b`, but got 1
+     6 |     let char3 u8 = 'ab'
+     7 |     let char4 u8 = '\bd'
        |                    ^
-     8 |     let char4 u8 = '\cd'
-tests/inputs/invalid_char_lit_2.own:8:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 2
-     7 |     let char3 u8 = 'ab'
-     8 |     let char4 u8 = '\cd'
+     8 |     let char4 u8 = '\c'
+tests/inputs/invalid_char_lit_2.own:8:20:[1;31merror[0;39m:language feature `excape sequence `\c`` not yet implemented (may or may not be implemented in the future)
+     7 |     let char4 u8 = '\bd'
+     8 |     let char4 u8 = '\c'
        |                    ^
-     9 |     return 0
+     9 |     let char4 u8 = '\cd'
+tests/inputs/invalid_char_lit_2.own:9:20:[1;31merror[0;39m:language feature `excape sequence `\c`` not yet implemented (may or may not be implemented in the future)
+     8 |     let char4 u8 = '\c'
+     9 |     let char4 u8 = '\cd'
+       |                    ^
+    10 |     return 0
 
 compile::return_code 1
 

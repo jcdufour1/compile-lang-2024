@@ -15,6 +15,7 @@
 #include <name.h>
 #include <errno.h>
 
+
 size_t get_count_excape_seq(Strv strv) {
     size_t count_excapes = 0;
     while (strv.count > 0) {
@@ -237,29 +238,132 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         return true;
     }
 
-    if (strv.count != 1) {
-        msg(
-            DIAG_INVALID_CHAR_LIT, pos,
-            "expected exactly one character in char literal after `\\`, but got %zu\n",
-            strv.count
-        );
-        return false;
-    }
     char esc_char = strv_consume(&strv);
+
     switch (esc_char) {
+        case 'a':
+            // fallthrough
+        case 'b':
+            // fallthrough
+        case 'f':
+            // fallthrough
         case 'n':
-            *result = '\n';
-            return true;
+            // fallthrough
+        case 'r':
+            // fallthrough
+        case 't':
+            // fallthrough
+        case 'v':
+            // fallthrough
+        case '\\':
+            // fallthrough
+        case '\'':
+            // fallthrough
+        case '"':
+            // fallthrough
+        case '?':
+            // fallthrough
+        case '0':
+            if (strv.count != 0) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected 0 characters in char literal after `\\%c`, but got %zu\n",
+                    esc_char, strv.count
+                );
+                return false;
+            }
+            break;
+        case 'x':
+            // hexadecimal
+            if (strv.count != 2) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected exactly 2 characters in char literal after `\\x` excape, but got %zu\n",
+                    strv.count + 1
+                );
+                return false;
+            }
+            break;
+        case 'o':
+            // octal
+            if (strv.count != 3) {
+                msg(
+                    DIAG_INVALID_CHAR_LIT, pos,
+                    "expected exactly 3 characters in char literal after `\\o` excape, but got %zu\n",
+                    strv.count + 1
+                );
+                return false;
+            }
+            break;
         default: {
             String buf = {0};
             string_extend_cstr(&a_main, &buf, "excape sequence `\\");
             vec_append(&a_main, &buf, esc_char);
             string_extend_cstr(&a_main, &buf, "`");
             msg_todo_strv(string_to_strv(buf), pos);
-            // TODO: expected failure case
-            todo();
             return false;
         }
+    }
+
+    switch (esc_char) {
+        case 'a':
+            *result = '\a';
+            return true;
+        case 'b':
+            *result = '\b';
+            return true;
+        case 'f':
+            *result = '\f';
+            return true;
+        case 'n':
+            *result = '\n';
+            return true;
+        case 'r':
+            *result = '\r';
+            return true;
+        case 't':
+            *result = '\t';
+            return true;
+        case 'v':
+            *result = '\v';
+            return true;
+        case '\\':
+            *result = '\\';
+            return true;
+        case '\'':
+            *result = '\'';
+            return true;
+        case '"':
+            *result = '"';
+            return true;
+        case '?':
+            *result = '?';
+            return true;
+        case '0':
+            *result = '\0';
+            return true;
+        case 'x': {
+            // hexadecimal
+            int64_t result_ = 0;
+            if (!try_strv_hex_after_0x_to_int64_t(&result_, pos, strv)) {
+                return false;
+            }
+            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            *result = (char)result_;
+            return true;
+        }
+        case 'o': {
+            // hexadecimal
+            int64_t result_ = 0;
+            if (!try_strv_octal_after_0o_to_int64_t(&result_, pos, strv)) {
+                return false;
+            }
+            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            *result = (char)result_;
+            return true;
+        }
+        default:
+            unreachable("");
     }
     unreachable("");
 }

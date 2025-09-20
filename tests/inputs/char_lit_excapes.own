@@ -1,0 +1,32 @@
+type io import = std.io
+
+
+fn main() i32 {
+    let ch u8 = '\n'
+
+    ch = '\a'
+    ch = '\b'
+    ch = '\f'
+    ch = '\n'
+    io.printf("%c", ch);
+    ch = '\r'
+    ch = '\t'
+    io.printf("%c\n", ch);
+    ch = '\r'
+    ch = '\v'
+    ch = '\\'
+    io.printf("%c\n", ch);
+    ch = '\''
+    io.printf("%c\n", ch);
+    ch = '\"'
+    io.printf("%c\n", ch);
+    ch = '\?'
+    io.printf("%c\n", ch);
+    ch = '\0'
+    ch = '\x61' // 'a'
+    io.printf("%c\n", ch);
+    ch = '\o150' // 'h'
+    io.printf("%c\n", ch);
+
+    return 0
+}
