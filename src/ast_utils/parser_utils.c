@@ -614,7 +614,6 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
-// TODO: remove this function?
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     size_t result = 0;
     uint64_t size_result = 0;
