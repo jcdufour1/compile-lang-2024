@@ -179,7 +179,6 @@ bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
             }
 
             msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix `0%c`\n", curr_char);
-            // TODO: expected failure case
             return false;
         }
 
@@ -571,14 +570,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     return strv;
 }
 
-// TODO: remove this function (macros should call util_literal_name_new_prefix_scope_internal instead)
-Name util_literal_name_new_prefix_internal(const char* file, int line, Strv debug_prefix) {
-    Name new_name = name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-    Tast_def* dummy = NULL;
-    unwrap(!symbol_lookup(&dummy, new_name));
-    return new_name;
-}
-
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
     Name new_name = name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id);
     Tast_def* dummy = NULL;
@@ -728,7 +719,6 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
-// TODO: remove this function?
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     size_t result = 0;
     uint64_t size_result = 0;

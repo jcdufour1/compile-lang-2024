@@ -13,19 +13,34 @@ bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
     FILE* file = fopen(strv_dup(&a_main, file_path), "rb");
     if (!file) {
+        msg(
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
+            "could not open file `"FMT"`: %s\n",
+            strv_print(file_path), strerror(errno)
+        );
         return false;
     }
 
     size_t buf_size = 2024;
-    size_t amount_read;
-    // TODO: check for errors?
+    size_t amount_read = 0;
     do {
         vec_reserve(&a_main, &file_text, buf_size);
         amount_read = fread(file_text.buf + file_text.info.count, 1, buf_size, file);
         file_text.info.count += amount_read;
     } while (amount_read > 0);
 
+    if (ferror(file)) {
+        msg(
+            DIAG_FILE_COULD_NOT_READ, POS_BUILTIN,
+            "could not read file `"FMT"`: %s\n",
+            strv_print(file_path), strerror(errno)
+        );
+        fclose(file);
+        return false;
+    }
+
     fclose(file);
+
     if (file_text.info.count < 1 || vec_at(&file_text, file_text.info.count - 1) != '\n') {
         vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
     }

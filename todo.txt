@@ -140,13 +140,13 @@ add_fn(<i16>)
     }
 - when printing msg, use name instead of uname to make types show pretty (and remove uname_normalize function?)
 - make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
-- this should not print s4 prefix, etc. (fix this by just printing "expression" instead of calling uast_symbol_print):
-    tests/inputs/sum_lit_invalid_arg.own:15:37:error:cannot assign symbol(( line:15 ))<struct s1_Thing>s4_thing
-     of type `Thing` to 'i32`
-        14 |     let token1 Token = Token.number("hello")
-        15 |     let token2 Token = Token.number(thing)
-           |                                     ^
-        16 |     return 0
+- make print functions check for null and print <null> or something instead of seg fault
+- figure out if I should de-duplilcate string literals, etc.
+- strings should actually be their own type (not just u8*) (maybe slice with null termination)
+- support alternative backend (such as qbe, cuik)
+- fix printing for lang_type in msg to not put newline
+- actually use newline to end statement depending on last token of line of line
+- expected failure case for invalid type in extern "c" function
 
 
 

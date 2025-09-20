@@ -86,13 +86,16 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 75, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 78, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
     {"missing-command-line-arg", DIAG_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true},
     {"file-could-not-open", DIAG_FILE_COULD_NOT_OPEN, LOG_ERROR, true},
+    {"file-could-not-read", DIAG_FILE_COULD_NOT_READ, LOG_ERROR, true},
+    {"diag-enum-non-void-case-no-par-on-assign", DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, LOG_ERROR, true},
+    {"diag-function-param-not-specified", DIAG_FUNCTION_PARAM_NOT_SPECIFIED, LOG_ERROR, true},
     {"missing-close-double-quote", DIAG_MISSING_CLOSE_DOUBLE_QUOTE, LOG_ERROR, true},
     {"missing-close-single-quote", DIAG_MISSING_CLOSE_SINGLE_QUOTE, LOG_ERROR, true},
     {"no-new-line-after-statement", DIAG_NO_NEW_LINE_AFTER_STATEMENT, LOG_ERROR, true},
@@ -147,7 +150,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-function-callee", DIAG_INVALID_FUNCTION_CALLEE, LOG_ERROR, true},
     {"optional-args-for-variadic-args", DIAG_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, LOG_ERROR, true},
     {"fail-invalid-fail-type", DIAG_INVALID_FAIL_TYPE, LOG_ERROR, false},
-    {"no-main-function", DIAG_NO_MAIN/*TODO: rename this to match string*/, LOG_WARNING, false},
+    {"no-main-function", DIAG_NO_MAIN_FUNCTION, LOG_WARNING, false},
     {"struct-like-recursion", DIAG_STRUCT_LIKE_RECURSION, LOG_ERROR, true},
     {"child-process-failure", DIAG_CHILD_PROCESS_FAILURE, LOG_FATAL, true},
     {"no-input-files", DIAG_NO_INPUT_FILES, LOG_FATAL, true},
@@ -330,9 +333,10 @@ static void long_option_upper_c(Strv curr_opt) {
 }
 
 static void long_option_dump_dot(Strv curr_opt) {
+    msg_todo("dump_dot", POS_BUILTIN);
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_GEN_IR;
-    params.dump_dot = true;
+    //params.stop_after = STOP_AFTER_GEN_IR;
+    //params.dump_dot = true;
 }
 
 static void long_option_run(Strv curr_opt) {
@@ -437,7 +441,15 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
-    {"set-log-level", "TODO", long_option_log_level, true},
+    {
+        "set-log-level",
+        "=OPT where OPT is "
+          "\"FETAL\", \"ERROR\", \"WARNING\", \"NOTE\", \"INFO\", \"VERBOSE\", \"DEBUG\", or \"TRACE\" ("
+          "eg. \"set-log-level=NOTE\" will suppress messages that are less important than \"NOTE\")",
+        long_option_log_level,
+        true
+    },
+
     // run should be at the bottom for now
     // TODO: consider moving run elsewhere, because run is not a regular option
     {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
@@ -478,7 +490,6 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
     msg(DIAG_INFO, POS_BUILTIN, "options:\n");
-    // TODO: show `-o <file>` instead of `-o`, etc.
     for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
         Long_option_pair curr = long_options[idx];
         msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));

@@ -14,7 +14,7 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type);
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 // TODO: remove Pos parameter
-bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos);
+bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type);
 
 // TODO: remove these tow forward decls and replace with better system
 bool lang_type_atom_is_signed(Lang_type_atom atom);
@@ -25,35 +25,32 @@ bool name_from_uname(Name* new_name, Uname name);
 
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
-    Ulang_type_tuple lang_type,
-    Pos pos
+    Ulang_type_tuple lang_type
 );
 
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
-    Ulang_type_fn lang_type,
-    Pos pos
+    Ulang_type_fn lang_type
 );
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Ulang_type_tuple lang_type) {
     Lang_type_tuple new_tuple = {0};
-    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type, lang_type.pos));
+    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type));
     return lang_type_tuple_const_wrap(new_tuple);
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_fn(Ulang_type_fn lang_type) {
     Lang_type_fn new_fn = {0};
-    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type, lang_type.pos));
+    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type));
     return lang_type_fn_const_wrap(new_fn);
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
-    Ulang_type_tuple lang_type,
-    Pos pos
+    Ulang_type_tuple lang_type
 ) {
     Lang_type_vec new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
@@ -62,30 +59,29 @@ static inline bool try_lang_type_from_ulang_type_tuple(
         }
 
         Lang_type new_child = {0};
-        if (!try_lang_type_from_ulang_type(&new_child, vec_at(&lang_type.ulang_types, idx), pos)) {
+        if (!try_lang_type_from_ulang_type(&new_child, vec_at(&lang_type.ulang_types, idx))) {
             return false;
         }
         vec_append(&a_main, &new_lang_types, new_child);
     }
-    *new_lang_type = lang_type_tuple_new(pos, new_lang_types);
+    *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types);
     return true;
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
-    Ulang_type_fn lang_type,
-    Pos pos
+    Ulang_type_fn lang_type
 ) {
     Lang_type_tuple new_params = {0};
-    if (!try_lang_type_from_ulang_type_tuple(&new_params, lang_type.params, pos)) {
+    if (!try_lang_type_from_ulang_type_tuple(&new_params, lang_type.params)) {
         return false;
     }
     Lang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
-    if (!try_lang_type_from_ulang_type(new_rtn_type, *lang_type.return_type, pos)) {
+    if (!try_lang_type_from_ulang_type(new_rtn_type, *lang_type.return_type)) {
         return false;
     }
-    *new_lang_type = lang_type_fn_new(pos, new_params, new_rtn_type);
+    *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type);
     return true;
 }
 
@@ -132,9 +128,8 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     unreachable("");
 }
 
-static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type, Pos pos) {
+static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
     (void) new_lang_type;
-    (void) pos;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};
     //log(LOG_DEBUG, FMT"\n", ulang_type_regular_print(&lang_type));
@@ -176,7 +171,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
 
 static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lang_type) {
     Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type, lang_type.pos));
+    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type));
     return new_lang_type;
 }
 

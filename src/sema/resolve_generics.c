@@ -174,7 +174,7 @@ static bool resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
-        Name gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
+        Name gen_def = vec_at(&old_base.generics, idx_gen)->name;
         generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
@@ -430,11 +430,11 @@ static bool resolve_generics_serialize_function_decl(
         }
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-            Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
+            Name curr_arg = vec_at(&old_decl->generics, idx_arg)->name;
             // TODO: same params are being replaced both here and in generic_sub_block?
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
         }
-        Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
+        Name curr_gen = vec_at(&old_decl->generics, idx_arg)->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
@@ -487,7 +487,7 @@ bool resolve_generics_function_def_call(
             ulang_type_rtn_type,
             def->decl->pos
         );
-        if (!try_lang_type_from_ulang_type_fn(type_res, new_fn, def->decl->pos)) {
+        if (!try_lang_type_from_ulang_type_fn(type_res, new_fn)) {
             return false;
         }
         *new_name = name;
@@ -503,7 +503,7 @@ bool resolve_generics_function_def_call(
     decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
         for (size_t idx_gen_param = 0; idx_gen_param < gen_args.info.count; idx_gen_param++) {
-            Name gen_param = vec_at(&decl->generics, idx_gen_param)->child->name;
+            Name gen_param = vec_at(&decl->generics, idx_gen_param)->name;
             Ulang_type gen_arg = vec_at(&gen_args, idx_gen_param);
             generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
             for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
@@ -533,7 +533,7 @@ bool resolve_generics_function_def_call(
         def->decl->pos
     );
     Lang_type_fn rtn_type_ = {0};
-    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
+    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn)) {
         return false;
     }
     *type_res = rtn_type_;

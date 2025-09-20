@@ -227,7 +227,7 @@ static bool get_next_token(
         if (strv_col_try_consume(pos, file_text_rem, '/')) {
             msg(
                 DIAG_MISSING_CLOSE_MULTILINE, 
-                *pos, "unmatched closing `/*`\n"
+                *pos, "unmatched closing `*/`\n"
             );
             return false;
         }
@@ -236,13 +236,12 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '%')) {
         token->type = TOKEN_MODULO;
         return true;
-    } else if (file_text_rem->base.count > 1 && strv_is_equal(strv_slice(file_text_rem->base, 0, 2), sv("//"))) {
-        strv_col_consume_until(pos, file_text_rem, '\n');
-        trim_non_newline_whitespace(file_text_rem, pos);
-        token->type = TOKEN_COMMENT;
-        return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '/')) {
-        if (strv_col_try_consume(pos, file_text_rem, '*')) {
+        if (strv_col_try_consume(pos, file_text_rem, '/')) {
+            strv_col_consume_until(pos, file_text_rem, '\n');
+            trim_non_newline_whitespace(file_text_rem, pos);
+            token->type = TOKEN_COMMENT;
+        } else if (strv_col_try_consume(pos, file_text_rem, '*')) {
             Pos_vec pos_stack = {0};
             vec_append(&a_token, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {

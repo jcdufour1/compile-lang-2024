@@ -421,15 +421,15 @@ static void load_block_stmts(
     }
     unwrap(!symbol_lookup(&dummy, break_expr->name));
 
-    if (lang_type.type != LANG_TYPE_VOID) {
+    if (lang_type.type == LANG_TYPE_VOID) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
+        assert(break_expr->name.base.count > 0);
+        unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
+    } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         load_variable_def(new_block, local_rtn_def);
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, local_rtn_def->name));
-        unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
-    } else {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
-        assert(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
@@ -458,7 +458,7 @@ static void load_block_stmts(
             // is_cont2_check
             Name after_check_cont2 = util_literal_name_new_prefix(sv("after_check_cont2"));
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_cont2ing, label_if_continue, after_check_cont2);
-            add_label(new_block, after_check_cont2, (Pos) {0}/*TODO*/);
+            add_label(new_block, after_check_cont2, new_block->pos);
 
             // is_yield_check
             load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
@@ -1641,7 +1641,7 @@ static Name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
 static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_BLOCK: {
-            // TODO: load_block should return Name instead of Ir_block
+            // TODO: load_block should return Name instead of Ir_block?
             Name yield_dest = util_literal_name_new();
             Ir_block* new_block_block = load_block(
                 tast_block_unwrap(old_expr),
@@ -1692,7 +1692,7 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
         case TAST_TUPLE:
             return load_tuple(new_block, tast_tuple_unwrap(old_expr));
         case TAST_ENUM_CALLEE:
-            todo();
+            unreachable("this should have been caught in the type checking pass");
         case TAST_ENUM_GET_TAG:
             return load_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
@@ -2360,7 +2360,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     );
     load_assignment(new_block, is_cont_assign);
 
-    //// TODO: do the assignments for 
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of for
@@ -2587,12 +2586,12 @@ static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if
     if_for_add_cond_goto(
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
-            (Pos) {0} /* TODO */,
-            tast_symbol_wrap(tast_symbol_new((Pos) {0}/*TODO*/, (Sym_typed_base) {
+            new_block->pos,
+            tast_symbol_wrap(tast_symbol_new(new_block->pos, (Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
                 .name = sym_name
             })),
-            tast_literal_wrap(tast_int_wrap(tast_int_new((Pos) {0}/*TODO*/, 0, lang_type_new_u1()))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(new_block->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
         )),
@@ -2612,17 +2611,17 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     //   (and is yield check should be used for child scopes)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
     load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
-    add_label(new_block, after_check_rtn, (Pos) {0}/*TODO*/);
+    add_label(new_block, after_check_rtn, new_block->pos);
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_yielding, vec_top(pairs).label->name, after_yield_check);
-    add_label(new_block, after_yield_check, (Pos) {0}/*TODO*/);
+    add_label(new_block, after_yield_check, new_block->pos);
 
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     load_single_is_rtn_check(new_block, vec_top(&defered_collections.coll_stack).is_cont2ing, vec_top(pairs).label->name, after_cont2_check);
-    add_label(new_block, after_cont2_check, (Pos) {0}/*TODO*/);
+    add_label(new_block, after_cont2_check, new_block->pos);
 }
 
 static Ir_block* load_block(

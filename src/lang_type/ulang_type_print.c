@@ -10,7 +10,7 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     env.silent_generic_resol_errors = true;
     if (mode == LANG_TYPE_MODE_MSG) {
         Lang_type new_lang_type = {0};
-        if (try_lang_type_from_ulang_type(&new_lang_type, lang_type, (Pos) {0} /* TODO */)) {
+        if (try_lang_type_from_ulang_type(&new_lang_type, lang_type)) {
             env.silent_generic_resol_errors = old_silent_resol_errors;
             return lang_type_print_internal(LANG_TYPE_MODE_MSG, new_lang_type);
         }

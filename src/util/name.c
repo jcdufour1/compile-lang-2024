@@ -25,7 +25,7 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 
 Uname name_to_uname(Name name) {
     Uast_mod_alias* new_alias = uast_mod_alias_new(
-        (Pos) {0} /* TODO */,
+        POS_BUILTIN,
         util_literal_name_new(),
         name.mod_path,
         name.scope_id

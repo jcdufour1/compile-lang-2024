@@ -467,11 +467,12 @@ Strv uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) {
     return string_to_strv(buf);
 }
 
-Strv uast_generic_param_print_internal(const Uast_generic_param* params, int indent) {
+Strv uast_generic_param_print_internal(const Uast_generic_param* param, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "generic_params\n", indent);
-    string_extend_strv(&a_print, &buf, uast_symbol_print_internal(params->child, indent + INDENT_WIDTH));
+    string_extend_strv_indent(&a_print, &buf, sv(""), indent + INDENT_WIDTH);
+    extend_name(NAME_LOG, &buf, param->name);
 
     return string_to_strv(buf);
 }

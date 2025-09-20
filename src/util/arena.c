@@ -3,15 +3,21 @@
 #include <assert.h>
 #include <stddef.h>
 
-// TODO: alignment in arena
-// TODO: use mmap instead of malloc
+// TODO: use mmap instead of malloc, etc.
 
-// TODO: fix bug when set to 1
+typedef union {
+    size_t a;
+    uint64_t b;
+    void* c;
+    long double d;
+} Align_thing;
+
+#define ALIGN_SIZE (sizeof(Align_thing))
+
 #ifdef NDEBUG
-#define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
+#define ARENA_DEFAULT_CAPACITY (ALIGN_SIZE*((1 << 20)/ALIGN_SIZE)) // 1 MB initial
 #else
-// TODO: use larger default in release?
-#define ARENA_DEFAULT_CAPACITY 1 // this is to catch bugs with the arena, strv functions, etc.
+#define ARENA_DEFAULT_CAPACITY ALIGN_SIZE // this is to catch bugs with the arena, strv functions, etc.
 #endif // NDEBUG
 
 /*
@@ -35,6 +41,7 @@ static void* safe_malloc(size_t capacity) {
         exit(EXIT_CODE_FAIL);
     }
     memset(new_ptr, 0, capacity);
+    assert((uint64_t)new_ptr%ALIGN_SIZE == 0 && "new_ptr is not aligned");
     return new_ptr;
 }
 
@@ -55,16 +62,18 @@ static size_t get_total_alloced(Arena* arena) {
 }
 
 void* arena_alloc(Arena* arena, size_t capacity_needed) {
+    capacity_needed = get_next_multiple(capacity_needed, ALIGN_SIZE);
+    size_t arena_buf_size = get_next_multiple(sizeof(Arena_buf), ALIGN_SIZE);
+
     Arena_buf** curr_buf = &arena->next;
     while (1) {
         if (!(*curr_buf)) {
             size_t cap_new_buf = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
-            cap_new_buf = MAX(cap_new_buf, capacity_needed + sizeof(Arena_buf));
+            cap_new_buf = get_next_multiple(MAX(cap_new_buf, capacity_needed + arena_buf_size), ALIGN_SIZE);
             *curr_buf = safe_malloc(cap_new_buf);
             (*curr_buf)->capacity = cap_new_buf;
-            (*curr_buf)->count = sizeof(**curr_buf);
+            (*curr_buf)->count = arena_buf_size;
         }
-
         size_t rem_capacity = (*curr_buf)->capacity - (*curr_buf)->count;
         if (rem_capacity >= capacity_needed) {
             break;
@@ -75,6 +84,7 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
 
     void* buf_to_return = (char*)(*curr_buf) + (*curr_buf)->count;
     (*curr_buf)->count += capacity_needed;
+    assert((uint64_t)buf_to_return%ALIGN_SIZE == 0 && "buf_to_return is not actually aligned");
     return buf_to_return;
 }
 
@@ -106,7 +116,7 @@ void arena_reset(Arena* arena) {
     while (curr_buf) {
         // memset nessessary so that reused buffers will be zero initialized
         memset(curr_buf + 1, 0, curr_buf->count - sizeof(*curr_buf));
-        curr_buf->count = sizeof(*curr_buf);
+        curr_buf->count = get_next_multiple(sizeof(*curr_buf), ALIGN_SIZE);
 
         curr_buf = curr_buf->next;
     }

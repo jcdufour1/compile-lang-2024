@@ -15,8 +15,6 @@
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
  
-// TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
-
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
@@ -46,7 +44,6 @@ Ir_block* compile_file_to_ir(void) {
 
     add_primitives();
 
-    // TODO: consider if mod_path member of Uast_mod_alias could be Strv instead of Name
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,

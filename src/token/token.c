@@ -63,7 +63,7 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
         case TOKEN_LOGICAL_NOT:
             return sv("!");
         case TOKEN_BITWISE_XOR:
-            return sv("xor");
+            return sv("^");
         case TOKEN_UNSAFE_CAST:
             return sv("unsafe_cast");
         case TOKEN_VOID:
@@ -219,7 +219,7 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
         case TOKEN_LOGICAL_NOT:
             return sv("!");
         case TOKEN_BITWISE_XOR:
-            return sv("xor");
+            return sv("^");
         case TOKEN_UNSAFE_CAST:
             return sv("unsafe_cast");
         case TOKEN_VOID:

@@ -412,6 +412,24 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     Tast_expr* src
 ) {
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
+        if (src->type == TAST_ENUM_CALLEE) {
+            Tast_enum_callee* callee = tast_enum_callee_unwrap(src);
+            Uast_def* enum_def_ = NULL;
+            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, callee->enum_lang_type)));
+            Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
+
+            // TODO: make helper function to print member more easily
+            msg(
+                DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, tast_expr_get_pos(src),
+                "enum case with non-void inner type cannot be assigned without using (); "
+                "use `"FMT"."FMT"()` instead of `"FMT"."FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
+                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name),
+                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
+                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name)
+            );
+            return CHECK_ASSIGN_ERROR;
+        }
         *new_src = src;
         return CHECK_ASSIGN_OK;
     }
@@ -439,7 +457,9 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_struct_literal_types(
-             &new_src_, dest_lang_type, uast_struct_literal_unwrap(src), pos
+             &new_src_,
+             dest_lang_type,
+             uast_struct_literal_unwrap(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -447,7 +467,10 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     } else if (src->type == UAST_ARRAY_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_array_literal_types(
-             &new_src_, dest_lang_type, uast_array_literal_unwrap(src), pos
+             &new_src_,
+             dest_lang_type,
+             uast_array_literal_unwrap(src),
+             pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -455,7 +478,9 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     } else if (src->type == UAST_TUPLE) {
         Tast_tuple* new_src_ = NULL;
         if (!try_set_tuple_assignment_types(
-             &new_src_, dest_lang_type, uast_tuple_unwrap(src)
+             &new_src_,
+             dest_lang_type,
+             uast_tuple_unwrap(src)
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -566,7 +591,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
-            msg_undefined_symbol(sym_untyped);
+            msg_undefined_symbol(sym_untyped->name, sym_untyped->pos);
             return false;
         }
     }
@@ -1163,7 +1188,7 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
     }
 
     Lang_type cast_to = {0};
-    if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type, unary->pos)) {
+    if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type)) {
         return false;
     }
     return try_set_unary_types_finish(new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, cast_to);
@@ -1383,7 +1408,7 @@ bool try_set_array_literal_types(
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
     if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
-        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_, lit->pos)) {
+        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_)) {
             return false;
         }
     } else {
@@ -1658,12 +1683,12 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
         return false;
     }
 
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).str.base));
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
-         &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
+         &new_rhs,
+         tast_expr_get_lang_type(new_lhs),
+         assignment->rhs,
+         assignment->pos
     )) {
         case CHECK_ASSIGN_OK:
             break;
@@ -1691,11 +1716,17 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
         case LANG_TYPE_VOID:
             unreachable("this error should have already been caught");
         default: {
+            Uast_symbol* sym = uast_symbol_unwrap(vec_at(&args, 0));
             // tast_enum_case->tag->lang_type is of selected varient of enum (maybe)
             Uast_variable_def* new_def = uast_variable_def_new(
                 enum_case->pos,
                 lang_type_to_ulang_type(enum_case->tag->lang_type),
-                name_new((Strv) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
+                name_new(
+                    sym->name.mod_path,
+                    sym->name.base,
+                    (Ulang_type_vec) {0} /* TODO */,
+                    sym->name.scope_id
+                )
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
                 // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -1710,7 +1741,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id, enum_case->pos)
+                    uast_expr_clone(parent_of_operand, sym->name.scope_id, enum_case->pos)
                 ))
             );
 
@@ -1798,8 +1829,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 case CHECK_ASSIGN_INVALID:
                     msg(
                         DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
-                        "cannot assign "FMT" of type `"FMT"` to '"FMT"`\n", 
-                        tast_expr_print(new_item),
+                        "cannot assign expression of type `"FMT"` to '"FMT"`\n", 
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
                              vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
@@ -2008,7 +2038,15 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
 
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
+        if (lang_type_is_equal(
+            lang_type_from_ulang_type(param->base->lang_type),
+            lang_type_primitive_const_wrap(
+                lang_type_opaque_const_wrap(lang_type_opaque_new(
+                    POS_BUILTIN,
+                    lang_type_atom_new_from_cstr("opaque", 0, 0)
+                ))
+            )
+        )) {
             // arguments for variadic parameter will be checked later
             // TODO: uncomment below?:
             // unreachable();
@@ -2398,18 +2436,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             bool found_gen = false;
             for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
                 if (strv_is_equal(
-                    vec_at(&fun_decl_temp->generics, idx_gen)->child->name.base,
+                    vec_at(&fun_decl_temp->generics, idx_gen)->name.base,
                     param->base->name.base
                 )) {
                     if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
                         status = false;
                         goto error;
                     }
-                    // TODO: remove below comment after above works
-                    //*vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                    //    ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-                    //    (Pos) {0}
-                    //));
                     *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
                     break;
@@ -2425,36 +2458,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         Tast_expr* new_arg = NULL;
 
-        //if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
-        //    // arguments for variadic parameter will be checked later
-        //    // TODO: uncomment below?:
-        //    // unreachable();
-        //    continue;
-        //} else {
-        //    switch (check_generic_assignment(
-        //        &new_arg,
-        //        lang_type_from_ulang_type(param->base->lang_type),
-        //        corres_arg,
-        //        uast_expr_get_pos(corres_arg)
-        //    )) {
-        //        case CHECK_ASSIGN_OK:
-        //            break;
-        //        case CHECK_ASSIGN_INVALID:
-        //            todo();
-        //            //msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
-        //            //status = false;
-        //            //goto error;
-        //        case CHECK_ASSIGN_ERROR:
-        //            status = false;
-        //            goto error;
-        //        default:
-        //            unreachable("");
-        //    }
-        //}
-
-        // TODO: print error, etc. if value already assigned
         if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
-            // TODO: print error for respecified function arg
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
                 tast_expr_get_pos(vec_at(&new_args, curr_arg_count)),
@@ -2550,7 +2554,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
 
                 msg(
-                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
                     "function parameter `"FMT"` was not specified\n",
                     name_print(NAME_MSG, param_name)
                 );
@@ -2717,7 +2721,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     // TODO: word below comment better
     // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
-    //amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
 
     params = fun_decl->params;
 
@@ -3308,7 +3311,7 @@ bool try_set_variable_def_types(
     }
 
     Lang_type new_lang_type = {0};
-    if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
+    if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update(uast_poison_def_wrap(new_poison));
         return false;
@@ -3408,7 +3411,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
-        msg_undefined_symbol(uast_symbol_new(yield->pos, yield->break_out_of));
+        msg_undefined_symbol(yield->break_out_of, yield->pos);
         status = false;
         goto error;
     }
@@ -3460,7 +3463,7 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, cont->break_out_of)) {
-        msg_undefined_symbol(uast_symbol_new(cont->pos, cont->break_out_of));
+        msg_undefined_symbol(cont->break_out_of, cont->pos);
         status = false;
         goto error;
     }
@@ -3691,6 +3694,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
+                // TODO: make helper function to print member more easily
                 extend_name(NAME_MSG, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
                 extend_name(NAME_MSG, &string, vec_at(&enum_def.members, idx)->name);
@@ -3978,7 +3982,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new(MOD_PATH_BUILTIN, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            msg(DIAG_NO_MAIN, POS_BUILTIN, "no main function\n");
+            msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
@@ -4142,16 +4146,14 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
-        Name curr_name = {0};
-        vec_pop(curr_name, &env.fun_implementations_waiting_to_resolve);
+        Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
         if (!resolve_generics_function_def_implementation(curr_name)) {
             status = false;
         }
     }
 
     while (env.struct_like_waiting_to_resolve.info.count > 0) {
-        Name curr_name = {0};
-        vec_pop(curr_name, &env.struct_like_waiting_to_resolve);
+        Name curr_name = vec_pop(&env.struct_like_waiting_to_resolve);
         if (!resolve_generics_struct_like_def_implementation(curr_name)) {
             status = false;
         }

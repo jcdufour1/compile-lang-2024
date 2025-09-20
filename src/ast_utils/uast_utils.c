@@ -5,7 +5,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_VARIABLE_DEF:
-            return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type, ulang_type_get_pos(uast_variable_def_const_unwrap(def)->lang_type));
+            return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type);
         case UAST_FUNCTION_DECL:
             *result = lang_type_from_ulang_type( uast_function_decl_const_unwrap(def)->return_type);
             return true;

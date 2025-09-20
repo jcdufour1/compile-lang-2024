@@ -98,12 +98,8 @@ typedef struct {
 #define vec_top_ref(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), vec_at_ref((vector), (vector)->info.count - 1))
 
-// TODO: try to "return" popped_item as "return value"
-#define vec_pop(popped_item, vector) \
-    do { \
-        (popped_item) = vec_top(vector); \
-        (vector)->info.count--; \
-    } while(0)
+#define vec_pop(vector) \
+    (unwrap((vector)->info.count > 0 && "out of bounds"), (vector)->info.count--, (vector)->buf[((vector)->info.count)])
 
 #define vec_rem_last(vector) \
     do { \

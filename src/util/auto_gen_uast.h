@@ -124,7 +124,6 @@ static Uast_type uast_gen_import_path(const char* prefix) {
     return import;
 }
 
-// TODO: also use this node to make more generized alias, etc.
 static Uast_type uast_gen_mod_alias(const char* prefix) {
     Uast_type import = {.name = uast_name_new(prefix, "mod_alias", false)};
 
@@ -158,7 +157,7 @@ static Uast_type uast_gen_unary(const char* prefix) {
 static Uast_type uast_gen_binary(const char* prefix) {
     Uast_type binary = {.name = uast_name_new(prefix, "binary", false)};
 
-    append_member(&binary.members, "Uast_expr*", "lhs"); // TODO: change this to Uast_expr
+    append_member(&binary.members, "Uast_expr*", "lhs");
     append_member(&binary.members, "Uast_expr*", "rhs");
     append_member(&binary.members, "BINARY_TYPE", "token_type");
 
@@ -448,8 +447,7 @@ static Uast_type uast_gen_void_def(const char* prefix) {
 static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
-    // TODO: change this to just Name?
-    append_member(&param.members, "Uast_symbol*", "child");
+    append_member(&param.members, "Name", "name");
 
     return param;
 }
@@ -599,7 +597,7 @@ static Uast_type uast_gen_return(const char* prefix) {
     Uast_type rtn = {.name = uast_name_new(prefix, "return", false)};
 
     append_member(&rtn.members, "Uast_expr*", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
+    append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
 }

@@ -983,7 +983,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
             Uast_variable_def* param_var_def = uast_variable_def_new(
                 uast_def_get_pos(base),
                 ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(uast_def_get_pos(base))),
-                name_new(curr_mod_path, uast_generic_param_unwrap(base)->child->name.base, (Ulang_type_vec) {0}, scope_id)
+                name_new(curr_mod_path, uast_generic_param_unwrap(base)->name.base, (Ulang_type_vec) {0}, scope_id)
             );
             *child = uast_param_new(uast_def_get_pos(base), param_var_def, is_optional, is_variadic, opt_default);
             return PARSE_EXPR_OK;
@@ -1093,10 +1093,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
         }
         Uast_generic_param* param = uast_generic_param_new(
             symbol.pos,
-            uast_symbol_new(
-                symbol.pos,
-                name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope)
-            )
+            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope)
         );
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
@@ -1454,7 +1451,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
         Uast_generic_param* var_def = uast_generic_param_new(
             name_token.pos,
-            uast_symbol_new(name_token.pos, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id))
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
         );
 
         *result = uast_generic_param_wrap(var_def);
@@ -1769,7 +1766,6 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
         break_out_of = default_brk_label;
     }
 
-    *new_cont = uast_continue_new(cont_token.pos, break_out_of);
     *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
@@ -3119,11 +3115,6 @@ bool parse_file(Uast_block** block, Strv file_path) {
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
-        msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
-            "could not open file `"FMT"`: %s\n",
-            strv_print(file_path), strerror(errno)
-        );
         status = false;
         goto error;
     }

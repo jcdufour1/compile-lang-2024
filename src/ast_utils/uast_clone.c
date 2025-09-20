@@ -128,8 +128,6 @@ Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, Scope_id new_scope, Pos de
 }
 
 Uast_macro* uast_macro_clone(const Uast_macro* macro, Scope_id new_scope, Pos dest_pos) {
-    (void) new_scope;
-    // TODO: use name_clone here?
     return uast_macro_new(macro->pos, macro->name, dest_pos);
 }
 
@@ -177,12 +175,14 @@ Uast_label* uast_label_clone(const Uast_label* label, Scope_id new_scope) {
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
+    (void) alias;
+    (void) new_scope;
     todo();
     //return uast_mod_alias_new(alias->pos, name_clone(alias->name, new_scope), name_clone(alias->mod_path, new_scope));
 }
 
 Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, Scope_id new_scope) {
-    return uast_generic_param_new(param->pos, uast_symbol_clone(param->child, new_scope));
+    return uast_generic_param_new(param->pos, name_clone(param->name, new_scope));
 }
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_pos) {

@@ -15,6 +15,8 @@ eg. .num is a Tast_enum_callee
 '''c
 let token Token = .num(76)
 '''
+### TAST_ENUM_ACCESS
+- used to access inner expression of enum
 ### TAST_ENUM_CASE
 in switch cases
 eg. .num in the case below is a Tast_enum_case
