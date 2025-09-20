@@ -4,7 +4,7 @@ type util import = std.util
 // TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
 // TODO: count should be usize by default when usize is implemented
 type Slice struct(<ItemT>) {
-    items ItemT*
+    buf ItemT*
     count u64
 }
 
@@ -12,7 +12,7 @@ fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
     if (index >= slice.count) {
         abort()
     }
-    return slice.items[index]
+    return slice.buf[index]
 }
 
 // TODO: count and max should be usize by default when usize is implemented
@@ -31,8 +31,8 @@ fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type, file u8* = #file, line i
 }
 
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
-    util.assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
-    return slice.items[index]
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return arr.buf[index]
 }
 
 fn arr_first(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
