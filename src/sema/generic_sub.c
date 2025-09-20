@@ -210,6 +210,12 @@ void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulan
     }
 }
 
+void generic_sub_array_literal(Uast_array_literal* lit, Name gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+        generic_sub_expr(vec_at(&lit->members, idx), gen_param, gen_arg);
+    }
+}
+
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
@@ -237,7 +243,7 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
     generic_sub_expr(assign->rhs, gen_param, gen_arg);
 }
 
-void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member*/, Ulang_type gen_arg) {
+void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member (consider if Strv can be used for gen_param)*/, Ulang_type gen_arg) {
     assert(gen_param.scope_id > 0);
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
@@ -276,11 +282,14 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             generic_sub_struct_literal(uast_struct_literal_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_TUPLE:
-            todo();
+            msg_todo("", uast_expr_get_pos(expr));
+            return;
         case UAST_ENUM_ACCESS:
-            todo();
+            msg_todo("", uast_expr_get_pos(expr));
+            return;
         case UAST_ENUM_GET_TAG:
-            todo();
+            msg_todo("", uast_expr_get_pos(expr));
+            return;
         case UAST_OPERATOR:
             generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
             return;
@@ -291,7 +300,7 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             generic_sub_if_else_chain(uast_if_else_chain_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_ARRAY_LITERAL:
-            todo();
+            generic_sub_array_literal(uast_array_literal_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_MACRO:
             // TODO

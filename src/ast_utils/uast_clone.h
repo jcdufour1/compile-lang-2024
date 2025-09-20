@@ -35,4 +35,6 @@ Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, Sc
 
 Uast_function_params* uast_function_params_clone(const Uast_function_params* params, Scope_id scope_id);
 
+Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, Scope_id new_scope, Pos dest_pos);
+
 #endif // UAST_CLONE_H

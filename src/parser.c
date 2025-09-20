@@ -2489,6 +2489,9 @@ static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
+                if (members->info.count < 1) {
+                    return PARSE_OK;
+                }
                 msg_expected_expr(*tokens, "");
                 return PARSE_ERROR;
             default:

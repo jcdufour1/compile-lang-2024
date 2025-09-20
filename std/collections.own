@@ -23,7 +23,7 @@ type Arr struct(<ItemT>) {
     max u64
 }
 
-fn arr_new(max_capacity u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
     let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
     util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
     return {buf, 0, max_capacity}
