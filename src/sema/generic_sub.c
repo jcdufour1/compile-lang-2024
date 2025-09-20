@@ -293,7 +293,7 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             todo();
             return;
         case UAST_MACRO:
-            todo();
+            // TODO
             return;
     }
     unreachable("");

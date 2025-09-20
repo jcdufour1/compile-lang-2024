@@ -143,10 +143,11 @@ add_fn(<i16>)
 - make print functions check for null and print <null> or something instead of seg fault
 - figure out if I should de-duplilcate string literals, etc.
 - strings should actually be their own type (not just u8*) (maybe slice with null termination)
-- support alternative backend (such as qbe, cuik)
 - fix printing for lang_type in msg to not put newline
 - actually use newline to end statement depending on last token of line of line
 - expected failure case for invalid type in extern "c" function
+- when showing error for file not opening while importing module, show note for import location
+
 
 
 
@@ -166,6 +167,7 @@ add_fn(<i16>)
 - when generics are mature, use them to associate custom allocators with things
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
+- support alternative backend
 
 # in the far future
 - try catch blocks with the question operator or similar

@@ -1,0 +1,22 @@
+type io import = std.io
+
+extern("c") fn isdigit(character i32) i32
+extern("c") fn abort()
+extern("c") fn malloc(size u64) opaque*
+
+type Optional enum(<ItemT>) {
+    some ItemT
+    none
+}
+
+// TODO: remove keep_going parameter from std?
+fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, line i32 = #line, column i32 = #column) {
+    if (!condition) {
+        // TODO: print to stderr
+        io.printf("%s:%d:%d:assertion failure: %s\n", file, line, column, message)
+        if (!keep_going) {
+            abort()
+        }
+    }
+}
+

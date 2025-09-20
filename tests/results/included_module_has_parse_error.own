@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-std_parse_error.own:3:14:[1;31merror[0;39m:got token `{`, but expected `symbol` 
+tests/dummy_std/std_parse_error.own:3:14:[1;31merror[0;39m:got token `{`, but expected `symbol` 
      2 | 
      3 | fn zero( i32 {
        |              ^

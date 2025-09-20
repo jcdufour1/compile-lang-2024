@@ -2381,8 +2381,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
+            log(LOG_DEBUG, "before\n");
+            // TODO: Uast_param should have Strv instead of name to prevent some bugs and make things simplier?
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
-                if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx_param)->base->name));
+                if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     size_t actual_arg_count = curr_arg_count;
                     param = vec_at(&params->params, idx_param);
                     curr_arg_count = idx_param;
@@ -2415,8 +2418,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
             }
             if (!name_found) {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name));
                 msg(
-                    DIAG_INVALID_MEMBER_ACCESS,
+                    DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                     lhs->pos,
                     "`"FMT"` is not a parameter of function `"FMT"`\n", 
                     strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
@@ -2773,7 +2777,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     local_gen_count++;
                 }
 
-                if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     param = vec_at(&params->params, idx_param);
                     curr_arg_count = idx_param - local_gen_count;
                     name_found = true;
@@ -2844,6 +2848,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             status = false;
             goto error;
         }
+        assert(new_arg);
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
@@ -2865,16 +2870,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     } else {
         assert(new_args_set.info.count == new_args.info.count);
-        for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
-            if (!vec_at(&new_args_set, idx)) {
+        size_t gen_arg_count = 0;
+        for (size_t idx = 0; idx < params->params.info.count; idx++) {
+            if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                gen_arg_count++;
+                continue;
+            }
+
+            if (!vec_at(&new_args_set, idx - gen_arg_count)) {
                 // TODO: move error for function parameter unspecified to here?
                 if (vec_at(&params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
-                    *vec_at_ref(&new_args_set, idx) = true;
+                    *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
                     switch (check_generic_assignment(
-                        vec_at_ref(&new_args, idx),
+                        vec_at_ref(&new_args, idx - gen_arg_count),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
                         new_default_,
                         uast_expr_get_pos(new_default_)
@@ -2883,7 +2894,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             break;
                         case CHECK_ASSIGN_INVALID:
                             msg_invalid_function_arg(
-                                vec_at(&new_args, idx),
+                                vec_at(&new_args, idx - gen_arg_count),
                                 vec_at(&params->params, idx)->base,
                                 is_fun_callback
                             );
@@ -2906,6 +2917,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         new_callee,
         fun_rtn_type
     ));
+    for (size_t idx = 0; idx < new_args.info.count; idx++) {
+        if (!vec_at(&new_args, idx)) {
+            log(LOG_DEBUG, "<null>\n");
+        } else {
+            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
+        }
+    }
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_call));
 
 error:
     return status;
