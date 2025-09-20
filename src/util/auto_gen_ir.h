@@ -269,7 +269,6 @@ static Ir_type ir_gen_function_def(void) {
 static Ir_type ir_gen_variable_def(void) {
     Ir_type def = {.name = ir_name_new("def", "variable_def", false)};
 
-    // TODO: refactor so that only one Name is needed here
     append_member(&def.members, "Llvm_lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Name", "name_self"); // for loading from variable_def param

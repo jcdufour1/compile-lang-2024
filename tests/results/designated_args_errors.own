@@ -1,0 +1,46 @@
+compile::stdout 0
+
+compile::stderr 40
+tests/inputs/designated_args_errors.own:8:11:[1;31merror[0;39m:`ndsaf` is not a parameter of function `print`
+     7 | fn main() i32 {
+     8 |     print(.ndsaf = 8)
+       |           ^
+     9 |     print(.number = 8, .number = 87)
+tests/inputs/designated_args_errors.own:3:4:[1;34mnote[0;39m:function `print` defined here
+     2 | 
+     3 | fn print(number i32 = 43, string u8* = "hello") {
+       |    ^
+     4 |     io.printf("%d %s\n", number, string)
+tests/inputs/designated_args_errors.own:9:32:[1;31merror[0;39m:function parameter `number` has been assigned to more than once
+     8 |     print(.ndsaf = 8)
+     9 |     print(.number = 8, .number = 87)
+       |                                ^
+    10 |     print(8, .number = 87)
+tests/inputs/designated_args_errors.own:9:19:[1;34mnote[0;39m:original assignment to parameter `number` here
+     8 |     print(.ndsaf = 8)
+     9 |     print(.number = 8, .number = 87)
+       |                   ^
+    10 |     print(8, .number = 87)
+tests/inputs/designated_args_errors.own:3:4:[1;34mnote[0;39m:function `print` defined here
+     2 | 
+     3 | fn print(number i32 = 43, string u8* = "hello") {
+       |    ^
+     4 |     io.printf("%d %s\n", number, string)
+tests/inputs/designated_args_errors.own:10:22:[1;31merror[0;39m:function parameter `number` has been assigned to more than once
+     9 |     print(.number = 8, .number = 87)
+    10 |     print(8, .number = 87)
+       |                      ^
+    11 |     
+tests/inputs/designated_args_errors.own:10:11:[1;34mnote[0;39m:original assignment to parameter `number` here
+     9 |     print(.number = 8, .number = 87)
+    10 |     print(8, .number = 87)
+       |           ^
+    11 |     
+tests/inputs/designated_args_errors.own:3:4:[1;34mnote[0;39m:function `print` defined here
+     2 | 
+     3 | fn print(number i32 = 43, string u8* = "hello") {
+       |    ^
+     4 |     io.printf("%d %s\n", number, string)
+
+compile::return_code 1
+

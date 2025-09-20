@@ -1,0 +1,46 @@
+compile::stdout 0
+
+compile::stderr 40
+tests/inputs/invalid_count_generic_args.own:20:16:[1;31merror[0;39m:0 generic arguments are passed, but 2 generic arguments expected
+    19 |     let num2 i32 = add(7, 8, 9, i32)
+    20 |     let token1 Token = {.item = 87, .pos = 32}
+       |                ^
+    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
+tests/inputs/invalid_count_generic_args.own:12:6:[1;34mnote[0;39m:generic parameters defined here
+    11 | 
+    12 | type Token struct(<ItemType, PosType>) {
+       |      ^
+    13 |     item ItemType
+tests/inputs/invalid_count_generic_args.own:21:16:[1;31merror[0;39m:3 generic arguments are passed, but 2 generic arguments expected
+    20 |     let token1 Token = {.item = 87, .pos = 32}
+    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
+       |                ^
+    22 |     return 0
+tests/inputs/invalid_count_generic_args.own:12:6:[1;34mnote[0;39m:generic parameters defined here
+    11 | 
+    12 | type Token struct(<ItemType, PosType>) {
+       |      ^
+    13 |     item ItemType
+tests/inputs/invalid_count_generic_args.own:18:20:[1;31merror[0;39m:4 arguments are passed to function `sub`, but 3 arguments expected
+    17 | fn main() i32 {
+    18 |     let num1 i32 = sub(7, 8, i32, i64)
+       |                    ^
+    19 |     let num2 i32 = add(7, 8, 9, i32)
+tests/inputs/invalid_count_generic_args.own:2:4:[1;34mnote[0;39m:function `sub` defined here
+     1 | 
+     2 | fn sub(lhs NumType, rhs NumType, NumType Type) {
+       |    ^
+     3 |     let result NumType = lhs - rhs
+tests/inputs/invalid_count_generic_args.own:19:20:[1;31merror[0;39m:function parameter `DummyType` was not specified
+    18 |     let num1 i32 = sub(7, 8, i32, i64)
+    19 |     let num2 i32 = add(7, 8, 9, i32)
+       |                    ^
+    20 |     let token1 Token = {.item = 87, .pos = 32}
+tests/inputs/invalid_count_generic_args.own:7:65:[1;34mnote[0;39m:function parameter `DummyType` defined here
+     6 | 
+     7 | fn add(lhs NumType, rhs NumType, dummy DummyType, NumType Type, DummyType Type) {
+       |                                                                 ^
+     8 |     let result NumType = lhs + rhs
+
+compile::return_code 1
+

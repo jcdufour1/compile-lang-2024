@@ -6,7 +6,7 @@
 #include <ir_utils.h>
 #include <llvm_lang_type.h>
 #include <llvm_lang_type_after.h>
-#include <common.h>
+#include <codegen_common.h>
 #include <llvm_lang_type_get_pos.h>
 #include <llvm_lang_type_print.h>
 #include <parser_utils.h>
@@ -23,7 +23,7 @@ typedef struct {
     String forward_decls;
 } Emit_c_strs;
 
-static void emit_c_block(Emit_c_strs* strs,  const Ir_block* block);
+static void emit_c_block(Emit_c_strs* strs, const Ir_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
@@ -178,8 +178,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     arena_free(&a_temp);
 }
 
-// this is only intended for alloca_table, etc.
-static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
+static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             emit_c_function_def(strs, ir_function_def_const_unwrap(def));
@@ -202,10 +201,10 @@ static void emit_c_def_sometimes(Emit_c_strs* strs, const Ir_def* def) {
     unreachable("");
 }
 
-static void emit_c_sometimes(Emit_c_strs* strs, const Ir* ir) {
+static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
-            emit_c_def_sometimes(strs, ir_def_const_unwrap(ir));
+            emit_c_def_out_of_line(strs, ir_def_const_unwrap(ir));
             return;
         case IR_BLOCK:
             return;
@@ -272,12 +271,12 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
             emit_c_expr_piece(strs, vec_at(&fun_call->args, idx));
         }
     }
-    //emit_function_call_arguments(&strs->output, literals, fun_call);
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
 static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
     (void) strs;
+    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen
     switch (unary_type) {
         case UNARY_DEREF:
             unreachable("defer should not make it here");
@@ -288,7 +287,7 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm
             c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             unreachable("not should not make it here");
         case UNARY_SIZEOF:
             unreachable("sizeof should not make it here");
@@ -530,7 +529,7 @@ static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     string_extend_cstr(&a_main, &strs->output, "    dummy = 0;\n");
 }
 
-static void emit_c_def(Emit_c_strs* strs, const Ir_def* def) {
+static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
     (void) strs;
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -563,26 +562,14 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
 
-    if (true /*src->type == IR_EXPR && ir_expr_const_unwrap(src)->type == IR_LITERAL*/) {
-        string_extend_cstr(&a_main, &strs->output, "    *((");
-        c_extend_type_call_str(&strs->output, store->lang_type, true);
-        string_extend_cstr(&a_main, &strs->output, "*)");
-        ir_extend_name(&strs->output, store->ir_dest);
-        string_extend_cstr(&a_main, &strs->output, ") = ");
-
-        emit_c_expr_piece(strs, store->ir_src);
-        string_extend_cstr(&a_main, &strs->output, ";\n");
-        return;
-    }
-
-    string_extend_cstr(&a_main, &strs->output, "    memcpy(");
-    emit_c_expr_piece(strs, store->ir_dest);
-    string_extend_cstr(&a_main, &strs->output, ", &");
+    string_extend_cstr(&a_main, &strs->output, "    *((");
+    c_extend_type_call_str(&strs->output, store->lang_type, true);
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    ir_extend_name(&strs->output, store->ir_dest);
+    string_extend_cstr(&a_main, &strs->output, ") = ");
 
     emit_c_expr_piece(strs, store->ir_src);
-    string_extend_cstr(&a_main, &strs->output, ", ");
-    string_extend_size_t(&a_main, &strs->output, sizeof_llvm_lang_type(store->lang_type));
-    string_extend_cstr(&a_main, &strs->output, ");\n");
+    string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
@@ -669,7 +656,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 emit_c_expr(strs, ir_expr_const_unwrap(stmt));
                 break;
             case IR_DEF:
-                emit_c_def(strs, ir_def_const_unwrap(stmt));
+                emit_c_def_inline(strs, ir_def_const_unwrap(stmt));
                 break;
             case IR_RETURN:
                 emit_c_return(strs, ir_return_const_unwrap(stmt));
@@ -708,7 +695,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
-        emit_c_sometimes(strs, curr);
+        emit_c_out_of_line(strs, curr);
     }
 }
 
@@ -726,13 +713,15 @@ void emit_c_from_tree(const Ir_block* root) {
         string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
         string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
         string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <string.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
+#       ifndef NDEBUG
+            string_extend_cstr(&a_main, &header, "#include <string.h>\n");
+            string_extend_cstr(&a_main, &header, "#include <assert.h>\n");
+#       endif // NDEBUG
 
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
-            emit_c_sometimes(&strs, curr);
+            emit_c_out_of_line(&strs, curr);
         }
 
         emit_c_block(&strs, root);

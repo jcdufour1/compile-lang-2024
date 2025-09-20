@@ -16,7 +16,8 @@
 #include <name.h>
 #include <ulang_type_clone.h>
 
-static Strv curr_mod_path;
+static Strv curr_mod_path; // mod_path of the file that is currently being parsed
+static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
 static Token prev_token;
 
@@ -57,6 +58,16 @@ static PARSE_EXPR_STATUS parse_expr(
 
 static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
+    Tk_view* tokens,
+    bool require_let,
+    bool add_to_sym_table,
+    bool require_type,
+    Ulang_type lang_type_if_not_required,
+    Scope_id scope_id
+);
+
+static PARSE_STATUS parse_variable_def_or_generic_param(
+    Uast_def** result,
     Tk_view* tokens,
     bool require_let,
     bool add_to_sym_table,
@@ -295,10 +306,19 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
     bool status = true;
+    assert(mod_path.count > 0);
+    assert(alias_tk.text.count > 0);
     Uast_def* prev_def = NULL;
     String file_path = {0};
+
+    Name old_mod_alias = curr_mod_alias;
+    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
+    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
+
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
+
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
@@ -314,17 +334,12 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
-        name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+        mod_path
     ))));
 
 finish:
     curr_mod_path = old_mod_path;
-    *mod_alias = uast_mod_alias_new(
-        alias_tk.pos,
-        name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-        name_new(curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
+    curr_mod_alias = old_mod_alias;
     return status;
 }
 
@@ -485,11 +500,13 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            return false;
+        case TOKEN_BITWISE_NOT:
             return false;
         case TOKEN_BITWISE_XOR:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return false;
         case TOKEN_UNSAFE_CAST:
             return false;
@@ -613,6 +630,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DOUBLE_TICK:
             return false;
+        case TOKEN_GENERIC_TYPE:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -637,9 +656,9 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DOUBLE_EQUAL:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_LOGICAL_NOT:
             return true;
         case TOKEN_STRING_LITERAL:
             return false;
@@ -765,6 +784,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_DOUBLE_TICK:
             return false;
+        case TOKEN_GENERIC_TYPE:
+            return false;
+        case TOKEN_BITWISE_NOT:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -772,18 +795,18 @@ static bool is_unary(TOKEN_TYPE token_type) {
 }
 
 static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-    Strv mod_alias = {0};
+    Name mod_alias = curr_mod_alias;
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        mod_alias = lang_type_token.text;
+        mod_alias.base = lang_type_token.text;
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+            // TODO: expected failure test
             todo();
             return false;
         }
@@ -791,12 +814,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = uname_new(
-        name_new(curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id),
-        lang_type_token.text,
-        (Ulang_type_vec) {0},
-        scope_id
-    );
+    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -879,6 +897,10 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
     if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
         return false;
     }
+    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        atom.pointer_depth++;
+    }
+
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
     return true;
 }
@@ -904,17 +926,27 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     }
 }
 
-static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, bool add_to_sym_table, Scope_id scope_id) {
+static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_table, Scope_id scope_id) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
 
-    Uast_variable_def* base = NULL;
+    Uast_def* base = NULL;
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_def(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
+    if (PARSE_OK != parse_variable_def_or_generic_param(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_EXPR_ERROR;
+    }
+    switch (base->type) {
+        case UAST_VARIABLE_DEF:
+            break;
+        case UAST_GENERIC_PARAM:
+            assert(base);
+            vec_append(&a_main, gen_params, uast_generic_param_unwrap(base));
+            break;
+        default:
+            unreachable("");
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         is_variadic = true;
@@ -943,17 +975,31 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
-    *child = uast_param_new(base->pos, base, is_optional, is_variadic, opt_default);
-    return PARSE_EXPR_OK;
+    switch (base->type) {
+        case UAST_VARIABLE_DEF:
+            *child = uast_param_new(uast_def_get_pos(base), uast_variable_def_unwrap(base), is_optional, is_variadic, opt_default);
+            return PARSE_EXPR_OK;
+        case UAST_GENERIC_PARAM: {
+            Uast_variable_def* param_var_def = uast_variable_def_new(
+                uast_def_get_pos(base),
+                ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(uast_def_get_pos(base))),
+                name_new(curr_mod_path, uast_generic_param_unwrap(base)->name.base, (Ulang_type_vec) {0}, scope_id)
+            );
+            *child = uast_param_new(uast_def_get_pos(base), param_var_def, is_optional, is_variadic, opt_default);
+            return PARSE_EXPR_OK;
+        }
+        default:
+            unreachable("");
+    }
 }
 
-static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, bool add_to_sym_tbl, Scope_id scope_id) {
+static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
     Uast_param_vec params = {0};
 
     Uast_param* param = NULL;
     bool done = false;
     while (!done) {
-        switch (parse_function_parameter(&param, tokens, add_to_sym_tbl, scope_id)) {
+        switch (parse_function_parameter(&param, tokens, gen_params, add_to_sym_tbl, scope_id)) {
             case PARSE_EXPR_OK:
                 vec_append(&a_main, &params, param);
                 break;
@@ -981,19 +1027,13 @@ static PARSE_STATUS parse_function_decl_common(
     Token name_token = consume(tokens);
 
     Uast_generic_param_vec gen_params = {0};
-    if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
-        if (PARSE_OK != parse_generics_params(&gen_params, tokens, block_scope)) {
-            return PARSE_ERROR;
-        }
-    }
-
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         msg_parser_expected(tk_view_front(*tokens), " in function decl", TOKEN_OPEN_PAR);
         return PARSE_ERROR;
     }
 
     Uast_function_params* params = NULL;
-    if (PARSE_OK != parse_function_parameters(&params, tokens, add_to_sym_table, block_scope)) {
+    if (PARSE_OK != parse_function_parameters(&params, tokens, &gen_params, add_to_sym_table, block_scope)) {
         return PARSE_ERROR;
     }
 
@@ -1053,10 +1093,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
         }
         Uast_generic_param* param = uast_generic_param_new(
             symbol.pos,
-            uast_symbol_new(
-                symbol.pos,
-                name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope)
-            )
+            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope)
         );
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
@@ -1232,8 +1269,10 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     }
 
     *enum_def = uast_enum_def_new(name.pos, base);
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.base));
+    log(LOG_DEBUG, "%zu\n", (*enum_def)->base.name.scope_id);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
-        todo();
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
     }
@@ -1361,6 +1400,37 @@ static PARSE_STATUS parse_variable_def(
     Ulang_type default_lang_type,
     Scope_id scope_id
 ) {
+    Uast_def* result_ = NULL;
+    PARSE_STATUS status = parse_variable_def_or_generic_param(
+        &result_,
+        tokens,
+        require_let,
+        add_to_sym_table,
+        require_type,
+        default_lang_type,
+        scope_id
+    );
+    if (status != PARSE_OK) {
+        return PARSE_ERROR;
+    }
+
+    if (result_->type != UAST_VARIABLE_DEF) {
+        // TODO: expected failure case
+        todo();
+    }
+    *result = uast_variable_def_unwrap(result_);
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_variable_def_or_generic_param(
+    Uast_def** result,
+    Tk_view* tokens,
+    bool require_let,
+    bool add_to_sym_table,
+    bool require_type,
+    Ulang_type default_lang_type,
+    Scope_id scope_id
+) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
         assert(!require_let);
@@ -1376,32 +1446,50 @@ static PARSE_STATUS parse_variable_def(
     try_consume_no_rm_newlines(NULL, tokens, TOKEN_COLON);
 
     Ulang_type lang_type = {0};
-    if (require_type) {
-        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
-            return PARSE_ERROR;
+    Token type_tk = {0};
+
+    if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
+        Uast_generic_param* var_def = uast_generic_param_new(
+            name_token.pos,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+        );
+
+        *result = uast_generic_param_wrap(var_def);
+
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_generic_param_wrap(var_def))) {
+                msg_redefinition_of_symbol(uast_generic_param_wrap(var_def));
+                return PARSE_ERROR;
+            }
         }
     } else {
-        if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
-            lang_type = default_lang_type;
+        if (require_type) {
+            if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
+                return PARSE_ERROR;
+            }
+        } else {
+            if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
+                lang_type = default_lang_type;
+            }
         }
-    }
 
-    Uast_variable_def* var_def = uast_variable_def_new(
-        name_token.pos,
-        lang_type,
-        name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
-    );
+        Uast_variable_def* var_def = uast_variable_def_new(
+            name_token.pos,
+            lang_type,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+        );
+        *result = uast_variable_def_wrap(var_def);
 
-    if (add_to_sym_table) {
-        if (!usymbol_add(uast_variable_def_wrap(var_def))) {
-            msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
-            return PARSE_ERROR;
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_variable_def_wrap(var_def))) {
+                msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
+                return PARSE_ERROR;
+            }
         }
     }
 
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
-    *result = var_def;
     return PARSE_OK;
 }
 
@@ -1678,7 +1766,6 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
         break_out_of = default_brk_label;
     }
 
-    *new_cont = uast_continue_new(cont_token.pos, break_out_of);
     *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, scope_id));
     return PARSE_OK;
 }
@@ -1771,6 +1858,11 @@ static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
+    if (callee->type == UAST_SYMBOL && uast_symbol_unwrap(callee)->name.gen_args.info.count > 0) {
+        msg(DIAG_WRONG_GEN_TYPE, uast_expr_get_pos(callee), "`(<` and `>)` should not be used on function callee\n");
+        return PARSE_ERROR;
+    }
+
     bool is_first_time = true;
     bool prev_is_comma = false;
     Uast_expr_vec args = {0};
@@ -2154,13 +2246,19 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
     log(LOG_DEBUG, "thing 877: %zu\n", parent);
+
+    if (cases.info.count < 1) {
+        msg(DIAG_SWITCH_NO_CASES, start_token.pos, "switch statement must have at least one case statement\n");
+        status = PARSE_ERROR;
+        goto error;
+    }
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
     log_tokens(LOG_DEBUG, *tokens);
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         // TODO: expeced failure case no close brace
         msg_todo("no close brace", start_token.pos);
-        status = false;
+        status = PARSE_ERROR;
         goto error;
     }
 
@@ -2659,11 +2757,24 @@ static PARSE_EXPR_STATUS parse_unary(
     Token oper = consume_unary(tokens);
 
     Uast_expr* child = NULL;
-    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
+    Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_atom_new(
+            uname_new(
+                MOD_ALIAS_BUILTIN,
+                sv("i32"),
+                (Ulang_type_vec) {0},
+                SCOPE_BUILTIN
+            ),
+            0
+        ),
+        oper.pos
+    )); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT:
+            break;
+        case TOKEN_LOGICAL_NOT:
             break;
         case TOKEN_ASTERISK:
             break;
@@ -2677,21 +2788,20 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         case TOKEN_UNSAFE_CAST: {
             {
-                Token temp;
+                Token temp = {0};
                 if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                    msg_parser_expected(temp, "", TOKEN_LESS_THAN);
+                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_LESS_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }
-            // TODO: parse just Lang_type instead of Lang_type_atom
             // make expected success case for function pointer casting, etc.
-            if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens, scope_id)) {
+            if (PARSE_OK != parse_lang_type_struct_require(&unary_lang_type, tokens, scope_id)) {
                 return PARSE_EXPR_ERROR;
             }
             {
-                Token temp;
+                Token temp = {0};
                 if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                    msg_parser_expected(temp, "", TOKEN_GREATER_THAN);
+                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_GREATER_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }
@@ -2714,9 +2824,23 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
-        case TOKEN_NOT:
+        case TOKEN_BITWISE_NOT: {
+            Uast_expr_vec args = {0};
+            vec_append(&a_main, &args, child);
+            *result = uast_function_call_wrap(uast_function_call_new(
+                oper.pos,
+                args,
+                uast_symbol_wrap(uast_symbol_new(oper.pos, name_new(
+                    MOD_PATH_RUNTIME,
+                    sv("bitwise_not"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
+                )))
+            ));
+        } break;
+        case TOKEN_LOGICAL_NOT:
             // fallthrough
         case TOKEN_ASTERISK:
             // fallthrough
@@ -2727,7 +2851,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 oper.pos,
                 child,
                 token_type_to_unary_type(oper.type),
-                ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos))
+                unary_lang_type
             )));
             assert(*result);
             break;
@@ -2828,7 +2952,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 72, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 74, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -2837,7 +2961,7 @@ static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
     {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
     {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
+    {TOKEN_LOGICAL_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
     {TOKEN_LESS_THAN, TOKEN_LESS_OR_EQUAL, TOKEN_GREATER_THAN, TOKEN_GREATER_OR_EQUAL},
     {TOKEN_SHIFT_LEFT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT},
     {TOKEN_SINGLE_PLUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS},
@@ -2915,6 +3039,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
+    log(LOG_DEBUG, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
@@ -2958,6 +3083,31 @@ static void parser_do_tests(void);
 
 bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
+
+    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN);
+
+    if (curr_mod_alias.base.count < 1) {
+        curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
+        curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
+        Uast_mod_alias* mod_alias = uast_mod_alias_new(
+            POS_BUILTIN,
+            curr_mod_alias,
+            curr_mod_path,
+            SCOPE_TOP_LEVEL
+        );
+        unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
+        log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
+
+        Uast_mod_alias* dummy = NULL;
+        unwrap(get_mod_alias_from_path_token(
+            &dummy,
+            token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+            (Pos) {0} /* TODO */,
+            MOD_PATH_RUNTIME
+        ));
+    }
+
+    // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();
@@ -2965,11 +3115,6 @@ bool parse_file(Uast_block** block, Strv file_path) {
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
-        msg(
-            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
-            "could not open file `"FMT"`: %s\n",
-            strv_print(file_path), strerror(errno)
-        );
         status = false;
         goto error;
     }
@@ -2981,7 +3126,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
+    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
     }

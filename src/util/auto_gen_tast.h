@@ -656,7 +656,7 @@ static Tast_type tast_gen_return(const char* prefix) {
     Tast_type rtn = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&rtn.members, "Tast_expr*", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
+    append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
 }
@@ -902,7 +902,6 @@ void tast_gen_tast_wrap(Tast_type tast) {
     tast_gen_internal_wrap(tast, true);
 }
 
-// TODO: deduplicate these functions (use same function for Ir and Tast)
 static void tast_gen_print_forward_decl(Tast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         tast_gen_print_forward_decl(vec_at(&type.sub_types, idx));

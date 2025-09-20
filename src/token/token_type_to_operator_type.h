@@ -5,7 +5,7 @@
 #include <operator_type.h>
 
 static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only binary tokens are handled)");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only binary tokens are handled)");
     switch (token_type) {
         case TOKEN_DOUBLE_EQUAL:
             return BINARY_DOUBLE_EQUAL;
@@ -27,7 +27,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
             return BINARY_GREATER_OR_EQUAL;
         case TOKEN_LESS_OR_EQUAL:
             return BINARY_LESS_OR_EQUAL;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_LOGICAL_NOT_EQUAL:
             return BINARY_NOT_EQUAL;
         case TOKEN_BITWISE_AND:
             return BINARY_BITWISE_AND;
@@ -52,7 +52,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
 }
 
 static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only unary tokens are handled)");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only unary tokens are handled)");
     switch (token_type) {
         case TOKEN_UNSAFE_CAST:
             return UNARY_UNSAFE_CAST;
@@ -60,8 +60,10 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
             return UNARY_DEREF;
         case TOKEN_BITWISE_AND:
             return UNARY_REFER;
-        case TOKEN_NOT:
-            return UNARY_NOT;
+        case TOKEN_LOGICAL_NOT:
+            return UNARY_LOGICAL_NOT;
+        case TOKEN_BITWISE_NOT:
+            unreachable("");
         case TOKEN_SIZEOF:
             return UNARY_SIZEOF;
         case TOKEN_COUNTOF:

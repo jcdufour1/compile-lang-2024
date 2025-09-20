@@ -53,8 +53,7 @@ static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
         case BINARY_NOT_EQUAL:
             return sv("!=");
         case BINARY_BITWISE_XOR:
-            // TODO: change to "^"
-            return sv("xor");
+            return sv("^");
         case BINARY_BITWISE_AND:
             return sv("&");
         case BINARY_BITWISE_OR:
@@ -77,7 +76,7 @@ typedef enum {
     UNARY_DEREF,
     UNARY_REFER,
     UNARY_UNSAFE_CAST,
-    UNARY_NOT,
+    UNARY_LOGICAL_NOT,
     UNARY_SIZEOF,
     UNARY_COUNTOF,
 } UNARY_TYPE;
@@ -90,7 +89,7 @@ static inline Strv unary_type_to_strv(UNARY_TYPE unary_type) {
             return sv("refer");
         case UNARY_UNSAFE_CAST:
             return sv("unsafe_cast");
-        case UNARY_NOT:
+        case UNARY_LOGICAL_NOT:
             return sv("!");
         case UNARY_SIZEOF:
             return sv("sizeof");

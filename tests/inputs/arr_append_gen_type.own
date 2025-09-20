@@ -1,0 +1,14 @@
+type io import = std.io
+
+type Token struct(<NumT, StrT>) {
+    num NumT
+    string StrT
+}
+
+fn main() i32 {
+    let arr io.Arr(<Token(<i32, u8*>)>) = {unsafe_cast<Token(<i32, u8*>)*>io.malloc(1000000), 0, 100}
+    io.assert(arr.buf != unsafe_cast<Token(<i32, u8*>)*>0, "out of memory")
+    arr = io.arr_append(arr, {9187, "hello"}, Token(<i32, u8*>))
+    io.printf("%s\n", io.arr_first(arr, Token(<i32, u8*>)).string);
+    return 0
+}

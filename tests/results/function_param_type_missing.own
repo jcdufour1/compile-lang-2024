@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/function_param_type_missing.own:4:20:[1;31merror[0;39m:got token `)`, but expected `symbol` 
+     3 | 
+     4 | fn println(string: ) {
+       |                    ^
+     5 |     printf("%s\n", string)
+
+compile::return_code 1
+

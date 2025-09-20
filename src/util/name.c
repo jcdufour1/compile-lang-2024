@@ -8,8 +8,35 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+// this function will convert `io.i32` to `i32`, etc.
+static Uname uname_normalize(Uname name) {
+    Uast_def* dummy = NULL;
+    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id);
+    if (usymbol_lookup(&dummy, possible_new)) {
+        return name_to_uname(possible_new);
+    }
+    return name;
+}
+
+static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    assert(mod_alias.base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+}
+
+Uname name_to_uname(Name name) {
+    Uast_mod_alias* new_alias = uast_mod_alias_new(
+        POS_BUILTIN,
+        util_literal_name_new(),
+        name.mod_path,
+        name.scope_id
+    );
+    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+    return uname_new_internal(new_alias->name, name.base, name.gen_args, name.scope_id);
+}
+
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    assert(mod_alias.base.count > 0);
+    return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
 }
 
 void extend_name_ir(String* buf, Name name) {
@@ -27,9 +54,6 @@ void serialize_strv(String* buf, Strv strv) {
     string_extend_strv(&a_main, buf, strv);
     string_extend_cstr(&a_main, buf, "_");
 }
-
-// TODO: remove this
-bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore);
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 Strv serialize_name_symbol_table(Name name) {
@@ -149,8 +173,8 @@ void extend_name_msg(String* buf, Name name) {
 // TODO: move this function elsewhere
 // TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
-    if (name.mod_alias.base.count > 0 || (mode != UNAME_MSG && name.mod_alias.scope_id > 0)) {
+    if (mode != UNAME_MSG || !(name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) || (name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)))) {
+        extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_print, buf, ".");
     }
     string_extend_strv(&a_print, buf, name.base);

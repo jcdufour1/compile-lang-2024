@@ -1,0 +1,27 @@
+
+type io import = std.io
+
+type Opt def = io.Optional
+//type Token def = io.Token
+type print def = io.printf
+
+fn add_internal(lhs NumType, rhs NumType, NumType Type) NumType {
+    return lhs + rhs
+}
+
+type add def = add_internal
+
+fn main() i32 {
+    print("hello\n")
+    // TODO: change add_internal on below line to add
+    print("%d\n", add_internal(54, 3, i32))
+
+    let opt Opt(<i32>) = .some(43)
+
+    switch opt {
+        case .some(num): print("%d\n", num)
+        case .none: print("nothing\n")
+    }
+
+    return 0
+}

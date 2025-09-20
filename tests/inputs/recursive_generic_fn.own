@@ -1,0 +1,30 @@
+
+type io import = std.io
+
+fn add(lhs NumType, rhs NumType, NumType Type) NumType {
+    if rhs < 0 {
+        return add(lhs, rhs + 1, NumType) - 1
+    }
+    if rhs == 0 {
+        return lhs
+    }
+    return add(lhs, rhs - 1, NumType) + 1
+}
+
+fn add_i32(lhs i32, rhs i32) i32 {
+    if rhs < 0 {
+        return add_i32(lhs, rhs + 1) - 1
+    }
+    if rhs == 0 {
+        return lhs
+    }
+    return add_i32(lhs, rhs - 1) + 1
+}
+
+fn main() i32 {
+    let num i32 = 78
+    io.printf("%d\n", add(num, 33, i32))
+    io.printf("%d\n", add_i32(num, 34))
+
+    return 0
+}

@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/struct_literal_missing_dot.own:8:20:[1;31merror[0;39m:symbol `numerator` is not defined
+     7 | fn main() i32 {
+     8 |     let div Div = {numerator = 91, .denominator = 1256}
+       |                    ^
+     9 |     let div2 Div = {.numerator = 92, denominator = 1257}
+tests/inputs/struct_literal_missing_dot.own:9:38:[1;31merror[0;39m:symbol `denominator` is not defined
+     8 |     let div Div = {numerator = 91, .denominator = 1256}
+     9 |     let div2 Div = {.numerator = 92, denominator = 1257}
+       |                                      ^
+    10 | 
+
+compile::return_code 1
+

@@ -65,4 +65,6 @@ void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg);
 
+void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg);
+
 #endif // GENERIC_SUB_H

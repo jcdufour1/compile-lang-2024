@@ -27,8 +27,8 @@ class FileItem:
 class TestResult:
     compile: subprocess.CompletedProcess[str]
 
-INPUTS_DIR = os.path.join("tests2", "inputs")
-RESULTS_DIR = os.path.join("tests2", "results")
+INPUTS_DIR = os.path.join("tests", "inputs")
+RESULTS_DIR = os.path.join("tests", "results")
 
 BUILD_DEBUG_DIR = os.path.join("build", "debug")
 BUILD_RELEASE_DIR = os.path.join("build", "release")

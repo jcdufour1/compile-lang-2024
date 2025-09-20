@@ -6,40 +6,11 @@
 #include <auto_gen_lang_type.h>
 #include <auto_gen_llvm_lang_type.h>
 
-// TODO: move todos to somewhere else
-//
-// TODO: make print functions check for null and print <null> or something instead of seg fault
-// TODO: figure out if I should de-duplilcate string literals, etc.
-
-// TODO: remove env.global_literals
-
-// TODO: strings should actually be their own type (not just u8*)
-
-// TODO: support alternative backend (such as qbe, cuik and c)
-
-// TODO: fix printing for lang_type in msg to not put newline
-
-// TODO: actually use newline to end statement depending on last token of line of line
-// TODO: expected failure case for invalid type in extern "c" function
-// TODO: char literal with escape
-//
-//
-// TODO: expected failure test for 
-// type Token enum {
-//     string u8*
-//     number i32
-// }
-//
-// fn main() i32 {
-//     let token Token = Token.number
-//     return 0
-// }
-
 static const char* get_path(const char* build_dir, const char* file_name_in_dir) {
     String path = {0};
 
     string_extend_cstr(&gen_a, &path, build_dir);
-    string_extend_cstr(&gen_a, &path, "/");
+    string_extend_cstr(&gen_a, &path, "/"); // TODO: do not hardcode this separator
     string_extend_cstr(&gen_a, &path, file_name_in_dir);
     string_extend_cstr(&gen_a, &path, "\0");
 

@@ -1,0 +1,38 @@
+type io import = std.io
+
+fn add(lhs i32, rhs i32, RtnType Type) RtnType {
+    if rhs < 0 {
+        return unsafe_cast<RtnType>add(lhs - 1, rhs + 1, RtnType)
+    } 
+    if rhs > 0 {
+        return unsafe_cast<RtnType>add(lhs + 1, rhs - 1, i31)
+    }
+    return lhs
+}
+
+fn add2(lhs i32, rhs i32, RtnType Type) RtnType {
+    if rhs < 0 {
+        return add2(lhs - 1, rhs + 1)
+    } 
+    if rhs > 0 {
+        return add2(lhs + 1, rhs - 1, RtnType)
+    }
+    return lhs
+}
+
+fn add3(lhs i32, rhs i32, RtnType Type) RtnType {
+    if rhs < 0 {
+        return add2(lhs - 1, rhs + 1)
+    } 
+    if rhs > 0 {
+        return add2(lhs + 1, rhs - 1, RtnType)
+    }
+    return lhs
+}
+
+fn main() i32 {
+    io.printf("%d\n", add(56, -34, i32))
+    io.printf("%d\n", add2(57, -3, i32))
+    add3(58, -2)
+    return 0
+}

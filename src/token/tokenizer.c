@@ -10,6 +10,9 @@
 #include <parser_utils.h>
 #include <pos_vec.h>
 
+// TODO: this is temporary forward decl; try_strv_to_char should eventually be moved elsewhere (eg. to "string_int_utils.h")
+bool try_strv_to_char(char* result, const Pos pos, Strv strv);
+
 static Arena a_token = {0};
 
 #define msg_tokenizer_invalid_token(token_text, pos) msg_tokenizer_invalid_token_internal(__FILE__, __LINE__, token_text, pos)
@@ -64,8 +67,7 @@ static bool is_dot(char prev, char curr) {
 }
 
 static bool not_single_quote(char prev, char curr) {
-    (void) prev;
-    return curr != '\'';
+    return prev == '\\' || curr != '\'';
 }
 
 // returns count of characters trimmed
@@ -104,7 +106,7 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 72, "exhausive handling of token types (only keywords are explicitly handled)");
+    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem))) {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
@@ -155,6 +157,8 @@ static bool get_next_token(
             token->type = TOKEN_YIELD;
         } else if (strv_is_equal(text, sv("countof"))) {
             token->type = TOKEN_COUNTOF;
+        } else if (strv_is_equal(text, sv("Type"))) {
+            token->type = TOKEN_GENERIC_TYPE;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;
@@ -223,7 +227,7 @@ static bool get_next_token(
         if (strv_col_try_consume(pos, file_text_rem, '/')) {
             msg(
                 DIAG_MISSING_CLOSE_MULTILINE, 
-                *pos, "unmatched closing `/*`\n"
+                *pos, "unmatched closing `*/`\n"
             );
             return false;
         }
@@ -232,13 +236,12 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '%')) {
         token->type = TOKEN_MODULO;
         return true;
-    } else if (file_text_rem->base.count > 1 && strv_is_equal(strv_slice(file_text_rem->base, 0, 2), sv("//"))) {
-        strv_col_consume_until(pos, file_text_rem, '\n');
-        trim_non_newline_whitespace(file_text_rem, pos);
-        token->type = TOKEN_COMMENT;
-        return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '/')) {
-        if (strv_col_try_consume(pos, file_text_rem, '*')) {
+        if (strv_col_try_consume(pos, file_text_rem, '/')) {
+            strv_col_consume_until(pos, file_text_rem, '\n');
+            trim_non_newline_whitespace(file_text_rem, pos);
+            token->type = TOKEN_COMMENT;
+        } else if (strv_col_try_consume(pos, file_text_rem, '*')) {
             Pos_vec pos_stack = {0};
             vec_append(&a_token, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {
@@ -312,15 +315,38 @@ static bool get_next_token(
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_tick);
         if (equals.base.count == 1) {
             token->type = TOKEN_CHAR_LITERAL;
+            Pos pos_open = *pos;
 
-            Strv_col result = {0};
-            if (!strv_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
-                msg(DIAG_MISSING_CLOSE_SINGLE_QUOTE, token->pos, "unmatched opening `'`\n");
-                return false;
+            char prev = '\0';
+            Strv result = file_text_rem->base;
+            result.count = 0;
+            bool prev_2_is_backsl = false;
+            while (1) {
+                if (file_text_rem->base.count < 1) {
+                    msg(
+                        DIAG_MISSING_CLOSE_MULTILINE, 
+                        pos_open, "unmatched opening `'`\n"
+                    );
+                    return false;
+                }
+                char curr = strv_col_consume(pos, file_text_rem);
+                if ((prev_2_is_backsl || prev != '\\') && curr == '\'') {
+                    break;
+                }
+                if (prev == '\\') {
+                    prev_2_is_backsl = true;
+                } else {
+                    prev_2_is_backsl = false;
+                }
+                prev = curr;
+                result.count++;
             }
 
-            unwrap(strv_col_consume(pos, file_text_rem));
-            token->text = result.base;
+            token->text = result;
+            char dummy = '\0';
+            if (!try_strv_to_char(&dummy, pos_open, token->text)) {
+                assert(error_count > 0);
+            }
             return true;
         } else if (equals.base.count == 2) {
             token->type = TOKEN_DOUBLE_TICK;
@@ -333,12 +359,15 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, ':')) {
         token->type = TOKEN_COLON;
         return true;
+    } else if (strv_col_try_consume(pos, file_text_rem, '~')) {
+        token->type = TOKEN_BITWISE_NOT;
+        return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '!')) {
         if (strv_col_try_consume(pos, file_text_rem, '=')) {
-            token->type = TOKEN_NOT_EQUAL;
+            token->type = TOKEN_LOGICAL_NOT_EQUAL;
             return true;
         }
-        token->type = TOKEN_NOT;
+        token->type = TOKEN_LOGICAL_NOT;
         return true;
     } else if (strv_col_front(*file_text_rem) == '=') {
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_equal);
@@ -410,11 +439,6 @@ static bool get_next_token(
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;
     }
-}
-
-static Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = sv(text), .type = token_type};
-    return token;
 }
 
 static void test(const char* file_text, Tk_view expected) {
@@ -637,6 +661,7 @@ void tokenize_do_test(void) {
     test8();
 }
 
+// TODO: return Tk_view instead of Token_vec
 bool tokenize(Token_vec* result, Strv file_path) {
     size_t prev_err_count = error_count;
     Token_vec tokens = {0};

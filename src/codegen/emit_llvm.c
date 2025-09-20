@@ -13,12 +13,12 @@
 #include <lang_type_print.h>
 #include <lang_type_get_pos.h>
 #include <symbol_iter.h>
-#include <common.h>
+#include <codegen_common.h>
 #include <do_passes.h>
 
 //static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* fun_block);
 //
-//static void emit_sometimes(String* struct_defs, String* output, String* literals, const Ir* ir);
+//static void emit_out_of_line(String* struct_defs, String* output, String* literals, const Ir* ir);
 //
 //static void emit_symbol_normal(String* literals, Name key, const Ir_literal* lit);
 //
@@ -492,7 +492,7 @@
 //            unreachable("suffix not needed for UNARY_DEREF");
 //        case UNARY_REFER:
 //            unreachable("suffix not needed for UNARY_REFER");
-//        case UNARY_NOT:
+//        case UNARY_LOGICAL_NOT:
 //            unreachable("not should not still be present here");
 //        case UNARY_SIZEOF:
 //            unreachable("sizeof should not still be present here");
@@ -925,12 +925,12 @@
 //    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
 //    Ir* curr = NULL;
 //    while (ir_tbl_iter_next(&curr, &iter)) {
-//        emit_sometimes(struct_defs, output, literals, curr);
+//        emit_out_of_line(struct_defs, output, literals, curr);
 //    }
 //}
 //
 //// this is only intended for alloca_table, etc.
-//static void emit_def_sometimes(String* struct_defs, String* output, String* literals, const Ir_def* def) {
+//static void emit_def_out_of_line(String* struct_defs, String* output, String* literals, const Ir_def* def) {
 //    switch (def->type) {
 //        case IR_FUNCTION_DEF:
 //            emit_function_def(struct_defs, output, literals, ir_function_def_const_unwrap(def));
@@ -954,10 +954,10 @@
 //}
 //
 //// this is only intended for alloca_table, etc.
-//static void emit_sometimes(String* struct_defs, String* output, String* literals, const Ir* ir) {
+//static void emit_out_of_line(String* struct_defs, String* output, String* literals, const Ir* ir) {
 //    switch (ir->type) {
 //        case IR_DEF:
-//            emit_def_sometimes(struct_defs, output, literals, ir_def_const_unwrap(ir));
+//            emit_def_out_of_line(struct_defs, output, literals, ir_def_const_unwrap(ir));
 //            return;
 //        case IR_BLOCK:
 //            unreachable("");
@@ -1018,7 +1018,7 @@
 //    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
 //    Ir* curr = NULL;
 //    while (ir_tbl_iter_next(&curr, &iter)) {
-//        emit_sometimes(&struct_defs, &output, &literals, curr);
+//        emit_out_of_line(&struct_defs, &output, &literals, curr);
 //    }
 //
 //    emit_block(&struct_defs, &output, &literals, root);

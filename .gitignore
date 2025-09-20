@@ -9,6 +9,8 @@
 !std/
 !std/**
 !std_parse_error.own
+!tests/
+!tests/**
 !tests2/
 !tests2/**
 !third_party/

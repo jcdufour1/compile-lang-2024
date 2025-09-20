@@ -1,0 +1,14 @@
+compile::stdout 8
+
+	
+\
+'
+"
+?
+a
+h
+
+compile::stderr 0
+
+compile::return_code 0
+
