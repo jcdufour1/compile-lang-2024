@@ -1716,11 +1716,17 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
         case LANG_TYPE_VOID:
             unreachable("this error should have already been caught");
         default: {
+            Uast_symbol* sym = uast_symbol_unwrap(vec_at(&args, 0));
             // tast_enum_case->tag->lang_type is of selected varient of enum (maybe)
             Uast_variable_def* new_def = uast_variable_def_new(
                 enum_case->pos,
                 lang_type_to_ulang_type(enum_case->tag->lang_type),
-                name_new((Strv) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
+                name_new(
+                    sym->name.mod_path,
+                    sym->name.base,
+                    (Ulang_type_vec) {0} /* TODO */,
+                    sym->name.scope_id
+                )
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
                 // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -1735,7 +1741,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id, enum_case->pos)
+                    uast_expr_clone(parent_of_operand, sym->name.scope_id, enum_case->pos)
                 ))
             );
 
@@ -2033,7 +2039,15 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
 
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
+        if (lang_type_is_equal(
+            lang_type_from_ulang_type(param->base->lang_type),
+            lang_type_primitive_const_wrap(
+                lang_type_opaque_const_wrap(lang_type_opaque_new(
+                    POS_BUILTIN,
+                    lang_type_atom_new_from_cstr("opaque", 0, 0)
+                ))
+            )
+        )) {
             // arguments for variadic parameter will be checked later
             // TODO: uncomment below?:
             // unreachable();
@@ -2430,11 +2444,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         status = false;
                         goto error;
                     }
-                    // TODO: remove below comment after above works
-                    //*vec_at_ref(&new_gens, idx_gen) = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                    //    ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-                    //    (Pos) {0}
-                    //));
                     *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
                     break;
@@ -2450,36 +2459,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         Tast_expr* new_arg = NULL;
 
-        //if (lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
-        //    // arguments for variadic parameter will be checked later
-        //    // TODO: uncomment below?:
-        //    // unreachable();
-        //    continue;
-        //} else {
-        //    switch (check_generic_assignment(
-        //        &new_arg,
-        //        lang_type_from_ulang_type(param->base->lang_type),
-        //        corres_arg,
-        //        uast_expr_get_pos(corres_arg)
-        //    )) {
-        //        case CHECK_ASSIGN_OK:
-        //            break;
-        //        case CHECK_ASSIGN_INVALID:
-        //            todo();
-        //            //msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
-        //            //status = false;
-        //            //goto error;
-        //        case CHECK_ASSIGN_ERROR:
-        //            status = false;
-        //            goto error;
-        //        default:
-        //            unreachable("");
-        //    }
-        //}
-
-        // TODO: print error, etc. if value already assigned
         if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
-            // TODO: print error for respecified function arg
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
                 tast_expr_get_pos(vec_at(&new_args, curr_arg_count)),
@@ -2575,7 +2555,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
 
                 msg(
-                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
                     "function parameter `"FMT"` was not specified\n",
                     name_print(NAME_MSG, param_name)
                 );
@@ -2742,7 +2722,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     // TODO: word below comment better
     // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
-    //amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
 
     params = fun_decl->params;
 
