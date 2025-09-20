@@ -140,13 +140,13 @@ add_fn(<i16>)
     }
 - when printing msg, use name instead of uname to make types show pretty (and remove uname_normalize function?)
 - make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
--make print functions check for null and print <null> or something instead of seg fault
--figure out if I should de-duplilcate string literals, etc.
--strings should actually be their own type (not just u8*) (maybe slice with null termination)
--support alternative backend (such as qbe, cuik)
--fix printing for lang_type in msg to not put newline
--actually use newline to end statement depending on last token of line of line
--expected failure case for invalid type in extern "c" function
+- make print functions check for null and print <null> or something instead of seg fault
+- figure out if I should de-duplilcate string literals, etc.
+- strings should actually be their own type (not just u8*) (maybe slice with null termination)
+- support alternative backend (such as qbe, cuik)
+- fix printing for lang_type in msg to not put newline
+- actually use newline to end statement depending on last token of line of line
+- expected failure case for invalid type in extern "c" function
 
 
 
@@ -165,6 +165,7 @@ add_fn(<i16>)
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 - when generics are mature, use them to associate custom allocators with things
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
+- windows support (including ci)
 
 # in the far future
 - try catch blocks with the question operator or similar
