@@ -27,6 +27,8 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
+static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access);
+
 static void emit_c_loc(String* output, Loc loc, Pos pos) {
     string_extend_cstr(&a_main, output, "/* loc: ");
     string_extend_cstr(&a_main, output, loc.file);
@@ -450,7 +452,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
             emit_c_expr_piece_expr(strs, ir_expr_unwrap(result));
             return;
         case IR_ARRAY_ACCESS:
-            todo();
+            ir_extend_name(&strs->output, ir_tast_get_name(result));
+            return;
         case IR_LOAD_ELEMENT_PTR:
             ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
@@ -714,7 +717,6 @@ void emit_c_from_tree(const Ir_block* root) {
         string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
         string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
 #       ifndef NDEBUG
-            string_extend_cstr(&a_main, &header, "#include <string.h>\n");
             string_extend_cstr(&a_main, &header, "#include <assert.h>\n");
 #       endif // NDEBUG
 

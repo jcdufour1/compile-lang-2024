@@ -123,6 +123,13 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
     );
 }
 
+Uast_struct_literal* uast_struct_literal_clone(const Uast_struct_literal* lit, Scope_id new_scope, Pos dest_pos) {
+    return uast_struct_literal_new(
+        lit->pos,
+        uast_expr_vec_clone(lit->members, new_scope, dest_pos)
+    );
+}
+
 Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, Scope_id new_scope, Pos dest_pos) {
     return uast_tuple_new(tuple->pos, uast_expr_vec_clone(tuple->members, new_scope, dest_pos));
 }
@@ -204,7 +211,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_p
         case UAST_FUNCTION_CALL:
             return uast_function_call_wrap(uast_function_call_clone(uast_function_call_const_unwrap(expr), new_scope, dest_pos));
         case UAST_STRUCT_LITERAL:
-            todo();
+            return uast_struct_literal_wrap(uast_struct_literal_clone(uast_struct_literal_const_unwrap(expr), new_scope, dest_pos));
         case UAST_TUPLE:
             return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr), new_scope, dest_pos));
         case UAST_ENUM_ACCESS: // TODO: remove uast_enum_access if not used

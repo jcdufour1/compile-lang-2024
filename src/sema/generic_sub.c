@@ -273,7 +273,8 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             generic_sub_function_call(uast_function_call_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_STRUCT_LITERAL:
-            todo();
+            generic_sub_struct_literal(uast_struct_literal_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_TUPLE:
             todo();
         case UAST_ENUM_ACCESS:
@@ -304,6 +305,12 @@ void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ula
         generic_sub_expr(vec_at(&fun_call->args, idx), gen_param, gen_arg);
     }
     generic_sub_expr(fun_call->callee, gen_param, gen_arg);
+}
+
+void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+        generic_sub_expr(vec_at(&lit->members, idx), gen_param, gen_arg);
+    }
 }
 
 void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {

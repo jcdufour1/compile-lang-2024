@@ -1,5 +1,6 @@
 
 type util import = std.util
+type io import = std.io
 
 // TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
 // TODO: count should be usize by default when usize is implemented
@@ -22,12 +23,34 @@ type Arr struct(<ItemT>) {
     max u64
 }
 
-// TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
-fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+fn arr_new(max_capacity u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+    let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
+    util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
+    return {buf, 0, max_capacity}
+}
+
+fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
+    util.free(unsafe_cast<opaque*>arr.buf);
+    arr.buf = unsafe_cast<ItemT*>0
+    arr.max = 0
+    arr.count = 0
+}
+
+fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+    util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
+    util.assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    if (arr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&arr.buf[index + 1], &arr.buf[index], arr.count - index, ItemT);
+    }
+    arr.buf[index] = item
+    arr.count += 1
+}
+
+fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
     util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
     arr.buf[arr.count] = item
     arr.count += 1
-    return arr
 }
 
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -37,5 +60,10 @@ fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = 
 
 fn arr_first(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
     return arr_at(arr, 0, .file = file, .line = line, .column = column)
+}
+
+fn arr_last(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return arr.buf[arr.count - 1]
 }
 

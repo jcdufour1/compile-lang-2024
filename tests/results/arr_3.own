@@ -1,0 +1,26 @@
+compile::stdout 20
+hello
+hello
+thing 10
+hello
+bye
+thing 12
+thing
+hello
+bye
+thing 14
+thing
+compiler
+hello
+bye
+thing 16
+thing
+compiler
+hello
+bye
+programming
+
+compile::stderr 0
+
+compile::return_code 0
+

@@ -55,6 +55,8 @@ void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulan
 
 void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ulang_type gen_arg);
 
+void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_type gen_arg);
+
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg);
