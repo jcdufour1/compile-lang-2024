@@ -68,6 +68,7 @@ for generics:
 - expected failure test for more than one generic parameter with the same name?
 - expected failure case for generic argument having default argument
 - expected failure case for invalid return type or parameter types for main function
+- more util functions should be in .c file instead of .h file to make things easier
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

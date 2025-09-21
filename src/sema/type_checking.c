@@ -140,16 +140,6 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
 static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
-    todo();
-    if (src.type == LANG_TYPE_CHAR && 1 /*lang_type_char_const_unwrap(src).atom.pointer_depth == 1*/) {
-        todo();
-    }
-
-    // TODO: LANG_TYPE_PRIMITIVE should have a separate subtype for string literals to differeniate char passed as pointer and cstr, etc.?
-    if (src.type == LANG_TYPE_CHAR && 1 /*lang_type_char_const_unwrap(src).atom.pointer_depth == 1*/) {
-        todo();
-    }
-
     if (!implicit_pointer_depth) {
         if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
             return false;
@@ -243,9 +233,8 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
         log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).mod_path));
         log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).base));
         log(LOG_DEBUG, "%zu\n",            name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).scope_id);
-        todo();
+        goto next;
     }
-    todo();
 
 next:
     if (dest.type != src.type) {
