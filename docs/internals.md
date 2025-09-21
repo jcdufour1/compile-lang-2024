@@ -28,6 +28,16 @@ switch token {
 '''
 ## Llvm
 
-## parsing
+# Pos in Ulang_type and Lang_type
+- this represents where the lang type appears
+- eg. the Token lang_type parsed from below will have the pos of `Token` below
+```c
+fn main() i32 {
+    let token Token = {8}
+    return 0
+}
+```
+
+# parsing
 - things in the top level of a file always have SCOPE_TOP_LEVEL
 

@@ -13,7 +13,7 @@ bool expand_def_def(Uast_def* def);
 
 bool expand_def_block(Uast_block* block);
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos dest_pos);
+EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
 bool expand_def_expr_vec(Uast_expr_vec* exprs);
 

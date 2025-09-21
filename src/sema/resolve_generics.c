@@ -309,7 +309,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
 bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
-    if (!name_from_uname(&name_base, lang_type.atom.str)) {
+    if (!name_from_uname(&name_base, lang_type.atom.str, lang_type.pos)) {
         todo();
         return false;
     }

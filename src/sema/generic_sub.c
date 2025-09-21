@@ -28,7 +28,7 @@ void generic_sub_lang_type_regular(
     // TODO: call generic_sub_name here?
     Name temp = {0};
 
-    unwrap(name_from_uname(&temp, lang_type.atom.str));
+    unwrap(name_from_uname(&temp, lang_type.atom.str, lang_type.pos));
     if (name_is_equal(gen_param, temp)) {
         *new_lang_type = ulang_type_clone(gen_arg, lang_type.atom.str.scope_id);
 
@@ -371,7 +371,7 @@ void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
             todo();
         }
         if (gen_arg.type == ULANG_TYPE_REGULAR) {
-            if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str)) {
+            if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str, ulang_type_regular_const_unwrap(gen_arg).pos)) {
                 // TODO
                 todo();
             }

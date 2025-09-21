@@ -21,7 +21,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 bool lang_type_atom_is_float(Lang_type_atom atom);
 
-bool name_from_uname(Name* new_name, Uname name);
+bool name_from_uname(Name* new_name, Uname name, Pos name_pos);
 
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
@@ -87,7 +87,7 @@ static inline bool try_lang_type_from_ulang_type_fn(
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type) {
     Name name = {0};
-    unwrap(name_from_uname( &name, lang_type.atom.str));
+    unwrap(name_from_uname( &name, lang_type.atom.str, lang_type.pos));
     Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
 
     if (lang_type_atom_is_signed(atom)) {
@@ -141,11 +141,11 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     //log(LOG_DEBUG, FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
     //log(LOG_DEBUG, FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
     Name temp_name = {0};
-    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
+    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos)) {
         return false;
     }
 
-    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
+    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (type) {
         case LANG_TYPE_STRUCT:

@@ -1,0 +1,6 @@
+
+
+fn main() i32 {
+    let token thing.Token = {.num = 8}
+    return 0
+}

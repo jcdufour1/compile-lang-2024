@@ -1,3 +1,9 @@
+// TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
+// TODO: count should be usize by default when usize is implemented
+type Slice struct(<ItemT>) {
+    buf ItemT*
+    count u64
+}
 
 fn bitwise_not(num NumT, NumT Type) NumT {
     return unsafe_cast<NumT>(-1)^num

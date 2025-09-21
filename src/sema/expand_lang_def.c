@@ -17,9 +17,9 @@ static bool expand_def_ulang_type_regular(
 ) {
     (void) new_lang_type;
     Uast_expr* new_expr = NULL;
-    switch (expand_def_uname(&new_expr, &lang_type.atom.str, dest_pos)) {
+    switch (expand_def_uname(&new_expr, &lang_type.atom.str, lang_type.pos, dest_pos)) {
         case EXPAND_NAME_ERROR:
-            todo();
+            return false;
         case EXPAND_NAME_NORMAL:
             *new_lang_type = lang_type;
             return true;
@@ -212,10 +212,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos dest_pos) {
+EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos) {
     Name actual = {0};
-    if (!name_from_uname(&actual, *name)) {
-        todo();
+    if (!name_from_uname(&actual, *name, pos)) {
         return false;
     }
 
