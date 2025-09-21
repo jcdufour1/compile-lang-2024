@@ -2,9 +2,10 @@
 
 CC_COMPILER ?= clang
 
+# TODO: remove -Wundefined-internal?
 # TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
-C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
+C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wno-undefined-internal -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 

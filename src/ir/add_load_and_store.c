@@ -12,6 +12,7 @@
 #include <symbol_log.h>
 #include <symbol_iter.h>
 #include <sizeof.h>
+#include <tast_clone.h>
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -1001,13 +1002,43 @@ static Name load_struct_literal(Ir_block* new_block, Tast_struct_literal* old_li
 }
 
 static Name load_string(Tast_string* old_lit) {
-    Ir_string* string = ir_string_new(
+    if (old_lit->is_cstr) {
+        Ir_string* string = ir_string_new(
+            old_lit->pos,
+            old_lit->data,
+            util_literal_name_new()
+        );
+        unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_string_wrap(string)))));
+        return string->name;
+    }
+
+
+    Tast_expr_vec args = {0};
+    vec_append(&a_main, &args, tast_literal_wrap(tast_string_wrap(tast_string_clone(old_lit))));
+
+    Tast_expr_vec membs = {0};
+    vec_append(&a_main, &membs, tast_literal_wrap(tast_string_wrap(old_lit)));
+    vec_append(&a_main, &membs, tast_function_call_wrap(tast_function_call_new(
         old_lit->pos,
-        old_lit->data,
-        util_literal_name_new()
-    );
-    unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_string_wrap(string)))));
-    return string->name;
+        args,
+        tast_symbol_wrap(tast_symbol_new(
+            old_lit->pos,
+            (Sym_typed_base) {
+                .lang_type = lang_type_new_ux(64),
+                .name = name_new(sv("std/util"), sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+            }
+        )),
+        lang_type_new_ux(64)
+    )));
+
+    return load_struct_literal(new_block, tast_struct_literal_new(
+        old_lit->pos,
+        membs,
+        util_literal_name_new(),
+        lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), 0
+        )))
+    ));
 }
 
 static Name load_void(Pos pos) {
@@ -2089,6 +2120,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
             for_count++;
         }
     }
+    // TODO: remove some debug printing
     String for_template = {0};
     string_extend_cstr(&a_main, &for_template, "for_");
     string_extend_size_t(&a_main, &for_template, for_count);
