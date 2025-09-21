@@ -292,6 +292,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             todo();
         case UAST_GENERIC_PARAM:
             // TODO: explain why it is unreachable
+            log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             unreachable("");
         case UAST_FUNCTION_DEF:
             todo();

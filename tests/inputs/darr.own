@@ -1,0 +1,75 @@
+
+type io import = std.io
+type coll import = std.collections
+type util import = std.util
+
+type Token struct {
+    num i32
+    string u8*
+}
+
+fn main() i32 {
+    let arr coll.Darr(<Token>) = coll.darr_new(Token)
+    defer coll.darr_free(&arr)
+
+    coll.darr_append(&arr, {9187, "hello"})
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 0).string);
+
+    io.printf("thing 10\n");
+
+    coll.darr_append(&arr, {87, "bye"})
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+
+    io.printf("thing 12\n");
+
+    coll.darr_insert(&arr, {86, "thing"}, 0)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+    io.printf("%s\n", coll.darr_at(arr, 2).string);
+
+    io.printf("thing 14\n");
+
+    coll.darr_insert(&arr, {86, "compiler"}, 1)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+    io.printf("%s\n", coll.darr_at(arr, 2).string);
+    io.printf("%s\n", coll.darr_at(arr, 3).string);
+
+    io.printf("thing 16\n");
+
+    coll.darr_insert(&arr, {86, "programming"}, 4)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+    io.printf("%s\n", coll.darr_at(arr, 2).string);
+    io.printf("%s\n", coll.darr_at(arr, 3).string);
+    io.printf("%s\n", coll.darr_at(arr, 4).string);
+
+    io.printf("thing 18\n");
+
+    coll.darr_remove(&arr, 1)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+    io.printf("%s\n", coll.darr_at(arr, 2).string);
+    io.printf("%s\n", coll.darr_at(arr, 3).string);
+
+    io.printf("thing 20\n");
+
+    coll.darr_remove(&arr, 0)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+    io.printf("%s\n", coll.darr_at(arr, 2).string);
+
+    io.printf("thing 22\n");
+
+    coll.darr_remove(&arr, 2)
+    io.printf("%s\n", coll.darr_first(arr).string);
+    io.printf("%s\n", coll.darr_at(arr, 1).string);
+
+    let arr2 coll.Darr(<i32>) = coll.darr_new(i32, [9, 8])
+    io.printf("%d\n", coll.darr_first(arr2));
+    io.printf("%d\n", coll.darr_at(arr2, 1));
+
+    return 0
+}

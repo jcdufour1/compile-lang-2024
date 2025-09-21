@@ -1,0 +1,75 @@
+
+type io import = std.io
+type coll import = std.collections
+type util import = std.util
+
+type Token struct {
+    num i32
+    string u8*
+}
+
+fn main() i32 {
+    let arr coll.Arr(<Token>) = coll.arr_new(5, Token)
+    defer coll.arr_free(&arr)
+
+    coll.arr_append(&arr, {9187, "hello"})
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 0).string);
+
+    io.printf("thing 10\n");
+
+    coll.arr_append(&arr, {87, "bye"})
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+
+    io.printf("thing 12\n");
+
+    coll.arr_insert(&arr, {86, "thing"}, 0)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+
+    io.printf("thing 14\n");
+
+    coll.arr_insert(&arr, {86, "compiler"}, 1)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+    io.printf("%s\n", coll.arr_at(arr, 3).string);
+
+    io.printf("thing 16\n");
+
+    coll.arr_insert(&arr, {86, "programming"}, 4)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+    io.printf("%s\n", coll.arr_at(arr, 3).string);
+    io.printf("%s\n", coll.arr_at(arr, 4).string);
+
+    io.printf("thing 18\n");
+
+    coll.arr_remove(&arr, 1)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+    io.printf("%s\n", coll.arr_at(arr, 3).string);
+
+    io.printf("thing 20\n");
+
+    coll.arr_remove(&arr, 0)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+    io.printf("%s\n", coll.arr_at(arr, 2).string);
+
+    io.printf("thing 22\n");
+
+    coll.arr_remove(&arr, 2)
+    io.printf("%s\n", coll.arr_first(arr).string);
+    io.printf("%s\n", coll.arr_at(arr, 1).string);
+
+    let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, [9, 8])
+    io.printf("%d\n", coll.arr_first(arr2));
+    io.printf("%d\n", coll.arr_at(arr2, 1));
+
+    return 0
+}

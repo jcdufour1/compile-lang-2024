@@ -147,6 +147,33 @@ add_fn(<i16>)
 - actually use newline to end statement depending on last token of line of line
 - expected failure case for invalid type in extern "c" function
 - when showing error for file not opening while importing module, show note for import location
+- figure out why this function causes compiler to crash ("column = column" used instead of ".column = column"):
+    fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+        let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
+        util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
+        let arr Arr(<ItemT>) = {buf, 0, max_capacity}
+        arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
+        return arr
+    }
+- test case for local struct with the same base name (Name->base) as std struct, and use std struct (be sure that compiler actually differenciates between the two)
+    eg. (coll.arr_new accepts std::collections::arr_new)
+    type coll import = std.collections
+    type Slice struct(<ItemT>) {
+        buf ItemT*
+        count u64
+    }
+    fn main() i32 {
+        let slice coll.Slice(<i32>) = [9, 8]
+        let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, slice)
+        return 0
+    }
+- expected failure test case for:
+    fn main() i32 {
+        return 0
+    }
+    }
+
+
 
 
 

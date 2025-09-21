@@ -10,7 +10,7 @@ type Token struct {
 fn main() i32 {
     let arr coll.Arr(<Token>) = {unsafe_cast<Token*>util.malloc(1000000), 0, 100}
     util.assert(arr.buf != unsafe_cast<Token*>0, "out of memory")
-    arr = coll.arr_append(arr, {9187, "hello"}, Token)
+    coll.arr_append(&arr, {9187, "hello"}, Token)
     io.printf("%s\n", coll.arr_first(arr, Token).string);
     return 0
 }
