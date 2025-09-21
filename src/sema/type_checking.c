@@ -553,7 +553,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
                 old_string->data,
-                false
+                true
             ));
         }
         case UAST_INT: {
@@ -2965,7 +2965,7 @@ error:
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (strv_is_equal(macro->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, true)));
         return true;
     } else if (strv_is_equal(macro->name, sv("line"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));

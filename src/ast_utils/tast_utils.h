@@ -211,7 +211,7 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             if (!name_is_equal(lang_type_struct_const_unwrap(lang_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
                 todo();
             }
-            tast_string_unwrap(lit)->is_cstr = true;
+            tast_string_unwrap(lit)->is_cstr = false;
             return;
         }
         case TAST_VOID:
