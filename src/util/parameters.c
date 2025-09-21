@@ -532,7 +532,7 @@ void parse_args(int argc, char** argv) {
     }
 
     if (params.compile_own) {
-        vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
+        //vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
     }
 
     // set default output file path

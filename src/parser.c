@@ -804,6 +804,9 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
     }
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        // TODO: mod_alias.mod = line below is a temporary hack.
+        //   fix the actual bug with curr_mod_alias to prevent the need for this hack
+        mod_alias.mod_path = curr_mod_path;
         mod_alias.base = lang_type_token.text;
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
             // TODO: expected failure test

@@ -1308,11 +1308,11 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
-            if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
+            if (!strv_is_equal(memb_def->name.base, lhs->member_name->name.base)) {
                 msg(
                     DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."FMT" =`, got `."FMT" =`\n", 
-                    strv_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
+                    strv_print(memb_def->name.base), strv_print(lhs->member_name->name.base)
                 );
                 return false;
             }
