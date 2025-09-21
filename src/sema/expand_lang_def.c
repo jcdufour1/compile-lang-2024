@@ -26,7 +26,7 @@ bool expand_def_ulang_type_regular(
         case EXPAND_NAME_NEW_EXPR:
             break;
         default:
-            todo();
+            unreachable("");
     }
 
     switch (new_expr->type) {
@@ -46,8 +46,7 @@ bool expand_def_ulang_type_regular(
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
     }
-
-    todo();
+    unreachable("");
 }
 
 static bool expand_def_ulang_type_fn(
@@ -230,7 +229,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_ERROR:
-            todo();
+            return EXPAND_NAME_ERROR;
     }
     unreachable("");
 }
@@ -260,6 +259,7 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
+            // TODO
             todo();
         case EXPAND_NAME_ERROR:
             todo();
@@ -524,9 +524,7 @@ static bool expand_def_param(Uast_param* param) {
 bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
-        if (!expand_def_generic_param(vec_at(params, idx))) {
-            status = false;
-        }
+        status = expand_def_generic_param(vec_at(params, idx)) && status;
     }
     return status;
 }
@@ -534,9 +532,7 @@ bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
 bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
-        if (!expand_def_variable_def(vec_at(defs, idx))) {
-            status = false;
-        }
+        status = expand_def_variable_def(vec_at(defs, idx)) && status;
     }
     return status;
 }
@@ -544,9 +540,7 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
 bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
-        if (!expand_def_expr(vec_at_ref(exprs, idx), vec_at(exprs, idx))) {
-            status = false;
-        }
+        status = expand_def_expr(vec_at_ref(exprs, idx), vec_at(exprs, idx)) && status;
     }
     return status;
 }
@@ -575,7 +569,6 @@ static bool expand_def_function_params(Uast_function_params* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (!expand_def_param(vec_at(&params->params, idx))) {
-            todo();
             status = false;
         }
     }
