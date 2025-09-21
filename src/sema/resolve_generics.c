@@ -324,9 +324,6 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         msg_undefined_type(new_lang_type.pos, ulang_type_regular_const_wrap(new_lang_type));
         return false;
     }
-    if (!expand_def_def(before_res)) {
-        return false;
-    }
 
     return resolve_generics_ulang_type_internal(
         type,
@@ -478,6 +475,11 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
+    log(LOG_DEBUG, FMT"\n", uast_function_def_print(def));
+    if (!expand_def_function_def(def)) {
+        return false;
+    }
+
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
 

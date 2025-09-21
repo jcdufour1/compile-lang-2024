@@ -33,4 +33,6 @@ bool expand_def_ulang_type_regular(
     Pos dest_pos
 );
 
+bool expand_def_function_def(Uast_function_def* def);
+
 #endif // EXPAND_LANG_DEF
