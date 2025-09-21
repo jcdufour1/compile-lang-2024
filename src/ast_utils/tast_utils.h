@@ -5,7 +5,11 @@
 #include <lang_type_after.h>
 #include <llvm_lang_type_after.h>
 #include <ulang_type.h>
+#include <lang_type_print.h>
 #include <ulang_type_get_pos.h>
+
+// TODO: remove this forward declaration
+static inline Ulang_type ulang_type_new_int_x(Strv base);
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
@@ -184,6 +188,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
     unreachable("");
 }
 
+// TODO: get rid of this function (do this stuff in can_be_implicitly_converted instead, etc.)
 static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_type) {
     switch (lit->type) {
         case TAST_INT:
@@ -192,9 +197,23 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
         case TAST_FLOAT:
             tast_float_unwrap(lit)->lang_type = lang_type;
             return;
-        case TAST_STRING:
+        case TAST_STRING: {
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+            if (gen_args_u8.info.count < 1) {
+                vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+            }
+
+            if (lang_type.type != LANG_TYPE_STRUCT) {
+                todo();
+            } 
+
+            if (!name_is_equal(lang_type_struct_const_unwrap(lang_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+                todo();
+            }
             tast_string_unwrap(lit)->is_cstr = true;
             return;
+        }
         case TAST_VOID:
             unreachable("");
         case TAST_ENUM_TAG_LIT:
@@ -389,6 +408,7 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
     unreachable("");
 }
 
+// TODO: remove this function
 static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type) {
     switch (stmt->type) {
         case TAST_DEF:

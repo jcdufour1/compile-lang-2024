@@ -205,6 +205,7 @@ static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, 
     return can_be_implicitly_converted(*dest.return_type, *src.return_type, false, implicit_pointer_depth);
 }
 
+// TODO: this function should also actually do the implicit conversion I think
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
     static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
     if (gen_args_u8.info.count < 1) {
@@ -551,7 +552,8 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             Uast_string* old_string = uast_string_unwrap(literal);
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
-                old_string->data
+                old_string->data,
+                false
             ));
         }
         case UAST_INT: {
@@ -2963,7 +2965,7 @@ error:
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (strv_is_equal(macro->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
         return true;
     } else if (strv_is_equal(macro->name, sv("line"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
