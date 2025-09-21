@@ -1,0 +1,9 @@
+
+// this function currently only works for integer types
+fn abs(num NumT, NumT Type) NumT {
+    if num < unsafe_cast<NumT>0 {
+        // TODO: "-num" should be allowed for floating point types
+        return unsafe_cast<NumT>0 - num
+    }
+    return num
+}
