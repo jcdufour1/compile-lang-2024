@@ -275,8 +275,24 @@ static bool expand_def_function_call(Uast_function_call* call) {
     return expand_def_expr_vec(&call->args) && expand_def_expr(&call->callee, call->callee);
 }
 
+static bool expand_def_struct_literal(Uast_struct_literal* lit) {
+    return expand_def_expr_vec(&lit->members);
+}
+
 static bool expand_def_binary(Uast_binary* bin) {
     return expand_def_expr(&bin->lhs, bin->lhs) && expand_def_expr(&bin->rhs, bin->rhs);
+}
+
+static bool expand_def_unary(Uast_unary* unary) {
+    return expand_def_expr(&unary->child, unary->child) && expand_def_ulang_type(&unary->lang_type, unary->pos /* TODO */);
+}
+
+static bool expand_def_condition(Uast_condition* cond) {
+    return expand_def_operator(cond->child);
+}
+
+static bool expand_def_if(Uast_if* lang_if) {
+    return expand_def_condition(lang_if->condition) && expand_def_block(lang_if->body);
 }
 
 static bool expand_def_member_access(Uast_member_access* access) {
@@ -296,12 +312,12 @@ static bool expand_def_member_access(Uast_member_access* access) {
     unreachable("");
 }
 
-static bool expand_def_operator(Uast_operator* oper) {
+bool expand_def_operator(Uast_operator* oper) {
     switch (oper->type) {
         case UAST_BINARY:
             return expand_def_binary(uast_binary_unwrap(oper));
         case UAST_UNARY:
-            todo();
+            return expand_def_unary(uast_unary_unwrap(oper));
     }
     unreachable("");
 }
@@ -364,7 +380,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
             *new_expr = expr;
             return expand_def_block(uast_block_unwrap(expr));
         case UAST_IF_ELSE_CHAIN:
-            todo();
+            *new_expr = expr;
+            return expand_def_if_else_chain(uast_if_else_chain_unwrap(expr));
         case UAST_SWITCH:
             *new_expr = expr;
             return expand_def_switch(uast_switch_unwrap(expr));
@@ -399,7 +416,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
             *new_expr = expr;
             return expand_def_function_call(uast_function_call_unwrap(expr));
         case UAST_STRUCT_LITERAL:
-            todo();
+            *new_expr = expr;
+            return expand_def_struct_literal(uast_struct_literal_unwrap(expr));
         case UAST_ARRAY_LITERAL:
             *new_expr = expr;
             return expand_def_array_literal(uast_array_literal_unwrap(expr));
@@ -517,6 +535,16 @@ bool expand_def_case_vec(Uast_case_vec* cases) {
     return status;
 }
 
+bool expand_def_if_vec(Uast_if_vec* ifs) {
+    bool status = true;
+    for (size_t idx = 0; idx < ifs->info.count; idx++) {
+        if (!expand_def_if(vec_at(ifs, idx))) {
+            status = false;
+        }
+    }
+    return status;
+}
+
 static bool expand_def_function_params(Uast_function_params* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
@@ -601,6 +629,10 @@ bool expand_def_def(Uast_def* def) {
 bool expand_def_switch(Uast_switch* lang_switch) {
     bool status = expand_def_expr(&lang_switch->operand, lang_switch->operand);
     return expand_def_case_vec(&lang_switch->cases) && status;
+}
+
+bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
+    return expand_def_if_vec(&if_else->uasts);
 }
 
 bool expand_def_block(Uast_block* block) {

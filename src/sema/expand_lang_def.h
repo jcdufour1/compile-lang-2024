@@ -39,4 +39,8 @@ bool expand_def_switch(Uast_switch* lang_switch);
 
 bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
 
+bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
+
+bool expand_def_operator(Uast_operator* oper);
+
 #endif // EXPAND_LANG_DEF
