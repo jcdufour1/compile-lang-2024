@@ -1,13 +1,9 @@
 
 type util import = std.util
 type io import = std.io
+type rt import = std.runtime
 
-// TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
-// TODO: count should be usize by default when usize is implemented
-type Slice struct(<ItemT>) {
-    buf ItemT*
-    count u64
-}
+type Slice def = rt.Slice
 
 fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
     if (index >= slice.count) {
