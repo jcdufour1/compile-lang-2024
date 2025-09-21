@@ -167,6 +167,11 @@ add_fn(<i16>)
         let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, slice)
         return 0
     }
+- expected failure test case for:
+    fn main() i32 {
+        return 0
+    }
+    }
 
 
 
