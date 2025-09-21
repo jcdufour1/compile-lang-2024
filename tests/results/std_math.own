@@ -1,0 +1,11 @@
+compile::stdout 5
+abs 9 = 9
+abs -9 = 9
+abs -9.7 = 9.7
+pow 8**3 = 512
+pow 8.2**2 = 67.24
+
+compile::stderr 0
+
+compile::return_code 0
+
