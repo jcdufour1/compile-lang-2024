@@ -10,7 +10,7 @@
 
 // TODO: consider if def definition has pointer_depth > 0
 
-static bool expand_def_ulang_type_regular(
+bool expand_def_ulang_type_regular(
     Ulang_type_regular* new_lang_type,
     Ulang_type_regular lang_type,
     Pos dest_pos
@@ -252,19 +252,18 @@ static EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos 
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
     (void) def;
-    todo();
-    //if (!expand_def_ulang_type(&def->lang_type)) {
-    //    return false;
-    //}
-    //Uast_expr* new_expr = NULL;
-    //switch (expand_def_name(&new_expr, &def->name)) {
-    //    case EXPAND_NAME_NORMAL:
-    //        todo();
-    //    case EXPAND_NAME_NEW_EXPR:
-    //        todo();
-    //    case EXPAND_NAME_ERROR:
-    //        todo();
-    //}
+    if (!expand_def_ulang_type(&def->lang_type, def->pos /* TODO */)) {
+        return false;
+    }
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_name(&new_expr, &def->name, def->pos /* TODO */)) {
+        case EXPAND_NAME_NORMAL:
+            return true;
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        case EXPAND_NAME_ERROR:
+            todo();
+    }
     unreachable("");
 }
 
@@ -281,7 +280,7 @@ static bool expand_def_struct_def_base(Ustruct_def_base* base, Pos dest_pos) {
     Uast_expr* new_expr = NULL;
     switch (expand_def_name(&new_expr, &base->name, dest_pos)) {
         case EXPAND_NAME_NORMAL:
-            todo();
+            return true;
         case EXPAND_NAME_NEW_EXPR:
             todo();
         case EXPAND_NAME_ERROR:
@@ -388,15 +387,14 @@ static bool expand_def_stmt(Uast_stmt* stmt) {
 }
 
 static bool expand_def_lang_def(Uast_lang_def* def) {
+    log(LOG_DEBUG, FMT"\n", uast_lang_def_print(def));
     (void) def;
     // TODO
     return true;
 }
 
 static bool expand_def_generic_param(Uast_generic_param* param) {
-    (void) param;
-    todo();
-    //return expand_def_symbol(param->child);
+    return true;
 }
 
 static bool expand_def_param(Uast_param* param) {
@@ -509,7 +507,8 @@ bool expand_def_def(Uast_def* def) {
         case UAST_ENUM_DEF:
             return expand_def_enum_def(uast_enum_def_unwrap(def));
         case UAST_PRIMITIVE_DEF:
-            todo();
+            // TODO
+            return true;
         case UAST_FUNCTION_DECL:
             return expand_def_function_decl(uast_function_decl_unwrap(def));
         case UAST_LANG_DEF:

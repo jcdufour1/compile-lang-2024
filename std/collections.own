@@ -1,6 +1,7 @@
 
 type util import = std.util
 type io import = std.io
+type rt import = std.runtime
 
 type Slice def = rt.Slice
 

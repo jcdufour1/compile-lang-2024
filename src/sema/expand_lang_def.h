@@ -27,4 +27,10 @@ EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym);
 
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
 
+bool expand_def_ulang_type_regular(
+    Ulang_type_regular* new_lang_type,
+    Ulang_type_regular lang_type,
+    Pos dest_pos
+);
+
 #endif // EXPAND_LANG_DEF
