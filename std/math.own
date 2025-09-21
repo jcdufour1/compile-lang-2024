@@ -16,8 +16,9 @@ fn pow(base BaseT, exponent ExpT, BaseT Type, ExpT Type) BaseT {
     return result
 }
 
-// TODO: this function is intended for floating point numbers. Figure out what to do for integers?
+// TODO: this function is intended primarily for floating point numbers. Figure out what to do for integers?
 fn sqrt(num NumT, NumT Type) NumT {
+    // TODO: consider edge cases such as negative numbers?
     if sizeof(num) <= 4 {
         return unsafe_cast<NumT>util.sqrtf(unsafe_cast<f32>num)
     }
@@ -26,6 +27,20 @@ fn sqrt(num NumT, NumT Type) NumT {
     }
     // TODO: use sqrtl for 128f?
     util.assert(0, "sqrt for numbers larger than f64 is not yet implemented")
+    return unsafe_cast<NumT>0
+}
+
+// TODO: this function is intended primarily for floating point numbers. Figure out what to do for integers?
+fn log(num NumT, NumT Type) NumT {
+    // TODO: consider edge cases such as negative numbers?
+    if sizeof(num) <= 4 {
+        return unsafe_cast<NumT>util.logf(unsafe_cast<f32>num)
+    }
+    if sizeof(num) <= 8 {
+        return unsafe_cast<NumT>util.log(unsafe_cast<f64>num)
+    }
+    // TODO: use sqrtl for 128f?
+    util.assert(0, "log for numbers larger than f64 is not yet implemented")
     return unsafe_cast<NumT>0
 }
 

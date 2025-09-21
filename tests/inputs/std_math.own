@@ -11,6 +11,8 @@ fn main() i32 {
 
     io.printf("sqrt 9.0 ~ %0.1f\n", math.sqrt(9.0))
 
+    io.printf("log 9.0 ~ %0.1f\n", math.log(9.0))
+
     io.printf("pi ~ %0.2f\n", math.pi(f32))
     io.printf("e ~ %0.2f\n", math.e(f32))
 

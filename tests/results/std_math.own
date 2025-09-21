@@ -1,10 +1,11 @@
-compile::stdout 8
+compile::stdout 9
 abs 9 = 9
 abs -9 = 9
 abs -9.7 = 9.7
 pow 8**3 = 512
 pow 8.2**2 = 67.24
 sqrt 9.0 ~ 3.0
+log 9.0 ~ 2.2
 pi ~ 3.14
 e ~ 2.72
 
