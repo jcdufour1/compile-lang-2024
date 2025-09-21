@@ -1,3 +1,4 @@
+type util import = std.util
 
 fn abs(num NumT, NumT Type) NumT {
     if num < unsafe_cast<NumT>0 {
@@ -13,4 +14,17 @@ fn pow(base BaseT, exponent ExpT, BaseT Type, ExpT Type) BaseT {
         result *= base
     }
     return result
+}
+
+// TODO: this function is intended for floating point numbers. Figure out what to do for integers?
+fn sqrt(num NumT, NumT Type) NumT {
+    if sizeof(num) <= 4 {
+        return unsafe_cast<NumT>util.sqrtf(unsafe_cast<f32>num)
+    }
+    if sizeof(num) <= 8 {
+        return unsafe_cast<NumT>util.sqrt(unsafe_cast<f64>num)
+    }
+    // TODO: use sqrtl for 128f?
+    util.assert(0, "sqrt for numbers larger than f64 is not yet implemented")
+    return unsafe_cast<NumT>0
 }

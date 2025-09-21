@@ -2,14 +2,14 @@ type math import = std.math
 type io import = std.io
 
 fn main() i32 {
-    //io.printf("sqrt 9.0 ~ %0.1f\n", math.sqrt(9.0))
-
     io.printf("abs 9 = %d\n", math.abs(9))
     io.printf("abs -9 = %d\n", math.abs(-9))
     io.printf("abs -9.7 = %0.1f\n", math.abs(0.0 - 9.7 /* TODO: change to -9.7 when possible */))
 
     io.printf("pow 8**3 = %d\n", math.pow(8, 3))
     io.printf("pow 8.2**2 = %0.2f\n", math.pow(8.2, 2))
+
+    io.printf("sqrt 9.0 ~ %0.1f\n", math.sqrt(9.0))
 
     return 0
 }
