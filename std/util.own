@@ -1,4 +1,5 @@
 type io import = std.io
+type rt import = std.runtime
 
 extern("c") fn isdigit(character i32) i32
 extern("c") fn abort()
@@ -10,7 +11,7 @@ extern("c") fn sqrtf(num f32) f32
 extern("c") fn sqrt(num f64) f64
 extern("c") fn logf(num f32) f32
 extern("c") fn log(num f64) f64
-
+extern("c") fn strlen(cstr u8*) u64
 
 type Optional enum(<ItemT>) {
     some ItemT
@@ -34,3 +35,6 @@ fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, l
     }
 }
 
+fn slice_from_cstr(cstr u8*) rt.Slice(<u8>) {
+    return {cstr, strlen(cstr)}
+}
