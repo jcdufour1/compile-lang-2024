@@ -268,7 +268,38 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
 }
 
 static bool expand_def_function_call(Uast_function_call* call) {
-    return expand_def_expr_vec(&call->args) && expand_def_expr(call->callee);
+    return expand_def_expr_vec(&call->args) && expand_def_expr(&call->callee, call->callee);
+}
+
+static bool expand_def_binary(Uast_binary* bin) {
+    return expand_def_expr(&bin->lhs, bin->lhs) && expand_def_expr(&bin->rhs, bin->rhs);
+}
+
+static bool expand_def_member_access(Uast_member_access* access) {
+    if (!expand_def_expr(&access->callee, access->callee)) {
+        return false;
+    }
+
+    Uast_expr* dummy = NULL;
+    switch (expand_def_symbol(&dummy, access->member_name)) {
+        case EXPAND_NAME_NORMAL:
+            return true;
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        case EXPAND_NAME_ERROR:
+            return false;
+    }
+    unreachable("");
+}
+
+static bool expand_def_operator(Uast_operator* oper) {
+    switch (oper->type) {
+        case UAST_BINARY:
+            return expand_def_binary(uast_binary_unwrap(oper));
+        case UAST_UNARY:
+            todo();
+    }
+    unreachable("");
 }
 
 static bool expand_def_array_literal(Uast_array_literal* lit) {
@@ -323,25 +354,28 @@ EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym) {
     return expand_def_name(new_expr, &sym->name, sym->pos);
 }
 
-bool expand_def_expr(Uast_expr* expr) {
+bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
     switch (expr->type) {
         case UAST_BLOCK:
-            todo();
+            *new_expr = expr;
+            return expand_def_block(uast_block_unwrap(expr));
         case UAST_IF_ELSE_CHAIN:
             todo();
         case UAST_SWITCH:
             todo();
         case UAST_UNKNOWN:
-            todo();
+            *new_expr = expr;
+            return true;
         case UAST_OPERATOR:
-            todo();
+            *new_expr = expr;
+            return expand_def_operator(uast_operator_unwrap(expr));
         case UAST_SYMBOL: {
-            Uast_expr* dummy = NULL;
-            switch (expand_def_symbol(&dummy, uast_symbol_unwrap(expr))) {
+            switch (expand_def_symbol(new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:
+                    *new_expr = expr;
                     return true;
                 case EXPAND_NAME_NEW_EXPR:
-                    todo();
+                    return true;
                 case EXPAND_NAME_ERROR:
                     return false;
                 default:
@@ -349,16 +383,20 @@ bool expand_def_expr(Uast_expr* expr) {
             }
         }
         case UAST_MEMBER_ACCESS:
-            todo();
+            *new_expr = expr;
+            return expand_def_member_access(uast_member_access_unwrap(expr));
         case UAST_INDEX:
             todo();
         case UAST_LITERAL:
+            *new_expr = expr;
             return expand_def_literal(uast_literal_unwrap(expr));
         case UAST_FUNCTION_CALL:
+            *new_expr = expr;
             return expand_def_function_call(uast_function_call_unwrap(expr));
         case UAST_STRUCT_LITERAL:
             todo();
         case UAST_ARRAY_LITERAL:
+            *new_expr = expr;
             return expand_def_array_literal(uast_array_literal_unwrap(expr));
         case UAST_TUPLE:
             todo();
@@ -373,13 +411,24 @@ bool expand_def_expr(Uast_expr* expr) {
 }
 
 static bool expand_def_return(Uast_return* rtn) {
-    return expand_def_expr(rtn->child);
+    return expand_def_expr(&rtn->child, rtn->child);
 }
 
-static bool expand_def_stmt(Uast_stmt* stmt) {
+static bool expand_def_yield(Uast_yield* yield) {
+    return (!yield->do_yield_expr || expand_def_expr(&yield->yield_expr, yield->yield_expr));
+    // TODO: does yield->break_out_of need to be expanded?
+}
+
+static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
     switch (stmt->type) {
-        case UAST_EXPR:
-            return expand_def_expr(uast_expr_unwrap(stmt));
+        case UAST_EXPR: {
+            Uast_expr* new_expr = NULL;
+            if (!expand_def_expr(&new_expr, uast_expr_unwrap(stmt))) {
+                return false;
+            }
+            *new_stmt = uast_expr_wrap(new_expr);
+            return true;
+        }
         case UAST_DEF:
             return expand_def_def(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND:
@@ -387,7 +436,7 @@ static bool expand_def_stmt(Uast_stmt* stmt) {
         case UAST_CONTINUE:
             todo();
         case UAST_YIELD:
-            todo();
+            return expand_def_yield(uast_yield_unwrap(stmt));
         case UAST_ASSIGNMENT:
             todo();
         case UAST_RETURN:
@@ -416,7 +465,7 @@ static bool expand_def_param(Uast_param* param) {
     if (!expand_def_variable_def(param->base)) {
         status = false;
     }
-    if (param->is_optional && !expand_def_expr(param->optional_default)) {
+    if (param->is_optional && !expand_def_expr(&param->optional_default, param->optional_default)) {
         status = false;
     }
 
@@ -446,7 +495,7 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
 bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
-        if (!expand_def_expr(vec_at(exprs, idx))) {
+        if (!expand_def_expr(vec_at_ref(exprs, idx), vec_at(exprs, idx))) {
             status = false;
         }
     }
@@ -508,7 +557,7 @@ bool expand_def_def(Uast_def* def) {
         case UAST_POISON_DEF:
             todo();
         case UAST_GENERIC_PARAM:
-            todo();
+            return expand_def_generic_param(uast_generic_param_unwrap(def));
         case UAST_FUNCTION_DEF:
             return expand_def_function_def(uast_function_def_unwrap(def));
         case UAST_VARIABLE_DEF:
@@ -547,7 +596,7 @@ bool expand_def_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        if (!expand_def_stmt(vec_at(&block->children, idx))) {
+        if (!expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx))) {
             log(LOG_DEBUG, FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
     todo();
             status = false;

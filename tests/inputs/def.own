@@ -13,9 +13,9 @@ fn add_internal(lhs NumType, rhs NumType, NumType Type) NumType {
 type add def = add_internal
 
 fn main() i32 {
+    let num i32 = 8
     print("hello\n")
-    // TODO: change add_internal on below line to add
-    print("%d\n", add_internal(54, 3, i32))
+    print("%d\n", add(54, 3, i32))
 
     let opt Opt(<i32>) = .some(43)
 

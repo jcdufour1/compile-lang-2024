@@ -17,7 +17,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
 
 bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
-bool expand_def_expr(Uast_expr* expr);
+bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr);
 
 bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 

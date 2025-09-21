@@ -172,6 +172,9 @@ add_fn(<i16>)
         return 0
     }
     }
+- allow if body (single statement) to be on the same line as if condition using => or similar
+    this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
+    this way => can also be used in switch, function definition, etc.
 
 
 

@@ -475,7 +475,7 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    log(LOG_DEBUG, FMT"\n", uast_function_def_print(def));
+    // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
     if (!expand_def_function_def(def)) {
         return false;
     }
