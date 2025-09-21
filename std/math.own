@@ -7,3 +7,11 @@ fn abs(num NumT, NumT Type) NumT {
     }
     return num
 }
+
+fn pow(base BaseT, exponent u64, BaseT Type) BaseT {
+    let result BaseT = unsafe_cast<BaseT>1
+    for idx u64 in 0..exponent {
+        result *= base
+    }
+    return result
+}
