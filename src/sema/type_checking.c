@@ -225,16 +225,9 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
     } 
 
     if (!name_is_equal(lang_type_struct_const_unwrap(dest).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_struct_const_unwrap(dest).atom.str));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL)));
-        log(LOG_DEBUG, FMT"\n", strv_print(lang_type_struct_const_unwrap(dest).atom.str.mod_path));
-        log(LOG_DEBUG, FMT"\n", strv_print(lang_type_struct_const_unwrap(dest).atom.str.base));
-        log(LOG_DEBUG, "%zu\n", lang_type_struct_const_unwrap(dest).atom.str.scope_id);
-        log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).mod_path));
-        log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).base));
-        log(LOG_DEBUG, "%zu\n",            name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).scope_id);
         goto next;
     }
+    return true;
 
 next:
     if (dest.type != src.type) {
@@ -479,6 +472,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     unreachable("");
 }
 
+// TODO: rename to check_general_assignment
+// TODO: make src/sema/check_general_assignment.own, and also put can_be_implicitly_converted in there?
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Tast_expr** new_src,
     Lang_type dest_lang_type,

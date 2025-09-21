@@ -193,7 +193,8 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             tast_float_unwrap(lit)->lang_type = lang_type;
             return;
         case TAST_STRING:
-            todo();
+            tast_string_unwrap(lit)->is_cstr = true;
+            return;
         case TAST_VOID:
             unreachable("");
         case TAST_ENUM_TAG_LIT:
