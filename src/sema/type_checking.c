@@ -140,6 +140,16 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
 static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
+    todo();
+    if (src.type == LANG_TYPE_CHAR && 1 /*lang_type_char_const_unwrap(src).atom.pointer_depth == 1*/) {
+        todo();
+    }
+
+    // TODO: LANG_TYPE_PRIMITIVE should have a separate subtype for string literals to differeniate char passed as pointer and cstr, etc.?
+    if (src.type == LANG_TYPE_CHAR && 1 /*lang_type_char_const_unwrap(src).atom.pointer_depth == 1*/) {
+        todo();
+    }
+
     if (!implicit_pointer_depth) {
         if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
             return false;
@@ -206,11 +216,43 @@ static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, 
 }
 
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
+
+    if (src.type != LANG_TYPE_PRIMITIVE) {
+        goto next;
+    } 
+    if (lang_type_primitive_const_unwrap(src).type != LANG_TYPE_CHAR) {
+        goto next;
+    } 
+    if (lang_type_char_const_unwrap(lang_type_primitive_const_unwrap(src)).atom.pointer_depth != 1) {
+        goto next;
+    } 
+    if (dest.type != LANG_TYPE_STRUCT) {
+        goto next;
+    } 
+
+    if (!name_is_equal(lang_type_struct_const_unwrap(dest).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_struct_const_unwrap(dest).atom.str));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL)));
+        log(LOG_DEBUG, FMT"\n", strv_print(lang_type_struct_const_unwrap(dest).atom.str.mod_path));
+        log(LOG_DEBUG, FMT"\n", strv_print(lang_type_struct_const_unwrap(dest).atom.str.base));
+        log(LOG_DEBUG, "%zu\n", lang_type_struct_const_unwrap(dest).atom.str.scope_id);
+        log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).mod_path));
+        log(LOG_DEBUG, FMT"\n", strv_print(name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).base));
+        log(LOG_DEBUG, "%zu\n",            name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL).scope_id);
+        todo();
+    }
+    todo();
+
+next:
     if (dest.type != src.type) {
         return false;
     }
 
-    switch (dest.type) {
+    switch (src.type) {
         case LANG_TYPE_FN:
             return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_TUPLE:
