@@ -13,7 +13,6 @@ fn add_internal(lhs NumType, rhs NumType, NumType Type) NumType {
 type add def = add_internal
 
 fn main() i32 {
-    let num i32 = 8
     print("hello\n")
     print("%d\n", add(54, 3, i32))
 

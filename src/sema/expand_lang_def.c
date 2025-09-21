@@ -267,6 +267,10 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
     unreachable("");
 }
 
+static bool expand_def_case(Uast_case* lang_case) {
+    return expand_def_expr(&lang_case->expr, lang_case->expr) && expand_def_stmt(&lang_case->if_true, lang_case->if_true);
+}
+
 static bool expand_def_function_call(Uast_function_call* call) {
     return expand_def_expr_vec(&call->args) && expand_def_expr(&call->callee, call->callee);
 }
@@ -362,7 +366,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
         case UAST_IF_ELSE_CHAIN:
             todo();
         case UAST_SWITCH:
-            todo();
+            *new_expr = expr;
+            return expand_def_switch(uast_switch_unwrap(expr));
         case UAST_UNKNOWN:
             *new_expr = expr;
             return true;
@@ -419,7 +424,7 @@ static bool expand_def_yield(Uast_yield* yield) {
     // TODO: does yield->break_out_of need to be expanded?
 }
 
-static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
+bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR: {
             Uast_expr* new_expr = NULL;
@@ -496,6 +501,16 @@ bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
         if (!expand_def_expr(vec_at_ref(exprs, idx), vec_at(exprs, idx))) {
+            status = false;
+        }
+    }
+    return status;
+}
+
+bool expand_def_case_vec(Uast_case_vec* cases) {
+    bool status = true;
+    for (size_t idx = 0; idx < cases->info.count; idx++) {
+        if (!expand_def_case(vec_at(cases, idx))) {
             status = false;
         }
     }
@@ -581,6 +596,11 @@ bool expand_def_def(Uast_def* def) {
             return true;
     }
     unreachable("");
+}
+
+bool expand_def_switch(Uast_switch* lang_switch) {
+    bool status = expand_def_expr(&lang_switch->operand, lang_switch->operand);
+    return expand_def_case_vec(&lang_switch->cases) && status;
 }
 
 bool expand_def_block(Uast_block* block) {

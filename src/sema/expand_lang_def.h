@@ -35,4 +35,8 @@ bool expand_def_ulang_type_regular(
 
 bool expand_def_function_def(Uast_function_def* def);
 
+bool expand_def_switch(Uast_switch* lang_switch);
+
+bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
+
 #endif // EXPAND_LANG_DEF
