@@ -1001,7 +1001,7 @@ static Name load_struct_literal(Ir_block* new_block, Tast_struct_literal* old_li
     return load_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
-static Name load_string(Tast_string* old_lit) {
+static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
     if (old_lit->is_cstr) {
         Ir_string* string = ir_string_new(
             old_lit->pos,
@@ -1012,22 +1012,26 @@ static Name load_string(Tast_string* old_lit) {
         return string->name;
     }
 
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
 
     Tast_expr_vec args = {0};
-    vec_append(&a_main, &args, tast_literal_wrap(tast_string_wrap(tast_string_clone(old_lit))));
+    Tast_string* inner_str = tast_string_clone(old_lit);
+    inner_str->is_cstr = true;
+    vec_append(&a_main, &args, tast_literal_wrap(tast_string_wrap(inner_str)));
 
     Tast_expr_vec membs = {0};
     vec_append(&a_main, &membs, tast_literal_wrap(tast_string_wrap(old_lit)));
     vec_append(&a_main, &membs, tast_function_call_wrap(tast_function_call_new(
         old_lit->pos,
         args,
-        tast_symbol_wrap(tast_symbol_new(
+        tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
             old_lit->pos,
-            (Sym_typed_base) {
-                .lang_type = lang_type_new_ux(64),
-                .name = name_new(sv("std/util"), sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-            }
-        )),
+            name_new(sv("std/util"), sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+            lang_type_new_ux(64)
+        ))),
         lang_type_new_ux(64)
     )));
 
@@ -1036,7 +1040,7 @@ static Name load_string(Tast_string* old_lit) {
         membs,
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), 0
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL), 0
         )))
     ));
 }
@@ -1176,7 +1180,7 @@ static Name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit)
 static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
     switch (old_lit->type) {
         case TAST_STRING:
-            return load_string(tast_string_unwrap(old_lit));
+            return load_string(new_block, tast_string_unwrap(old_lit));
         case TAST_VOID:
             return load_void(tast_void_unwrap(old_lit)->pos);
         case TAST_ENUM_TAG_LIT:
