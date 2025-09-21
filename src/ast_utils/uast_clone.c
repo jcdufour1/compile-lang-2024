@@ -135,6 +135,7 @@ Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, Scope_id new_scope, Pos de
 }
 
 Uast_macro* uast_macro_clone(const Uast_macro* macro, Scope_id new_scope, Pos dest_pos) {
+    (void) new_scope;
     return uast_macro_new(macro->pos, macro->name, dest_pos);
 }
 
