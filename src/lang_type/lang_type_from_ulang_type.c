@@ -33,7 +33,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_GEN_PARAM:
-            unreachable("ulang_type_gen_param should not be converted from ulang_type to lang_type");
+            // TODO: print error?
+            return false;
     }
     unreachable("");
 }

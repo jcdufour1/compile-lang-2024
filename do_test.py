@@ -104,6 +104,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
         assert(False and "not implemented")
 
     compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
+    compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=NOTE")
     compile_cmd.append("-o")
     compile_cmd.append("test")

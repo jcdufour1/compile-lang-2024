@@ -6,6 +6,11 @@ extern("c") fn malloc(size u64) opaque*
 extern("c") fn realloc(ptr opaque*, size u64) opaque*
 extern("c") fn free(ptr opaque*)
 extern("c") fn memmove(dest opaque*, src opaque*, n u64)
+extern("c") fn sqrtf(num f32) f32
+extern("c") fn sqrt(num f64) f64
+extern("c") fn logf(num f32) f32
+extern("c") fn log(num f64) f64
+
 
 type Optional enum(<ItemT>) {
     some ItemT

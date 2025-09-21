@@ -2460,8 +2460,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         sym_name->gen_args = new_gens;
 
-        Tast_expr* new_arg = NULL;
-
         if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
@@ -2478,7 +2476,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             status = false;
             goto error;
         }
-        *vec_at_ref(&new_args, curr_arg_count) = new_arg;
+        
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
@@ -2490,7 +2488,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     size_t idx_gen_param = 0;
     bool incre_param_next = false;
-    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
+    for (size_t idx = 0; status && idx < params->params.info.count; idx++) {
         if (incre_param_next) {
             idx_gen_param++;
         }
@@ -2534,10 +2532,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
                                 arg_to_infer_from->type == TAST_LITERAL,
-                                vec_at(&params->params, idx_gen_param)->base,
+                                vec_at(&params->params, param_idx)->base,
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
+                                log(LOG_DEBUG, FMT"\n", tast_expr_print(arg_to_infer_from));
+                                log(LOG_DEBUG, "thing 86: idx_gen_param = %zu, : "FMT"\n", idx_gen_param, name_print(NAME_LOG, param_name));
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
@@ -2850,6 +2850,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
         assert(new_arg);
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
+        assert(vec_at(&new_args, curr_arg_count));
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
@@ -2865,7 +2866,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 status = false;
                 continue;
             }
-            assert(!vec_at(&new_args_set, idx));
+            assert(vec_at(&new_args, idx));
             *vec_at_ref(&new_args_set, idx) = true;
         }
     } else {
@@ -2891,6 +2892,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         uast_expr_get_pos(new_default_)
                     )) {
                         case CHECK_ASSIGN_OK:
+                            assert(vec_at(&new_args, idx - gen_arg_count));
                             break;
                         case CHECK_ASSIGN_INVALID:
                             msg_invalid_function_arg(
@@ -2911,20 +2913,23 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
+    if (!status) {
+        goto error;
+    }
+
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,
         new_args,
         new_callee,
         fun_rtn_type
     ));
+    log(LOG_DEBUG, "%zu "FMT"\n", new_args.info.count, name_print(NAME_MSG, fun_name));
     for (size_t idx = 0; idx < new_args.info.count; idx++) {
-        if (!vec_at(&new_args, idx)) {
-            log(LOG_DEBUG, "<null>\n");
-        } else {
-            log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
-        }
+        assert(vec_at(&new_args_set, idx));
+        log(LOG_DEBUG, "thing 8\n");
+        assert(vec_at(&new_args, idx));
+        log(LOG_DEBUG, "thing 9\n");
     }
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_call));
 
 error:
     return status;
