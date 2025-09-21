@@ -4,6 +4,6 @@ fn undef_type_in_arg(thing thing.Foo) {
 
 fn main() i32 {
     let token thing.Token = {.num = 8}
-    undef_type_in_arg(token)
+    undef_type_in_arg()
     return 0
 }

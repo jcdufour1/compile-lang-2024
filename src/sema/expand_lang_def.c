@@ -312,6 +312,11 @@ static bool expand_def_member_access(Uast_member_access* access) {
     unreachable("");
 }
 
+static bool expand_def_index(Uast_index* index) {
+    bool status = expand_def_expr(&index->callee, index->callee);
+    return expand_def_expr(&index->index, index->index) && status;
+}
+
 bool expand_def_operator(Uast_operator* oper) {
     switch (oper->type) {
         case UAST_BINARY:
@@ -408,7 +413,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
             *new_expr = expr;
             return expand_def_member_access(uast_member_access_unwrap(expr));
         case UAST_INDEX:
-            todo();
+            *new_expr = expr;
+            return expand_def_index(uast_index_unwrap(expr));
         case UAST_LITERAL:
             *new_expr = expr;
             return expand_def_literal(uast_literal_unwrap(expr));
@@ -424,7 +430,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
         case UAST_TUPLE:
             todo();
         case UAST_MACRO:
-            todo();
+            // TODO
+            return true;
         case UAST_ENUM_ACCESS:
             todo();
         case UAST_ENUM_GET_TAG:
@@ -437,9 +444,28 @@ static bool expand_def_return(Uast_return* rtn) {
     return expand_def_expr(&rtn->child, rtn->child);
 }
 
+bool expand_def_defer(Uast_defer* lang_defer) {
+    return expand_def_stmt(&lang_defer->child, lang_defer->child);
+}
+
 static bool expand_def_yield(Uast_yield* yield) {
     return (!yield->do_yield_expr || expand_def_expr(&yield->yield_expr, yield->yield_expr));
     // TODO: does yield->break_out_of need to be expanded?
+}
+
+static bool expand_def_assignment(Uast_assignment* assign) {
+    bool status = expand_def_expr(&assign->lhs, assign->lhs);
+    return expand_def_expr(&assign->rhs, assign->rhs) && status;
+}
+
+static bool expand_def_continue(Uast_continue* cont) {
+    (void) cont;
+    return true;
+}
+
+static bool expand_def_for_with_cond(Uast_for_with_cond* lang_for) {
+    bool status = expand_def_condition(lang_for->condition);
+    return expand_def_block(lang_for->body) && status;
 }
 
 bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
@@ -455,17 +481,17 @@ bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
         case UAST_DEF:
             return expand_def_def(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND:
-            todo();
+            return expand_def_for_with_cond(uast_for_with_cond_unwrap(stmt));
         case UAST_CONTINUE:
-            todo();
+            return expand_def_continue(uast_continue_unwrap(stmt));
         case UAST_YIELD:
             return expand_def_yield(uast_yield_unwrap(stmt));
         case UAST_ASSIGNMENT:
-            todo();
+            return expand_def_assignment(uast_assignment_unwrap(stmt));
         case UAST_RETURN:
             return expand_def_return(uast_return_unwrap(stmt));
         case UAST_DEFER:
-            todo();
+            return expand_def_defer(uast_defer_unwrap(stmt));
     }
     unreachable("");
 }
@@ -641,18 +667,11 @@ bool expand_def_block(Uast_block* block) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (!expand_def_def(curr)) {
-    todo();
-            status = false;
-        }
+        status = expand_def_def(curr) && status;
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        if (!expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx))) {
-            log(LOG_DEBUG, FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
-    todo();
-            status = false;
-        }
+        status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx)) && status;
     }
 
     return status;

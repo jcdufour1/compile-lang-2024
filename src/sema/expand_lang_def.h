@@ -43,4 +43,6 @@ bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
 
 bool expand_def_operator(Uast_operator* oper);
 
+bool expand_def_defer(Uast_defer* lang_defer);
+
 #endif // EXPAND_LANG_DEF
