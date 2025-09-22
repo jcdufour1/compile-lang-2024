@@ -1,6 +1,9 @@
 #ifndef ULANG_TYPE_GET_POS_H
 #define ULANG_TYPE_GET_POS_H
 
+// TODO: include header file and remove this forward declaration
+bool name_from_uname(Name* new_name, Uname name, Pos name_pos);
+
 static inline bool name_is_equal(Name a, Name b);
 
 static inline bool uname_is_equal(Uname a, Uname b);
@@ -66,19 +69,28 @@ static inline bool name_is_equal(Name a, Name b) {
 }
 
 static inline bool uname_is_equal(Uname a, Uname b) {
-    if (!name_is_equal(a.mod_alias, b.mod_alias) || !strv_is_equal(a.base, b.base)) {
+    Name new_a = {0};
+    if (!name_from_uname(&new_a, a, POS_BUILTIN /* TODO */)) {
         return false;
     }
-
-    if (a.gen_args.info.count != b.gen_args.info.count) {
+    Name new_b = {0};
+    if (!name_from_uname(&new_b, b, POS_BUILTIN /* TODO */)) {
         return false;
     }
-    for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
-            return false;
-        }
-    }
+    return name_is_equal(new_a, new_b);
+    //if (!name_is_equal(a.mod_alias, b.mod_alias) || !strv_is_equal(a.base, b.base)) {
+    //    return false;
+    //}
 
-    return true;
+    //if (a.gen_args.info.count != b.gen_args.info.count) {
+    //    return false;
+    //}
+    //for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
+    //    if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
+    //        return false;
+    //    }
+    //}
+
+    //return true;
 }
 #endif // ULANG_TYPE_GET_POS_H

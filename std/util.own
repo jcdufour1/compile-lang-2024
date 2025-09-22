@@ -1,4 +1,6 @@
 type io import = std.io
+type rt import = std.runtime
+type coll import = std.collections
 
 extern("c") fn isdigit(character i32) i32
 extern("c") fn abort()
@@ -10,7 +12,7 @@ extern("c") fn sqrtf(num f32) f32
 extern("c") fn sqrt(num f64) f64
 extern("c") fn logf(num f32) f32
 extern("c") fn log(num f64) f64
-
+extern("c") fn strlen(cstr u8*) u64
 
 type Optional enum(<ItemT>) {
     some ItemT
@@ -24,13 +26,16 @@ fn move_items(dest ItemT*, src ItemT*, count_items u64, ItemT Type) {
 }
 
 // TODO: remove keep_going parameter from std?
-fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn assert(condition u1, message coll.Str = "", keep_going u1 = 0, file coll.Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
         // TODO: print to stderr
-        io.printf("%s:%d:%d:assertion failure: %s\n", file, line, column, message)
+        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", file.count, file.buf, line, column, message)
         if (!keep_going) {
             abort()
         }
     }
 }
 
+fn slice_from_cstr(cstr u8*) rt.Slice(<u8>) {
+    return {cstr, strlen(cstr)}
+}

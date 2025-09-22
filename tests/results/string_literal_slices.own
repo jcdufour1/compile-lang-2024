@@ -1,0 +1,10 @@
+compile::stdout 4
+num2 = 10
+hello
+thi
+computer
+
+compile::stderr 0
+
+compile::return_code 0
+

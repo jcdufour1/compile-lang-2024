@@ -531,6 +531,10 @@ void parse_args(int argc, char** argv) {
         exit(EXIT_CODE_FAIL);
     }
 
+    if (params.compile_own) {
+        vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
+    }
+
     // set default output file path
     if (params.output_file_path.count < 1) {
         static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states");

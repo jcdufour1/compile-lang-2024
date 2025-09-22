@@ -205,12 +205,37 @@ static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, 
     return can_be_implicitly_converted(*dest.return_type, *src.return_type, false, implicit_pointer_depth);
 }
 
+// TODO: this function should also actually do the implicit conversion I think
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
+
+    if (dest.type != LANG_TYPE_PRIMITIVE) {
+        goto next;
+    } 
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_CHAR && lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
+        goto next;
+    } 
+    if (lang_type_get_pointer_depth(dest) != 1) {
+        goto next;
+    } 
+    if (src.type != LANG_TYPE_STRUCT) {
+        goto next;
+    } 
+
+    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+        goto next;
+    }
+    return true;
+
+next:
     if (dest.type != src.type) {
         return false;
     }
 
-    switch (dest.type) {
+    switch (src.type) {
         case LANG_TYPE_FN:
             return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_TUPLE:
@@ -448,6 +473,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     unreachable("");
 }
 
+// TODO: rename to check_general_assignment
+// TODO: make src/sema/check_general_assignment.own, and also put can_be_implicitly_converted in there?
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Tast_expr** new_src,
     Lang_type dest_lang_type,
@@ -525,7 +552,8 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             Uast_string* old_string = uast_string_unwrap(literal);
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
-                old_string->data
+                old_string->data,
+                false
             ));
         }
         case UAST_INT: {
@@ -1308,11 +1336,11 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
-            if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
+            if (!strv_is_equal(memb_def->name.base, lhs->member_name->name.base)) {
                 msg(
                     DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."FMT" =`, got `."FMT" =`\n", 
-                    strv_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
+                    strv_print(memb_def->name.base), strv_print(lhs->member_name->name.base)
                 );
                 return false;
             }
@@ -2937,7 +2965,7 @@ error:
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (strv_is_equal(macro->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
         return true;
     } else if (strv_is_equal(macro->name, sv("line"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));

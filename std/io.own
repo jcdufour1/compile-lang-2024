@@ -1,7 +1,9 @@
+type rt import = std.runtime
 
 extern("c") fn puts(format_string u8*) i32
 extern("c") fn printf(format_string u8*, args opaque...) i32
 extern("c") fn fopen(file_path u8*, flags u8*) opaque*
+extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) opaque*
 
 // TODO: remove from std
 type Token struct {

@@ -177,8 +177,14 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
             *new_name = sym->name;
-            unwrap(new_name->gen_args.info.count == 0 && "not implemented");
-            new_name->gen_args = name.gen_args;
+            if (new_name->gen_args.info.count > 0) {
+                if (name.gen_args.info.count > 0) {
+                    // TODO: expected failure case?
+                    todo();
+                }
+            } else {
+                new_name->gen_args = name.gen_args;
+            }
             return EXPAND_NAME_NORMAL;
         }
         case UAST_IF_ELSE_CHAIN:
@@ -221,7 +227,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
         case EXPAND_NAME_NORMAL:
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
-            unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
+            name->gen_args = new_name.gen_args;
             name->base = new_name.base;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:

@@ -4,11 +4,17 @@ type io import = std.io
 type rt import = std.runtime
 
 type Slice def = rt.Slice
+type Str def = Slice(<u8>)
 
-fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
-    if (index >= slice.count) {
-        util.abort()
-    }
+// TODO: make alloc function instead of using malloc directly
+
+fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+    util.assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return {&slice.buf[start], count}
+}
+
+fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return slice.buf[index]
 }
 
@@ -19,7 +25,7 @@ type Arr struct(<ItemT>) {
     max u64
 }
 
-fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
     let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
     util.assert(buf != unsafe_cast<ItemT*>0, "out of memory", .file = file, .line = line, .column = column)
     let arr Arr(<ItemT>) = {buf, 0, max_capacity}
@@ -34,7 +40,7 @@ fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
     arr.count = 0
 }
 
-fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
     util.assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (arr.count - index > 0) {
@@ -45,19 +51,19 @@ fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file u8* = #
     arr.count += 1
 }
 
-fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
     arr.buf[arr.count] = item
     arr.count += 1
 }
 
-fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
         arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
     }
 }
 
-fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     util.assert(arr.count > 0, "attempt to remove element from empty array", .file = file, .line = line, .column = column);
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     arr.count -= 1
@@ -67,16 +73,16 @@ fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file u8* = #file, line i
     }
 }
 
-fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return arr.buf[index]
 }
 
-fn arr_first(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn arr_first(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return arr_at(arr, 0, .file = file, .line = line, .column = column)
 }
 
-fn arr_last(arr Arr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn arr_last(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return arr.buf[arr.count - 1]
 }
@@ -87,7 +93,7 @@ type Darr struct(<ItemT>) {
     capacity u64
 }
 
-fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
+fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
     let darr Darr(<ItemT>) = {unsafe_cast<ItemT*>0, 0, 0}
     darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
     return darr
@@ -117,7 +123,7 @@ fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
     }
 }
 
-fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     darr_reserve(darr, 1);
     util.assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (darr.count - index > 0) {
@@ -128,20 +134,20 @@ fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file u8* 
     darr.count += 1
 }
 
-fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     darr_reserve(darr, 1);
     darr.buf[darr.count] = item
     darr.count += 1
 }
 
-fn darr_extend(dest Darr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn darr_extend(dest Darr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
         darr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
     }
 }
 
 // TODO: return item removed?
-fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) {
+fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     util.assert(darr.count > 0, "attempt to remove element from empty dynamic array", .file = file, .line = line, .column = column);
     util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     darr.count -= 1
@@ -151,16 +157,16 @@ fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file u8* = #file, lin
     }
 }
 
-fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     return darr.buf[index]
 }
 
-fn darr_first(darr Darr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_first(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return darr_at(darr, 0, .file = file, .line = line, .column = column)
 }
 
-fn darr_last(darr Darr(<ItemT>), ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     return darr.buf[darr.count - 1]
 }

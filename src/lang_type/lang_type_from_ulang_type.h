@@ -8,6 +8,10 @@
 #include <resolve_generics.h>
 #include <ulang_type_get_pos.h>
 #include <msg.h>
+#include <tast_utils.h>
+
+// TODO: remove this forward decl when possible
+static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
 
 static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type);
 
