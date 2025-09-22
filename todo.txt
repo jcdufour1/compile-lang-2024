@@ -159,7 +159,7 @@ add_fn(<i16>)
         return arr
     }
 - test case for local struct with the same base name (Name->base) as std struct, and use std struct (be sure that compiler actually differenciates between the two)
-    eg. (coll.arr_new accepts std::collections::arr_new)
+    eg. (coll.arr_new accepts std::collections::Slice)
     type coll import = std.collections
     type Slice struct(<ItemT>) {
         buf ItemT*
@@ -178,6 +178,7 @@ add_fn(<i16>)
 - allow if body (single statement) to be on the same line as if condition using => or similar
     this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
     this way => can also be used in switch, function definition, etc.
+- check for return statement on all code paths
 
 
 
