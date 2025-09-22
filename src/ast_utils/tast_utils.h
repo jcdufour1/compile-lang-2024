@@ -220,20 +220,9 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             tast_float_unwrap(lit)->lang_type = lang_type;
             return;
         case TAST_STRING: {
-            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
-            if (gen_args_u8.info.count < 1) {
-                vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
-            }
-
-            if (lang_type.type != LANG_TYPE_STRUCT) {
-                todo();
-            } 
-
-            if (!name_is_equal(lang_type_struct_const_unwrap(lang_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
-                todo();
-            }
-            tast_string_unwrap(lit)->is_cstr = false;
+            // TODO: not checking that lang_type is actually cstr 
+            //   because tast_literal_set_lang_type will eventually be removed anyway
+            tast_string_unwrap(lit)->is_cstr = true;
             return;
         }
         case TAST_VOID:

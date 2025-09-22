@@ -212,20 +212,20 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
         vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
     }
 
-    if (src.type != LANG_TYPE_PRIMITIVE) {
+    if (dest.type != LANG_TYPE_PRIMITIVE) {
         goto next;
     } 
-    if (lang_type_primitive_const_unwrap(src).type != LANG_TYPE_CHAR) {
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_CHAR && lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
         goto next;
     } 
-    if (lang_type_char_const_unwrap(lang_type_primitive_const_unwrap(src)).atom.pointer_depth != 1) {
+    if (lang_type_get_pointer_depth(dest) != 1) {
         goto next;
     } 
-    if (dest.type != LANG_TYPE_STRUCT) {
+    if (src.type != LANG_TYPE_STRUCT) {
         goto next;
     } 
 
-    if (!name_is_equal(lang_type_struct_const_unwrap(dest).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
         goto next;
     }
     return true;
