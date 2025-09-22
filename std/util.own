@@ -16,17 +16,21 @@ fn move_items(dest ItemT*, src ItemT*, count_items u64, ItemT Type) {
     c.memmove(unsafe_cast<opaque*>dest, unsafe_cast<opaque*>src, sizeof(ItemT)*count_items);
 }
 
+fn null(ItemT Type) ItemT* {
+    return unsafe_cast<ItemT*>0
+}
+
 // TODO: return optional, etc.?
 fn alloc(count_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     let buf ItemT* = unsafe_cast<ItemT*>c.malloc(sizeof(ItemT)*count_items)
-    assert(buf != unsafe_cast<ItemT*>0, "out of memory", .file = file, .line = line, .column = column)
+    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 // TODO: return optional, etc.?
 fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     buf = unsafe_cast<ItemT*>c.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
-    assert(buf != unsafe_cast<ItemT*>0, "out of memory", .file = file, .line = line, .column = column)
+    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 

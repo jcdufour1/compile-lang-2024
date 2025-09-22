@@ -172,6 +172,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
             new_name->gen_args = name.gen_args;
             *new_expr = uast_member_access_wrap(access);
+
+            log(LOG_DEBUG, FMT"\n", strv_print(name.mod_path));
+            log(LOG_DEBUG, FMT"\n", strv_print(name.base));
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_SYMBOL: {
@@ -311,7 +314,9 @@ static bool expand_def_member_access(Uast_member_access* access) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
-            todo();
+            // TODO: this may not be right, but this switch will be refactored in the 
+            //   future anyway when changing access->member_name type
+            return true;
         case EXPAND_NAME_ERROR:
             return false;
     }

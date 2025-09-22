@@ -74,6 +74,10 @@ for generics:
 - test case for:
     io.printf("%.*s:%d:%d\n", #file.count, (#file).buf, #line, #column);
 - allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
+- tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
+- uast_member_access->member_name should be Uast_strv_symbol
+- tast_member_access->member_name should be Tast_strv_symbol
+- ir_member_access->member_name should be Ir_strv_symbol
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
