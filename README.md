@@ -15,6 +15,7 @@ the language design and implementation are not finished; there will be breaking 
 ```c
 
 type util import = std.util
+type io import = std.io
 
 fn divide(lhs NumT, rhs NumT, NumT Type) util.Optional(<NumT>) {
     if rhs == 0 {
@@ -35,6 +36,7 @@ fn main() i32 {
 ```c
 
 type coll import = std.collections
+type io import = std.io
 
 fn main() i32 {
     let nums coll.Darr(<i32>) = coll.darr_new(i32, [94, 23])

@@ -2278,6 +2278,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
+    log(LOG_DEBUG, FMT"\n", strv_print(sym_name->mod_path));
+    log(LOG_DEBUG, FMT"\n", strv_print(sym_name->base));
+    log(LOG_DEBUG, "%zu\n", sym_name->gen_args.info.count);
+    if (sym_name->gen_args.info.count > 0) {
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&sym_name->gen_args, 0)));
+    }
     assert(
         sym_name->gen_args.info.count == 0 &&
         "generics are already instanciated, and they should not have been"
