@@ -73,6 +73,7 @@ for generics:
     it could also help to print function name that is problem in actual error (not only in note)
 - test case for:
     io.printf("%.*s:%d:%d\n", #file.count, (#file).buf, #line, #column);
+- allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

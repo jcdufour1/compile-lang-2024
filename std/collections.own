@@ -26,15 +26,14 @@ type Arr struct(<ItemT>) {
 }
 
 fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
-    let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
-    util.assert(buf != unsafe_cast<ItemT*>0, "out of memory", .file = file, .line = line, .column = column)
-    let arr Arr(<ItemT>) = {buf, 0, max_capacity}
+    let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
 fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
-    util.free(unsafe_cast<opaque*>arr.buf);
+    // TODO: remove ItemT explicit parameter below when possible
+    util.free(arr.buf, ItemT);
     arr.buf = unsafe_cast<ItemT*>0
     arr.max = 0
     arr.count = 0
@@ -100,7 +99,8 @@ fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i
 }
 
 fn darr_free(darr Darr(<ItemT>)*, ItemT Type) {
-    util.free(unsafe_cast<opaque*>darr.buf);
+    // TODO: remove ItemT explicit parameter below when possible
+    util.free(darr.buf, ItemT);
     darr.buf = unsafe_cast<ItemT*>0
     darr.count = 0
     darr.capacity = 0
@@ -113,12 +113,13 @@ fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
-            darr.buf = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*darr.capacity)
+            darr.buf = util.alloc(darr.capacity, ItemT)
         } else {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
-            darr.buf = unsafe_cast<ItemT*>util.realloc(unsafe_cast<opaque*>darr.buf, sizeof(ItemT)*darr.capacity)
+            // TODO: remove explicit ItemT when possible
+            darr.buf = util.realloc(darr.buf, darr.capacity, ItemT)
         }
     }
 }

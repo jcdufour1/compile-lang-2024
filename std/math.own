@@ -1,4 +1,5 @@
 type util import = std.util
+type c import = std.libc
 
 fn abs(num NumT, NumT Type) NumT {
     if num < unsafe_cast<NumT>0 {
@@ -20,10 +21,10 @@ fn pow(base BaseT, exponent ExpT, BaseT Type, ExpT Type) BaseT {
 fn sqrt(num NumT, NumT Type) NumT {
     // TODO: consider edge cases such as negative numbers?
     if sizeof(num) <= 4 {
-        return unsafe_cast<NumT>util.sqrtf(unsafe_cast<f32>num)
+        return unsafe_cast<NumT>c.sqrtf(unsafe_cast<f32>num)
     }
     if sizeof(num) <= 8 {
-        return unsafe_cast<NumT>util.sqrt(unsafe_cast<f64>num)
+        return unsafe_cast<NumT>c.sqrt(unsafe_cast<f64>num)
     }
     // TODO: use sqrtl for 128f?
     util.assert(0, "sqrt for numbers larger than f64 is not yet implemented")
@@ -34,10 +35,10 @@ fn sqrt(num NumT, NumT Type) NumT {
 fn log(num NumT, NumT Type) NumT {
     // TODO: consider edge cases such as negative numbers?
     if sizeof(num) <= 4 {
-        return unsafe_cast<NumT>util.logf(unsafe_cast<f32>num)
+        return unsafe_cast<NumT>c.logf(unsafe_cast<f32>num)
     }
     if sizeof(num) <= 8 {
-        return unsafe_cast<NumT>util.log(unsafe_cast<f64>num)
+        return unsafe_cast<NumT>c.log(unsafe_cast<f64>num)
     }
     // TODO: use sqrtl for 128f?
     util.assert(0, "log for numbers larger than f64 is not yet implemented")
