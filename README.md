@@ -1,6 +1,9 @@
 # Compile Lang 2024
 A statically typed systems programming language with modern language features such as sum types, generics, and defer for safe resource management.
 
+## Disclaimer
+the language design and implementation are not finished; there will be breaking changes and bugs
+
 ## Features
 - :white_check_mark: Sum types with pattern matching
 - :white_check_mark: `defer` for automatic cleanup for resources
@@ -11,9 +14,9 @@ A statically typed systems programming language with modern language features su
 ## Example Programs
 ```c
 
-type io import = std.io
+type util import = std.util
 
-fn divide(lhs NumT, rhs NumT, NumT Type) io.Optional(<NumT>) {
+fn divide(lhs NumT, rhs NumT, NumT Type) util.Optional(<NumT>) {
     if rhs == 0 {
         return .none
     }
@@ -29,7 +32,24 @@ fn main() i32 {
 }
 ```
 
-### TODO: defer example
+```c
+
+type coll import = std.collections
+
+fn main() i32 {
+    let nums coll.Darr(<i32>) = coll.darr_new(i32, [94, 23])
+    defer coll.darr_free(&nums)
+
+    coll.arr_append(&nums, 3)
+    coll.arr_append(&nums, 7)
+
+    for idx u64 in 0..nums.count {
+        io.print_num(coll.darr_at(nums, idx))
+    }
+
+    return 0
+}
+```
 
 ## Quickstart
 1. clone the repo
