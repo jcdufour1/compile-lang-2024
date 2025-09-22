@@ -3,7 +3,7 @@ type c import = std.libc
 type coll import = std.collections
 type util import = std.util
 
-extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) opaque*
+extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) i32
 
 type printf def = c.printf
 type puts def = c.puts
