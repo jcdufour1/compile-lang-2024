@@ -12,6 +12,16 @@ void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(rtn->child, gen_param, gen_arg);
 }
 
+void generic_sub_continue(Uast_continue* cont, Name gen_param, Ulang_type gen_arg) {
+    (void) cont;
+    (void) gen_param;
+    (void) gen_arg;
+}
+
+void generic_sub_defer(Uast_defer* defer, Name gen_param, Ulang_type gen_arg) {
+    generic_sub_stmt(defer->child, gen_param, gen_arg);
+}
+
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg) {
     generic_sub_variable_def(def->base, gen_param, gen_arg);
     if (def->is_optional) {
@@ -183,7 +193,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             generic_sub_for_with_cond(uast_for_with_cond_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_CONTINUE:
-            todo();
+            generic_sub_continue(uast_continue_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_ASSIGNMENT:
             generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
             return;
@@ -191,7 +202,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_DEFER:
-            todo();
+            generic_sub_defer(uast_defer_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_YIELD:
             generic_sub_yield(uast_yield_unwrap(stmt), gen_param, gen_arg);
             return;

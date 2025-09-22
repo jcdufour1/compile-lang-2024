@@ -1,0 +1,18 @@
+
+type io import = std.io
+
+fn main() i32 {
+    io.print_str("hello")
+
+    io.print_float(8.7)
+
+    io.print_int(94)
+    
+    io.print_str("hello", .end = ", world\n")
+
+    io.print_float(8.7, .end = " is a float\n")
+
+    io.print_int(94, .end = " is an integer\n")
+
+    return 0
+}

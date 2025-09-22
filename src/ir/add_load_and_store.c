@@ -1029,7 +1029,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         args,
         tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
             old_lit->pos,
-            name_new(sv("std/libc"), sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
             lang_type_new_ux(64)
         ))),
         lang_type_new_ux(64)

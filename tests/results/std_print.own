@@ -1,0 +1,12 @@
+compile::stdout 6
+hello
+8.700000
+94
+hello, world
+8.700000 is a float
+94 is an integer
+
+compile::stderr 0
+
+compile::return_code 0
+

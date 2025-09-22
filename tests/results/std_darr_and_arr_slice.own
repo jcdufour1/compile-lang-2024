@@ -1,0 +1,12 @@
+compile::stdout 6
+hello, world
+, world
+, w
+hello, world
+, world
+, w
+
+compile::stderr 0
+
+compile::return_code 0
+

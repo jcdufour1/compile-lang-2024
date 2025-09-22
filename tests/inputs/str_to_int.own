@@ -1,0 +1,27 @@
+type coll import = std.collections
+type io import = std.io
+
+fn main() i32 {
+    let num i32 = coll.str_to_int("83095", i32)
+    io.print_int(num)
+
+    num = coll.str_to_int("0", i32)
+    io.print_int(num)
+
+    num = coll.str_to_int("-13", i32)
+    io.print_int(num)
+
+    let str coll.Darr(<u8>) = coll.str_from_int(-1)
+    defer coll.darr_free(&str)
+    io.print_str(coll.darr_slice(str))
+
+    let str2 coll.Darr(<u8>) = coll.str_from_int(0)
+    defer coll.darr_free(&str2)
+    io.print_str(coll.darr_slice(str2))
+
+    let str3 coll.Darr(<u8>) = coll.str_from_int(9506)
+    defer coll.darr_free(&str3)
+    io.print_str(coll.darr_slice(str3))
+
+    return 0
+}

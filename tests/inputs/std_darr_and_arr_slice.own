@@ -1,0 +1,47 @@
+
+type io import = std.io
+type coll import = std.collections
+
+fn darr1() {
+    let string coll.Darr(<u8>) = coll.darr_new(u8)
+    defer coll.darr_free(&string)
+
+    io.own_printf(coll.darr_slice(string))
+}
+
+fn darr2() {
+    let string coll.Darr(<u8>) = coll.darr_new(u8, "hello, world\n")
+    defer coll.darr_free(&string)
+
+    io.own_printf(coll.darr_slice(string))
+    io.own_printf(coll.darr_slice(string, 5))
+    io.own_printf(coll.darr_slice(string, 5, .some(3)))
+    io.own_printf("\n")
+}
+
+fn arr1() {
+    let string coll.Arr(<u8>) = coll.arr_new(0, u8)
+    defer coll.arr_free(&string)
+
+    io.own_printf(coll.arr_slice(string))
+}
+
+fn arr2() {
+    let string coll.Arr(<u8>) = coll.arr_new(15, u8, "hello, world\n")
+    defer coll.arr_free(&string)
+
+    io.own_printf(coll.arr_slice(string))
+    io.own_printf(coll.arr_slice(string, 5))
+    io.own_printf(coll.arr_slice(string, 5, .some(3)))
+    io.own_printf("\n")
+}
+
+fn main() i32 {
+    darr1()
+    darr2()
+    arr1()
+    arr2()
+
+    return 0
+}
+

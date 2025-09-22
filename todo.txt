@@ -74,6 +74,11 @@ for generics:
 - test case for:
     io.printf("%.*s:%d:%d\n", #file.count, (#file).buf, #line, #column);
 - allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
+- tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
+- uast_member_access->member_name should be Uast_strv_symbol
+- tast_member_access->member_name should be Tast_strv_symbol
+- ir_member_access->member_name should be Ir_strv_symbol
+- error for using `def` in std/runtime.own (or figure out way to make defs work there)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -115,7 +120,7 @@ for generics:
 continue(<thing>)
 -tests for ir printing
 -consider if this is good enough syntax for passing generic function callback:
-add_fn(<i16>)
+    add_fn(<i16>)
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
 - figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
