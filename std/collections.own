@@ -4,11 +4,15 @@ type io import = std.io
 type rt import = std.runtime
 
 type Slice def = rt.Slice
+type Str def = Slice(<u8>)
+
+fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file u8* = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+    util.assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return {&slice.buf[start], count}
+}
 
 fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type) ItemT {
-    if (index >= slice.count) {
-        util.abort()
-    }
+    util.assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return slice.buf[index]
 }
 

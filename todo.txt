@@ -69,6 +69,8 @@ for generics:
 - expected failure case for generic argument having default argument
 - expected failure case for invalid return type or parameter types for main function
 - more util functions should be in .c file instead of .h file to make things easier
+- see if error for invalid function arg type can print both dest and src to reduce confusion
+    it could also help to print function name that is problem in actual error (not only in note)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -143,7 +145,7 @@ add_fn(<i16>)
 - make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
 - make print functions check for null and print <null> or something instead of seg fault
 - figure out if I should de-duplilcate string literals, etc.
-- strings should actually be their own type (not just u8*) (maybe slice with null termination)
+- strings should be slice by default instead of u8* to allow for better type inference
 - fix printing for lang_type in msg to not put newline
 - actually use newline to end statement depending on last token of line of line
 - expected failure case for invalid type in extern "c" function
