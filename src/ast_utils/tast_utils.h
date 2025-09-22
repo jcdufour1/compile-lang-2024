@@ -164,6 +164,28 @@ static inline void tast_operator_set_lang_type(Tast_operator* operator, Lang_typ
     }
 }
 
+static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
+    if (str->is_cstr) {
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(
+            lang_type_char_new(
+                str->pos,
+                lang_type_atom_new_from_cstr("u8", 1, 0)
+            )
+        ));
+    }
+
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
+
+
+    return lang_type_struct_const_wrap(lang_type_struct_new(
+        str->pos,
+        lang_type_atom_new(name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL), 0)
+    ));
+}
+
 static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_INT:
@@ -171,7 +193,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_FLOAT:
             return tast_float_const_unwrap(lit)->lang_type;
         case TAST_STRING:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1, 0))));
+            return tast_string_get_lang_type(tast_string_const_unwrap(lit));
         case TAST_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
         case TAST_ENUM_TAG_LIT:

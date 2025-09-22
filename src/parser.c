@@ -319,9 +319,16 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
+    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
+
+    unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
+        mod_path_pos,
+        NULL,
+        mod_path
+    ))));
 
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
@@ -331,11 +338,12 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         goto finish;
     }
 
-    unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
+    usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
         mod_path
-    ))));
+    )));
+
 
 finish:
     curr_mod_path = old_mod_path;
@@ -3045,7 +3053,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
-    log(LOG_DEBUG, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
+    //log(LOG_DEBUG, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
@@ -3124,6 +3132,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         status = false;
         goto error;
     }
+    log(LOG_DEBUG, FMT"\n", strv_print(file_path));
     unwrap(file_path_to_text_tbl_add(file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
     Token_vec tokens = {0};
