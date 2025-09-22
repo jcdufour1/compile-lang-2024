@@ -1,57 +1,33 @@
+type rt import = std.runtime
+type c import = std.libc
+type coll import = std.collections
+type util import = std.util
 
-extern("c") fn puts(format_string u8*) i32
-extern("c") fn printf(format_string u8*, args opaque...) i32
-extern("c") fn isdigit(character i32) i32
-extern("c") fn abort()
-extern("c") fn fopen(file_path u8*, flags u8*) opaque*
-extern("c") fn malloc(size u64) opaque*
+extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) i32
 
-type Token struct {
-    num i32
+type printf def = c.printf
+type puts def = c.puts
+type fopen def = c.fopen
+
+fn print_str_internal__(str coll.Str) {
+    own_printf("%.*s", str.count, str.buf)
 }
 
-type Optional enum(<ItemType>) {
-    some ItemType
-    none
+fn print_str(str coll.Str, end coll.Str = "\n") {
+    print_str_internal__(str)
+    print_str_internal__(end)
 }
 
-type Slice struct(<ItemType>) {
-    items ItemType*
-    count u64
+fn print_float(num NumT, end coll.Str = "\n", NumT Type) {
+    let cond u1 = num < 0.1 // this condition is to give errors for using non float type (for now)
+    own_printf("%f", num)
+    print_str_internal__(end)
 }
 
-fn slice_at(slice Slice(<ItemType>), index u64, ItemType Type) ItemType {
-    if (index >= slice.count) {
-        abort()
-    }
-    return slice.items[index]
-}
-
-fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, line i32 = #line, column i32 = #column) {
-    if (!condition) {
-        printf("%s:%d:%d:assertion failure: %s\n", file, line, column, message)
-        if (!keep_going) {
-            abort()
-        }
-    }
-}
-
-type Arr struct(<ItemT>) {
-    buf ItemT*
-    count u64
-    max u64
-}
-
-// TODO: change Arr(<ItemT>) to Arr(<ItemT>)*
-fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type) Arr(<ItemT>) {
-    assert(arr.count < arr.max, "arr overflow");
-    arr.buf[arr.count] = item
-    arr.count += 1
-    return arr
-}
-
-fn arr_first(arr Arr(<ItemT>), ItemT Type) ItemT {
-    assert(arr.count > 0, "out of bounds");
-    return arr.buf[0];
+fn print_int(num NumT, end coll.Str = "\n", NumT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+    let cond u1 = num < 1 // this condition is to give errors for using non int type (for now)
+    util.assert(sizeof(num) <= 8, "bit widths larger than 8 not implemented", .file = file, .line = line, .column = column)
+    own_printf("%lld", unsafe_cast<i64>num)
+    print_str_internal__(end)
 }
 

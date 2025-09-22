@@ -3,9 +3,9 @@
 #include <ulang_type.h>
 #include <name.h>
 
-Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope) {
+Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
     Name temp = {0};
-    unwrap(name_from_uname( &temp, atom.str));
+    unwrap(name_from_uname(&temp, atom.str, pos));
     Strv serialized = {0};
     if (include_scope) {
         serialized = serialize_name(temp);
@@ -40,7 +40,7 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
-    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope), (Ulang_type_vec) {0}, 0 /* TODO */);
+    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, 0 /* TODO */);
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {

@@ -1,0 +1,54 @@
+type io import = std.io
+type rt import = std.runtime
+type coll import = std.collections
+type c import = std.libc
+
+type Optional enum(<ItemT>) {
+    some ItemT
+    none
+}
+
+// TODO: make null function or similar
+
+// overlapping regions are allowed
+// count_items is the number of items to move, not the number of bytes
+fn move_items(dest ItemT*, src ItemT*, count_items u64, ItemT Type) {
+    c.memmove(unsafe_cast<opaque*>dest, unsafe_cast<opaque*>src, sizeof(ItemT)*count_items);
+}
+
+fn null(ItemT Type) ItemT* {
+    return unsafe_cast<ItemT*>0
+}
+
+// TODO: return optional, etc.?
+fn alloc(count_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    let buf ItemT* = unsafe_cast<ItemT*>c.malloc(sizeof(ItemT)*count_items)
+    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
+    return buf
+}
+
+// TODO: return optional, etc.?
+fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    buf = unsafe_cast<ItemT*>c.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
+    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
+    return buf
+}
+
+fn free(buf ItemT*, ItemT Type) {
+    c.free(unsafe_cast<opaque*>buf)
+}
+
+// TODO: remove keep_going parameter from std?
+fn assert(condition u1, message coll.Str = "", keep_going u1 = 0, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+    if (!condition) {
+        // TODO: print to stderr
+        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", file.count, file.buf, line, column, message)
+        if (!keep_going) {
+            c.abort()
+        }
+    }
+}
+
+fn slice_from_cstr(cstr u8*) rt.Slice(<u8>) {
+    return {cstr, strlen(cstr)}
+}

@@ -68,6 +68,17 @@ for generics:
 - expected failure test for more than one generic parameter with the same name?
 - expected failure case for generic argument having default argument
 - expected failure case for invalid return type or parameter types for main function
+- more util functions should be in .c file instead of .h file to make things easier
+- see if error for invalid function arg type can print both dest and src to reduce confusion
+    it could also help to print function name that is problem in actual error (not only in note)
+- test case for:
+    io.printf("%.*s:%d:%d\n", #file.count, (#file).buf, #line, #column);
+- allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
+- tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
+- uast_member_access->member_name should be Uast_strv_symbol
+- tast_member_access->member_name should be Tast_strv_symbol
+- ir_member_access->member_name should be Ir_strv_symbol
+- error for using `def` in std/runtime.own (or figure out way to make defs work there)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -109,7 +120,7 @@ for generics:
 continue(<thing>)
 -tests for ir printing
 -consider if this is good enough syntax for passing generic function callback:
-add_fn(<i16>)
+    add_fn(<i16>)
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
 - figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
@@ -142,11 +153,43 @@ add_fn(<i16>)
 - make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
 - make print functions check for null and print <null> or something instead of seg fault
 - figure out if I should de-duplilcate string literals, etc.
-- strings should actually be their own type (not just u8*) (maybe slice with null termination)
-- support alternative backend (such as qbe, cuik)
+- strings should be slice by default instead of u8* to allow for better type inference
 - fix printing for lang_type in msg to not put newline
 - actually use newline to end statement depending on last token of line of line
 - expected failure case for invalid type in extern "c" function
+- when showing error for file not opening while importing module, show note for import location
+- figure out why this function causes compiler to crash ("column = column" used instead of ".column = column"):
+    fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+        let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
+        util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
+        let arr Arr(<ItemT>) = {buf, 0, max_capacity}
+        arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
+        return arr
+    }
+- test case for local struct with the same base name (Name->base) as std struct, and use std struct (be sure that compiler actually differenciates between the two)
+    eg. (coll.arr_new accepts std::collections::Slice)
+    type coll import = std.collections
+    type Slice struct(<ItemT>) {
+        buf ItemT*
+        count u64
+    }
+    fn main() i32 {
+        let slice coll.Slice(<i32>) = [9, 8]
+        let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, slice)
+        return 0
+    }
+- expected failure test case for:
+    fn main() i32 {
+        return 0
+    }
+    }
+- allow if body (single statement) to be on the same line as if condition using => or similar
+    this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
+    this way => can also be used in switch, function definition, etc.
+- check for return statement on all code paths
+
+
+
 
 
 
@@ -166,6 +209,7 @@ add_fn(<i16>)
 - when generics are mature, use them to associate custom allocators with things
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
+- support alternative backend
 
 # in the far future
 - try catch blocks with the question operator or similar

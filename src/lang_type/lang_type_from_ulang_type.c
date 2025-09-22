@@ -33,16 +33,17 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_GEN_PARAM:
-            unreachable("ulang_type_gen_param should not be converted from ulang_type to lang_type");
+            // TODO: print error?
+            return false;
     }
     unreachable("");
 }
 
-bool name_from_uname(Name* new_name, Uname name) {
+bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     assert(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    unwrap(usymbol_lookup(
+    if (!usymbol_lookup(
         &alias_,
         name_new(
             name.mod_alias.mod_path,
@@ -50,7 +51,17 @@ bool name_from_uname(Name* new_name, Uname name) {
             (Ulang_type_vec) {0},
             name.mod_alias.scope_id
         )
-    ));
+    )) {
+        msg(
+            DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
+            name_print(NAME_MSG, name_new(name.mod_alias.mod_path,
+                name.mod_alias.base,
+                (Ulang_type_vec) {0},
+                name.mod_alias.scope_id
+            ))
+        );
+        return false;
+    }
 
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {

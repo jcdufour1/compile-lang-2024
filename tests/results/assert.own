@@ -1,6 +1,6 @@
 compile::stdout 2
-tests/inputs/assert.own:5:43
-tests/inputs/assert.own:6:7:assertion failure: hello
+tests/inputs/assert.own:8:60
+tests/inputs/assert.own:9:9:assertion failure: hello
 
 compile::stderr 0
 

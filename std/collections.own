@@ -1,0 +1,250 @@
+
+type util import = std.util
+type io import = std.io
+type rt import = std.runtime
+
+type Slice def = rt.Slice
+type Str def = Slice(<u8>)
+
+// TODO: make alloc function instead of using malloc directly
+
+fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+    if count < 1 {
+        return {util.null(ItemT), 0}
+    }
+    util.assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return {&slice.buf[start], count}
+}
+
+fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return slice.buf[index]
+}
+
+// TODO: count and max should be usize by default when usize is implemented
+type Arr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+    max u64
+}
+
+fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+    let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
+    arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
+    return arr
+}
+
+fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+    let actual_count u64 = arr.count - start
+    if let .some(num) = count {
+        actual_count = num
+    }
+    let slice Slice(<ItemT>) = {arr.buf, arr.count}
+    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    // TODO: uncomment below line (figure out why it will not compile)
+    //return slice_range({arr.buf, arr.count}, start, actual_count)
+}
+
+fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
+    // TODO: remove ItemT explicit parameter below when possible
+    util.free(arr.buf, ItemT);
+    arr.buf = util.null(ItemT) 
+    arr.max = 0
+    arr.count = 0
+}
+
+fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
+    util.assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    if (arr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&arr.buf[index + 1], &arr.buf[index], arr.count - index, ItemT);
+    }
+    arr.buf[index] = item
+    arr.count += 1
+}
+
+fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    util.assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
+    arr.buf[arr.count] = item
+    arr.count += 1
+}
+
+fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    for idx u64 in 0..src.count {
+        arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+    }
+}
+
+fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    util.assert(arr.count > 0, "attempt to remove element from empty array", .file = file, .line = line, .column = column);
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    arr.count -= 1
+    if (arr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&arr.buf[index], &arr.buf[index + 1], arr.count - index, ItemT);
+    }
+}
+
+fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return arr.buf[index]
+}
+
+fn arr_first(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    return arr_at(arr, 0, .file = file, .line = line, .column = column)
+}
+
+fn arr_last(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return arr.buf[arr.count - 1]
+}
+
+type Darr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+    capacity u64
+}
+
+fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
+    let darr Darr(<ItemT>) = {util.null(ItemT), 0, 0}
+    darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
+    return darr
+}
+
+fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+    let actual_count u64 = darr.count - start
+    if let .some(num) = count {
+        actual_count = num
+    }
+    let slice Slice(<ItemT>) = {darr.buf, darr.count}
+    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    // TODO: uncomment below line (figure out why it will not compile)
+    //return slice_range({darr.buf, darr.count}, start, actual_count)
+}
+
+fn darr_free(darr Darr(<ItemT>)*, ItemT Type) {
+    // TODO: remove ItemT explicit parameter below when possible
+    util.free(darr.buf, ItemT);
+    darr.buf = util.null(ItemT)
+    darr.count = 0
+    darr.capacity = 0
+}
+
+// TODO: pass line, etc. in here or return optional instead of failing for out of memory
+fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
+    if darr.count + count_items_to_add > darr.capacity {
+        if darr.capacity < 1 {
+            darr.capacity = 1 // TODO: initial capacity should probably be higher than 1?
+            for darr.count + count_items_to_add > darr.capacity {
+                darr.capacity *= 2
+            }
+            darr.buf = util.alloc(darr.capacity, ItemT)
+        } else {
+            for darr.count + count_items_to_add > darr.capacity {
+                darr.capacity *= 2
+            }
+            // TODO: remove explicit ItemT when possible
+            darr.buf = util.realloc(darr.buf, darr.capacity, ItemT)
+        }
+    }
+}
+
+fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    darr_reserve(darr, 1);
+    util.assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
+    if (darr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&darr.buf[index + 1], &darr.buf[index], darr.count - index, ItemT);
+    }
+    darr.buf[index] = item
+    darr.count += 1
+}
+
+fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    darr_reserve(darr, 1);
+    darr.buf[darr.count] = item
+    darr.count += 1
+}
+
+fn darr_extend(dest Darr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    for idx u64 in 0..src.count {
+        darr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+    }
+}
+
+// TODO: return item removed?
+fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    util.assert(darr.count > 0, "attempt to remove element from empty dynamic array", .file = file, .line = line, .column = column);
+    util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
+    darr.count -= 1
+    if (darr.count - index > 0) {
+        // TODO: fix type inference bug, then remove explicit ItemT arguent here
+        util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index, ItemT);
+    }
+}
+
+fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return darr.buf[index]
+}
+
+fn darr_first(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    return darr_at(darr, 0, .file = file, .line = line, .column = column)
+}
+
+fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return darr.buf[darr.count - 1]
+}
+
+// TODO: return result, optional, etc. instead of crashing?
+// TODO: check for overflow
+fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) NumT {
+    let should_neg u1 = 0
+    if slice_at(str, 0, .file = file, .line = line, .column = column) == '-' {
+        should_neg = 1
+        str = slice_range(str, 1, str.count - 1)
+    }
+
+    let result NumT = 0
+    for idx u64 in 0..str.count {
+        result *= 10
+
+        let curr u8 = slice_at(str, idx, .file = file, .line = line, .column = column)
+        util.assert(curr >= '0' && curr <= '9', "str contains nonzero digits", .file = file, .line = line, .column = column)
+        result += curr - '0'
+    }
+
+    if should_neg {
+        result *= -1
+    }
+
+    return result
+}
+
+// TODO: return result, optional, etc. instead of crashing?
+fn str_from_int(num NumT, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) Darr(<u8>) {
+    let result Darr(<u8>) = darr_new(u8)
+    if num == 0 {
+        darr_append(&result, '0')
+        return result
+    }
+
+    let should_neg u1 = 0
+    if num < 0 {
+        should_neg = 1
+        num *= unsafe_cast<NumT>-1
+    }
+
+    for num > 0 {
+        // TODO: try to avoid insert at start of darr?
+        darr_insert(&result, '0' + unsafe_cast<u8>(num%10), 0)
+        num /= 10
+    }
+    if should_neg {
+        darr_insert(&result, '-', 0)
+    }
+    return result
+}
+

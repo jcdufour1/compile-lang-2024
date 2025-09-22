@@ -123,11 +123,19 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
     );
 }
 
+Uast_struct_literal* uast_struct_literal_clone(const Uast_struct_literal* lit, Scope_id new_scope, Pos dest_pos) {
+    return uast_struct_literal_new(
+        lit->pos,
+        uast_expr_vec_clone(lit->members, new_scope, dest_pos)
+    );
+}
+
 Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, Scope_id new_scope, Pos dest_pos) {
     return uast_tuple_new(tuple->pos, uast_expr_vec_clone(tuple->members, new_scope, dest_pos));
 }
 
 Uast_macro* uast_macro_clone(const Uast_macro* macro, Scope_id new_scope, Pos dest_pos) {
+    (void) new_scope;
     return uast_macro_new(macro->pos, macro->name, dest_pos);
 }
 
@@ -204,7 +212,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_p
         case UAST_FUNCTION_CALL:
             return uast_function_call_wrap(uast_function_call_clone(uast_function_call_const_unwrap(expr), new_scope, dest_pos));
         case UAST_STRUCT_LITERAL:
-            todo();
+            return uast_struct_literal_wrap(uast_struct_literal_clone(uast_struct_literal_const_unwrap(expr), new_scope, dest_pos));
         case UAST_TUPLE:
             return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr), new_scope, dest_pos));
         case UAST_ENUM_ACCESS: // TODO: remove uast_enum_access if not used
@@ -218,7 +226,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope, Pos dest_p
         case UAST_IF_ELSE_CHAIN:
             return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(expr), new_scope, dest_pos));
         case UAST_ARRAY_LITERAL:
-            todo();
+            return uast_array_literal_wrap(uast_array_literal_clone(uast_array_literal_const_unwrap(expr), new_scope, dest_pos));
     }
     unreachable("");
 }
@@ -294,6 +302,10 @@ Uast_return* uast_return_clone(const Uast_return* rtn, Scope_id new_scope, Pos d
 
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, Scope_id new_scope, Pos dest_pos) {
     return uast_if_else_chain_new(if_else->pos, uast_if_vec_clone(if_else->uasts, new_scope, dest_pos));
+}
+
+Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, Scope_id new_scope, Pos dest_pos) {
+    return uast_array_literal_new(if_else->pos, uast_expr_vec_clone(if_else->members, new_scope, dest_pos));
 }
 
 Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, Scope_id new_scope, Pos dest_pos) {

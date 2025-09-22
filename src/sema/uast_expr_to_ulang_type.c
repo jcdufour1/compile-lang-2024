@@ -4,15 +4,15 @@
 bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_BLOCK:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_SWITCH:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_UNKNOWN:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_OPERATOR:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_SYMBOL: {
             Name sym_name = uast_symbol_const_unwrap(expr)->name;
             *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
@@ -27,25 +27,25 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
             return true;
         }
         case UAST_MEMBER_ACCESS:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_INDEX:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_LITERAL:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_FUNCTION_CALL:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_STRUCT_LITERAL:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_ARRAY_LITERAL:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_TUPLE:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_MACRO:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_ENUM_ACCESS:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
         case UAST_ENUM_GET_TAG:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
     }
     unreachable("");
 }

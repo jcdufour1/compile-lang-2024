@@ -302,9 +302,7 @@ bool usym_tbl_add(Uast_def* item) {
 }
 
 void usym_tbl_update(Uast_def* item) {
-    (void) item;
-    todo();
-    //generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table(uast_def_get_name(item)), item);
+    generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, uast_def_get_name(item).scope_id)->usymbol_table, serialize_name_symbol_table(uast_def_get_name(item)), item);
 }
 
 bool usym_tbl_lookup(Uast_def** result, Name key) {

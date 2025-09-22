@@ -1,0 +1,18 @@
+type io import = std.io
+type util import = std.util
+type coll import = std.collections
+
+fn main() i32 {
+    let string coll.Str = "num = 8"
+
+    io.printf("num2 = %d\n", 10)
+    io.own_printf("hello\n")
+
+    io.own_printf(coll.slice_range("thing", 0, 3, u8))
+    io.own_printf("\n")
+
+    io.own_printf(coll.slice_range("a computer is a thing", 2, 8))
+    io.own_printf("\n")
+
+    return 0
+}

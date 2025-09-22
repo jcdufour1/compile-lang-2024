@@ -11,6 +11,7 @@
 #include <symbol_log.h>
 #include <msg_todo.h>
 #include <symbol_iter.h>
+#include <expand_lang_def.h>
 
 static bool is_in_struct_base_def;
 
@@ -283,6 +284,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             *type = LANG_TYPE_VOID;
             return true;
         case UAST_LANG_DEF:
+            log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
             todo();
@@ -292,6 +294,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             todo();
         case UAST_GENERIC_PARAM:
             // TODO: explain why it is unreachable
+            log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             unreachable("");
         case UAST_FUNCTION_DEF:
             todo();
@@ -308,13 +311,17 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
 bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
-    if (!name_from_uname(&name_base, lang_type.atom.str)) {
-        todo();
+    if (!name_from_uname(&name_base, lang_type.atom.str, lang_type.pos)) {
+        return false;
+    }
+
+    Ulang_type_regular new_lang_type = {0};
+    if (!expand_def_ulang_type_regular(&new_lang_type, lang_type, lang_type.pos /* TODO */)) {
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
-        msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+        msg_undefined_type(new_lang_type.pos, ulang_type_regular_const_wrap(new_lang_type));
         return false;
     }
 
@@ -322,7 +329,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         type,
         result,
         before_res,
-        ulang_type_regular_const_wrap(lang_type)
+        ulang_type_regular_const_wrap(new_lang_type)
     );
 }
 
@@ -468,6 +475,11 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
+    // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
+    if (!expand_def_function_def(def)) {
+        return false;
+    }
+
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
 

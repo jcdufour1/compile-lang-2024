@@ -1,10 +1,11 @@
 type io import = std.io
+type coll import = std.collections
 
 fn main() i32 {
-    let slice io.Slice(<i32>) = [87, 131]
+    let slice coll.Slice(<i32>) = [87, 131]
 
-    io.printf("%d\n", io.slice_at(slice, 0, i32))
-    io.printf("%d\n", io.slice_at(slice, 1, i32))
+    io.printf("%d\n", coll.slice_at(slice, 0, i32))
+    io.printf("%d\n", coll.slice_at(slice, 1, i32))
 
     return 0
 }

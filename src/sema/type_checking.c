@@ -205,12 +205,37 @@ static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, 
     return can_be_implicitly_converted(*dest.return_type, *src.return_type, false, implicit_pointer_depth);
 }
 
+// TODO: this function should also actually do the implicit conversion I think
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
+
+    if (dest.type != LANG_TYPE_PRIMITIVE) {
+        goto next;
+    } 
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_CHAR && lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
+        goto next;
+    } 
+    if (lang_type_get_pointer_depth(dest) != 1) {
+        goto next;
+    } 
+    if (src.type != LANG_TYPE_STRUCT) {
+        goto next;
+    } 
+
+    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+        goto next;
+    }
+    return true;
+
+next:
     if (dest.type != src.type) {
         return false;
     }
 
-    switch (dest.type) {
+    switch (src.type) {
         case LANG_TYPE_FN:
             return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_TUPLE:
@@ -448,6 +473,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     unreachable("");
 }
 
+// TODO: rename to check_general_assignment
+// TODO: make src/sema/check_general_assignment.own, and also put can_be_implicitly_converted in there?
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Tast_expr** new_src,
     Lang_type dest_lang_type,
@@ -525,7 +552,8 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             Uast_string* old_string = uast_string_unwrap(literal);
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
-                old_string->data
+                old_string->data,
+                false
             ));
         }
         case UAST_INT: {
@@ -1308,11 +1336,11 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
-            if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
+            if (!strv_is_equal(memb_def->name.base, lhs->member_name->name.base)) {
                 msg(
                     DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."FMT" =`, got `."FMT" =`\n", 
-                    strv_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
+                    strv_print(memb_def->name.base), strv_print(lhs->member_name->name.base)
                 );
                 return false;
             }
@@ -1570,8 +1598,6 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_tuple_wrap(new_call);
             return true;
         }
-        case UAST_STRUCT_LITERAL:
-            unreachable("");
         case UAST_ENUM_ACCESS: {
             Tast_enum_access* new_access = NULL;
             if (!try_set_enum_access_types(&new_access, uast_enum_access_unwrap(uast))) {
@@ -1605,6 +1631,8 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_ARRAY_LITERAL:
+            unreachable("");
+        case UAST_STRUCT_LITERAL:
             unreachable("");
     }
     unreachable("");
@@ -2381,8 +2409,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
+            log(LOG_DEBUG, "before\n");
+            // TODO: Uast_param should have Strv instead of name to prevent some bugs and make things simplier?
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
-                if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx_param)->base->name));
+                if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     size_t actual_arg_count = curr_arg_count;
                     param = vec_at(&params->params, idx_param);
                     curr_arg_count = idx_param;
@@ -2415,8 +2446,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
             }
             if (!name_found) {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name));
                 msg(
-                    DIAG_INVALID_MEMBER_ACCESS,
+                    DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                     lhs->pos,
                     "`"FMT"` is not a parameter of function `"FMT"`\n", 
                     strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
@@ -2456,8 +2488,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         sym_name->gen_args = new_gens;
 
-        Tast_expr* new_arg = NULL;
-
         if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
@@ -2474,7 +2504,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             status = false;
             goto error;
         }
-        *vec_at_ref(&new_args, curr_arg_count) = new_arg;
+        
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
@@ -2486,7 +2516,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     size_t idx_gen_param = 0;
     bool incre_param_next = false;
-    for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
+    for (size_t idx = 0; status && idx < params->params.info.count; idx++) {
         if (incre_param_next) {
             idx_gen_param++;
         }
@@ -2530,10 +2560,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
                                 arg_to_infer_from->type == TAST_LITERAL,
-                                vec_at(&params->params, idx_gen_param)->base,
+                                vec_at(&params->params, param_idx)->base,
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
+                                log(LOG_DEBUG, FMT"\n", tast_expr_print(arg_to_infer_from));
+                                log(LOG_DEBUG, "thing 86: idx_gen_param = %zu, : "FMT"\n", idx_gen_param, name_print(NAME_LOG, param_name));
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
@@ -2773,7 +2805,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     local_gen_count++;
                 }
 
-                if (name_is_equal(vec_at(&params->params, idx_param)->base->name, lhs->member_name->name)) {
+                if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     param = vec_at(&params->params, idx_param);
                     curr_arg_count = idx_param - local_gen_count;
                     name_found = true;
@@ -2844,7 +2876,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             status = false;
             goto error;
         }
+        assert(new_arg);
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
+        assert(vec_at(&new_args, curr_arg_count));
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
     }
 
@@ -2860,30 +2894,37 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 status = false;
                 continue;
             }
-            assert(!vec_at(&new_args_set, idx));
+            assert(vec_at(&new_args, idx));
             *vec_at_ref(&new_args_set, idx) = true;
         }
     } else {
         assert(new_args_set.info.count == new_args.info.count);
-        for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
-            if (!vec_at(&new_args_set, idx)) {
+        size_t gen_arg_count = 0;
+        for (size_t idx = 0; idx < params->params.info.count; idx++) {
+            if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                gen_arg_count++;
+                continue;
+            }
+
+            if (!vec_at(&new_args_set, idx - gen_arg_count)) {
                 // TODO: move error for function parameter unspecified to here?
                 if (vec_at(&params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
-                    *vec_at_ref(&new_args_set, idx) = true;
+                    *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
                     switch (check_generic_assignment(
-                        vec_at_ref(&new_args, idx),
+                        vec_at_ref(&new_args, idx - gen_arg_count),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
                         new_default_,
                         uast_expr_get_pos(new_default_)
                     )) {
                         case CHECK_ASSIGN_OK:
+                            assert(vec_at(&new_args, idx - gen_arg_count));
                             break;
                         case CHECK_ASSIGN_INVALID:
                             msg_invalid_function_arg(
-                                vec_at(&new_args, idx),
+                                vec_at(&new_args, idx - gen_arg_count),
                                 vec_at(&params->params, idx)->base,
                                 is_fun_callback
                             );
@@ -2900,12 +2941,23 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
+    if (!status) {
+        goto error;
+    }
+
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,
         new_args,
         new_callee,
         fun_rtn_type
     ));
+    log(LOG_DEBUG, "%zu "FMT"\n", new_args.info.count, name_print(NAME_MSG, fun_name));
+    for (size_t idx = 0; idx < new_args.info.count; idx++) {
+        assert(vec_at(&new_args_set, idx));
+        log(LOG_DEBUG, "thing 8\n");
+        assert(vec_at(&new_args, idx));
+        log(LOG_DEBUG, "thing 9\n");
+    }
 
 error:
     return status;
@@ -2913,7 +2965,7 @@ error:
 
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (strv_is_equal(macro->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path)));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
         return true;
     } else if (strv_is_equal(macro->name, sv("line"))) {
         *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
