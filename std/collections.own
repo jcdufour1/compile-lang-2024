@@ -197,3 +197,54 @@ fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line,
     util.assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     return darr.buf[darr.count - 1]
 }
+
+// TODO: return result, optional, etc. instead of crashing?
+// TODO: check for overflow
+fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) NumT {
+    let should_neg u1 = 0
+    if slice_at(str, 0, .file = file, .line = line, .column = column) == '-' {
+        should_neg = 1
+        str = slice_range(str, 1, str.count - 1)
+    }
+
+    let result NumT = 0
+    for idx u64 in 0..str.count {
+        result *= 10
+
+        let curr u8 = slice_at(str, idx, .file = file, .line = line, .column = column)
+        util.assert(curr >= '0' && curr <= '9', "str contains nonzero digits", .file = file, .line = line, .column = column)
+        result += curr - '0'
+    }
+
+    if should_neg {
+        result *= -1
+    }
+
+    return result
+}
+
+// TODO: return result, optional, etc. instead of crashing?
+fn str_from_int(num NumT, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) Darr(<u8>) {
+    let result Darr(<u8>) = darr_new(u8)
+    if num == 0 {
+        darr_append(&result, '0')
+        return result
+    }
+
+    let should_neg u1 = 0
+    if num < 0 {
+        should_neg = 1
+        num *= unsafe_cast<NumT>-1
+    }
+
+    for num > 0 {
+        // TODO: try to avoid insert at start of darr?
+        darr_insert(&result, '0' + unsafe_cast<u8>(num%10), 0)
+        num /= 10
+    }
+    if should_neg {
+        darr_insert(&result, '-', 0)
+    }
+    return result
+}
+
