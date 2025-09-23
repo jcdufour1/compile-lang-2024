@@ -210,10 +210,12 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
     unreachable("");
 }
 
-Name name_clone(Name name, Scope_id new_scope) {
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, new_scope), new_scope);
+Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
+    Scope_id scope = use_new_scope ? new_scope : name.scope_id;
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
-Uname uname_clone(Uname name, Scope_id new_scope) {
-    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, new_scope), new_scope);
+Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
+    Scope_id scope = use_new_scope ? new_scope : name.scope_id;
+    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
 }

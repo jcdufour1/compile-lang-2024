@@ -163,7 +163,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             todo();
     }
 
-    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, name.scope_id, dest_pos);
+    // TODO: this clone is expensive I think
+    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
     switch (expr->type) {
         case UAST_BLOCK:
             todo();

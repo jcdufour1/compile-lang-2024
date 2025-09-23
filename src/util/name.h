@@ -57,9 +57,9 @@ void extend_name(NAME_MODE mode, String* buf, Name name);
 
 void extend_name_log_internal(bool is_msg, String* buf, Name name);
 
-Name name_clone(Name name, Scope_id scope_id);
+Name name_clone(Name name, bool use_new_scope, Scope_id new_scope);
 
-Uname uname_clone(Uname name, Scope_id scope_id);
+Uname uname_clone(Uname name, bool use_new_scope, Scope_id scope_id);
 
 #define name_print(mode, name) strv_print(name_print_internal(mode, false, name))
 

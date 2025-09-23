@@ -28,7 +28,6 @@
 #include <check_struct_recursion.h>
 #include <uast_expr_to_ulang_type.h>
 #include <infer_generic_type.h>
-#include <uast_get_scope_id.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -1770,7 +1769,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(parent_of_operand, sym->name.scope_id, enum_case->pos)
+                    uast_expr_clone(parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
                 ))
             );
 
@@ -1997,7 +1996,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
         } else if (param->is_optional) {
             unwrap(!is_variadic);
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+            corres_arg = uast_expr_clone(param->optional_default, false, 0, fun_call->pos);
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
@@ -2149,7 +2148,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     unwrap(!is_variadic);
                     *vec_at_ref(&new_args_set, idx) = true;
                     // TODO: expected failure case for invalid optional_default
-                    Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+                    Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
                     switch (check_generic_assignment(
                         vec_at_ref(&new_args, idx),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
@@ -2218,11 +2217,7 @@ error:
 
 // TODO: there is a lot of duplication between try_set_function_call_types and try_set_function_call_types_old
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
-    Scope_id new_scope = 0;
-    if (!uast_function_call_get_scope_id(&new_scope, fun_call)) {
-        return try_set_function_call_types_old(new_call, fun_call);
-    }
-    fun_call = uast_function_call_clone(fun_call, new_scope, fun_call->pos /* TODO */);
+    fun_call = uast_function_call_clone(fun_call, false, 0, fun_call->pos /* TODO */);
 
     Name* sym_name = NULL;
     switch (fun_call->callee->type) {
@@ -2406,7 +2401,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else if (param->is_optional) {
             unwrap(!is_variadic);
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+            corres_arg = uast_expr_clone(param->optional_default, false, 0/* fun_name.scope_id TODO */, fun_call->pos);
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
@@ -2800,7 +2795,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else if (param->is_optional) {
             unwrap(!is_variadic);
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+            corres_arg = uast_expr_clone(param->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
@@ -2929,7 +2924,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     unwrap(!is_variadic);
                     *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
                     // TODO: expected failure case for invalid optional_default
-                    Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
+                    Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
                     switch (check_generic_assignment(
                         vec_at_ref(&new_args, idx - gen_arg_count),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
@@ -3783,7 +3778,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     Tast_if_vec new_ifs = {0};
 
     Tast_expr* new_operand = NULL;
-    if (!try_set_expr_types(&new_operand, uast_expr_clone(lang_switch->operand, vec_at(&lang_switch->cases, 0)->scope_id, lang_switch->pos /* TODO */))) {
+    if (!try_set_expr_types(&new_operand, uast_expr_clone(lang_switch->operand, false, 0, lang_switch->pos /* TODO */))) {
         return false;
     }
 
@@ -3819,7 +3814,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         switch (tast_expr_get_lang_type(new_operand).type) {
             case LANG_TYPE_ENUM:
                 operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
-                    uast_expr_get_pos(lang_switch->operand), uast_expr_clone(lang_switch->operand, old_case->scope_id, lang_switch->pos /* TODO */)
+                    uast_expr_get_pos(lang_switch->operand), uast_expr_clone(lang_switch->operand, true/*TODO*/, old_case->scope_id, lang_switch->pos /* TODO */)
                 ));
                 break;
             default:
