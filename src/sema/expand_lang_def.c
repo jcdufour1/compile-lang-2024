@@ -173,10 +173,26 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
             new_name->gen_args = name.gen_args;
             *new_expr = uast_member_access_wrap(access);
+<<<<<<< Updated upstream
 
             log(LOG_DEBUG, FMT"\n", strv_print(name.mod_path));
             log(LOG_DEBUG, FMT"\n", strv_print(name.base));
             return EXPAND_NAME_NEW_EXPR;
+=======
+            if (access->callee->type != UAST_SYMBOL) {
+                return EXPAND_NAME_NEW_EXPR;
+            }
+
+            Uast_def* lhs_def = NULL;
+            unwrap(usymbol_lookup(&lhs_def, uast_symbol_unwrap(access->callee)->name));
+            if (lhs_def->type != UAST_MOD_ALIAS) {
+                return EXPAND_NAME_NEW_EXPR;
+            }
+            log(LOG_DEBUG, FMT"\n", uast_def_print(lhs_def));
+            new_name->mod_path = uast_mod_alias_unwrap(lhs_def)->mod_path;
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
+            return EXPAND_NAME_NORMAL;
+>>>>>>> Stashed changes
         }
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
@@ -229,11 +245,14 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
 
     Name new_name = {0};
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
-        case EXPAND_NAME_NORMAL:
-            unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
-            name->gen_args = new_name.gen_args;
-            name->base = new_name.base;
+        case EXPAND_NAME_NORMAL: {
+            Scope_id old_scope = name->scope_id;
+            *name = name_to_uname(new_name);
+            name->scope_id = old_scope;
+            //name->gen_args = new_name.gen_args;
+            //name->base = new_name.base;
             return EXPAND_NAME_NORMAL;
+        }
         case EXPAND_NAME_NEW_EXPR:
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
@@ -315,9 +334,14 @@ static bool expand_def_member_access(Uast_member_access* access) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
+<<<<<<< Updated upstream
             // TODO: this may not be right, but this switch will be refactored in the 
             //   future anyway when changing access->member_name type
             return true;
+=======
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(dummy));
+            todo();
+>>>>>>> Stashed changes
         case EXPAND_NAME_ERROR:
             return false;
     }

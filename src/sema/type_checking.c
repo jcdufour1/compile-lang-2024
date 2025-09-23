@@ -1631,8 +1631,10 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_ARRAY_LITERAL:
+            // TODO: type check array literal here?
             unreachable("");
         case UAST_STRUCT_LITERAL:
+            // TODO: type check struct literal here?
             unreachable("");
     }
     unreachable("");
