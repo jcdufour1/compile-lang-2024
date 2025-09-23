@@ -36,6 +36,7 @@ endif
 
 OBJS=\
 	 ${BUILD_DIR}/util/name.o \
+	 ${BUILD_DIR}/util/str_and_num_utils.o \
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/ast_utils/uast_print.o \
@@ -244,6 +245,9 @@ ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
+
+${BUILD_DIR}/util/str_and_num_utils.o: ${DEP_COMMON} src/util/str_and_num_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/str_and_num_utils.o src/util/str_and_num_utils.c
 
 ${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/params_log_level.o src/util/params_log_level.c

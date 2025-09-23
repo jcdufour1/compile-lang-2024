@@ -1,12 +1,13 @@
 #ifndef PARSER_UTIL_H
 #define PARSER_UTIL_H
 
-#include "strv.h"
-#include "symbol_table.h"
-#include "tast_utils.h"
-#include "uast_utils.h"
-#include "ir_utils.h"
-#include "ctype.h"
+#include <strv.h>
+#include <symbol_table.h>
+#include <tast_utils.h>
+#include <uast_utils.h>
+#include <ir_utils.h>
+#include <ctype.h>
+#include <str_and_num_utils.h>
 
 // TODO: consider moving almost all functions from here to elsewhere
 
@@ -56,11 +57,6 @@ static inline Ulang_type ulang_type_new_usize(void) {
     return ulang_type_new_int_x(sv("u64" /* TODO: change based on target */));
 }
 
-size_t get_count_excape_seq(Strv strv);
-
-// \n excapes are actually stored as is in tokens, uast, tasts, and irs, but should be printed as \0a (depending on the backend)
-void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv);
-
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 bool lang_type_atom_is_signed(Lang_type_atom atom);
@@ -89,41 +85,6 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
 int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom);
-
-int64_t strv_to_int64_t(const Pos pos, Strv strv);
-
-bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv);
-
-bool try_strv_to_size_t(size_t* result, Strv strv);
-
-bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore);
-
-Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix);
-
-#define util_literal_strv_new() \
-    util_literal_strv_new_internal(__FILE__, __LINE__, sv(""))
-
-Name util_literal_name_new_prefix_scope_internal(
-    const char* file,
-    int line,
-    Strv debug_prefix,
-    Scope_id scope_id
-);
-
-#define util_literal_name_new_prefix(debug_prefix) \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_BUILTIN)
-
-#define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
-
-#define util_literal_name_new() \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_BUILTIN)
-
-bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
-
-static inline bool ishex(int c) {
-    return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-}
 
 // lhs and rhs should not be used for other tasks after this
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs);

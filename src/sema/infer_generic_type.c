@@ -3,6 +3,7 @@
 #include <lang_type_print.h>
 #include <lang_type_from_ulang_type.h>
 #include <parser_utils.h>
+#include <str_and_num_utils.h>
 
 bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
     if (old_width <= 32) {
