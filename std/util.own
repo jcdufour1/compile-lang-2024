@@ -42,7 +42,7 @@ fn free(buf ItemT*, ItemT Type) {
 fn assert(condition u1, message coll.Str = "", keep_going u1 = 0, file coll.Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
         // TODO: print to stderr
-        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", file.count, file.buf, line, column, message)
+        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", unsafe_cast<i32>file.count, file.buf, unsafe_cast<i32>line, unsafe_cast<i32>column, message)
         if (!keep_going) {
             c.abort()
         }
