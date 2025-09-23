@@ -1,9 +1,9 @@
 #include <name.h>
 #include <util.h>
-#include <parser_utils.h>
 #include <ulang_type_serialize.h>
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
+#include <uast.h>
 
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};

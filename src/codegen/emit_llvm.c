@@ -5,7 +5,6 @@
 #include <symbol_table.h>
 #include <parameters.h>
 #include <file.h>
-#include <parser_utils.h>
 #include <ir_utils.h>
 #include <errno.h>
 #include <tast_serialize.h>

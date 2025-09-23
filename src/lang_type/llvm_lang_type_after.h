@@ -281,4 +281,20 @@ static inline Llvm_lang_type llvm_lang_type_new_usize(void) {
     return llvm_lang_type_new_ux(64 /* TODO: change based on target */);
 }
 
+static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LLVM_LANG_TYPE_STRUCT:
+            return true;
+        case LLVM_LANG_TYPE_PRIMITIVE:
+            return false;
+        case LLVM_LANG_TYPE_VOID:
+            return false;
+        case LLVM_LANG_TYPE_TUPLE:
+            return true;
+        case LLVM_LANG_TYPE_FN:
+            return false;
+    }
+    unreachable("");
+}
+
 #endif // LLVM_LANG_TYPE_AFTER_H

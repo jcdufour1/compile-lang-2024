@@ -14,6 +14,7 @@
 #include <subprocess.h>
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
+#include <msg.h>
  
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(

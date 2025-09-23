@@ -477,4 +477,42 @@ static inline Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom la
     return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
+static inline Lang_type lang_type_new_ux(int32_t bit_width) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
+    ));
+}
+
+static inline Lang_type lang_type_new_usize(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 64 /* TODO: change based on target */, 0)
+    ));
+}
+
+static inline Lang_type lang_type_new_u1(void) {
+    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+}
+
+static inline bool is_struct_like(LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LANG_TYPE_STRUCT:
+            return true;
+        case LANG_TYPE_PRIMITIVE:
+            return false;
+        case LANG_TYPE_RAW_UNION:
+            return true;
+        case LANG_TYPE_VOID:
+            return false;
+        case LANG_TYPE_ENUM:
+            return true;
+        case LANG_TYPE_TUPLE:
+            return true;
+        case LANG_TYPE_FN:
+            return false;
+    }
+    unreachable("");
+}
+
 #endif // LANG_TYPE_AFTER_H

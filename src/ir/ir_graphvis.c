@@ -1,9 +1,10 @@
 #include <ir_graphvis.h>
-#include <parser_utils.h>
 #include <symbol_iter.h>
 #include <llvm_lang_type.h>
 #include <llvm_lang_type_after.h>
 #include <llvm_lang_type_print.h>
+#include <ir_utils.h>
+#include <str_and_num_utils.h>
 
 // NOTE: arrow from parent to child created in parent corresponding function, not child
 

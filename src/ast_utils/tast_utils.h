@@ -577,4 +577,15 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (strv_is_equal(curr_member->name.base, member_name)) {
+            return idx;
+        }
+    }
+    unreachable("member not found");
+}
+
+
 #endif // TAST_UTIL_H

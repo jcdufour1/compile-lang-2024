@@ -7,8 +7,9 @@
 #include <env.h>
 #include <do_passes.h>
 #include <ctype.h>
-#include <parser_utils.h>
 #include <pos_vec.h>
+#include <msg.h>
+#include <msg_todo.h>
 
 // TODO: this is temporary forward decl; try_strv_to_char should eventually be moved elsewhere (eg. to "string_int_utils.h")
 bool try_strv_to_char(char* result, const Pos pos, Strv strv);

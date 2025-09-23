@@ -1,5 +1,4 @@
 #include <uast_clone.h>
-#include <parser_utils.h>
 #include <symbol_collection_clone.h>
 #include <ulang_type_clone.h>
 #include <symbol_log.h>

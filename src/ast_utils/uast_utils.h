@@ -194,4 +194,38 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
+Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
+
+Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+
+Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
+
+// will print error on failure
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
+
+static inline bool uast_try_get_member_def(
+    Uast_variable_def** member_def,
+    const Ustruct_def_base* struct_def,
+    Strv member_name
+) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (strv_is_equal(curr_member->name.base, member_name)) {
+            *member_def = curr_member;
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (strv_is_equal(curr_member->name.base, member_name)) {
+            return idx;
+        }
+    }
+    unreachable("member not found");
+}
+
 #endif // UAST_UTIL_H

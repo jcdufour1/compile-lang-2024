@@ -2,6 +2,7 @@
 #include <type_checking.h>
 #include <token_type_to_operator_type.h>
 #include <sizeof.h>
+#include <uast_utils.h>
 
 Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
     return try_set_literal_types(util_uast_literal_new_from_double(value, pos));
@@ -48,3 +49,5 @@ size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
 
     return result;
 }
+
+

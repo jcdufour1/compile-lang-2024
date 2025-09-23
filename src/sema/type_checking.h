@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <util.h>
-#include <parser_utils.h>
+#include <tast.h>
 
 typedef enum {
     STMT_OK,
@@ -17,7 +17,6 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr);
 
 bool try_set_binary_types_finish(
-     
     Tast_expr** new_tast,
     Tast_expr* new_lhs,
     Tast_expr* new_rhs,
@@ -38,7 +37,6 @@ bool try_set_uast_types(Tast** new_tast, Uast* tast);
 bool try_set_binary_operand_types(Tast_expr* operand);
 
 bool try_set_unary_types_finish(
-     
     Tast_expr** new_tast,
     Tast_expr* new_child,
     Pos unary_pos,
@@ -64,7 +62,6 @@ bool try_set_struct_literal_types(
 );
 
 bool try_set_array_literal_types(
-     
     Tast_stmt** new_tast,
     Lang_type dest_lang_type,
     Uast_array_literal* lit,
@@ -84,7 +81,6 @@ bool try_set_function_def_types(
 );
 
 bool try_set_function_decl_types(
-     
     Tast_function_decl** new_decl,
     Uast_function_decl* decl,
     bool add_to_sym_tbl
@@ -99,7 +95,6 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
 bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index);
 
 bool try_set_function_params_types(
-     
     Tast_function_params** new_tast,
     Uast_function_params* def,
     bool add_to_sym_tbl
@@ -124,5 +119,12 @@ bool try_set_label_def_types(Uast_label* tast);
 bool try_set_lang_def_types(Uast_lang_def* tast);
 
 bool try_set_types(Tast_block** new_tast, Uast_block* block);
+
+bool try_set_variable_def_types(
+    Tast_variable_def** new_tast,
+    Uast_variable_def* uast,
+    bool add_to_sym_tbl,
+    bool is_variadic
+);
 
 #endif // TYPE_CHECKING_H
