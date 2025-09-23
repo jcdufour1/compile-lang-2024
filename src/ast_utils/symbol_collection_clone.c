@@ -8,7 +8,7 @@ void usymbol_table_clone(Scope_id old_scope, Scope_id new_scope) {
     Uast_def* curr = NULL;
     
     while (usym_tbl_iter_next(&curr, &iter)) {
-        Uast_def* new_def = uast_def_clone(curr, new_scope);
+        Uast_def* new_def = uast_def_clone(curr, true, new_scope);
         unwrap(usym_tbl_add(new_def));
     }
 }

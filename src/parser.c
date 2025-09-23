@@ -1516,7 +1516,7 @@ static PARSE_STATUS parse_for_range_internal(
     Name user_name = var_def_user->name;
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
-        ulang_type_clone(var_def_user->lang_type, user_name.scope_id),
+        ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
         name_new(sv("builtin"), util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
@@ -1717,7 +1717,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
     // TODO: print error for break outside of for loop here
 
     // TODO: remove uast_break, and make uast_yield here
-    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, scope_id));
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id));
     return PARSE_OK;
 }
 
@@ -1777,7 +1777,7 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
         break_out_of = default_brk_label;
     }
 
-    *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, scope_id));
+    *new_cont = uast_continue_new(cont_token.pos, name_clone(break_out_of, true, scope_id));
     return PARSE_OK;
 }
 
@@ -3077,7 +3077,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     switch (parse_generic_binary(&rhs, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
             if (is_assign_bin) {
-                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, scope_id, oper.pos), rhs, binary_type_from_token_type(oper.type))));
+                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, true, scope_id, oper.pos), rhs, binary_type_from_token_type(oper.type))));
             } else {
                 final_rhs = rhs;
             }
@@ -3110,7 +3110,6 @@ bool parse_file(Uast_block** block, Strv file_path) {
             SCOPE_TOP_LEVEL
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
-        log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
 
         Uast_mod_alias* dummy = NULL;
         unwrap(get_mod_alias_from_path_token(

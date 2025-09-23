@@ -16,7 +16,7 @@ static inline const char* get_log_level_str(int log_level) {
         case LOG_DEBUG:
             return "debug";
         case LOG_VERBOSE:
-            return "debug";
+            return "verbose";
         case LOG_INFO:
             return LOG_GREEN"info"LOG_NORMAL;
         case LOG_NOTE:

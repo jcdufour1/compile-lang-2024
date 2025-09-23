@@ -170,8 +170,7 @@ static bool resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-        // TODO: gen thign
-        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb), 0/* TODO */));
+        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb), false, 0));
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
@@ -335,7 +334,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
 
 bool resolve_generics_struct_like_def_implementation(Name name) {
     Uast_def* before_res = NULL;
-    Name name_before = name_clone(name, name.scope_id);
+    Name name_before = name_clone(name, false, 0);
     memset(&name_before.gen_args, 0, sizeof(name_before.gen_args));
     unwrap(usym_tbl_lookup(&before_res, name_before));
     Ulang_type dummy = {0};
@@ -418,7 +417,7 @@ static bool resolve_generics_serialize_function_decl(
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), new_block->scope_id));
+        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), true, new_block->scope_id));
     }
 
     Ulang_type new_rtn_type = old_decl->return_type;
@@ -511,7 +510,7 @@ bool resolve_generics_function_def_call(
         return false;
     }
 
-    Uast_function_decl* decl = uast_function_decl_clone(def->decl, def->decl->name.scope_id);
+    Uast_function_decl* decl = uast_function_decl_clone(def->decl, true, def->decl->name.scope_id);
     decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
         for (size_t idx_gen_param = 0; idx_gen_param < gen_args.info.count; idx_gen_param++) {
@@ -575,7 +574,7 @@ bool resolve_generics_function_def_implementation(Name name) {
         unwrap(usymbol_lookup(&result, name_plain));
         unwrap(function_decl_tbl_lookup(&dummy_3, name));
         Uast_function_def* def = uast_function_def_unwrap(result);
-        Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id, def->body->pos);
+        Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id, true, def->body->pos);
         assert(new_block != def->body);
 
         Uast_function_decl* new_decl = NULL;

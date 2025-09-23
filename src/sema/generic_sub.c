@@ -40,7 +40,7 @@ void generic_sub_lang_type_regular(
 
     unwrap(name_from_uname(&temp, lang_type.atom.str, lang_type.pos));
     if (name_is_equal(gen_param, temp)) {
-        *new_lang_type = ulang_type_clone(gen_arg, lang_type.atom.str.scope_id);
+        *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.atom.str.scope_id);
 
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
@@ -48,7 +48,7 @@ void generic_sub_lang_type_regular(
         return;
     }
 
-    lang_type = ulang_type_regular_clone(lang_type, lang_type.atom.str.scope_id);
+    lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
