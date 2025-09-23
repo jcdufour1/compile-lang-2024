@@ -86,7 +86,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 78, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 79, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -112,6 +112,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-function-arg", DIAG_INVALID_FUN_ARG, LOG_ERROR, true},
     {"mismatched-return-type", DIAG_MISMATCHED_RETURN_TYPE, LOG_ERROR, true},
     {"mismatched-yield-type", DIAG_MISMATCHED_YIELD_TYPE, LOG_ERROR, true},
+    {"diag-mismatched-closing-curly-brace", DIAG_MISMATCHED_CLOSING_CURLY_BRACE, LOG_ERROR, true},
     {"assignment-mismatched-types", DIAG_ASSIGNMENT_MISMATCHED_TYPES, LOG_ERROR, true},
     {"unary-mismatched-types", DIAG_UNARY_MISMATCHED_TYPES, LOG_ERROR, true},
     {"binary-mismatched-types", DIAG_BINARY_MISMATCHED_TYPES, LOG_ERROR, true},
