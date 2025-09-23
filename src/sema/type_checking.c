@@ -1,5 +1,4 @@
 #include <type_checking.h>
-#include <parser_utils.h>
 #include <uast_utils.h>
 #include <uast.h>
 #include <tast.h>
@@ -28,6 +27,7 @@
 #include <check_struct_recursion.h>
 #include <uast_expr_to_ulang_type.h>
 #include <infer_generic_type.h>
+#include <str_and_num_utils.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,

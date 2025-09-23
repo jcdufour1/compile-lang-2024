@@ -7,6 +7,7 @@
 #include <uast_clone.h>
 #include <type_checking.h>
 #include <msg_todo.h>
+#include <lang_type_from_ulang_type.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 

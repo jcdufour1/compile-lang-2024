@@ -567,4 +567,25 @@ static inline Lang_type tast_lang_type_from_name(Name name) {
     return tast_def_get_lang_type(tast_def_from_name(name));
 }
 
+Tast_literal* util_tast_literal_new_from_double(double value, Pos pos);
+
+Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type);
+
+Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
+
+size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
+
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (strv_is_equal(curr_member->name.base, member_name)) {
+            return idx;
+        }
+    }
+    unreachable("member not found");
+}
+
+
 #endif // TAST_UTIL_H

@@ -1,7 +1,6 @@
-#include "util.h"
-#include "tast.h"
-#include "symbol_table.h"
-#include "parser_utils.h"
+#include <util.h>
+#include <tast.h>
+#include <symbol_table.h>
 #include <stdarg.h>
 #include <parameters.h>
 

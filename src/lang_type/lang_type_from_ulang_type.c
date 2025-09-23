@@ -3,7 +3,6 @@
 #include <symbol_log.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
-#include <parser_utils.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
     if (!expand_def_ulang_type(&lang_type, POS_BUILTIN /* TODO */)) {
