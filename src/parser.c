@@ -3146,6 +3146,14 @@ bool parse_file(Uast_block** block, Strv file_path) {
     }
     symbol_log(LOG_TRACE, (*block)->scope_id);
 
+    while (token_view.count > 0) {
+        Token curr = consume(&token_view);
+        if (curr.type == TOKEN_CLOSE_CURLY_BRACE) {
+            msg(DIAG_MISMATCHED_CLOSING_CURLY_BRACE, curr.pos, "closing `}` is unmatched\n");
+            status = false;
+        }
+    }
+
 error:
     return status;
 }

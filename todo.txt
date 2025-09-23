@@ -187,7 +187,7 @@ continue(<thing>)
     this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
     this way => can also be used in switch, function definition, etc.
 - check for return statement on all code paths
-- examples directory should be run through test swite as well?
+- examples directory should be run through test suite as well?
 
 
 
