@@ -567,4 +567,14 @@ static inline Lang_type tast_lang_type_from_name(Name name) {
     return tast_def_get_lang_type(tast_def_from_name(name));
 }
 
+Tast_literal* util_tast_literal_new_from_double(double value, Pos pos);
+
+Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type);
+
+Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
+
+size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
+
 #endif // TAST_UTIL_H

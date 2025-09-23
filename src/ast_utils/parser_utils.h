@@ -9,22 +9,6 @@
 #include <ctype.h>
 #include <str_and_num_utils.h>
 
-// TODO: consider moving almost all functions from here to elsewhere
-
-static inline Llvm_lang_type llvm_lang_type_new_ux(int32_t bit_width) {
-    return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(
-        llvm_lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
-    ));
-}
-
-static inline Llvm_lang_type llvm_lang_type_new_u8(void) {
-    return llvm_lang_type_new_ux(8);
-}
-
-static inline Llvm_lang_type llvm_lang_type_new_usize(void) {
-    return llvm_lang_type_new_ux(64 /* TODO: change based on target */);
-}
-
 static inline Lang_type lang_type_new_ux(int32_t bit_width) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
@@ -86,9 +70,6 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
 int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom);
 
-// lhs and rhs should not be used for other tasks after this
-Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs);
-
 bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
@@ -108,8 +89,6 @@ Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE 
 const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
-
-size_t ir_struct_def_base_get_idx_largest_member(Ir_struct_def_base base);
 
 // TODO: move to another file
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {

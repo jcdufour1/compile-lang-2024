@@ -1,4 +1,5 @@
 #include <uast_utils.h>
+#include <str_and_num_utils.h>
 
 bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics) {
     switch (def->type) {
@@ -96,3 +97,107 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     Ulang_type_fn fn = ulang_type_fn_new(ulang_type_tuple_new(params, decl->pos), return_type, decl->pos);
     return ulang_type_fn_const_wrap(fn);
 }
+
+// will print error on failure
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
+    switch (token_type) {
+        case TOKEN_INT_LITERAL: {
+            int64_t raw = 0;
+            if (!try_strv_to_int64_t(&raw,  pos, value)) {
+                return false;
+            }
+            Uast_int* literal = uast_int_new(pos, raw);
+            *new_lit = uast_int_wrap(literal);
+            break;
+        }
+        case TOKEN_FLOAT_LITERAL: {
+            double raw = 0;
+            if (!try_strv_to_double(&raw,  pos, value)) {
+                return false;
+            }
+            Uast_float* literal = uast_float_new(pos, raw);
+            *new_lit = uast_float_wrap(literal);
+            break;
+        }
+        case TOKEN_STRING_LITERAL: {
+            Uast_string* string = uast_string_new(pos, value);
+            *new_lit = uast_string_wrap(string);
+            break;
+        }
+        case TOKEN_VOID: {
+            Uast_void* lang_void = uast_void_new(pos);
+            *new_lit = uast_void_wrap(lang_void);
+            break;
+        }
+        case TOKEN_CHAR_LITERAL: {
+            char raw = '\0';
+            if (!try_strv_to_char(&raw, pos, value)) {
+                return false;
+            }
+            Uast_char* lang_char = uast_char_new(pos, raw);
+            *new_lit = uast_char_wrap(lang_char);
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
+    assert(*new_lit);
+    return true;
+}
+
+Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* lit = NULL;
+    unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
+    return lit;
+}
+
+Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* new_literal = NULL;
+
+    switch (token_type) {
+        case TOKEN_INT_LITERAL: {
+            Uast_int* literal = uast_int_new(pos, value);
+            literal->data = value;
+            new_literal = uast_int_wrap(literal);
+            break;
+        }
+        case TOKEN_STRING_LITERAL:
+            unreachable("");
+        case TOKEN_VOID: {
+            Uast_void* literal = uast_void_new(pos);
+            new_literal = uast_void_wrap(literal);
+            break;
+        }
+        case TOKEN_CHAR_LITERAL: {
+            assert(value < INT8_MAX);
+            Uast_char* literal = uast_char_new(pos, value);
+            new_literal = uast_char_wrap(literal);
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
+    assert(new_literal);
+    return new_literal;
+}
+
+Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
+    Uast_literal* lit = uast_float_wrap(uast_float_new(pos, value));
+    return lit;
+}
+
+Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
+    Uast_binary* binary = uast_binary_new(
+        uast_expr_get_pos(if_cond_child),
+        uast_literal_wrap(
+            util_uast_literal_new_from_int64_t( 0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
+        ),
+        if_cond_child,
+        BINARY_NOT_EQUAL
+    );
+
+    return uast_binary_wrap(binary);
+}
+
