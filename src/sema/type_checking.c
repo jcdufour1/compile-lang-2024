@@ -28,6 +28,7 @@
 #include <check_struct_recursion.h>
 #include <uast_expr_to_ulang_type.h>
 #include <infer_generic_type.h>
+#include <uast_get_scope_id.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -2217,6 +2218,12 @@ error:
 
 // TODO: there is a lot of duplication between try_set_function_call_types and try_set_function_call_types_old
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
+    Scope_id new_scope = 0;
+    if (!uast_function_call_get_scope_id(&new_scope, fun_call)) {
+        return try_set_function_call_types_old(new_call, fun_call);
+    }
+    fun_call = uast_function_call_clone(fun_call, new_scope, fun_call->pos /* TODO */);
+
     Name* sym_name = NULL;
     switch (fun_call->callee->type) {
         case TAST_BLOCK:
@@ -2555,12 +2562,16 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         size_t old_error_count = error_count;
                         size_t old_warn_count = warning_count;
 
+                        log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(&fun_call->args, param_idx)));
+
                         params_log_level = LOG_FATAL;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
                             params_log_level = old_log_level;
                             error_count = old_error_count;
                             warning_count = old_warn_count;
                             log(LOG_DEBUG, "%zu\n", idx);
+
+                            log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(&fun_call->args, param_idx)));
 
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
