@@ -1,7 +1,0 @@
-compile::stdout 1
-hello
-
-compile::stderr 0
-
-compile::return_code 0
-

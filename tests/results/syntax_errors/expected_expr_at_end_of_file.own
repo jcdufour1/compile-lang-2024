@@ -1,0 +1,10 @@
+compile::stdout 0
+
+compile::stderr 4
+tests/inputs/syntax_errors/expected_expr_at_end_of_file.own:2:0:[1;31merror[0;39m:expected expression after `=` in def definition
+     1 | type print def = 
+     2 | 
+       | ^
+
+compile::return_code 1
+

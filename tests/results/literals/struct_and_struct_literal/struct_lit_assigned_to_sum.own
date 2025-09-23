@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/literals/struct_and_struct_literal/struct_lit_assigned_to_sum.own:14:21:[1;31merror[0;39m:struct literal cannot be assigned to enum
+    13 | fn main() i32 {
+    14 |     let token Token = {.number = 23, .string = "bye"}
+       |                     ^
+    15 |     return 0
+
+compile::return_code 1
+

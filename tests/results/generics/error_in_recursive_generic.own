@@ -1,0 +1,36 @@
+compile::stdout 0
+
+compile::stderr 30
+tests/inputs/generics/error_in_recursive_generic.own:36:5:[1;31merror[0;39m:function parameter `RtnType` was not specified
+    35 |     io.printf("%d\n", add2(57, -3, i32))
+    36 |     add3(58, -2)
+       |     ^
+    37 |     return 0
+tests/inputs/generics/error_in_recursive_generic.own:23:27:[1;34mnote[0;39m:function parameter `RtnType` defined here
+    22 | 
+    23 | fn add3(lhs i32, rhs i32, RtnType Type) RtnType {
+       |                           ^
+    24 |     if rhs < 0 {
+tests/inputs/generics/error_in_recursive_generic.own:15:16:[1;31merror[0;39m:function parameter `RtnType` was not specified
+    14 |     if rhs < 0 {
+    15 |         return add2(lhs - 1, rhs + 1)
+       |                ^
+    16 |     } 
+tests/inputs/generics/error_in_recursive_generic.own:13:27:[1;34mnote[0;39m:function parameter `RtnType` defined here
+    12 | 
+    13 | fn add2(lhs i32, rhs i32, RtnType Type) RtnType {
+       |                           ^
+    14 |     if rhs < 0 {
+tests/inputs/generics/error_in_recursive_generic.own:10:12:[1;31merror[0;39m:returning `i32`, but type `i31` expected
+     9 |     }
+    10 |     return lhs
+       |            ^
+    11 | }
+tests/inputs/generics/error_in_recursive_generic.own:8:58:[1;34mnote[0;39m:function return type `i31` defined here
+     7 |     if rhs > 0 {
+     8 |         return unsafe_cast<RtnType>add(lhs + 1, rhs - 1, i31)
+       |                                                          ^
+     9 |     }
+
+compile::return_code 1
+

@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/function/no_generic_args_when_required.own:8:16:[1;31merror[0;39m:0 generic arguments are passed, but 1 generic arguments expected
+     7 | fn main() i32 {
+     8 |     let token1 Token = .number(76)
+       |                ^
+     9 | 
+tests/inputs/function/no_generic_args_when_required.own:2:6:[1;34mnote[0;39m:generic parameters defined here
+     1 | 
+     2 | type Token enum(<NumType>) {
+       |      ^
+     3 |     string u8*
+
+compile::return_code 1
+

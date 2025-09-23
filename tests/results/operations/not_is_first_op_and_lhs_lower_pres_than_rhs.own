@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/operations/not_is_first_op_and_lhs_lower_pres_than_rhs.own:6:5:[1;31merror[0;39m:expected expression 
+     5 |     let num1: i32 = 87 + 12*
+     6 |     return 0
+       |     ^
+     7 | }
+
+compile::return_code 1
+

@@ -67,18 +67,10 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
     possible_path: str
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
-        print("thing 100:", end="")
-        print(possible_base)
         possible_path = os.path.realpath(possible_base)
         actual_base = possible_path[len(os.path.realpath(INPUTS_DIR)) + 1:]
-        print(possible_path)
-        print(files_to_test)
-        print("thing 108:", possible_path)
-        print("thing 109:", files_to_test)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            print("thing 110:", actual_base)
             files.append(FileItem(actual_base))
-    print(files)
     return files
 
 def get_expected_output(file: FileItem) -> str:
@@ -226,8 +218,8 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
-    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
-        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
+    for possible_base in list_files_recursively(INPUTS_DIR):
+        possible_path = os.path.realpath(possible_base)
         if os.path.isfile(possible_path):
             callback(list_or_map, possible_path)
 

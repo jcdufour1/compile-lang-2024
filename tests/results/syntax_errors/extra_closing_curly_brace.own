@@ -1,0 +1,10 @@
+compile::stdout 0
+
+compile::stderr 4
+tests/inputs/syntax_errors/extra_closing_curly_brace.own:4:1:[1;31merror[0;39m:closing `}` is unmatched
+     3 | }
+     4 | }
+       | ^
+
+compile::return_code 1
+

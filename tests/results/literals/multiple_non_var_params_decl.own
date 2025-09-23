@@ -1,0 +1,9 @@
+compile::stdout 1
+error: could not open file
+
+compile::stderr 2
+[1;31mfatal error[0;39m:child process for the compiled program returned exit code 1
+[1;34mnote[0;39m:child process run with command `./test`
+
+compile::return_code 1
+

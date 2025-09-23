@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/syntax_errors/char_unmatched_single_quote.own:4:17:[1;31merror[0;39m:unmatched opening `'`
+     3 | fn main() i32 {
+     4 |     let ch u8 = '
+       |                 ^
+     5 |     return 0
+
+compile::return_code 1
+
