@@ -187,6 +187,7 @@ continue(<thing>)
     this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
     this way => can also be used in switch, function definition, etc.
 - check for return statement on all code paths
+- examples directory should be run through test swite as well?
 
 
 
@@ -210,6 +211,10 @@ continue(<thing>)
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend
+- consider implementing this:
+    if let .some(num) = divide(6, 3) => io.printf("result is %d\n", num)
+    else => io.printf("error when dividing (cannot divide by zero\n", num)
+
 
 # in the far future
 - try catch blocks with the question operator or similar

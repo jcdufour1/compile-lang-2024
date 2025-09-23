@@ -3110,7 +3110,6 @@ bool parse_file(Uast_block** block, Strv file_path) {
             SCOPE_TOP_LEVEL
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
-        log(LOG_VERBOSE, FMT"\n", name_print(NAME_LOG, curr_mod_alias));
 
         Uast_mod_alias* dummy = NULL;
         unwrap(get_mod_alias_from_path_token(
