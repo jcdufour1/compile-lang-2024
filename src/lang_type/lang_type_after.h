@@ -339,4 +339,142 @@ static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t poi
     lang_type_set_atom( lang_type, atom);
 }
 
+// TODO: put this function (and some others) in .c file and make this function static?
+static inline bool lang_type_atom_is_number_finish(Lang_type_atom atom, bool allow_decimal) {
+    (void) atom;
+    size_t idx = 0;
+    bool decimal_enc = false;
+    for (idx = 1; idx < atom.str.base.count; idx++) {
+        if (strv_at(atom.str.base, idx) == '.') {
+            if (!allow_decimal || decimal_enc) {
+                return false;
+            }
+            decimal_enc = true;
+        } else if (!isdigit(strv_at(atom.str.base, idx))) {
+            return false;
+        }
+    }
+
+    return idx > 1;
+}
+
+// TODO: get rid of this function?
+static inline bool lang_type_atom_is_signed(Lang_type_atom atom) {
+    if (atom.str.base.count < 1) {
+        return false;
+    }
+    if (strv_at(atom.str.base, 0) != 'i') {
+        return false;
+    }
+    return lang_type_atom_is_number_finish(atom, false);
+}
+
+// TODO: get rid of this function?
+static inline bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
+    if (atom.str.base.count < 1) {
+        return false;
+    }
+    if (strv_at(atom.str.base, 0) != 'u') {
+        return false;
+    }
+    return lang_type_atom_is_number_finish(atom, false);
+}
+
+static inline bool lang_type_atom_is_float(Lang_type_atom atom) {
+    if (atom.str.base.count < 1) {
+        return false;
+    }
+    if (strv_at(atom.str.base, 0) != 'f') {
+        return false;
+    }
+    return lang_type_atom_is_number_finish(atom, true);
+}
+
+static inline bool lang_type_atom_is_number(Lang_type_atom atom) {
+    return lang_type_atom_is_unsigned(atom) || lang_type_atom_is_signed(atom);
+}
+
+// only for unsafe_cast and similar cases
+static inline bool lang_type_is_number_like(Lang_type lang_type) {
+    if (lang_type_get_pointer_depth(lang_type) > 0) {
+        return true;
+    }
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+        case LANG_TYPE_CHAR:
+            return true;
+        case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_UNSIGNED_INT:
+            return true;
+        case LANG_TYPE_FLOAT:
+            return true;
+        case LANG_TYPE_OPAQUE:
+            return false;
+    }
+    unreachable("");
+}
+
+// for general use
+static inline bool lang_type_primitive_is_number(Lang_type_primitive lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_CHAR:
+            return false;
+        case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_UNSIGNED_INT:
+            return true;
+        case LANG_TYPE_FLOAT:
+            return true;
+        case LANG_TYPE_OPAQUE:
+            return false;
+    }
+    unreachable("");
+}
+
+// for general use
+static inline bool lang_type_is_number(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    return lang_type_primitive_is_number(lang_type_primitive_const_unwrap(lang_type));
+}
+
+static inline bool lang_type_is_signed(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    return lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_SIGNED_INT;
+}
+
+static inline bool lang_type_is_unsigned(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    return lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT;
+}
+
+// TODO: make separate file for lang_type_atom functions?
+static inline int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
+    //assert(lang_type_atom_is_signed(lang_type));
+    return strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1));
+}
+
+// TODO: put strings in a hash table to avoid allocating duplicate types
+static inline Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
+    // TODO: remove or change this function
+    assert(lang_type_atom_is_unsigned(lang_type));
+
+    if (lang_type.pointer_depth != 0) {
+        todo();
+    }
+
+    String string = {0};
+    string_extend_cstr(&a_main, &string, "i");
+    string_extend_strv(&a_main, &string, strv_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
+    return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
+}
+
 #endif // LANG_TYPE_AFTER_H

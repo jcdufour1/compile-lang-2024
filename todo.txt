@@ -65,6 +65,7 @@ for generics:
 - tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
 - error for using `def` in std/runtime.own (or figure out way to make defs work there)
 - make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
+- ** operator (pow)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
