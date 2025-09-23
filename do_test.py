@@ -51,16 +51,10 @@ def print_info(*base, **kargs) -> None:
     print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
 def list_files_recursively(dir: str) -> list[str]:
-    result: str[list] = []
+    result: list[str] = []
     for root, _, files in os.walk(dir):
         for file_path in files:
-            print("thing 98:", end="")
-            print(root)
-            print("thing 99:", end="")
-            print(file_path)
-            print("")
             result.append(os.path.join(root, file_path))
-    print(result)
     return result
 
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
@@ -212,8 +206,6 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
         print(stdout_color)
         return False
 
-    #print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
-    #print()
     return True
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
