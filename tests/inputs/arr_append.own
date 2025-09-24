@@ -9,13 +9,13 @@ type Arr struct(<ItemT>) {
     max u64
 }
 
-fn arr_append(thing_766 coll.Arr(<Token>)*, item Token) {
+fn arr_append(thing_766 coll.Arr(<Token>), item Token) {
     let cond u1 = thing_766.count < 9 
 }
 
 fn main() i32 {
     let arr coll.Arr(<Token>)// = arr_new_local(1000000)
-    arr_append(&arr, {8, ""})
+    arr_append(arr, {8, ""})
     //defer coll.arr_free(&arr);
 
     //coll.arr_append(&arr, {9187, "hello"}, Token)

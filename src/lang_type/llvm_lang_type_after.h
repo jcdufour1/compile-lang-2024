@@ -268,4 +268,14 @@ static inline void llvm_lang_type_set_pointer_depth(Llvm_lang_type* llvm_lang_ty
     llvm_lang_type_set_atom( llvm_lang_type, atom);
 }
 
+static inline Llvm_lang_type llvm_lang_type_pointer_depth_inc(Llvm_lang_type lang_type) {
+    llvm_lang_type_set_pointer_depth(&lang_type, llvm_lang_type_get_pointer_depth(lang_type) + 1);
+    return lang_type;
+}
+
+static inline Llvm_lang_type llvm_lang_type_pointer_depth_dec(Llvm_lang_type lang_type) {
+    llvm_lang_type_set_pointer_depth(&lang_type, llvm_lang_type_get_pointer_depth(lang_type) - 1);
+    return lang_type;
+}
+
 #endif // LLVM_LANG_TYPE_AFTER_H

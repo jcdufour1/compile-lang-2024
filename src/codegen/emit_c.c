@@ -500,7 +500,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_main, output, "    ");
-    c_extend_type_call_str(output, alloca->lang_type, true);
+    c_extend_type_call_str(output, llvm_lang_type_pointer_depth_dec(alloca->lang_type), true);
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");

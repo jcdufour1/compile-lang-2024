@@ -1541,7 +1541,7 @@ static Name load_member_access(Ir_block* new_block, Tast_member_access* old_acce
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         ptr,
-        lang_type_from_get_name(ptr),
+        llvm_lang_type_pointer_depth_dec(lang_type_from_get_name(ptr)),
         util_literal_name_new()
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
