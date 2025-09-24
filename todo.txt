@@ -31,27 +31,15 @@ for generics:
 - make actual if_expression test
 - make expected failure test for using variable to assign self in initialization
     (eg. let num i32 = num*4)
+    (this will be done by having pass to check for uninitialized)
 - struct and sum with same elements, etc. to stress test some things
 - make expected failure test case for this:
       import = std
 - expected failure case for importing file that does not exist
 - print function for vector of something
-- test case for this in generic function:
-    return Optional(<ItemType>).some(num + 1)
 - rename atom.str to atom.name
 - put import_path in different name space from other things
 - do_test.py shold fail if thing with invalid extension found in tests/* or examples/new_lang/
-- disallow literal int implicit conversion to i32 in generic?
-- Uast_mod_alias: use Str_view for mod_path?
-- expected success case for circular import
-- should I use syntax:
-  type Token struct {
-  }
-  type get_token fn
-  instead of:
-  type Token struct {
-  }
-  fn get_token
 - make an assertion that tests/expected_failure_examples/expected_expr_at_end_of_file.own has no newlines or similar characters after `io.`
 - make an assertion that tests/expected_failure_examples/empty_file.own actually is empty
 - expected failure test for passing `fn (i32, i32) i32` to function parameter of `fn (i64, i64) i64`
@@ -75,13 +63,12 @@ for generics:
     io.printf("%.*s:%d:%d\n", #file.count, (#file).buf, #line, #column);
 - allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
 - tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
-- uast_member_access->member_name should be Uast_strv_symbol
-- tast_member_access->member_name should be Tast_strv_symbol
-- ir_member_access->member_name should be Ir_strv_symbol
 - error for using `def` in std/runtime.own (or figure out way to make defs work there)
 - generic args should be Lang_type instead of ulang_type?
 - make command line argument to not import any libraries (even runtime) to make debugging easier
 - imporove ir printing
+- make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
+- ** operator (pow)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

@@ -2,7 +2,6 @@
 #include <uast.h>
 #include <ir.h>
 #include <symbol_table.h>
-#include <parser_utils.h>
 #include <type_checking.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
@@ -14,6 +13,8 @@
 #include <sizeof.h>
 #include <tast_clone.h>
 #include <llvm_lang_type_print.h>
+#include <str_and_num_utils.h>
+#include <ir_utils.h>
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -1223,6 +1224,7 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
         assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
     }
 
+    // TODO: remove this switch and just return ir_tast_get_name(alloca)
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
         case LANG_TYPE_ENUM:

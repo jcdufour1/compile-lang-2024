@@ -269,6 +269,36 @@ static inline void llvm_lang_type_set_pointer_depth(Llvm_lang_type* llvm_lang_ty
     llvm_lang_type_set_atom( llvm_lang_type, atom);
 }
 
+static inline Llvm_lang_type llvm_lang_type_new_ux(int32_t bit_width) {
+    return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(
+        llvm_lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
+    ));
+}
+
+static inline Llvm_lang_type llvm_lang_type_new_u8(void) {
+    return llvm_lang_type_new_ux(8);
+}
+
+static inline Llvm_lang_type llvm_lang_type_new_usize(void) {
+    return llvm_lang_type_new_ux(64 /* TODO: change based on target */);
+}
+
+static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LLVM_LANG_TYPE_STRUCT:
+            return true;
+        case LLVM_LANG_TYPE_PRIMITIVE:
+            return false;
+        case LLVM_LANG_TYPE_VOID:
+            return false;
+        case LLVM_LANG_TYPE_TUPLE:
+            return true;
+        case LLVM_LANG_TYPE_FN:
+            return false;
+    }
+    unreachable("");
+}
+
 static inline Llvm_lang_type llvm_lang_type_pointer_depth_inc(Llvm_lang_type lang_type) {
     llvm_lang_type_set_pointer_depth(&lang_type, llvm_lang_type_get_pointer_depth(lang_type) + 1);
     return lang_type;

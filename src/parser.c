@@ -4,7 +4,6 @@
 #include <uast_utils.h>
 #include <token_view.h>
 #include <symbol_table.h>
-#include <parser_utils.h>
 #include <do_passes.h>
 #include <ulang_type.h>
 #include <token_type_to_operator_type.h>
@@ -15,6 +14,7 @@
 #include <errno.h>
 #include <name.h>
 #include <ulang_type_clone.h>
+#include <str_and_num_utils.h>
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed

@@ -9,11 +9,11 @@
 #include <codegen_common.h>
 #include <llvm_lang_type_get_pos.h>
 #include <llvm_lang_type_print.h>
-#include <parser_utils.h>
 #include <sizeof.h>
 #include <strv_vec.h>
 #include <subprocess.h>
 #include <file.h>
+#include <str_and_num_utils.h>
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {

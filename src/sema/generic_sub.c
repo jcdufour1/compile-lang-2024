@@ -6,7 +6,6 @@
 #include <uast_utils.h>
 #include <env.h>
 #include <symbol_iter.h>
-#include <parser_utils.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(rtn->child, gen_param, gen_arg);

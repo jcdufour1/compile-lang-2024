@@ -36,10 +36,12 @@ endif
 
 OBJS=\
 	 ${BUILD_DIR}/util/name.o \
+	 ${BUILD_DIR}/util/str_and_num_utils.o \
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/ast_utils/uast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_print.o \
+	 ${BUILD_DIR}/ast_utils/tast_utils.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
@@ -52,7 +54,6 @@ OBJS=\
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
-	 ${BUILD_DIR}/ast_utils/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
@@ -132,9 +133,6 @@ ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c
 ${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/util/arena.c
 
-${BUILD_DIR}/ast_utils/parser_utils.o: ${DEP_COMMON} src/ast_utils/parser_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/parser_utils.o src/ast_utils/parser_utils.c
-
 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o: ${DEP_COMMON} src/sema/uast_expr_to_ulang_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o src/sema/uast_expr_to_ulang_type.c
 
@@ -143,6 +141,9 @@ ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c
 
 ${BUILD_DIR}/ast_utils/uast_print.o: ${DEP_COMMON} src/ast_utils/uast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_print.o src/ast_utils/uast_print.c
+
+${BUILD_DIR}/ast_utils/uast_utils.o: ${DEP_COMMON} src/ast_utils/uast_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_utils.o src/ast_utils/uast_utils.c
 
 ${BUILD_DIR}/ast_utils/tast_print.o: ${DEP_COMMON} src/ast_utils/tast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_print.o src/ast_utils/tast_print.c
@@ -204,8 +205,8 @@ ${BUILD_DIR}/lang_type/ulang_type_serialize.o: ${DEP_COMMON} src/lang_type/ulang
 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/lang_type_from_ulang_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o src/lang_type/lang_type_from_ulang_type.c
 
-${BUILD_DIR}/ast_utils/uast_utils.o: ${DEP_COMMON} src/ast_utils/uast_utils.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_utils.o src/ast_utils/uast_utils.c
+${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_utils.o src/ast_utils/tast_utils.c
 
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
@@ -248,6 +249,9 @@ ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
+
+${BUILD_DIR}/util/str_and_num_utils.o: ${DEP_COMMON} src/util/str_and_num_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/str_and_num_utils.o src/util/str_and_num_utils.c
 
 ${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/params_log_level.o src/util/params_log_level.c
