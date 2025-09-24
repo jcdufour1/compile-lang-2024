@@ -11,13 +11,20 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
     return ir_def_wrap(ir_function_def_wrap(def));
 }
 
+static Ir* rm_void_variable_def(Ir_variable_def* def) {
+    if (alloca->lang_type.type == LLVM_LANG_TYPE_VOID) {
+        return ir_removed_wrap(ir_removed_new(alloca->pos));
+    }
+    return ir_variable_def_wrap(alloca);
+}
+
 // TODO: maybe return Ir_def instead?
 static Ir* rm_void_def(Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             return rm_void_function_def(ir_function_def_unwrap(def));
         case IR_VARIABLE_DEF:
-            todo();
+            return rm_void_variable_def(ir_variable_def_unwrap(def));
         case IR_STRUCT_DEF:
             // TODO
             return ir_def_wrap(def);
@@ -40,7 +47,8 @@ static Ir* rm_void_expr(Ir_expr* expr) {
         case IR_LITERAL:
             return ir_expr_wrap(expr);
         case IR_FUNCTION_CALL:
-            todo();
+            // TODO
+            return ir_expr_wrap(expr);
     }
     unreachable("");
 }
@@ -100,21 +108,8 @@ static Ir* rm_void_ir(Ir* ir) {
 }
 
 static Ir* rm_void_block(Ir_block* block) {
-    log(LOG_DEBUG, FMT"\n", ir_block_print(block));
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Ir* curr_ = vec_at(&block->children, idx);
-        if (curr_->type != IR_DEF) {
-            continue;
-        }
-        Ir_def* curr = ir_def_unwrap(curr_);
-        if (curr->type != IR_VARIABLE_DEF) {
-            continue;
-        }
-        Ir_variable_def* var = ir_variable_def_unwrap(curr);
-        if (var->lang_type.type == LLVM_LANG_TYPE_VOID) {
-            todo();
-            *vec_at_ref(&block->children, idx) = ir_removed_wrap(ir_removed_new(var->pos));
-        }
+        *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(&block->children, idx));
     }
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
