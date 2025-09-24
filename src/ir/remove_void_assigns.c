@@ -12,14 +12,6 @@
         return (wrap_fn)(item); \
     } while (0)
 
-#define rm_void_internal_2(item, wrap_fn_inner, wrap_fn_outer) \
-    do { \
-        if ((item)->lang_type.type == LLVM_LANG_TYPE_VOID) { \
-            return ir_removed_wrap(ir_removed_new((item)->pos)); \
-        } \
-        return wrap_fn_outer(wrap_fn_inner(item)); \
-    } while (0)
-
 static Ir* rm_void_block(Ir_block* block);
 
 static Ir* rm_void_function_def(Ir_function_def* def) {
@@ -28,7 +20,10 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
 }
 
 static Ir* rm_void_variable_def(Ir_variable_def* def) {
-    rm_void_internal_2(def, ir_variable_def_wrap, ir_def_wrap);
+    if (def->lang_type.type == LLVM_LANG_TYPE_VOID) {
+        return ir_removed_wrap(ir_removed_new(def->pos));
+    }
+    return ir_def_wrap(ir_variable_def_wrap(def));
 }
 
 // TODO: maybe return Ir_def instead?
@@ -90,7 +85,8 @@ static Ir* rm_void_ir(Ir* ir) {
             // TODO
             return ir;
         case IR_ARRAY_ACCESS:
-            todo();
+            // TODO
+            return ir;
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
