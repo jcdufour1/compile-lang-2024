@@ -1,25 +1,18 @@
+type io import = std.io
+type coll import = std.collections
+type util import = std.util
+
 type Token struct {
     num i32
     string u8*
 }
 
-type Arr struct(<ItemT>) {
-    buf ItemT*
-    count u64
-    max u64
-}
-
-fn arr_append(thing_766 coll.Arr(<Token>), item Token) {
-    let cond u1 = thing_766.count < 9 
-}
-
 fn main() i32 {
-    let arr coll.Arr(<Token>)// = arr_new_local(1000000)
-    arr_append(arr, {8, ""})
-    //defer coll.arr_free(&arr);
+    let arr coll.Arr(<Token>) = coll.arr_new(1000000, Token)
+    defer coll.arr_free(&arr);
 
-    //coll.arr_append(&arr, {9187, "hello"}, Token)
-    //io.printf("%s\n", coll.arr_first(arr, Token).string);
+    coll.arr_append(&arr, {9187, "hello"}, Token)
+    io.printf("%s\n", coll.arr_first(arr, Token).string);
 
     return 0
 }

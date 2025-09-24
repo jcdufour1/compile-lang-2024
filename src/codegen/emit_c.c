@@ -280,7 +280,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
 
 static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
     (void) strs;
-    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen?
+    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
         case UNARY_DEREF:
             unreachable("defer should not make it here");
@@ -591,10 +591,6 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
-    // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
-    if (0 && llvm_lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
-        string_extend_cstr(&a_main, &strs->output, "*");
-    }
     string_extend_cstr(&a_main, &strs->output, ")");
     ir_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_main, &strs->output, ")->");

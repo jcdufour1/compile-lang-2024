@@ -1219,7 +1219,9 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
 
     assert(var_def);
-    assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
+    if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
+        assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
+    }
 
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
