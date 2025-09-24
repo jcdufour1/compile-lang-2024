@@ -19,6 +19,8 @@ Tast_block* remove_tuples(Tast_block* root);
 
 Ir_block* add_load_and_store(Tast_block* old_block);
 
+void remove_void_assigns(Ir_block* block, Arena* a_old_, Arena* a_new_);
+
 Ir_block* assign_ir_ids(Ir_block* root);
 
 void emit_llvm_from_tree(const Ir_block* root);
