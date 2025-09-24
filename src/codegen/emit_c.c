@@ -233,6 +233,8 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
             return;
         case IR_ARRAY_ACCESS:
             return;
+        case IR_REMOVED:
+            return;
     }
     unreachable("");
 }
@@ -479,6 +481,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
             unreachable("");
         case IR_BLOCK:
             ir_extend_name(&strs->output, ir_tast_get_name(result));
+            return;
+        case IR_REMOVED:
             return;
     }
     unreachable("");

@@ -19,7 +19,7 @@ Tast_block* remove_tuples(Tast_block* root);
 
 Ir_block* add_load_and_store(Tast_block* old_block);
 
-void remove_void_assigns(Ir_block* block, Arena* a_old_, Arena* a_new_);
+void remove_void_assigns(Ir_block* block);
 
 Ir_block* assign_ir_ids(Ir_block* root);
 

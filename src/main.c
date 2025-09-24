@@ -108,8 +108,7 @@ Ir_block* compile_file_to_ir(void) {
     }
     assert(ir_root);
 
-    Arena a_aux = {0};
-    remove_void_assigns(ir_root, &a_main, &a_aux);
+    remove_void_assigns(ir_root);
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 
