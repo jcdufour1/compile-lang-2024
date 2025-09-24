@@ -692,6 +692,8 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
             case IR_STORE_ANOTHER_IR:
                 emit_c_store_another_ir(strs, ir_store_another_ir_const_unwrap(stmt));
                 break;
+            case IR_REMOVED:
+                break;
             default:
                 log(LOG_ERROR, FMT"\n", string_print(strs->output));
                 ir_printf(stmt);

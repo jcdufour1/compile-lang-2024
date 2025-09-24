@@ -4,6 +4,22 @@
 #include <arena.h>
 #include <symbol_iter.h>
 
+#define rm_void_internal(item, wrap_fn) \
+    do { \
+        if ((item)->lang_type.type == LLVM_LANG_TYPE_VOID) { \
+            return ir_removed_wrap(ir_removed_new((item)->pos)); \
+        } \
+        return (wrap_fn)(item); \
+    } while (0)
+
+#define rm_void_internal_2(item, wrap_fn_inner, wrap_fn_outer) \
+    do { \
+        if ((item)->lang_type.type == LLVM_LANG_TYPE_VOID) { \
+            return ir_removed_wrap(ir_removed_new((item)->pos)); \
+        } \
+        return wrap_fn_outer(wrap_fn_inner(item)); \
+    } while (0)
+
 static Ir* rm_void_block(Ir_block* block);
 
 static Ir* rm_void_function_def(Ir_function_def* def) {
@@ -12,10 +28,7 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
 }
 
 static Ir* rm_void_variable_def(Ir_variable_def* def) {
-    if (alloca->lang_type.type == LLVM_LANG_TYPE_VOID) {
-        return ir_removed_wrap(ir_removed_new(alloca->pos));
-    }
-    return ir_variable_def_wrap(alloca);
+    rm_void_internal_2(def, ir_variable_def_wrap, ir_def_wrap);
 }
 
 // TODO: maybe return Ir_def instead?
@@ -43,7 +56,8 @@ static Ir* rm_void_def(Ir_def* def) {
 static Ir* rm_void_expr(Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
-            todo();
+            // TODO
+            return ir_expr_wrap(expr);
         case IR_LITERAL:
             return ir_expr_wrap(expr);
         case IR_FUNCTION_CALL:
@@ -55,24 +69,15 @@ static Ir* rm_void_expr(Ir_expr* expr) {
 
 // TODO: do not call variables/parameters "alloca" because it could conflict with library alloca
 static Ir* rm_void_alloca(Ir_alloca* alloca) {
-    if (alloca->lang_type.type == LLVM_LANG_TYPE_VOID) {
-        return ir_removed_wrap(ir_removed_new(alloca->pos));
-    }
-    return ir_alloca_wrap(alloca);
+    rm_void_internal(alloca, ir_alloca_wrap);
 }
 
 static Ir* rm_void_load_another_ir(Ir_load_another_ir* load) {
-    if (load->lang_type.type == LLVM_LANG_TYPE_VOID) {
-        return ir_removed_wrap(ir_removed_new(load->pos));
-    }
-    return ir_load_another_ir_wrap(load);
+    rm_void_internal(load, ir_load_another_ir_wrap);
 }
 
 static Ir* rm_void_store_another_ir(Ir_store_another_ir* store) {
-    if (store->lang_type.type == LLVM_LANG_TYPE_VOID) {
-        return ir_removed_wrap(ir_removed_new(store->pos));
-    }
-    return ir_store_another_ir_wrap(store);
+    rm_void_internal(store, ir_store_another_ir_wrap);
 }
 
 static Ir* rm_void_ir(Ir* ir) {
@@ -82,7 +87,8 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_EXPR:
             return rm_void_expr(ir_expr_unwrap(ir));
         case IR_LOAD_ELEMENT_PTR:
-            todo();
+            // TODO
+            return ir;
         case IR_ARRAY_ACCESS:
             todo();
         case IR_FUNCTION_PARAMS:
@@ -90,11 +96,13 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_DEF:
             return rm_void_def(ir_def_unwrap(ir));
         case IR_RETURN:
-            todo();
+            // TODO
+            return ir;
         case IR_GOTO:
-            todo();
+            return ir;
         case IR_COND_GOTO:
-            todo();
+            // TODO
+            return ir;
         case IR_ALLOCA:
             return rm_void_alloca(ir_alloca_unwrap(ir));
         case IR_LOAD_ANOTHER_IR:
