@@ -3112,12 +3112,12 @@ bool parse_file(Uast_block** block, Strv file_path) {
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
 
         Uast_mod_alias* dummy = NULL;
-        unwrap(get_mod_alias_from_path_token(
-            &dummy,
-            token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
-            (Pos) {0} /* TODO */,
-            MOD_PATH_RUNTIME
-        ));
+        //unwrap(get_mod_alias_from_path_token(
+        //    &dummy,
+        //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+        //    (Pos) {0} /* TODO */,
+        //    MOD_PATH_RUNTIME
+        //));
     }
 
     // TODO: DNDEBUG should be spelled NDEBUG

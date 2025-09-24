@@ -79,6 +79,9 @@ for generics:
 - tast_member_access->member_name should be Tast_strv_symbol
 - ir_member_access->member_name should be Ir_strv_symbol
 - error for using `def` in std/runtime.own (or figure out way to make defs work there)
+- generic args should be Lang_type instead of ulang_type?
+- make command line argument to not import any libraries (even runtime) to make debugging easier
+- imporove ir printing
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

@@ -13,6 +13,7 @@
 #include <symbol_iter.h>
 #include <sizeof.h>
 #include <tast_clone.h>
+#include <llvm_lang_type_print.h>
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -1216,7 +1217,10 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
         unwrap(ir_lookup(&alloca, var_def->name_corr_param));
     }
 
+    llvm_lang_type_get_pointer_depth();
+
     assert(var_def);
+    assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
 
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
@@ -1475,6 +1479,7 @@ static Name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
 }
 
 static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
+    log(LOG_INFO, FMT"\n", tast_expr_print(old_access->callee));
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
 
     Tast_def* def = NULL;
@@ -1504,6 +1509,8 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
         new_callee,
         util_literal_name_new()
     );
+    log(LOG_INFO, FMT"\n", ir_load_element_ptr_print(new_load));
+    log(LOG_INFO, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_load->ir_src)));
     unwrap(ir_add(ir_load_element_ptr_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_load));
@@ -2297,6 +2304,9 @@ static Name load_ptr_operator(Ir_block* new_block, Tast_operator* old_oper) {
 }
 
 static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr) {
+    log(LOG_INFO, FMT"\n", tast_expr_print(old_expr));
+    //log(LOG_INFO, FMT"\n", ir_load_element_ptr_print(new_load));
+    //log(LOG_INFO, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_load->ir_src)));
     switch (old_expr->type) {
         case TAST_BLOCK:
             msg_todo("block used as expression (ptr)", tast_block_unwrap(old_expr)->pos);
