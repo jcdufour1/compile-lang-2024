@@ -280,7 +280,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
 
 static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
     (void) strs;
-    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen
+    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen?
     switch (unary_type) {
         case UNARY_DEREF:
             unreachable("defer should not make it here");
@@ -500,22 +500,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_main, output, "    ");
-    log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
-    log(LOG_DEBUG, FMT"\n", strv_print(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
-    // TODO: remove these two if statements, and fix the actual underlying issues
-    // we may need to make system to identify location of node generation, etc.
-    // NOTE: this seems to be related to function callbacks for some reason
-    if (0 && strv_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv("void"))) {
-        string_extend_cstr(&a_main, output, " uint64_t ");
-    } else if (strv_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv(""))) {
-        string_extend_cstr(&a_main, output, " uint64_t ");
-    } else {
-        c_extend_type_call_str(output, alloca->lang_type, true);
-        // this line below should be kept though
-    }
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
+    c_extend_type_call_str(output, alloca->lang_type, true);
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
