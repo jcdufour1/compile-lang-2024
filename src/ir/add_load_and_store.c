@@ -1612,7 +1612,7 @@ static Name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_acce
     
     Ir_load_element_ptr* new_union = ir_load_element_ptr_new(
         old_access->pos,
-        rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos),
+        llvm_lang_type_pointer_depth_inc(rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos)),
         1,
         new_callee,
         util_literal_name_new()
@@ -2308,7 +2308,6 @@ static Name load_ptr_operator(Ir_block* new_block, Tast_operator* old_oper) {
 }
 
 static Name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr) {
-    log(LOG_INFO, FMT"\n", tast_expr_print(old_expr));
     //log(LOG_INFO, FMT"\n", ir_load_element_ptr_print(new_load));
     //log(LOG_INFO, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_load->ir_src)));
     switch (old_expr->type) {
