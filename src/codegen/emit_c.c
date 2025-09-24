@@ -592,7 +592,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
     // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
-    if (1 || llvm_lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
+    if (0 && llvm_lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
         string_extend_cstr(&a_main, &strs->output, "*");
     }
     string_extend_cstr(&a_main, &strs->output, ")");

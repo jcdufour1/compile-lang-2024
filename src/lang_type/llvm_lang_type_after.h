@@ -226,7 +226,8 @@ static inline void llvm_lang_type_set_atom(Llvm_lang_type* llvm_lang_type, Llvm_
         case LLVM_LANG_TYPE_FN:
             unreachable("");
         case LLVM_LANG_TYPE_VOID:
-            todo();
+            // TODO
+            return;
     }
     unreachable("");
 }
