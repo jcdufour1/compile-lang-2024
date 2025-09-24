@@ -3213,7 +3213,6 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
         return false;
     }
     new_callee = auto_deref_to_0(new_callee);
-    log(LOG_INFO, FMT"\n", tast_expr_print(new_callee));
 
     switch (new_callee->type) {
         case TAST_SYMBOL: {
