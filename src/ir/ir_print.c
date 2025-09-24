@@ -274,6 +274,15 @@ Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int in
     return string_to_strv(buf);
 }
 
+Strv ir_removed_print_internal(const Ir_removed* removed, int indent) {
+    (void) removed;
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "removed\n", indent);
+
+    return string_to_strv(buf);
+}
+
 Strv ir_function_decl_print_internal(const Ir_function_decl* fun_decl, int indent) {
     String buf = {0};
 
@@ -463,6 +472,8 @@ Strv ir_print_internal(const Ir* ir, int indent) {
             return ir_load_another_ir_print_internal(ir_load_another_ir_const_unwrap(ir), indent);
         case IR_STORE_ANOTHER_IR:
             return ir_store_another_ir_print_internal(ir_store_another_ir_const_unwrap(ir), indent);
+        case IR_REMOVED:
+            return ir_removed_print_internal(ir_removed_const_unwrap(ir), indent);
     }
     unreachable("");
 }

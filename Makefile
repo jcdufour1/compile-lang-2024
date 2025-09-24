@@ -43,6 +43,7 @@ OBJS=\
 	 ${BUILD_DIR}/ast_utils/tast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_utils.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
+	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
@@ -149,6 +150,9 @@ ${BUILD_DIR}/ast_utils/tast_print.o: ${DEP_COMMON} src/ast_utils/tast_print.c
 
 ${BUILD_DIR}/ir/ir_print.o: ${DEP_COMMON} src/ir/ir_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_print.o src/ir/ir_print.c
+
+${BUILD_DIR}/ir/remove_void_assigns.o: ${DEP_COMMON} src/ir/remove_void_assigns.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/remove_void_assigns.o src/ir/remove_void_assigns.c
 
 ${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c

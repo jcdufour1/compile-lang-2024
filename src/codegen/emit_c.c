@@ -233,6 +233,8 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
             return;
         case IR_ARRAY_ACCESS:
             return;
+        case IR_REMOVED:
+            return;
     }
     unreachable("");
 }
@@ -278,7 +280,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
 
 static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
     (void) strs;
-    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen
+    // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
         case UNARY_DEREF:
             unreachable("defer should not make it here");
@@ -480,6 +482,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case IR_BLOCK:
             ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
+        case IR_REMOVED:
+            return;
     }
     unreachable("");
 }
@@ -496,22 +500,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_main, output, "    ");
-    log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
-    log(LOG_DEBUG, FMT"\n", strv_print(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
-    // TODO: remove these two if statements, and fix the actual underlying issues
-    // we may need to make system to identify location of node generation, etc.
-    // NOTE: this seems to be related to function callbacks for some reason
-    if (strv_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv("void"))) {
-        string_extend_cstr(&a_main, output, " uint64_t ");
-    } else if (strv_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, sv(""))) {
-        string_extend_cstr(&a_main, output, " uint64_t ");
-    } else {
-        c_extend_type_call_str(output, alloca->lang_type, true);
-        // this line below should be kept though
-    }
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
-    log(LOG_DEBUG, FMT"\n", llvm_lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
+    c_extend_type_call_str(output, llvm_lang_type_pointer_depth_dec(alloca->lang_type), true);
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -602,10 +591,6 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
-    // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
-    if (llvm_lang_type_get_pointer_depth(lang_type_from_get_name(load->ir_src)) < 1) {
-        string_extend_cstr(&a_main, &strs->output, "*");
-    }
     string_extend_cstr(&a_main, &strs->output, ")");
     ir_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
@@ -687,6 +672,8 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 break;
             case IR_STORE_ANOTHER_IR:
                 emit_c_store_another_ir(strs, ir_store_another_ir_const_unwrap(stmt));
+                break;
+            case IR_REMOVED:
                 break;
             default:
                 log(LOG_ERROR, FMT"\n", string_print(strs->output));

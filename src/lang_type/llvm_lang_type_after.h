@@ -224,9 +224,11 @@ static inline void llvm_lang_type_set_atom(Llvm_lang_type* llvm_lang_type, Llvm_
         case LLVM_LANG_TYPE_TUPLE:
             unreachable("");
         case LLVM_LANG_TYPE_FN:
-            unreachable("");
+            // TODO
+            return;
         case LLVM_LANG_TYPE_VOID:
-            todo();
+            // TODO
+            return;
     }
     unreachable("");
 }
@@ -295,6 +297,16 @@ static inline bool llvm_is_struct_like(LLVM_LANG_TYPE_TYPE type) {
             return false;
     }
     unreachable("");
+}
+
+static inline Llvm_lang_type llvm_lang_type_pointer_depth_inc(Llvm_lang_type lang_type) {
+    llvm_lang_type_set_pointer_depth(&lang_type, llvm_lang_type_get_pointer_depth(lang_type) + 1);
+    return lang_type;
+}
+
+static inline Llvm_lang_type llvm_lang_type_pointer_depth_dec(Llvm_lang_type lang_type) {
+    llvm_lang_type_set_pointer_depth(&lang_type, llvm_lang_type_get_pointer_depth(lang_type) - 1);
+    return lang_type;
 }
 
 #endif // LLVM_LANG_TYPE_AFTER_H

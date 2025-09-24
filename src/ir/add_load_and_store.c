@@ -12,6 +12,7 @@
 #include <symbol_iter.h>
 #include <sizeof.h>
 #include <tast_clone.h>
+#include <llvm_lang_type_print.h>
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
 
@@ -747,6 +748,7 @@ static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
         var_def->lang_type,
         var_def->name_corr_param
     );
+    llvm_lang_type_set_pointer_depth(&alloca->lang_type, llvm_lang_type_get_pointer_depth(alloca->lang_type) + 1);
     ir_add(ir_alloca_wrap(alloca));
     assert(alloca);
     return alloca;
@@ -1218,6 +1220,9 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
 
     assert(var_def);
+    if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
+        assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
+    }
 
     // TODO: remove this switch and just return ir_tast_get_name(alloca)
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
@@ -1478,6 +1483,7 @@ static Name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
 
 static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
+    assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
     unwrap(symbol_lookup(&def, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_callee))));
@@ -1506,6 +1512,10 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
         new_callee,
         util_literal_name_new()
     );
+    llvm_lang_type_set_pointer_depth(&new_load->lang_type, llvm_lang_type_get_pointer_depth(new_load->lang_type) + 1);
+    assert(llvm_lang_type_get_pointer_depth(new_load->lang_type) > 0);
+    assert(llvm_lang_type_get_pointer_depth(lang_type_from_get_name(new_load->ir_src)) > 0);
+
     unwrap(ir_add(ir_load_element_ptr_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_load));
@@ -1532,7 +1542,7 @@ static Name load_member_access(Ir_block* new_block, Tast_member_access* old_acce
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         ptr,
-        lang_type_from_get_name(ptr),
+        llvm_lang_type_pointer_depth_dec(lang_type_from_get_name(ptr)),
         util_literal_name_new()
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
@@ -1603,7 +1613,7 @@ static Name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_acce
     
     Ir_load_element_ptr* new_union = ir_load_element_ptr_new(
         old_access->pos,
-        rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos),
+        llvm_lang_type_pointer_depth_inc(rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos)),
         1,
         new_callee,
         util_literal_name_new()

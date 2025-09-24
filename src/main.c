@@ -14,6 +14,7 @@
 #include <subprocess.h>
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
+#include <symbol_iter.h>
 #include <msg.h>
  
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
@@ -107,6 +108,10 @@ Ir_block* compile_file_to_ir(void) {
         exit(EXIT_CODE_FAIL);
     }
     assert(ir_root);
+
+    remove_void_assigns(ir_root);
+    log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
+    ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 
     return ir_root;
 }

@@ -64,6 +64,9 @@ for generics:
 - allow passing pointer type (eg. "Token(<i32, u8*>)*") into function arg
 - tests/inputs/arr_append_gen_type.own: defer arr_free to free memory
 - error for using `def` in std/runtime.own (or figure out way to make defs work there)
+- generic args should be Lang_type instead of ulang_type?
+- make command line argument to not import any libraries (even runtime) to make debugging easier
+- imporove ir printing
 - make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
 - ** operator (pow)
 

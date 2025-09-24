@@ -426,6 +426,12 @@ static Ir_type ir_gen_store_another_ir(void) {
     return store;
 }
 
+static Ir_type ir_gen_removed(void) {
+    Ir_type store = {.name = ir_name_new("ir", "removed", false)};
+
+    return store;
+}
+
 static Ir_type ir_gen_ir(void) {
     Ir_type ir = {.name = ir_name_new("ir", "", true)};
 
@@ -441,6 +447,7 @@ static Ir_type ir_gen_ir(void) {
     vec_append(&gen_a, &ir.sub_types, ir_gen_alloca());
     vec_append(&gen_a, &ir.sub_types, ir_gen_load_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_store_another_ir());
+    vec_append(&gen_a, &ir.sub_types, ir_gen_removed());
 
     return ir;
 }
