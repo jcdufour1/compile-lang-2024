@@ -3,6 +3,8 @@ type io import = std.io
 type rl import = std.raylib
 type rand import = std.random
 type libc import = std.libc
+type util import = std.util
+type coll import = std.collections
 
 type Pos struct {
     x i32
@@ -17,51 +19,20 @@ type Dir enum {
 }
 
 type Snake struct {
-    nodes Arr(<Pos>)
+    nodes coll.Arr(<Pos>)
     dir Dir
 }
 
-type Arr struct(<ItemT>) {
-    buf ItemT*
-    count u64
-    max u64
-}
-
-// TODO: test case for:
-//  io.printf(
-//      "snake.nodes.count = %zu\n",
-//      snake.nodes.count
-//  )
-
-fn arr_first(arr Arr(<ItemT>), ItemT Type) ItemT {
-    assert(arr.count > 0, "out of bounds")
-    return arr.buf[0]
-}
-
-fn arr_append(arr Arr(<ItemT>), item ItemT, ItemT Type) Arr(<ItemT>) {
-    assert(arr.count < arr.max, "arr overflow");
-    arr.buf[arr.count] = item
-    arr.count += 1
-    return arr
-}
-
 fn snake_first(snake Snake) Pos {
-    return arr_first(snake.nodes)
+    return coll.arr_first(snake.nodes)
 }
 
 fn snake_new(init_pos Pos, init_dir Dir, squares: Pos) Snake {
     let max u64 = unsafe_cast<u64>(squares.x*squares.y)
-    let arr Arr(<Pos>) = {unsafe_cast<Pos*>libc.malloc(24*max), 0, max}
-    assert(arr.buf != unsafe_cast<Pos*>0, "out of memory")
-    arr = arr_append(arr, init_pos)
+    let arr coll.Arr(<Pos>) = {unsafe_cast<Pos*>libc.malloc(24*max), 0, max}
+    util.assert(arr.buf != unsafe_cast<Pos*>0, "out of memory")
+    coll.arr_append(&arr, init_pos)
     return {arr, init_dir}
-}
-
-fn assert(condition u1, message u8* = "", file u8* = #file, line i32 = #line) {
-    if (!condition) {
-        io.printf("%s%d:assertion failure: %s\n", file, line, message)
-        libc.abort()
-    }
 }
 
 fn mod(a i32, b i32) i32 {
@@ -70,9 +41,9 @@ fn mod(a i32, b i32) i32 {
 
     // TODO: test case for this
     //io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
-fn move_snake(snake Snake*, squares Pos, do_grow u1) {
+fn move_snake(snake Snake*, squares Pos, do_grow u1) Bool {
     let new_pos Pos = snake_first(*snake)
-    assert(snake.nodes.count > 0)
+    util.assert(snake.nodes.count > 0)
     let last_pos Pos = snake.nodes.buf[snake.nodes.count - 1]
     switch snake.dir {
         case .down: new_pos.y += 1
@@ -86,7 +57,7 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) {
     // detect snake collisions with itself
     for idx u64 in 0..snake.nodes.count {
         if pos_is_equal(snake.nodes.buf[idx], new_pos) {
-            assert(0, "snake collision with itself")
+            util.assert(0, "snake collision with itself")
         }
     }
     
@@ -95,21 +66,18 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) {
     //io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
     for idx_ u64 in 1..(snake.nodes.count) {
         let idx u64 = snake.nodes.count - idx_
-        assert(idx < snake.nodes.count, "out of bounds")
+        util.assert(idx < snake.nodes.count, "out of bounds")
         snake.nodes.buf[idx] = snake.nodes.buf[idx - 1]
     }
     snake.nodes.buf[0] = new_pos
 
     if do_grow {
-        snake.nodes = arr_append(snake.nodes, last_pos)
+        coll.arr_append(&snake.nodes, last_pos)
     }
 }
 
 fn pos_is_equal(lhs Pos, rhs Pos) u1 {
     return lhs.x == rhs.x && lhs.y == rhs.y
-}
-
-fn snake_grow(snake Snake*) {
 }
 
 fn main() i32 {
@@ -123,14 +91,13 @@ fn main() i32 {
     let LOOP_RATE i32 = 200;
 
     let snake Snake = snake_new({7, 9}, .right, SQUARES)
-    assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
+    util.assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
     // TODO: call srand or similar
     let apple Pos = {rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}
     //let apple Pos = {snake_first(snake).x, snake_first(snake).y}
 
     move_snake(&snake, SQUARES, 1)
-    snake_grow(&snake)
 
     rl.InitWindow(CANVAS.x, CANVAS.y, "Snake Game")
     let loop_count i32 = 0
