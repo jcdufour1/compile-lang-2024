@@ -932,7 +932,7 @@ static void gen_all_irs(const char* file_path, bool implementation) {
     } else {
         gen_gen("#ifndef IR_FORWARD_DECL_H\n");
         gen_gen("#define IR_FORWARD_DECL_H\n");
-        gen_gen("#include <llvm_lang_type.h>\n");
+        gen_gen("#include <ir_lang_type.h>\n");
     }
 
 

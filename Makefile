@@ -45,7 +45,7 @@ OBJS=\
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
-	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
+	 ${BUILD_DIR}/lang_type/ir_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/ast_utils/uast_utils.o \
@@ -157,8 +157,8 @@ ${BUILD_DIR}/ir/remove_void_assigns.o: ${DEP_COMMON} src/ir/remove_void_assigns.
 ${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c
 
-${BUILD_DIR}/lang_type/llvm_lang_type_print.o: ${DEP_COMMON} src/lang_type/llvm_lang_type_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/llvm_lang_type_print.o src/lang_type/llvm_lang_type_print.c
+${BUILD_DIR}/lang_type/ir_lang_type_print.o: ${DEP_COMMON} src/lang_type/ir_lang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ir_lang_type_print.o src/lang_type/ir_lang_type_print.c
 
 ${BUILD_DIR}/lang_type/ulang_type_print.o: ${DEP_COMMON} src/lang_type/ulang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_print.o src/lang_type/ulang_type_print.c
