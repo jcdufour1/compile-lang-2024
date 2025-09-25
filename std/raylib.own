@@ -18,12 +18,8 @@ extern("c") fn IsKeyPressed(key i32) u1; // Check if a key has been pressed once
 extern("c") fn SetTargetFPS(fps i32) // Set target FPS (maximum)
 
 // Text drawing functions
-extern("c") fn void DrawFPS(int posX, int posY);                                                     // Draw current FPS
-extern("c") fn void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
-extern("c") fn void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
-extern("c") fn void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); // Draw text using Font and pro parameters (rotation)
-extern("c") fn void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); // Draw one character (codepoint)
-extern("c") fn void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
+extern("c") fn DrawFPS(posX i32, posY i32);                                                     // Draw current FPS
+extern("c") fn DrawText(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
 
 
 type Vector3 struct {
