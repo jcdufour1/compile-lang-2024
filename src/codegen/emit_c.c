@@ -4,11 +4,11 @@
 #include <msg.h>
 #include <errno.h>
 #include <ir_utils.h>
-#include <llvm_lang_type.h>
-#include <llvm_lang_type_after.h>
+#include <ir_lang_type.h>
+#include <ir_lang_type_after.h>
 #include <codegen_common.h>
-#include <llvm_lang_type_get_pos.h>
-#include <llvm_lang_type_print.h>
+#include <ir_lang_type_get_pos.h>
+#include <ir_lang_type_print.h>
 #include <sizeof.h>
 #include <strv_vec.h>
 #include <subprocess.h>
@@ -43,41 +43,41 @@ static void emit_c_loc(String* output, Loc loc, Pos pos) {
 }
 
 // TODO: see if this can be merged with extend_type_call_str in emit_ir.c in some way
-static void c_extend_type_call_str(String* output, Llvm_lang_type llvm_lang_type, bool opaque_ptr) {
-    if (opaque_ptr && llvm_lang_type_get_pointer_depth(llvm_lang_type) != 0) {
+static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr) {
+    if (opaque_ptr && ir_lang_type_get_pointer_depth(ir_lang_type) != 0) {
         string_extend_cstr(&a_main, output, "void*");
         return;
     }
 
-    switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_FN: {
-            Llvm_lang_type_fn fn = llvm_lang_type_fn_const_unwrap(llvm_lang_type);
+    switch (ir_lang_type.type) {
+        case IR_LANG_TYPE_FN: {
+            Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
             string_extend_cstr(&a_main, output, "(");
             c_extend_type_call_str(output, *fn.return_type, opaque_ptr);
             string_extend_cstr(&a_main, output, "(*)(");
-            for (size_t idx = 0; idx < fn.params.llvm_lang_types.info.count; idx++) {
+            for (size_t idx = 0; idx < fn.params.ir_lang_types.info.count; idx++) {
                 if (idx > 0) {
                     string_extend_cstr(&a_main, output, ", ");
                 }
-                c_extend_type_call_str(output, vec_at(&fn.params.llvm_lang_types, idx), opaque_ptr);
+                c_extend_type_call_str(output, vec_at(&fn.params.ir_lang_types, idx), opaque_ptr);
             }
             string_extend_cstr(&a_main, output, "))");
             return;
         }
-        case LLVM_LANG_TYPE_TUPLE:
+        case IR_LANG_TYPE_TUPLE:
             unreachable("");
-        case LLVM_LANG_TYPE_STRUCT:
-            ir_extend_name(output, llvm_lang_type_struct_const_unwrap(llvm_lang_type).atom.str);
-            for (size_t idx = 0; idx < (size_t)llvm_lang_type_struct_const_unwrap(llvm_lang_type).atom.pointer_depth; idx++) {
+        case IR_LANG_TYPE_STRUCT:
+            ir_extend_name(output, ir_lang_type_struct_const_unwrap(ir_lang_type).atom.str);
+            for (size_t idx = 0; idx < (size_t)ir_lang_type_struct_const_unwrap(ir_lang_type).atom.pointer_depth; idx++) {
                 string_extend_cstr(&a_main, output, "*");
             }
             return;
-        case LLVM_LANG_TYPE_VOID:
-            llvm_lang_type = llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(llvm_lang_type_get_pos(llvm_lang_type)));
+        case IR_LANG_TYPE_VOID:
+            ir_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_lang_type_get_pos(ir_lang_type)));
             string_extend_strv(&a_main, output, sv("void"));
             return;
-        case LLVM_LANG_TYPE_PRIMITIVE:
-            extend_llvm_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, llvm_lang_type);
+        case IR_LANG_TYPE_PRIMITIVE:
+            extend_ir_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, ir_lang_type);
             return;
     }
     unreachable("");
@@ -142,9 +142,9 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
         Ir_variable_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
-        Llvm_lang_type llvm_lang_type = {0};
+        Ir_lang_type ir_lang_type = {0};
         if (llvm_is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
-            Name ori_name = llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
+            Name ori_name = ir_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -159,14 +159,14 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
                 unwrap(c_forward_struct_tbl_add(struct_to_use, ori_name));
                 emit_c_struct_def(strs, new_def);
             }
-            llvm_lang_type = llvm_lang_type_struct_const_wrap(llvm_lang_type_struct_new(
+            ir_lang_type = ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 curr->pos,
-                llvm_lang_type_atom_new(*struct_to_use, llvm_lang_type_get_pointer_depth(curr->lang_type))
+                ir_lang_type_atom_new(*struct_to_use, ir_lang_type_get_pointer_depth(curr->lang_type))
             ));
         } else {
-            llvm_lang_type = curr->lang_type;
+            ir_lang_type = curr->lang_type;
         }
-        c_extend_type_call_str(&buf, llvm_lang_type, true);
+        c_extend_type_call_str(&buf, ir_lang_type, true);
         string_extend_cstr(&a_temp, &buf, " ");
         ir_extend_name(&buf, curr->name_self);
         string_extend_cstr(&a_temp, &buf, ";\n");
@@ -245,13 +245,13 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
 
     // start of actual function call
     string_extend_cstr(&a_main, &strs->output, "    ");
-    if (fun_call->lang_type.type != LLVM_LANG_TYPE_VOID) {
+    if (fun_call->lang_type.type != IR_LANG_TYPE_VOID) {
         c_extend_type_call_str(&strs->output, fun_call->lang_type, true);
         string_extend_cstr(&a_main, &strs->output, " ");
         ir_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
-        //assert(!strv_cstr_is_equal(llvm_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
+        //assert(!strv_cstr_is_equal(ir_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Ir* callee = NULL;
@@ -278,7 +278,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Llvm_lang_type cast_to) {
+static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Ir_lang_type cast_to) {
     (void) strs;
     // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
@@ -500,7 +500,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_main, output, "    ");
-    c_extend_type_call_str(output, llvm_lang_type_pointer_depth_dec(alloca->lang_type), true);
+    c_extend_type_call_str(output, ir_lang_type_pointer_depth_dec(alloca->lang_type), true);
     string_extend_cstr(&a_main, output, " ");
     ir_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -583,7 +583,7 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
     Ir* struct_def_ = NULL;
-    unwrap(ir_lookup(&struct_def_, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
+    unwrap(ir_lookup(&struct_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     ir_extend_name(&strs->output, load->name_self);

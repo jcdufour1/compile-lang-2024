@@ -6,7 +6,7 @@
 
 #define rm_void_internal(item, wrap_fn) \
     do { \
-        if ((item)->lang_type.type == LLVM_LANG_TYPE_VOID) { \
+        if ((item)->lang_type.type == IR_LANG_TYPE_VOID) { \
             return ir_removed_wrap(ir_removed_new((item)->pos)); \
         } \
         return (wrap_fn)(item); \
@@ -20,7 +20,7 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
 }
 
 static Ir* rm_void_variable_def(Ir_variable_def* def) {
-    if (def->lang_type.type == LLVM_LANG_TYPE_VOID) {
+    if (def->lang_type.type == IR_LANG_TYPE_VOID) {
         return ir_removed_wrap(ir_removed_new(def->pos));
     }
     return ir_def_wrap(ir_variable_def_wrap(def));

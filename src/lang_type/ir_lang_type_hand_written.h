@@ -1,5 +1,5 @@
-#ifndef LLVM_LANG_TYPE_HAND_WRITTEN
-#define LLVM_LANG_TYPE_HAND_WRITTEN
+#ifndef IR_LANG_TYPE_HAND_WRITTEN
+#define IR_LANG_TYPE_HAND_WRITTEN
 
 #include <strv.h>
 #include <vector.h>
@@ -11,25 +11,25 @@ typedef struct {
                            // and that in function, variable is already referenced twice
                            //
                            // for function argument: 2 means to reference the variable twice
-} Llvm_lang_type_atom;
+} Ir_lang_type_atom;
 
-struct Llvm_lang_type_;
-typedef struct Llvm_lang_type_ Llvm_lang_type;
+struct Ir_lang_type_;
+typedef struct Ir_lang_type_ Ir_lang_type;
 
 typedef struct {
     Vec_base info;
-    Llvm_lang_type* buf;
-} Llvm_lang_type_vec;
+    Ir_lang_type* buf;
+} Ir_lang_type_vec;
 
-static inline Llvm_lang_type_atom llvm_lang_type_atom_new(Name str, int16_t pointer_depth) {
-    return (Llvm_lang_type_atom) {.str = str, .pointer_depth = pointer_depth};
+static inline Ir_lang_type_atom ir_lang_type_atom_new(Name str, int16_t pointer_depth) {
+    return (Ir_lang_type_atom) {.str = str, .pointer_depth = pointer_depth};
 }
 
-static inline Llvm_lang_type_atom llvm_lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
-    return llvm_lang_type_atom_new(
+static inline Ir_lang_type_atom ir_lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
+    return ir_lang_type_atom_new(
         name_new((Strv) {0}, sv(cstr), (Ulang_type_vec) {0}, scope_id),
         pointer_depth
     );
 }
 
-#endif // LLVM_LANG_TYPE_HAND_WRITTEN
+#endif // IR_LANG_TYPE_HAND_WRITTEN
