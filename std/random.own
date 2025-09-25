@@ -1,0 +1,8 @@
+
+
+type c import = std.libc
+
+// min and max are inclusive
+fn int_range(min i32, max i32) i32 {
+    return min + c.rand()%(max - min)
+}

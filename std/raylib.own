@@ -14,6 +14,7 @@ extern("c") fn DrawRectangleLines(posX i32, posY i32, width i32, height i32, col
 extern("c") fn DrawRectangleLinesEx(rect Rectangle, thickness f32, color Color) // Draw rectangle outline
 extern("c") fn WaitTime(seconds f64); // Wait for some time (halt program execution)
 extern("c") fn IsKeyPressed(key i32) u1; // Check if a key has been pressed once
+extern("c") fn SetTargetFPS(fps i32) // Set target FPS (maximum)
 
 type Vector3 struct {
     a f32
