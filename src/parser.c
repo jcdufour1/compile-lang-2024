@@ -827,9 +827,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
         //   fix the actual bug with curr_mod_alias to prevent the need for this hack
         mod_alias.mod_path = curr_mod_path;
         mod_alias.base = lang_type_token.text;
-        if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
-            // TODO: expected failure test
-            todo();
+        if (!consume_expect(&lang_type_token, tokens, "", TOKEN_SYMBOL)) {
             return false;
         }
     }
@@ -852,10 +850,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
 
     // TODO: make token naming more consistant
     Token tk_start = {0};
-    if (!try_consume(&tk_start, tokens, TOKEN_OPEN_PAR)) {
-        log_tokens(LOG_DEBUG, *tokens);
-        todo();
-    }
+    unwrap(try_consume(&tk_start, tokens, TOKEN_OPEN_PAR));
 
     while (is_comma) {
         // a return type is only one token, at least for now
@@ -869,10 +864,8 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        log_tokens(LOG_DEBUG, *tokens);
-        // TODO: expected failure test
-        todo();
+    if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_PAR)) {
+        return false;
     }
 
     *lang_type = ulang_type_tuple_new(types, tk_start.pos);
@@ -1050,8 +1043,7 @@ static PARSE_STATUS parse_function_decl_common(
     Token name_token = consume(tokens);
 
     Uast_generic_param_vec gen_params = {0};
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), " in function decl", TOKEN_OPEN_PAR);
+    if (!consume_expect(NULL, tokens,  " in function decl", TOKEN_OPEN_PAR)) {
         return PARSE_ERROR;
     }
 
@@ -1110,8 +1102,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
 
     do {
         Token symbol = {0};
-        if (!try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        if (!consume_expect(&symbol, tokens, "", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         Uast_generic_param* param = uast_generic_param_new(
@@ -1188,8 +1179,7 @@ static PARSE_STATUS parse_struct_base_def(
         vec_append(&a_main, &base->members, member);
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+    if (!consume_expect(NULL, tokens, "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE)) {
         return PARSE_ERROR;
     }
 
@@ -1205,8 +1195,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     (void) lang_type;
     base->name = name;
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
+    if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -1214,8 +1203,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Token name_token = {0};
-        if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
+        if (!consume_expect(&name_token, tokens, "in variable definition", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -1306,8 +1294,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
     unwrap(try_consume(&lang_def_tk, tokens, TOKEN_DEF));
 
     Token dummy = {0};
-    if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
-        msg_parser_expected(tk_view_front(*tokens), "after `def`", TOKEN_SINGLE_EQUAL);
+    if (!consume_expect(&dummy, tokens, "after `def`", TOKEN_SINGLE_EQUAL)) {
         return PARSE_ERROR;
     }
     Uast_expr* expr = NULL;
@@ -3122,7 +3109,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         );
         unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
 
-        Uast_mod_alias* dummy = NULL;
+        //Uast_mod_alias* dummy = NULL;
         //unwrap(get_mod_alias_from_path_token(
         //    &dummy,
         //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
