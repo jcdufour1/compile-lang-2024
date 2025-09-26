@@ -4208,6 +4208,8 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     if (!try_set_block_types(new_tast, block, false)) {
         status = false;
     }
+    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
+    todo();
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
