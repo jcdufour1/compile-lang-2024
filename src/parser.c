@@ -107,6 +107,8 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
+static bool parse_file(Uast_block** block, Strv file_path);
+
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
 }
@@ -330,11 +332,11 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
 
+    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         NULL,
@@ -354,7 +356,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         block,
         mod_path
     )));
-
 
 finish:
     curr_mod_path = old_mod_path;
@@ -3070,30 +3071,8 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-bool parse_file(Uast_block** block, Strv file_path) {
+static bool parse_file(Uast_block** block, Strv file_path) {
     bool status = true;
-
-    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN);
-
-    if (curr_mod_alias.base.count < 1) {
-        curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
-        curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
-        Uast_mod_alias* mod_alias = uast_mod_alias_new(
-            POS_BUILTIN,
-            curr_mod_alias,
-            curr_mod_path,
-            SCOPE_TOP_LEVEL
-        );
-        unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
-
-        //Uast_mod_alias* dummy = NULL;
-        //unwrap(get_mod_alias_from_path_token(
-        //    &dummy,
-        //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
-        //    (Pos) {0} /* TODO */,
-        //    MOD_PATH_RUNTIME
-        //));
-    }
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
@@ -3115,7 +3094,7 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
+    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
         status = false;
         goto error;
     }
@@ -3131,6 +3110,36 @@ bool parse_file(Uast_block** block, Strv file_path) {
 
 error:
     return status;
+}
+
+bool parse(Uast_block** block, Strv file_path) {
+    symbol_collection_new(SCOPE_BUILTIN);
+
+    //Uast_mod_alias* dummy = NULL;
+    //unwrap(get_mod_alias_from_path_token(
+    //    &dummy,
+    //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+    //    (Pos) {0} /* TODO */,
+    //    MOD_PATH_RUNTIME
+    //));
+
+    log(LOG_DEBUG, FMT"\n", strv_print(strv_slice(file_path, 0, file_path.count - 4)));
+    Uast_mod_alias* alias = NULL;
+    if (!get_mod_alias_from_path_token(
+        &alias,
+        token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
+        (Pos) {0} /* TODO */,
+        strv_slice(file_path, 0, file_path.count - 4)
+    )) {
+        return false;
+    }
+
+    Uast_def* import = NULL;
+    log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
+    unwrap(usymbol_lookup(&import, name_new((Strv) {0}, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
+    *block = uast_import_path_unwrap(import)->block;
+    log(LOG_DEBUG, FMT"\n", uast_block_print(*block));
+    return true;
 }
 
 static void parser_test_parse_expr(const char* input, int test) {

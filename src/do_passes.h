@@ -11,7 +11,7 @@ void tokenize_do_test(void);
 
 bool tokenize(Token_vec* result, Strv file_path);
 
-bool parse_file(Uast_block** block, Strv file_path);
+bool parse(Uast_block** block, Strv file_path);
 
 Tast_block* change_operators(Tast_block* root);
 

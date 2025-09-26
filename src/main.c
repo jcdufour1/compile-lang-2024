@@ -55,7 +55,7 @@ Ir_block* compile_file_to_ir(void) {
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
     Uast_block* untyped = NULL;
-    bool status = parse_file(&untyped, params.input_file_path);
+    bool status = parse(&untyped, params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
         assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
