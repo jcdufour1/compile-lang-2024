@@ -1,8 +1,8 @@
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
-#include <llvm_lang_type.h>
-#include <llvm_lang_type_after.h>
-#include <llvm_lang_type_print.h>
+#include <ir_lang_type.h>
+#include <ir_lang_type_after.h>
+#include <ir_lang_type_print.h>
 #include <ir_utils.h>
 #include <str_and_num_utils.h>
 
@@ -180,7 +180,7 @@ static void ir_function_decl_graphvis_internal(String* buf, const Ir_function_de
 
     ir_function_params_graphvis_internal(buf, decl->params);
     // TODO
-    //string_extend_strv(&a_print, buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
+    //string_extend_strv(&a_print, buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
 }
 
 static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def* def) {
@@ -247,7 +247,7 @@ static void ir_int_graphvis_internal(String* buf, const Ir_int* lit) {
 
     string_extend_int64_t(&a_print, &num_buf, lit->data);
     string_extend_cstr(&a_print, &num_buf, " ");
-    string_extend_strv(&a_print, &num_buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_strv(&a_print, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
@@ -256,7 +256,7 @@ static void ir_float_graphvis_internal(String* buf, const Ir_float* lit) {
 
     string_extend_double(&a_print, &num_buf, lit->data);
     string_extend_cstr(&a_print, &num_buf, " ");
-    string_extend_strv(&a_print, &num_buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_strv(&a_print, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
@@ -318,7 +318,7 @@ static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     string_extend_cstr(&a_print, &type_buf, "binary ");
     string_extend_strv(&a_print, &type_buf, binary_type_to_strv(bin->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
-    string_extend_strv(&a_print, &type_buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
+    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, bin->name, bin->lhs, sv("lhs"));
@@ -330,7 +330,7 @@ static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     string_extend_cstr(&a_print, &type_buf, "unary ");
     string_extend_strv(&a_print, &type_buf, unary_type_to_strv(unary->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
-    string_extend_strv(&a_print, &type_buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
+    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, unary->name, unary->child, sv("child"));
@@ -399,7 +399,7 @@ static void ir_store_another_ir_graphvis_internal(String* buf, const Ir_store_an
 static void ir_load_another_ir_graphvis_internal(String* buf, const Ir_load_another_ir* load) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "load ");
-    string_extend_strv(&a_print, &type_buf, llvm_lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
+    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
     label(buf, load->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, load->name, load->ir_src, sv("src"));

@@ -860,6 +860,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
         log_tokens(LOG_DEBUG, *tokens);
+        // TODO: expected failure test
         todo();
     }
 

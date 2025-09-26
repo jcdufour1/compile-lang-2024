@@ -2,7 +2,7 @@
 #include <tast.h>
 #include <util.h>
 #include <ir_utils.h>
-#include <llvm_lang_type_print.h>
+#include <ir_lang_type_print.h>
 
 static void extend_child_name(String* buf, const char* location, Name child_name) {
     string_extend_cstr(&a_print, buf, " (* ");
@@ -22,7 +22,7 @@ Strv ir_binary_print_internal(const Ir_binary* binary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "binary", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
     string_extend_strv(&a_print, &buf, binary_type_to_strv(binary->token_type));
     extend_name(NAME_LOG, &buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
@@ -36,7 +36,7 @@ Strv ir_unary_print_internal(const Ir_unary* unary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "unary", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
     string_extend_strv(&a_print, &buf, unary_type_to_strv(unary->token_type));
     extend_name(NAME_LOG, &buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
@@ -46,7 +46,7 @@ Strv ir_unary_print_internal(const Ir_unary* unary, int indent) {
 }
 
 void ir_extend_sym_typed_base(String* string, Llvm_sym_typed_base base) {
-    extend_llvm_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
+    extend_ir_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
     extend_name(NAME_LOG, string, base.name);
     string_extend_cstr(&a_print, string, "\n");
 }
@@ -73,7 +73,7 @@ Strv ir_function_call_print_internal(const Ir_function_call* fun_call, int inden
     string_extend_cstr_indent(&a_print, &buf, "function_call", indent);
     extend_name(NAME_LOG, &buf, fun_call->name_self);
     extend_child_name(&buf, "function_to_call:", fun_call->name_self);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_call->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_call->lang_type);
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
@@ -89,7 +89,7 @@ Strv ir_int_print_internal(const Ir_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "number", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
     extend_name(NAME_LOG, &buf, num->name);
     string_extend_int64_t(&a_print, &buf, num->data);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -101,7 +101,7 @@ Strv ir_float_print_internal(const Ir_float* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "float", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
     extend_name(NAME_LOG, &buf, num->name);
     string_extend_double(&a_print, &buf, num->data);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -144,7 +144,7 @@ Strv ir_load_element_ptr_print_internal(const Ir_load_element_ptr* load, int ind
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "load_element_ptr", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name_self);
     extend_child_name(&buf, "member_name", load->name_self);
     extend_child_name(&buf, "src", load->ir_src);
@@ -157,7 +157,7 @@ Strv ir_array_access_print_internal(const Ir_array_access* load, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "array_access", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name_self);
     extend_child_name(&buf, "member_name", load->name_self);
     extend_child_name(&buf, "src", load->callee);
@@ -241,7 +241,7 @@ Strv ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
     extend_lhs_and_eq(&buf, alloca->name, indent);
 
     string_extend_cstr(&a_print, &buf, "alloca");
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, alloca->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, alloca->lang_type);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
@@ -253,7 +253,7 @@ Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int inden
     extend_lhs_and_eq(&buf, load->ir_src, indent);
 
     string_extend_cstr(&a_print, &buf, "load_another_ir");
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name);
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -266,7 +266,7 @@ Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int in
     extend_lhs_and_eq(&buf, store->ir_dest, indent);
 
     string_extend_cstr(&a_print, &buf, "store_another_ir");
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, store->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, store->lang_type);
     extend_name(NAME_LOG, &buf, store->name);
     extend_child_name(&buf, "src", store->ir_src);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -289,7 +289,7 @@ Strv ir_function_decl_print_internal(const Ir_function_decl* fun_decl, int inden
     string_extend_cstr_indent(&a_print, &buf, "function_decl", indent);
     indent += INDENT_WIDTH;
     extend_name(NAME_LOG, &buf, fun_decl->name);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&a_print, &buf, "\n");
     string_extend_strv(&a_print, &buf, ir_function_params_print_internal(fun_decl->params, indent));
     indent -= INDENT_WIDTH;
@@ -333,7 +333,7 @@ Strv ir_primitive_def_print_internal(const Ir_primitive_def* def, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "primitive_def\n", indent);
     indent += INDENT_WIDTH;
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     string_extend_cstr(&a_print, &buf, "\n");
     indent -= INDENT_WIDTH;
 
@@ -361,7 +361,7 @@ Strv ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) 
     string_extend_cstr_indent(&a_print, &buf, "struct_lit_def", indent);
     extend_name(NAME_LOG, &buf, def->name);
     string_extend_cstr(&a_print, &buf, "\n");
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
         Strv memb_text = ir_expr_print_internal(vec_at(&def->members, idx), indent);
         string_extend_strv(&a_print, &buf, memb_text);
@@ -396,7 +396,7 @@ Strv ir_variable_def_print_internal(const Ir_variable_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "variable_def", indent);
-    extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     extend_name(NAME_LOG, &buf, def->name_self);
     extend_child_name(&buf, "corrs_param", def->name_corr_param);
     string_extend_cstr(&a_print, &buf, "\n");

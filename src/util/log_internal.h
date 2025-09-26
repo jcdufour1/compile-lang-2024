@@ -36,7 +36,7 @@ static inline void log_internal(LOG_LEVEL log_level, const char* file, int line,
     va_list args;
     va_start(args, format);
 
-    if (log_level >= CURR_LOG_LEVEL && log_level >= params_log_level) {
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
         for (int idx = 0; idx < indent; idx++) {
             fprintf(stderr, " ");
         }

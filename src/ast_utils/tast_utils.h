@@ -3,7 +3,7 @@
 
 #include <tast.h>
 #include <lang_type_after.h>
-#include <llvm_lang_type_after.h>
+#include <ir_lang_type_after.h>
 #include <ulang_type.h>
 #include <lang_type_print.h>
 #include <ulang_type_get_pos.h>
@@ -13,26 +13,26 @@ static inline Ulang_type ulang_type_new_int_x(Strv base);
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
-static inline bool llvm_lang_type_is_equal(Llvm_lang_type a, Llvm_lang_type b);
+static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
 static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type);
     
-static inline bool llvm_lang_type_atom_is_equal(Llvm_lang_type_atom a, Llvm_lang_type_atom b) {
+static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
     return name_is_equal(a.str, b.str);
 }
 
-static inline bool llvm_lang_type_vec_is_equal(Llvm_lang_type_vec a, Llvm_lang_type_vec b) {
+static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {
     if (a.info.count != b.info.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!llvm_lang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!ir_lang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
             return false;
         }
     }
@@ -40,37 +40,37 @@ static inline bool llvm_lang_type_vec_is_equal(Llvm_lang_type_vec a, Llvm_lang_t
     return true;
 }
 
-static inline bool llvm_lang_type_tuple_is_equal(Llvm_lang_type_tuple a, Llvm_lang_type_tuple b) {
-    return llvm_lang_type_vec_is_equal(a.llvm_lang_types, b.llvm_lang_types);
+static inline bool ir_lang_type_tuple_is_equal(Ir_lang_type_tuple a, Ir_lang_type_tuple b) {
+    return ir_lang_type_vec_is_equal(a.ir_lang_types, b.ir_lang_types);
 }
 
-static inline bool llvm_lang_type_fn_is_equal(Llvm_lang_type_fn a, Llvm_lang_type_fn b) {
-    return llvm_lang_type_tuple_is_equal(a.params, b.params) && llvm_lang_type_is_equal(*a.return_type, *b.return_type);
+static inline bool ir_lang_type_fn_is_equal(Ir_lang_type_fn a, Ir_lang_type_fn b) {
+    return ir_lang_type_tuple_is_equal(a.params, b.params) && ir_lang_type_is_equal(*a.return_type, *b.return_type);
 }
 
-static inline bool llvm_lang_type_is_equal(Llvm_lang_type a, Llvm_lang_type b) {
+static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     if (a.type != b.type) {
         return false;
     }
     
     switch (a.type) {
-        case LLVM_LANG_TYPE_PRIMITIVE:
+        case IR_LANG_TYPE_PRIMITIVE:
             // fallthrough
-        case LLVM_LANG_TYPE_STRUCT:
+        case IR_LANG_TYPE_STRUCT:
             // fallthrough
-        case LLVM_LANG_TYPE_VOID:
-            return llvm_lang_type_atom_is_equal(llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), llvm_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
-        case LLVM_LANG_TYPE_TUPLE:
-            return llvm_lang_type_tuple_is_equal(llvm_lang_type_tuple_const_unwrap(a), llvm_lang_type_tuple_const_unwrap(b));
-        case LLVM_LANG_TYPE_FN:
-            return llvm_lang_type_fn_is_equal(llvm_lang_type_fn_const_unwrap(a), llvm_lang_type_fn_const_unwrap(b));
+        case IR_LANG_TYPE_VOID:
+            return ir_lang_type_atom_is_equal(ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
+        case IR_LANG_TYPE_TUPLE:
+            return ir_lang_type_tuple_is_equal(ir_lang_type_tuple_const_unwrap(a), ir_lang_type_tuple_const_unwrap(b));
+        case IR_LANG_TYPE_FN:
+            return ir_lang_type_fn_is_equal(ir_lang_type_fn_const_unwrap(a), ir_lang_type_fn_const_unwrap(b));
     }
     unreachable("");
 }
 
-static inline Llvm_lang_type_vec llvm_lang_type_vec_from_llvm_lang_type(Llvm_lang_type llvm_lang_type) {
-    Llvm_lang_type_vec vec = {0};
-    vec_append(&a_main, &vec, llvm_lang_type);
+static inline Ir_lang_type_vec ir_lang_type_vec_from_ir_lang_type(Ir_lang_type ir_lang_type) {
+    Ir_lang_type_vec vec = {0};
+    vec_append(&a_main, &vec, ir_lang_type);
     return vec;
 }
 
