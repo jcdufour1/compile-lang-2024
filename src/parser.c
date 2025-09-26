@@ -1323,23 +1323,20 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
     unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
 
     Token dummy = {0};
-    if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
-        msg_parser_expected(tk_view_front(*tokens), "after `import`", TOKEN_SINGLE_EQUAL);
+    if (!consume_expect(&dummy, tokens, "after `import`", TOKEN_SINGLE_EQUAL)) {
         return PARSE_ERROR;
     }
 
     String mod_path = {0};
     Token path_tk = {0};
-    if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(tk_view_front(*tokens), "after =", TOKEN_SYMBOL);
+    if (!consume_expect(&path_tk, tokens, "after =", TOKEN_SYMBOL)) {
         return PARSE_ERROR;
     }
     string_extend_strv(&a_main, &mod_path, path_tk.text);
     Pos mod_path_pos = path_tk.pos;
 
     while (try_consume(&path_tk, tokens, TOKEN_SINGLE_DOT)) {
-        if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "after . in module path", TOKEN_SYMBOL);
+        if (!consume_expect(&path_tk, tokens, "after . in module path", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &mod_path, PATH_SEPARATOR);
@@ -1355,8 +1352,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
 
 static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id scope_id) {
     Token name = {0};
-    if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+    if (!consume_expect(&name, tokens, "", TOKEN_SYMBOL)) {
         return PARSE_ERROR;
     }
 
@@ -1527,8 +1523,7 @@ static PARSE_STATUS parse_for_range_internal(
         return PARSE_ERROR;
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
-        msg_parser_expected(tk_view_front(*tokens), "after for loop lower bound", TOKEN_DOUBLE_DOT);
+    if (!consume_expect(NULL, tokens, "after for loop lower bound", TOKEN_DOUBLE_DOT)) {
         return PARSE_ERROR;
     }
 
@@ -1690,8 +1685,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
     Name break_out_of = default_brk_label;
     if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
         Token token = {0};
-        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+        if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
@@ -1725,8 +1719,7 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
     Name break_out_of = {0};
     if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
         Token token = {0};
-        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+        if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
@@ -1759,8 +1752,7 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
     Name break_out_of = {0};
     if (try_consume(NULL, tokens, TOKEN_DOUBLE_TICK)) {
         Token token = {0};
-        if (!try_consume(&token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "(scope name)", TOKEN_SYMBOL);
+        if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
         break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
@@ -1815,13 +1807,11 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     PARSE_STATUS status = PARSE_ERROR;
 
     unwrap(try_consume(NULL, tokens, TOKEN_EXTERN));
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_OPEN_PAR);
+    if (!consume_expect(NULL, tokens, "in function decl", TOKEN_OPEN_PAR)) {
         goto error;
     }
     Token extern_type_token;
-    if (!try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL)) {
-        msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_STRING_LITERAL);
+    if (!consume_expect(&extern_type_token, tokens, "in function decl", TOKEN_STRING_LITERAL)) {
         goto error;
     }
     if (!strv_is_equal(extern_type_token.text, sv("c"))) {
@@ -1831,12 +1821,10 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
         );
         goto error;
     }
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_CLOSE_PAR);
+    if (!consume_expect(NULL, tokens, "in function decl", TOKEN_CLOSE_PAR)) {
         goto error;
     }
-    if (!try_consume(NULL, tokens, TOKEN_FN)) {
-        msg_parser_expected(tk_view_front(*tokens), "in function decl", TOKEN_FN);
+    if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
     if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL) /* TODO */)) {
@@ -2074,8 +2062,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Token eq_token = {0};
-    if (!try_consume(&eq_token, tokens, TOKEN_SINGLE_EQUAL)) {
-        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SINGLE_EQUAL);
+    if (!consume_expect(&eq_token, tokens, "", TOKEN_SINGLE_EQUAL)) {
         return PARSE_ERROR;
     }
 
@@ -2191,8 +2178,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
             unreachable("");
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "after switch operand", TOKEN_OPEN_CURLY_BRACE);
+    if (!consume_expect(NULL, tokens, "after switch operand", TOKEN_OPEN_CURLY_BRACE)) {
         status = PARSE_ERROR;
         goto error;
     }
@@ -2264,10 +2250,8 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
     log_tokens(LOG_DEBUG, *tokens);
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_CURLY_BRACE)) {
         // TODO: expeced failure case no close brace
-        msg_todo("no close brace", start_token.pos);
-        status = PARSE_ERROR;
         goto error;
     }
 
@@ -2516,8 +2500,7 @@ static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view
 
 static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_view* tokens, Scope_id scope_id) {
     Token start_token;
-    if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
+    if (!consume_expect(&start_token, tokens, "at start of struct literal", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }
 
@@ -2553,8 +2536,7 @@ static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_vi
 
 static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* tokens, Scope_id scope_id) {
     Token start_token;
-    if (!try_consume(&start_token, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-        msg_parser_expected(tk_view_front(*tokens), "at start of array literal", TOKEN_OPEN_CURLY_BRACE);
+    if (!consume_expect(&start_token, tokens, "at start of array literal", TOKEN_OPEN_SQ_BRACKET)) {
         return PARSE_ERROR;
     }
     
@@ -2677,8 +2659,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
     if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
         try_consume_newlines(tokens);
         Token memb_name = {0};
-        if (!try_consume(&memb_name, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(tk_view_front(*tokens), "after `.` in member access", TOKEN_SYMBOL);
+        if (!consume_expect(&memb_name, tokens, "after `.` in member access", TOKEN_SYMBOL)) {
             return PARSE_EXPR_ERROR;
         }
 
@@ -2733,9 +2714,7 @@ static PARSE_EXPR_STATUS parse_high_presidence(
     if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
         // eg. `.some` in `let opt Optional(<i32>) = .some`
         Token memb_name = {0};
-        if (!try_consume(&memb_name, tokens, TOKEN_SYMBOL)) {
-            todo();
-        }
+        unwrap(consume_expect(&memb_name, tokens, "", TOKEN_SYMBOL));
 
         lhs = uast_member_access_wrap(uast_member_access_new(
             oper.pos,
@@ -2801,8 +2780,7 @@ static PARSE_EXPR_STATUS parse_unary(
         case TOKEN_UNSAFE_CAST: {
             {
                 Token temp = {0};
-                if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_LESS_THAN);
+                if (!consume_expect(&temp, tokens, "", TOKEN_LESS_THAN)) {
                     return PARSE_EXPR_ERROR;
                 }
             }
@@ -2812,8 +2790,7 @@ static PARSE_EXPR_STATUS parse_unary(
             }
             {
                 Token temp = {0};
-                if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                    msg_parser_expected(tk_view_front(*tokens), "", TOKEN_GREATER_THAN);
+                if (!consume_expect(&temp, tokens, "", TOKEN_GREATER_THAN)) {
                     return PARSE_EXPR_ERROR;
                 }
             }
