@@ -3998,11 +3998,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
-        Tast_stmt* new_tast = NULL;
-        switch (try_set_stmt_types(&new_tast, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
+        Tast_stmt* new_stmt = NULL;
+        switch (try_set_stmt_types(&new_stmt, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_OK:
                 assert(curr_tast);
-                vec_append(&a_main, &new_tasts, new_tast);
+                vec_append(&a_main, &new_tasts, new_stmt);
                 break;
             case STMT_NO_STMT:
                 break;
@@ -4045,8 +4045,10 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(MOD_PATH_BUILTIN, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(sv("tests/inputs/circular_import_main"), sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
+            // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
+            // TODO: use warn for warnings instead of msg to reduce mistakes?
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
@@ -4208,8 +4210,6 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     if (!try_set_block_types(new_tast, block, false)) {
         status = false;
     }
-    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
-    todo();
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
