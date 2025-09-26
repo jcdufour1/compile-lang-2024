@@ -447,7 +447,11 @@ Strv uast_import_path_print_internal(const Uast_import_path* import, int indent)
     string_extend_cstr_indent(&a_print, &buf, "import_path", indent);
     string_extend_strv(&a_print, &buf, import->mod_path);
     string_extend_cstr(&a_print, &buf, "\n");
-    string_extend_strv(&a_print, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));
+    if (import->block) {
+        string_extend_strv(&a_print, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));
+    } else {
+        string_extend_cstr_indent(&a_print, &buf, "<block is null>\n", indent);
+    }
 
     return string_to_strv(buf);
 }

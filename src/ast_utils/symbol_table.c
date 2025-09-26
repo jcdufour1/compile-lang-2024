@@ -528,6 +528,12 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
 //
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+    static int count = 0;
+    if (count > 10) {
+        return;
+    }
+    count++;
+
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {

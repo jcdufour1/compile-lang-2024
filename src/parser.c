@@ -107,7 +107,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
-static bool parse_file(Uast_block** block, Strv file_path);
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod);
 
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
@@ -317,7 +317,7 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     return PARSE_OK;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
+static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_main_mod) {
     bool status = true;
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
@@ -346,10 +346,11 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path))) {
+    if (!parse_file(&block, string_to_strv(file_path), is_main_mod)) {
         status = false;
         goto finish;
     }
+    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
@@ -1344,7 +1345,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path))) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false)) {
         return PARSE_ERROR;
     }
 
@@ -3071,8 +3072,15 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-static bool parse_file(Uast_block** block, Strv file_path) {
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
     bool status = true;
+    Scope_id new_scope = SCOPE_TOP_LEVEL;
+    if (!is_main_mod) {
+        new_scope = symbol_collection_new(SCOPE_BUILTIN);
+    }
+    if (new_scope == SCOPE_TOP_LEVEL) {
+        log(LOG_DEBUG, "thing 92\n");
+    }
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
@@ -3094,7 +3102,9 @@ static bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
+    log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
+    // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
+    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
     }
@@ -3129,7 +3139,8 @@ bool parse(Uast_block** block, Strv file_path) {
         &alias,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         (Pos) {0} /* TODO */,
-        strv_slice(file_path, 0, file_path.count - 4)
+        strv_slice(file_path, 0, file_path.count - 4),
+        true
     )) {
         return false;
     }
