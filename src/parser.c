@@ -231,10 +231,7 @@ static void msg_expected_expr_internal(const char* file, int line, Tk_view token
 #define msg_expected_expr(tokens, msg_suffix) \
     msg_expected_expr_internal(__FILE__, __LINE__, tokens, msg_suffix)
 
-static void msg_parser_expected_internal(const char* file, int line, Token got, const char* msg_suffix, int count_expected, ...) {
-    va_list args;
-    va_start(args, count_expected);
-
+static void msg_parser_expected_internal(const char* file, int line, Token got, const char* msg_suffix, int count_expected, TOKEN_TYPE args[]) {
     String message = {0};
     string_extend_cstr(&a_print, &message, "got token `");
     string_extend_strv(&a_print, &message, token_print_internal(&a_print, TOKEN_MODE_MSG, got));
@@ -249,7 +246,8 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
             }
         }
         string_extend_cstr(&a_print, &message, "`");
-        string_extend_strv(&a_print, &message, token_type_to_strv(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
+        unwrap(idx < count_expected);
+        string_extend_strv(&a_print, &message, token_type_to_strv(TOKEN_MODE_MSG, args[idx]));
         string_extend_cstr(&a_print, &message, "` ");
     }
 
@@ -260,15 +258,28 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
         expect_fail_type = DIAG_INVALID_TOKEN;
     }
     msg_internal(file, line, expect_fail_type, got.pos, FMT"\n", strv_print(string_to_strv(message)));
-
-    va_end(args);
 }
 
 #define msg_parser_expected(got, msg_suffix, ...) \
     do { \
-        msg_parser_expected_internal(__FILE__, __LINE__, got, msg_suffix, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+        msg_parser_expected_internal(__FILE__, __LINE__, got, msg_suffix, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), (TOKEN_TYPE[]){__VA_ARGS__}); \
     } while(0)
 
+bool consume_expect_internal(const char* file, int line, Token* result, Tk_view* tokens, const char* msg, int count_expected, TOKEN_TYPE args[]) {
+    for (int idx = 0; idx < count_expected; idx++) {
+        unwrap(idx < count_expected);
+        if (try_consume(result, tokens, args[idx])) {
+            return true;
+        }
+    }
+
+    msg_parser_expected_internal(file, line, tk_view_front(*tokens), msg, count_expected, args);
+    return false;
+}
+
+#define consume_expect(result, tokens, msg, ...) \
+    consume_expect_internal(__FILE__, __LINE__, result, tokens, msg, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), (TOKEN_TYPE[]){__VA_ARGS__})
+    
 static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
         DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
@@ -1154,8 +1165,7 @@ static PARSE_STATUS parse_struct_base_def(
         parse_generics_params(&base->generics, tokens, name.scope_id);
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
+    if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }
 
