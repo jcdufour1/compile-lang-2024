@@ -415,6 +415,37 @@ bool ir_lookup(Ir** result, Name key) {
 }
 
 //
+// Initialized implementation
+//
+
+static Init_table_vec init_tables = {0};
+
+bool init_symbol_lookup(
+    void** result,
+    Strv key,
+    Scope_id scope_id
+) {
+    if (scope_id == SCOPE_NOT) {
+        return false;
+    }
+
+    Scope_id curr_scope = scope_id;
+    while (true) {
+        void* tbl = vec_at_ref(&init_tables, curr_scope);
+        if (generic_tbl_lookup(result, tbl, key)) {
+             return true;
+        }
+        if (curr_scope == 0) {
+            break;
+        }
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+    }
+
+    return false;
+}
+
+
+//
 // File_path_to_text implementation
 //
 
