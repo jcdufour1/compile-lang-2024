@@ -149,13 +149,36 @@ static void check_unit_def(const Ir_def* def) {
     unreachable("");
 }
 
+static void check_unit_function_call(const Ir_function_call* call) {
+    check_unit_src(call->callee, call->pos);
+    for (size_t idx = 0; idx < call->args.info.count; idx++) {
+        Name curr = vec_at(&call->args, idx);
+        check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */);
+    }
+    
+}
+
+static void check_unit_expr(const Ir_expr* expr) {
+    switch (expr->type) {
+        case IR_OPERATOR:
+            todo();
+        case IR_LITERAL:
+            todo();
+        case IR_FUNCTION_CALL:
+            check_unit_function_call(ir_function_call_const_unwrap(expr));
+            return;
+    }
+    unreachable("");
+}
+
 static void check_unit_ir_from_block(const Ir* ir) {
     log(LOG_DEBUG, FMT"\n", ir_print(ir));
     switch (ir->type) {
         case IR_BLOCK:
             todo();
         case IR_EXPR:
-            todo();
+            check_unit_expr(ir_expr_const_unwrap(ir));
+            return;
         case IR_LOAD_ELEMENT_PTR:
             todo();
         case IR_ARRAY_ACCESS:

@@ -1,6 +1,16 @@
 
+fn wrong1() i32 {
+    let status i32
+    return status
+}
+
+fn wrong1() i32 {
+    let status i32
+    return status
+}
 
 fn main() i32 {
+    wrong1()
     let status i32
     return status
 }
