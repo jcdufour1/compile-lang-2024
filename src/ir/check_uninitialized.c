@@ -2,6 +2,12 @@
 #include <symbol_iter.h>
 #include <msg.h>
 #include <ir_utils.h>
+#include <name.h>
+#include <ulang_type_get_pos.h>
+
+static size_t block_idx = 0;
+static Name goto_label = (Name) {0};
+static bool goto_or_cond_goto = false;
 
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
@@ -120,10 +126,44 @@ static void check_unit_dest(const Name dest) {
 }
 
 static void check_unit_block(const Ir_block* block) {
+    assert(block_idx == 0);
+    assert(goto_or_cond_goto == false);
+
     // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        check_unit_ir_from_block(vec_at(&block->children, idx));
+    while (block_idx < block->children.info.count) {
+        check_unit_ir_from_block(vec_at(&block->children, block_idx));
+
+        if (goto_or_cond_goto) {
+            assert(goto_label.base.count > 0);
+            bool label_found = false;
+            for (size_t temp_idx = 0; temp_idx < block->children.info.count; temp_idx++) {
+                // TODO: find a way to avoid O(n) time for finding new block idx 
+                //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
+                Ir* curr = vec_at(&block->children, temp_idx);
+                if (curr->type == IR_BLOCK) {
+                    todo();
+                }
+                if (curr->type != IR_DEF) {
+                    continue;
+                }
+                const Ir_def* curr_def = ir_def_const_unwrap(curr);
+                if (curr_def->type != IR_LABEL) {
+                    continue;
+                }
+                if (name_is_equal(goto_label, ir_label_const_unwrap(curr_def)->name)) {
+                    label_found = true;
+                    block_idx = temp_idx;
+                    break;
+                }
+            }
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, goto_label));
+            unwrap(label_found); 
+        }
+
+        block_idx++;
+        goto_or_cond_goto = false;
     }
+    block_idx = 0;
 }
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -161,9 +201,8 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
-    log(LOG_DEBUG, FMT"\n", ir_goto_print(lang_goto));
-    // TODO: actually do something because we need to trace things in the order that they will execute
-    (void) lang_goto;
+    goto_label = lang_goto->label;
+    goto_or_cond_goto = true;
 }
 
 static void check_unit_def(const Ir_def* def) {

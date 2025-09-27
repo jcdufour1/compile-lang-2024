@@ -17,8 +17,8 @@ fn wrong2() i32 {
 }
 
 fn main() i32 {
-    wrong1()
-    wrong2()
+    //wrong1()
+    //wrong2()
     let status i32
     return status
 }
