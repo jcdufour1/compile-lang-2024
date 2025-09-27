@@ -1,16 +1,22 @@
 
+fn aux_1arg(arg i32) {
+}
+
 fn wrong1() i32 {
     let status i32
     return status
 }
 
-fn wrong1() i32 {
-    let status i32
+fn wrong2() i32 {
+    let status i32 = 0
+    aux_1arg(status)
+    status = 8
     return status
 }
 
 fn main() i32 {
     wrong1()
+    wrong2()
     let status i32
     return status
 }

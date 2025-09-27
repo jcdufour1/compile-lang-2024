@@ -6,6 +6,8 @@
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
 
+static void check_unit_src_internal_name(Name name, Pos pos);
+
 static void check_unit_src_internal_literal(const Ir_literal* lit) {
     switch (lit->type) {
         case IR_INT:
@@ -35,6 +37,31 @@ static void check_unit_src_internal_expr(const Ir_expr* expr) {
     unreachable("");
 }
 
+static void check_unit_src_internal_variable_def(const Ir_variable_def* def) {
+    check_unit_src_internal_name(def->name_self, def->pos);
+}
+
+static void check_unit_src_internal_def(const Ir_def* def) {
+    switch (def->type) {
+        case IR_FUNCTION_DEF:
+            todo();
+        case IR_VARIABLE_DEF:
+            check_unit_src_internal_variable_def(ir_variable_def_const_unwrap(def));
+            return;
+        case IR_STRUCT_DEF:
+            todo();
+        case IR_PRIMITIVE_DEF:
+            todo();
+        case IR_FUNCTION_DECL:
+            todo();
+        case IR_LABEL:
+            todo();
+        case IR_LITERAL_DEF:
+            todo();
+    }
+    unreachable("");
+}
+
 static void check_unit_src_internal_name(Name name, Pos pos) {
     if (!init_symbol_lookup(name)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
@@ -54,7 +81,8 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
-            todo();
+            check_unit_src_internal_def(ir_def_const_unwrap(ir));
+            return;
         case IR_RETURN:
             todo();
         case IR_GOTO:

@@ -69,10 +69,13 @@ for generics:
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
 - give error if both -o and -run are used
+- give error for invalid arg at the command line
+- help should not print green on every line, and should not print location when on debug mode
 - make ir output more readable:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
     -- have proper delimeters (eg. space)
+
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
