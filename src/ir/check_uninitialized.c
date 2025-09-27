@@ -4,13 +4,79 @@
 
 static void check_unit_ir_from_block(const Ir* ir);
 
-static void check_unit_src(const Name src) {
-    if (!init_symbol_lookup(src)) {
-        Ir* sym_def = NULL;
-        unwrap(ir_lookup(&sym_def, src));
-        log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
-        msg(DIAG_UNINITIALIZED_VARIABLE, ir_get_pos(sym_def), "symbol may be used uninitialized\n");
+static void check_unit_src_internal_literal(const Ir_literal* lit) {
+    switch (lit->type) {
+        case IR_INT:
+            return;
+        case IR_FLOAT:
+            return;
+        case IR_STRING:
+            return;
+        case IR_VOID:
+            return;
+        case IR_FUNCTION_NAME:
+            return;
     }
+    unreachable("");
+}
+
+static void check_unit_src_internal_expr(const Ir_expr* expr) {
+    switch (expr->type) {
+        case IR_OPERATOR:
+            todo();
+        case IR_LITERAL:
+            check_unit_src_internal_literal(ir_literal_const_unwrap(expr));
+            return;
+        case IR_FUNCTION_CALL:
+            todo();
+    }
+    unreachable("");
+}
+
+static void check_unit_src_internal_ir(const Ir* ir) {
+    switch (ir->type) {
+        case IR_BLOCK:
+            todo();
+        case IR_EXPR:
+            check_unit_src_internal_expr(ir_expr_const_unwrap(ir));
+            return;
+        case IR_LOAD_ELEMENT_PTR:
+            todo();
+        case IR_ARRAY_ACCESS:
+            todo();
+        case IR_FUNCTION_PARAMS:
+            todo();
+        case IR_DEF:
+            todo();
+        case IR_RETURN:
+            todo();
+        case IR_GOTO:
+            todo();
+        case IR_COND_GOTO:
+            todo();
+        case IR_ALLOCA:
+            todo();
+        case IR_LOAD_ANOTHER_IR:
+            todo();
+        case IR_STORE_ANOTHER_IR:
+            todo();
+        case IR_IMPORT_PATH:
+            todo();
+        case IR_REMOVED:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static void check_unit_src(const Name src) {
+    Ir* sym_def = NULL;
+    unwrap(ir_lookup(&sym_def, src));
+    check_unit_src_internal_ir(sym_def);
+
+    //if (!init_symbol_lookup(src)) {
+        //log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
+        //msg(DIAG_UNINITIALIZED_VARIABLE, ir_get_pos(sym_def), "symbol may be used uninitialized\n");
+    //}
 }
 
 static void check_unit_dest(const Name dest) {
