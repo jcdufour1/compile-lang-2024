@@ -432,6 +432,15 @@ static Ir_type ir_gen_removed(void) {
     return store;
 }
 
+static Ir_type ir_gen_import_path(void) {
+    Ir_type mod = {.name = ir_name_new("ir", "import_path", false)};
+
+    append_member(&mod.members, "Ir_block*", "block");
+    append_member(&mod.members, "Strv", "mod_path");
+
+    return mod;
+}
+
 static Ir_type ir_gen_ir(void) {
     Ir_type ir = {.name = ir_name_new("ir", "", true)};
 
@@ -447,6 +456,7 @@ static Ir_type ir_gen_ir(void) {
     vec_append(&gen_a, &ir.sub_types, ir_gen_alloca());
     vec_append(&gen_a, &ir.sub_types, ir_gen_load_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_store_another_ir());
+    vec_append(&gen_a, &ir.sub_types, ir_gen_import_path());
     vec_append(&gen_a, &ir.sub_types, ir_gen_removed());
 
     return ir;

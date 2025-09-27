@@ -2251,7 +2251,12 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
 }
 
 static void load_import(Tast_import* old_import) {
-    unwrap(load_block();
+    Name yield_name = util_literal_name_new();
+    unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
+        old_import->pos,
+        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void()),
+        old_import->mod_path
+    ))));
 }
 
 static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
@@ -2628,7 +2633,7 @@ static void load_def_sometimes(Tast_def* old_def) {
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
-            load_import(tast_mod_path_unwrap(old_def));
+            load_import(tast_import_unwrap(old_def));
             return;
         case TAST_LABEL:
             return;

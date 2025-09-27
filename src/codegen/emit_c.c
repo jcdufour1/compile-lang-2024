@@ -204,6 +204,10 @@ static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
     unreachable("");
 }
 
+static void emit_c_import_path(Emit_c_strs* strs, const Ir_import_path* ir) {
+    emit_c_block(strs, ir->block);
+}
+
 static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
@@ -233,6 +237,9 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
         case IR_LOAD_ANOTHER_IR:
             return;
         case IR_ARRAY_ACCESS:
+            return;
+        case IR_IMPORT_PATH:
+            emit_c_import_path(strs, ir_import_path_const_unwrap(ir));
             return;
         case IR_REMOVED:
             return;
@@ -483,6 +490,9 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case IR_BLOCK:
             ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
+        case IR_IMPORT_PATH:
+            unreachable("");
+            return;
         case IR_REMOVED:
             return;
     }
@@ -711,7 +721,6 @@ void emit_c_from_tree(void) {
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
-            todo();
             emit_c_out_of_line(&strs, curr);
         }
 

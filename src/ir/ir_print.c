@@ -274,6 +274,21 @@ Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, int in
     return string_to_strv(buf);
 }
 
+Strv ir_import_path_print_internal(const Ir_import_path* import, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "import_path", indent);
+    string_extend_strv(&a_print, &buf, import->mod_path);
+    string_extend_cstr(&a_print, &buf, "\n");
+    if (import->block) {
+        string_extend_strv(&a_print, &buf, ir_block_print_internal(import->block, indent + INDENT_WIDTH));
+    } else {
+        string_extend_cstr_indent(&a_print, &buf, "<block is null>\n", indent);
+    }
+
+    return string_to_strv(buf);
+}
+
 Strv ir_removed_print_internal(const Ir_removed* removed, int indent) {
     (void) removed;
     String buf = {0};
@@ -472,6 +487,8 @@ Strv ir_print_internal(const Ir* ir, int indent) {
             return ir_load_another_ir_print_internal(ir_load_another_ir_const_unwrap(ir), indent);
         case IR_STORE_ANOTHER_IR:
             return ir_store_another_ir_print_internal(ir_store_another_ir_const_unwrap(ir), indent);
+        case IR_IMPORT_PATH:
+            return ir_import_path_print_internal(ir_import_path_const_unwrap(ir), indent);
         case IR_REMOVED:
             return ir_removed_print_internal(ir_removed_const_unwrap(ir), indent);
     }

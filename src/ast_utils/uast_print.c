@@ -441,6 +441,7 @@ Strv uast_label_print_internal(const Uast_label* label, int indent) {
 
     return string_to_strv(buf);
 }
+
 Strv uast_import_path_print_internal(const Uast_import_path* import, int indent) {
     String buf = {0};
 

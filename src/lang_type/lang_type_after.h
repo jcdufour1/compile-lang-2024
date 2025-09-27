@@ -495,6 +495,10 @@ static inline Lang_type lang_type_new_u1(void) {
     ));
 }
 
+static inline Lang_type lang_type_new_void(void) {
+    return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+}
+
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_STRUCT:
