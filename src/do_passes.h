@@ -21,6 +21,8 @@ void add_load_and_store(void);
 
 void remove_void_assigns(void);
 
+void check_uninitialized(void);
+
 Ir_block* assign_ir_ids(Ir_block* root);
 
 void emit_llvm_from_tree(const Ir_block* root);

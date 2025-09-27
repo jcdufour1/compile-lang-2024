@@ -407,74 +407,83 @@ static void ir_load_another_ir_graphvis_internal(String* buf, const Ir_load_anot
 
 // this should return false for statement types that never return or have custom code paths, etc.
 static bool ir_graphvis_do_next_arrow(const Ir* ir) {
-    switch (ir->type) {
-        case IR_BLOCK:
-            return false;
-        case IR_EXPR:
-            return true;
-        case IR_DEF:
-            return true;
-        case IR_LOAD_ELEMENT_PTR:
-            return true;
-        case IR_ARRAY_ACCESS:
-            return true;
-        case IR_FUNCTION_PARAMS:
-            unreachable("");
-        case IR_RETURN:
-            return false;
-        case IR_GOTO:
-            return false;
-        case IR_COND_GOTO:
-            return false;
-        case IR_ALLOCA:
-            return true;
-        case IR_LOAD_ANOTHER_IR:
-            return true;
-        case IR_STORE_ANOTHER_IR:
-            return true;
-    }
-    unreachable("");
+    (void) ir;
+    todo();
+//    switch (ir->type) {
+//        case IR_BLOCK:
+//            return false;
+//        case IR_EXPR:
+//            return true;
+//        case IR_DEF:
+//            return true;
+//        case IR_LOAD_ELEMENT_PTR:
+//            return true;
+//        case IR_ARRAY_ACCESS:
+//            return true;
+//        case IR_FUNCTION_PARAMS:
+//            unreachable("");
+//        case IR_RETURN:
+//            return false;
+//        case IR_GOTO:
+//            return false;
+//        case IR_COND_GOTO:
+//            return false;
+//        case IR_ALLOCA:
+//            return true;
+//        case IR_LOAD_ANOTHER_IR:
+//            return true;
+//        case IR_STORE_ANOTHER_IR:
+//            return true;
+//        case IR_REMOVED:
+//            return true;
+//    }
+//    unreachable("");
 }
 
 static void ir_graphvis_internal(String* buf, const Ir* ir) {
-    switch (ir->type) {
-        case IR_BLOCK:
-            ir_block_graphvis_internal(buf, ir_block_const_unwrap(ir));
-            return;
-        case IR_EXPR:
-            ir_expr_graphvis_internal(buf, ir_expr_const_unwrap(ir));
-            return;
-        case IR_DEF:
-            ir_def_graphvis_internal(buf, ir_def_const_unwrap(ir));
-            return;
-        case IR_LOAD_ELEMENT_PTR:
-            ir_load_element_ptr_graphvis_internal(buf, ir_load_element_ptr_const_unwrap(ir));
-            return;
-        case IR_ARRAY_ACCESS:
-            ir_array_access_graphvis_internal(buf, ir_array_access_const_unwrap(ir));
-            return;
-        case IR_FUNCTION_PARAMS:
-            ir_function_params_graphvis_internal(buf, ir_function_params_const_unwrap(ir));
-            return;
-        case IR_RETURN:
-            ir_return_graphvis_internal(buf, ir_return_const_unwrap(ir));
-            return;
-        case IR_GOTO:
-            ir_goto_graphvis_internal(buf, ir_goto_const_unwrap(ir));
-            return;
-        case IR_COND_GOTO:
-            ir_cond_goto_graphvis_internal(buf, ir_cond_goto_const_unwrap(ir));
-            return;
-        case IR_ALLOCA:
-            ir_alloca_graphvis_internal(buf, ir_alloca_const_unwrap(ir));
-            return;
-        case IR_LOAD_ANOTHER_IR:
-            ir_load_another_ir_graphvis_internal(buf, ir_load_another_ir_const_unwrap(ir));
-            return;
-        case IR_STORE_ANOTHER_IR:
-            ir_store_another_ir_graphvis_internal(buf, ir_store_another_ir_const_unwrap(ir));
-            return;
-    }
+    (void) buf;
+    (void) ir;
+    todo();
+    //switch (ir->type) {
+    //    case IR_BLOCK:
+    //        ir_block_graphvis_internal(buf, ir_block_const_unwrap(ir));
+    //        return;
+    //    case IR_EXPR:
+    //        ir_expr_graphvis_internal(buf, ir_expr_const_unwrap(ir));
+    //        return;
+    //    case IR_DEF:
+    //        ir_def_graphvis_internal(buf, ir_def_const_unwrap(ir));
+    //        return;
+    //    case IR_LOAD_ELEMENT_PTR:
+    //        ir_load_element_ptr_graphvis_internal(buf, ir_load_element_ptr_const_unwrap(ir));
+    //        return;
+    //    case IR_ARRAY_ACCESS:
+    //        ir_array_access_graphvis_internal(buf, ir_array_access_const_unwrap(ir));
+    //        return;
+    //    case IR_FUNCTION_PARAMS:
+    //        ir_function_params_graphvis_internal(buf, ir_function_params_const_unwrap(ir));
+    //        return;
+    //    case IR_RETURN:
+    //        ir_return_graphvis_internal(buf, ir_return_const_unwrap(ir));
+    //        return;
+    //    case IR_GOTO:
+    //        ir_goto_graphvis_internal(buf, ir_goto_const_unwrap(ir));
+    //        return;
+    //    case IR_COND_GOTO:
+    //        ir_cond_goto_graphvis_internal(buf, ir_cond_goto_const_unwrap(ir));
+    //        return;
+    //    case IR_ALLOCA:
+    //        ir_alloca_graphvis_internal(buf, ir_alloca_const_unwrap(ir));
+    //        return;
+    //    case IR_LOAD_ANOTHER_IR:
+    //        ir_load_another_ir_graphvis_internal(buf, ir_load_another_ir_const_unwrap(ir));
+    //        return;
+    //    case IR_STORE_ANOTHER_IR:
+    //        ir_store_another_ir_graphvis_internal(buf, ir_store_another_ir_const_unwrap(ir));
+    //        return;
+    //    case IR_REMOVED:
+    //        return;
+    //}
     unreachable("");
 }
 

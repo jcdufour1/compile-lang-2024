@@ -111,6 +111,9 @@ void compile_file_to_ir(void) {
     remove_void_assigns();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
+
+    check_uninitialized();
+    ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 }
 
 void do_passes(void) {
