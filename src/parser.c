@@ -1087,6 +1087,9 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope)) {
         return PARSE_ERROR;
     }
+    if (strv_is_equal(fun_decl->name.base, sv("main"))) {
+        env.mod_path_main_fn = curr_mod_path;
+    }
 
     Uast_block* fun_body = NULL;
     if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {

@@ -4045,7 +4045,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(sv("tests/inputs/circular_import_main"), sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
             // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
             // TODO: use warn for warnings instead of msg to reduce mistakes?

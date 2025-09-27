@@ -32,6 +32,8 @@ typedef struct Env_ {
     
     Name_vec struct_like_waiting_to_resolve;
     Usymbol_table struct_like_tbl;
+
+    Strv mod_path_main_fn;
 } Env;
 
 #endif // ENV_H
