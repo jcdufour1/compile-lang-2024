@@ -3,6 +3,7 @@
 #include <msg.h>
 #include <ir_utils.h>
 
+// TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
 
 static void check_unit_src_internal_literal(const Ir_literal* lit) {
@@ -43,7 +44,7 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     }
 }
 
-static void check_unit_src_internal_ir(const Ir* ir) {
+static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
     switch (ir->type) {
         case IR_BLOCK:
             todo();
@@ -69,7 +70,7 @@ static void check_unit_src_internal_ir(const Ir* ir) {
         case IR_ARRAY_ACCESS:
             // fallthrough
         case IR_ALLOCA:
-            check_unit_src_internal_name(ir_tast_get_name(ir), ir_get_pos(ir));
+            check_unit_src_internal_name(ir_tast_get_name(ir), pos);
             return;
         case IR_IMPORT_PATH:
             todo();
@@ -79,10 +80,10 @@ static void check_unit_src_internal_ir(const Ir* ir) {
     unreachable("");
 }
 
-static void check_unit_src(const Name src) {
+static void check_unit_src(const Name src, Pos pos) {
     Ir* sym_def = NULL;
     unwrap(ir_lookup(&sym_def, src));
-    check_unit_src_internal_ir(sym_def);
+    check_unit_src_internal_ir(sym_def, pos);
 }
 
 static void check_unit_dest(const Name dest) {
@@ -107,13 +108,15 @@ static void check_unit_function_def(const Ir_function_def* def) {
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
-    check_unit_src(store->ir_src);
+    check_unit_src(store->ir_src, store->pos);
     check_unit_dest(store->ir_dest);
     unwrap(init_symbol_add(store->name));
 }
 
+// TODO: should Ir_load_another_ir and store_another_ir actually have name member 
+//   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
-    check_unit_src(load->ir_src);
+    check_unit_src(load->ir_src, load->pos);
     unwrap(init_symbol_add(load->name));
 }
 
