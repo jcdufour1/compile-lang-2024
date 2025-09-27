@@ -3402,7 +3402,9 @@ bool try_set_function_decl_types(
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
-    unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
+    log(LOG_DEBUG, FMT"\n", tast_function_decl_print(*new_tast));
+    // TODO: figure out how to handle redefinition of extern "c" functions?
+    sym_tbl_add(tast_function_decl_wrap(*new_tast));
 
     return true;
 }
