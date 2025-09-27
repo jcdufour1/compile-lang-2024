@@ -75,6 +75,11 @@ static Ir* rm_void_store_another_ir(Ir_store_another_ir* store) {
     rm_void_internal(store, ir_store_another_ir_wrap);
 }
 
+static Ir* rm_void_import_path(Ir_import_path* import) {
+    rm_void_block(import->block);
+    return ir_import_path_wrap(import);
+}
+
 static Ir* rm_void_ir(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -82,22 +87,18 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_EXPR:
             return rm_void_expr(ir_expr_unwrap(ir));
         case IR_LOAD_ELEMENT_PTR:
-            // TODO
             return ir;
         case IR_ARRAY_ACCESS:
-            // TODO
             return ir;
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
             return rm_void_def(ir_def_unwrap(ir));
         case IR_RETURN:
-            // TODO
             return ir;
         case IR_GOTO:
             return ir;
         case IR_COND_GOTO:
-            // TODO
             return ir;
         case IR_ALLOCA:
             return rm_void_alloca(ir_alloca_unwrap(ir));
@@ -105,6 +106,8 @@ static Ir* rm_void_ir(Ir* ir) {
             return rm_void_load_another_ir(ir_load_another_ir_unwrap(ir));
         case IR_STORE_ANOTHER_IR:
             return rm_void_store_another_ir(ir_store_another_ir_unwrap(ir));
+        case IR_IMPORT_PATH:
+            return rm_void_import_path(ir_import_path_unwrap(ir));
         case IR_REMOVED:
             return ir;
     }
@@ -124,9 +127,7 @@ static Ir* rm_void_block(Ir_block* block) {
     return ir_block_wrap(block);
 }
 
-void remove_void_assigns(Ir_block* block) {
-    rm_void_block(block);
-
+void remove_void_assigns(void) {
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {

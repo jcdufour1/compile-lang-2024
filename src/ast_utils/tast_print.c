@@ -550,6 +550,18 @@ Strv tast_enum_def_print_internal(const Tast_enum_def* def, int indent) {
     return string_to_strv(buf);
 }
 
+Strv tast_import_print_internal(const Tast_import* import, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "import\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv(&a_print, &buf, tast_block_print_internal(import->block, indent));
+    string_extend_cstr_indent(&a_print, &buf, "mod_path: ", indent);
+    string_extend_strv(&a_print, &buf, import->mod_path);
+
+    return string_to_strv(buf);
+}
+
 Strv tast_variable_def_print_internal(const Tast_variable_def* def, int indent) {
     String buf = {0};
 
@@ -588,7 +600,7 @@ Strv tast_def_print_internal(const Tast_def* def, int indent) {
         case TAST_ENUM_DEF:
             return tast_enum_def_print_internal(tast_enum_def_const_unwrap(def), indent);
         case TAST_IMPORT:
-            todo();
+            return tast_import_print_internal(tast_import_const_unwrap(def), indent);
         case TAST_LABEL:
             return tast_label_print_internal(tast_label_const_unwrap(def), indent);
     }

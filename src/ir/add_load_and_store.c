@@ -2250,6 +2250,15 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     }
 }
 
+static void load_import(Tast_import* old_import) {
+    Name yield_name = util_literal_name_new();
+    unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
+        old_import->pos,
+        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void()),
+        old_import->mod_path
+    ))));
+}
+
 static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
     assert(old_unary->token_type == UNARY_DEREF);
 
@@ -2602,6 +2611,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
     unreachable("");
 }
 
+// TODO: rename to load_def_out_of_line or similar
 static void load_def_sometimes(Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
@@ -2623,7 +2633,8 @@ static void load_def_sometimes(Tast_def* old_def) {
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
-            todo();
+            load_import(tast_import_unwrap(old_def));
+            return;
         case TAST_LABEL:
             return;
     }
@@ -2718,20 +2729,16 @@ static Ir_block* load_block(
     return new_block;
 }
 
-Ir_block* add_load_and_store(Tast_block* old_root) {
+void add_load_and_store(void) {
     assert(defered_collections.coll_stack.info.count == 0);
 
-    Symbol_iter iter = sym_tbl_iter_new(0);
+    Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         load_def_sometimes(curr);
     }
 
-    Name dummy = {0};
-    Ir_block* block = load_block(old_root, &dummy, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
-
     assert(defered_collections.coll_stack.info.count == 0);
-    return block;
 }
 
 

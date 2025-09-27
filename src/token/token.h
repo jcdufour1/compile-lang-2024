@@ -118,8 +118,8 @@ typedef enum {
     TOKEN_MODE_MSG,
 } TOKEN_MODE;
 
-static inline Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = sv(text), .type = token_type};
+static inline Token token_new(Strv text, TOKEN_TYPE token_type) {
+    Token token = {.text = text, .type = token_type};
     return token;
 }
 

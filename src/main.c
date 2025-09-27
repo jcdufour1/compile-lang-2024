@@ -36,7 +36,7 @@ static void add_primitives(void) {
     add_void();
 }
 
-Ir_block* compile_file_to_ir(void) {
+void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
@@ -55,7 +55,7 @@ Ir_block* compile_file_to_ir(void) {
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
     Uast_block* untyped = NULL;
-    bool status = parse_file(&untyped, params.input_file_path);
+    bool status = parse(&untyped, params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
         assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
@@ -69,8 +69,7 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
     arena_reset(&a_print);
-    Tast_block* typed = NULL;
-    status = try_set_types(&typed, untyped);
+    status = try_set_types();
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
         assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
@@ -79,15 +78,15 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "try_set_block_types succedded\n");
     assert(status && "error_count should be zero if try_set_types returns true");
     
-    unwrap(typed);
+    //unwrap(typed);
     arena_reset(&a_print);
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
-    symbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG,FMT, tast_block_print(typed));
+    symbol_log_level(LOG_DEBUG, SCOPE_BUILTIN);
+    //log(LOG_DEBUG,FMT, tast_block_print(typed));
     log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
 
-    Ir_block* ir_root = add_load_and_store(typed);
+    add_load_and_store();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, 0);
 
@@ -96,30 +95,27 @@ Ir_block* compile_file_to_ir(void) {
     Ir* curr = NULL;
     (void) curr;
     // TODO
-    //while (ir_tbl_iter_next(&curr, &iter)) {
-    //    log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
-    //    log(LOG_DEBUG, FMT, ir_print(curr));
-    //    log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
-    //}
+    while (ir_tbl_iter_next(&curr, &iter)) {
+        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
+        log(LOG_DEBUG, FMT, ir_print(curr));
+        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
+    }
     //// TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
     //log(LOG_DEBUG, FMT, ir_block_print(ir_root));
     //log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }
-    assert(ir_root);
+    //assert(ir_root);
 
-    remove_void_assigns(ir_root);
+    remove_void_assigns();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
-
-    return ir_root;
 }
 
 void do_passes(void) {
-    Ir_block* ir = NULL;
     if (params.compile_own) {
-        ir = compile_file_to_ir();
+        compile_file_to_ir();
     }
 
     static_assert(
@@ -130,29 +126,17 @@ void do_passes(void) {
         if (params.dump_dot) {
             // TODO: add logic in parse_args to catch below error:
             unwrap(params.compile_own && "this should have been caught in parse_args");
-            String graphvis = {0};
-            string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
-            write_file("dump.dot", string_to_strv(graphvis));
+            todo();
+            //String graphvis = {0};
+            //string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
+            //write_file("dump.dot", string_to_strv(graphvis));
         } else {
             String contents = {0};
-            string_extend_strv(&a_print, &contents, sv("builtin scope:\n"));
-            string_extend_strv(&a_print, &contents, ir_block_print_internal(ir, INDENT_WIDTH));
-            {
-                Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
-                Ir* curr = NULL;
-                while (ir_tbl_iter_next(&curr, &iter)) {
-                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
-                }
-            }
-            string_extend_strv(&a_print, &contents, sv("\n\n"));
 
-            string_extend_strv(&a_print, &contents, sv("top level scope:\n"));
-            {
-                Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
-                Ir* curr = NULL;
-                while (ir_tbl_iter_next(&curr, &iter)) {
-                    string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
-                }
+            Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+            Ir* curr = NULL;
+            while (ir_tbl_iter_next(&curr, &iter)) {
+                string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
             }
             string_extend_strv(&a_print, &contents, sv("\n\n"));
 
@@ -172,7 +156,7 @@ void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                emit_c_from_tree(ir);
+                emit_c_from_tree();
                 break;
             default:
                 unreachable("");

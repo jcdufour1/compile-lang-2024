@@ -1,0 +1,2 @@
+
+type dummy import = tests.inputs.circular_import_main

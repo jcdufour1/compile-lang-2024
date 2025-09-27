@@ -16,6 +16,7 @@
 #include <str_and_num_utils.h>
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
+// TODO: look into using #line to make linker messages print location of .own source code?
 typedef struct {
     String struct_defs;
     String output;
@@ -203,6 +204,10 @@ static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
     unreachable("");
 }
 
+static void emit_c_import_path(Emit_c_strs* strs, const Ir_import_path* ir) {
+    emit_c_block(strs, ir->block);
+}
+
 static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
@@ -232,6 +237,9 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
         case IR_LOAD_ANOTHER_IR:
             return;
         case IR_ARRAY_ACCESS:
+            return;
+        case IR_IMPORT_PATH:
+            emit_c_import_path(strs, ir_import_path_const_unwrap(ir));
             return;
         case IR_REMOVED:
             return;
@@ -482,6 +490,9 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case IR_BLOCK:
             ir_extend_name(&strs->output, ir_tast_get_name(result));
             return;
+        case IR_IMPORT_PATH:
+            unreachable("");
+            return;
         case IR_REMOVED:
             return;
     }
@@ -689,7 +700,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     }
 }
 
-void emit_c_from_tree(const Ir_block* root) {
+void emit_c_from_tree(void) {
     Strv test_output = sv("test.c");
     if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
         test_output = params.output_file_path;
@@ -712,8 +723,6 @@ void emit_c_from_tree(const Ir_block* root) {
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);
         }
-
-        emit_c_block(&strs, root);
 
         FILE* file = fopen(strv_to_cstr(&a_main, test_output), "w");
         if (!file) {

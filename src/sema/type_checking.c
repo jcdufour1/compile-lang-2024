@@ -1638,7 +1638,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
     unreachable("");
 }
 
-STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
+STMT_STATUS try_set_def_types(Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
@@ -1689,7 +1689,12 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            *new_stmt = tast_expr_wrap(tast_block_wrap(new_block));
+            // TODO: make tast node type to hold this new block
+            unwrap(sym_tbl_add(tast_import_wrap(tast_import_new(
+                new_block->pos,
+                new_block,
+                uast_import_path_unwrap(uast)->mod_path
+            ))));
             return STMT_OK;
         }
         case UAST_MOD_ALIAS:
@@ -3402,7 +3407,9 @@ bool try_set_function_decl_types(
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
-    unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
+    log(LOG_DEBUG, FMT"\n", tast_function_decl_print(*new_tast));
+    // TODO: figure out how to handle redefinition of extern "c" functions?
+    sym_tbl_add(tast_function_decl_wrap(*new_tast));
 
     return true;
 }
@@ -3982,8 +3989,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -3998,11 +4004,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
-        Tast_stmt* new_tast = NULL;
-        switch (try_set_stmt_types(&new_tast, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
+        Tast_stmt* new_stmt = NULL;
+        switch (try_set_stmt_types(&new_stmt, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_OK:
                 assert(curr_tast);
-                vec_append(&a_main, &new_tasts, new_tast);
+                vec_append(&a_main, &new_tasts, new_stmt);
                 break;
             case STMT_NO_STMT:
                 break;
@@ -4045,8 +4051,10 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(MOD_PATH_BUILTIN, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
+            // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
+            // TODO: use warn for warnings instead of msg to reduce mistakes?
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
@@ -4121,7 +4129,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_DEF:
-            return try_set_def_types(new_tast, uast_def_unwrap(stmt));
+            return try_set_def_types(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types(&new_tast_, uast_for_with_cond_unwrap(stmt))) {
@@ -4174,14 +4182,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     unreachable("");
 }
 
-bool try_set_types(Tast_block** new_tast, Uast_block* block) {
+bool try_set_types(void) {
     lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
-    Usymbol_iter iter = usym_tbl_iter_new(0);
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         // TODO: make switch for this if for exhausive checking
@@ -4191,8 +4199,7 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -4203,10 +4210,6 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
             default:
                 unreachable("");
         }
-    }
-
-    if (!try_set_block_types(new_tast, block, false)) {
-        status = false;
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {

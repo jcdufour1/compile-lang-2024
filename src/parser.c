@@ -107,6 +107,8 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod);
+
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
 }
@@ -315,7 +317,7 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     return PARSE_OK;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path) {
+static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_main_mod) {
     bool status = true;
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
@@ -330,11 +332,14 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
-    if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
+    // TODO: this could cause collisions if internal symbol has the same name as mod_path.
+    //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
+    // TODO: do not hardcode (Strv) {0}
+    if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
 
+    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         NULL,
@@ -344,17 +349,17 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path))) {
+    if (!parse_file(&block, string_to_strv(file_path), is_main_mod)) {
         status = false;
         goto finish;
     }
+    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
         mod_path
     )));
-
 
 finish:
     curr_mod_path = old_mod_path;
@@ -1085,6 +1090,9 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope)) {
         return PARSE_ERROR;
     }
+    if (strv_is_equal(fun_decl->name.base, sv("main"))) {
+        env.mod_path_main_fn = curr_mod_path;
+    }
 
     Uast_block* fun_body = NULL;
     if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
@@ -1343,7 +1351,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path))) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false)) {
         return PARSE_ERROR;
     }
 
@@ -3070,29 +3078,14 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-bool parse_file(Uast_block** block, Strv file_path) {
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
     bool status = true;
-
-    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN);
-
-    if (curr_mod_alias.base.count < 1) {
-        curr_mod_path = MOD_PATH_BUILTIN; // TODO: may not be a good idea because of collisions
-        curr_mod_alias = MOD_ALIAS_TOP_LEVEL;
-        Uast_mod_alias* mod_alias = uast_mod_alias_new(
-            POS_BUILTIN,
-            curr_mod_alias,
-            curr_mod_path,
-            SCOPE_TOP_LEVEL
-        );
-        unwrap(usymbol_add(uast_mod_alias_wrap(mod_alias)));
-
-        //Uast_mod_alias* dummy = NULL;
-        //unwrap(get_mod_alias_from_path_token(
-        //    &dummy,
-        //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
-        //    (Pos) {0} /* TODO */,
-        //    MOD_PATH_RUNTIME
-        //));
+    Scope_id new_scope = SCOPE_TOP_LEVEL;
+    if (!is_main_mod) {
+        new_scope = symbol_collection_new(SCOPE_BUILTIN);
+    }
+    if (new_scope == SCOPE_TOP_LEVEL) {
+        log(LOG_DEBUG, "thing 92\n");
     }
 
     // TODO: DNDEBUG should be spelled NDEBUG
@@ -3115,6 +3108,8 @@ bool parse_file(Uast_block** block, Strv file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
+    log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
+    // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
@@ -3131,6 +3126,38 @@ bool parse_file(Uast_block** block, Strv file_path) {
 
 error:
     return status;
+}
+
+bool parse(Uast_block** block, Strv file_path) {
+    symbol_collection_new(SCOPE_BUILTIN);
+
+    //Uast_mod_alias* dummy = NULL;
+    //unwrap(get_mod_alias_from_path_token(
+    //    &dummy,
+    //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
+    //    (Pos) {0} /* TODO */,
+    //    MOD_PATH_RUNTIME
+    //));
+
+    log(LOG_DEBUG, FMT"\n", strv_print(strv_slice(file_path, 0, file_path.count - 4)));
+    Uast_mod_alias* alias = NULL;
+    if (!get_mod_alias_from_path_token(
+        &alias,
+        token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
+        (Pos) {0} /* TODO */,
+        strv_slice(file_path, 0, file_path.count - 4),
+        true
+    )) {
+        return false;
+    }
+
+    Uast_def* import = NULL;
+    log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
+    unwrap(usymbol_lookup(&import, name_new((Strv) {0}, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
+    *block = uast_import_path_unwrap(import)->block;
+    assert((*block)->scope_id == SCOPE_TOP_LEVEL);
+    log(LOG_DEBUG, FMT"\n", uast_block_print(*block));
+    return true;
 }
 
 static void parser_test_parse_expr(const char* input, int test) {

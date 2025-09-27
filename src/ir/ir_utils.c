@@ -90,6 +90,8 @@ Ir_lang_type ir_get_lang_type(const Ir* ir) {
             return ir_load_element_ptr_const_unwrap(ir)->lang_type;
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->lang_type;
+        case IR_IMPORT_PATH:
+            unreachable("");
         case IR_REMOVED:
             unreachable("");
     }
@@ -191,6 +193,8 @@ Name ir_tast_get_name(const Ir* ir) {
             return ir_load_element_ptr_const_unwrap(ir)->name_self;
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
+        case IR_IMPORT_PATH:
+            return name_new((Strv) {0}, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
         case IR_REMOVED:
             unreachable("");
     }

@@ -153,9 +153,14 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         string_extend_cstr(&a_print, buf, "_");
     }
 
-    string_extend_strv(&a_print, buf, name.mod_path);
-    if (name.mod_path.count > 0) {
-        string_extend_cstr(&a_print, buf, "::");
+    if (!is_msg) {
+        // TODO: even when is_msg is true, show prefix sometimes to avoid confusion?
+        //   (maybe only show prefix when mod_path of name is different than mod_path of file that 
+        //   name appears in)
+        string_extend_strv(&a_print, buf, name.mod_path);
+        if (name.mod_path.count > 0) {
+            string_extend_cstr(&a_print, buf, "::");
+        }
     }
     string_extend_strv(&a_print, buf, name.base);
     if (name.gen_args.info.count > 0) {
