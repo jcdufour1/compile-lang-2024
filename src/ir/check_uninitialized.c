@@ -130,7 +130,19 @@ static void check_unit_import_path(const Ir_import_path* import) {
     check_unit_block(import->block);
 }
 
+static void check_unit_function_params(const Ir_function_params* params) {
+    for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        check_unit_dest(vec_at(&params->params, idx)->name_self);
+    }
+}
+
+static void check_unit_function_decl(const Ir_function_decl* decl) {
+    check_unit_function_params(decl->params);
+}
+
 static void check_unit_function_def(const Ir_function_def* def) {
+    // NOTE: decl must be checked before body so that parameters can be set as initialized
+    check_unit_function_decl(def->decl);
     check_unit_block(def->body);
 }
 

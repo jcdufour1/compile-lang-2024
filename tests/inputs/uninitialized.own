@@ -1,5 +1,7 @@
 
-fn aux_1arg(arg i32) {
+fn aux_1arg(arg i32) i32 {
+    let num i32 = arg
+    return arg
 }
 
 fn wrong1() i32 {
