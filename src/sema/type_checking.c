@@ -4178,7 +4178,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     unreachable("");
 }
 
-bool try_set_types(Tast_block** new_tast, Uast_block* block) {
+bool try_set_types(void) {
     lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
@@ -4207,10 +4207,6 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
             default:
                 unreachable("");
         }
-    }
-
-    if (!try_set_block_types(new_tast, block, false)) {
-        status = false;
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {

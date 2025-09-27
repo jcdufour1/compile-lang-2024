@@ -36,7 +36,7 @@ static void add_primitives(void) {
     add_void();
 }
 
-Ir_block* compile_file_to_ir(void) {
+void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
@@ -69,8 +69,7 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
     arena_reset(&a_print);
-    Tast_block* typed = NULL;
-    status = try_set_types(&typed, untyped);
+    status = try_set_types();
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
         assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
@@ -79,15 +78,15 @@ Ir_block* compile_file_to_ir(void) {
     log(LOG_DEBUG, "try_set_block_types succedded\n");
     assert(status && "error_count should be zero if try_set_types returns true");
     
-    unwrap(typed);
+    //unwrap(typed);
     arena_reset(&a_print);
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
     symbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG,FMT, tast_block_print(typed));
+    //log(LOG_DEBUG,FMT, tast_block_print(typed));
     log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
 
-    Ir_block* ir_root = add_load_and_store(typed);
+    add_load_and_store();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, 0);
 
@@ -107,19 +106,16 @@ Ir_block* compile_file_to_ir(void) {
     if (error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }
-    assert(ir_root);
+    //assert(ir_root);
 
-    remove_void_assigns(ir_root);
+    remove_void_assigns();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
-
-    return ir_root;
 }
 
 void do_passes(void) {
-    Ir_block* ir = NULL;
     if (params.compile_own) {
-        ir = compile_file_to_ir();
+        compile_file_to_ir();
     }
 
     static_assert(

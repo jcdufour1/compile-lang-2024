@@ -124,9 +124,7 @@ static Ir* rm_void_block(Ir_block* block) {
     return ir_block_wrap(block);
 }
 
-void remove_void_assigns(Ir_block* block) {
-    rm_void_block(block);
-
+void remove_void_assigns(void) {
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {

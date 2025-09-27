@@ -2718,20 +2718,16 @@ static Ir_block* load_block(
     return new_block;
 }
 
-Ir_block* add_load_and_store(Tast_block* old_root) {
+void add_load_and_store(void) {
     assert(defered_collections.coll_stack.info.count == 0);
 
-    Symbol_iter iter = sym_tbl_iter_new(0);
+    Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         load_def_sometimes(curr);
     }
 
-    Name dummy = {0};
-    Ir_block* block = load_block(old_root, &dummy, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
-
     assert(defered_collections.coll_stack.info.count == 0);
-    return block;
 }
 
 
