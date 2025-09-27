@@ -4185,7 +4185,7 @@ bool try_set_types(void) {
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
-    Usymbol_iter iter = usym_tbl_iter_new(0);
+    Usymbol_iter iter = usym_tbl_iter_new();
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         // TODO: make switch for this if for exhausive checking

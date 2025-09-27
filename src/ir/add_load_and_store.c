@@ -2602,6 +2602,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
     unreachable("");
 }
 
+// TODO: rename to load_def_out_of_line or similar
 static void load_def_sometimes(Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
@@ -2724,6 +2725,7 @@ void add_load_and_store(void) {
     Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
+        todo();
         load_def_sometimes(curr);
     }
 

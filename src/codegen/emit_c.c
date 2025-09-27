@@ -16,6 +16,7 @@
 #include <str_and_num_utils.h>
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
+// TODO: look into using #line to make linker messages print location of .own source code?
 typedef struct {
     String struct_defs;
     String output;
@@ -689,7 +690,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     }
 }
 
-void emit_c_from_tree(const Ir_block* root) {
+void emit_c_from_tree(void) {
     Strv test_output = sv("test.c");
     if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
         test_output = params.output_file_path;
@@ -710,10 +711,9 @@ void emit_c_from_tree(const Ir_block* root) {
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
+            todo();
             emit_c_out_of_line(&strs, curr);
         }
-
-        emit_c_block(&strs, root);
 
         FILE* file = fopen(strv_to_cstr(&a_main, test_output), "w");
         if (!file) {

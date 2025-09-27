@@ -68,6 +68,7 @@ for generics:
 - make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
+- give error if both -o and -run are used
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

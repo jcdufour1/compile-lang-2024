@@ -25,6 +25,6 @@ Ir_block* assign_ir_ids(Ir_block* root);
 
 void emit_llvm_from_tree(const Ir_block* root);
 
-void emit_c_from_tree(const Ir_block* root);
+void emit_c_from_tree(void);
 
 #endif // PASSES_H
