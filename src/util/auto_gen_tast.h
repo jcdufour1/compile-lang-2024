@@ -433,6 +433,7 @@ static Tast_type tast_gen_if_else_chain(const char* prefix) {
     return chain;
 }
 
+// TODO: remove tast_gen_module_alias if it is not used
 static Tast_type tast_gen_module_alias(const char* prefix) {
     const char* base_name = "module_alias";
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
@@ -443,12 +444,12 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     return chain;
 }
 
+// TODO: rename tast_import to tast_mod_path?
 static Tast_type tast_gen_import(const char* prefix) {
     Tast_type import = {.name = tast_name_new(prefix, "import", false)};
 
     append_member(&import.members, "Tast_block*", "block");
-    append_member(&import.members, "Name", "alias_name");
-    append_member(&import.members, "Strv", "path");
+    append_member(&import.members, "Strv", "mod_path");
 
     return import;
 }

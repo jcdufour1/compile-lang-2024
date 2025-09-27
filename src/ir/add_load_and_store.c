@@ -2250,6 +2250,10 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     }
 }
 
+static void load_import(Tast_import* old_import) {
+    unwrap(load_block();
+}
+
 static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
     assert(old_unary->token_type == UNARY_DEREF);
 
@@ -2624,7 +2628,8 @@ static void load_def_sometimes(Tast_def* old_def) {
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
-            todo();
+            load_import(tast_mod_path_unwrap(old_def));
+            return;
         case TAST_LABEL:
             return;
     }
@@ -2725,7 +2730,6 @@ void add_load_and_store(void) {
     Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
-        todo();
         load_def_sometimes(curr);
     }
 

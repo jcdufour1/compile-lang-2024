@@ -332,6 +332,9 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
+    // TODO: this could cause collisions if internal symbol has the same name as mod_path.
+    //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
+    // TODO: do not hardcode (Strv) {0}
     if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }

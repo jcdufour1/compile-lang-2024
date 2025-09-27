@@ -1638,7 +1638,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
     unreachable("");
 }
 
-STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
+STMT_STATUS try_set_def_types(Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
@@ -1689,7 +1689,12 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            *new_stmt = tast_expr_wrap(tast_block_wrap(new_block));
+            // TODO: make tast node type to hold this new block
+            unwrap(sym_tbl_add(tast_import_wrap(tast_import_new(
+                new_block->pos,
+                new_block,
+                uast_import_path_unwrap(uast)->mod_path
+            ))));
             return STMT_OK;
         }
         case UAST_MOD_ALIAS:
@@ -3984,8 +3989,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -4125,7 +4129,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_DEF:
-            return try_set_def_types(new_tast, uast_def_unwrap(stmt));
+            return try_set_def_types(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types(&new_tast_, uast_for_with_cond_unwrap(stmt))) {
@@ -4185,7 +4189,7 @@ bool try_set_types(void) {
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
-    Usymbol_iter iter = usym_tbl_iter_new();
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         // TODO: make switch for this if for exhausive checking
@@ -4195,8 +4199,7 @@ bool try_set_types(void) {
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:

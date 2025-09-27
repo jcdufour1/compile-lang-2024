@@ -502,7 +502,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT:
-            todo();
+            return name_new((Strv) {0} /* TODO */, tast_import_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
     }
