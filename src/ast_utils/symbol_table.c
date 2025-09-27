@@ -445,9 +445,27 @@ static bool init_symbol_lookup_internal(void** result, Strv key, Scope_id scope_
     return false;
 }
 
+bool init_symbol_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+) {
+    void* dummy;
+    if (init_symbol_lookup_internal((void**)&dummy, key, scope_id)) {
+        return false;
+    }
+    void* curr_tast = vec_at_ref(&init_tables, scope_id);
+    unwrap(generic_tbl_add(curr_tast, key, item));
+    return true;
+}
+
 bool init_symbol_lookup(Name name) {
     void* dummy = NULL;
     return init_symbol_lookup_internal(&dummy, serialize_name_symbol_table(name), name.scope_id);
+}
+
+bool init_symbol_add(Name name) {
+    return init_symbol_add_internal(serialize_name_symbol_table(name), NULL, name.scope_id);
 }
 
 //
@@ -543,6 +561,7 @@ bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
 static Scope_id_vec scope_id_to_parent;
 
 // returns parent of key
+// TODO: assert that key is != SCOPE_BUILTIN?
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
     return vec_at(&scope_id_to_parent, key);
 }

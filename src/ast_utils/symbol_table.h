@@ -94,6 +94,8 @@ void ir_update(Ir* tast_of_symbol);
 
 bool init_symbol_lookup(Name name);
 
+bool init_symbol_add(Name name);
+
 Symbol_table* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);

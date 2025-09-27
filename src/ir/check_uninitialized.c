@@ -1,6 +1,7 @@
 #include <do_passes.h>
 #include <symbol_iter.h>
 #include <msg.h>
+#include <ir_utils.h>
 
 static void check_unit_ir_from_block(const Ir* ir);
 
@@ -33,6 +34,12 @@ static void check_unit_src_internal_expr(const Ir_expr* expr) {
     unreachable("");
 }
 
+static void check_unit_src_internal_name(Name name, Pos pos) {
+    if (!init_symbol_lookup(name)) {
+        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol may be used uninitialized\n");
+    }
+}
+
 static void check_unit_src_internal_ir(const Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -40,10 +47,6 @@ static void check_unit_src_internal_ir(const Ir* ir) {
         case IR_EXPR:
             check_unit_src_internal_expr(ir_expr_const_unwrap(ir));
             return;
-        case IR_LOAD_ELEMENT_PTR:
-            todo();
-        case IR_ARRAY_ACCESS:
-            todo();
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
@@ -54,12 +57,17 @@ static void check_unit_src_internal_ir(const Ir* ir) {
             todo();
         case IR_COND_GOTO:
             todo();
-        case IR_ALLOCA:
-            todo();
         case IR_LOAD_ANOTHER_IR:
-            todo();
+            // fallthrough
         case IR_STORE_ANOTHER_IR:
-            todo();
+            // fallthrough
+        case IR_LOAD_ELEMENT_PTR:
+            // fallthrough
+        case IR_ARRAY_ACCESS:
+            // fallthrough
+        case IR_ALLOCA:
+            check_unit_src_internal_name(ir_tast_get_name(ir), ir_get_pos(ir));
+            return;
         case IR_IMPORT_PATH:
             todo();
         case IR_REMOVED:
@@ -72,15 +80,11 @@ static void check_unit_src(const Name src) {
     Ir* sym_def = NULL;
     unwrap(ir_lookup(&sym_def, src));
     check_unit_src_internal_ir(sym_def);
-
-    //if (!init_symbol_lookup(src)) {
-        //log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
-        //msg(DIAG_UNINITIALIZED_VARIABLE, ir_get_pos(sym_def), "symbol may be used uninitialized\n");
-    //}
 }
 
 static void check_unit_dest(const Name dest) {
-    todo();
+    if (!init_symbol_add(dest)) {
+    }
 }
 
 static void check_unit_block(const Ir_block* block) {
@@ -104,6 +108,16 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     check_unit_dest(store->ir_dest);
 }
 
+static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
+    check_unit_src(load->ir_src);
+}
+
+static void check_unit_goto(const Ir_goto* lang_goto) {
+    log(LOG_DEBUG, FMT"\n", ir_goto_print(lang_goto));
+    // TODO: actually do something because we need to trace things in the order that they will execute
+    (void) lang_goto;
+}
+
 static void check_unit_def(const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -119,7 +133,8 @@ static void check_unit_def(const Ir_def* def) {
         case IR_FUNCTION_DECL:
             todo();
         case IR_LABEL:
-            todo();
+            // TODO
+            return;
         case IR_LITERAL_DEF:
             todo();
     }
@@ -143,15 +158,19 @@ static void check_unit_ir_from_block(const Ir* ir) {
             check_unit_def(ir_def_const_unwrap(ir));
             return;
         case IR_RETURN:
-            todo();
+            // NOTE: return is not checked here because the add_load_and_store pass assigns return value 
+            //   to other variables that will trigger uninitialized error anyway
+            return;
         case IR_GOTO:
-            todo();
+            check_unit_goto(ir_goto_const_unwrap(ir));
+            return;
         case IR_COND_GOTO:
             todo();
         case IR_ALLOCA:
             return;
         case IR_LOAD_ANOTHER_IR:
-            todo();
+            check_unit_load_another_ir(ir_load_another_ir_const_unwrap(ir));
+            return;
         case IR_STORE_ANOTHER_IR:
             check_unit_store_another_ir(ir_store_another_ir_const_unwrap(ir));
             return;

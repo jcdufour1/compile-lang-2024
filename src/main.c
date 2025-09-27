@@ -113,6 +113,10 @@ void compile_file_to_ir(void) {
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 
     check_uninitialized();
+    if (error_count > 0) {
+        log(LOG_DEBUG, "check_uninitialized failed\n");
+        exit(EXIT_CODE_FAIL);
+    }
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 }
 
