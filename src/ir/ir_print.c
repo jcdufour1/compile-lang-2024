@@ -255,6 +255,7 @@ Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int inden
     string_extend_cstr(&a_print, &buf, "load_another_ir");
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name);
+    extend_child_name(&buf, "src", load->ir_src);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);

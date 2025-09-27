@@ -36,7 +36,10 @@ static void check_unit_src_internal_expr(const Ir_expr* expr) {
 
 static void check_unit_src_internal_name(Name name, Pos pos) {
     if (!init_symbol_lookup(name)) {
-        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol may be used uninitialized\n");
+        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
+        Ir* sym_def = NULL;
+        unwrap(ir_lookup(&sym_def, name));
+        log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
     }
 }
 
@@ -106,10 +109,12 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src);
     check_unit_dest(store->ir_dest);
+    unwrap(init_symbol_add(store->name));
 }
 
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     check_unit_src(load->ir_src);
+    unwrap(init_symbol_add(load->name));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
@@ -177,7 +182,7 @@ static void check_unit_ir_from_block(const Ir* ir) {
         case IR_IMPORT_PATH:
             todo();
         case IR_REMOVED:
-            todo();
+            return;
     }
     unreachable("");
 }
