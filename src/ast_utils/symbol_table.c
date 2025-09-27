@@ -420,13 +420,14 @@ bool ir_lookup(Ir** result, Name key) {
 
 static Init_table_vec init_tables = {0};
 
-bool init_symbol_lookup(
-    void** result,
-    Strv key,
-    Scope_id scope_id
-) {
+static bool init_symbol_lookup_internal(void** result, Strv key, Scope_id scope_id) {
     if (scope_id == SCOPE_NOT) {
         return false;
+    }
+
+    while (scope_id + 1 > init_tables.info.count) {
+        // TODO: use different arena then a_main, because this vector is only needed for one pass
+        vec_append(&a_main, &init_tables, (Init_table) {0});
     }
 
     Scope_id curr_scope = scope_id;
@@ -444,6 +445,10 @@ bool init_symbol_lookup(
     return false;
 }
 
+bool init_symbol_lookup(Name name) {
+    void* dummy = NULL;
+    return init_symbol_lookup_internal(&dummy, serialize_name_symbol_table(name), name.scope_id);
+}
 
 //
 // File_path_to_text implementation

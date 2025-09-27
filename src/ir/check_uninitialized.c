@@ -1,10 +1,16 @@
 #include <do_passes.h>
 #include <symbol_iter.h>
+#include <msg.h>
 
 static void check_unit_ir_from_block(const Ir* ir);
 
 static void check_unit_src(const Name src) {
-    todo();
+    if (!init_symbol_lookup(src)) {
+        Ir* sym_def = NULL;
+        unwrap(ir_lookup(&sym_def, src));
+        log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
+        msg(DIAG_UNINITIALIZED_VARIABLE, ir_get_pos(sym_def), "symbol may be used uninitialized\n");
+    }
 }
 
 static void check_unit_dest(const Name dest) {
