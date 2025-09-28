@@ -366,7 +366,7 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
     goto_or_cond_goto = true;
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables)/*TODO: remove this clone */, lang_goto->label, curr_frame.prev_desisions));
+    vec_append(&a_main /* TODO */, &frames, frame_new(curr_frame.init_tables, lang_goto->label, curr_frame.prev_desisions));
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
@@ -375,7 +375,7 @@ static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
     Bool_vec if_false_decisions = bool_vec_clone(curr_frame.prev_desisions);
     vec_append(&a_main, &if_true_decisions, true);
     vec_append(&a_main, &if_false_decisions, false);
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables)/*TODO: remove this clone */, cond_goto->if_true, if_true_decisions));
+    vec_append(&a_main /* TODO */, &frames, frame_new(curr_frame.init_tables, cond_goto->if_true, if_true_decisions));
     vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables), cond_goto->if_false, if_false_decisions));
 }
 
