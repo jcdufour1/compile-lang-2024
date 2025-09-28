@@ -4,10 +4,19 @@
 #include <ir_utils.h>
 #include <name.h>
 #include <ulang_type_get_pos.h>
+#include <bool_vec.h>
 
+static Bool_vec bool_vec_clone(Bool_vec vec) {
+    Bool_vec new_vec = {0};
+    vec_extend(&a_main /* TODO */, &new_vec, &vec);
+    return new_vec;
+}
 typedef struct {
     Init_table_vec init_tables;
     Name label_to_cont;
+    Bool_vec prev_desisions; // true on element [0] means that is_true path was taken on first cond_goto,
+                             // true on element [1] means that is_true path was taken on second cond_goto,
+                             // etc.
 } Frame;
 
 typedef struct {
@@ -15,8 +24,8 @@ typedef struct {
     Frame* buf;
 } Frame_vec;
 
-static Frame frame_new(Init_table_vec init_tables, Name label_to_cont) {
-    return (Frame) {.init_tables = init_tables, .label_to_cont = label_to_cont};
+static Frame frame_new(Init_table_vec init_tables, Name label_to_cont, Bool_vec prev_desisions) {
+    return (Frame) {.init_tables = init_tables, .label_to_cont = label_to_cont, .prev_desisions = prev_desisions};
 }
 
 static Init_table init_table_clone(Init_table table) {
@@ -42,7 +51,7 @@ static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
 
 static size_t block_idx = 0;
 static bool goto_or_cond_goto = false;
-static Init_table_vec init_tables = {0};
+static Frame curr_frame = {0};
 static Frame_vec frames = {0};
 
 // TODO: rename unit to uninit?
@@ -124,12 +133,26 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 }
 
 static void check_unit_src_internal_name(Name name, Pos pos) {
-    if (!init_symbol_lookup(&init_tables, name)) {
+    // TODO: !strv_is_equal(sv("builtin")/* TODO */, name.mod_path) is used to avoid checking implementation symbol
+    //   (because otherwise it would be required to modify the add_load_and_store pass or
+    //   ignore impossible paths (eg. neither the if nor else is taken).
+    //   consider if builtin symbols should be checked or not
+    if (!init_symbol_lookup(&curr_frame.init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
-        init_symbol_lookup(&init_tables, name);
+        init_symbol_lookup(&curr_frame.init_tables, name);
         Ir* sym_def = NULL;
         unwrap(ir_lookup(&sym_def, name));
         log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
+
+        String buf = {0};
+        for (size_t idx = 0; idx < curr_frame.prev_desisions.info.count; idx++) {
+            if (idx > 0) {
+                string_extend_cstr(&a_print, &buf, ", ");
+            }
+            string_extend_cstr(&a_print, &buf, vec_at(&curr_frame.prev_desisions, idx) ? "true" : "false");
+        }
+        // TODO: remove or change to DEBUG
+        log(LOG_INFO, FMT"\n", string_print(buf));
         todo();
     }
 }
@@ -178,7 +201,7 @@ static void check_unit_src(const Name src, Pos pos) {
 }
 
 static void check_unit_dest(const Name dest) {
-    if (!init_symbol_add(&init_tables, dest)) {
+    if (!init_symbol_add(&curr_frame.init_tables, dest)) {
     }
 }
 
@@ -186,11 +209,11 @@ static void check_unit_block(const Ir_block* block) {
     assert(frames.info.count == 0);
     assert(block_idx == 0);
     assert(goto_or_cond_goto == false);
-    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(init_tables, (Name) {0}));
+    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
 
     while (frames.info.count > 0) {
-        Frame curr_frame = vec_pop(&frames);
-        init_tables = curr_frame.init_tables;
+        curr_frame = vec_pop(&frames);
+        curr_frame.init_tables = curr_frame.init_tables;
         if (curr_frame.label_to_cont.base.count < 1) {
             assert(block_idx == 0);
         } else {
@@ -234,7 +257,7 @@ static void check_unit_block(const Ir_block* block) {
         block_idx = 0;
     }
 
-    memset(&init_tables, 0, sizeof(init_tables));
+    memset(&curr_frame.init_tables, 0, sizeof(curr_frame.init_tables));
 }
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -253,7 +276,7 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 }
 
 static void check_unit_function_def(const Ir_function_def* def) {
-    assert(init_tables.info.count == 0);
+    assert(curr_frame.init_tables.info.count == 0);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body);
@@ -263,27 +286,30 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos);
     check_unit_dest(store->ir_dest);
-    unwrap(init_symbol_add(&init_tables, store->name));
+    unwrap(init_symbol_add(&curr_frame.init_tables, store->name));
 }
 
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
-    unwrap(init_symbol_lookup(&init_tables, name_new(sv("tests/inputs/uninitialized"), sv("status"), (Ulang_type_vec) {0}, 5)));
     check_unit_src(load->ir_src, load->pos);
-    unwrap(init_symbol_add(&init_tables, load->name));
+    unwrap(init_symbol_add(&curr_frame.init_tables, load->name));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
     goto_or_cond_goto = true;
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables)/*TODO: remove this clone */, lang_goto->label));
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables)/*TODO: remove this clone */, lang_goto->label, curr_frame.prev_desisions));
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
     goto_or_cond_goto = true;
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables)/*TODO: remove this clone */, cond_goto->if_true));
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables), cond_goto->if_false));
+    Bool_vec if_true_decisions = curr_frame.prev_desisions;
+    Bool_vec if_false_decisions = bool_vec_clone(curr_frame.prev_desisions);
+    vec_append(&a_main, &if_true_decisions, true);
+    vec_append(&a_main, &if_false_decisions, false);
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables)/*TODO: remove this clone */, cond_goto->if_true, if_true_decisions));
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables), cond_goto->if_false, if_false_decisions));
 }
 
 static void check_unit_def(const Ir_def* def) {
