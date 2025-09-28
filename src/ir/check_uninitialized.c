@@ -78,6 +78,14 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
     unreachable("");
 }
 
+static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos) {
+    check_unit_src(call->callee, pos);
+    for (size_t idx = 0; idx < call->args.info.count; idx++) {
+        Name curr = vec_at(&call->args, idx);
+        check_unit_src(curr, pos);
+    }
+}
+
 static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos) {
     check_unit_src(bin->lhs, pos);
     check_unit_src(bin->rhs, pos);
@@ -103,7 +111,8 @@ static void check_unit_src_internal_expr(const Ir_expr* expr, Pos pos) {
             check_unit_src_internal_literal(ir_literal_const_unwrap(expr));
             return;
         case IR_FUNCTION_CALL:
-            todo();
+            check_unit_src_internal_function_call(ir_function_call_const_unwrap(expr), pos);
+            return;
     }
     unreachable("");
 }
