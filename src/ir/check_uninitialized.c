@@ -30,10 +30,27 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
     unreachable("");
 }
 
-static void check_unit_src_internal_expr(const Ir_expr* expr) {
+static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos) {
+    check_unit_src_internal_name(bin->lhs, pos);
+    check_unit_src_internal_name(bin->rhs, pos);
+}
+
+static void check_unit_src_internal_operator(const Ir_operator* oper, Pos pos) {
+    switch (oper->type) {
+        case IR_BINARY:
+            check_unit_src_internal_binary(ir_binary_const_unwrap(oper), pos);
+            return;
+        case IR_UNARY:
+            todo();
+    }
+    unreachable("");
+}
+
+static void check_unit_src_internal_expr(const Ir_expr* expr, Pos pos) {
     switch (expr->type) {
         case IR_OPERATOR:
-            todo();
+            check_unit_src_internal_operator(ir_operator_const_unwrap(expr), pos);
+            return;
         case IR_LITERAL:
             check_unit_src_internal_literal(ir_literal_const_unwrap(expr));
             return;
@@ -69,7 +86,6 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 }
 
 static void check_unit_src_internal_name(Name name, Pos pos) {
-    todo();
     if (!init_symbol_lookup(name)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
         Ir* sym_def = NULL;
@@ -83,7 +99,7 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
         case IR_BLOCK:
             todo();
         case IR_EXPR:
-            check_unit_src_internal_expr(ir_expr_const_unwrap(ir));
+            check_unit_src_internal_expr(ir_expr_const_unwrap(ir), pos);
             return;
         case IR_FUNCTION_PARAMS:
             todo();
@@ -207,6 +223,14 @@ static void check_unit_goto(const Ir_goto* lang_goto) {
     goto_or_cond_goto = true;
 }
 
+static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
+    check_unit_src(cond_goto->condition, cond_goto->pos);
+    goto_label = cond_goto->if_true;
+    goto_or_cond_goto = true;
+
+    todo();
+}
+
 static void check_unit_def(const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
@@ -239,12 +263,46 @@ static void check_unit_function_call(const Ir_function_call* call) {
     
 }
 
+static void check_unit_binary(const Ir_binary* bin) {
+    check_unit_src(bin->lhs, bin->pos);
+    check_unit_src(bin->rhs, bin->pos);
+}
+
+static void check_unit_operator(const Ir_operator* oper) {
+    switch (oper->type) {
+        case IR_UNARY:
+            todo();
+        case IR_BINARY:
+            check_unit_binary(ir_binary_const_unwrap(oper));
+            return;
+    }
+    unreachable("");
+}
+
+static void check_unit_literal(const Ir_literal* lit) {
+    switch (lit->type) {
+        case IR_INT:
+            return;
+        case IR_FLOAT:
+            return;
+        case IR_STRING:
+            return;
+        case IR_VOID:
+            return;
+        case IR_FUNCTION_NAME:
+            return;
+    }
+    unreachable("");
+}
+
 static void check_unit_expr(const Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
-            todo();
+            check_unit_operator(ir_operator_const_unwrap(expr));
+            return;
         case IR_LITERAL:
-            todo();
+            check_unit_literal(ir_literal_const_unwrap(expr));
+            return;
         case IR_FUNCTION_CALL:
             check_unit_function_call(ir_function_call_const_unwrap(expr));
             return;
@@ -256,7 +314,7 @@ static void check_unit_ir_from_block(const Ir* ir) {
     log(LOG_DEBUG, FMT"\n", ir_print(ir));
     switch (ir->type) {
         case IR_BLOCK:
-            todo();
+            unreachable("nested blocks should not be present at this point");
         case IR_EXPR:
             check_unit_expr(ir_expr_const_unwrap(ir));
             return;
@@ -277,7 +335,8 @@ static void check_unit_ir_from_block(const Ir* ir) {
             check_unit_goto(ir_goto_const_unwrap(ir));
             return;
         case IR_COND_GOTO:
-            todo();
+            check_unit_cond_goto(ir_cond_goto_const_unwrap(ir));
+            return;
         case IR_ALLOCA:
             return;
         case IR_LOAD_ANOTHER_IR:
