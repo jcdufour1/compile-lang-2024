@@ -11,6 +11,41 @@ static Bool_vec bool_vec_clone(Bool_vec vec) {
     vec_extend(&a_main /* TODO */, &new_vec, &vec);
     return new_vec;
 }
+
+static bool init_table_is_equal(Init_table a, Init_table b) {
+    if (a.count != b.count) {
+        return false;
+    }
+    if (a.capacity != b.capacity) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < a.capacity; idx++) {
+        if (a.table_tasts[idx].status != b.table_tasts[idx].status) {
+            return false;
+        }
+        if (a.table_tasts[idx].status == SYM_TBL_OCCUPIED && !strv_is_equal(a.table_tasts[idx].key, b.table_tasts[idx].key)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
+    if (a.info.count != b.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < a.info.count; idx++) {
+        if (!init_table_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 typedef struct {
     Init_table_vec init_tables;
     Name label_to_cont;
@@ -53,6 +88,7 @@ static size_t block_idx = 0;
 static bool goto_or_cond_goto = false;
 static Frame curr_frame = {0};
 static Frame_vec frames = {0};
+static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
 // TODO: rename unit to uninit?
@@ -255,7 +291,24 @@ static void check_unit_block(const Ir_block* block) {
     vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
 
     while (frames.info.count > 0) {
+        bool frame_not_needed = false;
         curr_frame = vec_pop(&frames);
+        for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
+            Frame curr_already = vec_at(&already_run_frames, idx);
+            if (
+                init_table_vec_is_equal(curr_already.init_tables, curr_frame.init_tables) &&
+                name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont)
+            ) {
+                frame_not_needed = true;
+                break;
+            }
+        }
+
+        if (frame_not_needed) {
+            break;
+        }
+        vec_append(&a_main /* TODO */, &already_run_frames, curr_frame);
+
         curr_frame.init_tables = curr_frame.init_tables;
         if (curr_frame.label_to_cont.base.count < 1) {
             assert(block_idx == 0);
