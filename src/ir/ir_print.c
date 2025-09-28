@@ -250,8 +250,6 @@ Strv ir_alloca_print_internal(const Ir_alloca* alloca, int indent) {
 Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, int indent) {
     String buf = {0};
 
-    extend_lhs_and_eq(&buf, load->ir_src, indent);
-
     string_extend_cstr(&a_print, &buf, "load_another_ir");
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
     extend_name(NAME_LOG, &buf, load->name);
