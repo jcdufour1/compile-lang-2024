@@ -437,6 +437,7 @@ static bool ir_graphvis_do_next_arrow(const Ir* ir) {
 }
 
 static void ir_graphvis_internal(String* buf, const Ir* ir) {
+    todo();
     switch (ir->type) {
         case IR_BLOCK:
             ir_block_graphvis_internal(buf, ir_block_const_unwrap(ir));
