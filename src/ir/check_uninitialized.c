@@ -69,6 +69,7 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 }
 
 static void check_unit_src_internal_name(Name name, Pos pos) {
+    todo();
     if (!init_symbol_lookup(name)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
         Ir* sym_def = NULL;
@@ -196,6 +197,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
+    log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
     unwrap(init_symbol_add(load->name));
 }
@@ -296,7 +298,8 @@ static void check_unit_ir_builtin(const Ir* ir) {
     log(LOG_DEBUG, FMT"\n", ir_print(ir));
     switch (ir->type) {
         case IR_BLOCK:
-            check_unit_block(ir_block_const_unwrap(ir));
+            // TODO: uncomment below unreachable (there should be no block in the top level?)
+            //unreachable("");
             return;
         case IR_EXPR:
             // TODO

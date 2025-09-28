@@ -20,5 +20,10 @@ fn main() i32 {
     //wrong1()
     //wrong2()
     let status i32
+    if 1 {
+        status = 1
+    } else {
+        status = 4
+    }
     return status
 }
