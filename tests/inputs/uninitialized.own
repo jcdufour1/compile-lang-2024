@@ -17,13 +17,15 @@ fn wrong2() i32 {
 }
 
 fn main() i32 {
+    aux_1arg(8)
     //wrong1()
     //wrong2()
-    let status i32 = 8
-    if status {
-        status = 1
-    } else {
-        status = 4
-    }
-    return status
+    //let status i32 = 8
+    //if status {
+    //    status = 1
+    //} else {
+    //    status = 4
+    //}
+    //return status
+    return 8
 }

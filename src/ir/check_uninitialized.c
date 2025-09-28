@@ -5,9 +5,24 @@
 #include <name.h>
 #include <ulang_type_get_pos.h>
 
+typedef struct {
+    Init_table_vec init_tables;
+    Name label_to_cont;
+} Frame;
+
+typedef struct {
+    Vec_base info;
+    Frame* buf;
+} Frame_vec;
+
+static Frame frame_new(Init_table_vec init_tables, Name label_to_cont) {
+    return (Frame) {.init_tables = init_tables, .label_to_cont = label_to_cont};
+}
+
 static size_t block_idx = 0;
-static Name goto_label = (Name) {0};
 static bool goto_or_cond_goto = false;
+static Init_table_vec init_tables = {0};
+static Frame_vec frames = {0};
 
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
@@ -88,12 +103,11 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 }
 
 static void check_unit_src_internal_name(Name name, Pos pos) {
-    if (!init_symbol_lookup(name)) {
+    if (!init_symbol_lookup(&init_tables, name)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
         Ir* sym_def = NULL;
         unwrap(ir_lookup(&sym_def, name));
         log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
-        todo();
     }
 }
 
@@ -141,20 +155,22 @@ static void check_unit_src(const Name src, Pos pos) {
 }
 
 static void check_unit_dest(const Name dest) {
-    if (!init_symbol_add(dest)) {
+    if (!init_symbol_add(&init_tables, dest)) {
     }
 }
 
 static void check_unit_block(const Ir_block* block) {
+    assert(frames.info.count == 0);
     assert(block_idx == 0);
     assert(goto_or_cond_goto == false);
+    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, (Frame) {0});
 
-    // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
-    while (block_idx < block->children.info.count) {
-        check_unit_ir_from_block(vec_at(&block->children, block_idx));
-
-        if (goto_or_cond_goto) {
-            assert(goto_label.base.count > 0);
+    while (frames.info.count > 0) {
+        Frame curr_frame = vec_pop(&frames);
+        init_tables = curr_frame.init_tables;
+        if (curr_frame.label_to_cont.base.count < 1) {
+            assert(block_idx == 0);
+        } else {
             bool label_found = false;
             for (size_t temp_idx = 0; temp_idx < block->children.info.count; temp_idx++) {
                 // TODO: find a way to avoid O(n) time for finding new block idx 
@@ -170,20 +186,30 @@ static void check_unit_block(const Ir_block* block) {
                 if (curr_def->type != IR_LABEL) {
                     continue;
                 }
-                if (name_is_equal(goto_label, ir_label_const_unwrap(curr_def)->name)) {
+                if (name_is_equal(curr_frame.label_to_cont, ir_label_const_unwrap(curr_def)->name)) {
                     label_found = true;
-                    block_idx = temp_idx;
+                    block_idx = temp_idx + 1;
                     break;
                 }
             }
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, goto_label));
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_frame.label_to_cont));
             unwrap(label_found); 
         }
 
-        block_idx++;
-        goto_or_cond_goto = false;
+
+        // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
+        while (block_idx < block->children.info.count) {
+            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+            if (goto_or_cond_goto) {
+                goto_or_cond_goto = false;
+                break;
+            }
+
+            block_idx++;
+            goto_or_cond_goto = false;
+        }
+        block_idx = 0;
     }
-    block_idx = 0;
 }
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -192,6 +218,7 @@ static void check_unit_import_path(const Ir_import_path* import) {
 
 static void check_unit_function_params(const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx)->name_self));
         check_unit_dest(vec_at(&params->params, idx)->name_self);
     }
 }
@@ -210,7 +237,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos);
     check_unit_dest(store->ir_dest);
-    unwrap(init_symbol_add(store->name));
+    unwrap(init_symbol_add(&init_tables, store->name));
 }
 
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
@@ -218,18 +245,22 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
-    unwrap(init_symbol_add(load->name));
+    unwrap(init_symbol_add(&init_tables, load->name));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
-    goto_label = lang_goto->label;
     goto_or_cond_goto = true;
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_tables, lang_goto->label));
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
-    check_unit_src(cond_goto->condition, cond_goto->pos);
-    goto_label = cond_goto->if_true;
-    goto_or_cond_goto = true;
+    (void) cond_goto;
+    //check_unit_src(cond_goto->condition, cond_goto->pos);
+    //goto_label = cond_goto->if_true;
+    //goto_or_cond_goto = true;
+
+    todo();
+    //vec_append();
 
     todo();
 }

@@ -418,21 +418,19 @@ bool ir_lookup(Ir** result, Name key) {
 // Initialized implementation
 //
 
-static Init_table_vec init_tables = {0};
-
-static bool init_symbol_lookup_internal(void** result, Strv key, Scope_id scope_id) {
+static bool init_symbol_lookup_internal(Init_table_vec* init_tables, void** result, Strv key, Scope_id scope_id) {
     if (scope_id == SCOPE_NOT) {
         return false;
     }
 
-    while (scope_id + 1 > init_tables.info.count) {
+    while (scope_id + 1 > init_tables->info.count) {
         // TODO: use different arena then a_main, because this vector is only needed for one pass
-        vec_append(&a_main, &init_tables, (Init_table) {0});
+        vec_append(&a_main, init_tables, (Init_table) {0});
     }
 
     Scope_id curr_scope = scope_id;
     while (true) {
-        void* tbl = vec_at_ref(&init_tables, curr_scope);
+        void* tbl = vec_at_ref(init_tables, curr_scope);
         if (generic_tbl_lookup(result, tbl, key)) {
              return true;
         }
@@ -446,26 +444,27 @@ static bool init_symbol_lookup_internal(void** result, Strv key, Scope_id scope_
 }
 
 bool init_symbol_add_internal(
+    Init_table_vec* init_tables,
     Strv key,
     void* item,
     Scope_id scope_id
 ) {
     void* dummy;
-    if (init_symbol_lookup_internal((void**)&dummy, key, scope_id)) {
+    if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
         return false;
     }
-    void* curr_tast = vec_at_ref(&init_tables, scope_id);
+    void* curr_tast = vec_at_ref(init_tables, scope_id);
     unwrap(generic_tbl_add(curr_tast, key, item));
     return true;
 }
 
-bool init_symbol_lookup(Name name) {
+bool init_symbol_lookup(Init_table_vec* init_tables, Name name) {
     void* dummy = NULL;
-    return init_symbol_lookup_internal(&dummy, serialize_name_symbol_table(name), name.scope_id);
+    return init_symbol_lookup_internal(init_tables, &dummy, serialize_name_symbol_table(name), name.scope_id);
 }
 
-bool init_symbol_add(Name name) {
-    return init_symbol_add_internal(serialize_name_symbol_table(name), NULL, name.scope_id);
+bool init_symbol_add(Init_table_vec* init_tables, Name name) {
+    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), NULL, name.scope_id);
 }
 
 //
