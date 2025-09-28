@@ -116,6 +116,7 @@ static Ir* rm_void_ir(Ir* ir) {
 
 static Ir* rm_void_block(Ir_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        assert(vec_at(&block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
         *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(&block->children, idx));
     }
 
