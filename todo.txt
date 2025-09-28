@@ -75,6 +75,18 @@ for generics:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
     -- have proper delimeters (eg. space)
+- for below, figure out why order is wrong:
+    tests/inputs/uninitialized.own:47:19:note:tracing path of uninitialized variable use
+        46 |     switch way {
+        47 |         case .way1: break
+           |                   ^
+        48 |         case .way2: status = 4
+    tests/inputs/uninitialized.own:46:5:note:tracing path of uninitialized variable use
+        45 |     let status i32
+        46 |     switch way {
+           |     ^
+        47 |         case .way1: break
+
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -184,7 +196,6 @@ continue(<thing>)
     this way => can also be used in switch, function definition, etc.
 - check for return statement on all code paths
 - examples directory should be run through test suite as well?
-- test case for circular imports
 
 
 

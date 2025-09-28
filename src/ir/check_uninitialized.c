@@ -53,6 +53,7 @@ static size_t block_idx = 0;
 static bool goto_or_cond_goto = false;
 static Frame curr_frame = {0};
 static Frame_vec frames = {0};
+static bool check_unit_src_internal_name_failed = false;
 
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
@@ -139,24 +140,11 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     //   consider if builtin symbols should be checked or not
     if (!init_symbol_lookup(&curr_frame.init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
-        Ir* sym_def = NULL;
-        unwrap(ir_lookup(&sym_def, name));
-        log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
-
-        String buf = {0};
-        for (size_t idx = 0; idx < curr_frame.prev_desisions.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_print, &buf, ", ");
-            }
-            string_extend_cstr(&a_print, &buf, vec_at(&curr_frame.prev_desisions, idx) ? "true" : "false");
-        }
-        // TODO: remove or change to DEBUG
-        log(LOG_INFO, FMT"\n", string_print(buf));
-
         for (size_t idx = 0; idx < frames.info.count; idx++) {
             // prevent printing error for the same symbol on several code paths
             init_symbol_add(&vec_at_ref(&frames, idx)->init_tables, name);
         }
+        check_unit_src_internal_name_failed = true;
     }
 }
 
@@ -208,6 +196,30 @@ static void check_unit_dest(const Name dest) {
     }
 }
 
+// returns true if the label was found
+// TODO: move this function elsewhere, since this function may be useful for other passes?
+static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
+    for (size_t idx = 0; idx < block_children.info.count; idx++) {
+        // TODO: find a way to avoid O(n) time for finding new block idx 
+        //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
+        const Ir* curr = vec_at(&block_children, idx);
+        if (curr->type == IR_BLOCK) {
+            todo();
+        }
+        if (curr->type != IR_DEF) {
+            continue;
+        }
+        const Ir_def* curr_def = ir_def_const_unwrap(curr);
+        if (curr_def->type != IR_LABEL) {
+            continue;
+        }
+        if (name_is_equal(label, ir_label_const_unwrap(curr_def)->name)) {
+            return idx + 1;
+        }
+    }
+    unreachable("label should have been found");
+}
+
 static void check_unit_block(const Ir_block* block) {
     assert(frames.info.count == 0);
     assert(block_idx == 0);
@@ -220,35 +232,54 @@ static void check_unit_block(const Ir_block* block) {
         if (curr_frame.label_to_cont.base.count < 1) {
             assert(block_idx == 0);
         } else {
-            bool label_found = false;
-            for (size_t temp_idx = 0; temp_idx < block->children.info.count; temp_idx++) {
-                // TODO: find a way to avoid O(n) time for finding new block idx 
-                //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
-                Ir* curr = vec_at(&block->children, temp_idx);
-                if (curr->type == IR_BLOCK) {
-                    todo();
-                }
-                if (curr->type != IR_DEF) {
-                    continue;
-                }
-                const Ir_def* curr_def = ir_def_const_unwrap(curr);
-                if (curr_def->type != IR_LABEL) {
-                    continue;
-                }
-                if (name_is_equal(curr_frame.label_to_cont, ir_label_const_unwrap(curr_def)->name)) {
-                    label_found = true;
-                    block_idx = temp_idx + 1;
-                    break;
-                }
-            }
+            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
+            //   this for loop. this may cause bugs?
+            block_idx = label_name_to_block_idx(block->children, curr_frame.label_to_cont);
             log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_frame.label_to_cont));
-            unwrap(label_found); 
         }
 
 
         // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
         while (block_idx < block->children.info.count) {
             check_unit_ir_from_block(vec_at(&block->children, block_idx));
+            if (check_unit_src_internal_name_failed) {
+                String buf = {0};
+                size_t temp_block_idx = 0;
+                size_t bool_idx = 0;
+
+                uint32_t prev_line = 0;
+                while (temp_block_idx < block->children.info.count) {
+                    const Ir* curr = vec_at(&block->children, temp_block_idx);
+                    if (curr->type == IR_COND_GOTO) {
+                        const Ir_cond_goto* cond_goto = ir_cond_goto_const_unwrap(curr);
+                        if (cond_goto->pos.line != prev_line) {
+                            msg(
+                                DIAG_NOTE,
+                                cond_goto->pos,
+                                "tracing path of uninitialized variable use\n"
+                            );
+                            prev_line = cond_goto->pos.line;
+                        }
+
+                        Name next_label = vec_at(&curr_frame.prev_desisions, bool_idx) ?
+                            cond_goto->if_true : cond_goto->if_false;
+                        temp_block_idx = label_name_to_block_idx(block->children, next_label);
+                        bool_idx++;
+
+                        if (bool_idx >= curr_frame.prev_desisions.info.count) {
+                            break;
+                        }
+                    } else if (curr->type == IR_GOTO) {
+                        const Ir_goto* lang_goto = ir_goto_const_unwrap(curr);
+                        temp_block_idx = label_name_to_block_idx(block->children, lang_goto->label);
+                    } else {
+                        temp_block_idx++;
+                    }
+                }
+
+                assert(bool_idx == curr_frame.prev_desisions.info.count);
+            }
+
             if (goto_or_cond_goto) {
                 goto_or_cond_goto = false;
                 break;
@@ -256,6 +287,7 @@ static void check_unit_block(const Ir_block* block) {
 
             block_idx++;
             goto_or_cond_goto = false;
+            check_unit_src_internal_name_failed = false;
         }
         block_idx = 0;
     }

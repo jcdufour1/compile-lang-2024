@@ -1,4 +1,9 @@
 
+type Way enum {
+    way1
+    way2
+}
+
 fn aux_1arg(arg i32) i32 {
     let num i32 = arg
     return arg
@@ -35,10 +40,21 @@ fn wrong3() i32 {
     return status
 }
 
+fn wrong4() i32 {
+    let way Way = .way1
+    let status i32
+    switch way {
+        case .way1: break
+        case .way2: status = 4
+    }
+    return status
+}
+
 fn main() i32 {
-    //wrong1()
-    //wrong2()
+    wrong1()
+    wrong2()
     wrong3()
+    wrong4()
     right1()
     let status i32
     return status

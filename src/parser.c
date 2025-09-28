@@ -2259,6 +2259,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     log_tokens(LOG_DEBUG, *tokens);
     if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_CURLY_BRACE)) {
+        status = PARSE_ERROR;
         // TODO: expeced failure case no close brace
         goto error;
     }
