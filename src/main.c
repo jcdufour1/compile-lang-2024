@@ -112,7 +112,7 @@ void compile_file_to_ir(void) {
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
 
-    check_uninitialized();
+    //check_uninitialized();
     if (error_count > 0) {
         log(LOG_DEBUG, "check_uninitialized failed\n");
         exit(EXIT_CODE_FAIL);

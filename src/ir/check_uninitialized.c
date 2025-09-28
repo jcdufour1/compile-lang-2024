@@ -126,9 +126,11 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 static void check_unit_src_internal_name(Name name, Pos pos) {
     if (!init_symbol_lookup(&init_tables, name)) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
+        init_symbol_lookup(&init_tables, name);
         Ir* sym_def = NULL;
         unwrap(ir_lookup(&sym_def, name));
         log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
+        todo();
     }
 }
 
@@ -268,6 +270,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
+    unwrap(init_symbol_lookup(&init_tables, name_new(sv("tests/inputs/uninitialized"), sv("status"), (Ulang_type_vec) {0}, 5)));
     check_unit_src(load->ir_src, load->pos);
     unwrap(init_symbol_add(&init_tables, load->name));
 }

@@ -464,6 +464,9 @@ bool init_symbol_lookup(Init_table_vec* init_tables, Name name) {
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Name name) {
+    if (strv_is_equal(name.base, sv("str__rtn_val__25"))) {
+        todo();
+    }
     return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), NULL, name.scope_id);
 }
 
