@@ -86,6 +86,7 @@ for generics:
         46 |     switch way {
            |     ^
         47 |         case .way1: break
+- do_test.py: command line arg to avoid using red/green background on diff
 
 
 
