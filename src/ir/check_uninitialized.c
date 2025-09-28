@@ -14,35 +14,43 @@ static Bool_vec bool_vec_clone(Bool_vec vec) {
 
 static bool init_table_is_equal(Init_table a, Init_table b) {
     if (a.count != b.count) {
+        log(LOG_INFO, "thing 325: no 2.1: %zu %zu\n", a.count, b.count);
         return false;
     }
     if (a.capacity != b.capacity) {
+        log(LOG_INFO, "thing 325: no 2.2\n");
         return false;
     }
 
     for (size_t idx = 0; idx < a.capacity; idx++) {
         if (a.table_tasts[idx].status != b.table_tasts[idx].status) {
+            log(LOG_INFO, "thing 325: no 2.3\n");
             return false;
         }
         if (a.table_tasts[idx].status == SYM_TBL_OCCUPIED && !strv_is_equal(a.table_tasts[idx].key, b.table_tasts[idx].key)) {
+            log(LOG_INFO, "thing 325: no 2.4\n");
             return false;
         }
     }
 
+    log(LOG_INFO, "thing 325: yes 2\n");
     return true;
 }
 
 static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
     if (a.info.count != b.info.count) {
+        //log(LOG_INFO, "thing 324: no 1\n");
         return false;
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
         if (!init_table_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            //log(LOG_INFO, "thing 324: no 2\n");
             return false;
         }
     }
 
+    //log(LOG_INFO, "thing 324: yes\n");
     return true;
 }
 
@@ -127,13 +135,18 @@ static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos) {
     check_unit_src(bin->rhs, pos);
 }
 
+static void check_unit_src_internal_unary(const Ir_unary* unary, Pos pos) {
+    check_unit_src(unary->child, pos);
+}
+
 static void check_unit_src_internal_operator(const Ir_operator* oper, Pos pos) {
     switch (oper->type) {
         case IR_BINARY:
             check_unit_src_internal_binary(ir_binary_const_unwrap(oper), pos);
             return;
         case IR_UNARY:
-            todo();
+            check_unit_src_internal_unary(ir_unary_const_unwrap(oper), pos);
+            return;
     }
     unreachable("");
 }
@@ -281,6 +294,7 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
             return idx + 1;
         }
     }
+    log(LOG_ERROR, FMT"\n", name_print(NAME_LOG, label));
     unreachable("label should have been found");
 }
 
@@ -295,6 +309,7 @@ static void check_unit_block(const Ir_block* block) {
         curr_frame = vec_pop(&frames);
         for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
             Frame curr_already = vec_at(&already_run_frames, idx);
+            // TODO: init_table_vec_is_equal: look at subset/superset instead of just is_equal
             if (
                 init_table_vec_is_equal(curr_already.init_tables, curr_frame.init_tables) &&
                 name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont)
@@ -305,7 +320,7 @@ static void check_unit_block(const Ir_block* block) {
         }
 
         if (frame_not_needed) {
-            break;
+            continue;
         }
         vec_append(&a_main /* TODO */, &already_run_frames, curr_frame);
 
@@ -373,6 +388,7 @@ static void check_unit_block(const Ir_block* block) {
     }
 
     memset(&curr_frame.init_tables, 0, sizeof(curr_frame.init_tables));
+    assert(frames.info.count == 0);
 }
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -415,6 +431,12 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos);
     unwrap(init_symbol_add(&curr_frame.init_tables, load->name_self));
+}
+
+static void check_unit_array_access(const Ir_array_access* access) {
+    check_unit_src(access->index, access->pos);
+    check_unit_src(access->callee, access->pos);
+    unwrap(init_symbol_add(&curr_frame.init_tables, access->name_self));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
@@ -461,7 +483,6 @@ static void check_unit_function_call(const Ir_function_call* call) {
         Name curr = vec_at(&call->args, idx);
         check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */);
     }
-    
 }
 
 static void check_unit_binary(const Ir_binary* bin) {
@@ -469,10 +490,15 @@ static void check_unit_binary(const Ir_binary* bin) {
     check_unit_src(bin->rhs, bin->pos);
 }
 
+static void check_unit_unary(const Ir_unary* unary) {
+    check_unit_src(unary->child, unary->pos);
+}
+
 static void check_unit_operator(const Ir_operator* oper) {
     switch (oper->type) {
         case IR_UNARY:
-            todo();
+            check_unit_unary(ir_unary_const_unwrap(oper));
+            return;
         case IR_BINARY:
             check_unit_binary(ir_binary_const_unwrap(oper));
             return;
@@ -523,7 +549,8 @@ static void check_unit_ir_from_block(const Ir* ir) {
             check_unit_load_element_ptr(ir_load_element_ptr_const_unwrap(ir));
             return;
         case IR_ARRAY_ACCESS:
-            todo();
+            check_unit_array_access(ir_array_access_const_unwrap(ir));
+            return;
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
@@ -569,7 +596,8 @@ static void check_unit_ir_builtin(const Ir* ir) {
             // TODO
             return;
         case IR_ARRAY_ACCESS:
-            todo();
+            // TODO
+            return;
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
