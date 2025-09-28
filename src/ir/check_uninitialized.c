@@ -19,6 +19,27 @@ static Frame frame_new(Init_table_vec init_tables, Name label_to_cont) {
     return (Frame) {.init_tables = init_tables, .label_to_cont = label_to_cont};
 }
 
+static Init_table init_table_clone(Init_table table) {
+    Init_table new_table = {
+        .table_tasts = arena_alloc(&a_main /* TODO */, sizeof(new_table.table_tasts[0])*table.capacity), 
+        .count = table.count,
+        .capacity = table.capacity
+    };
+    for (size_t idx = 0; idx < table.capacity; idx++) {
+        Usymbol_table_tast curr = table.table_tasts[idx];
+        new_table.table_tasts[idx] = (Usymbol_table_tast) {.key = curr.key, .status = curr.status};
+    }
+    return new_table;
+}
+
+static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
+    Init_table_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main /* TODO */, &new_vec, init_table_clone(vec_at(&vec, idx)));
+    }
+    return new_vec;
+}
+
 static size_t block_idx = 0;
 static bool goto_or_cond_goto = false;
 static Init_table_vec init_tables = {0};
@@ -253,19 +274,13 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
     goto_or_cond_goto = true;
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_tables, lang_goto->label));
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables)/*TODO: remove this clone */, lang_goto->label));
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
-    (void) cond_goto;
-    //check_unit_src(cond_goto->condition, cond_goto->pos);
-    //goto_label = cond_goto->if_true;
-    //goto_or_cond_goto = true;
-
-    todo();
-    //vec_append();
-
-    todo();
+    goto_or_cond_goto = true;
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables)/*TODO: remove this clone */, cond_goto->if_true));
+    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(init_tables), cond_goto->if_false));
 }
 
 static void check_unit_def(const Ir_def* def) {
