@@ -138,8 +138,7 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     //   ignore impossible paths (eg. neither the if nor else is taken).
     //   consider if builtin symbols should be checked or not
     if (!init_symbol_lookup(&curr_frame.init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
-        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` may be used uninitialized\n", name_print(NAME_MSG, name));
-        init_symbol_lookup(&curr_frame.init_tables, name);
+        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
         Ir* sym_def = NULL;
         unwrap(ir_lookup(&sym_def, name));
         log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
@@ -153,6 +152,11 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         }
         // TODO: remove or change to DEBUG
         log(LOG_INFO, FMT"\n", string_print(buf));
+
+        for (size_t idx = 0; idx < frames.info.count; idx++) {
+            // prevent printing error for the same symbol on several code paths
+            init_symbol_add(&vec_at_ref(&frames, idx)->init_tables, name);
+        }
     }
 }
 

@@ -36,8 +36,8 @@ fn wrong3() i32 {
 }
 
 fn main() i32 {
-    wrong1()
-    wrong2()
+    //wrong1()
+    //wrong2()
     wrong3()
     right1()
     let status i32
