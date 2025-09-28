@@ -153,7 +153,6 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         }
         // TODO: remove or change to DEBUG
         log(LOG_INFO, FMT"\n", string_print(buf));
-        todo();
     }
 }
 

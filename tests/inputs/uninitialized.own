@@ -16,14 +16,30 @@ fn wrong2() i32 {
     return status
 }
 
-fn main() i32 {
-    //wrong1()
-    //wrong2()
+fn right1() i32 {
     let status i32
     if 1 {
         status = 1
     } else {
         status = 4
     }
+    return status
+}
+
+fn wrong3() i32 {
+    let status i32
+    if 1 {
+    } else {
+        status = 4
+    }
+    return status
+}
+
+fn main() i32 {
+    wrong1()
+    wrong2()
+    wrong3()
+    right1()
+    let status i32
     return status
 }

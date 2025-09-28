@@ -1956,7 +1956,7 @@ static void load_struct_def(Tast_struct_def* old_def) {
     }
 }
 
-static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
+static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, bool is_last_if) {
     Tast_block* old_block = if_statement->body;
     Name dummy = {0};
     Ir_block* inner_block = load_block(
@@ -1973,14 +1973,23 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if) {
         if_statement->body->scope_id
     );
 
-
     Tast_condition* if_cond = if_statement->condition;
 
     Tast_operator* old_oper = if_cond->child;
 
     Name if_body = util_literal_name_new_prefix(sv("if_body"));
 
-    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    if (is_last_if) {
+        Ir_goto* lang_goto = ir_goto_new_internal(
+            if_statement->pos,
+            loc_new(),
+            util_literal_name_new(),
+            if_body
+        );
+        vec_append(&a_main, &new_block->children, ir_goto_wrap(lang_goto));
+    } else {
+        if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    }
 
     add_label(new_block, if_body, old_block->pos);
 
@@ -2070,7 +2079,11 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         }
 
         assert(label_if_break.base.count > 0);
-        Ir_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
+        Ir_block* if_block = if_statement_to_branch(
+            vec_at(&if_else->tasts, idx),
+            next_if,
+            idx + 1 == if_else->tasts.info.count
+        );
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_extend(&a_main, &(*new_block)->children, &if_block->children);
 
