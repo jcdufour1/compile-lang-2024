@@ -14,6 +14,8 @@ static void check_unit_ir_from_block(const Ir* ir);
 
 static void check_unit_src_internal_name(Name name, Pos pos);
 
+static void check_unit_src(const Name src, Pos pos);
+
 static void check_unit_src_internal_literal(const Ir_literal* lit) {
     switch (lit->type) {
         case IR_INT:
@@ -31,8 +33,8 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
 }
 
 static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos) {
-    check_unit_src_internal_name(bin->lhs, pos);
-    check_unit_src_internal_name(bin->rhs, pos);
+    check_unit_src(bin->lhs, pos);
+    check_unit_src(bin->rhs, pos);
 }
 
 static void check_unit_src_internal_operator(const Ir_operator* oper, Pos pos) {
@@ -91,6 +93,7 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         Ir* sym_def = NULL;
         unwrap(ir_lookup(&sym_def, name));
         log(LOG_DEBUG, FMT"\n", ir_print(sym_def));
+        todo();
     }
 }
 
