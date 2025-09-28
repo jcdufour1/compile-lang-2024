@@ -133,13 +133,32 @@ static void check_unit_src_internal_def(const Ir_def* def) {
     unreachable("");
 }
 
+// TODO: make helper function in ir_utils or similar (or figure out if I do already and clean it up)
+static bool check_unit_is_struct(Name name) {
+    Ir* def_ = NULL;
+    unwrap(ir_lookup(&def_, name));
+    if (def_->type != IR_ALLOCA) {
+        return false;
+    } 
+    return ir_alloca_const_unwrap(def_)->lang_type.type == IR_LANG_TYPE_STRUCT;
+}
+
 static void check_unit_src_internal_name(Name name, Pos pos) {
     // TODO: !strv_is_equal(sv("builtin")/* TODO */, name.mod_path) is used to avoid checking implementation symbol
     //   (because otherwise it would be required to modify the add_load_and_store pass or
     //   ignore impossible paths (eg. neither the if nor else is taken).
     //   consider if builtin symbols should be checked or not
     if (!init_symbol_lookup(&curr_frame.init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
-        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
+        if (check_unit_is_struct(name)) {
+            msg(
+                DIAG_UNINITIALIZED_VARIABLE, pos,
+                "symbol `"FMT"` is used uninitialized on some or all code paths; "
+                "note that struct must be initialized with a struct literal or function call "
+                "(individual member accesses do not satisfy initialization requirements)\n", name_print(NAME_MSG, name));
+        } else {
+            msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
+        }
+
         for (size_t idx = 0; idx < frames.info.count; idx++) {
             // prevent printing error for the same symbol on several code paths
             init_symbol_add(&vec_at_ref(&frames, idx)->init_tables, name);
@@ -243,7 +262,6 @@ static void check_unit_block(const Ir_block* block) {
         while (block_idx < block->children.info.count) {
             check_unit_ir_from_block(vec_at(&block->children, block_idx));
             if (check_unit_src_internal_name_failed) {
-                String buf = {0};
                 size_t temp_block_idx = 0;
                 size_t bool_idx = 0;
 
@@ -330,6 +348,11 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
     unwrap(init_symbol_add(&curr_frame.init_tables, load->name));
+}
+
+static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
+    check_unit_src(load->ir_src, load->pos);
+    unwrap(init_symbol_add(&curr_frame.init_tables, load->name_self));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
@@ -435,7 +458,8 @@ static void check_unit_ir_from_block(const Ir* ir) {
             check_unit_expr(ir_expr_const_unwrap(ir));
             return;
         case IR_LOAD_ELEMENT_PTR:
-            todo();
+            check_unit_load_element_ptr(ir_load_element_ptr_const_unwrap(ir));
+            return;
         case IR_ARRAY_ACCESS:
             todo();
         case IR_FUNCTION_PARAMS:
@@ -480,7 +504,8 @@ static void check_unit_ir_builtin(const Ir* ir) {
             // TODO
             return;
         case IR_LOAD_ELEMENT_PTR:
-            todo();
+            // TODO
+            return;
         case IR_ARRAY_ACCESS:
             todo();
         case IR_FUNCTION_PARAMS:

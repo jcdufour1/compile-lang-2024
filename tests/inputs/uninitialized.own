@@ -4,6 +4,11 @@ type Way enum {
     way2
 }
 
+type Token struct {
+    num i32
+    character u8
+}
+
 fn aux_1arg(arg i32) i32 {
     let num i32 = arg
     return arg
@@ -50,11 +55,17 @@ fn wrong4() i32 {
     return status
 }
 
+fn wrong5() i32 {
+    let token Token
+    return token.num
+}
+
 fn main() i32 {
     wrong1()
     wrong2()
     wrong3()
     wrong4()
+    wrong5()
     right1()
     let status i32
     return status
