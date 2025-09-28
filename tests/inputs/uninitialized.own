@@ -10,22 +10,20 @@ fn wrong1() i32 {
 }
 
 fn wrong2() i32 {
-    let status i32 = 0
+    let status i32
     aux_1arg(status)
     status = 8
     return status
 }
 
 fn main() i32 {
-    aux_1arg(8)
-    //wrong1()
-    //wrong2()
-    //let status i32 = 8
+    wrong1()
+    wrong2()
+    let status i32
     //if status {
     //    status = 1
     //} else {
     //    status = 4
     //}
-    //return status
-    return 8
+    return status
 }

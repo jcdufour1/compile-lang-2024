@@ -163,7 +163,7 @@ static void check_unit_block(const Ir_block* block) {
     assert(frames.info.count == 0);
     assert(block_idx == 0);
     assert(goto_or_cond_goto == false);
-    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, (Frame) {0});
+    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(init_tables, (Name) {0}));
 
     while (frames.info.count > 0) {
         Frame curr_frame = vec_pop(&frames);
@@ -210,6 +210,8 @@ static void check_unit_block(const Ir_block* block) {
         }
         block_idx = 0;
     }
+
+    memset(&init_tables, 0, sizeof(init_tables));
 }
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -228,6 +230,7 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 }
 
 static void check_unit_function_def(const Ir_function_def* def) {
+    assert(init_tables.info.count == 0);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body);
