@@ -2072,14 +2072,12 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         assert(label_if_break.base.count > 0);
         Ir_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
-        vec_append(&a_main, &(*new_block)->children, ir_block_wrap(if_block));
+        vec_extend(&a_main, &(*new_block)->children, &if_block->children);
 
         if (idx + 1 < if_else->tasts.info.count) {
             assert(!ir_lookup(&dummy, next_if));
             add_label((*new_block), next_if, vec_at(&if_else->tasts, idx)->pos);
             assert(ir_lookup(&dummy, next_if));
-        } else {
-            //assert(strv_is_equal(next_if, label_if_break));
         }
     }
 
@@ -2109,7 +2107,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
 static Name load_if_else_chain(Ir_block* new_block, Tast_if_else_chain* old_if_else) {
     Ir_block* new_if_else = NULL;
     Name result = if_else_chain_to_branch(&new_if_else, old_if_else);
-    vec_append(&a_main, &new_block->children, ir_block_wrap(new_if_else));
+    vec_extend(&a_main, &new_block->children, &new_if_else->children);
 
     return result;
 }
@@ -2205,7 +2203,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
 static void load_for_with_cond(Ir_block* new_block, Tast_for_with_cond* old_for) {
     Ir_block* new_for = for_with_cond_to_branch(old_for);
-    vec_append(&a_main, &new_block->children, ir_block_wrap(new_for));
+    vec_extend(&a_main, &new_block->children, &new_for->children);
 }
 
 static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
@@ -2668,6 +2666,7 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     // is_rtn_check
     // TODO: maybe this check should only be done at top level of function
     //   (and is yield check should be used for child scopes)
+    //   (this may not be nessessary because optimization passes could remove unnessessary assignments)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
     load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
     add_label(new_block, after_check_rtn, new_block->pos);
