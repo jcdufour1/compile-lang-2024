@@ -152,6 +152,8 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("''");
         case TOKEN_GENERIC_TYPE:
             return sv("Type");
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return sv("=>");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -308,6 +310,8 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("''");
         case TOKEN_GENERIC_TYPE:
             return sv("Type");
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return sv("=>");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -330,7 +334,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -403,7 +407,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_COUNTOF: // fallthrough
         case TOKEN_DOUBLE_TICK: // fallthrough
         case TOKEN_ASSIGN_BY_BIN:  // fallthrough
-        case TOKEN_GENERIC_TYPE:
+        case TOKEN_GENERIC_TYPE: // fallthrough
+        case TOKEN_ONE_LINE_BLOCK_START:
             break;
         case TOKEN_MACRO: 
             string_extend_strv(arena, &buf, token.text);

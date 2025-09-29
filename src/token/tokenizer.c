@@ -107,7 +107,7 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only keywords are explicitly handled)");
+    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem))) {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
@@ -373,6 +373,10 @@ static bool get_next_token(
     } else if (strv_col_front(*file_text_rem) == '=') {
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_equal);
         if (equals.base.count == 1) {
+            if (strv_col_try_consume(pos, file_text_rem, '>')) {
+                token->type = TOKEN_ONE_LINE_BLOCK_START;
+                return true;
+            }
             token->type = TOKEN_SINGLE_EQUAL;
             return true;
         } else if (equals.base.count == 2) {

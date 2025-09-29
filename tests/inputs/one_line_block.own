@@ -1,0 +1,7 @@
+
+fn print_hello() => io.print_str("hello")
+
+fn main() i32 {
+    print_hello()
+    return 0
+}

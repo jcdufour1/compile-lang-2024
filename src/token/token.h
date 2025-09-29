@@ -74,6 +74,7 @@ typedef enum {
     TOKEN_MACRO,
     TOKEN_DEFER,
     TOKEN_DOUBLE_TICK,
+    TOKEN_ONE_LINE_BLOCK_START,
 
     // keywords
     TOKEN_FN,
@@ -276,6 +277,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_GENERIC_TYPE:
             return false;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -432,6 +435,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_BITWISE_NOT:
             return true;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -618,6 +623,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_DOUBLE_TICK:
             return false;
         case TOKEN_GENERIC_TYPE:
+            return false;
+        case TOKEN_ONE_LINE_BLOCK_START:
             return false;
         case TOKEN_COUNT:
             unreachable("");
