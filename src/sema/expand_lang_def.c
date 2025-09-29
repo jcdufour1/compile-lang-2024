@@ -18,7 +18,6 @@ bool expand_def_ulang_type_regular(
     Pos dest_pos
 ) {
 
-    log_temp(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     (void) new_lang_type;
     Uast_expr* new_expr = NULL;
     switch (expand_def_uname(&new_expr, &lang_type.atom.str, lang_type.pos, dest_pos)) {
@@ -195,6 +194,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 log_temp(LOG_DEBUG, FMT"\n", uast_def_print(result));
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
+                    new_name->base = access->member_name->name.base;
                     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos);
                 }
@@ -259,11 +259,11 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
     Name new_name = {0};
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
         case EXPAND_NAME_NORMAL:
-            //*name = name_to_uname(new_name);
+            *name = name_to_uname(new_name);
             //log(LOG_DEBUG, FMT"\n", name_print(
-            unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
-            name->gen_args = new_name.gen_args;
-            name->base = new_name.base;
+            //unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
+            //name->gen_args = new_name.gen_args;
+            //name->base = new_name.base;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
