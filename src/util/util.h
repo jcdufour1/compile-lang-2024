@@ -63,6 +63,9 @@ __attribute__((format (printf, 5, 6)));
 #define log(log_level, ...) \
     log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
 
+#define log_temp(log_level, ...) \
+    log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
+
 #define todo() \
     do { \
         log(LOG_FATAL, "not implemented\n"); \

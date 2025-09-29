@@ -5,9 +5,9 @@ type Slice struct(<ItemT>) {
     buf ItemT*
     count u64
 }
-
-extern("c") fn strlen(cstr u8*) u64
-
-fn bitwise_not(num NumT, NumT Type) NumT {
-    return unsafe_cast<NumT>(-1)^num
-}
+//
+//extern("c") fn strlen(cstr u8*) u64
+//
+//fn bitwise_not(num NumT, NumT Type) NumT {
+//    return unsafe_cast<NumT>(-1)^num
+//}

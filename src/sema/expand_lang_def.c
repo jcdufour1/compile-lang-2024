@@ -8,6 +8,7 @@
 #include <type_checking.h>
 #include <msg_todo.h>
 #include <lang_type_from_ulang_type.h>
+#include <msg_undefined_symbol.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 
@@ -16,6 +17,8 @@ bool expand_def_ulang_type_regular(
     Ulang_type_regular lang_type,
     Pos dest_pos
 ) {
+
+    log_temp(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     (void) new_lang_type;
     Uast_expr* new_expr = NULL;
     switch (expand_def_uname(&new_expr, &lang_type.atom.str, lang_type.pos, dest_pos)) {
@@ -37,6 +40,7 @@ bool expand_def_ulang_type_regular(
                 msg_todo("", uast_expr_get_pos(access->callee));
                 return false;
             }
+            // TODO: use uname_new function
             Uname new_uname = {.mod_alias = uast_symbol_unwrap(access->callee)->name, .base = access->member_name->name.base, .gen_args = lang_type.atom.str.gen_args};
             *new_lang_type = ulang_type_regular_new(ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth), lang_type.pos);
             return true;
@@ -123,6 +127,10 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
 }
 
 static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* new_name, Name name, Pos dest_pos) {
+    if (strv_is_equal(name.base, sv("Token"))) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    }
+
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
@@ -134,6 +142,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
 
     switch (def->type) {
         case UAST_POISON_DEF:
+            if (strv_is_equal(name.base, sv("Token"))) {
+                todo();
+            }
             return EXPAND_NAME_ERROR;
         case UAST_LANG_DEF:
             break;
@@ -173,10 +184,27 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             Uast_member_access* access = uast_member_access_unwrap(expr);
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
             new_name->gen_args = name.gen_args;
-            *new_expr = uast_member_access_wrap(access);
+
+            log_temp(LOG_DEBUG, FMT"\n", uast_def_print(def));
+            log_temp(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
+            Uast_def* result = NULL;
+            if (access->callee->type == UAST_SYMBOL) {
+                if (!usymbol_lookup(&result, uast_symbol_unwrap(access->callee)->name)) {
+                    msg_undefined_symbol(uast_symbol_unwrap(access->callee)->name, uast_symbol_unwrap(access->callee)->pos);
+                }
+                log_temp(LOG_DEBUG, FMT"\n", uast_def_print(result));
+                if (result->type == UAST_MOD_ALIAS) {
+                    new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
+                    return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos);
+                }
+                todo();
+            }
+            todo();
 
             log(LOG_DEBUG, FMT"\n", strv_print(name.mod_path));
             log(LOG_DEBUG, FMT"\n", strv_print(name.base));
+            *new_expr = uast_member_access_wrap(access);
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_SYMBOL: {
@@ -190,7 +218,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             } else {
                 new_name->gen_args = name.gen_args;
             }
-            return EXPAND_NAME_NORMAL;
+            return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos);
         }
         case UAST_IF_ELSE_CHAIN:
             todo();
@@ -231,6 +259,8 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
     Name new_name = {0};
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
         case EXPAND_NAME_NORMAL:
+            //*name = name_to_uname(new_name);
+            //log(LOG_DEBUG, FMT"\n", name_print(
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             name->gen_args = new_name.gen_args;
             name->base = new_name.base;
