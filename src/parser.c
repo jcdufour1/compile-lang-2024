@@ -395,6 +395,10 @@ static bool starts_with_label(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
 }
 
+static bool starts_with_using(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_USING;
+}
+
 static bool starts_with_defer(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEFER;
 }
@@ -1799,6 +1803,19 @@ static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id scope_id) {
+    Token using_tk = {0};
+    unwrap(try_consume(&using_tk, tokens, TOKEN_USING));
+
+    Token sym_name = {0};
+    if (!consume_expect(&sym_name, tokens, "(module or struct name)", TOKEN_SYMBOL)) {
+        return PARSE_ERROR;
+    }
+
+    *using = uast_using_new(using_tk.pos, sym_name.text, scope_id);
+    return PARSE_OK;
+}
+
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
     // TODO: expected failure case for return in defer block
     Token defer_tk = {0};
@@ -2310,12 +2327,18 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(fun_decl);
-    } else if (starts_with_defer(*tokens)) {
-        Uast_defer* fun_decl;
-        if (PARSE_OK != parse_defer(&fun_decl, tokens, scope_id)) {
+    } else if (starts_with_using(*tokens)) {
+        Uast_using* using;
+        if (PARSE_OK != parse_using(&using, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_defer_wrap(fun_decl);
+        lhs = uast_using_wrap(using);
+    } else if (starts_with_defer(*tokens)) {
+        Uast_defer* defer;
+        if (PARSE_OK != parse_defer(&defer, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_defer_wrap(defer);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {

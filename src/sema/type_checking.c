@@ -3916,6 +3916,18 @@ error:
     return status;
 }
 
+bool try_set_using_types(const Uast_using* using) {
+    // TODO: using should possibly have Name instead of Strv?
+    Name sym_name = name_new((Strv) {0} /* TODO */, using->sym_name, (Ulang_type_vec) {0}, using->scope_id);
+    Uast_def* def = NULL;
+    if (!usymbol_lookup(&def, sym_name)) {
+        msg_undefined_symbol(sym_name, using->pos);
+        return false;
+    }
+
+    todo();
+}
+
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
@@ -4104,6 +4116,8 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_DEFER:
             return false;
+        case UAST_USING:
+            return true;
     }
     unreachable("");
 }
@@ -4160,6 +4174,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             }
             *new_tast = tast_defer_wrap(new_defer);
             return STMT_OK;
+        }
+        case UAST_USING: {
+            if (!try_set_using_types(uast_using_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
         }
         case UAST_YIELD: {
             Tast_yield* new_yield = NULL;
