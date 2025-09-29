@@ -260,10 +260,6 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
     switch (expand_def_name_internal(new_expr, &new_name, actual, dest_pos)) {
         case EXPAND_NAME_NORMAL:
             *name = name_to_uname(new_name);
-            //log(LOG_DEBUG, FMT"\n", name_print(
-            //unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
-            //name->gen_args = new_name.gen_args;
-            //name->base = new_name.base;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
