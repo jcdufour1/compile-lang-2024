@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `puts`
+     2 | type io import = std.io
+     3 | using io
+       | ^
+     4 | 
+tests/inputs/using_error.own:5:4:[1;34mnote[0;39m:`puts` originally defined here
+     4 | 
+     5 | fn puts() i32 {
+       |    ^
+     6 | }
+
+compile::return_code 1
+

@@ -346,7 +346,7 @@ Strv uast_using_print_internal(const Uast_using* using, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "using: ", indent);
-    string_extend_strv(&a_print, &buf, using->sym_name);
+    extend_name(NAME_LOG, &buf, using->sym_name);
 
     return string_to_strv(buf);
 }

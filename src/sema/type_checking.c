@@ -28,6 +28,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <infer_generic_type.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -3917,15 +3918,46 @@ error:
 }
 
 bool try_set_using_types(const Uast_using* using) {
-    // TODO: using should possibly have Name instead of Strv?
-    Name sym_name = name_new((Strv) {0} /* TODO */, using->sym_name, (Ulang_type_vec) {0}, using->scope_id);
+    bool status = true;
     Uast_def* def = NULL;
-    if (!usymbol_lookup(&def, sym_name)) {
-        msg_undefined_symbol(sym_name, using->pos);
+    if (!usymbol_lookup(&def, using->sym_name)) {
+        msg_undefined_symbol(using->sym_name, using->pos);
         return false;
     }
 
-    todo();
+    if (def->type == UAST_STRUCT_DEF) {
+        msg_todo("using for struct", using->pos);
+        return false;
+    } else if (def->type == UAST_MOD_ALIAS) {
+        Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
+        // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
+        //   eventually, it may be a good idea to speed this up 
+        //   (eg. by keeping array of symbols of top level of each module)
+
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Uast_def* curr = NULL;
+        while (usym_tbl_iter_next(&curr, &iter)) {
+            Name curr_name = uast_def_get_name(curr);
+            if (strv_is_equal(curr_name.mod_path, mod_path)) {
+                Name alias_name = using->sym_name;
+                alias_name.base = curr_name.base;
+                Uast_lang_def* lang_def = uast_lang_def_new(
+                    using->pos,
+                    alias_name,
+                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name))
+                );
+                if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+                    msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                    status = false;
+                }
+            }
+        }
+        return status;
+    } else {
+        msg(DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, using->pos, "symbol after `using` must be struct or module alias");
+        return false;
+    }
+    unreachable("");
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?

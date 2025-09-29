@@ -311,8 +311,7 @@ static Uast_type uast_gen_macro(const char* prefix) {
 static Uast_type uast_gen_using(const char* prefix) {
     Uast_type using = {.name = uast_name_new(prefix, "using", false)};
 
-    append_member(&using.members, "Strv", "sym_name");
-    append_member(&using.members, "Scope_id", "scope_id");
+    append_member(&using.members, "Name", "sym_name");
 
     return using;
 }

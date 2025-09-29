@@ -323,9 +323,10 @@ Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, bool use_new_scope, S
 }
 
 Uast_using* uast_using_clone(const Uast_using* using, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) use_new_scope;
+    (void) new_scope;
     (void) dest_pos;
-    Scope_id scope = use_new_scope ? new_scope : using->scope_id;
-    return uast_using_new(using->pos, using->sym_name, scope);
+    return uast_using_new(using->pos, using->sym_name);
 }
 
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

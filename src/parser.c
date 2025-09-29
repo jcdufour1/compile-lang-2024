@@ -15,6 +15,7 @@
 #include <name.h>
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
@@ -26,23 +27,7 @@ static Pos new_scope_name_pos;
 
 static Name default_brk_label = {0};
 
-// TODO: make consume_expect function to print error automatically
-
 // TODO: use parent block for scope_ids instead of function calls everytime
-
-// functions return bool if they do not report error to the user
-// functions return PARSE_STATUS if they report error to the user
-// functions return PARSE_EXPR_STATUS if they may report error to the user or do nothing without reporting an error
-typedef enum {
-    PARSE_OK, // no need for callers to sync tokens
-    PARSE_ERROR, // tokens need to be synced by callers
-} PARSE_STATUS;
-
-typedef enum {
-    PARSE_EXPR_OK, // no need for callers to sync tokens, and no message reported to the user
-    PARSE_EXPR_NONE, // no expr parsed; no message reported to the user, and no need for callers to sync tokens
-    PARSE_EXPR_ERROR, // tokens need to be synced by callers
-} PARSE_EXPR_STATUS;
 
 static bool can_end_stmt(Token token);
 
@@ -282,22 +267,6 @@ bool consume_expect_internal(const char* file, int line, Token* result, Tk_view*
 #define consume_expect(result, tokens, msg, ...) \
     consume_expect_internal(__FILE__, __LINE__, result, tokens, msg, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), (TOKEN_TYPE[]){__VA_ARGS__})
     
-static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
-    msg(
-        DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
-    );
-
-    Uast_def* original_def;
-    unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
-    msg(
-        DIAG_NOTE, uast_def_get_pos(original_def),
-        "`"FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
-    );
-
-    return PARSE_ERROR;
-}
-
 // TODO: give this function a better name
 // returns the modified name of the label
 static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
@@ -1812,7 +1781,7 @@ static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id sc
         return PARSE_ERROR;
     }
 
-    *using = uast_using_new(using_tk.pos, sym_name.text, scope_id);
+    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id));
     return PARSE_OK;
 }
 
