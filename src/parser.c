@@ -2417,6 +2417,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
+    bool is_one_line = false;
 
     Name dummy = {0};
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
@@ -2426,13 +2427,25 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "at start of block", TOKEN_OPEN_CURLY_BRACE);
-        status = PARSE_ERROR;
-        goto end;
+        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START)) {
+            is_one_line = true;
+        } else {
+            msg_parser_expected(
+                tk_view_front(*tokens),
+                "at start of block",
+                TOKEN_OPEN_CURLY_BRACE,
+                TOKEN_ONE_LINE_BLOCK_START
+            );
+            status = PARSE_ERROR;
+            goto end;
+        }
     }
-    while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    // TODO: consider if these new lines should be allowed even with one line block
+    if (!is_one_line) {
+        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    }
 
-    while (1) {
+    do {
         if (tk_view_front(*tokens).type == TOKEN_EOF) {
             // this means that there is no matching `}` found
             if (!is_top_level) {
@@ -2469,11 +2482,16 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         }
         assert(!try_consume_newlines(tokens));
         vec_append(&a_main, &(*block)->children, child);
-    }
+    } while (!is_one_line);
+
     Token block_end = {0};
-    if (!is_top_level && status == PARSE_OK && !try_consume(&block_end, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    if (!is_top_level && !is_one_line && status == PARSE_OK && !try_consume(&block_end, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), "at the end of the block", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
+    }
+    if (is_one_line) {
+        assert(!is_top_level);
+        block_end = prev_token;
     }
     (*block)->pos_end = block_end.pos;
 

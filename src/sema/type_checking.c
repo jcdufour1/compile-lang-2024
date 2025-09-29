@@ -4031,9 +4031,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             )),
             true
         );
-        if (rtn_statement->pos.line == 0) {
-            unreachable("");
-        }
+        unwrap(rtn_statement->pos.line != 0);
+
         Tast_stmt* new_rtn_statement = NULL;
         switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_ERROR:
