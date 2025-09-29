@@ -1,0 +1,8 @@
+
+type io import = std.io
+using io
+
+fn main() i32 {
+    print_str("hello")
+    return 0
+}
