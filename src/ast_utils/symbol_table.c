@@ -30,8 +30,6 @@ typedef Generic_symbol_table*(*Get_tbl_from_collection_fn)(Symbol_collection* co
 
 bool generic_symbol_lookup(void** result, Strv key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
-
 // TODO: symbol_add should call symbol_update to reduce duplication
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Strv key, void* item) {
     assert(key.count > 0 && "invalid item");

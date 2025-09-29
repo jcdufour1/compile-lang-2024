@@ -5,41 +5,41 @@ fn one() i32 {
 }
 
 fn part_2() {
-    {
-        let num i32 = 7
-        if 0 - 1 == num {
-            io.printf("no1\n")
-        } else {
-            io.printf("yes1\n")
-        }
-    }
+    //{
+    //    let num i32 = 7
+    //    if 0 - 1 == num {
+    //        io.printf("no1\n")
+    //    } else {
+    //        io.printf("yes1\n")
+    //    }
+    //}
 
-    {
-        let num i32 = 0 - 1
-        if 0 - 1 == num {
-            io.printf("yes2\n")
-        } else {
-            io.printf("no2\n")
-        }
-    }
+    //{
+    //    let num i32 = 0 - 1
+    //    if 0 - 1 == num {
+    //        io.printf("yes2\n")
+    //    } else {
+    //        io.printf("no2\n")
+    //    }
+    //}
 
-    {
-        let num i32 = 7
-        if -1 == num {
-            io.printf("no3\n")
-        } else {
-            io.printf("yes3\n")
-        }
-    }
+    //{
+    //    let num i32 = 7
+    //    if -1 == num {
+    //        io.printf("no3\n")
+    //    } else {
+    //        io.printf("yes3\n")
+    //    }
+    //}
 
-    {
-        let num i32 = -1
-        if -1 == num {
-            io.printf("yes4\n")
-        } else {
-            io.printf("no4\n")
-        }
-    }
+    //{
+    //    let num i32 = -1
+    //    if -1 == num {
+    //        io.printf("yes4\n")
+    //    } else {
+    //        io.printf("no4\n")
+    //    }
+    //}
 
     {
         let num i32 = 7

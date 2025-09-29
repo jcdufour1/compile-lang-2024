@@ -14,26 +14,46 @@ static Bool_vec bool_vec_clone(Bool_vec vec) {
 
 static bool init_table_is_equal(Init_table a, Init_table b) {
     if (a.count != b.count) {
-        log(LOG_INFO, "thing 325: no 2.1: %zu %zu\n", a.count, b.count);
+        //log(LOG_INFO, "thing 325: no 2.1: %zu %zu\n", a.count, b.count);
         return false;
     }
     if (a.capacity != b.capacity) {
-        log(LOG_INFO, "thing 325: no 2.2\n");
+        //log(LOG_INFO, "thing 325: no 2.2\n");
         return false;
     }
 
     for (size_t idx = 0; idx < a.capacity; idx++) {
         if (a.table_tasts[idx].status != b.table_tasts[idx].status) {
-            log(LOG_INFO, "thing 325: no 2.3\n");
+            //log(LOG_INFO, "thing 325: no 2.3\n");
             return false;
         }
         if (a.table_tasts[idx].status == SYM_TBL_OCCUPIED && !strv_is_equal(a.table_tasts[idx].key, b.table_tasts[idx].key)) {
-            log(LOG_INFO, "thing 325: no 2.4\n");
+            //log(LOG_INFO, "thing 325: no 2.4\n");
             return false;
         }
     }
 
-    log(LOG_INFO, "thing 325: yes 2\n");
+    //log(LOG_INFO, "thing 325: yes 2\n");
+    return true;
+}
+
+static bool init_table_is_subset(Init_table superset, Init_table subset) {
+    //if (a.count != b.count) {
+    //    log(LOG_INFO, "thing 325: no 2.1: %zu %zu\n", a.count, b.count);
+    //    return false;
+    //}
+    //if (a.capacity != b.capacity) {
+    //    log(LOG_INFO, "thing 325: no 2.2\n");
+    //    return false;
+    //}
+
+    for (size_t idx = 0; idx < subset.capacity; idx++) {
+        void* dummy = NULL;
+        if (subset.table_tasts[idx].status == SYM_TBL_OCCUPIED && !generic_tbl_lookup(&dummy, (Generic_symbol_table*)&superset, subset.table_tasts[idx].key)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -45,6 +65,22 @@ static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
         if (!init_table_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            //log(LOG_INFO, "thing 324: no 2\n");
+            return false;
+        }
+    }
+
+    //log(LOG_INFO, "thing 324: yes\n");
+    return true;
+}
+
+static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec subset) {
+    if (superset.info.count < subset.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < subset.info.count; idx++) {
+        if (!init_table_is_subset(vec_at(&superset, idx), vec_at(&subset, idx))) {
             //log(LOG_INFO, "thing 324: no 2\n");
             return false;
         }
@@ -310,9 +346,10 @@ static void check_unit_block(const Ir_block* block) {
         for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
             Frame curr_already = vec_at(&already_run_frames, idx);
             // TODO: init_table_vec_is_equal: look at subset/superset instead of just is_equal
+            //   init_table_vec_is_subset
             if (
-                init_table_vec_is_equal(curr_already.init_tables, curr_frame.init_tables) &&
-                name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont)
+                name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont) &&
+                init_table_vec_is_subset(curr_frame.init_tables, curr_already.init_tables)
             ) {
                 frame_not_needed = true;
                 break;
@@ -538,7 +575,6 @@ static void check_unit_expr(const Ir_expr* expr) {
 }
 
 static void check_unit_ir_from_block(const Ir* ir) {
-    log(LOG_DEBUG, FMT"\n", ir_print(ir));
     switch (ir->type) {
         case IR_BLOCK:
             unreachable("nested blocks should not be present at this point");
