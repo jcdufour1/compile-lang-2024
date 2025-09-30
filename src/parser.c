@@ -15,6 +15,7 @@
 #include <name.h>
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
@@ -26,23 +27,9 @@ static Pos new_scope_name_pos;
 
 static Name default_brk_label = {0};
 
-// TODO: make consume_expect function to print error automatically
+static Uast_using_vec using_params = {0};
 
 // TODO: use parent block for scope_ids instead of function calls everytime
-
-// functions return bool if they do not report error to the user
-// functions return PARSE_STATUS if they report error to the user
-// functions return PARSE_EXPR_STATUS if they may report error to the user or do nothing without reporting an error
-typedef enum {
-    PARSE_OK, // no need for callers to sync tokens
-    PARSE_ERROR, // tokens need to be synced by callers
-} PARSE_STATUS;
-
-typedef enum {
-    PARSE_EXPR_OK, // no need for callers to sync tokens, and no message reported to the user
-    PARSE_EXPR_NONE, // no expr parsed; no message reported to the user, and no need for callers to sync tokens
-    PARSE_EXPR_ERROR, // tokens need to be synced by callers
-} PARSE_EXPR_STATUS;
 
 static bool can_end_stmt(Token token);
 
@@ -282,22 +269,6 @@ bool consume_expect_internal(const char* file, int line, Token* result, Tk_view*
 #define consume_expect(result, tokens, msg, ...) \
     consume_expect_internal(__FILE__, __LINE__, result, tokens, msg, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), (TOKEN_TYPE[]){__VA_ARGS__})
     
-static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
-    msg(
-        DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
-    );
-
-    Uast_def* original_def;
-    unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
-    msg(
-        DIAG_NOTE, uast_def_get_pos(original_def),
-        "`"FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
-    );
-
-    return PARSE_ERROR;
-}
-
 // TODO: give this function a better name
 // returns the modified name of the label
 static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
@@ -393,6 +364,10 @@ static bool starts_with_lang_def(Tk_view tokens) {
 
 static bool starts_with_label(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
+static bool starts_with_using(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_USING;
 }
 
 static bool starts_with_defer(Tk_view tokens) {
@@ -658,6 +633,8 @@ static bool can_end_stmt(Token token) {
             return true;
         case TOKEN_ONE_LINE_BLOCK_START:
             return false;
+        case TOKEN_USING:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -815,6 +792,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_BITWISE_NOT:
             return true;
         case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
+        case TOKEN_USING:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -1020,6 +999,11 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
 
 static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
     Uast_param_vec params = {0};
+    assert(
+        using_params.info.count == 0 &&
+        "this vector should have been emptied at the start of the previous block, "
+        "and should only be added to when parsing function arguments"
+    );
 
     Uast_param* param = NULL;
     bool done = false;
@@ -1453,6 +1437,9 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         assert(!require_let);
     }
 
+    Token dummy = {0};
+    bool is_using = try_consume(&dummy, tokens, TOKEN_USING);
+
     try_consume_newlines(tokens);
     Token name_token = {0};
     if (!try_consume_no_rm_newlines(&name_token, tokens, TOKEN_SYMBOL)) {
@@ -1502,9 +1489,16 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
                 return PARSE_ERROR;
             }
+            if (is_using) {
+                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name));
+            }
+        } else if (is_using) {
+            msg_todo("using in this situation", var_def->pos);
+            return PARSE_ERROR;
         }
     }
 
+    // TODO: this should be removed
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
     return PARSE_OK;
@@ -1792,6 +1786,19 @@ static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
 
     new_scope_name_pos = sym_name.pos;
     new_scope_name = label_name;
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id scope_id) {
+    Token using_tk = {0};
+    unwrap(try_consume(&using_tk, tokens, TOKEN_USING));
+
+    Token sym_name = {0};
+    if (!consume_expect(&sym_name, tokens, "(module or struct name)", TOKEN_SYMBOL)) {
+        return PARSE_ERROR;
+    }
+
+    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id));
     return PARSE_OK;
 }
 
@@ -2306,12 +2313,18 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(fun_decl);
-    } else if (starts_with_defer(*tokens)) {
-        Uast_defer* fun_decl;
-        if (PARSE_OK != parse_defer(&fun_decl, tokens, scope_id)) {
+    } else if (starts_with_using(*tokens)) {
+        Uast_using* using;
+        if (PARSE_OK != parse_using(&using, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_defer_wrap(fun_decl);
+        lhs = uast_using_wrap(using);
+    } else if (starts_with_defer(*tokens)) {
+        Uast_defer* defer;
+        if (PARSE_OK != parse_defer(&defer, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_defer_wrap(defer);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {
@@ -2443,6 +2456,10 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     // TODO: consider if these new lines should be allowed even with one line block
     if (!is_one_line) {
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    }
+
+    while (using_params.info.count > 0) {
+        vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
     }
 
     do {
@@ -2791,7 +2808,7 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     )); // this is a placeholder type
 
-    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -2843,7 +2860,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -2971,7 +2988,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 75, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 76, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

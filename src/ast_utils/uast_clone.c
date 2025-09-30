@@ -322,6 +322,11 @@ Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, bool use_new_scope, S
     return uast_defer_new(lang_defer->pos, uast_stmt_clone(lang_defer->child, use_new_scope, new_scope, dest_pos));
 }
 
+Uast_using* uast_using_clone(const Uast_using* using, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) dest_pos;
+    return uast_using_new(using->pos, name_clone(using->sym_name, use_new_scope, new_scope));
+}
+
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     switch (stmt->type) {
         case UAST_EXPR:
@@ -341,6 +346,8 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_DEFER:
             return uast_defer_wrap(uast_defer_clone(uast_defer_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
+        case UAST_USING:
+            return uast_using_wrap(uast_using_clone(uast_using_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
     }
     unreachable("");
 }

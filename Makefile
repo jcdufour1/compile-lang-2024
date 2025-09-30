@@ -3,7 +3,6 @@
 CC_COMPILER ?= clang
 
 # TODO: remove -Wundefined-internal?
-# TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wno-undefined-internal -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
@@ -59,6 +58,7 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
+	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
@@ -210,6 +210,9 @@ ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c
 
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
+
+${BUILD_DIR}/ast_utils/ast_msg.o: ${DEP_COMMON} src/ast_utils/ast_msg.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/ast_msg.o src/ast_utils/ast_msg.c
 
 ${BUILD_DIR}/ast_utils/uast_clone.o: ${DEP_COMMON} src/ast_utils/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_clone.o src/ast_utils/uast_clone.c

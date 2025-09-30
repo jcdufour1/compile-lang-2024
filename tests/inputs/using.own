@@ -1,0 +1,37 @@
+
+type io import = std.io
+type coll import = std.collections
+using io
+using coll
+
+type Token struct {
+    num i32
+    string Str
+}
+
+fn using_struct(token Token) {
+    using token
+
+    print_int(num)
+    print_str(string)
+
+    print_int(token.num)
+    print_str(token.string)
+}
+
+fn using_struct_concise(using token Token) {
+    print_int(num)
+    print_str(string)
+
+    print_int(token.num)
+    print_str(token.string)
+}
+
+fn main() i32 {
+    print_str("hello")
+    let token Token = {8, "world"}
+    using_struct(token)
+    token = {65, "computer"}
+    using_struct_concise(token)
+    return 0
+}
