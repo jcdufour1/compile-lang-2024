@@ -186,7 +186,7 @@ void extend_name_msg(String* buf, Name name) {
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
     if (
         mode != UNAME_MSG || !(
-            strv_is_equal(name.mod_alias.mod_path, sv("builtin") /* TODO */) ||
+            strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||
             name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) ||
             name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)
         )
