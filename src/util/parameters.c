@@ -167,8 +167,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"diag-redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
     {"diag-switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
     {"diag-wrong-gen-type", DIAG_WRONG_GEN_TYPE, LOG_ERROR, true},
-    {"DIAG-USING-ON-NON-STRUCT-OR-MOD-ALIAS", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
-    {"DIAG-FILE-NAMED-BUILTIN", DIAG_FILE_NAMED_BUILTIN, LOG_ERROR, true},
+    {"diag-using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
+    {"diag-file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
     {"diag-gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
 };
 
