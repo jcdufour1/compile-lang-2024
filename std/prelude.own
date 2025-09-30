@@ -1,0 +1,5 @@
+
+
+type coll import = std.collections
+
+type Str def = coll.Str

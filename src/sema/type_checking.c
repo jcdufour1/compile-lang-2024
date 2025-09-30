@@ -625,10 +625,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).base));
-    log(LOG_DEBUG, "%zu\n", uast_def_get_name(sym_def).scope_id);
-
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
             function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
@@ -2426,7 +2422,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             log(LOG_DEBUG, "before\n");
             // TODO: Uast_param should have Strv instead of name to prevent some bugs and make things simplier?
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx_param)->base->name));
                 if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     size_t actual_arg_count = curr_arg_count;
                     param = vec_at(&params->params, idx_param);
@@ -3932,10 +3927,12 @@ bool try_set_using_types(const Uast_using* using) {
         name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
+        // TODO: expected failure test for using on enum, etc.
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
             Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
             Name alias_name = using->sym_name;
+            alias_name.mod_path = using->mod_path_to_put_defs;
             alias_name.base = curr->name.base;
             Uast_lang_def* lang_def = uast_lang_def_new(
                 using->pos,
@@ -3964,6 +3961,7 @@ bool try_set_using_types(const Uast_using* using) {
             Name curr_name = uast_def_get_name(curr);
             if (strv_is_equal(curr_name.mod_path, mod_path)) {
                 Name alias_name = using->sym_name;
+                alias_name.mod_path = using->mod_path_to_put_defs;
                 alias_name.base = curr_name.base;
                 Uast_lang_def* lang_def = uast_lang_def_new(
                     using->pos,

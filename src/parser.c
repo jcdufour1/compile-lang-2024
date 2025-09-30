@@ -303,9 +303,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    // TODO: this could cause collisions if internal symbol has the same name as mod_path.
-    //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
-    // TODO: do not hardcode (Strv) {0}
     if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
@@ -1490,7 +1487,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 return PARSE_ERROR;
             }
             if (is_using) {
-                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name));
+                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
             msg_todo("using in this situation", var_def->pos);
@@ -1796,7 +1793,7 @@ static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id sc
         return PARSE_ERROR;
     }
 
-    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id));
+    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id), curr_mod_path);
     return PARSE_OK;
 }
 
@@ -3187,6 +3184,23 @@ error:
 bool parse(Uast_block** block, Strv file_path) {
     symbol_collection_new(SCOPE_BUILTIN);
 
+    Uast_mod_alias* prelude_alias = NULL;
+    if (!get_mod_alias_from_path_token(
+        &prelude_alias,
+        token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
+        POS_BUILTIN,
+        MOD_PATH_PRELUDE,
+        false
+    )) {
+        return false;
+    }
+    vec_append(
+        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+        &using_params,
+        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+    );
+
+    // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
     //Uast_mod_alias* dummy = NULL;
     //unwrap(get_mod_alias_from_path_token(
     //    &dummy,
