@@ -3117,6 +3117,13 @@ static void parser_do_tests(void);
 
 static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
     bool status = true;
+
+    if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
+        msg(DIAG_FILE_NAMED_BUILTIN, POS_BUILTIN /* TODO */, "file with basename `builtin.own` is not permitted\n");
+        status = false;
+        goto error;
+    }
+
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
         new_scope = symbol_collection_new(SCOPE_BUILTIN);
@@ -3182,7 +3189,7 @@ bool parse(Uast_block** block, Strv file_path) {
         &alias,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         (Pos) {0} /* TODO */,
-        strv_slice(file_path, 0, file_path.count - 4),
+        strv_slice(file_path, 0, file_path.count - 4) /* TODO: make function for this */,
         true
     )) {
         return false;

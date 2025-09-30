@@ -82,6 +82,7 @@ typedef enum {
     DIAG_GEN_INFER_MORE_THAN_64_WIDE,
     DIAG_MISMATCHED_CLOSING_CURLY_BRACE,
     DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
+    DIAG_FILE_NAMED_BUILTIN,
 
     // count of cases for static asserts
     DIAG_COUNT,
