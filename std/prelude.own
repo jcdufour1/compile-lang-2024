@@ -1,5 +1,14 @@
 
 
 type coll import = std.collections
+type util import = std.util
+type math import = std.math
 
 type Str def = coll.Str
+type Dstr def = coll.Darr(<u8>)
+type Darr def = coll.Darr
+
+type assert def = util.assert
+
+type min def = math.min
+type max def = math.max
