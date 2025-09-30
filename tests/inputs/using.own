@@ -1,14 +1,21 @@
 
-//type io import = std.io
+type io import = std.io
 type coll import = std.collections
-//using io
+using io
 using coll
 
 type Token struct {
+    num i32
     string Str
 }
 
+fn using_struct(token Token) {
+    using token
+}
+
 fn main() i32 {
-    let token Token = {"world"}
+    print_str("hello")
+    let token Token = {8, "hello")
+    using_struct(token)
     return 0
 }

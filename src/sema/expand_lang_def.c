@@ -272,7 +272,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
 }
 
 // TODO: expected failure case for having generic parameters in def definition
-static EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos) {
+EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos) {
     Name new_name = {0};
     switch (expand_def_name_internal(new_expr, &new_name, *name, dest_pos)) {
         case EXPAND_NAME_NORMAL:
