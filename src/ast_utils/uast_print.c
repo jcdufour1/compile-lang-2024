@@ -342,6 +342,15 @@ Strv uast_defer_print_internal(const Uast_defer* defer, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_using_print_internal(const Uast_using* using, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "using: ", indent);
+    extend_name(NAME_LOG, &buf, using->sym_name);
+
+    return string_to_strv(buf);
+}
+
 Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     String buf = {0};
 
@@ -738,6 +747,8 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_DEFER:
             return uast_defer_print_internal(uast_defer_const_unwrap(stmt), indent);
+        case UAST_USING:
+            return uast_using_print_internal(uast_using_const_unwrap(stmt), indent);
         case UAST_CONTINUE:
             return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
     }

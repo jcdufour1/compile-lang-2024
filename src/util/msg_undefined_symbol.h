@@ -1,7 +1,7 @@
 #ifndef MSG_UNDEFINED_SYMBOL_H
 #define MSG_UNDEFINED_SYMBOL_H
 
-// TODO: move this function and macro elsewhere
+// TODO: move this function and macro to ast_msg.{h, c}
 static inline void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Pos sym_pos) {
     msg_internal(
         file, line,

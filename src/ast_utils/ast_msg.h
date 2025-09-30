@@ -1,0 +1,22 @@
+#ifndef AST_MSG_H
+#define AST_MSG_H
+
+#include <uast.h>
+
+// functions return bool if they do not report error to the user
+// functions return PARSE_STATUS if they report error to the user
+// functions return PARSE_EXPR_STATUS if they may report error to the user or do nothing without reporting an error
+typedef enum {
+    PARSE_OK, // no need for callers to sync tokens
+    PARSE_ERROR, // tokens need to be synced by callers
+} PARSE_STATUS;
+
+typedef enum {
+    PARSE_EXPR_OK, // no need for callers to sync tokens, and no message reported to the user
+    PARSE_EXPR_NONE, // no expr parsed; no message reported to the user, and no need for callers to sync tokens
+    PARSE_EXPR_ERROR, // tokens need to be synced by callers
+} PARSE_EXPR_STATUS;
+
+PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def);
+
+#endif // AST_MSG_H
