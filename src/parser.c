@@ -1511,13 +1511,11 @@ static PARSE_STATUS parse_for_range_internal(
     Tk_view* tokens,
     Scope_id block_scope
 ) {
-    // TODO: create mod_path "builtin" for all builtin symbols (to prevent collisions between user defined symbols and internal symbols)
-
     Name user_name = var_def_user->name;
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(sv("builtin"), util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
