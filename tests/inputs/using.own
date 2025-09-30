@@ -11,11 +11,17 @@ type Token struct {
 
 fn using_struct(token Token) {
     using token
+
+    print_int(num)
+    print_str(string)
+
+    print_int(token.num)
+    print_str(token.string)
 }
 
 fn main() i32 {
     print_str("hello")
-    let token Token = {8, "hello")
+    let token Token = {8, "world"}
     using_struct(token)
     return 0
 }

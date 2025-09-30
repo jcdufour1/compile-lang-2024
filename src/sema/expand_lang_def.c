@@ -198,6 +198,11 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos);
                 }
+
+                if (result->type == UAST_VARIABLE_DEF) {
+                    *new_expr = uast_member_access_wrap(access);
+                    return EXPAND_NAME_NEW_EXPR;
+                }
                 todo();
             }
             todo();
@@ -487,6 +492,20 @@ bool expand_def_defer(Uast_defer* lang_defer) {
     return expand_def_stmt(&lang_defer->child, lang_defer->child);
 }
 
+bool expand_def_using(Uast_using* using) {
+    Uast_expr* dummy = NULL;
+    switch (expand_def_name(&dummy, &using->sym_name, using->pos)) {
+        case EXPAND_NAME_NORMAL:
+            return true;
+        case EXPAND_NAME_NEW_EXPR:
+            msg_todo("new expression substitution here", using->pos);
+            return false;
+        case EXPAND_NAME_ERROR:
+            return false;
+    }
+    unreachable("");
+}
+
 static bool expand_def_yield(Uast_yield* yield) {
     return (!yield->do_yield_expr || expand_def_expr(&yield->yield_expr, yield->yield_expr));
     // TODO: does yield->break_out_of need to be expanded?
@@ -532,7 +551,7 @@ bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
         case UAST_DEFER:
             return expand_def_defer(uast_defer_unwrap(stmt));
         case UAST_USING:
-            todo();
+            return expand_def_using(uast_using_unwrap(stmt));
     }
     unreachable("");
 }

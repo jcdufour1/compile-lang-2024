@@ -3925,9 +3925,35 @@ bool try_set_using_types(const Uast_using* using) {
         return false;
     }
 
-    if (def->type == UAST_STRUCT_DEF) {
-        msg_todo("using for struct", using->pos);
-        return false;
+    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
+    if (def->type == UAST_VARIABLE_DEF) {
+        Uast_variable_def* var_def = uast_variable_def_unwrap(def);
+        Name lang_type_name = {0};
+        name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
+        Uast_def* struct_def_ = NULL;
+        unwrap(usymbol_lookup(&struct_def_, lang_type_name));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_name));
+        log(LOG_DEBUG, FMT"\n", uast_def_print(struct_def_));
+        Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
+        for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
+            Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
+            Name alias_name = using->sym_name;
+            alias_name.base = curr->name.base;
+            Uast_lang_def* lang_def = uast_lang_def_new(
+                using->pos,
+                alias_name,
+                uast_member_access_wrap(uast_member_access_new(
+                    curr->pos,
+                    uast_symbol_new(curr->pos, curr->name),
+                    uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
+                ))
+            );
+            if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+                msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                status = false;
+            }
+        }
+        return true;
     } else if (def->type == UAST_MOD_ALIAS) {
         Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
         // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
@@ -3954,7 +3980,12 @@ bool try_set_using_types(const Uast_using* using) {
         }
         return status;
     } else {
-        msg(DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, using->pos, "symbol after `using` must be struct or module alias");
+        msg(
+            DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
+            using->pos,
+            "symbol after `using` must be struct or module alias\n"
+        );
+        todo();
         return false;
     }
     unreachable("");
