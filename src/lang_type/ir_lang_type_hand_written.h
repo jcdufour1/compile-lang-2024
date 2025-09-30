@@ -27,7 +27,7 @@ static inline Ir_lang_type_atom ir_lang_type_atom_new(Name str, int16_t pointer_
 
 static inline Ir_lang_type_atom ir_lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
     return ir_lang_type_atom_new(
-        name_new((Strv) {0}, sv(cstr), (Ulang_type_vec) {0}, scope_id),
+        name_new(MOD_PATH_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, scope_id),
         pointer_depth
     );
 }
