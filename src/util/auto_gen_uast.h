@@ -435,6 +435,7 @@ static Uast_type uast_gen_lang_def(const char* prefix) {
 
     append_member(&def.members, "Name", "alias_name");
     append_member(&def.members, "Uast_expr*", "expr");
+    append_member(&def.members, "bool", "is_from_using");
 
     return def;
 }

@@ -3941,7 +3941,8 @@ bool try_set_using_types(const Uast_using* using) {
                     curr->pos,
                     uast_symbol_new(curr->pos, curr->name),
                     uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
-                ))
+                )),
+                true
             );
             if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
                 msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
@@ -3960,17 +3961,27 @@ bool try_set_using_types(const Uast_using* using) {
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
             if (strv_is_equal(curr_name.mod_path, mod_path)) {
+                // TODO: do not use Name for using->sym_name? have separate members in using for Strv, Scope_id, etc.
+                //   Name in using causes too many problems
                 Name alias_name = using->sym_name;
+                log(LOG_INFO, FMT"\n", name_print(NAME_LOG, alias_name));
                 alias_name.mod_path = using->mod_path_to_put_defs;
                 alias_name.base = curr_name.base;
+                alias_name.scope_id = curr_name.scope_id;
                 Uast_lang_def* lang_def = uast_lang_def_new(
                     using->pos,
                     alias_name,
-                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name))
+                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
+                    true
                 );
+                log(LOG_INFO, FMT"\n", uast_lang_def_print(lang_def));
                 if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-                    msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                    status = false;
+                    Uast_def* prev_def = NULL;
+                    unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
+                    if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
+                        msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                        status = false;
+                    }
                 }
             }
         }

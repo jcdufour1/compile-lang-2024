@@ -1303,7 +1303,13 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
             unreachable("");
     }
 
-    *def = uast_lang_def_new(name.pos, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), expr);
+    *def = uast_lang_def_new(
+        name.pos,
+        name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        expr,
+        false
+    );
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, (*def)->alias_name));
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
