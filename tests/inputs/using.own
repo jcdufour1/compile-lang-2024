@@ -19,9 +19,19 @@ fn using_struct(token Token) {
     print_str(token.string)
 }
 
+fn using_struct_concise(using token Token) {
+    print_int(num)
+    print_str(string)
+
+    print_int(token.num)
+    print_str(token.string)
+}
+
 fn main() i32 {
     print_str("hello")
     let token Token = {8, "world"}
     using_struct(token)
+    token = {65, "computer"}
+    using_struct_concise(token)
     return 0
 }

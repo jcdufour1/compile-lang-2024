@@ -27,6 +27,8 @@ static Pos new_scope_name_pos;
 
 static Name default_brk_label = {0};
 
+static Uast_using_vec using_params = {0};
+
 // TODO: use parent block for scope_ids instead of function calls everytime
 
 static bool can_end_stmt(Token token);
@@ -997,6 +999,11 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
 
 static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
     Uast_param_vec params = {0};
+    assert(
+        using_params.info.count == 0 &&
+        "this vector should have been emptied at the start of the previous block, "
+        "and should only be added to when parsing function arguments"
+    );
 
     Uast_param* param = NULL;
     bool done = false;
@@ -1430,6 +1437,9 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         assert(!require_let);
     }
 
+    Token dummy = {0};
+    bool is_using = try_consume(&dummy, tokens, TOKEN_USING);
+
     try_consume_newlines(tokens);
     Token name_token = {0};
     if (!try_consume_no_rm_newlines(&name_token, tokens, TOKEN_SYMBOL)) {
@@ -1479,9 +1489,16 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
                 return PARSE_ERROR;
             }
+            if (is_using) {
+                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name));
+            }
+        } else if (is_using) {
+            msg_todo("using in this situation", var_def->pos);
+            return PARSE_ERROR;
         }
     }
 
+    // TODO: this should be removed
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
     return PARSE_OK;
@@ -2439,6 +2456,10 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     // TODO: consider if these new lines should be allowed even with one line block
     if (!is_one_line) {
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    }
+
+    while (using_params.info.count > 0) {
+        vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
     }
 
     do {
