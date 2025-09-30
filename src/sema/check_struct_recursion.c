@@ -56,7 +56,6 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
     }
     Uast_def* def = {0};
     Name name = {0};
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     unwrap(expand_def_ulang_type_regular(&lang_type, lang_type, lang_type.pos));
     unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
     if (!usymbol_lookup(&def, name)) {
@@ -86,7 +85,6 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
         case UAST_ENUM_DEF:
             return check_struct_rec_internal_def(def, lang_type, name, rec_stack);
         case UAST_LANG_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(def));
             todo();
         case UAST_PRIMITIVE_DEF:
             return true;

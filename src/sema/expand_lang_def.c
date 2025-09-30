@@ -184,18 +184,14 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
             new_name->gen_args = name.gen_args;
 
-            log_temp(LOG_DEBUG, FMT"\n", uast_def_print(def));
-            log_temp(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
             Uast_def* result = NULL;
             if (access->callee->type == UAST_SYMBOL) {
                 if (!usymbol_lookup(&result, uast_symbol_unwrap(access->callee)->name)) {
                     msg_undefined_symbol(uast_symbol_unwrap(access->callee)->name, uast_symbol_unwrap(access->callee)->pos);
                 }
-                log_temp(LOG_DEBUG, FMT"\n", uast_def_print(result));
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos);
                 }
 

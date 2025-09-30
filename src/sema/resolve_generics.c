@@ -195,15 +195,6 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_new obj_new
 ) {
     Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
-
-#   ifndef NDEBUG
-        Uast_def* dummy_2 = NULL;
-        (void) dummy_2;
-        if (usymbol_lookup(&dummy_2, new_name)) {
-            assert(dummy_2->type != UAST_LANG_DEF);
-        }
-#   endif // NDEBUG
-       
     if (!struct_like_tbl_lookup(after_res, new_name)) {
         if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
@@ -242,11 +233,6 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         usym_tbl_add(*after_res);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
-        Uast_def* dummy_3 = NULL;
-        (void) dummy_3;
-        if (usymbol_lookup(&dummy_3, new_name)) {
-            assert(dummy_3->type != UAST_LANG_DEF);
-        }
     return true;
 }
 
@@ -329,17 +315,8 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    if (strv_is_equal(lang_type.atom.str.base, sv("Str"))) {
-        log(LOG_DEBUG, "sdflk\n");
-        log(LOG_DEBUG, "sdflk\n");
-        log(LOG_DEBUG, "sdflk\n");
-        log(LOG_DEBUG, "sdflk\n");
-        log(LOG_DEBUG, "sdflk\n");
-    }
-
     Ulang_type_regular new_lang_type = {0};
     if (!expand_def_ulang_type_regular(&new_lang_type, lang_type, lang_type.pos /* TODO */)) {
-        todo();
         return false;
     }
 
@@ -354,10 +331,6 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_base));
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(new_lang_type)));
-    log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
     return resolve_generics_ulang_type_internal(
         type,
         result,
