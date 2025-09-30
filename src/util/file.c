@@ -119,3 +119,20 @@ void file_extend_strv(FILE* file, Strv strv) {
     }
 
 }
+
+Strv file_strip_extension(Strv file_path) {
+    Strv new_path = file_path;
+    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != '.') {
+        new_path = strv_slice(new_path, 0, new_path.count - 1);
+    }
+    return new_path.count > 0 ? strv_slice(new_path, 0, new_path.count - 1) : file_path;
+}
+
+Strv file_basename(Strv file_path) {
+    Strv new_path = file_path;
+    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != PATH_SEPARATOR) {
+        new_path = strv_slice(new_path, 0, new_path.count - 1);
+    }
+    return strv_slice(file_path, new_path.count, file_path.count - new_path.count);
+}
+

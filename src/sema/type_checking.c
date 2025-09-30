@@ -2185,7 +2185,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
         if (!vec_at(&new_args_set, idx)) {
             Name param_name = vec_at(&params->params, idx)->base->name;
-            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+            if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
                 size_t max_args = params->params.info.count;
                 if (is_variadic) {
@@ -2545,7 +2545,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
 
             Name param_name = vec_at(&params->params, idx)->base->name;
-            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+            if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
                 size_t max_args = params->params.info.count;
                 if (is_variadic) {

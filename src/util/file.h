@@ -27,4 +27,8 @@ FILE_TYPE get_file_type(Strv file_path);
 
 void file_extend_strv(FILE* file, Strv strv);
 
+Strv file_strip_extension(Strv file_path);
+
+Strv file_basename(Strv file_path);
+
 #endif // FILE_H

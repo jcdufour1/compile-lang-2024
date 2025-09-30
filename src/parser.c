@@ -306,7 +306,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     // TODO: this could cause collisions if internal symbol has the same name as mod_path.
     //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
     // TODO: do not hardcode (Strv) {0}
-    if (usymbol_lookup(&prev_def, name_new((Strv) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
+    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
 
@@ -1511,13 +1511,11 @@ static PARSE_STATUS parse_for_range_internal(
     Tk_view* tokens,
     Scope_id block_scope
 ) {
-    // TODO: create mod_path "builtin" for all builtin symbols (to prevent collisions between user defined symbols and internal symbols)
-
     Name user_name = var_def_user->name;
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(sv("builtin"), util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
@@ -3119,6 +3117,25 @@ static void parser_do_tests(void);
 
 static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
     bool status = true;
+
+    if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path with basename `builtin.own` is not permitted\n");
+        status = false;
+        goto error;
+    }
+
+    if (file_basename(file_path).count < 1) {
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path with basename length of zero is not permitted\n");
+        status = false;
+        goto error;
+    }
+
+    if (strv_at(file_basename(file_path), 0) == '.') {
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path that starts with `.` is not permitted\n");
+        status = false;
+        goto error;
+    }
+
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
         new_scope = symbol_collection_new(SCOPE_BUILTIN);
@@ -3183,8 +3200,8 @@ bool parse(Uast_block** block, Strv file_path) {
     if (!get_mod_alias_from_path_token(
         &alias,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
-        (Pos) {0} /* TODO */,
-        strv_slice(file_path, 0, file_path.count - 4),
+        POS_BUILTIN,
+        file_strip_extension(file_path),
         true
     )) {
         return false;
@@ -3192,7 +3209,7 @@ bool parse(Uast_block** block, Strv file_path) {
 
     Uast_def* import = NULL;
     log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
-    unwrap(usymbol_lookup(&import, name_new((Strv) {0}, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
+    unwrap(usymbol_lookup(&import, name_new(MOD_PATH_OF_MOD_PATHS, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
     *block = uast_import_path_unwrap(import)->block;
     assert((*block)->scope_id == SCOPE_TOP_LEVEL);
     log(LOG_DEBUG, FMT"\n", uast_block_print(*block));

@@ -93,6 +93,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     Name name = {0};
     unwrap(name_from_uname( &name, lang_type.atom.str, lang_type.pos));
     Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
+    assert(name.mod_path.count > 0);
 
     if (lang_type_atom_is_signed(atom)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
