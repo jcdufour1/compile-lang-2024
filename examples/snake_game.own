@@ -29,7 +29,7 @@ fn snake_first(snake Snake) Pos {
 
 fn snake_new(init_pos Pos, init_dir Dir, squares: Pos) Snake {
     let max u64 = unsafe_cast<u64>(squares.x*squares.y)
-    let arr coll.Arr(<Pos>) = {unsafe_cast<Pos*>libc.malloc(24*max), 0, max}
+    let arr coll.Arr(<Pos>) = coll.arr_new(max, Pos);
     util.assert(arr.buf != unsafe_cast<Pos*>0, "out of memory")
     coll.arr_append(&arr, init_pos)
     return {arr, init_dir}
@@ -82,6 +82,10 @@ fn pos_is_equal(lhs Pos, rhs Pos) u1 {
     return lhs.x == rhs.x && lhs.y == rhs.y
 }
 
+type State struct {
+
+}
+
 fn main() i32 {
     let BORDER_WIDTH i32 = 5
     let SQUARES Pos = {20, 10};
@@ -97,11 +101,6 @@ fn main() i32 {
 
     // TODO: call srand or similar
     let apple Pos = {rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}
-    //let apple Pos = {snake_first(snake).x, snake_first(snake).y}
-
-    if !move_snake(&snake, SQUARES, 1) {
-        util.assert(0, "snake should have moved")
-    }
 
     rl.InitWindow(CANVAS.x, CANVAS.y, "Snake Game")
     defer rl.CloseWindow()
@@ -116,11 +115,15 @@ fn main() i32 {
         rl.ClearBackground(rl.BLACK());
 
         if game_is_over {
-            rl.DrawText("game over: collision", CANVAS.x/2, CANVAS.y/2, 15, rl.WHITE())
-            if rl.IsKeyPressed(rl.KEY_ENTER()) {
-            }
-                
+            rl.DrawText("game over: collision", CANVAS.x/3, CANVAS.y/2, 30, rl.WHITE())
+            rl.DrawText("press enter to restart", CANVAS.x/3, CANVAS.y/2 + 50, 22, rl.WHITE())
             rl.EndDrawing()
+
+            if rl.IsKeyPressed(rl.KEY_ENTER()) {
+                game_is_over = 0
+                coll.arr_free(&snake.nodes);
+                snake = snake_new({7, 9}, .right, SQUARES)
+            }
         } else {
             rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>CANVAS.x, unsafe_cast<f32>CANVAS.y}, unsafe_cast<f32>BORDER_WIDTH, rl.WHITE())
 
