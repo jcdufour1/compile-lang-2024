@@ -23,6 +23,12 @@ type Snake struct {
     dir Dir
 }
 
+type State enum {
+    normal
+    over
+    paused
+}
+
 fn snake_first(snake Snake) Pos {
     return coll.arr_first(snake.nodes)
 }
@@ -82,6 +88,19 @@ fn rand_pos(squares Pos) Pos {
     return {rand.int_range(0, squares.x), rand.int_range(0, squares.y)}
 }
 
+fn draw_items(canvas Pos, border_width i32, square_width i32, snake Snake, apples coll.Arr(<Pos>)) {
+    rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>canvas.x, unsafe_cast<f32>canvas.y}, unsafe_cast<f32>border_width, rl.WHITE())
+
+    for idx u64 in 0..snake.nodes.count {
+        let curr Pos = snake.nodes.buf[idx]
+        rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.YELLOW())
+    }
+    for idx u64 in 0..apples.count {
+        let curr Pos = coll.arr_at(apples, idx)
+        rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.RED())
+    }
+}
+
 fn main() i32 {
     let BORDER_WIDTH i32 = 5
     let SQUARES Pos = {20, 10};
@@ -110,71 +129,74 @@ fn main() i32 {
     let do_grow_snake u1 = 0
     rl.SetTargetFPS(LOOP_RATE)
 
-    let game_is_over u1 = 0
+    let game_state State = .normal
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()
         rl.ClearBackground(rl.BLACK());
 
-        if game_is_over {
-            rl.DrawText("game over", CANVAS.x/3, CANVAS.y/2 - 50, 30, rl.WHITE())
-            rl.DrawText(
-                rl.TextFormat("snake length: %zu", snake.nodes.count),
-                CANVAS.x/3,
-                CANVAS.y/2,
-                30,
-                rl.WHITE())
-            rl.DrawText("press enter to restart", CANVAS.x/3, CANVAS.y/2 + 50, 22, rl.WHITE())
-            rl.EndDrawing()
+        switch game_state {
+            case .paused:{
+                draw_items(CANVAS, BORDER_WIDTH, SQUARE_WIDTH, snake, apples)
+                rl.EndDrawing()
 
-            if rl.IsKeyPressed(rl.KEY_ENTER()) {
-                game_is_over = 0
-                coll.arr_free(&snake.nodes);
-                snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
+                if rl.IsKeyPressed(rl.KEY_SPACE()) {
+                    game_state = .normal
+                }
             }
-        } else {
-            rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>CANVAS.x, unsafe_cast<f32>CANVAS.y}, unsafe_cast<f32>BORDER_WIDTH, rl.WHITE())
+            case .over: {
+                rl.DrawText("game over", CANVAS.x/3, CANVAS.y/2 - 50, 30, rl.WHITE())
+                rl.DrawText(
+                    rl.TextFormat("snake length: %zu", snake.nodes.count),
+                    CANVAS.x/3,
+                    CANVAS.y/2,
+                    30,
+                    rl.WHITE())
+                rl.DrawText("press enter to restart", CANVAS.x/3, CANVAS.y/2 + 50, 22, rl.WHITE())
+                rl.EndDrawing()
 
-            for idx u64 in 0..snake.nodes.count {
-                let curr Pos = snake.nodes.buf[idx]
-                rl.DrawRectangle(BORDER_WIDTH + SQUARE_WIDTH*curr.x, BORDER_WIDTH + SQUARE_WIDTH*curr.y, SQUARE_WIDTH, SQUARE_WIDTH, rl.YELLOW())
+                if rl.IsKeyPressed(rl.KEY_ENTER()) {
+                    game_state = .normal
+                    coll.arr_free(&snake.nodes);
+                    snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
+                }
             }
-            for idx u64 in 0..apples.count {
-                let curr Pos = coll.arr_at(apples, idx)
-                rl.DrawRectangle(BORDER_WIDTH + SQUARE_WIDTH*curr.x, BORDER_WIDTH + SQUARE_WIDTH*curr.y, SQUARE_WIDTH, SQUARE_WIDTH, rl.RED())
-            }
+            case .normal: {
+                draw_items(CANVAS, BORDER_WIDTH, SQUARE_WIDTH, snake, apples)
+                rl.EndDrawing()
 
-            rl.EndDrawing()
+                if rl.IsKeyPressed(rl.KEY_W()) || rl.IsKeyPressed(rl.KEY_UP()) {
+                    snake.dir = .up
+                } else if rl.IsKeyPressed(rl.KEY_S()) || rl.IsKeyPressed(rl.KEY_DOWN()) {
+                    snake.dir = .down
+                } else if rl.IsKeyPressed(rl.KEY_A()) || rl.IsKeyPressed(rl.KEY_LEFT()) {
+                    snake.dir = .left
+                } else if rl.IsKeyPressed(rl.KEY_D()) || rl.IsKeyPressed(rl.KEY_RIGHT()) {
+                    snake.dir = .right
+                } else if rl.IsKeyPressed(rl.KEY_SPACE()) {
+                    game_state = .paused
+                }
 
-            if rl.IsKeyPressed(rl.KEY_W()) || rl.IsKeyPressed(rl.KEY_UP()) {
-                snake.dir = .up
-            } else if rl.IsKeyPressed(rl.KEY_S()) || rl.IsKeyPressed(rl.KEY_DOWN()) {
-                snake.dir = .down
-            } else if rl.IsKeyPressed(rl.KEY_A()) || rl.IsKeyPressed(rl.KEY_LEFT()) {
-                snake.dir = .left
-            } else if rl.IsKeyPressed(rl.KEY_D()) || rl.IsKeyPressed(rl.KEY_RIGHT()) {
-                snake.dir = .right
-            }
-
-            // check for apple collision
-            for snake_ u64 in 0..snake.nodes.count {
-                let curr Pos = snake.nodes.buf[snake_]
-                for apple u64 in 0..apples.count {
-                    if pos_is_equal(curr, coll.arr_at(apples, apple)) {
-                        do_grow_snake = 1
-                        *coll.arr_at_ref(apples, apple) = rand_pos(SQUARES)
+                // check for apple collision
+                for snake_ u64 in 0..snake.nodes.count {
+                    let curr Pos = snake.nodes.buf[snake_]
+                    for apple u64 in 0..apples.count {
+                        if pos_is_equal(curr, coll.arr_at(apples, apple)) {
+                            do_grow_snake = 1
+                            *coll.arr_at_ref(apples, apple) = rand_pos(SQUARES)
+                        }
                     }
                 }
-            }
 
-            if (loop_count >= LOOP_RATE/FRAME_RATE) {
-                if !move_snake(&snake, SQUARES, do_grow_snake) {
-                    game_is_over = 1
+                if (loop_count >= LOOP_RATE/FRAME_RATE) {
+                    if !move_snake(&snake, SQUARES, do_grow_snake) {
+                        game_state = .over
+                    }
+                    do_grow_snake = 0
+                    loop_count -= LOOP_RATE/FRAME_RATE
                 }
-                do_grow_snake = 0
-                loop_count -= LOOP_RATE/FRAME_RATE
-            }
 
-            loop_count += 1
+                loop_count += 1
+            }
         }
     }
 
