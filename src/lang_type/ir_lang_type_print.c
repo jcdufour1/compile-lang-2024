@@ -1,30 +1,30 @@
-#include <llvm_lang_type_print.h>
-#include <llvm_lang_type_after.h>
+#include <ir_lang_type_print.h>
+#include <ir_lang_type_after.h>
 #include <ulang_type.h>
 #include <resolve_generics.h>
 
-void extend_llvm_lang_type_tag_to_string(String* buf, LLVM_LANG_TYPE_TYPE type) {
+void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     switch (type) {
-        case LLVM_LANG_TYPE_PRIMITIVE:
+        case IR_LANG_TYPE_PRIMITIVE:
             string_extend_cstr(&a_print, buf, "primitive");
             return;
-        case LLVM_LANG_TYPE_STRUCT:
+        case IR_LANG_TYPE_STRUCT:
             string_extend_cstr(&a_print, buf, "struct");
             return;
-        case LLVM_LANG_TYPE_TUPLE:
+        case IR_LANG_TYPE_TUPLE:
             string_extend_cstr(&a_print, buf, "tuple");
             return;
-        case LLVM_LANG_TYPE_VOID:
+        case IR_LANG_TYPE_VOID:
             string_extend_cstr(&a_print, buf, "void");
             return;
-        case LLVM_LANG_TYPE_FN:
+        case IR_LANG_TYPE_FN:
             string_extend_cstr(&a_print, buf, "fn");
             return;
     }
     unreachable("");
 }
 
-Strv llvm_lang_type_vec_print_internal(Llvm_lang_type_vec types) {
+Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -32,14 +32,14 @@ Strv llvm_lang_type_vec_print_internal(Llvm_lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_llvm_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&types, idx));
+        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
     return string_to_strv(buf);
 }
 
-void extend_llvm_lang_type_atom(String* string, LANG_TYPE_MODE mode, Llvm_lang_type_atom atom) {
+void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_atom atom) {
     Name temp = atom.str;
 
     if (atom.str.base.count > 1) {
@@ -76,9 +76,9 @@ void extend_llvm_lang_type_atom(String* string, LANG_TYPE_MODE mode, Llvm_lang_t
     }
 }
 
-Strv llvm_lang_type_print_internal(LANG_TYPE_MODE mode, Llvm_lang_type llvm_lang_type) {
+Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     String buf = {0};
-    extend_llvm_lang_type_to_string(&buf, mode, llvm_lang_type);
+    extend_ir_lang_type_to_string(&buf, mode, ir_lang_type);
     switch (mode) {
         case LANG_TYPE_MODE_EMIT_LLVM:
             break;
@@ -95,20 +95,20 @@ Strv llvm_lang_type_print_internal(LANG_TYPE_MODE mode, Llvm_lang_type llvm_lang
     return string_to_strv(buf);
 }
 
-Strv llvm_lang_type_atom_print_internal(Llvm_lang_type_atom atom, LANG_TYPE_MODE mode) {
+Strv ir_lang_type_atom_print_internal(Ir_lang_type_atom atom, LANG_TYPE_MODE mode) {
     String buf = {0};
-    extend_llvm_lang_type_atom(&buf, mode, atom);
+    extend_ir_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
 }
 
-void extend_llvm_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Llvm_lang_type llvm_lang_type) {
+void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&a_print, string, '<');
     }
 
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
-            extend_llvm_lang_type_tag_to_string(string, llvm_lang_type.type);
+            extend_ir_lang_type_tag_to_string(string, ir_lang_type.type);
             string_extend_cstr(&a_main, string, " ");
             break;
         case LANG_TYPE_MODE_MSG:
@@ -121,36 +121,36 @@ void extend_llvm_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Llvm_l
             unreachable("");
     }
 
-    switch (llvm_lang_type.type) {
-        case LLVM_LANG_TYPE_TUPLE:
+    switch (ir_lang_type.type) {
+        case IR_LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
-            Llvm_lang_type_vec llvm_lang_types = llvm_lang_type_tuple_const_unwrap(llvm_lang_type).llvm_lang_types;
-            for (size_t idx = 0; idx < llvm_lang_types.info.count; idx++) {
+            Ir_lang_type_vec ir_lang_types = ir_lang_type_tuple_const_unwrap(ir_lang_type).ir_lang_types;
+            for (size_t idx = 0; idx < ir_lang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_llvm_lang_type_to_string(string, mode, vec_at(&llvm_lang_types, idx));
+                extend_ir_lang_type_to_string(string, mode, vec_at(&ir_lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
             }
             goto end;
-        case LLVM_LANG_TYPE_FN: {
-            Llvm_lang_type_fn fn = llvm_lang_type_fn_const_unwrap(llvm_lang_type);
+        case IR_LANG_TYPE_FN: {
+            Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
             string_extend_cstr(&a_main, string, "fn");
-            extend_llvm_lang_type_to_string(string, mode, llvm_lang_type_tuple_const_wrap(fn.params));
-            extend_llvm_lang_type_to_string(string, mode, *fn.return_type);
+            extend_ir_lang_type_to_string(string, mode, ir_lang_type_tuple_const_wrap(fn.params));
+            extend_ir_lang_type_to_string(string, mode, *fn.return_type);
             goto end;
         }
-        case LLVM_LANG_TYPE_STRUCT:
+        case IR_LANG_TYPE_STRUCT:
             // fallthrough
-            assert(!strv_is_equal(llvm_lang_type_get_atom(mode, llvm_lang_type).str.base, sv("void")));
-        case LLVM_LANG_TYPE_VOID:
+            assert(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
+        case IR_LANG_TYPE_VOID:
             // fallthrough
-        case LLVM_LANG_TYPE_PRIMITIVE:
-            extend_llvm_lang_type_atom(string, mode, llvm_lang_type_get_atom(mode, llvm_lang_type));
+        case IR_LANG_TYPE_PRIMITIVE:
+            extend_ir_lang_type_atom(string, mode, ir_lang_type_get_atom(mode, ir_lang_type));
             goto end;
     }
     unreachable("");

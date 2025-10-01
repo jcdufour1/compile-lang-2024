@@ -284,6 +284,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             return true;
         case UAST_LANG_DEF:
             log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
+            log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
             todo();
@@ -318,6 +319,12 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     if (!expand_def_ulang_type_regular(&new_lang_type, lang_type, lang_type.pos /* TODO */)) {
         return false;
     }
+
+    Uast_expr* dummy = NULL;
+    if (EXPAND_NAME_NORMAL != expand_def_name(&dummy, &name_base, lang_type.pos /* TODO */)) {
+        todo();
+    }
+
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
         msg_undefined_type(new_lang_type.pos, ulang_type_regular_const_wrap(new_lang_type));

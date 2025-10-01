@@ -25,7 +25,7 @@ typedef struct {
 } Sym_typed_base;
 
 typedef struct {
-    Llvm_lang_type lang_type;
+    Ir_lang_type lang_type;
     Name name;
 } Llvm_sym_typed_base;
 

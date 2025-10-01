@@ -6,7 +6,7 @@
 
 #define rm_void_internal(item, wrap_fn) \
     do { \
-        if ((item)->lang_type.type == LLVM_LANG_TYPE_VOID) { \
+        if ((item)->lang_type.type == IR_LANG_TYPE_VOID) { \
             return ir_removed_wrap(ir_removed_new((item)->pos)); \
         } \
         return (wrap_fn)(item); \
@@ -20,7 +20,7 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
 }
 
 static Ir* rm_void_variable_def(Ir_variable_def* def) {
-    if (def->lang_type.type == LLVM_LANG_TYPE_VOID) {
+    if (def->lang_type.type == IR_LANG_TYPE_VOID) {
         return ir_removed_wrap(ir_removed_new(def->pos));
     }
     return ir_def_wrap(ir_variable_def_wrap(def));
@@ -75,6 +75,11 @@ static Ir* rm_void_store_another_ir(Ir_store_another_ir* store) {
     rm_void_internal(store, ir_store_another_ir_wrap);
 }
 
+static Ir* rm_void_import_path(Ir_import_path* import) {
+    rm_void_block(import->block);
+    return ir_import_path_wrap(import);
+}
+
 static Ir* rm_void_ir(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -82,22 +87,18 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_EXPR:
             return rm_void_expr(ir_expr_unwrap(ir));
         case IR_LOAD_ELEMENT_PTR:
-            // TODO
             return ir;
         case IR_ARRAY_ACCESS:
-            // TODO
             return ir;
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
             return rm_void_def(ir_def_unwrap(ir));
         case IR_RETURN:
-            // TODO
             return ir;
         case IR_GOTO:
             return ir;
         case IR_COND_GOTO:
-            // TODO
             return ir;
         case IR_ALLOCA:
             return rm_void_alloca(ir_alloca_unwrap(ir));
@@ -105,6 +106,8 @@ static Ir* rm_void_ir(Ir* ir) {
             return rm_void_load_another_ir(ir_load_another_ir_unwrap(ir));
         case IR_STORE_ANOTHER_IR:
             return rm_void_store_another_ir(ir_store_another_ir_unwrap(ir));
+        case IR_IMPORT_PATH:
+            return rm_void_import_path(ir_import_path_unwrap(ir));
         case IR_REMOVED:
             return ir;
     }
@@ -113,6 +116,7 @@ static Ir* rm_void_ir(Ir* ir) {
 
 static Ir* rm_void_block(Ir_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        assert(vec_at(&block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
         *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(&block->children, idx));
     }
 
@@ -124,9 +128,7 @@ static Ir* rm_void_block(Ir_block* block) {
     return ir_block_wrap(block);
 }
 
-void remove_void_assigns(Ir_block* block) {
-    rm_void_block(block);
-
+void remove_void_assigns(void) {
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {

@@ -3,21 +3,20 @@
 CC_COMPILER ?= clang
 
 # TODO: remove -Wundefined-internal?
-# TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wno-undefined-internal -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
-			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			  -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
 			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
-			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			    -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
 
 C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
-			     -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			     -fsanitize=address -fno-omit-frame-pointer 
 
 BUILD_DIR_DEBUG ?= ./build/debug/
@@ -31,7 +30,7 @@ ifeq ($(DEBUG), 1)
 else
     C_FLAGS = ${C_FLAGS_RELEASE}
 	BUILD_DIR=${BUILD_DIR_RELEASE}
-	LOG_LEVEL ?= "LOG_VERBOSE"
+	LOG_LEVEL ?= "LOG_INFO"
 endif
 
 OBJS=\
@@ -45,7 +44,7 @@ OBJS=\
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
-	 ${BUILD_DIR}/lang_type/llvm_lang_type_print.o \
+	 ${BUILD_DIR}/lang_type/ir_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/ast_utils/uast_utils.o \
@@ -59,6 +58,7 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
+	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
@@ -157,8 +157,8 @@ ${BUILD_DIR}/ir/remove_void_assigns.o: ${DEP_COMMON} src/ir/remove_void_assigns.
 ${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c
 
-${BUILD_DIR}/lang_type/llvm_lang_type_print.o: ${DEP_COMMON} src/lang_type/llvm_lang_type_print.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/llvm_lang_type_print.o src/lang_type/llvm_lang_type_print.c
+${BUILD_DIR}/lang_type/ir_lang_type_print.o: ${DEP_COMMON} src/lang_type/ir_lang_type_print.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ir_lang_type_print.o src/lang_type/ir_lang_type_print.c
 
 ${BUILD_DIR}/lang_type/ulang_type_print.o: ${DEP_COMMON} src/lang_type/ulang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_print.o src/lang_type/ulang_type_print.c
@@ -210,6 +210,9 @@ ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c
 
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
+
+${BUILD_DIR}/ast_utils/ast_msg.o: ${DEP_COMMON} src/ast_utils/ast_msg.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/ast_msg.o src/ast_utils/ast_msg.c
 
 ${BUILD_DIR}/ast_utils/uast_clone.o: ${DEP_COMMON} src/ast_utils/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_clone.o src/ast_utils/uast_clone.c

@@ -1,0 +1,6 @@
+
+type tok import = tests.dummy_std.circular_import_lib
+
+fn main() i32 {
+    return 0
+}

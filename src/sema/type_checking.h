@@ -118,7 +118,7 @@ bool try_set_label_def_types(Uast_label* tast);
 
 bool try_set_lang_def_types(Uast_lang_def* tast);
 
-bool try_set_types(Tast_block** new_tast, Uast_block* block);
+bool try_set_types(void);
 
 bool try_set_variable_def_types(
     Tast_variable_def** new_tast,

@@ -1,13 +1,13 @@
 #include <sizeof.h>
 #include <lang_type.h>
 #include <lang_type_after.h>
-#include <llvm_lang_type_after.h>
+#include <ir_lang_type_after.h>
 #include <tast_utils.h>
 #include <ir_utils.h>
 #include <tast.h>
 #include <ir.h>
 #include <lang_type_print.h>
-#include <llvm_lang_type_print.h>
+#include <ir_lang_type_print.h>
 
 static uint64_t bit_width_to_bytes(uint64_t bit_width) {
     return (bit_width + 7)/8;
@@ -34,20 +34,20 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     unreachable("");
 }
 
-uint64_t sizeof_llvm_primitive(Llvm_lang_type_primitive primitive) {
+uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
-    if (llvm_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
+    if (ir_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
         return 8;
     }
 
     switch (primitive.type) {
-        case LLVM_LANG_TYPE_SIGNED_INT:
-            return bit_width_to_bytes(llvm_lang_type_signed_int_const_unwrap(primitive).bit_width);
-        case LLVM_LANG_TYPE_UNSIGNED_INT:
-            return bit_width_to_bytes(llvm_lang_type_unsigned_int_const_unwrap(primitive).bit_width);
-        case LLVM_LANG_TYPE_FLOAT:
-            return bit_width_to_bytes(llvm_lang_type_float_const_unwrap(primitive).bit_width);
-        case LLVM_LANG_TYPE_OPAQUE:
+        case IR_LANG_TYPE_SIGNED_INT:
+            return bit_width_to_bytes(ir_lang_type_signed_int_const_unwrap(primitive).bit_width);
+        case IR_LANG_TYPE_UNSIGNED_INT:
+            return bit_width_to_bytes(ir_lang_type_unsigned_int_const_unwrap(primitive).bit_width);
+        case IR_LANG_TYPE_FLOAT:
+            return bit_width_to_bytes(ir_lang_type_float_const_unwrap(primitive).bit_width);
+        case IR_LANG_TYPE_OPAQUE:
             unreachable("");
     }
     unreachable("");
@@ -82,23 +82,23 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
-uint64_t sizeof_llvm_lang_type(Llvm_lang_type lang_type) {
+uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
     switch (lang_type.type) {
-        case LLVM_LANG_TYPE_PRIMITIVE:
-            return sizeof_llvm_primitive(llvm_lang_type_primitive_const_unwrap(lang_type));
-        case LLVM_LANG_TYPE_STRUCT: {
+        case IR_LANG_TYPE_PRIMITIVE:
+            return sizeof_llvm_primitive(ir_lang_type_primitive_const_unwrap(lang_type));
+        case IR_LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            unwrap(symbol_lookup(&def, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def(def);
         }
-        case LLVM_LANG_TYPE_VOID:
+        case IR_LANG_TYPE_VOID:
             return 0;
-        case LLVM_LANG_TYPE_TUPLE:
+        case IR_LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
-        case LLVM_LANG_TYPE_FN:
+        case IR_LANG_TYPE_FN:
             todo();
     }
-    unreachable(FMT, llvm_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    unreachable(FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
 uint64_t sizeof_def(const Tast_def* def) {
@@ -161,7 +161,7 @@ static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
     (void) env;
     switch (expr->type) {
         case IR_LITERAL:
-            return sizeof_llvm_lang_type(ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
+            return sizeof_ir_lang_type(ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -171,7 +171,7 @@ static uint64_t ir_sizeof_def(const Ir_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_llvm_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
+            return sizeof_ir_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
         default:
             unreachable("");
     }

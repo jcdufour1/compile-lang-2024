@@ -21,7 +21,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, lang_type_signed_int_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -34,7 +34,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "f");
             string_extend_int64_t(&a_main, &string, lang_type_float_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -47,7 +47,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -493,6 +493,10 @@ static inline Lang_type lang_type_new_u1(void) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
+}
+
+static inline Lang_type lang_type_new_void(void) {
+    return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 }
 
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {

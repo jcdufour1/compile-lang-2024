@@ -107,7 +107,7 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only keywords are explicitly handled)");
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem))) {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
@@ -160,6 +160,8 @@ static bool get_next_token(
             token->type = TOKEN_COUNTOF;
         } else if (strv_is_equal(text, sv("Type"))) {
             token->type = TOKEN_GENERIC_TYPE;
+        } else if (strv_is_equal(text, sv("using"))) {
+            token->type = TOKEN_USING;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;
@@ -373,6 +375,10 @@ static bool get_next_token(
     } else if (strv_col_front(*file_text_rem) == '=') {
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_equal);
         if (equals.base.count == 1) {
+            if (strv_col_try_consume(pos, file_text_rem, '>')) {
+                token->type = TOKEN_ONE_LINE_BLOCK_START;
+                return true;
+            }
             token->type = TOKEN_SINGLE_EQUAL;
             return true;
         } else if (equals.base.count == 2) {
@@ -462,205 +468,206 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
     return tk_view;
 }
 
-static void test1(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("hello", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    test("hello\n", tokens_to_tk_view(expected));
-}
-
-static void test2(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    test("// hello\n", tokens_to_tk_view(expected));
-}
-
-static void test3(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-static Token_vec get_expected(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    return expected;
-}
-
-static void test4(void) {
-    Token_vec expected = get_expected();
-
-    test(
-        "if 1 {\n    puts(\"hello\")\n}\n else {\n    puts(\"unreachable\")\n}\n",
-        tokens_to_tk_view(expected)
-    );
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "}\n"
-        "else {\n"
-        "    puts(\"unreachable\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-static void test5(void) {
-    Token_vec expected = get_expected();
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "}\n"
-        "// thing thing \n"
-        "else {\n"
-        "    puts(\"unreachable\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-static void test6(void) {
-    Token_vec expected = get_expected();
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "// thing thing \n"
-        "}\n"
-        "else {\n"
-        "    puts(\"unreachable\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-static void test7(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "// thing thing \n"
-        "\n"
-        "}\n"
-        "else {\n"
-        "    puts(\"unreachable\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-static void test8(void) {
-    Token_vec expected = {0};
-    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-
-    const char* text = 
-        "if 1 {\n"
-        "    puts(\"hello\")\n"
-        "\n"
-        "\n"
-        "}\n"
-        "else {\n"
-        "    puts(\"unreachable\")\n"
-        "}\n";
-
-    test(text, tokens_to_tk_view(expected));
-}
-
-void tokenize_do_test(void) {
-    // note: this function is not currently being called
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-}
+// TODO
+//static void test1(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new(sv("hello"), TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    test("hello\n", tokens_to_tk_view(expected));
+//}
+//
+//static void test2(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    test("// hello\n", tokens_to_tk_view(expected));
+//}
+//
+//static void test3(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//static Token_vec get_expected(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    return expected;
+//}
+//
+//static void test4(void) {
+//    Token_vec expected = get_expected();
+//
+//    test(
+//        "if 1 {\n    puts(\"hello\")\n}\n else {\n    puts(\"unreachable\")\n}\n",
+//        tokens_to_tk_view(expected)
+//    );
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "}\n"
+//        "else {\n"
+//        "    puts(\"unreachable\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//static void test5(void) {
+//    Token_vec expected = get_expected();
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "}\n"
+//        "// thing thing \n"
+//        "else {\n"
+//        "    puts(\"unreachable\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//static void test6(void) {
+//    Token_vec expected = get_expected();
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "// thing thing \n"
+//        "}\n"
+//        "else {\n"
+//        "    puts(\"unreachable\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//static void test7(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "// thing thing \n"
+//        "\n"
+//        "}\n"
+//        "else {\n"
+//        "    puts(\"unreachable\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//static void test8(void) {
+//    Token_vec expected = {0};
+//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//
+//    const char* text = 
+//        "if 1 {\n"
+//        "    puts(\"hello\")\n"
+//        "\n"
+//        "\n"
+//        "}\n"
+//        "else {\n"
+//        "    puts(\"unreachable\")\n"
+//        "}\n";
+//
+//    test(text, tokens_to_tk_view(expected));
+//}
+//
+//void tokenize_do_test(void) {
+//    // note: this function is not currently being called
+//    test1();
+//    test2();
+//    test3();
+//    test4();
+//    test5();
+//    test6();
+//    test7();
+//    test8();
+//}
 
 // TODO: return Tk_view instead of Token_vec
 bool tokenize(Token_vec* result, Strv file_path) {

@@ -101,6 +101,7 @@ typedef struct {
 #define vec_pop(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), (vector)->info.count--, (vector)->buf[((vector)->info.count)])
 
+// TODO: remove this macro (use vec_pop instead)
 #define vec_rem_last(vector) \
     do { \
         (vector)->info.count--; \

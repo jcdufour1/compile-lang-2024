@@ -308,6 +308,14 @@ static Uast_type uast_gen_macro(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_using(const char* prefix) {
+    Uast_type using = {.name = uast_name_new(prefix, "using", false)};
+
+    append_member(&using.members, "Name", "sym_name");
+
+    return using;
+}
+
 static Uast_type uast_gen_defer(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "defer", false)};
 
@@ -607,6 +615,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_using(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));

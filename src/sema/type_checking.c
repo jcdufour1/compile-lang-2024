@@ -28,6 +28,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <infer_generic_type.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -1638,7 +1639,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
     unreachable("");
 }
 
-STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
+STMT_STATUS try_set_def_types(Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
@@ -1689,7 +1690,12 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            *new_stmt = tast_expr_wrap(tast_block_wrap(new_block));
+            // TODO: make tast node type to hold this new block
+            unwrap(sym_tbl_add(tast_import_wrap(tast_import_new(
+                new_block->pos,
+                new_block,
+                uast_import_path_unwrap(uast)->mod_path
+            ))));
             return STMT_OK;
         }
         case UAST_MOD_ALIAS:
@@ -2179,7 +2185,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     for (size_t idx = 0; status && idx < new_args_set.info.count; idx++) {
         if (!vec_at(&new_args_set, idx)) {
             Name param_name = vec_at(&params->params, idx)->base->name;
-            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+            if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
                 size_t max_args = params->params.info.count;
                 if (is_variadic) {
@@ -2539,7 +2545,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
 
             Name param_name = vec_at(&params->params, idx)->base->name;
-            if (strv_is_equal(sv("builtin"), param_name.mod_path)) {
+            if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
                 size_t max_args = params->params.info.count;
                 if (is_variadic) {
@@ -3402,7 +3408,9 @@ bool try_set_function_decl_types(
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
-    unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
+    log(LOG_DEBUG, FMT"\n", tast_function_decl_print(*new_tast));
+    // TODO: figure out how to handle redefinition of extern "c" functions?
+    sym_tbl_add(tast_function_decl_wrap(*new_tast));
 
     return true;
 }
@@ -3909,6 +3917,77 @@ error:
     return status;
 }
 
+bool try_set_using_types(const Uast_using* using) {
+    bool status = true;
+    Uast_def* def = NULL;
+    if (!usymbol_lookup(&def, using->sym_name)) {
+        msg_undefined_symbol(using->sym_name, using->pos);
+        return false;
+    }
+
+    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
+    if (def->type == UAST_VARIABLE_DEF) {
+        Uast_variable_def* var_def = uast_variable_def_unwrap(def);
+        Name lang_type_name = {0};
+        name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
+        Uast_def* struct_def_ = NULL;
+        unwrap(usymbol_lookup(&struct_def_, lang_type_name));
+        Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
+        for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
+            Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
+            Name alias_name = using->sym_name;
+            alias_name.base = curr->name.base;
+            Uast_lang_def* lang_def = uast_lang_def_new(
+                using->pos,
+                alias_name,
+                uast_member_access_wrap(uast_member_access_new(
+                    curr->pos,
+                    uast_symbol_new(curr->pos, curr->name),
+                    uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
+                ))
+            );
+            if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+                msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                status = false;
+            }
+        }
+        return true;
+    } else if (def->type == UAST_MOD_ALIAS) {
+        Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
+        // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
+        //   eventually, it may be a good idea to speed this up 
+        //   (eg. by keeping array of symbols of top level of each module)
+
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Uast_def* curr = NULL;
+        while (usym_tbl_iter_next(&curr, &iter)) {
+            Name curr_name = uast_def_get_name(curr);
+            if (strv_is_equal(curr_name.mod_path, mod_path)) {
+                Name alias_name = using->sym_name;
+                alias_name.base = curr_name.base;
+                Uast_lang_def* lang_def = uast_lang_def_new(
+                    using->pos,
+                    alias_name,
+                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name))
+                );
+                if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+                    msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                    status = false;
+                }
+            }
+        }
+        return status;
+    } else {
+        msg(
+            DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
+            using->pos,
+            "symbol after `using` must be struct or module alias\n"
+        );
+        return false;
+    }
+    unreachable("");
+}
+
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
@@ -3982,8 +4061,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -3998,11 +4076,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
-        Tast_stmt* new_tast = NULL;
-        switch (try_set_stmt_types(&new_tast, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
+        Tast_stmt* new_stmt = NULL;
+        switch (try_set_stmt_types(&new_stmt, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_OK:
                 assert(curr_tast);
-                vec_append(&a_main, &new_tasts, new_tast);
+                vec_append(&a_main, &new_tasts, new_stmt);
                 break;
             case STMT_NO_STMT:
                 break;
@@ -4025,9 +4103,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             )),
             true
         );
-        if (rtn_statement->pos.line == 0) {
-            unreachable("");
-        }
+        unwrap(rtn_statement->pos.line != 0);
+
         Tast_stmt* new_rtn_statement = NULL;
         switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_ERROR:
@@ -4045,8 +4122,10 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(MOD_PATH_BUILTIN, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
+            // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
+            // TODO: use warn for warnings instead of msg to reduce mistakes?
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
@@ -4097,6 +4176,8 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_DEFER:
             return false;
+        case UAST_USING:
+            return true;
     }
     unreachable("");
 }
@@ -4121,7 +4202,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_DEF:
-            return try_set_def_types(new_tast, uast_def_unwrap(stmt));
+            return try_set_def_types(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types(&new_tast_, uast_for_with_cond_unwrap(stmt))) {
@@ -4154,6 +4235,12 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_defer_wrap(new_defer);
             return STMT_OK;
         }
+        case UAST_USING: {
+            if (!try_set_using_types(uast_using_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
+        }
         case UAST_YIELD: {
             Tast_yield* new_yield = NULL;
             if (!try_set_yield_types(&new_yield, uast_yield_unwrap(stmt))) {
@@ -4174,14 +4261,14 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     unreachable("");
 }
 
-bool try_set_types(Tast_block** new_tast, Uast_block* block) {
+bool try_set_types(void) {
     lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
-    Usymbol_iter iter = usym_tbl_iter_new(0);
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         // TODO: make switch for this if for exhausive checking
@@ -4191,8 +4278,7 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
             continue;
         }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
+        switch (try_set_def_types(curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -4203,10 +4289,6 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
             default:
                 unreachable("");
         }
-    }
-
-    if (!try_set_block_types(new_tast, block, false)) {
-        status = false;
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {

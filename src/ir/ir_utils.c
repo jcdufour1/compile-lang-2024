@@ -1,12 +1,12 @@
 #include <ir_utils.h>
 #include <lang_type.h>
-#include <llvm_lang_type.h>
+#include <ir_lang_type.h>
 #include <lang_type_after.h>
-#include <llvm_lang_type_after.h>
+#include <ir_lang_type_after.h>
 #include <name.h>
 #include <ulang_type_get_pos.h>
 
-Llvm_lang_type ir_operator_get_lang_type(const Ir_operator* operator) {
+Ir_lang_type ir_operator_get_lang_type(const Ir_operator* operator) {
     if (operator->type == IR_UNARY) {
         return ir_unary_const_unwrap(operator)->lang_type;
     } else if (operator->type == IR_BINARY) {
@@ -16,23 +16,23 @@ Llvm_lang_type ir_operator_get_lang_type(const Ir_operator* operator) {
     }
 }
 
-Llvm_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
+Ir_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
     switch (lit->type) {
         case IR_INT:
             return ir_int_const_unwrap(lit)->lang_type;
         case IR_FLOAT:
             return ir_float_const_unwrap(lit)->lang_type;
         case IR_STRING:
-            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 8, 1)));
+            return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 8, 1)));
         case IR_VOID:
-            return llvm_lang_type_void_const_wrap(llvm_lang_type_void_new(ir_literal_get_pos(lit)));
+            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit)));
         case IR_FUNCTION_NAME:
-            return llvm_lang_type_primitive_const_wrap(llvm_lang_type_unsigned_int_const_wrap(llvm_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 64/* TODO */, 1)));
+            return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 64/* TODO */, 1)));
     }
     unreachable("");
 }
 
-Llvm_lang_type ir_expr_get_lang_type(const Ir_expr* expr) {
+Ir_lang_type ir_expr_get_lang_type(const Ir_expr* expr) {
     switch (expr->type) {
         case IR_FUNCTION_CALL:
             return ir_function_call_const_unwrap(expr)->lang_type;
@@ -44,7 +44,7 @@ Llvm_lang_type ir_expr_get_lang_type(const Ir_expr* expr) {
     unreachable("");
 }
 
-Llvm_lang_type ir_def_get_lang_type(const Ir_def* def) {
+Ir_lang_type ir_def_get_lang_type(const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             unreachable("");
@@ -53,7 +53,7 @@ Llvm_lang_type ir_def_get_lang_type(const Ir_def* def) {
         case IR_FUNCTION_DECL:
             unreachable("");
         case IR_STRUCT_DEF:
-            return llvm_lang_type_struct_const_wrap(llvm_lang_type_struct_new(ir_def_get_pos(def), llvm_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
+            return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(ir_def_get_pos(def), ir_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
         case IR_PRIMITIVE_DEF:
             unreachable("");
         case IR_LABEL:
@@ -64,7 +64,7 @@ Llvm_lang_type ir_def_get_lang_type(const Ir_def* def) {
     unreachable("");
 }
 
-Llvm_lang_type ir_get_lang_type(const Ir* ir) {
+Ir_lang_type ir_get_lang_type(const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
             return ir_def_get_lang_type(ir_def_const_unwrap(ir));
@@ -90,6 +90,8 @@ Llvm_lang_type ir_get_lang_type(const Ir* ir) {
             return ir_load_element_ptr_const_unwrap(ir)->lang_type;
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->lang_type;
+        case IR_IMPORT_PATH:
+            unreachable("");
         case IR_REMOVED:
             unreachable("");
     }
@@ -147,7 +149,7 @@ Name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
 Name ir_def_get_name(const Ir_def* def) {
     switch (def->type) {
         case IR_PRIMITIVE_DEF:
-            return llvm_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
+            return ir_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
@@ -191,6 +193,8 @@ Name ir_tast_get_name(const Ir* ir) {
             return ir_load_element_ptr_const_unwrap(ir)->name_self;
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
+        case IR_IMPORT_PATH:
+            return name_new((Strv) {0}, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
         case IR_REMOVED:
             unreachable("");
     }
@@ -198,7 +202,7 @@ Name ir_tast_get_name(const Ir* ir) {
 }
 
 // TODO: rename this function
-Llvm_lang_type lang_type_from_get_name(Name name) {
+Ir_lang_type lang_type_from_get_name(Name name) {
     return ir_get_lang_type(ir_from_get_name(name));
 }
 

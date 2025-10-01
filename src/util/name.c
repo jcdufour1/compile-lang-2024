@@ -103,6 +103,11 @@ Strv serialize_name_symbol_table(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+            // TODO: sometimes, it is possible to have multiple function instanciations with the same generic args
+            //   try to serialize Lang_type instead of Ulang_type
+            //
+            // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
+            //   so there is no need to switch to using Lang_type for generic arguents
             string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx), false)));
         }
     }
@@ -148,9 +153,14 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         string_extend_cstr(&a_print, buf, "_");
     }
 
-    string_extend_strv(&a_print, buf, name.mod_path);
-    if (name.mod_path.count > 0) {
-        string_extend_cstr(&a_print, buf, "::");
+    if (!is_msg) {
+        // TODO: even when is_msg is true, show prefix sometimes to avoid confusion?
+        //   (maybe only show prefix when mod_path of name is different than mod_path of file that 
+        //   name appears in)
+        string_extend_strv(&a_print, buf, name.mod_path);
+        if (name.mod_path.count > 0) {
+            string_extend_cstr(&a_print, buf, "::");
+        }
     }
     string_extend_strv(&a_print, buf, name.base);
     if (name.gen_args.info.count > 0) {
@@ -174,7 +184,13 @@ void extend_name_msg(String* buf, Name name) {
 // TODO: move this function elsewhere
 // TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    if (mode != UNAME_MSG || !(name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) || (name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)))) {
+    if (
+        mode != UNAME_MSG || !(
+            strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||
+            name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) ||
+            name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)
+        )
+    ) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_print, buf, ".");
     }

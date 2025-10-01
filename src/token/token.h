@@ -74,6 +74,7 @@ typedef enum {
     TOKEN_MACRO,
     TOKEN_DEFER,
     TOKEN_DOUBLE_TICK,
+    TOKEN_ONE_LINE_BLOCK_START,
 
     // keywords
     TOKEN_FN,
@@ -98,6 +99,7 @@ typedef enum {
     TOKEN_DEF,
     TOKEN_SIZEOF,
     TOKEN_COUNTOF,
+    TOKEN_USING,
 
     // comment
     TOKEN_COMMENT,
@@ -118,8 +120,8 @@ typedef enum {
     TOKEN_MODE_MSG,
 } TOKEN_MODE;
 
-static inline Token token_new(const char* text, TOKEN_TYPE token_type) {
-    Token token = {.text = sv(text), .type = token_type};
+static inline Token token_new(Strv text, TOKEN_TYPE token_type) {
+    Token token = {.text = text, .type = token_type};
     return token;
 }
 
@@ -275,6 +277,10 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_DOUBLE_TICK:
             return false;
         case TOKEN_GENERIC_TYPE:
+            return false;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
+        case TOKEN_USING:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -432,6 +438,10 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_BITWISE_NOT:
             return true;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
+        case TOKEN_USING:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -618,6 +628,10 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_DOUBLE_TICK:
             return false;
         case TOKEN_GENERIC_TYPE:
+            return false;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
+        case TOKEN_USING:
             return false;
         case TOKEN_COUNT:
             unreachable("");
