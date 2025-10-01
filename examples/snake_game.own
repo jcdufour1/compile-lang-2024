@@ -116,6 +116,10 @@ fn main() i32 {
         rl.ClearBackground(rl.BLACK());
 
         if game_is_over {
+            rl.DrawText("game over: collision", CANVAS.x/2, CANVAS.y/2, 15, rl.WHITE())
+            if rl.IsKeyPressed(rl.KEY_ENTER()) {
+            }
+                
             rl.EndDrawing()
         } else {
             rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>CANVAS.x, unsafe_cast<f32>CANVAS.y}, unsafe_cast<f32>BORDER_WIDTH, rl.WHITE())
@@ -149,6 +153,7 @@ fn main() i32 {
 
             if (loop_count >= LOOP_RATE/FRAME_RATE) {
                 if !move_snake(&snake, SQUARES, do_grow_snake) {
+                    game_is_over = 1
                 }
                 do_grow_snake = 0
                 io.printf(
