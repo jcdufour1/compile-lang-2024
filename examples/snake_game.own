@@ -60,8 +60,6 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
     }
     
     let pos_at_1 Pos = snake.nodes.buf[1]
-    // TODO: test case for this
-    //io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
     for idx_ u64 in 1..(snake.nodes.count) {
         let idx u64 = snake.nodes.count - idx_
         util.assert(idx < snake.nodes.count, "out of bounds")
@@ -80,14 +78,15 @@ fn pos_is_equal(lhs Pos, rhs Pos) u1 {
     return lhs.x == rhs.x && lhs.y == rhs.y
 }
 
-type State struct {
-
+fn rand_pos(squares Pos) Pos {
+    return {rand.int_range(0, squares.x), rand.int_range(0, squares.y)}
 }
 
 fn main() i32 {
     let BORDER_WIDTH i32 = 5
     let SQUARES Pos = {20, 10};
     let SQUARE_WIDTH i32 = 30;
+    let COUNT_APPLES u64 = 3;
 
     let CANVAS Pos = {SQUARES.x*SQUARE_WIDTH + 2*BORDER_WIDTH, SQUARES.y*SQUARE_WIDTH + 2*BORDER_WIDTH}
 
@@ -96,10 +95,13 @@ fn main() i32 {
 
     rand.srand()
 
-    let snake Snake = snake_new({rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}, .right, SQUARES)
+    let snake Snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
     util.assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
-    let apple Pos = {rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}
+    let apples coll.Arr(<Pos>) = coll.arr_new(COUNT_APPLES, Pos)
+    for idx u64 in 0..COUNT_APPLES {
+        coll.arr_append(&apples, rand_pos(SQUARES))
+    }
 
     rl.InitWindow(CANVAS.x, CANVAS.y, "Snake Game")
     defer rl.CloseWindow()
@@ -114,14 +116,20 @@ fn main() i32 {
         rl.ClearBackground(rl.BLACK());
 
         if game_is_over {
-            rl.DrawText("game over: collision", CANVAS.x/3, CANVAS.y/2, 30, rl.WHITE())
+            rl.DrawText("game over", CANVAS.x/3, CANVAS.y/2 - 50, 30, rl.WHITE())
+            rl.DrawText(
+                rl.TextFormat("snake length: %zu", snake.nodes.count),
+                CANVAS.x/3,
+                CANVAS.y/2,
+                30,
+                rl.WHITE())
             rl.DrawText("press enter to restart", CANVAS.x/3, CANVAS.y/2 + 50, 22, rl.WHITE())
             rl.EndDrawing()
 
             if rl.IsKeyPressed(rl.KEY_ENTER()) {
                 game_is_over = 0
                 coll.arr_free(&snake.nodes);
-                snake = snake_new({rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}, .right, SQUARES)
+                snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
             }
         } else {
             rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>CANVAS.x, unsafe_cast<f32>CANVAS.y}, unsafe_cast<f32>BORDER_WIDTH, rl.WHITE())
@@ -130,7 +138,10 @@ fn main() i32 {
                 let curr Pos = snake.nodes.buf[idx]
                 rl.DrawRectangle(BORDER_WIDTH + SQUARE_WIDTH*curr.x, BORDER_WIDTH + SQUARE_WIDTH*curr.y, SQUARE_WIDTH, SQUARE_WIDTH, rl.YELLOW())
             }
-            rl.DrawRectangle(BORDER_WIDTH + SQUARE_WIDTH*apple.x, BORDER_WIDTH + SQUARE_WIDTH*apple.y, SQUARE_WIDTH, SQUARE_WIDTH, rl.RED())
+            for idx u64 in 0..apples.count {
+                let curr Pos = coll.arr_at(apples, idx)
+                rl.DrawRectangle(BORDER_WIDTH + SQUARE_WIDTH*curr.x, BORDER_WIDTH + SQUARE_WIDTH*curr.y, SQUARE_WIDTH, SQUARE_WIDTH, rl.RED())
+            }
 
             rl.EndDrawing()
 
@@ -147,9 +158,11 @@ fn main() i32 {
             // check for apple collision
             for snake_ u64 in 0..snake.nodes.count {
                 let curr Pos = snake.nodes.buf[snake_]
-                if pos_is_equal(curr, apple) {
-                    do_grow_snake = 1
-                    apple = {rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}
+                for apple u64 in 0..apples.count {
+                    if pos_is_equal(curr, coll.arr_at(apples, apple)) {
+                        do_grow_snake = 1
+                        *coll.arr_at_ref(apples, apple) = rand_pos(SQUARES)
+                    }
                 }
             }
 

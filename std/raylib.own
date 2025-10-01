@@ -1,6 +1,6 @@
 // these bindings are unofficial bindings for raylib, and are maintained as part of this compiler project
 // these bindings are derived from raylib.h (https://github.com/raysan5/raylib)
-// these bindings are partial bindings currently
+// these bindings are partial bindings currently (only part of raylib.h is ported)
 // original work copyright (c) Ramon Santamaria and raylib contributors.
 // originally licensed under zlib/libpng license.
 
@@ -21,6 +21,9 @@ extern("c") fn SetTargetFPS(fps i32) // Set target FPS (maximum)
 extern("c") fn DrawFPS(posX i32, posY i32);                                                     // Draw current FPS
 extern("c") fn DrawText(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
 
+// Text strings management functions (no UTF-8 strings, only byte chars)
+// NOTE: Some strings allocate memory internally for returned strings, just be careful!
+extern("c") fn TextFormat(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
 
 type Vector3 struct {
     a f32
