@@ -17,6 +17,9 @@ typedef enum {
     PARSE_EXPR_ERROR, // tokens need to be synced by callers
 } PARSE_EXPR_STATUS;
 
-PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def);
+PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, const Uast_def* new_sym_def);
+
+#define msg_redefinition_of_symbol(new_sym_def) \
+    msg_redefinition_of_symbol_internal(__FILE__, __LINE__, new_sym_def);
 
 #endif // AST_MSG_H

@@ -2419,7 +2419,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
-            log(LOG_DEBUG, "before\n");
             // TODO: Uast_param should have Strv instead of name to prevent some bugs and make things simplier?
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
                 if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
@@ -2967,9 +2966,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     log(LOG_DEBUG, "%zu "FMT"\n", new_args.info.count, name_print(NAME_MSG, fun_name));
     for (size_t idx = 0; idx < new_args.info.count; idx++) {
         assert(vec_at(&new_args_set, idx));
-        log(LOG_DEBUG, "thing 8\n");
         assert(vec_at(&new_args, idx));
-        log(LOG_DEBUG, "thing 9\n");
     }
 
 error:
@@ -3952,6 +3949,7 @@ bool try_set_using_types(const Uast_using* using) {
         return true;
     } else if (def->type == UAST_MOD_ALIAS) {
         Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
+        bool is_builtin = strv_is_equal(MOD_PATH_BUILTIN, using->sym_name.mod_path);
         // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
         //   eventually, it may be a good idea to speed this up 
         //   (eg. by keeping array of symbols of top level of each module)
@@ -3961,8 +3959,6 @@ bool try_set_using_types(const Uast_using* using) {
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
             if (strv_is_equal(curr_name.mod_path, mod_path)) {
-                // TODO: do not use Name for using->sym_name? have separate members in using for Strv, Scope_id, etc.
-                //   Name in using causes too many problems
                 Name alias_name = using->sym_name;
                 log(LOG_INFO, FMT"\n", name_print(NAME_LOG, alias_name));
                 alias_name.mod_path = using->mod_path_to_put_defs;
@@ -3979,8 +3975,12 @@ bool try_set_using_types(const Uast_using* using) {
                     Uast_def* prev_def = NULL;
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
                     if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-                        msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                        status = false;
+                        if (!is_builtin) {
+                            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias_name));
+                            log(LOG_DEBUG, FMT"\n", uast_def_print(prev_def));
+                            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                            status = false;
+                        }
                     }
                 }
             }

@@ -288,7 +288,7 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     return PARSE_OK;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_main_mod) {
+static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_builtin_mod_path_alias, bool is_main_mod) {
     bool status = true;
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
@@ -296,7 +296,11 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     String file_path = {0};
 
     Name old_mod_alias = curr_mod_alias;
-    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    if (is_builtin_mod_path_alias) {
+        curr_mod_alias = util_literal_name_new();
+    } else {
+        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
 
@@ -1342,7 +1346,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false)) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, false)) {
         return PARSE_ERROR;
     }
 
@@ -3139,6 +3143,23 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
         goto error;
     }
 
+    Uast_mod_alias* prelude_alias = NULL;
+    if (!get_mod_alias_from_path_token(
+        &prelude_alias,
+        token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
+        POS_BUILTIN,
+        MOD_PATH_PRELUDE,
+        true,
+        false
+    )) {
+        return false;
+    }
+    vec_append(
+        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+        &using_params,
+        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+    );
+
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
         new_scope = symbol_collection_new(SCOPE_BUILTIN);
@@ -3190,22 +3211,6 @@ error:
 bool parse(Uast_block** block, Strv file_path) {
     symbol_collection_new(SCOPE_BUILTIN);
 
-    Uast_mod_alias* prelude_alias = NULL;
-    if (!get_mod_alias_from_path_token(
-        &prelude_alias,
-        token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
-        POS_BUILTIN,
-        MOD_PATH_PRELUDE,
-        false
-    )) {
-        return false;
-    }
-    vec_append(
-        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
-        &using_params,
-        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
-    );
-
     // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
     //Uast_mod_alias* dummy = NULL;
     //unwrap(get_mod_alias_from_path_token(
@@ -3222,6 +3227,7 @@ bool parse(Uast_block** block, Strv file_path) {
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
         file_strip_extension(file_path),
+        false,
         true
     )) {
         return false;

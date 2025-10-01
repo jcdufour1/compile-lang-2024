@@ -1,6 +1,5 @@
 type io import = std.io
 type rt import = std.runtime
-type coll import = std.collections
 type c import = std.libc
 
 type Optional enum(<ItemT>) {
@@ -21,14 +20,14 @@ fn null(ItemT Type) ItemT* {
 }
 
 // TODO: return optional, etc.?
-fn alloc(count_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+fn alloc(count_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     let buf ItemT* = unsafe_cast<ItemT*>c.malloc(sizeof(ItemT)*count_items)
     assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 // TODO: return optional, etc.?
-fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     buf = unsafe_cast<ItemT*>c.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
     assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
@@ -39,7 +38,7 @@ fn free(buf ItemT*, ItemT Type) {
 }
 
 // TODO: remove keep_going parameter from std?
-fn assert(condition u1, message coll.Str = "", keep_going u1 = 0, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
         // TODO: print to stderr
         io.own_printf("%.*s:%d:%d:assertion failure: %s\n", unsafe_cast<i32>file.count, file.buf, unsafe_cast<i32>line, unsafe_cast<i32>column, message)
