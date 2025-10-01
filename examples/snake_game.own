@@ -29,9 +29,7 @@ fn snake_first(snake Snake) Pos {
 
 fn snake_new(init_pos Pos, init_dir Dir, squares: Pos) Snake {
     let max u64 = unsafe_cast<u64>(squares.x*squares.y)
-    let arr coll.Arr(<Pos>) = coll.arr_new(max, Pos);
-    util.assert(arr.buf != unsafe_cast<Pos*>0, "out of memory")
-    coll.arr_append(&arr, init_pos)
+    let arr coll.Arr(<Pos>) = coll.arr_new(max, Pos, [init_pos]);
     return {arr, init_dir}
 }
 
@@ -96,10 +94,11 @@ fn main() i32 {
     let FRAME_RATE i32 = 7
     let LOOP_RATE i32 = 200;
 
-    let snake Snake = snake_new({7, 9}, .right, SQUARES)
+    rand.srand()
+
+    let snake Snake = snake_new({rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}, .right, SQUARES)
     util.assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
-    // TODO: call srand or similar
     let apple Pos = {rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}
 
     rl.InitWindow(CANVAS.x, CANVAS.y, "Snake Game")
@@ -122,7 +121,7 @@ fn main() i32 {
             if rl.IsKeyPressed(rl.KEY_ENTER()) {
                 game_is_over = 0
                 coll.arr_free(&snake.nodes);
-                snake = snake_new({7, 9}, .right, SQUARES)
+                snake = snake_new({rand.int_range(0, SQUARES.x), rand.int_range(0, SQUARES.y)}, .right, SQUARES)
             }
         } else {
             rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>CANVAS.x, unsafe_cast<f32>CANVAS.y}, unsafe_cast<f32>BORDER_WIDTH, rl.WHITE())
@@ -159,9 +158,6 @@ fn main() i32 {
                     game_is_over = 1
                 }
                 do_grow_snake = 0
-                io.printf(
-                    "snake.nodes.count = %zu\n",
-                    snake.nodes.count)
                 loop_count -= LOOP_RATE/FRAME_RATE
             }
 
