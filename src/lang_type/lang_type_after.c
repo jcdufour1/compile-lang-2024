@@ -58,89 +58,6 @@ Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type
     unreachable("");
 }
 
-Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive lang_type) {
-    switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            return lang_type_char_const_unwrap(lang_type).atom;
-        case LANG_TYPE_FLOAT: {
-            String string = {0};
-            uint32_t bit_width = lang_type_float_const_unwrap(lang_type).bit_width;
-            if (bit_width == 32) {
-                string_extend_cstr(&a_main, &string, "float");
-            } else if (bit_width == 64) {
-                string_extend_cstr(&a_main, &string, "double");
-            } else {
-                    msg_todo("bit widths other than 32 or 64 (for floating point numbers) with the c backend", lang_type_primitive_get_pos(lang_type));
-            }
-            return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
-                lang_type_float_const_unwrap(lang_type).pointer_depth
-            );
-        }
-        case LANG_TYPE_SIGNED_INT: {
-            String string = {0};
-            uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
-            if (bit_width == 1) {
-                string_extend_cstr(&a_main, &string, "bool");
-            } else {
-                string_extend_cstr(&a_main, &string, "int");
-                if (bit_width == 1) {
-                    // TODO: overflow may not happen correctly; maybe remove i1/u1 in earlier passes
-                    string_extend_cstr(&a_main, &string, "bool");
-                } else if (bit_width == 8) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 16) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 32) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 64) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else {
-                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 (for integers) with the c backend", lang_type_primitive_get_pos(lang_type));
-                }
-                string_extend_cstr(&a_main, &string, "_t");
-            }
-            return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
-                lang_type_signed_int_const_unwrap(lang_type).pointer_depth
-            );
-        }
-        case LANG_TYPE_UNSIGNED_INT: {
-            // TODO: deduplicate this and above case?
-            // TODO: bit width of 1 here?
-            String string = {0};
-            uint32_t bit_width = lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
-            if (bit_width == 1) {
-                string_extend_cstr(&a_main, &string, "bool");
-            } else {
-                string_extend_cstr(&a_main, &string, "uint");
-                if (bit_width == 8) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 16) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 32) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 64) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else {
-                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
-                }
-                string_extend_cstr(&a_main, &string, "_t");
-            }
-            return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
-                lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
-            );
-        }
-        case LANG_TYPE_OPAQUE:
-            return lang_type_atom_new(
-                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
-                lang_type_opaque_const_unwrap(lang_type).atom.pointer_depth
-            );
-    }
-    unreachable("");
-}
-
 static bool lang_type_atom_is_number_finish(Lang_type_atom atom, bool allow_decimal) {
     size_t idx = 0;
     bool decimal_enc = false;
@@ -355,9 +272,10 @@ Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primi
         case LANG_TYPE_MODE_MSG:
             return lang_type_primitive_get_atom_normal(lang_type);
         case LANG_TYPE_MODE_EMIT_LLVM:
-            return lang_type_primitive_get_atom_normal(lang_type);
+            unreachable("");
         case LANG_TYPE_MODE_EMIT_C:
-            return lang_type_primitive_get_atom_c(lang_type);
+            // TODO: make separate LANG_TYPE_MODE for IR?
+            unreachable("");
     }
     unreachable("");
 }
