@@ -91,6 +91,11 @@ fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = 
     return arr.buf[index]
 }
 
+fn arr_at_ref(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return &arr.buf[index]
+}
+
 fn arr_first(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return arr_at(arr, 0, .file = file, .line = line, .column = column)
 }
