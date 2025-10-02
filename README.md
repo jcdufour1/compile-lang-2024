@@ -12,8 +12,7 @@ The language design and implementation are not finished. Breaking changes will o
 - :white_check_mark: Compiles to C for portability
 
 ## Example Programs
-### Example 1
-[](examples/readme_1.own)
+### [Readme 1](examples/readme_1.own)
 ```c
 type util import = std.util
 type io import = std.io
@@ -45,8 +44,7 @@ fn main() i32 {
 }
 ```
 
-### Example 2
-[](examples/readme_2.own)
+### [Readme 2](examples/readme_2.own)
 ```c
 
 type coll import = std.collections
@@ -66,11 +64,10 @@ fn main() i32 {
     return 0
 }
 ```
-### Snake Game
-[](examples/snake_game.own)
+### [Snake Game](examples/snake_game.own)  
 ![](docs/snake_game.png)
 - This example uses raylib. Raylib is not vendored, so it will need to be installed separately and linked manually.
-- example command line to run snake game:
+- Example command line to run snake game:
 ```sh
 ./build/release/main examples/snake_game.own -O2 /usr/local/raylib-5.5_linux_amd64/lib/libraylib.a -lm --run
 ```
