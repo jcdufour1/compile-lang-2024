@@ -94,7 +94,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod);
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos);
 
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
@@ -288,7 +288,14 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     return PARSE_OK;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_main_mod) {
+static bool get_mod_alias_from_path_token(
+    Uast_mod_alias** mod_alias,
+    Token alias_tk,
+    Pos mod_path_pos,
+    Strv mod_path,
+    bool is_main_mod,
+    Pos import_pos
+) {
     bool status = true;
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
@@ -305,7 +312,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
 
     // TODO: this could cause collisions if internal symbol has the same name as mod_path.
     //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
-    // TODO: do not hardcode (Strv) {0}
     if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
@@ -320,7 +326,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), is_main_mod)) {
+    if (!parse_file(&block, string_to_strv(file_path), is_main_mod, import_pos)) {
         status = false;
         goto finish;
     }
@@ -1338,7 +1344,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false)) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, mod_path_pos)) {
         return PARSE_ERROR;
     }
 
@@ -3116,7 +3122,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos) {
     bool status = true;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
@@ -3153,6 +3159,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
+        msg(DIAG_NOTE, import_pos, "error occured when attempting to import module\n");
         status = false;
         goto error;
     }
@@ -3203,7 +3210,8 @@ bool parse(Uast_block** block, Strv file_path) {
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
         file_strip_extension(file_path),
-        true
+        true,
+        POS_BUILTIN
     )) {
         return false;
     }
