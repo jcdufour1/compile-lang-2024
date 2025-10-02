@@ -54,6 +54,7 @@ OBJS=\
 	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
+	 ${BUILD_DIR}/util/ir_operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
@@ -257,6 +258,9 @@ ${BUILD_DIR}/token/token.o: ${DEP_COMMON} src/token/token.c
 
 ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/operator_type.o src/util/operator_type.c
+
+${BUILD_DIR}/util/ir_operator_type.o: ${DEP_COMMON} src/util/ir_operator_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/ir_operator_type.o src/util/ir_operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c

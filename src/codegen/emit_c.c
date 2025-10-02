@@ -286,88 +286,90 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Ir_lang_type cast_to) {
+static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, Ir_lang_type cast_to) {
     (void) strs;
     // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
-        case UNARY_DEREF:
+        case IR_UNARY_DEREF:
             unreachable("defer should not make it here");
-        case UNARY_REFER:
+        case IR_UNARY_REFER:
             unreachable("refer should not make it here");
-        case UNARY_UNSAFE_CAST:
+        case IR_UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, &strs->output, "(");
             c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
-        case UNARY_LOGICAL_NOT:
+        case IR_UNARY_LOGICAL_NOT:
             unreachable("not should not make it here");
-        case UNARY_SIZEOF:
+        case IR_UNARY_SIZEOF:
             unreachable("sizeof should not make it here");
-        case UNARY_COUNTOF:
+        case IR_UNARY_COUNTOF:
             unreachable("countof should not make it here");
     }
     unreachable("");
 }
 
-static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
+static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
     (void) strs;
     switch (bin_type) {
-        case BINARY_SINGLE_EQUAL:
+        case IR_BINARY_SINGLE_EQUAL:
             unreachable("");
-        case BINARY_SUB:
+        case IR_BINARY_SUB:
             string_extend_cstr(&a_main, &strs->output, " - ");
             return;
-        case BINARY_ADD:
+        case IR_BINARY_ADD:
             string_extend_cstr(&a_main, &strs->output, " + ");
             return;
-        case BINARY_MULTIPLY:
+        case IR_BINARY_MULTIPLY:
             string_extend_cstr(&a_main, &strs->output, " * ");
             return;
-        case BINARY_DIVIDE:
+        case IR_BINARY_DIVIDE:
             string_extend_cstr(&a_main, &strs->output, " / ");
             return;
-        case BINARY_MODULO:
+        case IR_BINARY_MODULO:
             string_extend_cstr(&a_main, &strs->output, " % ");
             return;
-        case BINARY_LESS_THAN:
+        case IR_BINARY_LESS_THAN:
             string_extend_cstr(&a_main, &strs->output, " < ");
             return;
-        case BINARY_LESS_OR_EQUAL:
+        case IR_BINARY_LESS_OR_EQUAL:
             string_extend_cstr(&a_main, &strs->output, " <= ");
             return;
-        case BINARY_GREATER_OR_EQUAL:
+        case IR_BINARY_GREATER_OR_EQUAL:
             string_extend_cstr(&a_main, &strs->output, " >= ");
             return;
-        case BINARY_GREATER_THAN:
+        case IR_BINARY_GREATER_THAN:
             string_extend_cstr(&a_main, &strs->output, " > ");
             return;
-        case BINARY_DOUBLE_EQUAL:
+        case IR_BINARY_DOUBLE_EQUAL:
             string_extend_cstr(&a_main, &strs->output, " == ");
             return;
-        case BINARY_NOT_EQUAL:
+        case IR_BINARY_NOT_EQUAL:
             string_extend_cstr(&a_main, &strs->output, " != ");
             return;
-        case BINARY_BITWISE_XOR:
+        case IR_BINARY_BITWISE_XOR:
             string_extend_cstr(&a_main, &strs->output, " ^ ");
             return;
-        case BINARY_BITWISE_AND:
+        case IR_BINARY_BITWISE_AND:
             string_extend_cstr(&a_main, &strs->output, " & ");
             return;
-        case BINARY_BITWISE_OR:
+        case IR_BINARY_BITWISE_OR:
             string_extend_cstr(&a_main, &strs->output, " | ");
             return;
-        case BINARY_LOGICAL_AND:
+        case IR_BINARY_LOGICAL_AND:
             string_extend_cstr(&a_main, &strs->output, " && ");
             return;
-        case BINARY_LOGICAL_OR:
+        case IR_BINARY_LOGICAL_OR:
             string_extend_cstr(&a_main, &strs->output, " || ");
             return;
-        case BINARY_SHIFT_LEFT:
+        case IR_BINARY_SHIFT_LEFT:
             string_extend_cstr(&a_main, &strs->output, " << ");
             return;
-        case BINARY_SHIFT_RIGHT:
+        case IR_BINARY_SHIFT_RIGHT:
             string_extend_cstr(&a_main, &strs->output, " >> ");
             return;
+        case IR_BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

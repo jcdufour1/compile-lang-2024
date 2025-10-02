@@ -734,6 +734,8 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
             return lhs_val<<rhs_val;
         case BINARY_SHIFT_RIGHT:
             return lhs_val>>rhs_val;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -787,6 +789,8 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
         case BINARY_SHIFT_RIGHT:
             msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"FMT"` is not supported\n", binary_type_print(token_type));
             return false;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

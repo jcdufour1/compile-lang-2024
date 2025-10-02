@@ -24,6 +24,8 @@ typedef enum {
     BINARY_LOGICAL_OR,
     BINARY_SHIFT_LEFT,
     BINARY_SHIFT_RIGHT,
+
+    BINARY_COUNT,
 } BINARY_TYPE;
 
 static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
@@ -66,6 +68,8 @@ static inline Strv binary_type_to_strv(BINARY_TYPE bin_type) {
             return sv("<<");
         case BINARY_SHIFT_RIGHT:
             return sv(">>");
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

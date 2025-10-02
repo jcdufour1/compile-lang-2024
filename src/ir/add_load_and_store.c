@@ -15,6 +15,7 @@
 #include <ir_lang_type_print.h>
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
+#include <ir_operator_type.h>
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -736,6 +737,8 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
             return false;
         case BINARY_SHIFT_RIGHT:
             return false;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -1388,7 +1391,7 @@ static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
         old_bin->pos,
         load_expr(new_block, old_bin->lhs),
         load_expr(new_block, old_bin->rhs),
-        old_bin->token_type,
+        ir_binary_type_from_binary_type(old_bin->token_type), // TODO: rename from TOKEN_TYPE to IR_BINARY_TYPE
         rm_tuple_lang_type(old_bin->lang_type, old_bin->pos),
         util_literal_name_new()
     );
