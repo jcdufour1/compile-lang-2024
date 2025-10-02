@@ -1691,7 +1691,7 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
                 return STMT_ERROR;
             }
             // TODO: make tast node type to hold this new block
-            unwrap(sym_tbl_add(tast_import_wrap(tast_import_new(
+            unwrap(sym_tbl_add(tast_import_path_wrap(tast_import_path_new(
                 new_block->pos,
                 new_block,
                 uast_import_path_unwrap(uast)->mod_path

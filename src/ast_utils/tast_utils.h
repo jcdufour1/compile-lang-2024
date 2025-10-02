@@ -317,7 +317,7 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             return tast_enum_def_get_lang_type(tast_enum_def_const_unwrap(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
+        case TAST_IMPORT_PATH:
             unreachable("");
         case TAST_LABEL:
             unreachable("");
@@ -411,7 +411,7 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
             unreachable("");
         case TAST_ENUM_DEF:
             unreachable("");
-        case TAST_IMPORT:
+        case TAST_IMPORT_PATH:
             unreachable("");
         case TAST_LABEL:
             unreachable("");
@@ -501,8 +501,8 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_function_def_const_unwrap(def)->decl->name;
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
-        case TAST_IMPORT:
-            return name_new((Strv) {0} /* TODO */, tast_import_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+        case TAST_IMPORT_PATH:
+            return name_new((Strv) {0} /* TODO */, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
     }
@@ -547,7 +547,7 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             return tast_enum_def_const_unwrap(def)->base;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
+        case TAST_IMPORT_PATH:
             todo();
         case TAST_LABEL:
             unreachable("");

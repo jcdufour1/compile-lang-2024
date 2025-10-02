@@ -2248,7 +2248,7 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     }
 }
 
-static void load_import(Tast_import* old_import) {
+static void load_import_path(Tast_import_path* old_import) {
     Name yield_name = util_literal_name_new();
     unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
         old_import->pos,
@@ -2375,7 +2375,7 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
             unreachable("enum def should not make it here");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
+        case TAST_IMPORT_PATH:
             todo();
         case TAST_LABEL:
             load_label(new_block, tast_label_unwrap(old_def));
@@ -2630,8 +2630,8 @@ static void load_def_sometimes(Tast_def* old_def) {
             return;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
-            load_import(tast_import_unwrap(old_def));
+        case TAST_IMPORT_PATH:
+            load_import_path(tast_import_path_unwrap(old_def));
             return;
         case TAST_LABEL:
             return;
