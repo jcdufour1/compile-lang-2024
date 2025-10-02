@@ -551,7 +551,7 @@ static bool can_end_stmt(Token token) {
         case TOKEN_IF:
             return false;
         case TOKEN_RETURN:
-            return true;
+            return false;
         case TOKEN_EXTERN:
             return false;
         case TOKEN_STRUCT:
@@ -1901,6 +1901,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
         is_first_time = false;
     }
 
+    try_consume_newlines(tokens);
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_CLOSE_PAR, TOKEN_COMMA);
         return PARSE_ERROR;
@@ -1910,6 +1911,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     return PARSE_OK;
 }
 
+// TODO: rename this function to parse_return
 static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 

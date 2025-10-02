@@ -1,4 +1,4 @@
-compile::stdout 16
+compile::stdout 15
 9/2
 8/7
 11/10
@@ -14,7 +14,6 @@ token: 923 hello
 82 bye 56/84
 71 bye 56/84
 82 bye 56/84
-82
 
 compile::stderr 0
 
