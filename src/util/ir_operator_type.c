@@ -48,20 +48,20 @@ IR_BINARY_TYPE ir_binary_type_from_binary_type(BINARY_TYPE type) {
 }
 
 IR_UNARY_TYPE ir_unary_type_from_unary_type(UNARY_TYPE type) {
-    static_assert(BINARY_COUNT == 19, "exhausive handling of binary types");
+    static_assert(UNARY_COUNT == 6, "exhausive handling of binary types");
     switch (type) {
         case UNARY_DEREF:
-            return IR_UNARY_DEREF;
+            unreachable("");
         case UNARY_REFER:
-            return IR_UNARY_REFER;
+            unreachable("");
         case UNARY_UNSAFE_CAST:
             return IR_UNARY_UNSAFE_CAST;
         case UNARY_LOGICAL_NOT:
-            return IR_UNARY_LOGICAL_NOT;
+            unreachable("");
         case UNARY_SIZEOF:
-            return IR_UNARY_SIZEOF;
+            unreachable("");
         case UNARY_COUNTOF:
-            return IR_UNARY_COUNTOF;
+            unreachable("");
         case UNARY_COUNT:
             unreachable("");
     }

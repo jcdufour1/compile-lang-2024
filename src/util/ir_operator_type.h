@@ -78,28 +78,13 @@ static inline Strv ir_binary_type_to_strv(IR_BINARY_TYPE bin_type) {
 #define ir_binary_type_print(bin_type) strv_print(ir_binary_type_to_strv(bin_type))
 
 typedef enum {
-    IR_UNARY_DEREF,
-    IR_UNARY_REFER,
     IR_UNARY_UNSAFE_CAST,
-    IR_UNARY_LOGICAL_NOT,
-    IR_UNARY_SIZEOF,
-    IR_UNARY_COUNTOF,
 } IR_UNARY_TYPE;
 
 static inline Strv ir_unary_type_to_strv(IR_UNARY_TYPE ir_unary_type) {
     switch (ir_unary_type) {
-        case IR_UNARY_DEREF:
-            return sv("deref");
-        case IR_UNARY_REFER:
-            return sv("refer");
         case IR_UNARY_UNSAFE_CAST:
             return sv("unsafe_cast");
-        case IR_UNARY_LOGICAL_NOT:
-            return sv("!");
-        case IR_UNARY_SIZEOF:
-            return sv("sizeof");
-        case IR_UNARY_COUNTOF:
-            return sv("countof");
     }
     unreachable("");
 }

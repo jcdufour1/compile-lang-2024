@@ -290,21 +290,11 @@ static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, I
     (void) strs;
     // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
-        case IR_UNARY_DEREF:
-            unreachable("defer should not make it here");
-        case IR_UNARY_REFER:
-            unreachable("refer should not make it here");
         case IR_UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, &strs->output, "(");
             c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
-        case IR_UNARY_LOGICAL_NOT:
-            unreachable("not should not make it here");
-        case IR_UNARY_SIZEOF:
-            unreachable("sizeof should not make it here");
-        case IR_UNARY_COUNTOF:
-            unreachable("countof should not make it here");
     }
     unreachable("");
 }
