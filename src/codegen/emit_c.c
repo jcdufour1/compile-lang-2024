@@ -302,8 +302,6 @@ static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, I
 static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
     (void) strs;
     switch (bin_type) {
-        case IR_BINARY_SINGLE_EQUAL:
-            unreachable("");
         case IR_BINARY_SUB:
             string_extend_cstr(&a_main, &strs->output, " - ");
             return;
@@ -345,12 +343,6 @@ static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
             return;
         case IR_BINARY_BITWISE_OR:
             string_extend_cstr(&a_main, &strs->output, " | ");
-            return;
-        case IR_BINARY_LOGICAL_AND:
-            string_extend_cstr(&a_main, &strs->output, " && ");
-            return;
-        case IR_BINARY_LOGICAL_OR:
-            string_extend_cstr(&a_main, &strs->output, " || ");
             return;
         case IR_BINARY_SHIFT_LEFT:
             string_extend_cstr(&a_main, &strs->output, " << ");

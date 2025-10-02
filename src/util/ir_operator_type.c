@@ -4,7 +4,7 @@ IR_BINARY_TYPE ir_binary_type_from_binary_type(BINARY_TYPE type) {
     static_assert(BINARY_COUNT == 19, "exhausive handling of binary types");
     switch (type) {
         case BINARY_SINGLE_EQUAL:
-            return IR_BINARY_SINGLE_EQUAL;
+            unreachable("");
         case BINARY_SUB:
             return IR_BINARY_SUB;
         case BINARY_ADD:
@@ -34,9 +34,9 @@ IR_BINARY_TYPE ir_binary_type_from_binary_type(BINARY_TYPE type) {
         case BINARY_BITWISE_OR:
             return IR_BINARY_BITWISE_OR;
         case BINARY_LOGICAL_AND:
-            return IR_BINARY_LOGICAL_AND;
+            unreachable("");
         case BINARY_LOGICAL_OR:
-            return IR_BINARY_LOGICAL_OR;
+            unreachable("");
         case BINARY_SHIFT_LEFT:
             return IR_BINARY_SHIFT_LEFT;
         case BINARY_SHIFT_RIGHT:

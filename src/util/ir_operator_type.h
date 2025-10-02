@@ -6,7 +6,6 @@
 #include <operator_type.h>
 
 typedef enum {
-    IR_BINARY_SINGLE_EQUAL,
     IR_BINARY_SUB,
     IR_BINARY_ADD,
     IR_BINARY_MULTIPLY,
@@ -21,8 +20,6 @@ typedef enum {
     IR_BINARY_BITWISE_XOR,
     IR_BINARY_BITWISE_AND,
     IR_BINARY_BITWISE_OR,
-    IR_BINARY_LOGICAL_AND,
-    IR_BINARY_LOGICAL_OR,
     IR_BINARY_SHIFT_LEFT,
     IR_BINARY_SHIFT_RIGHT,
 
@@ -31,8 +28,6 @@ typedef enum {
 
 static inline Strv ir_binary_type_to_strv(IR_BINARY_TYPE bin_type) {
     switch (bin_type) {
-        case IR_BINARY_SINGLE_EQUAL:
-            return sv("=");
         case IR_BINARY_SUB:
             return sv("-");
         case IR_BINARY_ADD:
@@ -61,10 +56,6 @@ static inline Strv ir_binary_type_to_strv(IR_BINARY_TYPE bin_type) {
             return sv("&");
         case IR_BINARY_BITWISE_OR:
             return sv("|");
-        case IR_BINARY_LOGICAL_AND:
-            return sv("&&");
-        case IR_BINARY_LOGICAL_OR:
-            return sv("||");
         case IR_BINARY_SHIFT_LEFT:
             return sv("<<");
         case IR_BINARY_SHIFT_RIGHT:
