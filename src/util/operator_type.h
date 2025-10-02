@@ -83,6 +83,8 @@ typedef enum {
     UNARY_LOGICAL_NOT,
     UNARY_SIZEOF,
     UNARY_COUNTOF,
+
+    UNARY_COUNT,
 } UNARY_TYPE;
 
 static inline Strv unary_type_to_strv(UNARY_TYPE unary_type) {
@@ -99,6 +101,8 @@ static inline Strv unary_type_to_strv(UNARY_TYPE unary_type) {
             return sv("sizeof");
         case UNARY_COUNTOF:
             return sv("countof");
+        case UNARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

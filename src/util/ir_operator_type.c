@@ -46,3 +46,24 @@ IR_BINARY_TYPE ir_binary_type_from_binary_type(BINARY_TYPE type) {
     }
     unreachable("");
 }
+
+IR_UNARY_TYPE ir_unary_type_from_unary_type(UNARY_TYPE type) {
+    static_assert(BINARY_COUNT == 19, "exhausive handling of binary types");
+    switch (type) {
+        case UNARY_DEREF:
+            return IR_UNARY_DEREF;
+        case UNARY_REFER:
+            return IR_UNARY_REFER;
+        case UNARY_UNSAFE_CAST:
+            return IR_UNARY_UNSAFE_CAST;
+        case UNARY_LOGICAL_NOT:
+            return IR_UNARY_LOGICAL_NOT;
+        case UNARY_SIZEOF:
+            return IR_UNARY_SIZEOF;
+        case UNARY_COUNTOF:
+            return IR_UNARY_COUNTOF;
+        case UNARY_COUNT:
+            unreachable("");
+    }
+    unreachable("");
+}

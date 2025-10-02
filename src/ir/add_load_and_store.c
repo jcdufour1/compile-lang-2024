@@ -1460,7 +1460,7 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             Ir_unary* new_unary = ir_unary_new(
                 old_unary->pos,
                 new_child,
-                old_unary->token_type,
+                ir_unary_type_from_unary_type(old_unary->token_type),
                 rm_tuple_lang_type(old_unary->lang_type, old_unary->pos),
                 util_literal_name_new()
             );
@@ -1470,6 +1470,8 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             return new_unary->name;
         case UNARY_LOGICAL_NOT:
             unreachable("not should not still be present here");
+        case UNARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

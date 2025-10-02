@@ -106,6 +106,8 @@ static inline Strv ir_unary_type_to_strv(IR_UNARY_TYPE ir_unary_type) {
 
 IR_BINARY_TYPE ir_binary_type_from_binary_type(BINARY_TYPE type);
 
+IR_UNARY_TYPE ir_unary_type_from_unary_type(UNARY_TYPE type);
+
 #define ir_unary_type_print(ir_unary_type) strv_print(ir_unary_type_to_strv(ir_unary_type))
 
 #endif // IR_OPERATOR_TYPE_H

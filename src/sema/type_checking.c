@@ -1210,6 +1210,8 @@ bool try_set_unary_types_finish(
                 new_lang_type // TODO: make this u1?
             )));
             return true;
+        case UNARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
