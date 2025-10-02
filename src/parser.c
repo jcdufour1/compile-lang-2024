@@ -2044,7 +2044,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
             }
         } else {
             if_stmt->condition = uast_condition_new(if_token.pos, NULL);
-            if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
+            if_stmt->condition->child = uast_condition_get_default_child(uast_literal_wrap(
                 util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
             ));
         }

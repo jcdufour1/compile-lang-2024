@@ -210,7 +210,7 @@ void ir_lang_type_primitive_set_atom(Ir_lang_type_primitive* ir_lang_type, Ir_la
 void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom) {
     switch (ir_lang_type->type) {
         case IR_LANG_TYPE_PRIMITIVE:
-            ir_lang_type_primitive_set_atom( ir_lang_type_primitive_unwrap(ir_lang_type), atom);
+            ir_lang_type_primitive_set_atom(ir_lang_type_primitive_unwrap(ir_lang_type), atom);
             return;
         case IR_LANG_TYPE_STRUCT:
             ir_lang_type_struct_unwrap(ir_lang_type)->atom = atom;

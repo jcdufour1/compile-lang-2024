@@ -4,7 +4,7 @@ Strv serialize_struct_def_base(Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Lang_type curr = vec_at(&base.members, idx)->lang_type;
-        string_extend_strv(&a_main, &name, serialize_lang_type( curr));
+        string_extend_strv(&a_main, &name, serialize_lang_type(curr));
         //string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(curr));
         //string_extend_cstr(&a_main, &name, "_");
         //string_extend_size_t(&a_main, &name, lang_type_get_str(curr).count);
@@ -40,7 +40,7 @@ Strv serialize_lang_type_struct_thing(Lang_type lang_type) {
 
     Tast_def* def = NULL;
     unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-    string_extend_strv(&a_main, &name, serialize_struct_def_base( tast_def_get_struct_def_base(def)));
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(tast_def_get_struct_def_base(def)));
 
     return string_to_strv(name);
 }
@@ -49,15 +49,15 @@ Strv serialize_lang_type_tuple(Lang_type_tuple lang_type) {
     String name = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
         Lang_type curr = vec_at_const(lang_type.lang_types, idx);
-        string_extend_strv(&a_main, &name, serialize_lang_type( curr));
+        string_extend_strv(&a_main, &name, serialize_lang_type(curr));
     }
     return string_to_strv(name);
 }
 
 Strv serialize_lang_type_fn(Lang_type_fn lang_type) {
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_lang_type_tuple( lang_type.params));
-    string_extend_strv(&a_main, &name, serialize_lang_type( *lang_type.return_type));
+    string_extend_strv(&a_main, &name, serialize_lang_type_tuple(lang_type.params));
+    string_extend_strv(&a_main, &name, serialize_lang_type(*lang_type.return_type));
     return string_to_strv(name);
 }
 
@@ -70,10 +70,10 @@ Strv serialize_lang_type(Lang_type lang_type) {
     // TODO: factor in lang_type.type into serialization
     switch (lang_type.type) {
         case LANG_TYPE_FN: {
-            return serialize_lang_type_fn( lang_type_fn_const_unwrap(lang_type));
+            return serialize_lang_type_fn(lang_type_fn_const_unwrap(lang_type));
         }
         case LANG_TYPE_TUPLE:
-            return serialize_lang_type_tuple( lang_type_tuple_const_unwrap(lang_type));
+            return serialize_lang_type_tuple(lang_type_tuple_const_unwrap(lang_type));
         case LANG_TYPE_PRIMITIVE:
             // fallthrough
         case LANG_TYPE_STRUCT:
@@ -81,7 +81,7 @@ Strv serialize_lang_type(Lang_type lang_type) {
         case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
-            return serialize_lang_type_struct_thing( lang_type);
+            return serialize_lang_type_struct_thing(lang_type);
         case LANG_TYPE_VOID: {
             String name = {0};
             string_extend_cstr(&a_main, &name, "void");

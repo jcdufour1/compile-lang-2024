@@ -244,7 +244,7 @@ bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE mode, Lang_ty
 void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
         case LANG_TYPE_PRIMITIVE:
-            lang_type_primitive_set_atom( lang_type_primitive_unwrap(lang_type), atom);
+            lang_type_primitive_set_atom(lang_type_primitive_unwrap(lang_type), atom);
             return;
         case LANG_TYPE_ENUM:
             lang_type_enum_unwrap(lang_type)->atom = atom;

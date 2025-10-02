@@ -7,7 +7,7 @@
 #include <symbol_table.h>
 
 static void extend_pos(String* buf, Pos pos) {
-    string_extend_cstr(&a_print, buf, "(( line:");
+    string_extend_cstr(&a_print, buf, "((line:");
     string_extend_int64_t(&a_print, buf, pos.line);
     string_extend_cstr(&a_print, buf, " ))");
 }
