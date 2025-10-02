@@ -15,6 +15,7 @@
 #include <ir_lang_type_print.h>
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
+#include <ir_operator_type.h>
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -736,6 +737,8 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
             return false;
         case BINARY_SHIFT_RIGHT:
             return false;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -1388,7 +1391,7 @@ static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
         old_bin->pos,
         load_expr(new_block, old_bin->lhs),
         load_expr(new_block, old_bin->rhs),
-        old_bin->token_type,
+        ir_binary_type_from_binary_type(old_bin->token_type), // TODO: rename from TOKEN_TYPE to IR_BINARY_TYPE
         rm_tuple_lang_type(old_bin->lang_type, old_bin->pos),
         util_literal_name_new()
     );
@@ -1457,7 +1460,7 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             Ir_unary* new_unary = ir_unary_new(
                 old_unary->pos,
                 new_child,
-                old_unary->token_type,
+                ir_unary_type_from_unary_type(old_unary->token_type),
                 rm_tuple_lang_type(old_unary->lang_type, old_unary->pos),
                 util_literal_name_new()
             );
@@ -1467,6 +1470,8 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             return new_unary->name;
         case UNARY_LOGICAL_NOT:
             unreachable("not should not still be present here");
+        case UNARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -2248,7 +2253,7 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     }
 }
 
-static void load_import(Tast_import* old_import) {
+static void load_import_path(Tast_import_path* old_import) {
     Name yield_name = util_literal_name_new();
     unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
         old_import->pos,
@@ -2375,7 +2380,7 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
             unreachable("enum def should not make it here");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
+        case TAST_IMPORT_PATH:
             todo();
         case TAST_LABEL:
             load_label(new_block, tast_label_unwrap(old_def));
@@ -2630,8 +2635,8 @@ static void load_def_sometimes(Tast_def* old_def) {
             return;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_IMPORT:
-            load_import(tast_import_unwrap(old_def));
+        case TAST_IMPORT_PATH:
+            load_import_path(tast_import_path_unwrap(old_def));
             return;
         case TAST_LABEL:
             return;

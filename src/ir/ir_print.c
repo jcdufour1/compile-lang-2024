@@ -23,7 +23,7 @@ Strv ir_binary_print_internal(const Ir_binary* binary, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "binary", indent);
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
-    string_extend_strv(&a_print, &buf, binary_type_to_strv(binary->token_type));
+    string_extend_strv(&a_print, &buf, ir_binary_type_to_strv(binary->token_type));
     extend_name(NAME_LOG, &buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
     extend_child_name(&buf, "rhs", binary->rhs);
@@ -37,7 +37,7 @@ Strv ir_unary_print_internal(const Ir_unary* unary, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "unary", indent);
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
-    string_extend_strv(&a_print, &buf, unary_type_to_strv(unary->token_type));
+    string_extend_strv(&a_print, &buf, ir_unary_type_to_strv(unary->token_type));
     extend_name(NAME_LOG, &buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&a_print, &buf, "\n");

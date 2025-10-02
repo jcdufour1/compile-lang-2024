@@ -444,9 +444,8 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     return chain;
 }
 
-// TODO: rename tast_import to tast_mod_path?
-static Tast_type tast_gen_import(const char* prefix) {
-    Tast_type import = {.name = tast_name_new(prefix, "import", false)};
+static Tast_type tast_gen_import_path(const char* prefix) {
+    Tast_type import = {.name = tast_name_new(prefix, "import_path", false)};
 
     append_member(&import.members, "Tast_block*", "block");
     append_member(&import.members, "Strv", "mod_path");
@@ -561,7 +560,7 @@ static Tast_type tast_gen_def(const char* prefix) {
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &def.sub_types, tast_gen_label(base_name));
-    vec_append(&gen_a, &def.sub_types, tast_gen_import(base_name));
+    vec_append(&gen_a, &def.sub_types, tast_gen_import_path(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_variable_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_struct_def(base_name));

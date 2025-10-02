@@ -734,6 +734,8 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
             return lhs_val<<rhs_val;
         case BINARY_SHIFT_RIGHT:
             return lhs_val>>rhs_val;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -787,6 +789,8 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
         case BINARY_SHIFT_RIGHT:
             msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"FMT"` is not supported\n", binary_type_print(token_type));
             return false;
+        case BINARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -1206,6 +1210,8 @@ bool try_set_unary_types_finish(
                 new_lang_type // TODO: make this u1?
             )));
             return true;
+        case UNARY_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -1691,7 +1697,7 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
                 return STMT_ERROR;
             }
             // TODO: make tast node type to hold this new block
-            unwrap(sym_tbl_add(tast_import_wrap(tast_import_new(
+            unwrap(sym_tbl_add(tast_import_path_wrap(tast_import_path_new(
                 new_block->pos,
                 new_block,
                 uast_import_path_unwrap(uast)->mod_path

@@ -2,6 +2,8 @@
 #define MSG_TODO_H
 
 #include <diag_type.h>
+#include <util.h>
+#include <strv.h>
 
 // TODO: remove this forward declaration
 __attribute__((format (printf, 5, 6)))

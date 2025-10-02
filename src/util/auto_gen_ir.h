@@ -131,7 +131,7 @@ static Ir_type ir_gen_unary(void) {
     Ir_type unary = {.name = ir_name_new("operator", "unary", false)};
 
     append_member(&unary.members, "Name", "child");
-    append_member(&unary.members, "UNARY_TYPE", "token_type");
+    append_member(&unary.members, "IR_UNARY_TYPE", "token_type");
     append_member(&unary.members, "Ir_lang_type", "lang_type");
     append_member(&unary.members, "Name", "name");
 
@@ -143,7 +143,7 @@ static Ir_type ir_gen_binary(void) {
 
     append_member(&binary.members, "Name", "lhs");
     append_member(&binary.members, "Name", "rhs");
-    append_member(&binary.members, "BINARY_TYPE", "token_type");
+    append_member(&binary.members, "IR_BINARY_TYPE", "token_type");
     append_member(&binary.members, "Ir_lang_type", "lang_type");
     append_member(&binary.members, "Name", "name");
 
@@ -944,7 +944,8 @@ static void gen_all_irs(const char* file_path, bool implementation) {
         gen_gen("#define IR_FORWARD_DECL_H\n");
         gen_gen("#include <ir_lang_type.h>\n");
     }
-
+    gen_gen("#include <ir_operator_type.h>\n");
+    gen_gen("#include <operator_type.h>\n");
 
     if (!implementation) {
         ir_gen_ir_forward_decl(ir);

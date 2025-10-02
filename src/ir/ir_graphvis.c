@@ -316,7 +316,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
 static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "binary ");
-    string_extend_strv(&a_print, &type_buf, binary_type_to_strv(bin->token_type));
+    string_extend_strv(&a_print, &type_buf, ir_binary_type_to_strv(bin->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
     string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
@@ -328,7 +328,7 @@ static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
 static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "unary ");
-    string_extend_strv(&a_print, &type_buf, unary_type_to_strv(unary->token_type));
+    string_extend_strv(&a_print, &type_buf, ir_unary_type_to_strv(unary->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
     string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
@@ -432,6 +432,10 @@ static bool ir_graphvis_do_next_arrow(const Ir* ir) {
             return true;
         case IR_STORE_ANOTHER_IR:
             return true;
+        case IR_IMPORT_PATH:
+            todo();
+        case IR_REMOVED:
+            todo();
     }
     unreachable("");
 }
@@ -475,6 +479,10 @@ static void ir_graphvis_internal(String* buf, const Ir* ir) {
         case IR_STORE_ANOTHER_IR:
             ir_store_another_ir_graphvis_internal(buf, ir_store_another_ir_const_unwrap(ir));
             return;
+        case IR_IMPORT_PATH:
+            todo();
+        case IR_REMOVED:
+            todo();
     }
     unreachable("");
 }

@@ -800,9 +800,9 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name( load->ir_src);
-//    lang_type_set_pointer_depth( &lang_type, 0);
-//    extend_type_call_str( output, lang_type);
+//    Lang_type lang_type = lang_type_from_get_name(load->ir_src);
+//    lang_type_set_pointer_depth(&lang_type, 0);
+//    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, load->ir_src);
 //    string_extend_cstr(&a_main, output, ", i32 0, i32 ");
@@ -816,13 +816,13 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name( load->callee);
-//    lang_type_set_pointer_depth( &lang_type, 0);
-//    extend_type_call_str( output, lang_type);
+//    Lang_type lang_type = lang_type_from_get_name(load->callee);
+//    lang_type_set_pointer_depth(&lang_type, 0);
+//    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, load->callee);
 //    string_extend_cstr(&a_main, output, ", ");
-//    extend_type_call_str( output, lang_type_from_get_name( load->index));
+//    extend_type_call_str(output, lang_type_from_get_name(load->index));
 //    string_extend_cstr(&a_main, output, " ");
 //
 //    Ir* struct_index = NULL;
@@ -831,7 +831,7 @@
 //        string_extend_cstr(&a_main, output, "%");
 //        ir_extend_name(output, ir_tast_get_name(struct_index));
 //    } else {
-//        emit_operator_operand( output, load->index);
+//        emit_operator_operand(output, load->index);
 //    }
 //
 //    vec_append(&a_main, output, '\n');

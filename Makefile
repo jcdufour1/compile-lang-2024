@@ -41,6 +41,8 @@ OBJS=\
 	 ${BUILD_DIR}/ast_utils/uast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_utils.o \
+	 ${BUILD_DIR}/lang_type/lang_type_after.o \
+	 ${BUILD_DIR}/lang_type/ir_lang_type_after.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
@@ -52,6 +54,7 @@ OBJS=\
 	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
+	 ${BUILD_DIR}/util/ir_operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
@@ -208,6 +211,12 @@ ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/
 ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_utils.o src/ast_utils/tast_utils.c
 
+${BUILD_DIR}/lang_type/lang_type_after.o: ${DEP_COMMON} src/lang_type/lang_type_after.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_after.o src/lang_type/lang_type_after.c
+
+${BUILD_DIR}/lang_type/ir_lang_type_after.o: ${DEP_COMMON} src/lang_type/ir_lang_type_after.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ir_lang_type_after.o src/lang_type/ir_lang_type_after.c
+
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
 
@@ -249,6 +258,9 @@ ${BUILD_DIR}/token/token.o: ${DEP_COMMON} src/token/token.c
 
 ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/operator_type.o src/util/operator_type.c
+
+${BUILD_DIR}/util/ir_operator_type.o: ${DEP_COMMON} src/util/ir_operator_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/ir_operator_type.o src/util/ir_operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
