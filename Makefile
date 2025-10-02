@@ -41,6 +41,7 @@ OBJS=\
 	 ${BUILD_DIR}/ast_utils/uast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_utils.o \
+	 ${BUILD_DIR}/lang_type/lang_type_after.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
@@ -207,6 +208,9 @@ ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/
 
 ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_utils.o src/ast_utils/tast_utils.c
+
+${BUILD_DIR}/lang_type/lang_type_after.o: ${DEP_COMMON} src/lang_type/lang_type_after.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_after.o src/lang_type/lang_type_after.c
 
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
