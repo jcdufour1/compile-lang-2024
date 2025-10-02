@@ -324,7 +324,6 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
         status = false;
         goto finish;
     }
-    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
