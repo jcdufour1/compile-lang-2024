@@ -228,7 +228,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_UNKNOWN:
             todo();
         case UAST_OPERATOR:
-            todo();
+            *new_expr = expr;
+            return EXPAND_NAME_NEW_EXPR;
         case UAST_INDEX:
             todo();
         case UAST_LITERAL:
