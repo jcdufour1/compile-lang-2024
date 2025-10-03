@@ -1,18 +1,28 @@
 type coll import = std.collections
 
-// TODO: make Arr struct and arr_new function local as well as arr_extend to prevent risk of this test breaking
-
-// these local functions are needed in case the std functions get modified
+// these local functions and Local_arr are needed in case the std functions get modified
 //   (so that this test will still catch the bug that it was designed to catch)
-fn arr_extend(dest coll.Arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+
+type Local_arr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+    max u64
+}
+
+fn arr_new(max_capacity u64, ItemT Type, init_elems coll.Slice(<ItemT>) = [], file coll.Str = #file, line i32 = #line, column i32 = #column) Local_arr(<ItemT>) {
+    let arr Local_arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
+    arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
+    return arr
+}
+
+fn arr_extend(dest coll.Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
         arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
     }
 }
 
 fn main() i32 {
-    let arr coll.Arr(<i32>) = coll.arr_new(87, i32)
-    coll.arr_extend(&arr, [], .file = file, column = 8)
-        //coll.arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
+    let arr Local_arr(<i32>) = arr_new(87, i32)
+    arr_extend(&arr, [], .file = file, column = 8)
     return 0
 }
