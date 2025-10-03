@@ -1,4 +1,5 @@
 type coll import = std.collections
+type util import = std.util
 
 // these local functions and Local_arr are needed in case the std functions get modified
 //   (so that this test will still catch the bug that it was designed to catch)
@@ -15,10 +16,7 @@ fn arr_new(max_capacity u64, ItemT Type, init_elems coll.Slice(<ItemT>) = [], fi
     return arr
 }
 
-fn arr_extend(dest coll.Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
-    for idx u64 in 0..src.count {
-        arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
-    }
+fn arr_extend(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
 }
 
 fn main() i32 {

@@ -1,16 +1,16 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/fake_designated_arg.own:15:52:[1;31merror[0;39m:function parameter `file` has been assigned to more than once
-    14 |     let arr coll.Arr(<i32>) = coll.arr_new(87, i32)
-    15 |     coll.arr_extend(&arr, [], .file = file, column = 8)
-       |                                                    ^
-    16 |         //coll.arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
-std/collections.own:73:4:[1;34mnote[0;39m:function `arr_extend` defined here
-    72 | 
-    73 | fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+tests/inputs/fake_designated_arg.own:24:47:[1;31merror[0;39m:function parameter `file` has been assigned to more than once
+    23 |     let arr Local_arr(<i32>) = arr_new(87, i32)
+    24 |     arr_extend(&arr, [], .file = file, column = 8)
+       |                                               ^
+    25 |     return 0
+tests/inputs/fake_designated_arg.own:19:4:[1;34mnote[0;39m:function `arr_extend` defined here
+    18 | 
+    19 | fn arr_extend(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
        |    ^
-    74 |     for idx u64 in 0..src.count {
+    20 | }
 
 compile::return_code 1
 
