@@ -2373,14 +2373,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
-    size_t amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
+    size_t amt_args_needed = MAX(
+        is_variadic ? params->params.info.count - 1 : params->params.info.count,
+        fun_call->args.info.count
+    );
 
-    Tast_expr_vec new_args = {0};
     Bool_vec new_args_set = {0};
-    vec_reserve(&a_main, &new_args, amt_args_needed);
-    while (new_args.info.count < amt_args_needed) {
-        vec_append(&a_main, &new_args, NULL);
-    }
     vec_reserve(&a_main, &new_args_set, amt_args_needed);
     while (new_args_set.info.count < amt_args_needed) {
         vec_append(&a_main, &new_args_set, false);
@@ -2511,7 +2509,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         if (curr_arg_count <= new_args_set.info.count && vec_at(&new_args_set, curr_arg_count)) {
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
-                tast_expr_get_pos(vec_at(&new_args, curr_arg_count)),
+                uast_expr_get_pos(vec_at(&fun_call->args, curr_arg_count)),
                 "function parameter `"FMT"` has been assigned to more than once\n", 
                 name_print(NAME_MSG, vec_at(&params->params, curr_arg_count)->base->name)
             );
@@ -2780,7 +2778,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     params = fun_decl->params;
 
-    memset(&new_args, 0, sizeof(new_args));
+    Tast_expr_vec new_args = {0};
     memset(&new_args_set, 0, sizeof(new_args_set));
     amt_args_needed -= fun_decl->generics.info.count;
     vec_reserve(&a_main, &new_args, amt_args_needed);

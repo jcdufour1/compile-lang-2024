@@ -1,0 +1,18 @@
+type coll import = std.collections
+
+// TODO: make Arr struct and arr_new function local as well as arr_extend to prevent risk of this test breaking
+
+// these local functions are needed in case the std functions get modified
+//   (so that this test will still catch the bug that it was designed to catch)
+fn arr_extend(dest coll.Arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+    for idx u64 in 0..src.count {
+        arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+    }
+}
+
+fn main() i32 {
+    let arr coll.Arr(<i32>) = coll.arr_new(87, i32)
+    coll.arr_extend(&arr, [], .file = file, column = 8)
+        //coll.arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
+    return 0
+}
