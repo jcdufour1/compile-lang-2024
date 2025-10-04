@@ -2401,7 +2401,6 @@ Name get_is_cont2ing(const Defer_collection* item) {
 }
 
 // TODO: try to come up with a better name for this function
-// TODO: consider if this can be combined with load_brking_or_conting_set_etc
 static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name break_out_of, bool is_yielding) {
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
@@ -2446,7 +2445,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
                     .lang_type = lang_type_new_u1(),
                     .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
                 })),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1()))) // TODO: call helper functions for making some of these literals
             );
             load_assignment(new_block, is_brk_assign_aux);
 
@@ -2547,6 +2546,10 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 Ir_goto* new_goto = ir_goto_new(rtn->pos, util_literal_name_new(), vec_top(pairs).label->name);
                 vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             }
+
+            // TODO: uncomment and fix below code so that return in for loop works
+            //   in tests/inputs/defer.own, make case for return in for loop
+            //load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
             return;
         }
         case TAST_FOR_WITH_COND:
