@@ -3586,6 +3586,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     return status;
 }
 
+// TODO: do not accept entire Uast_if as input (because Uast_if->body is not expected to be provided by the caller)
 bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     bool status = true;
 
@@ -3789,13 +3790,17 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
 
+    Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id);
+
+    Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
+
     Tast_expr* new_operand_typed = NULL;
-    if (!try_set_expr_types(&new_operand_typed, uast_expr_clone(lang_switch->operand, false, 0, lang_switch->pos /* TODO */))) {
+    if (!try_set_expr_types(&new_operand_typed, oper)) {
         return false;
     }
 
     Uast_variable_def* oper_var = uast_variable_def_new(
-        uast_expr_get_pos(lang_switch->operand),
+        uast_expr_get_pos(oper),
         lang_type_to_ulang_type(tast_expr_get_lang_type(new_operand_typed)),
         util_literal_name_new()
     );
@@ -3869,18 +3874,26 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             )));
         }
 
-        vec_append(&a_main, &switch_case_defer_add_if_true, old_case->if_true);
+        Scope_id inner_scope = symbol_collection_new(outer_scope_id);
+        log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
+        // TODO: try to remove stmt_clone below (for performance)
+        vec_append(&a_main, &switch_case_defer_add_if_true, uast_stmt_clone(
+            old_case->if_true,
+            true,
+            inner_scope,
+            old_case->pos /* TODO */
+        ));
         Uast_block* if_true = uast_block_new(
             old_case->pos,
             (Uast_stmt_vec) {0},
             old_case->pos,
-            old_case->scope_id
+            inner_scope
         );
                 
         parent_of = PARENT_OF_CASE;
         parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
+        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
             status = false;
             goto error_inner;
         }
@@ -3917,8 +3930,11 @@ error_inner:
         stmts,
         lang_switch->pos /* TODO */,
         vec_at(&new_if_else->tasts, 0)->body->lang_type,
-        vec_at(&new_if_else->tasts, 0)->body->scope_id /* TODO */
+        outer_scope_id //vec_at(&new_if_else->tasts, 0)->body->scope_id /* TODO */
     );
+    //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
+    //    scope_get_parent_tbl_update(vec_at(&new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
+    //}
 
 error:
     parent_of = old_parent_of;

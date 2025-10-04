@@ -39,4 +39,11 @@ Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, 
 
 Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
+Uast_enum_get_tag* uast_enum_get_tag_clone(
+    const Uast_enum_get_tag* get_tag,
+    bool use_new_scope,
+    Scope_id new_scope,
+    Pos dest_pos
+);
+
 #endif // UAST_CLONE_H

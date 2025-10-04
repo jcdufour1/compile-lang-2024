@@ -152,7 +152,33 @@ fn fun8() i32 {
     return 8
 }
 
-// TODO: test case for nested if within nested for
+fn fun9() i32 {
+    defer io.printf("at very end yes 9.1\n")
+    let num i32 = 0
+    for idx i32 in 0..2 {
+        for idx_2 i32 in 0..2 {
+            if 0 {
+                defer io.printf("no 9.8\n")
+                io.printf("no 9.1\n")
+                return 79
+            } else {
+                defer io.printf("yes 9.3\n")
+                io.printf("yes 9.2\n")
+                return 9
+                defer io.printf("no 9.2\n")
+                io.printf("no 9.3\n")
+            }
+            defer io.printf("at very end no 9.9\n")
+            io.printf("at very end no 9.10\n")
+        }
+    }
+    defer io.printf("at very end yes 9.2\n")
+    io.printf("at very end yes 9.8\n")
+    return 8
+    defer io.printf("at very end no 9.1\n")
+    io.printf("at very end no 9.11\n")
+    return 8
+}
 
 fn main() i32 {
     util.assert(fun1() == 1)
@@ -163,16 +189,7 @@ fn main() i32 {
     util.assert(fun6() == 6)
     util.assert(fun7() == 7)
     util.assert(fun8() == 8)
+    util.assert(fun9() == 9)
 
-    //io.printf("thing thing\n");
-    //defer io.printf("thing thing 8\n");
-    //if 1 {
-    //    io.printf("thing thing 3\n");
-    //    defer io.printf("thing thing 4\n");
-    //    return 5
-    //    io.printf("never 2\n");
-    //} else {
-    //    io.printf("never\n");
-    //}
-    return 1011
+    return 0
 }

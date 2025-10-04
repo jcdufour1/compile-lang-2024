@@ -2495,7 +2495,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 "label `"FMT"` points to a scope that is not a parent of this statement\n",
                 name_print(NAME_MSG, break_out_of)
             );
-            todo();
             break;
         }
         unwrap(idx > 0);
