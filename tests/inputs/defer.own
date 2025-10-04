@@ -152,6 +152,7 @@ fn fun8() i32 {
     return 8
 }
 
+// TODO: test case for nested if within nested for
 
 fn main() i32 {
     util.assert(fun1() == 1)

@@ -180,6 +180,8 @@ continue(<thing>)
 - test case for circular imports
 - if this is typed, compiler should say, "did you mean `if let`", etc.:
         if .some(ch) = fgetc(file) {
+- "_1__7_builtin_str____2658" could be printed as "7builtin_str____2658", 
+    because variable names cannot start with digit anyway
 
 
 
