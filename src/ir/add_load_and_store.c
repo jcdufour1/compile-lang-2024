@@ -1391,7 +1391,7 @@ static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
         old_bin->pos,
         load_expr(new_block, old_bin->lhs),
         load_expr(new_block, old_bin->rhs),
-        ir_binary_type_from_binary_type(old_bin->token_type), // TODO: rename from TOKEN_TYPE to IR_BINARY_TYPE
+        ir_binary_type_from_binary_type(old_bin->token_type),
         rm_tuple_lang_type(old_bin->lang_type, old_bin->pos),
         util_literal_name_new()
     );
@@ -2401,7 +2401,8 @@ Name get_is_cont2ing(const Defer_collection* item) {
 }
 
 // TODO: try to come up with a better name for this function
-static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name break_out_of, bool is_yielding) {
+// if use_break_out_of is false, then every scope in function will be breaked out of
+static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool use_break_out_of, Name break_out_of, bool is_yielding) {
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
@@ -2427,14 +2428,16 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     assert(defered_collections.coll_stack.info.count > 0);
     size_t idx = defered_collections.coll_stack.info.count - 1;
     while (1) {
-        assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
-        log(LOG_DEBUG, "%zu\n", curr_scope);
-        log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
+        if (use_break_out_of) {
+            assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
+            log(LOG_DEBUG, "%zu\n", curr_scope);
+            log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
+        }
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
 
-        if (curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
+        if (use_break_out_of && curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2477,12 +2480,15 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
         }
 
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
-        if (curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
+        if (use_break_out_of && curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
             break;
         }
 
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
         if (idx < 1) {
+            if (!use_break_out_of) {
+                break;
+            }
             log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
             msg(
                 DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
@@ -2541,15 +2547,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             );
             load_assignment(new_block, is_rtn_assign);
 
-            Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-            if (pairs->info.count > 0) {
-                Ir_goto* new_goto = ir_goto_new(rtn->pos, util_literal_name_new(), vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
-            }
-
-            // TODO: uncomment and fix below code so that return in for loop works
-            //   in tests/inputs/defer.own, make case for return in for loop
-            //load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
+            load_yielding_set_etc(new_block, old_stmt, false, (Name) {0}, true);
             return;
         }
         case TAST_FOR_WITH_COND:
@@ -2591,7 +2589,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 load_assignment(new_block, new_assign);
             }
 
-            load_yielding_set_etc(new_block, old_stmt, tast_yield_unwrap(old_stmt)->break_out_of, true);
+            load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true);
             return;
         }
         case TAST_CONTINUE: {
@@ -2601,7 +2599,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 return;
             }
 
-            load_yielding_set_etc(new_block, old_stmt, tast_continue_unwrap(old_stmt)->break_out_of, false);
+            load_yielding_set_etc(new_block, old_stmt, true, tast_continue_unwrap(old_stmt)->break_out_of, false);
             return;
         }
         case TAST_DEFER: {
