@@ -104,9 +104,12 @@ static Name name_parent_fn;
 // forward declarations
 //
 
-static void load_all_is_rtn_checks(Ir_block* new_block);
+#define load_single_is_rtn_check(new_block, sym_name, if_rtning, otherwise) \
+    load_single_is_rtn_check_internal(__FILE__, __LINE__, new_block, sym_name, if_rtning, otherwise);
 
-static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise);
+static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise);
+
+static void load_all_is_rtn_checks(Ir_block* new_block);
 
 static void if_for_add_cond_goto_internal(
     Loc loc,
@@ -388,21 +391,21 @@ static void load_block_stmts(
         case DEFER_PARENT_OF_FUN: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")), new_block->scope_id)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
         case DEFER_PARENT_OF_FOR: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")), new_block->scope_id)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
         case DEFER_PARENT_OF_IF: {
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")), new_block->scope_id)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
@@ -410,10 +413,10 @@ static void load_block_stmts(
             assert(new_block);
             assert(new_block->scope_id);
             assert(defer);
-            assert(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id));
+            assert(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id)));
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
@@ -2075,8 +2078,9 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         }
 
         assert(label_if_break.base.count > 0);
+        // TODO: rename if_statement_to_branch to if_stmt_to_branch
         Ir_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if);
-        scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
+        //scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_extend(&a_main, &(*new_block)->children, &if_block->children);
 
         if (idx + 1 < if_else->tasts.info.count) {
@@ -2403,6 +2407,12 @@ Name get_is_cont2ing(const Defer_collection* item) {
 // TODO: try to come up with a better name for this function
 // if use_break_out_of is false, then every scope in function will be breaked out of
 static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool use_break_out_of, Name break_out_of, bool is_yielding) {
+    static int count = 0;
+    if (count >= 2) {
+        //todo();
+    }
+    count++;
+    log(LOG_INFO, "ENTERING load_yielding_set_etc: %zu\n", defered_collections.coll_stack.info.count);
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
@@ -2429,10 +2439,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     size_t idx = defered_collections.coll_stack.info.count - 1;
     while (1) {
         if (use_break_out_of) {
-            assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
+            //assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
             log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
             log(LOG_DEBUG, "%zu\n", curr_scope);
-            log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
+            //log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
         }
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
@@ -2441,7 +2451,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             use_break_out_of &&
             name_is_equal(
                 scope_to_name_tbl_lookup(curr_scope),
-                scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)
+                tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope // TODO: do not call tast_def_from_name on every for loop iteration (for performance)?
             )
         ) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
@@ -2488,15 +2498,15 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
         // TODO: figure out why this if statement is duplicated in this function
         if (use_break_out_of) {
-            log(LOG_VERBOSE, "curr_scope: "FMT" target block scope: "FMT"\n", 
+            log(LOG_INFO, "curr_scope: "FMT" target block scope: "FMT"\n", 
                 name_print(NAME_LOG, scope_to_name_tbl_lookup(curr_scope)),
-                name_print(NAME_LOG, scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)));
+                name_print(NAME_LOG, tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope));
         }
         if (
             use_break_out_of &&
             name_is_equal(
                 scope_to_name_tbl_lookup(curr_scope),
-                scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)
+                tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope
             )
         ) {
             break;
@@ -2513,6 +2523,8 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 "label `"FMT"` points to a scope that is not a parent of this statement\n",
                 name_print(NAME_MSG, break_out_of)
             );
+            log(LOG_INFO, "scope name of break_out_of: "FMT"\n", name_print(NAME_LOG, tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope));
+            todo();
             break;
         }
         unwrap(idx > 0);
@@ -2524,6 +2536,8 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
+
+    log(LOG_INFO, "EXITING load_yielding_set_etc\n");
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
@@ -2624,7 +2638,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
             vec_append(&a_main, pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), new_block->scope_id)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             return;
         }
@@ -2662,8 +2676,9 @@ static void load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_single_is_rtn_check(Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise) {
-    if_for_add_cond_goto(
+static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise) {
+    if_for_add_cond_goto_internal(
+        (Loc) {.file = file, .line = line},
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
             new_block->pos,

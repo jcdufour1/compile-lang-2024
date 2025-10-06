@@ -275,7 +275,7 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
     // TODO: remove label->block_scope and use label->name.scope_id instead
     new_scope_name.scope_id = block_scope;
-    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, block_scope);
+    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, scope_to_name_tbl_lookup(block_scope));
     if (!usymbol_add(uast_label_wrap(label))) {
         msg_redefinition_of_symbol(uast_label_wrap(label));
         return PARSE_ERROR;
@@ -2306,6 +2306,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         assert(new_scope_name.base.count > 0);
     } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
+        log_tokens(LOG_INFO, *tokens);
         new_scope_name = util_literal_name_new_prefix_scope(sv("scope_name"), scope_id);
     }
 

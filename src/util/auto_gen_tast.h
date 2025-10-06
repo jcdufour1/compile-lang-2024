@@ -550,7 +550,7 @@ static Tast_type tast_gen_label(const char* prefix) {
     Tast_type lang_label = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lang_label.members, "Name", "name");
-    append_member(&lang_label.members, "Scope_id", "block_scope");
+    append_member(&lang_label.members, "Name", "block_scope");
 
     return lang_label;
 }

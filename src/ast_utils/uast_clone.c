@@ -178,9 +178,8 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 }
 
 Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_id new_scope) {
-    assert(label->name.scope_id == label->block_scope);
     Scope_id scope = use_new_scope ? new_scope : label->name.scope_id;
-    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope);
+    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope));
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, bool use_new_scope, Scope_id new_scope) {

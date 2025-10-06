@@ -3523,7 +3523,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
-    assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
+    //assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -3558,7 +3558,7 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     }
 
     *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
-    assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
+    //assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -3791,7 +3791,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     Tast_if_vec new_ifs = {0};
 
     Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id, util_literal_name_new());
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(outer_scope_id)));
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(outer_scope_id)));
 
     Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
 
@@ -3879,7 +3879,6 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(old_case->scope_id)));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(inner_scope)));
         log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
-        todo();
         // TODO: try to remove stmt_clone below (for performance)
         vec_append(&a_main, &switch_case_defer_add_if_true, uast_stmt_clone(
             old_case->if_true,
@@ -4110,6 +4109,9 @@ static void do_test_bit_width(void) {
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     do_test_bit_width();
+
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(block->scope_id)));
+    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     bool status = true;
 
