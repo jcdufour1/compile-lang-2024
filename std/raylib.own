@@ -1,0 +1,546 @@
+// these bindings are unofficial bindings for raylib, and are maintained as part of this compiler project
+// these bindings are derived from raylib.h (https://github.com/raysan5/raylib)
+// these bindings are partial bindings currently (only some parts of raylib.h are ported)
+// original work copyright (c) Ramon Santamaria and raylib contributors.
+// originally licensed under zlib/libpng license.
+
+
+
+/**********************************************************************************************
+*
+*   raylib v5.5 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*
+*   FEATURES:
+*       - NO external dependencies, all required libraries included with raylib
+*       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly,
+*                        MacOS, Haiku, Android, Raspberry Pi, DRM native, HTML5.
+*       - Written in plain C code (C99) in PascalCase/camelCase notation
+*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3, 4.3, ES2, ES3 - choose at compile)
+*       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
+*       - Multiple Fonts formats supported (TTF, OTF, FNT, BDF, Sprite fonts)
+*       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
+*       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
+*       - Flexible Materials system, supporting classic maps and PBR maps
+*       - Animated 3D models supported (skeletal bones animation) (IQM, M3D, GLTF)
+*       - Shaders support, including Model shaders and Postprocessing shaders
+*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, QOA, XM, MOD)
+*       - VR stereo rendering with configurable HMD device parameters
+*       - Bindings to multiple programming languages available!
+*
+*   NOTES:
+*       - One default Font is loaded on InitWindow()->LoadFontDefault() [core, text]
+*       - One default Texture2D is loaded on rlglInit(), 1x1 white pixel R8G8B8A8 [rlgl] (OpenGL 3.3 or ES2)
+*       - One default Shader is loaded on rlglInit()->rlLoadShaderDefault() [rlgl] (OpenGL 3.3 or ES2)
+*       - One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
+*
+*   DEPENDENCIES (included):
+*       [rcore][GLFW] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input
+*       [rcore][RGFW] rgfw (ColleagueRiley - github.com/ColleagueRiley/RGFW) for window/context management and input
+*       [rlgl] glad/glad_gles2 (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading
+*       [raudio] miniaudio (David Reid - github.com/mackron/miniaudio) for audio device/context management
+*
+*   OPTIONAL DEPENDENCIES (included):
+*       [rcore] msf_gif (Miles Fogle) for GIF recording
+*       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorithm
+*       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorithm
+*       [rcore] rprand (Ramon Snatamaria) for pseudo-random numbers generation
+*       [rtextures] qoi (Dominic Szablewski - https://phoboslab.org) for QOI image manage
+*       [rtextures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
+*       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
+*       [rtextures] stb_image_resize2 (Sean Barret) for image resizing algorithms
+*       [rtextures] stb_perlin (Sean Barret) for Perlin Noise image generation
+*       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
+*       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
+*       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation
+*       [rmodels] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
+*       [rmodels] cgltf (Johannes Kuhlmann) for models loading (glTF)
+*       [rmodels] m3d (bzt) for models loading (M3D, https://bztsrc.gitlab.io/model3d)
+*       [rmodels] vox_loader (Johann Nadalutti) for models loading (VOX)
+*       [raudio] dr_wav (David Reid) for WAV audio file loading
+*       [raudio] dr_flac (David Reid) for FLAC audio file loading
+*       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
+*       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
+*       [raudio] jar_xm (Joshua Reisenauer) for XM audio module loading
+*       [raudio] jar_mod (Joshua Reisenauer) for MOD audio module loading
+*       [raudio] qoa (Dominic Szablewski - https://phoboslab.org) for QOA audio manage
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software:
+*
+*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
+*
+**********************************************************************************************/
+
+
+extern("c") fn InitWindow(width i32, height i32, title u8*); // Initialize window and OpenGL context
+extern("c") fn CloseWindow(); // Close window and unload OpenGL context
+extern("c") fn BeginDrawing(); // Setup canvas (framebuffer) to start drawing
+extern("c") fn EndDrawing(); // Setup canvas (framebuffer) to start drawing
+extern("c") fn WindowShouldClose() u1
+extern("c") fn ClearBackground(color Color); // Set background color (framebuffer clear color)
+extern("c") fn DrawRectangle(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle
+extern("c") fn DrawRectangleLines(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle outline
+extern("c") fn DrawRectangleLinesEx(rect Rectangle, thickness f32, color Color) // Draw rectangle outline
+extern("c") fn WaitTime(seconds f64); // Wait for some time (halt program execution)
+extern("c") fn IsKeyPressed(key i32) u1; // Check if a key has been pressed once
+extern("c") fn SetTargetFPS(fps i32) // Set target FPS (maximum)
+
+// Text drawing functions
+extern("c") fn DrawFPS(posX i32, posY i32);                                                     // Draw current FPS
+extern("c") fn DrawText(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
+
+// Text strings management functions (no UTF-8 strings, only byte chars)
+// NOTE: Some strings allocate memory internally for returned strings, just be careful!
+extern("c") fn TextFormat(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
+
+type Vector3 struct {
+    a f32
+    b f32
+    c f32
+}
+
+type Rectangle struct {
+    posX f32
+    posY f32
+    width f32
+    height f32
+}
+
+type Color struct {
+    r u8; // Color red value
+    g u8; // Color green value
+    b u8; // Color blue value
+    a u8; // Color alpha value
+};
+
+fn LIGHTGRAY() Color {
+    return { 200, 200, 200, 255 }   // Light Gray
+}
+fn GRAY() Color {
+    return { 130, 130, 130, 255 }   // Gray
+}
+fn DARKGRAY() Color {
+    return { 80, 80, 80, 255 }      // Dark Gray
+}
+fn YELLOW() Color {
+    return { 253, 249, 0, 255 }     // Yellow
+}
+fn GOLD() Color {
+    return { 255, 203, 0, 255 }     // Gold
+}
+fn ORANGE() Color {
+    return { 255, 161, 0, 255 }     // Orange
+}
+fn PINK() Color {
+    return { 255, 109, 194, 255 }   // Pink
+}
+fn RED() Color {
+    return { 230, 41, 55, 255 }     // Red
+}
+fn MAROON() Color {
+    return { 190, 33, 55, 255 }     // Maroon
+}
+fn GREEN() Color {
+    return { 0, 228, 48, 255 }      // Green
+}
+fn LIME() Color {
+    return { 0, 158, 47, 255 }      // Lime
+}
+fn DARKGREEN() Color {
+    return { 0, 117, 44, 255 }      // Dark Green
+}
+fn SKYBLUE() Color {
+    return { 102, 191, 255, 255 }   // Sky Blue
+}
+fn BLUE() Color {
+    return { 0, 121, 241, 255 }     // Blue
+}
+fn DARKBLUE() Color {
+    return { 0, 82, 172, 255 }      // Dark Blue
+}
+fn PURPLE() Color {
+    return { 200, 122, 255, 255 }   // Purple
+}
+fn VIOLET() Color {
+    return { 135, 60, 190, 255 }    // Violet
+}
+fn DARKPURPLE() Color {
+    return { 112, 31, 126, 255 }    // Dark Purple
+}
+fn BEIGE() Color {
+    return { 211, 176, 131, 255 }   // Beige
+}
+fn BROWN() Color {
+    return { 127, 106, 79, 255 }    // Brown
+}
+fn DARKBROWN() Color {
+    return { 76, 63, 47, 255 }      // Dark Brown
+}
+fn WHITE() Color {
+    return { 255, 255, 255, 255 }   // White
+}
+fn BLACK() Color {
+    return { 0, 0, 0, 255 }         // Black
+}
+fn BLANK() Color {
+    return { 0, 0, 0, 0 }           // Blank (Transparent)
+}
+fn MAGENTA() Color {
+    return { 255, 0, 255, 255 }     // Magenta
+}
+fn RAYWHITE() Color {
+    return { 245, 245, 245, 255 }   // My own White (raylib logo)
+}
+
+fn KEY_NULL() i32 {
+    return 0
+}        
+// Alphanumeric keys
+fn KEY_APOSTROPHE() i32 {
+    return 39
+}
+fn KEY_COMMA() i32 {
+    return 44
+}
+fn KEY_MINUS() i32 {
+    return 45
+}
+fn KEY_PERIOD() i32 {
+    return 46
+}
+fn KEY_SLASH() i32 {
+    return 47
+}
+fn KEY_ZERO() i32 {
+    return 48
+}
+fn KEY_ONE() i32 {
+    return 49
+}
+fn KEY_TWO() i32 {
+    return 50
+}
+fn KEY_THREE() i32 {
+    return 51
+}
+fn KEY_FOUR() i32 {
+    return 52
+}
+fn KEY_FIVE() i32 {
+    return 53
+}
+fn KEY_SIX() i32 {
+    return 54
+}
+fn KEY_SEVEN() i32 {
+    return 55
+}
+fn KEY_EIGHT() i32 {
+    return 56
+}
+fn KEY_NINE() i32 {
+    return 57
+}
+fn KEY_SEMICOLON() i32 {
+    return 59
+}
+fn KEY_EQUAL() i32 {
+    return 61
+}
+fn KEY_A() i32 {
+    return 65
+}
+fn KEY_B() i32 {
+    return 66
+}
+fn KEY_C() i32 {
+    return 67
+}
+fn KEY_D() i32 {
+    return 68
+}
+fn KEY_E() i32 {
+    return 69
+}
+fn KEY_F() i32 {
+    return 70
+}
+fn KEY_G() i32 {
+    return 71
+}
+fn KEY_H() i32 {
+    return 72
+}
+fn KEY_I() i32 {
+    return 73
+}
+fn KEY_J() i32 {
+    return 74
+}
+fn KEY_K() i32 {
+    return 75
+}
+fn KEY_L() i32 {
+    return 76
+}
+fn KEY_M() i32 {
+    return 77
+}
+fn KEY_N() i32 {
+    return 78
+}
+fn KEY_O() i32 {
+    return 79
+}
+fn KEY_P() i32 {
+    return 80
+}
+fn KEY_Q() i32 {
+    return 81
+}
+fn KEY_R() i32 {
+    return 82
+}
+fn KEY_S() i32 {
+    return 83
+}
+fn KEY_T() i32 {
+    return 84
+}
+fn KEY_U() i32 {
+    return 85
+}
+fn KEY_V() i32 {
+    return 86
+}
+fn KEY_W() i32 {
+    return 87
+}
+fn KEY_X() i32 {
+    return 88
+}
+fn KEY_Y() i32 {
+    return 89
+}
+fn KEY_Z() i32 {
+    return 90
+}
+fn KEY_LEFT_BRACKET() i32 {
+    return 91
+}
+fn KEY_BACKSLASH() i32 {
+    return 92
+}
+fn KEY_RIGHT_BRACKET() i32 {
+    return 93
+}
+fn KEY_GRAVE() i32 {
+    return 96
+}
+fn KEY_SPACE() i32 {
+    return 32
+}
+fn KEY_ESCAPE() i32 {
+    return 256
+}
+fn KEY_ENTER() i32 {
+    return 257
+}
+fn KEY_TAB() i32 {
+    return 258
+}
+fn KEY_BACKSPACE() i32 {
+    return 259
+}
+fn KEY_INSERT() i32 {
+    return 260
+}
+fn KEY_DELETE() i32 {
+    return 261
+}
+fn KEY_RIGHT() i32 {
+    return 262
+}
+fn KEY_LEFT() i32 {
+    return 263
+}
+fn KEY_DOWN() i32 {
+    return 264
+}
+fn KEY_UP() i32 {
+    return 265
+}
+fn KEY_PAGE_UP() i32 {
+    return 266
+}
+fn KEY_PAGE_DOWN() i32 {
+    return 267
+}
+fn KEY_HOME() i32 {
+    return 268
+}
+fn KEY_END() i32 {
+    return 269
+}
+fn KEY_CAPS_LOCK() i32 {
+    return 280
+}
+fn KEY_SCROLL_LOCK() i32 {
+    return 281
+}
+fn KEY_NUM_LOCK() i32 {
+    return 282
+}
+fn KEY_PRINT_SCREEN() i32 {
+    return 283
+}
+fn KEY_PAUSE() i32 {
+    return 284
+}
+fn KEY_F1() i32 {
+    return 290
+}
+fn KEY_F2() i32 {
+    return 291
+}
+fn KEY_F3() i32 {
+    return 292
+}
+fn KEY_F4() i32 {
+    return 293
+}
+fn KEY_F5() i32 {
+    return 294
+}
+fn KEY_F6() i32 {
+    return 295
+}
+fn KEY_F7() i32 {
+    return 296
+}
+fn KEY_F8() i32 {
+    return 297
+}
+fn KEY_F9() i32 {
+    return 298
+}
+fn KEY_F10() i32 {
+    return 299
+}
+fn KEY_F11() i32 {
+    return 300
+}
+fn KEY_F12() i32 {
+    return 301
+}
+fn KEY_LEFT_SHIFT() i32 {
+    return 340
+}
+fn KEY_LEFT_CONTROL() i32 {
+    return 341
+}
+fn KEY_LEFT_ALT() i32 {
+    return 342
+}
+fn KEY_LEFT_SUPER() i32 {
+    return 343
+}
+fn KEY_RIGHT_SHIFT() i32 {
+    return 344
+}
+fn KEY_RIGHT_CONTROL() i32 {
+    return 345
+}
+fn KEY_RIGHT_ALT() i32 {
+    return 346
+}
+fn KEY_RIGHT_SUPER() i32 {
+    return 347
+}
+fn KEY_KB_MENU() i32 {
+    return 348
+}
+// Keypad keys
+fn KEY_KP_0() i32 {
+    return 320
+}
+fn KEY_KP_1() i32 {
+    return 321
+}
+fn KEY_KP_2() i32 {
+    return 322
+}
+fn KEY_KP_3() i32 {
+    return 323
+}
+fn KEY_KP_4() i32 {
+    return 324
+}
+fn KEY_KP_5() i32 {
+    return 325
+}
+fn KEY_KP_6() i32 {
+    return 326
+}
+fn KEY_KP_7() i32 {
+    return 327
+}
+fn KEY_KP_8() i32 {
+    return 328
+}
+fn KEY_KP_9() i32 {
+    return 329
+}
+fn KEY_KP_DECIMAL() i32 {
+    return 330
+}
+fn KEY_KP_DIVIDE() i32 {
+    return 331
+}
+fn KEY_KP_MULTIPLY() i32 {
+    return 332
+}
+fn KEY_KP_SUBTRACT() i32 {
+    return 333
+}
+fn KEY_KP_ADD() i32 {
+    return 334
+}
+fn KEY_KP_ENTER() i32 {
+    return 335
+}
+fn KEY_KP_EQUAL() i32 {
+    return 336
+}
+// Android key buttons
+fn KEY_BACK() i32 {
+    return 4
+}
+fn KEY_MENU() i32 {
+    return 5
+}
+fn KEY_VOLUME_UP() i32 {
+    return 24
+}
+fn KEY_VOLUME_DOWN() i32 {
+    return 25        
+}

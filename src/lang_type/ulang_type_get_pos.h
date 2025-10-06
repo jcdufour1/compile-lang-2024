@@ -78,19 +78,6 @@ static inline bool uname_is_equal(Uname a, Uname b) {
         return false;
     }
     return name_is_equal(new_a, new_b);
-    //if (!name_is_equal(a.mod_alias, b.mod_alias) || !strv_is_equal(a.base, b.base)) {
-    //    return false;
-    //}
-
-    //if (a.gen_args.info.count != b.gen_args.info.count) {
-    //    return false;
-    //}
-    //for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-    //    if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
-    //        return false;
-    //    }
-    //}
-
-    //return true;
 }
+
 #endif // ULANG_TYPE_GET_POS_H

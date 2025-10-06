@@ -91,28 +91,28 @@ static inline bool try_lang_type_from_ulang_type_fn(
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type) {
     Name name = {0};
-    unwrap(name_from_uname( &name, lang_type.atom.str, lang_type.pos));
+    unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
     Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
     assert(name.mod_path.count > 0);
 
     if (lang_type_atom_is_signed(atom)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
             lang_type.pos,
-            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
     } else if (lang_type_atom_is_unsigned(atom)) {
         Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(
             lang_type.pos,
-            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (lang_type_atom_is_float(atom)) {
         Lang_type_float new_float = lang_type_float_new(
             lang_type.pos,
-            strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
@@ -198,7 +198,7 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
     // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
     Ulang_type_vec new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type( vec_at(&lang_type.lang_types, idx)));
+        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
     }
     return ulang_type_tuple_new(new_types, lang_type.pos);
 }

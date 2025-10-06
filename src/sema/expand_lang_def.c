@@ -632,7 +632,7 @@ static bool expand_def_function_params(Uast_function_params* params) {
 }
 
 static bool expand_def_function_decl(Uast_function_decl* def) {
-    if ( 
+    if (
         !expand_def_generic_param_vec(&def->generics) ||
         !expand_def_function_params(def->params) ||
         !expand_def_ulang_type(&def->return_type, def->pos)

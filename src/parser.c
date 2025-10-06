@@ -94,7 +94,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod);
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos);
 
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
@@ -288,7 +288,15 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     return PARSE_OK;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Strv mod_path, bool is_builtin_mod_path_alias, bool is_main_mod) {
+static bool get_mod_alias_from_path_token(
+    Uast_mod_alias** mod_alias,
+    Token alias_tk,
+    Pos mod_path_pos,
+    Strv mod_path,
+    bool is_builtin_mod_path_alias, 
+    bool is_main_mod,
+    Pos import_pos
+) {
     bool status = true;
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
@@ -321,11 +329,10 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), is_main_mod)) {
+    if (!parse_file(&block, string_to_strv(file_path), is_main_mod, import_pos)) {
         status = false;
         goto finish;
     }
-    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
@@ -553,7 +560,7 @@ static bool can_end_stmt(Token token) {
         case TOKEN_IF:
             return false;
         case TOKEN_RETURN:
-            return true;
+            return false;
         case TOKEN_EXTERN:
             return false;
         case TOKEN_STRUCT:
@@ -1346,7 +1353,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, false)) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, false, mod_path_pos)) {
         return PARSE_ERROR;
     }
 
@@ -1909,6 +1916,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
         is_first_time = false;
     }
 
+    try_consume_newlines(tokens);
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_CLOSE_PAR, TOKEN_COMMA);
         return PARSE_ERROR;
@@ -1918,6 +1926,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     return PARSE_OK;
 }
 
+// TODO: rename this function to parse_return
 static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
@@ -2050,7 +2059,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
             }
         } else {
             if_stmt->condition = uast_condition_new(if_token.pos, NULL);
-            if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
+            if_stmt->condition->child = uast_condition_get_default_child(uast_literal_wrap(
                 util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
             ));
         }
@@ -2439,7 +2448,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
 
     Name dummy = {0};
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
-        return PARSE_ERROR;
+        status = PARSE_ERROR;
     }
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
@@ -2455,7 +2464,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
                 TOKEN_ONE_LINE_BLOCK_START
             );
             status = PARSE_ERROR;
-            goto end;
         }
     }
     // TODO: consider if these new lines should be allowed even with one line block
@@ -2463,8 +2471,12 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     }
 
+    // NOTE: this if statement should always run even if parse_block returns PARSE_ERROR
     while (using_params.info.count > 0) {
         vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
+    }
+    if (status != PARSE_OK) {
+        goto end;
     }
 
     do {
@@ -3122,7 +3134,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
+static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos) {
     bool status = true;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
@@ -3150,15 +3162,11 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
         POS_BUILTIN,
         MOD_PATH_PRELUDE,
         true,
-        false
+        false,
+        POS_BUILTIN
     )) {
         return false;
     }
-    vec_append(
-        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
-        &using_params,
-        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
-    );
 
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
@@ -3176,6 +3184,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
+        msg(DIAG_NOTE, import_pos, "error occured when attempting to import module\n");
         status = false;
         goto error;
     }
@@ -3190,6 +3199,11 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
+    vec_append(
+        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+        &using_params,
+        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+    );
     if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
@@ -3228,7 +3242,8 @@ bool parse(Uast_block** block, Strv file_path) {
         POS_BUILTIN,
         file_strip_extension(file_path),
         false,
-        true
+        true,
+        POS_BUILTIN
     )) {
         return false;
     }

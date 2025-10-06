@@ -101,7 +101,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
-            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple( lang_type_tuple_const_unwrap(lang_type)));
+            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 ulang_type_atom_new_from_cstr("void", 0),

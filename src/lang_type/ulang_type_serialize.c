@@ -59,11 +59,11 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_FN:
-            return serialize_ulang_type_fn( mod_path, ulang_type_fn_const_unwrap(ulang_type), include_scope);
+            return serialize_ulang_type_fn(mod_path, ulang_type_fn_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_TUPLE:
-            return serialize_ulang_type_tuple( mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
+            return serialize_ulang_type_tuple(mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_GEN_PARAM:
-            return serialize_ulang_type_gen_param( mod_path);
+            return serialize_ulang_type_gen_param(mod_path);
     }
     unreachable("");
 }

@@ -3,8 +3,6 @@ type util import = std.util
 type io import = std.io
 type rt import = std.runtime
 
-using util
-
 type Slice def = rt.Slice
 type Str def = Slice(<u8>)
 
@@ -12,7 +10,7 @@ type Str def = Slice(<u8>)
 
 fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
     if count < 1 {
-        return {null(ItemT), 0}
+        return {util.null(ItemT), 0}
     }
     assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return {&slice.buf[start], count}
@@ -31,12 +29,12 @@ type Arr struct(<ItemT>) {
 }
 
 fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
-    let arr Arr(<ItemT>) = {alloc(max_capacity, ItemT), 0, max_capacity}
+    let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
-fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
     let actual_count u64 = arr.count - start
     if let .some(num) = count {
         actual_count = num
@@ -49,8 +47,8 @@ fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count Optional(<u64>) = .none, Ite
 
 fn arr_free(arr Arr(<ItemT>)*, ItemT Type) {
     // TODO: remove ItemT explicit parameter below when possible
-    free(arr.buf, ItemT);
-    arr.buf = null(ItemT) 
+    util.free(arr.buf, ItemT);
+    arr.buf = util.null(ItemT) 
     arr.max = 0
     arr.count = 0
 }
@@ -60,7 +58,7 @@ fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #
     assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (arr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        move_items(&arr.buf[index + 1], &arr.buf[index], arr.count - index, ItemT);
+        util.move_items(&arr.buf[index + 1], &arr.buf[index], arr.count - index, ItemT);
     }
     arr.buf[index] = item
     arr.count += 1
@@ -84,13 +82,18 @@ fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i
     arr.count -= 1
     if (arr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        move_items(&arr.buf[index], &arr.buf[index + 1], arr.count - index, ItemT);
+        util.move_items(&arr.buf[index], &arr.buf[index + 1], arr.count - index, ItemT);
     }
 }
 
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return arr.buf[index]
+}
+
+fn arr_at_ref(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
+    return &arr.buf[index]
 }
 
 fn arr_first(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -109,12 +112,12 @@ type Darr struct(<ItemT>) {
 }
 
 fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
-    let darr Darr(<ItemT>) = {null(ItemT), 0, 0}
+    let darr Darr(<ItemT>) = {util.null(ItemT), 0, 0}
     darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
     return darr
 }
 
-fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
     let actual_count u64 = darr.count - start
     if let .some(num) = count {
         actual_count = num
@@ -127,8 +130,8 @@ fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count Optional(<u64>) = .none, 
 
 fn darr_free(using darr Darr(<ItemT>)*, ItemT Type) {
     // TODO: remove ItemT explicit parameter below when possible
-    free(buf, ItemT);
-    buf = null(ItemT)
+    util.free(buf, ItemT);
+    buf = util.null(ItemT)
     count = 0
     capacity = 0
 }
@@ -141,13 +144,13 @@ fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
-            darr.buf = alloc(darr.capacity, ItemT)
+            darr.buf = util.alloc(darr.capacity, ItemT)
         } else {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
             // TODO: remove explicit ItemT when possible
-            darr.buf = realloc(darr.buf, darr.capacity, ItemT)
+            darr.buf = util.realloc(darr.buf, darr.capacity, ItemT)
         }
     }
 }
@@ -157,7 +160,7 @@ fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str 
     assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (darr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        move_items(&darr.buf[index + 1], &darr.buf[index], darr.count - index, ItemT);
+        util.move_items(&darr.buf[index + 1], &darr.buf[index], darr.count - index, ItemT);
     }
     darr.buf[index] = item
     darr.count += 1
@@ -182,7 +185,7 @@ fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, lin
     darr.count -= 1
     if (darr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index, ItemT);
+        util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index, ItemT);
     }
 }
 

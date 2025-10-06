@@ -33,7 +33,7 @@ static inline Strv serialize_uast_def(const Uast_def* def) {
         case UAST_IMPORT_PATH:
             todo();
         case UAST_STRUCT_DEF:
-            return serialize_uast_struct_def( uast_struct_def_const_unwrap(def));
+            return serialize_uast_struct_def(uast_struct_def_const_unwrap(def));
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_FUNCTION_DECL:
@@ -41,9 +41,9 @@ static inline Strv serialize_uast_def(const Uast_def* def) {
         case UAST_VARIABLE_DEF:
             unreachable("");
         case UAST_RAW_UNION_DEF:
-            return serialize_uast_raw_union_def( uast_raw_union_def_const_unwrap(def));
+            return serialize_uast_raw_union_def(uast_raw_union_def_const_unwrap(def));
         case UAST_ENUM_DEF:
-            return serialize_uast_enum_def( uast_enum_def_const_unwrap(def));
+            return serialize_uast_enum_def(uast_enum_def_const_unwrap(def));
         case UAST_PRIMITIVE_DEF:
             unreachable("");
         case UAST_GENERIC_PARAM:

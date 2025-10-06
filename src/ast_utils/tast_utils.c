@@ -25,7 +25,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_expr_get_pos(if_cond_child),
         tast_literal_wrap(
-            util_tast_literal_new_from_int64_t( 0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         BINARY_NOT_EQUAL,
