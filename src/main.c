@@ -56,6 +56,7 @@ void compile_file_to_ir(void) {
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
     // TODO: remove untyped variable here, because block should be in SCOPE_BUILTIN anyway
+    //   (also, parse function should not have untyped "parameter")
     Uast_block* untyped = NULL;
     bool status = parse(&untyped, params.input_file_path);
     if (error_count > 0) {
@@ -83,10 +84,10 @@ void compile_file_to_ir(void) {
     //unwrap(typed);
     arena_reset(&a_print);
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
-    log(LOG_INFO,  "\nafter type checking start--------------------\n");
-    symbol_log_level(LOG_INFO, SCOPE_BUILTIN);
+    log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
+    symbol_log_level(LOG_DEBUG, SCOPE_BUILTIN);
     //log(LOG_DEBUG,FMT, tast_block_print(typed));
-    log(LOG_INFO,  "\nafter type checking end--------------------\n");
+    log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
 
     add_load_and_store();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
