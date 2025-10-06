@@ -1,2 +1,0 @@
-
-extern("c") fn puts(format_string u8*) i32
