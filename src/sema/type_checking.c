@@ -3790,7 +3790,8 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
 
-    Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id);
+    Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id, util_literal_name_new());
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(outer_scope_id)));
 
     Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
 
@@ -3874,8 +3875,11 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             )));
         }
 
-        Scope_id inner_scope = symbol_collection_new(outer_scope_id);
+        Scope_id inner_scope = symbol_collection_new(outer_scope_id, scope_to_name_tbl_lookup(old_case->scope_id));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(old_case->scope_id)));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(inner_scope)));
         log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
+        todo();
         // TODO: try to remove stmt_clone below (for performance)
         vec_append(&a_main, &switch_case_defer_add_if_true, uast_stmt_clone(
             old_case->if_true,

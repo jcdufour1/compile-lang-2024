@@ -1343,7 +1343,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             if_true_stmts,
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            symbol_collection_new(new_block->scope_id)
+            symbol_collection_new(new_block->scope_id, util_literal_name_new())
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -1367,7 +1367,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             if_false_stmts,
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            symbol_collection_new(new_block->scope_id)
+            symbol_collection_new(new_block->scope_id, util_literal_name_new())
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -2034,7 +2034,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         util_literal_name_new(),
         (Ir_vec) {0},
         (Pos) {0},
-        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id))
+        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id), util_literal_name_new())
     );
 
     // TODO: remove?
@@ -2422,7 +2422,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
-    ////   we need to set is_brking of multiple scopes to break/continue out of for
+    ////   we need to set is_brking of multiple scopes to break/continue out of fors, ifs, etc.
 
     Scope_id curr_scope = new_block->scope_id;
     assert(defered_collections.coll_stack.info.count > 0);
@@ -2437,7 +2437,13 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         unwrap(curr_scope != SCOPE_BUILTIN);
         unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
 
-        if (use_break_out_of && curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
+        if (
+            use_break_out_of &&
+            name_is_equal(
+                scope_to_name_tbl_lookup(curr_scope),
+                scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)
+            )
+        ) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2480,7 +2486,19 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         }
 
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
-        if (use_break_out_of && curr_scope == tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope) {
+        // TODO: figure out why this if statement is duplicated in this function
+        if (use_break_out_of) {
+            log(LOG_VERBOSE, "curr_scope: "FMT" target block scope: "FMT"\n", 
+                name_print(NAME_LOG, scope_to_name_tbl_lookup(curr_scope)),
+                name_print(NAME_LOG, scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)));
+        }
+        if (
+            use_break_out_of &&
+            name_is_equal(
+                scope_to_name_tbl_lookup(curr_scope),
+                scope_to_name_tbl_lookup(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope)
+            )
+        ) {
             break;
         }
 

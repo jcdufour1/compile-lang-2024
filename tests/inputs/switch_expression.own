@@ -10,23 +10,14 @@ fn is_true() Bool {
     return .true
 }
 
-fn is_false() Bool {
-    return .false
+fn nop() {
 }
 
 fn main() i32 {
     let num1 i32 = switch (is_true()) {
         case .true: break 2
-        case .false: break 3
+        case .false: nop()
     }
-
-    let num2 i32 = switch (is_false()) {
-        case .true: break 2
-        case .false: break 3
-    }
-
-    io.printf("num1: %d\n", num1)
-    io.printf("num2: %d\n", num2)
 
     return 0
 }
