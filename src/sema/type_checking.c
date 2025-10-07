@@ -4049,7 +4049,6 @@ bool try_set_types(void) {
             expand_def_def(curr);
         }
     }
-    todo();
 
     check_env.lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
