@@ -393,14 +393,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     (void) debug_prefix;
     (void) file;
     (void) line;
-    // TODO: this String_vec (literal_strings) could probably be removed 
-    static String_vec literal_strings = {0};
     static size_t count = 0;
-
-    if (count == 457) {
-        //__asm__("int3");
-        //todo();
-    }
 
     String var_name = {0};
     string_extend_cstr(&a_main, &var_name, "str");
@@ -416,17 +409,13 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     string_extend_cstr(&a_main, &var_name, "__");
     string_extend_strv(&a_main, &var_name, debug_prefix);
     string_extend_cstr(&a_main, &var_name, "__");
-#endif // DNDEBUG
+#endif // NDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);
-    vec_append(&a_main, &literal_strings, var_name);
 
     count++;
 
-    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
-    // TODO: use string_to_strv function below
-    Strv strv = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
-    return strv;
+    return string_to_strv(var_name);
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {

@@ -6,10 +6,48 @@
 #include <tast.h>
 
 typedef enum {
+    PARENT_OF_NONE = 0,
+    PARENT_OF_CASE,
+    PARENT_OF_ASSIGN_RHS,
+    PARENT_OF_RETURN,
+    PARENT_OF_BREAK,
+    PARENT_OF_IF,
+} PARENT_OF;
+
+typedef enum {
+    PARENT_OF_DEFER_NONE = 0,
+    PARENT_OF_DEFER_DEFER,
+    PARENT_OF_DEFER_FOR,
+} PARENT_OF_DEFER;
+
+typedef enum {
     STMT_OK,
     STMT_NO_STMT, // new_tast is invalid and should not be added to block
     STMT_ERROR,
 } STMT_STATUS;
+
+typedef struct {
+    int dummy_int;
+    
+    Lang_type break_type;
+    
+    bool break_in_case;
+    
+    Uast_stmt_vec switch_case_defer_add_if_true;
+    Uast_stmt_vec switch_case_defer_add_enum_case_part;
+    
+    Lang_type lhs_lang_type;
+    
+    PARENT_OF parent_of;
+    Uast_expr* parent_of_operand;
+    
+    PARENT_OF_DEFER parent_of_defer;
+    
+    bool is_in_struct_base_def;
+    
+    bool is_in_defer;
+    Pos parent_defer_pos;
+} Type_checking_env;
 
 bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment);
 

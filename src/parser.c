@@ -33,7 +33,13 @@ static Uast_using_vec using_params = {0};
 
 static bool can_end_stmt(Token token);
 
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id scope_id);
+static PARSE_STATUS parse_block(
+    Uast_block** block,
+    Tk_view* tokens,
+    bool is_top_level,
+    Scope_id new_scope,
+    Uast_stmt_vec init_children
+);
 
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id);
 
@@ -273,15 +279,12 @@ bool consume_expect_internal(const char* file, int line, Token* result, Tk_view*
 // returns the modified name of the label
 static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
-    // TODO: remove label->block_scope and use label->name.scope_id instead
     new_scope_name.scope_id = block_scope;
     Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, scope_to_name_tbl_lookup(block_scope));
     if (!usymbol_add(uast_label_wrap(label))) {
         msg_redefinition_of_symbol(uast_label_wrap(label));
         return PARSE_ERROR;
     }
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_scope_name));
-    log(LOG_DEBUG, "%zu\n", block_scope);
     Name old_name = new_scope_name;
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     *new_name = old_name;
@@ -1091,7 +1094,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     }
 
     Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
+    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope, (Uast_stmt_vec) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1511,9 +1514,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         }
     }
 
-    // TODO: this should be removed
-    try_consume(NULL, tokens, TOKEN_SEMICOLON);
-
     return PARSE_OK;
 }
 
@@ -1557,18 +1557,6 @@ static PARSE_STATUS parse_for_range_internal(
             unreachable("");
     }
 
-    Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope, util_literal_name_new()))) {
-        return PARSE_ERROR;
-    }
-
-    Uast_assignment* init_assign = uast_assignment_new(
-        uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
-        lower_bound
-    );
-    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
-
     Uast_assignment* increment = uast_assignment_new(
         uast_expr_get_pos(upper_bound),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
@@ -1579,8 +1567,20 @@ static PARSE_STATUS parse_for_range_internal(
             BINARY_ADD
         )))
     );
-    // TODO: make new vector instead to avoid O(n) insert time
-    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(increment));
+    Uast_stmt_vec init_children = {0};
+    vec_append(&a_main, &init_children, uast_assignment_wrap(increment));
+
+    Uast_block* inner = NULL;
+    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope, util_literal_name_new()), init_children)) {
+        return PARSE_ERROR;
+    }
+
+    Uast_assignment* init_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+        lower_bound
+    );
+    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
     Uast_assignment* user_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
@@ -1641,7 +1641,7 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
         default:
             unreachable("");
     }
-    return parse_block(&(*for_new)->body, tokens, false, block_scope);
+    return parse_block(&(*for_new)->body, tokens, false, block_scope, (Uast_stmt_vec) {0});
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
@@ -1723,9 +1723,6 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
             unreachable("");
     }
 
-    // TODO: print error for break outside of for loop here
-
-    // TODO: remove uast_break, and make uast_yield here
     *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id));
     return PARSE_OK;
 }
@@ -1925,8 +1922,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     return PARSE_OK;
 }
 
-// TODO: rename this function to parse_return
-static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Uast_expr* expr = NULL;
@@ -2035,7 +2031,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()))) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_vec) {0})) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -2063,7 +2059,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
             ));
         }
 
-        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()))) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_vec) {0})) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -2073,7 +2069,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
-    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos /* TODO */, parent);
+    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent);
     return PARSE_OK;
 }
 
@@ -2112,7 +2108,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Uast_block* if_true = NULL;
-    if (PARSE_OK != parse_block(&if_true, tokens, false, if_true_scope)) {
+    if (PARSE_OK != parse_block(&if_true, tokens, false, if_true_scope, (Uast_stmt_vec) {0})) {
         return PARSE_ERROR;
     }
 
@@ -2124,7 +2120,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         }
 
         Uast_block* if_false_block = NULL;
-        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(if_false_scope, util_literal_name_new()))) {
+        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(if_false_scope, util_literal_name_new()), (Uast_stmt_vec) {0})) {
             return PARSE_ERROR;
         }
         if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
@@ -2352,7 +2348,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_def_wrap(uast_function_def_wrap(fun_def));
     } else if (starts_with_return(*tokens)) {
         Uast_return* rtn_stmt = NULL;
-        if (PARSE_OK != parse_function_return(&rtn_stmt, tokens, scope_id)) {
+        if (PARSE_OK != parse_return(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
@@ -2381,7 +2377,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_continue_wrap(rtn_stmt);
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id, util_literal_name_new()))) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id, util_literal_name_new()), (Uast_stmt_vec) {0})) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_expr_wrap(uast_block_wrap(block_def));
@@ -2441,7 +2437,13 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
+static PARSE_STATUS parse_block(
+    Uast_block** block,
+    Tk_view* tokens,
+    bool is_top_level,
+    Scope_id new_scope,
+    Uast_stmt_vec init_children
+) {
     PARSE_STATUS status = PARSE_OK;
     bool is_one_line = false;
 
@@ -2449,7 +2451,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
         status = PARSE_ERROR;
     }
-    *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
+    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, (Pos) {0}, new_scope);
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -2648,7 +2650,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
-                // TODO: remove this if if it causes too mopaque issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
                         DIAG_MISSING_CLOSE_PAR, open_par_token.pos, 
@@ -3190,12 +3191,11 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     log(LOG_DEBUG, FMT"\n", strv_print(file_path));
     unwrap(file_path_to_text_tbl_add(file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
-    Token_vec tokens = {0};
+    Tk_view tokens = {0};
     if (!tokenize(&tokens, file_path)) {
         status = false;
         goto error;
     }
-    Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     vec_append(
@@ -3203,14 +3203,14 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         &using_params,
         uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
     );
-    if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
+    if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {
         status = false;
         goto error;
     }
     symbol_log(LOG_TRACE, (*block)->scope_id);
 
-    while (token_view.count > 0) {
-        Token curr = consume(&token_view);
+    while (tokens.count > 0) {
+        Token curr = consume(&tokens);
         if (curr.type == TOKEN_CLOSE_CURLY_BRACE) {
             msg(DIAG_MISMATCHED_CLOSING_CURLY_BRACE, curr.pos, "closing `}` is unmatched\n");
             status = false;
@@ -3221,39 +3221,19 @@ error:
     return status;
 }
 
-bool parse(Uast_block** block, Strv file_path) {
+bool parse(void) {
     symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
-    // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
-    //Uast_mod_alias* dummy = NULL;
-    //unwrap(get_mod_alias_from_path_token(
-    //    &dummy,
-    //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
-    //    (Pos) {0} /* TODO */,
-    //    MOD_PATH_RUNTIME
-    //));
-
-    log(LOG_DEBUG, FMT"\n", strv_print(strv_slice(file_path, 0, file_path.count - 4)));
-    Uast_mod_alias* alias = NULL;
-    if (!get_mod_alias_from_path_token(
-        &alias,
+    Uast_mod_alias* dummy = NULL;
+    return get_mod_alias_from_path_token(
+        &dummy,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
-        file_strip_extension(file_path),
+        file_strip_extension(params.input_file_path),
         false,
         true,
         POS_BUILTIN
-    )) {
-        return false;
-    }
-
-    Uast_def* import = NULL;
-    log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
-    unwrap(usymbol_lookup(&import, name_new(MOD_PATH_OF_MOD_PATHS, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
-    *block = uast_import_path_unwrap(import)->block;
-    assert((*block)->scope_id == SCOPE_TOP_LEVEL);
-    log(LOG_DEBUG, FMT"\n", uast_block_print(*block));
-    return true;
+    );
 }
 
 static void parser_test_parse_expr(const char* input, int test) {

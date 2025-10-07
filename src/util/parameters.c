@@ -467,7 +467,6 @@ static void parse_long_option(int* argc, char*** argv) {
         if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
             if (curr.arg_expected && curr_opt.count < 1) {
-                // TODO: try to avoid building string everytime
                 String buf = {0};
                 string_extend_strv(&a_print, &buf, sv("argument expected after `"));
                 string_extend_strv(&a_print, &buf, sv(curr.text));

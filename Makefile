@@ -66,6 +66,7 @@ OBJS=\
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
+	 ${BUILD_DIR}/sema/check_general_assignment.o \
 	 ${BUILD_DIR}/sema/resolve_generics.o \
 	 ${BUILD_DIR}/sema/generic_sub.o \
 	 ${BUILD_DIR}/sema/infer_generic_type.o \
@@ -183,6 +184,9 @@ ${BUILD_DIR}/sema/check_struct_recursion.o: ${DEP_COMMON} src/sema/check_struct_
 
 ${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c
+
+${BUILD_DIR}/sema/check_general_assignment.o: ${DEP_COMMON} src/sema/check_general_assignment.c
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/check_general_assignment.o src/sema/check_general_assignment.c
 
 ${BUILD_DIR}/util/file.o: ${DEP_COMMON} src/util/file.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/file.o src/util/file.c

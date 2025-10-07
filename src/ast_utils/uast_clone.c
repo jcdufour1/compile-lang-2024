@@ -3,7 +3,6 @@
 #include <ulang_type_clone.h>
 #include <symbol_log.h>
 
-// TODO: cloning symbol may not always work correctly with nested scopes?
 Uast_int* uast_int_clone(const Uast_int* lit) {
     return uast_int_new(lit->pos, lit->data);
 }
@@ -155,7 +154,7 @@ Uast_unknown* uast_unknown_clone(const Uast_unknown* unknown) {
 
 Uast_param* uast_param_clone(const Uast_param* param, bool use_new_scope, Scope_id new_scope) {
     Uast_expr* new_opt_default = param->is_optional ? 
-        uast_expr_clone(param->optional_default, use_new_scope, new_scope, (Pos) {0} /* TODO */) :
+        uast_expr_clone(param->optional_default, use_new_scope, new_scope, param->pos) :
         NULL;
 
     return uast_param_new(
@@ -216,11 +215,11 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_struct_literal_wrap(uast_struct_literal_clone(uast_struct_literal_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_TUPLE:
             return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
-        case UAST_ENUM_ACCESS: // TODO: remove uast_enum_access if not used
+        case UAST_ENUM_ACCESS:
             todo();
-        case UAST_UNKNOWN: // TODO: remove uast_enum_access if not used
+        case UAST_UNKNOWN:
             return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
-        case UAST_ENUM_GET_TAG: // TODO: remove uast_enum_access if not used
+        case UAST_ENUM_GET_TAG:
             return uast_enum_get_tag_wrap(uast_enum_get_tag_clone(uast_enum_get_tag_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_SWITCH:
             return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(expr), use_new_scope, new_scope, dest_pos));

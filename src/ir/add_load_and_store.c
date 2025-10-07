@@ -17,7 +17,7 @@
 #include <ir_utils.h>
 #include <ir_operator_type.h>
 
-// TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
+// TODO: remove is_brking (use is_yielding instead)
 
 typedef enum {
     DEFER_PARENT_OF_NONE,
@@ -180,7 +180,6 @@ static void load_block_stmts(
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
-    // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
         local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix(sv("rtn_val")));
@@ -476,7 +475,7 @@ static void load_block_stmts(
         }
 
         load_stmt(new_block, pair.defer->child, true);
-        vec_rem_last(pairs);
+        vec_pop(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
             // TODO: expected failure test
@@ -487,7 +486,7 @@ static void load_block_stmts(
     if (parent_of == DEFER_PARENT_OF_FUN) {
         rtn_def = old_rtn_def;
     }
-    vec_rem_last(&defered_collections.coll_stack);
+    vec_pop(&defered_collections.coll_stack);
 
     assert(defered_collections.coll_stack.info.count == old_colls_count);
 }
@@ -2277,7 +2276,7 @@ static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
-            // TODO: this may not do the right thing for the ir backend. Fix underlying issues instead of relying on this hack for ir?
+            // TODO: this may not do the right thing for the llvm backend. Fix underlying issues instead of relying on this hack for llvm?
             // TODO: (if this is nessessary) make params.backend_info.load_ptr_deref_break arg instead of just doing BACKEND_C check this way
             if (params.backend_info.backend == BACKEND_C) {
                 break;
@@ -2418,40 +2417,23 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     Defer_pair_vec* pairs = &coll.pairs;
     (void) pairs;
 
-    // TODO: extract this into separate function? (and for can use same function as continue, etc.
-    // TODO: eliminate this particular assignment
-    Tast_assignment* is_cont_assign = tast_assignment_new(
-        tast_stmt_get_pos(old_stmt),
-        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-            .lang_type = tast_lang_type_from_name(get_is_brking_or_conting(&coll)),
-            .name = coll.is_yielding
-        })),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
-    );
-    load_assignment(new_block, is_cont_assign);
-
     //// the purpose of these two for loops: 
     ////   if we are breaking/continuing out of for loop nested in multiple ifs, etc.,
     ////   we need to set is_brking of multiple scopes to break/continue out of fors, ifs, etc.
 
     assert(defered_collections.coll_stack.info.count > 0);
     size_t idx = defered_collections.coll_stack.info.count - 1;
+    Name break_out_of_scope = (Name) {0};
+    if (use_break_out_of) {
+        break_out_of_scope = tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope;
+    }
     while (1) {
         Name curr_scope = vec_at(&defered_collections.coll_stack, idx).curr_scope_name;
-        if (use_break_out_of) {
-            //assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
-            //log(LOG_DEBUG, "%zu\n", curr_scope);
-            //log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
-        }
-        //unwrap(curr_scope != SCOPE_BUILTIN);
-        //unwrap(curr_scope != SCOPE_TOP_LEVEL && "could not find scope");
-
         if (
             use_break_out_of &&
             name_is_equal(
                 curr_scope,
-                tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope // TODO: do not call tast_def_from_name on every for loop iteration (for performance)?
+                break_out_of_scope
             )
         ) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
@@ -2501,7 +2483,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             use_break_out_of &&
             name_is_equal(
                 curr_scope,
-                tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope
+                break_out_of_scope 
             )
         ) {
             break;
@@ -2528,7 +2510,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(pairs).label->name);
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
-
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {

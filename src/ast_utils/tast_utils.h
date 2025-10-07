@@ -103,6 +103,7 @@ static inline bool lang_type_fn_is_equal(Lang_type_fn a, Lang_type_fn b) {
     return lang_type_tuple_is_equal(a.params, b.params) && lang_type_is_equal(*a.return_type, *b.return_type);
 }
 
+// TOOD: move these lang_type functions
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     if (a.type != b.type) {
         return false;
@@ -178,7 +179,6 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (gen_args_u8.info.count < 1) {
         vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
     }
-
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,

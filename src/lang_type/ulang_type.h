@@ -203,6 +203,31 @@ static inline Ulang_type ulang_type_new_usize(void) {
     return ulang_type_new_int_x(sv("u64" /* TODO: change based on target */));
 }
 
+static inline bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
+    return uname_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;
+}
+
+static inline bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
+    return ulang_type_atom_is_equal(a.atom, b.atom);
+}
+
+static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
+    if (a.type != b.type) {
+        return false;
+    }
+
+    switch (a.type) {
+        case ULANG_TYPE_REGULAR:
+            return ulang_type_regular_is_equal(ulang_type_regular_const_unwrap(a), ulang_type_regular_const_unwrap(b));
+        case ULANG_TYPE_TUPLE:
+            todo();
+        case ULANG_TYPE_FN:
+            todo();
+        case ULANG_TYPE_GEN_PARAM:
+            todo();
+    }
+    todo();
+}
 
 #endif // ULANG_TYPE_H
 

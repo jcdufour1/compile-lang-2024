@@ -37,6 +37,37 @@ static void add_primitives(void) {
     add_void();
 }
 
+#define do_pass(pass_fn, sym_log_fn) \
+    do { \
+        pass_fn(); \
+        if (error_count > 0) { \
+            log(LOG_DEBUG, #pass_fn " failed\n"); \
+            exit(EXIT_CODE_FAIL); \
+        } \
+\
+        log(LOG_DEBUG, "\nafter " #pass_fn " start--------------------\n");\
+        sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
+        log(LOG_DEBUG, "\nafter " #pass_fn " end--------------------\n");\
+\
+        arena_reset(&a_print);\
+    } while (0)
+
+#define do_pass_status(pass_fn, sym_log_fn) \
+    do { \
+        bool status = pass_fn(); \
+        if (error_count > 0) { \
+            log(LOG_DEBUG, #pass_fn " failed\n"); \
+            assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
+            exit(EXIT_CODE_FAIL); \
+        } \
+\
+        log(LOG_DEBUG, "\nafter " #pass_fn " start--------------------\n");\
+        sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
+        log(LOG_DEBUG, "\nafter " #pass_fn " end--------------------\n");\
+\
+        arena_reset(&a_print);\
+    } while (0)
+
 void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
@@ -55,65 +86,13 @@ void compile_file_to_ir(void) {
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
-    // TODO: remove untyped variable here, because block should be in SCOPE_BUILTIN anyway
-    //   (also, parse function should not have untyped "parameter")
-    Uast_block* untyped = NULL;
-    bool status = parse(&untyped, params.input_file_path);
-    if (error_count > 0) {
-        log(LOG_DEBUG, "parse_file failed\n");
-        assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    assert(status && "error_count should be zero if parse_file returns true");
+    // generate ir from file(s)
+    do_pass_status(parse, usymbol_log_level);
+    do_pass_status(try_set_types, symbol_log_level);
+    do_pass(add_load_and_store, ir_log_level);
 
-    log(LOG_DEBUG, "\nafter parsing start--------------------\n");
-    usymbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG, FMT, uast_block_print(untyped));
-    log(LOG_DEBUG, "\nafter parsing end--------------------\n");
-
-    arena_reset(&a_print);
-    status = try_set_types();
-    if (error_count > 0) {
-        log(LOG_DEBUG, "try_set_block_types failed\n");
-        assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    log(LOG_DEBUG, "try_set_block_types succedded\n");
-    assert(status && "error_count should be zero if try_set_types returns true");
-    
-    //unwrap(typed);
-    arena_reset(&a_print);
-    log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
-    log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
-    symbol_log_level(LOG_DEBUG, SCOPE_BUILTIN);
-    //log(LOG_DEBUG,FMT, tast_block_print(typed));
-    log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
-
-    add_load_and_store();
-    log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
-    ir_log_level(LOG_DEBUG, 0);
-
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
-    (void) iter;
-    Ir* curr = NULL;
-    (void) curr;
-    // TODO
-    while (ir_tbl_iter_next(&curr, &iter)) {
-        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
-        log(LOG_DEBUG, FMT, ir_print(curr));
-        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
-    }
-    //// TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
-    //log(LOG_DEBUG, FMT, ir_block_print(ir_root));
-    //log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
-    if (error_count > 0) {
-        exit(EXIT_CODE_FAIL);
-    }
-    //assert(ir_root);
-
-    remove_void_assigns();
-    log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
-    ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
+    // ir passes
+    do_pass(remove_void_assigns, ir_log_level);
 }
 
 void do_passes(void) {
