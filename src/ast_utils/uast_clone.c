@@ -324,7 +324,7 @@ Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, bool use_new_scope, S
 
 Uast_using* uast_using_clone(const Uast_using* using, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     (void) dest_pos;
-    return uast_using_new(using->pos, name_clone(using->sym_name, use_new_scope, new_scope));
+    return uast_using_new(using->pos, name_clone(using->sym_name, use_new_scope, new_scope), using->mod_path_to_put_defs);
 }
 
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

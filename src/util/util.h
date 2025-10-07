@@ -126,9 +126,11 @@ typedef size_t Scope_id;
 // MOD_PATH_RUNTIME is used for standard library functions that are used by the compiler itself
 #define MOD_PATH_RUNTIME (sv("std/runtime")) /* TODO: try to avoid hardcoding path separator? */
 #define MOD_PATH_OF_MOD_PATHS ((Strv) {0})
+#define MOD_PATH_PRELUDE (sv("std/prelude"))
 
 #define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 #define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
+#define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
 #define FMT "%.*s"
 

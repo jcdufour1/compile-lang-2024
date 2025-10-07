@@ -1,0 +1,9 @@
+
+type io import = std.io
+
+fn main() i32 {
+    io.printf("%0.1f\n", min(8.1, 6.7))
+    io.print_int(max(8, 6))
+
+    return 0
+}

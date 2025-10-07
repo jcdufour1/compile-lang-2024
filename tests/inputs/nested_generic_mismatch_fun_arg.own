@@ -1,5 +1,5 @@
 
-type Darr struct(<ItemType, IndexType>) {
+type Local_Darr struct(<ItemType, IndexType>) {
     items ItemType*
     count IndexType
     capacity IndexType
@@ -10,11 +10,11 @@ type Token struct(<NumType, ThingType>) {
     thing ThingType
 }
 
-fn darr_do_things(darr Darr(<Token(<i64, u16>), i32>)) {
+fn darr_do_things(darr Local_Darr(<Token(<i64, u16>), i32>)) {
 }
 
 fn main() i32 {
-    let darr Darr(<Token(<i64, u8*>), i32>)
+    let darr Local_Darr(<Token(<i64, u8*>), i32>)
     darr_do_things(darr)
 
 

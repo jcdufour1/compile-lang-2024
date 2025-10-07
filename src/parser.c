@@ -293,6 +293,7 @@ static bool get_mod_alias_from_path_token(
     Token alias_tk,
     Pos mod_path_pos,
     Strv mod_path,
+    bool is_builtin_mod_path_alias, 
     bool is_main_mod,
     Pos import_pos
 ) {
@@ -303,15 +304,17 @@ static bool get_mod_alias_from_path_token(
     String file_path = {0};
 
     Name old_mod_alias = curr_mod_alias;
-    curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    if (is_builtin_mod_path_alias) {
+        curr_mod_alias = util_literal_name_new();
+    } else {
+        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
 
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    // TODO: this could cause collisions if internal symbol has the same name as mod_path.
-    //   something should be done to prevent collisions (such as changing MOD_PATH_BUILTIN to sv("builtin"))
     if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
@@ -1311,7 +1314,13 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
             unreachable("");
     }
 
-    *def = uast_lang_def_new(name.pos, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), expr);
+    *def = uast_lang_def_new(
+        name.pos,
+        name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        expr,
+        false
+    );
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, (*def)->alias_name));
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
@@ -1344,7 +1353,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
-    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, mod_path_pos)) {
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path), false, false, mod_path_pos)) {
         return PARSE_ERROR;
     }
 
@@ -1495,7 +1504,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 return PARSE_ERROR;
             }
             if (is_using) {
-                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name));
+                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
             msg_todo("using in this situation", var_def->pos);
@@ -1801,7 +1810,7 @@ static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id sc
         return PARSE_ERROR;
     }
 
-    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id));
+    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id), curr_mod_path);
     return PARSE_OK;
 }
 
@@ -2439,7 +2448,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
 
     Name dummy = {0};
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
-        return PARSE_ERROR;
+        status = PARSE_ERROR;
     }
     *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
@@ -2455,7 +2464,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
                 TOKEN_ONE_LINE_BLOCK_START
             );
             status = PARSE_ERROR;
-            goto end;
         }
     }
     // TODO: consider if these new lines should be allowed even with one line block
@@ -2463,8 +2471,12 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     }
 
+    // NOTE: this if statement should always run even if parse_block returns PARSE_ERROR
     while (using_params.info.count > 0) {
         vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
+    }
+    if (status != PARSE_OK) {
+        goto end;
     }
 
     do {
@@ -3143,6 +3155,19 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         goto error;
     }
 
+    Uast_mod_alias* prelude_alias = NULL;
+    if (!get_mod_alias_from_path_token(
+        &prelude_alias,
+        token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
+        POS_BUILTIN,
+        MOD_PATH_PRELUDE,
+        true,
+        false,
+        POS_BUILTIN
+    )) {
+        return false;
+    }
+
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
         new_scope = symbol_collection_new(SCOPE_BUILTIN);
@@ -3174,6 +3199,11 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
+    vec_append(
+        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+        &using_params,
+        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+    );
     if (PARSE_OK != parse_block(block, &token_view, true, new_scope)) {
         status = false;
         goto error;
@@ -3195,6 +3225,7 @@ error:
 bool parse(Uast_block** block, Strv file_path) {
     symbol_collection_new(SCOPE_BUILTIN);
 
+    // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
     //Uast_mod_alias* dummy = NULL;
     //unwrap(get_mod_alias_from_path_token(
     //    &dummy,
@@ -3210,6 +3241,7 @@ bool parse(Uast_block** block, Strv file_path) {
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
         file_strip_extension(file_path),
+        false,
         true,
         POS_BUILTIN
     )) {
