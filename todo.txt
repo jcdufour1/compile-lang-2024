@@ -191,6 +191,9 @@ continue(<thing>)
         io.print_str("error: could not open file")
         return 1
     }
+- fix this parser bug:
+    if curr < '0' || curr > '9' => break
+    *str = slice_range(*str, 1, str.count - 1)
 
 
 

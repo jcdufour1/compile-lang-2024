@@ -294,6 +294,14 @@ Uast_yield* uast_yield_clone(const Uast_yield* yield, bool use_new_scope, Scope_
     );
 }
 
+Uast_continue* uast_continue_clone(const Uast_continue* cont, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) dest_pos;
+    return uast_continue_new(
+        cont->pos,
+        name_clone(cont->break_out_of, use_new_scope, new_scope)
+    );
+}
+
 Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_assignment_new(
         assign->pos,
@@ -354,8 +362,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
         case UAST_YIELD:
             return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_CONTINUE:
-            // TODO
-            todo();
+            return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_ASSIGNMENT:
             return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_RETURN:

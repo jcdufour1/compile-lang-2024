@@ -1,0 +1,39 @@
+type io import = std.io
+type coll import = std.collections
+
+fn calculate(line Str) i64 {
+    let nums Darr(<i64>) = coll.darr_new(i64)
+
+    for line.count > 0 {
+        if let .some(num) = coll.str_consume_int(&line, i64) {
+            coll.darr_append(&nums, num)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '\n', u8) {
+            assert(line.count == 0)
+            break
+        }
+
+        assert(0, "TODO")
+    }
+
+    if nums.count != 1 {
+        assert(0, "TODO: error for invalid count of nums in the darr at the end of the calculation")
+    }
+    return coll.darr_first(nums)
+}
+
+fn main() i32 {
+    for 1 {
+        if let .some(line) = io.getline(io.stdin()) {
+            //io.print_int(calculate(darr_slice(line)))
+            io.print_int(calculate(coll.darr_slice(line)), .NumT = i64)
+            coll.darr_free(&line)
+        } else {
+            assert(0, "TODO")
+        }
+    }
+
+    return 0
+}

@@ -4,6 +4,9 @@ type coll import = std.collections
 type util import = std.util
 
 extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) i32
+extern("c") fn own_stdout() opaque*
+extern("c") fn own_stderr() opaque*
+extern("c") fn own_stdin() opaque*
 
 type printf def = c.printf
 type puts def = c.puts
@@ -12,6 +15,10 @@ type fopen def = c.fopen
 type File struct {
     file opaque*
 }
+
+fn stdout() File => return {own_stdout()}
+fn stderr() File => return {own_stderr()}
+fn stdin() File => return {own_stdin()}
 
 fn fgetc(file File) util.Optional(<u8>) {
     let ch i32 = c.fgetc(file.file)
