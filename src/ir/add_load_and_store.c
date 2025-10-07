@@ -2413,11 +2413,6 @@ Name get_is_cont2ing(const Defer_collection* item) {
 // TODO: try to come up with a better name for this function
 // if use_break_out_of is false, then every scope in function will be breaked out of
 static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool use_break_out_of, Name break_out_of, bool is_yielding) {
-    static int count = 0;
-    if (count >= 2) {
-        //todo();
-    }
-    count++;
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
