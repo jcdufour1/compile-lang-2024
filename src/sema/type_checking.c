@@ -28,21 +28,7 @@
 #include <infer_generic_type.h>
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
-
-typedef enum {
-    PARENT_OF_NONE = 0,
-    PARENT_OF_CASE,
-    PARENT_OF_ASSIGN_RHS,
-    PARENT_OF_RETURN,
-    PARENT_OF_BREAK,
-    PARENT_OF_IF,
-} PARENT_OF;
-
-typedef enum {
-    PARENT_OF_DEFER_NONE = 0,
-    PARENT_OF_DEFER_DEFER,
-    PARENT_OF_DEFER_FOR,
-} PARENT_OF_DEFER;
+#include <check_general_assignment.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -64,28 +50,9 @@ static Strv parent_of_print_internal(PARENT_OF parent_of) {
 
 #define parent_of_print(parent_of) strv_print(parent_of_print_internal(parent_of))
 
-static int dummy_int;
-
-static Lang_type break_type;
-
-static bool break_in_case;
-
-static Uast_stmt_vec switch_case_defer_add_if_true;
-static Uast_stmt_vec switch_case_defer_add_enum_case_part;
-
-static Lang_type lhs_lang_type;
-
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
-static PARENT_OF parent_of;
-static Uast_expr* parent_of_operand;
-
-static PARENT_OF_DEFER parent_of_defer;
-
-static bool is_in_struct_base_def;
-
-static bool is_in_defer;
-static Pos parent_defer_pos;
+static Type_checking_env check_env = {0};
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -136,134 +103,6 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
     }
     return expr;
 }
-
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
-
-static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
-    if (!implicit_pointer_depth) {
-        if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
-            return false;
-        }
-    }
-
-    if (!lang_type_primitive_is_number(dest) || !lang_type_primitive_is_number(src)) {
-        return false;
-    }
-
-    int32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
-    int32_t src_bit_width = lang_type_primitive_get_bit_width(src);
-
-    // both or none of types must be float
-    if (dest.type == LANG_TYPE_FLOAT && src.type != LANG_TYPE_FLOAT) {
-        return false;
-    }
-    if (dest.type != LANG_TYPE_FLOAT && src.type == LANG_TYPE_FLOAT) {
-        return false;
-    }
-
-    if (dest.type == LANG_TYPE_UNSIGNED_INT && src.type != LANG_TYPE_UNSIGNED_INT) {
-        return false;
-    }
-
-    if (src_is_zero) {
-        return true;
-    }
-
-    if (dest.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(dest_bit_width > 0);
-        dest_bit_width--;
-    }
-    if (src.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(src_bit_width > 0);
-        src_bit_width--;
-    }
-
-    return dest_bit_width >= src_bit_width;
-}
-
-static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tuple src, bool implicit_pointer_depth) {
-    (void) implicit_pointer_depth;
-    if (dest.lang_types.info.count != src.lang_types.info.count) {
-        return false;
-    }
-
-    for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
-        if (!can_be_implicitly_converted(
-             vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), false, implicit_pointer_depth
-        )) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, bool implicit_pointer_depth) {
-    if (!can_be_implicitly_converted_tuple(dest.params, src.params, implicit_pointer_depth)) {
-        return false;
-    }
-    return can_be_implicitly_converted(*dest.return_type, *src.return_type, false, implicit_pointer_depth);
-}
-
-// TODO: this function should also actually do the implicit conversion I think
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
-    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
-    if (gen_args_u8.info.count < 1) {
-        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
-    }
-
-    if (dest.type != LANG_TYPE_PRIMITIVE) {
-        goto next;
-    } 
-    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_CHAR && lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
-        goto next;
-    } 
-    if (lang_type_get_pointer_depth(dest) != 1) {
-        goto next;
-    } 
-    if (src.type != LANG_TYPE_STRUCT) {
-        goto next;
-    } 
-
-    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
-        goto next;
-    }
-    return true;
-
-next:
-    if (dest.type != src.type) {
-        return false;
-    }
-
-    switch (src.type) {
-        case LANG_TYPE_FN:
-            return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
-        case LANG_TYPE_TUPLE:
-            return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
-        case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_primitive(
-                lang_type_primitive_const_unwrap(dest),
-                lang_type_primitive_const_unwrap(src),
-                src_is_zero,
-                implicit_pointer_depth
-            );
-        case LANG_TYPE_ENUM:
-            return false; // TODO
-        case LANG_TYPE_STRUCT:
-            return false; // TODO
-        case LANG_TYPE_RAW_UNION:
-            return false; // TODO
-        case LANG_TYPE_VOID:
-            return true;
-    }
-    unreachable("");
-}
-
-typedef enum {
-    IMPLICIT_CONV_INVALID_TYPES,
-    IMPLICIT_CONV_CONVERTED,
-    IMPLICIT_CONV_OK,
-} IMPLICIT_CONV_STATUS;
 
 static void msg_invalid_function_arg_internal(
     const char* file,
@@ -371,7 +210,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
             file, line,
             DIAG_MISSING_YIELD_STATEMENT, pos,
             "no break statement in case that breaks `"FMT"`\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, break_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, check_env.break_type)
         );
     } else {
         msg_internal(
@@ -379,15 +218,15 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
             DIAG_MISMATCHED_YIELD_TYPE, pos,
             "breaking `"FMT"`, but type `"FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
-            lang_type_print(LANG_TYPE_MODE_MSG, break_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, check_env.break_type)
         );
     }
 
     msg_internal(
         file, line,
-        DIAG_NOTE, lang_type_get_pos(break_type),
+        DIAG_NOTE, lang_type_get_pos(check_env.break_type),
         "case break type `"FMT"` defined here\n",
-        lang_type_print(LANG_TYPE_MODE_MSG, break_type) 
+        lang_type_print(LANG_TYPE_MODE_MSG, check_env.break_type) 
     );
 }
 
@@ -422,129 +261,6 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
 
 #define msg_invalid_return_type(pos, child, is_auto_inserted) \
     msg_invalid_return_type_internal(__FILE__, __LINE__, pos, child, is_auto_inserted)
-
-typedef enum {
-    CHECK_ASSIGN_OK,
-    CHECK_ASSIGN_INVALID, // error was not printed to the user (caller should print error),
-                          // and new_src is valid for printing purposes
-    CHECK_ASSIGN_ERROR, // error was printed, and new_src is not valid for printing purposes
-} CHECK_ASSIGN_STATUS;
-
-CHECK_ASSIGN_STATUS check_generic_assignment_finish(
-    Tast_expr** new_src,
-    Lang_type dest_lang_type,
-    bool src_is_zero,
-    Tast_expr* src
-) {
-    if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
-        if (src->type == TAST_ENUM_CALLEE) {
-            Tast_enum_callee* callee = tast_enum_callee_unwrap(src);
-            Uast_def* enum_def_ = NULL;
-            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, callee->enum_lang_type)));
-            Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
-
-            // TODO: make helper function to print member more easily
-            msg(
-                DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, tast_expr_get_pos(src),
-                "enum case with non-void inner type cannot be assigned without using (); "
-                "use `"FMT"."FMT"()` instead of `"FMT"."FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name),
-                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name)
-            );
-            return CHECK_ASSIGN_ERROR;
-        }
-        *new_src = src;
-        return CHECK_ASSIGN_OK;
-    }
-
-    if (can_be_implicitly_converted(dest_lang_type, tast_expr_get_lang_type(src), src_is_zero, false)) {
-        if (src->type == TAST_LITERAL) {
-            *new_src = src;
-            tast_expr_set_lang_type(*new_src, dest_lang_type);
-            return CHECK_ASSIGN_OK;
-        }
-        msg_todo("non literal implicit conversion", tast_expr_get_pos(src));
-        return CHECK_ASSIGN_ERROR;
-    } else {
-        return CHECK_ASSIGN_INVALID;
-    }
-    unreachable("");
-}
-
-// TODO: rename to check_general_assignment
-// TODO: make src/sema/check_general_assignment.own, and also put can_be_implicitly_converted in there?
-CHECK_ASSIGN_STATUS check_generic_assignment(
-    Tast_expr** new_src,
-    Lang_type dest_lang_type,
-    Uast_expr* src,
-    Pos pos
-) {
-    if (src->type == UAST_STRUCT_LITERAL) {
-        Tast_stmt* new_src_ = NULL;
-        if (!try_set_struct_literal_types(
-             &new_src_,
-             dest_lang_type,
-             uast_struct_literal_unwrap(src), pos
-        )) {
-            return CHECK_ASSIGN_ERROR;
-        }
-        *new_src = tast_expr_unwrap(new_src_);
-    } else if (src->type == UAST_ARRAY_LITERAL) {
-        Tast_stmt* new_src_ = NULL;
-        if (!try_set_array_literal_types(
-             &new_src_,
-             dest_lang_type,
-             uast_array_literal_unwrap(src),
-             pos
-        )) {
-            return CHECK_ASSIGN_ERROR;
-        }
-        *new_src = tast_expr_unwrap(new_src_);
-    } else if (src->type == UAST_TUPLE) {
-        Tast_tuple* new_src_ = NULL;
-        if (!try_set_tuple_assignment_types(
-             &new_src_,
-             dest_lang_type,
-             uast_tuple_unwrap(src)
-        )) {
-            return CHECK_ASSIGN_ERROR;
-        }
-        *new_src = tast_tuple_wrap(new_src_);
-    } else {
-        Lang_type old_lhs_lang_type = lhs_lang_type;
-        Lang_type old_break_type = break_type;
-        PARENT_OF old_parent_of = parent_of;
-        parent_of = PARENT_OF_ASSIGN_RHS;
-        lhs_lang_type = dest_lang_type;
-        if (parent_of == PARENT_OF_ASSIGN_RHS) {
-            if (lhs_lang_type.type == LANG_TYPE_PRIMITIVE && strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type).base, sv("u8"))) {
-                //todo();
-            }
-            break_type = lhs_lang_type;
-        } else {
-            break_type = lang_type_void_const_wrap(lang_type_void_new(pos));
-        }
-
-        if (!try_set_expr_types(new_src, src)) {
-            lhs_lang_type = old_lhs_lang_type;
-            break_type = old_break_type;
-            parent_of = old_parent_of;
-            return CHECK_ASSIGN_ERROR;
-        }
-        lhs_lang_type = old_lhs_lang_type;
-        break_type = old_break_type;
-        parent_of = old_parent_of;
-    }
-
-    bool src_is_zero = false;
-    if (src->type == UAST_LITERAL && uast_literal_unwrap(src)->type == UAST_INT && uast_int_unwrap(uast_literal_unwrap(src))->data == 0) {
-        src_is_zero = true;
-    }
-
-    return check_generic_assignment_finish(new_src, dest_lang_type, src_is_zero, *new_src);
-}
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
     switch (literal->type) {
@@ -1047,7 +763,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
 
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
-        switch (check_generic_assignment(&new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
+        switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
             case CHECK_ASSIGN_OK:
                 *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, new_lhs, new_rhs));
                 return true;
@@ -1068,7 +784,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     }
 
     // TODO: remove below line
-    lhs_lang_type = tast_expr_get_lang_type(new_lhs);
+    check_env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
     }
@@ -1264,7 +980,8 @@ bool try_set_tuple_assignment_types(
 
         Tast_expr* new_memb = NULL;
         todo();
-        switch (check_generic_assignment(
+        switch (check_general_assignment(
+            &check_env,
             &new_memb,
             curr_dest,
             curr_src,
@@ -1351,8 +1068,8 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
         }
 
         Tast_expr* new_rhs = NULL;
-        switch (check_generic_assignment(
-             &new_rhs, lang_type_from_ulang_type(memb_def->lang_type), rhs, uast_expr_get_pos(memb)
+        switch (check_general_assignment(
+             &check_env, &new_rhs, lang_type_from_ulang_type(memb_def->lang_type), rhs, uast_expr_get_pos(memb)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -1453,8 +1170,8 @@ bool try_set_array_literal_types(
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         Uast_expr* rhs = vec_at(&lit->members, idx);
         Tast_expr* new_rhs = NULL;
-        switch (check_generic_assignment(
-             &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
+        switch (check_general_assignment(
+             &check_env, &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -1549,22 +1266,22 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
-            if (lhs_lang_type.type != LANG_TYPE_ENUM) {
+            if (check_env.lhs_lang_type.type != LANG_TYPE_ENUM) {
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
                     uast_expr_get_pos(uast),
                     "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                    lang_type_print(LANG_TYPE_MODE_MSG, check_env.lhs_lang_type)
                 );
                 return false;
             }
-            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
-            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.mod_path));
-            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, lhs_lang_type).str.base));
+            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type).str.mod_path));
+            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type).str.base));
 
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
-                lang_type_get_str(LANG_TYPE_MODE_LOG, lhs_lang_type)
+                lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)
             ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
@@ -1719,7 +1436,8 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
     }
 
     Tast_expr* new_rhs = NULL;
-    switch (check_generic_assignment(
+    switch (check_general_assignment(
+         &check_env,
          &new_rhs,
          tast_expr_get_lang_type(new_lhs),
          assignment->rhs,
@@ -1776,11 +1494,11 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
+                    uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
                 ))
             );
 
-            vec_append(&a_main, &switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
+            vec_append(&a_main, &check_env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
 
             *new_case = enum_case;
             return true;
@@ -1853,7 +1571,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
             Tast_expr* new_item = NULL;
-            switch (check_generic_assignment(
+            switch (check_general_assignment(
+                &check_env,
                 &new_item,
                 lang_type_from_ulang_type(vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
                 vec_at(&fun_call->args, 0),
@@ -2087,7 +1806,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             // unreachable();
             continue;
         } else {
-            switch (check_generic_assignment(
+            switch (check_general_assignment(
+                &check_env,
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),
                 corres_arg,
@@ -2156,7 +1876,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     *vec_at_ref(&new_args_set, idx) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
-                    switch (check_generic_assignment(
+                    switch (check_general_assignment(
+                        &check_env,
                         vec_at_ref(&new_args, idx),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
                         new_default_,
@@ -2656,7 +2377,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
             Tast_expr* new_item = NULL;
-            switch (check_generic_assignment(
+            switch (check_general_assignment(
+                &check_env,
                 &new_item,
                 lang_type_from_ulang_type(vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
                 vec_at(&fun_call->args, 0),
@@ -2853,7 +2575,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // unreachable();
             continue;
         } else {
-            switch (check_generic_assignment(
+            switch (check_general_assignment(
+                &check_env,
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),
                 corres_arg,
@@ -2928,7 +2651,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(&params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
-                    switch (check_generic_assignment(
+                    switch (check_general_assignment(
+                        &check_env,
                         vec_at_ref(&new_args, idx - gen_arg_count),
                         lang_type_from_ulang_type(vec_at(&params->params, idx)->base->lang_type),
                         new_default_,
@@ -3089,7 +2813,7 @@ bool try_set_member_access_types_finish_enum_def(
 ) {
     (void) new_callee;
 
-    switch (parent_of) {
+    switch (check_env.parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
@@ -3383,7 +3107,7 @@ bool try_set_variable_def_types(
     }
 
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
-    if (add_to_sym_tbl && !is_in_struct_base_def) {
+    if (add_to_sym_tbl && !check_env.is_in_struct_base_def) {
         symbol_add(tast_variable_def_wrap(*new_tast));
     }
     return true;
@@ -3439,18 +3163,18 @@ bool try_set_function_params_types(
 
 bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    parent_of = PARENT_OF_RETURN;
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.parent_of = PARENT_OF_RETURN;
 
-    if (is_in_defer) {
+    if (check_env.is_in_defer) {
         msg(DIAG_RETURN_IN_DEFER, rtn->pos, "return statement cannot be located in defer\n");
-        msg(DIAG_NOTE, parent_defer_pos, "defer statement defined here\n");
+        msg(DIAG_NOTE, check_env.parent_defer_pos, "defer statement defined here\n");
         status = false;
         goto error;
     }
 
     Tast_expr* new_child = NULL;
-    switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
+    switch (check_general_assignment(&check_env, &new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
@@ -3467,14 +3191,14 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
 error:
-    parent_of = old_parent_of;
+    check_env.parent_of = old_parent_of;
     return status;
 }
 
 bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    parent_of = PARENT_OF_BREAK; // TODO
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.parent_of = PARENT_OF_BREAK; // TODO
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
@@ -3483,7 +3207,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
         goto error;
     }
 
-    switch (parent_of_defer) {
+    switch (check_env.parent_of_defer) {
         case PARENT_OF_DEFER_FOR:
             break;
         case PARENT_OF_DEFER_NONE:
@@ -3498,7 +3222,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
 
     Tast_expr* new_child = NULL;
     if (yield->do_yield_expr) {
-        switch (check_generic_assignment(&new_child, break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
+        switch (check_general_assignment(&check_env, &new_child, check_env.break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
@@ -3516,17 +3240,17 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
     //assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
-    break_in_case = true;
+    check_env.break_in_case = true;
 error:
-    parent_of = old_parent_of;
+    check_env.parent_of = old_parent_of;
     return status;
 }
 
 // TODO: rename to try_set_continue_types
 bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    parent_of = PARENT_OF_BREAK; // TODO
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.parent_of = PARENT_OF_BREAK; // TODO
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, cont->break_out_of)) {
@@ -3535,7 +3259,7 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
         goto error;
     }
 
-    switch (parent_of_defer) {
+    switch (check_env.parent_of_defer) {
         case PARENT_OF_DEFER_FOR:
             break;
         case PARENT_OF_DEFER_NONE:
@@ -3551,15 +3275,15 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
     //assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
-    break_in_case = true;
+    check_env.break_in_case = true;
 error:
-    parent_of = old_parent_of;
+    check_env.parent_of = old_parent_of;
     return status;
 }
 
 bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
-    PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
-    parent_of_defer = PARENT_OF_DEFER_FOR;
+    PARENT_OF_DEFER old_parent_of_defer = check_env.parent_of_defer;
+    check_env.parent_of_defer = PARENT_OF_DEFER_FOR;
     bool status = true;
 
     Tast_condition* new_cond = NULL;
@@ -3573,7 +3297,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     }
 
     *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body, uast->continue_label, uast->do_cont_label);
-    parent_of_defer = old_parent_of_defer;
+    check_env.parent_of_defer = old_parent_of_defer;
     return status;
 }
 
@@ -3587,12 +3311,12 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     }
 
     Uast_stmt_vec new_if_children = {0};
-    vec_extend(&a_main, &new_if_children, &switch_case_defer_add_enum_case_part);
-    vec_extend(&a_main, &new_if_children, &switch_case_defer_add_if_true);
+    vec_extend(&a_main, &new_if_children, &check_env.switch_case_defer_add_enum_case_part);
+    vec_extend(&a_main, &new_if_children, &check_env.switch_case_defer_add_if_true);
     vec_extend(&a_main, &new_if_children, &uast->body->children);
     uast->body->children = new_if_children;
-    vec_reset(&switch_case_defer_add_enum_case_part);
-    vec_reset(&switch_case_defer_add_if_true);
+    vec_reset(&check_env.switch_case_defer_add_enum_case_part);
+    vec_reset(&check_env.switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
     if (!(status && try_set_block_types(&new_body, uast->body, false))) {
@@ -3601,13 +3325,13 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
 
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
-        if (parent_of == PARENT_OF_CASE) {
-            if (new_body->lang_type.type != LANG_TYPE_VOID && !break_in_case) {
+        if (check_env.parent_of == PARENT_OF_CASE) {
+            if (new_body->lang_type.type != LANG_TYPE_VOID && !check_env.break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
                 msg_invalid_yield_type(new_body->pos_end, NULL, true);
                 status = false;
             }
-        } else if (parent_of == PARENT_OF_IF) {
+        } else if (check_env.parent_of == PARENT_OF_IF) {
             todo();
         }
     }
@@ -3813,13 +3537,12 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     }
 
     bool status = true;
-    PARENT_OF old_parent_of = parent_of;
-    break_in_case = false;
-    Lang_type old_break_type = break_type;
-    if (parent_of == PARENT_OF_ASSIGN_RHS) {
-        break_type = lhs_lang_type;
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.break_in_case = false;
+    if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
+        check_env.break_type = check_env.lhs_lang_type;
     } else {
-        break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
+        check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
     switch (tast_expr_get_lang_type(new_operand_typed).type) {
@@ -3870,7 +3593,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(inner_scope)));
         log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
         // TODO: try to remove stmt_clone below (for performance)
-        vec_append(&a_main, &switch_case_defer_add_if_true, uast_stmt_clone(
+        vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_stmt_clone(
             old_case->if_true,
             true,
             inner_scope,
@@ -3883,8 +3606,8 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             inner_scope
         );
                 
-        parent_of = PARENT_OF_CASE;
-        parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
+        check_env.parent_of = PARENT_OF_CASE;
+        check_env.parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         Tast_if* new_if = NULL;
         if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
             status = false;
@@ -3892,9 +3615,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         }
 
 error_inner:
-        parent_of_operand = NULL;
-        parent_of = PARENT_OF_NONE;
-        break_in_case = false;
+        check_env.parent_of_operand = NULL;
+        check_env.parent_of = PARENT_OF_NONE;
+        check_env.break_in_case = false;
         if (!status) {
             goto error;
         }
@@ -3930,9 +3653,9 @@ error_inner:
     //}
 
 error:
-    parent_of = old_parent_of;
-    break_in_case = false;
-    break_type = old_break_type;
+    check_env.parent_of = old_parent_of;
+    check_env.break_in_case = false;
+    check_env.break_type = check_env.break_type;
     if (*new_tast) {
         log(LOG_DEBUG, FMT"\n", tast_block_print(*new_tast));
     }
@@ -3941,12 +3664,12 @@ error:
 
 bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
     bool status = true;
-    bool old_is_in_defer = is_in_defer;
-    is_in_defer = true;
-    Pos old_defer_pos = parent_defer_pos;
-    parent_defer_pos = defer->pos;
-    PARENT_OF_DEFER old_parent_of_defer = parent_of_defer;
-    parent_of_defer = PARENT_OF_DEFER_DEFER;
+    bool old_is_in_defer = check_env.is_in_defer;
+    check_env.is_in_defer = true;
+    Pos old_defer_pos = check_env.parent_defer_pos;
+    check_env.parent_defer_pos = defer->pos;
+    PARENT_OF_DEFER old_parent_of_defer = check_env.parent_of_defer;
+    check_env.parent_of_defer = PARENT_OF_DEFER_DEFER;
 
     Tast_stmt* new_child = NULL;
     switch (try_set_stmt_types(&new_child, defer->child, false)) {
@@ -3963,9 +3686,9 @@ bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
     *new_tast = tast_defer_new(defer->pos, new_child);
 
 error:
-    is_in_defer = old_is_in_defer;
-    parent_defer_pos = old_defer_pos;
-    parent_of_defer = old_parent_of_defer;
+    check_env.is_in_defer = old_is_in_defer;
+    check_env.parent_defer_pos = old_defer_pos;
+    check_env.parent_of_defer = old_parent_of_defer;
     return status;
 }
 
@@ -4206,14 +3929,14 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     }
 
 error:
-    dummy_int = 0; // allow pre-c23 compilers
+    check_env.dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
-    yield_type = break_type;
+    yield_type = check_env.break_type;
     // TODO: remove below if else
-    //if (parent_of == PARENT_OF_CASE) {
-    //    yield_type = break_type;
-    //} else if (parent_of == PARENT_OF_IF) {
+    //if (check_env.parent_of == PARENT_OF_CASE) {
+    //    yield_type = check_env.break_type;
+    //} else if (check_env.parent_of == PARENT_OF_IF) {
     //    todo();
     //}
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
@@ -4329,8 +4052,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(void) {
-    lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
-    break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    check_env.lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;
 
