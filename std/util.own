@@ -1,6 +1,7 @@
 type io import = std.io
 type rt import = std.runtime
 type c import = std.libc
+type coll import = std.collections
 
 type Optional enum(<ItemT>) {
     some ItemT

@@ -180,8 +180,21 @@ continue(<thing>)
 - test case for circular imports
 - if this is typed, compiler should say, "did you mean `if let`", etc.:
         if .some(ch) = fgetc(file) {
-- "_1__7_builtin_str____2658" could be printed as "7builtin_str____2658", 
-    because variable names cannot start with digit anyway
+- "_1__7_builtin_str____2658" could be printed as "7builtin_str2658", 
+    because variable names cannot start with digit anyway, and there is no need to encode pointer depth
+- this should not be parse error:
+    if let .some(file) = io.open_file("examples/read_file.own", "r") {
+        read(file)
+        io.close_file(file)
+    } 
+    else {
+        io.print_str("error: could not open file")
+        return 1
+    }
+- fix this parser bug:
+    if curr < '0' || curr > '9' => break
+    *str = slice_range(*str, 1, str.count - 1)
+- test case for passing "- " into std::collections::str_consume_int
 
 
 

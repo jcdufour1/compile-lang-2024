@@ -24,3 +24,15 @@ end:
     va_end(args);
     return status;
 }
+
+FILE* own_stdout(void) {
+    return stdout;
+}
+
+FILE* own_stderr(void) {
+    return stderr;
+}
+
+FILE* own_stdin(void) {
+    return stdin;
+}

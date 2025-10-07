@@ -2,6 +2,7 @@
 extern("c") fn puts(format_string u8*) i32
 extern("c") fn printf(format_string u8*, args opaque...) i32
 extern("c") fn fopen(file_path u8*, flags u8*) opaque*
+extern("c") fn fclose(file opaque*) i32
 extern("c") fn fgetc(file opaque*) i32
 
 extern("c") fn isdigit(character i32) i32
@@ -14,6 +15,8 @@ extern("c") fn sqrtf(num f32) f32
 extern("c") fn sqrt(num f64) f64
 extern("c") fn logf(num f32) f32
 extern("c") fn log(num f64) f64
+
+extern("c") fn isspace(ch i32) i32
 
 extern("c") fn rand() i32
 extern("c") fn srand(seed i32)

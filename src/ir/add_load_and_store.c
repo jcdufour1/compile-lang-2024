@@ -2418,7 +2418,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         //todo();
     }
     count++;
-    log(LOG_INFO, "ENTERING load_yielding_set_etc: %zu\n", defered_collections.coll_stack.info.count);
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = vec_top(&defered_collections.coll_stack);
     Defer_pair_vec* pairs = &coll.pairs;
@@ -2503,11 +2502,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
         // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
         // TODO: figure out why this if statement is duplicated in this function
-        if (use_break_out_of) {
-            log(LOG_INFO, "curr_scope: "FMT" target block scope: "FMT"\n", 
-                name_print(NAME_LOG, curr_scope),
-                name_print(NAME_LOG, tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope));
-        }
         if (
             use_break_out_of &&
             name_is_equal(
@@ -2528,8 +2522,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 "label `"FMT"` points to a scope that is not a parent of this statement\n",
                 name_print(NAME_MSG, break_out_of)
             );
-            log(LOG_INFO, "scope name of break_out_of: "FMT"\n", name_print(NAME_LOG, tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope));
-            todo();
             break;
         }
         unwrap(idx > 0);
@@ -2542,7 +2534,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
 
-    log(LOG_INFO, "EXITING load_yielding_set_etc\n");
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
