@@ -19,10 +19,7 @@ static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive 
     int32_t src_bit_width = lang_type_primitive_get_bit_width(src);
 
     // both or none of types must be float
-    if (dest.type == LANG_TYPE_FLOAT && src.type != LANG_TYPE_FLOAT) {
-        return false;
-    }
-    if (dest.type != LANG_TYPE_FLOAT && src.type == LANG_TYPE_FLOAT) {
+    if ((dest.type == LANG_TYPE_FLOAT) != (src.type == LANG_TYPE_FLOAT)) {
         return false;
     }
 
