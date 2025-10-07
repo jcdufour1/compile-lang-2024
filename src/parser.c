@@ -1922,8 +1922,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     return PARSE_OK;
 }
 
-// TODO: rename this function to parse_return
-static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Uast_expr* expr = NULL;
@@ -2070,7 +2069,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
-    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos /* TODO */, parent);
+    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent);
     return PARSE_OK;
 }
 
@@ -2349,7 +2348,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_def_wrap(uast_function_def_wrap(fun_def));
     } else if (starts_with_return(*tokens)) {
         Uast_return* rtn_stmt = NULL;
-        if (PARSE_OK != parse_function_return(&rtn_stmt, tokens, scope_id)) {
+        if (PARSE_OK != parse_return(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
@@ -2651,7 +2650,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
-                // TODO: remove this if if it causes too mopaque issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
                         DIAG_MISSING_CLOSE_PAR, open_par_token.pos, 
@@ -3193,12 +3191,11 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     log(LOG_DEBUG, FMT"\n", strv_print(file_path));
     unwrap(file_path_to_text_tbl_add(file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
-    Token_vec tokens = {0};
+    Tk_view tokens = {0};
     if (!tokenize(&tokens, file_path)) {
         status = false;
         goto error;
     }
-    Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     vec_append(
@@ -3206,14 +3203,14 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         &using_params,
         uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
     );
-    if (PARSE_OK != parse_block(block, &token_view, true, new_scope, (Uast_stmt_vec) {0})) {
+    if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {
         status = false;
         goto error;
     }
     symbol_log(LOG_TRACE, (*block)->scope_id);
 
-    while (token_view.count > 0) {
-        Token curr = consume(&token_view);
+    while (tokens.count > 0) {
+        Token curr = consume(&tokens);
         if (curr.type == TOKEN_CLOSE_CURLY_BRACE) {
             msg(DIAG_MISMATCHED_CLOSING_CURLY_BRACE, curr.pos, "closing `}` is unmatched\n");
             status = false;

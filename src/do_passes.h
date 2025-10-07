@@ -6,10 +6,11 @@
 #include <do_passes.h>
 #include <token_vec.h>
 #include <parameters.h>
+#include <token_view.h>
 
 void tokenize_do_test(void);
 
-bool tokenize(Token_vec* result, Strv file_path);
+bool tokenize(Tk_view* result, Strv file_path);
 
 bool parse(Strv file_path);
 

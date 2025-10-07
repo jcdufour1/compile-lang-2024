@@ -669,8 +669,7 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //    test8();
 //}
 
-// TODO: return Tk_view instead of Token_vec
-bool tokenize(Token_vec* result, Strv file_path) {
+bool tokenize(Tk_view* result, Strv file_path) {
     size_t prev_err_count = error_count;
     Token_vec tokens = {0};
 
@@ -717,7 +716,7 @@ bool tokenize(Token_vec* result, Strv file_path) {
 
     vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
 
-    *result = tokens;
+    *result = (Tk_view) {.tokens = tokens.buf, .count = tokens.info.count};
     return error_count == prev_err_count;
 }
 
