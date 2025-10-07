@@ -345,7 +345,14 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             }
             break;
         }
+        case UAST_UNKNOWN:
+            *new_expr = uast_member_access_wrap(access);
+            return true;
+        case UAST_FUNCTION_CALL:
+            *new_expr = uast_member_access_wrap(access);
+            return true;
         default:
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(access->callee));
             todo();
     }
 
@@ -696,7 +703,7 @@ bool expand_def_def(Uast_def* def) {
         case UAST_IMPORT_PATH:
             return expand_def_import_path(uast_import_path_unwrap(def));
         case UAST_POISON_DEF:
-            todo();
+            return false;
         case UAST_GENERIC_PARAM:
             return expand_def_generic_param(uast_generic_param_unwrap(def));
         case UAST_FUNCTION_DEF:
