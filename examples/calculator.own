@@ -5,7 +5,7 @@ type math import = std.math
 type util import = std.util
 
 fn is_whitespace(ch u8) u1 {
-    return 0 != c.isspace(unsafe_cast<i32>ch)
+    return ch != '-' && 0 != c.isspace(unsafe_cast<i32>ch)
 }
 
 fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
@@ -30,12 +30,9 @@ fn calculate(line Str) {
     defer coll.darr_free(&nums)
 
     for line.count > 0 {
-        let amt_consumed u64 = old_line.count - line.count
+        assert(!is_whitespace('-'))
 
-        if let .some(num) = coll.str_consume_int(&line, i64) {
-            coll.darr_append(&nums, num)
-            continue
-        }
+        let amt_consumed u64 = old_line.count - line.count
 
         if let .some(ch) = coll.slice_consume(&line, '\n') {
             assert(line.count == 0)
@@ -120,8 +117,14 @@ fn calculate(line Str) {
             continue
         }
 
-        io.print_str("error: unknown operation ", "")
-        io.print_str(line)
+        if let .some(num) = coll.str_consume_int(&line, i64) {
+            coll.darr_append(&nums, num)
+            continue
+        }
+
+        io.print_str("error: unknown operation \"", "")
+        io.print_str(line, "")
+        io.print_str("\"")
         return
     }
 
@@ -136,14 +139,14 @@ fn calculate(line Str) {
 
 fn main() i32 {
     for 1 {
-        if let .some(line) = io.getline(io.stdin()) {
-            //io.print_int(calculate(darr_slice(line)))
+        if let .some(line) = io.get(io.stdin()) {
             calculate(coll.darr_slice(line))
             coll.darr_free(&line)
         } else {
-            assert(0, "unreachable")
+            return 0
         }
     }
 
+    assert(0, "unreachable");
     return 0
 }

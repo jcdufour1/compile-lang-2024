@@ -60,6 +60,17 @@ fn main() i32 {
     return 0
 }
 ```
+### [Reverse Polish Notation Calculator](examples/calculator.own)
+#### start the calculator
+```sh
+./build/release/main examples/calculator.own -O2 -lm --run
+```
+#### calculate sqrt(9)*45
+```sh
+9 sqrt 45 *
+```
+
+
 ### [Snake Game](examples/snake_game.own)  
 ![](docs/snake_game.png)
 - This example uses raylib. Raylib is not vendored, so it will need to be installed separately and linked manually.
