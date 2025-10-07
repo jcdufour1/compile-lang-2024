@@ -1,37 +1,147 @@
 type io import = std.io
 type coll import = std.collections
+type c import = std.libc
+type math import = std.math
+type util import = std.util
 
-fn calculate(line Str) i64 {
+fn is_whitespace(ch u8) u1 {
+    return 0 != c.isspace(unsafe_cast<i32>ch)
+}
+
+fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
+    if nums_len < min_nums_count {
+        for idx u64 in 0..amt_consumed => io.print_str(" ", "")
+        io.print_str("^");
+        io.print_str("error: this operation requires at least ", "");
+        io.print_int(min_nums_count, "");
+        io.print_str(" numbers to be on the stack, but ", "");
+        io.print_int(nums_len, "");
+        io.print_str(" were found");
+        return 0;
+    }
+
+    return 1;
+}
+
+fn calculate(line Str) {
+    let old_line Str = line
+
     let nums Darr(<i64>) = coll.darr_new(i64)
+    defer coll.darr_free(&nums)
 
     for line.count > 0 {
+        let amt_consumed u64 = old_line.count - line.count
+
         if let .some(num) = coll.str_consume_int(&line, i64) {
             coll.darr_append(&nums, num)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '\n', u8) {
+        if let .some(ch) = coll.slice_consume(&line, '\n') {
             assert(line.count == 0)
             break
         }
 
-        assert(0, "TODO")
+        if let .some(ch) = coll.slice_try_get(&line, is_whitespace) => continue
+
+        if let .some(ch) = coll.slice_consume(&line, '+') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = coll.darr_pop(&nums) + coll.darr_pop(&nums)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '-') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = coll.darr_pop(&nums) - coll.darr_pop(&nums)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '/') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = coll.darr_pop(&nums)/coll.darr_pop(&nums)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '*') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = coll.darr_pop(&nums)*coll.darr_pop(&nums)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '%') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = coll.darr_pop(&nums)%coll.darr_pop(&nums)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, '^') => {
+            if !check_stack(amt_consumed, nums.count, 2) => return
+            let result i64 = math.pow(coll.darr_pop(&nums), coll.darr_pop(&nums))
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if let .some(ch) = coll.slice_consume(&line, 'e') => {
+            coll.darr_append(&nums, math.e(i64))
+            continue
+        }
+
+        if coll.slice_starts_with(line, "pi") => {
+            line = coll.slice_range(line, 2, line.count - 2)
+            coll.darr_append(&nums, math.pi(i64))
+            continue
+        }
+
+        if coll.slice_starts_with(line, "sqrt") {
+            if !check_stack(amt_consumed, nums.count, 1) => return
+            line = coll.slice_range(line, 4, line.count - 4)
+            let result i64 = math.sqrt(coll.darr_pop(&nums))
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if coll.slice_starts_with(line, "log") {
+            if !check_stack(amt_consumed, nums.count, 1) => return
+            line = coll.slice_range(line, 3, line.count - 3)
+            let result i64 = math.log(coll.darr_pop(&nums), i64)
+            coll.darr_append(&nums, result)
+            continue
+        }
+
+        if coll.slice_starts_with(line, "abs") {
+            if !check_stack(amt_consumed, nums.count, 1) => return
+            line = coll.slice_range(line, 3, line.count - 3)
+            coll.darr_append(&nums, math.abs(coll.darr_pop(&nums), i64))
+            continue
+        }
+
+        io.print_str("error: unknown operation ", "")
+        io.print_str(line)
+        return
     }
 
-    if nums.count != 1 {
-        assert(0, "TODO: error for invalid count of nums in the darr at the end of the calculation")
+    if nums.count == 1 {
+        io.print_int(coll.darr_first(nums))
+    } else {
+        io.print_str("error: there are ", "")
+        io.print_int(nums.count, "")
+        io.print_str(" numbers in the stack after all operations, but 1 is expected")
     }
-    return coll.darr_first(nums)
 }
 
 fn main() i32 {
     for 1 {
         if let .some(line) = io.getline(io.stdin()) {
             //io.print_int(calculate(darr_slice(line)))
-            io.print_int(calculate(coll.darr_slice(line)), .NumT = i64)
+            calculate(coll.darr_slice(line))
             coll.darr_free(&line)
         } else {
-            assert(0, "TODO")
+            assert(0, "unreachable")
         }
     }
 

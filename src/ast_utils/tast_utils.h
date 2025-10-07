@@ -280,7 +280,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_ENUM_GET_TAG:
             return tast_expr_get_lang_type(tast_enum_get_tag_const_unwrap(expr)->callee);
         case TAST_ASSIGNMENT:
-            unreachable("");
+            return tast_expr_get_lang_type(tast_assignment_const_unwrap(expr)->lhs);
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
         case TAST_MODULE_ALIAS:

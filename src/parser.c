@@ -560,7 +560,7 @@ static bool can_end_stmt(Token token) {
         case TOKEN_IF:
             return false;
         case TOKEN_RETURN:
-            return false;
+            return true;
         case TOKEN_EXTERN:
             return false;
         case TOKEN_STRUCT:

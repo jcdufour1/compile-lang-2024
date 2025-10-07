@@ -29,6 +29,22 @@ fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str =
     return .some(slice_at(*slice, 0))
 }
 
+fn slice_try_get(slice Slice(<ItemT>)*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
+    if slice.count < 1 => return .none
+    if !should_get(slice_at(*slice, 0)) => return .none
+
+    defer *slice = slice_range(*slice, 1, slice.count - 1)
+    return .some(slice_at(*slice, 0))
+}
+
+fn slice_starts_with(slice Slice(<ItemT>), start Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
+    if slice.count < start.count => return 0
+    for idx u64 in 0..start.count {
+        if slice_at(slice, idx) != slice_at(start, idx) => return 0
+    }
+    return 1
+}
+
 // TODO: count and max should be usize by default when usize is implemented
 // TODO: make max compile time when possible
 type Arr struct(<ItemT>) {
@@ -187,8 +203,7 @@ fn darr_extend(dest Darr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #
     }
 }
 
-// TODO: return item removed?
-fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(darr.count > 0, "attempt to remove element from empty dynamic array", .file = file, .line = line, .column = column);
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     darr.count -= 1
@@ -196,6 +211,12 @@ fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, lin
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
         util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index, ItemT);
     }
+    return darr.buf[index]
+}
+
+fn darr_pop(darr Darr(<ItemT>)*, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    assert(darr.count > 0, "attempt to remove element from empty dynamic array", .file = file, .line = line, .column = column);
+    return darr_remove(darr, darr.count - 1, .file = file, .line = line, .column = column)
 }
 
 fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
