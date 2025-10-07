@@ -3783,7 +3783,6 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     Tast_if_vec new_ifs = {0};
 
     Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id, util_literal_name_new());
-    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(outer_scope_id)));
 
     Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
 
@@ -4022,7 +4021,6 @@ bool try_set_using_types(const Uast_using* using) {
             Name curr_name = uast_def_get_name(curr);
             if (strv_is_equal(curr_name.mod_path, mod_path)) {
                 Name alias_name = using->sym_name;
-                log(LOG_INFO, FMT"\n", name_print(NAME_LOG, alias_name));
                 alias_name.mod_path = using->mod_path_to_put_defs;
                 alias_name.base = curr_name.base;
                 alias_name.scope_id = curr_name.scope_id;
@@ -4032,7 +4030,6 @@ bool try_set_using_types(const Uast_using* using) {
                     uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
                     true
                 );
-                log(LOG_INFO, FMT"\n", uast_lang_def_print(lang_def));
                 if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
                     Uast_def* prev_def = NULL;
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
@@ -4118,9 +4115,6 @@ static void do_test_bit_width(void) {
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     do_test_bit_width();
-
-    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(block->scope_id)));
-    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     bool status = true;
 

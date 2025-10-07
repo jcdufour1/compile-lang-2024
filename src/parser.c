@@ -1320,7 +1320,6 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         expr,
         false
     );
-    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, (*def)->alias_name));
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
@@ -2315,7 +2314,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         assert(new_scope_name.base.count > 0);
     } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
-        log_tokens(LOG_INFO, *tokens);
         new_scope_name = util_literal_name_new_prefix_scope(sv("scope_name"), scope_id);
     }
 
