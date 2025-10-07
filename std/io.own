@@ -9,6 +9,57 @@ type printf def = c.printf
 type puts def = c.puts
 type fopen def = c.fopen
 
+type File struct {
+    file opaque*
+}
+
+fn fgetc(file File) util.Optional(<u8>) {
+    let ch i32 = c.fgetc(file.file)
+    if ch == -1 => return .none
+    return .some(unsafe_cast<u8>ch)
+}
+
+fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
+    let new_str coll.Darr(<u8>) = coll.darr_new(u8)
+    let is_none u1 = 0 // TODO: remove this variable when compiler bugs are fixed
+    let keep_going u1 = 1 // TODO: remove this variable when compiler bugs are fixed
+    for keep_going {
+        if let .some(ch) = fgetc(file) {
+            coll.darr_append(&new_str, ch)
+            if ch == delim => keep_going = 0
+        } else {
+            coll.darr_free(&new_str)
+            is_none = 1
+            keep_going = 0
+        }
+    }
+    if is_none => return .none
+    return .some(new_str)
+}
+
+// TODO: return Result instead of Optional to specify the reason for open_file failing
+fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
+    let cstr_path u8* = util.str_to_cstr(file_path)
+    defer util.cstr_free(cstr_path)
+    let cstr_opts u8* = util.str_to_cstr(options)
+    defer util.cstr_free(cstr_opts)
+    
+    let ptr opaque* = c.fopen(cstr_path, cstr_opts)
+    if ptr == util.null(opaque) => return .none
+    return .some({ptr})
+}
+
+fn close_file(file File) util.Optional(<void>) {
+    util.assert(file.file == util.null(opaque*), "TODO")
+    defer util.cstr_free(&cstr_path)
+    let cstr_opts u8* = util.str_to_cstr(options)
+    defer util.cstr_free(&cstr_opts)
+    
+    let ptr opaque* = c.fclose(cstr_path, cstr_opts)
+    if ptr == util.null(opaque*) => return .none
+    return {ptr}
+}
+
 fn print_str_internal__(str coll.Str) {
     own_printf("%.*s", str.count, str.buf)
 }

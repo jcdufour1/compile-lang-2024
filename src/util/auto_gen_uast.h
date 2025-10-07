@@ -475,7 +475,7 @@ static Uast_type uast_gen_label(const char* prefix) {
     Uast_type bound = {.name = uast_name_new(prefix, "label", false)};
 
     append_member(&bound.members, "Name", "name");
-    append_member(&bound.members, "Scope_id", "block_scope");
+    append_member(&bound.members, "Name", "block_scope");
 
     return bound;
 }

@@ -12,15 +12,13 @@ The language design and implementation are not finished. Breaking changes will o
 - :white_check_mark: Compiles to C for portability
 
 ## Example Programs
-### [Readme 1](examples/readme_1.own)
+### [Optional](examples/optional.own)
 ```c
 type util import = std.util
 type io import = std.io
 
 fn divide(lhs NumT, rhs NumT, NumT Type) util.Optional(<NumT>) {
-    if rhs == 0 {
-        return .none
-    }
+    if rhs == 0 => return .none
     return .some(lhs/rhs)
 }
 
@@ -36,15 +34,13 @@ fn main() i32 {
     if let .some(num) = divide(6, 3) {
         io.print_str("result is ", "")
         io.print_int(num)
-    } else {
-        io.print_str("error when dividing (cannot divide by zero\n")
-    }
+    } else => io.print_str("error when dividing (cannot divide by zero\n")
 
     return 0
 }
 ```
 
-### [Readme 2](examples/readme_2.own)
+### [Defer](examples/defer.own)
 ```c
 
 type coll import = std.collections

@@ -105,7 +105,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
 
     compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     compile_cmd.append("-lm")
-    compile_cmd.append("--set-log-level=NOTE")
+    compile_cmd.append("--set-log-level=NOTE") # TODO: change to INFO
     compile_cmd.append("-o")
     compile_cmd.append("test")
     compile_cmd.append("--error=no-main-function")

@@ -1,0 +1,25 @@
+type io import = std.io
+type coll import = std.collections
+type util import = std.util
+
+fn read(file io.File) {
+    let keep_going u1 = 1 // TODO: remove this variable when compiler bugs are fixed
+    for keep_going {
+        if let .some(line) = io.getline(file) {
+            io.print_str(coll.darr_slice(line), "")
+        } else {
+            keep_going = 0
+            break
+        }
+    }
+}
+
+fn main() i32 {
+    if let .some(file) = io.open_file("examples/read_file.own", "r") => read(file)
+    else {
+        io.print_str("error: could not open file")
+        return 1
+    }
+
+    return 0
+}

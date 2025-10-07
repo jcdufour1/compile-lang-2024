@@ -16,6 +16,7 @@
 #include <symbol_iter.h>
 #include <symbol_iter.h>
 #include <msg.h>
+#include <str_and_num_utils.h>
  
 static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -42,7 +43,7 @@ void compile_file_to_ir(void) {
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    symbol_collection_new(SCOPE_BUILTIN);
+    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     add_primitives();
 
@@ -54,6 +55,8 @@ void compile_file_to_ir(void) {
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
+    // TODO: remove untyped variable here, because block should be in SCOPE_BUILTIN anyway
+    //   (also, parse function should not have untyped "parameter")
     Uast_block* untyped = NULL;
     bool status = parse(&untyped, params.input_file_path);
     if (error_count > 0) {

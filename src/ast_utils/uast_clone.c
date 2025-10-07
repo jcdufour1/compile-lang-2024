@@ -178,9 +178,8 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 }
 
 Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_id new_scope) {
-    assert(label->name.scope_id == label->block_scope);
     Scope_id scope = use_new_scope ? new_scope : label->name.scope_id;
-    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope);
+    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope));
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, bool use_new_scope, Scope_id new_scope) {
@@ -222,7 +221,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
         case UAST_UNKNOWN: // TODO: remove uast_enum_access if not used
             return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
         case UAST_ENUM_GET_TAG: // TODO: remove uast_enum_access if not used
-            todo();
+            return uast_enum_get_tag_wrap(uast_enum_get_tag_clone(uast_enum_get_tag_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_SWITCH:
             return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_IF_ELSE_CHAIN:
@@ -287,7 +286,12 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond, bool use_new_sc
 }
 
 Uast_yield* uast_yield_clone(const Uast_yield* yield, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_yield_new(yield->pos, yield->do_yield_expr, uast_expr_clone(yield->yield_expr, use_new_scope, new_scope, dest_pos), name_clone(yield->break_out_of, use_new_scope, new_scope));
+    return uast_yield_new(
+        yield->pos,
+        yield->do_yield_expr,
+        yield->do_yield_expr ? uast_expr_clone(yield->yield_expr, use_new_scope, new_scope, dest_pos) : NULL,
+        name_clone(yield->break_out_of, use_new_scope, new_scope)
+    );
 }
 
 Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -315,6 +319,18 @@ Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, bool use_new_scop
         lang_switch->pos,
         uast_expr_clone(lang_switch->operand, use_new_scope, new_scope, dest_pos),
         uast_case_vec_clone(lang_switch->cases, use_new_scope, new_scope, dest_pos)
+    );
+}
+
+Uast_enum_get_tag* uast_enum_get_tag_clone(
+    const Uast_enum_get_tag* get_tag,
+    bool use_new_scope,
+    Scope_id new_scope,
+    Pos dest_pos
+) {
+    return uast_enum_get_tag_new(
+        get_tag->pos,
+        uast_expr_clone(get_tag->callee, use_new_scope, new_scope, dest_pos)
     );
 }
 

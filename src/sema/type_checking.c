@@ -1618,11 +1618,11 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_SWITCH: {
-            Tast_if_else_chain* new_if_else = NULL;
-            if (!try_set_switch_types(&new_if_else, uast_switch_unwrap(uast))) {
+            Tast_block* new_block = NULL;
+            if (!try_set_switch_types(&new_block, uast_switch_unwrap(uast))) {
                 return false;
             }
-            *new_tast = tast_if_else_chain_wrap(new_if_else);
+            *new_tast = tast_block_wrap(new_block);
             return true;
         }
         case UAST_IF_ELSE_CHAIN: {
@@ -3515,7 +3515,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
-    assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
+    //assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -3550,7 +3550,7 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     }
 
     *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
-    assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
+    //assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     break_in_case = true;
 error:
@@ -3578,6 +3578,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     return status;
 }
 
+// TODO: do not accept entire Uast_if as input (because Uast_if->body is not expected to be provided by the caller)
 bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     bool status = true;
 
@@ -3778,11 +3779,38 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         return status;
 }
 
-bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
+bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
 
-    Tast_expr* new_operand = NULL;
-    if (!try_set_expr_types(&new_operand, uast_expr_clone(lang_switch->operand, false, 0, lang_switch->pos /* TODO */))) {
+    Scope_id outer_scope_id = symbol_collection_new(vec_at(&lang_switch->cases, 0)->scope_id, util_literal_name_new());
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(outer_scope_id)));
+
+    Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
+
+    Tast_expr* new_operand_typed = NULL;
+    if (!try_set_expr_types(&new_operand_typed, oper)) {
+        return false;
+    }
+
+    Uast_variable_def* oper_var = uast_variable_def_new(
+        uast_expr_get_pos(oper),
+        lang_type_to_ulang_type(tast_expr_get_lang_type(new_operand_typed)),
+        util_literal_name_new()
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(oper_var)));
+    symbol_add(tast_variable_def_wrap(tast_variable_def_new(
+        oper_var->pos,
+        tast_expr_get_lang_type(new_operand_typed),
+        false,
+        oper_var->name
+    )));
+    Uast_assignment* oper_assign = uast_assignment_new(
+        oper_var->pos,
+        uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name)), 
+        lang_switch->operand
+    );
+    Tast_assignment* new_oper_assign = NULL;
+    if (!try_set_assignment_types(&new_oper_assign, oper_assign)) {
         return false;
     }
 
@@ -3796,17 +3824,17 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
-    switch (tast_expr_get_lang_type(new_operand).type) {
+    switch (tast_expr_get_lang_type(new_operand_typed).type) {
         case LANG_TYPE_ENUM:
             break;
         default:
-            msg_todo("switch on type that is not enum", tast_expr_get_pos(new_operand));
+            msg_todo("switch on type that is not enum", oper_var->pos);
             status = false;
             goto error;
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
-         tast_expr_get_lang_type(new_operand)
+         tast_expr_get_lang_type(new_operand_typed)
     );
 
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
@@ -3815,10 +3843,11 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
 
         Uast_expr* operand = NULL;
 
-        switch (tast_expr_get_lang_type(new_operand).type) {
+        switch (tast_expr_get_lang_type(new_operand_typed).type) {
             case LANG_TYPE_ENUM:
                 operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
-                    uast_expr_get_pos(lang_switch->operand), uast_expr_clone(lang_switch->operand, true/*TODO*/, old_case->scope_id, lang_switch->pos /* TODO */)
+                    oper_var->pos,
+                    uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name))
                 ));
                 break;
             default:
@@ -3838,18 +3867,28 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             )));
         }
 
-        vec_append(&a_main, &switch_case_defer_add_if_true, old_case->if_true);
+        Scope_id inner_scope = symbol_collection_new(outer_scope_id, scope_to_name_tbl_lookup(old_case->scope_id));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(old_case->scope_id)));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(inner_scope)));
+        log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
+        // TODO: try to remove stmt_clone below (for performance)
+        vec_append(&a_main, &switch_case_defer_add_if_true, uast_stmt_clone(
+            old_case->if_true,
+            true,
+            inner_scope,
+            old_case->pos /* TODO */
+        ));
         Uast_block* if_true = uast_block_new(
             old_case->pos,
             (Uast_stmt_vec) {0},
             old_case->pos,
-            old_case->scope_id
+            inner_scope
         );
                 
         parent_of = PARENT_OF_CASE;
-        parent_of_operand = lang_switch->operand;
+        parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
+        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
             status = false;
             goto error_inner;
         }
@@ -3870,16 +3909,35 @@ error_inner:
         vec_append(&a_main, &new_ifs, new_if);
     }
 
-    *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
+
+    Tast_if_else_chain* new_if_else = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
+    Tast_stmt_vec stmts = {0};
+    vec_append(&a_main, &stmts, tast_expr_wrap(tast_assignment_wrap(new_oper_assign)));
+    vec_append(&a_main, &stmts, tast_expr_wrap(tast_if_else_chain_wrap(
+        new_if_else
+    )));
     if (!check_for_exhaustiveness_finish(exhaustive_data, lang_switch->pos)) {
         status = false;
         goto error;
     }
+    *new_tast = tast_block_new(
+        lang_switch->pos,
+        stmts,
+        lang_switch->pos /* TODO */,
+        vec_at(&new_if_else->tasts, 0)->body->lang_type,
+        outer_scope_id //vec_at(&new_if_else->tasts, 0)->body->scope_id /* TODO */
+    );
+    //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
+    //    scope_get_parent_tbl_update(vec_at(&new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
+    //}
 
 error:
     parent_of = old_parent_of;
     break_in_case = false;
     break_type = old_break_type;
+    if (*new_tast) {
+        log(LOG_DEBUG, FMT"\n", tast_block_print(*new_tast));
+    }
     return status;
 }
 
@@ -3928,7 +3986,7 @@ bool try_set_using_types(const Uast_using* using) {
         name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
-        // TODO: expected failure test for using on enum, etc.
+        // TODO: expected failure case for using `using` on enum, etc.
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
             Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
@@ -4060,6 +4118,9 @@ static void do_test_bit_width(void) {
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     do_test_bit_width();
+
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(block->scope_id)));
+    log(LOG_INFO, FMT"\n", uast_block_print(block));
 
     bool status = true;
 

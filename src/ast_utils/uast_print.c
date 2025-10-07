@@ -14,6 +14,14 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&a_print, buf, " ))");
 }
 
+static void extend_scope(String* buf, Scope_id scope_id, int indent) {
+    string_extend_cstr_indent(&a_print, buf, "scope: ", indent);
+    string_extend_size_t(&a_print, buf, scope_id);
+    string_extend_cstr(&a_print, buf, "\n");
+    string_extend_cstr_indent(&a_print, buf, "name of scope: ", indent);
+    extend_name(NAME_LOG, buf, scope_to_name_tbl_lookup(scope_id));
+}
+
 Strv uast_binary_print_internal(const Uast_binary* binary, int indent) {
     String buf = {0};
 
@@ -237,8 +245,7 @@ Strv uast_block_print_internal(const Uast_block* block, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
 
-    string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
-    string_extend_size_t(&a_print, &buf, block->scope_id);
+    extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
     string_extend_cstr(&a_print, &buf, "\n");
 
     string_extend_cstr_indent(&a_print, &buf, "parent_block_scope: ", indent + INDENT_WIDTH);
@@ -355,9 +362,21 @@ Strv uast_yield_print_internal(const Uast_yield* yield, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "yield\n", indent);
-    string_extend_cstr_indent(&a_print, &buf, "break_out_of: ", indent + INDENT_WIDTH);
+
+    // TODO: make function for below, and also use function for uast_continue_print_internal
+    string_extend_cstr_indent(&a_print, &buf, "label to break_out_of: ", indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, yield->break_out_of);
     string_extend_cstr(&a_print, &buf, "\n");
+    string_extend_cstr_indent(&a_print, &buf, "name of scope to break_out_of: ", indent + INDENT_WIDTH);
+    Uast_def* label_ = NULL;
+    if (usymbol_lookup(&label_, yield->break_out_of)) {
+        Uast_label* label = uast_label_unwrap(label_);
+        extend_name(NAME_LOG, &buf, label->block_scope);
+    } else {
+        string_extend_cstr(&a_print, &buf, "<null>");
+    }
+    string_extend_cstr(&a_print, &buf, "\n");
+
     if (yield->do_yield_expr) {
         string_extend_strv(&a_print, &buf, uast_expr_print_internal(yield->yield_expr, indent + INDENT_WIDTH));
     }
@@ -406,8 +425,7 @@ Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "case\n", indent);
 
-    string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
-    string_extend_size_t(&a_print, &buf, lang_case->scope_id);
+    extend_scope(&buf, lang_case->scope_id, indent + INDENT_WIDTH);
     string_extend_cstr(&a_print, &buf, "\n");
 
     if (lang_case->is_default) {
@@ -445,7 +463,7 @@ Strv uast_label_print_internal(const Uast_label* label, int indent) {
     extend_name(NAME_LOG, &buf, label->name);
     string_extend_cstr(&a_print, &buf, "\n");
     string_extend_cstr_indent(&a_print, &buf, "block_scope: ", indent + INDENT_WIDTH);
-    string_extend_size_t(&a_print, &buf, label->block_scope);
+    extend_name(NAME_LOG, &buf, label->block_scope);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);

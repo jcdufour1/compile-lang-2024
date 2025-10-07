@@ -275,7 +275,7 @@ static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
     // TODO: remove label->block_scope and use label->name.scope_id instead
     new_scope_name.scope_id = block_scope;
-    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, block_scope);
+    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, scope_to_name_tbl_lookup(block_scope));
     if (!usymbol_add(uast_label_wrap(label))) {
         msg_redefinition_of_symbol(uast_label_wrap(label));
         return PARSE_ERROR;
@@ -1080,7 +1080,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
     Scope_id fn_scope = SCOPE_TOP_LEVEL;
-    Scope_id block_scope = symbol_collection_new(fn_scope);
+    Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
 
     Uast_function_decl* fun_decl = NULL;
     if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope)) {
@@ -1559,7 +1559,7 @@ static PARSE_STATUS parse_for_range_internal(
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope))) {
+    if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope, util_literal_name_new()))) {
         return PARSE_ERROR;
     }
 
@@ -1655,7 +1655,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
     Token for_token = {0};
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
 
-    Scope_id block_scope = symbol_collection_new(scope_id);
+    Scope_id block_scope = symbol_collection_new(scope_id, util_literal_name_new());
     
     if (starts_with_variable_type_decl(*tokens, false)) {
         PARSE_STATUS status = PARSE_OK;
@@ -1858,7 +1858,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL) /* TODO */)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */)) {
         goto error;
     }
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -2014,7 +2014,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
 ) {
     Uast_if_vec ifs = {0};
 
-    Scope_id parent = symbol_collection_new(grand_parent);
+    Scope_id parent = symbol_collection_new(grand_parent, util_literal_name_new());
     // TODO: (maybe not): extract this if and block_new into separate function
     Name dummy = {0};
     if (PARSE_OK != label_thing(&dummy, parent)) {
@@ -2036,7 +2036,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent))) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()))) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -2064,7 +2064,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
             ));
         }
 
-        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent))) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()))) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -2080,8 +2080,8 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
 static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_token, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_LET));
-    Scope_id if_true_scope = symbol_collection_new(scope_id);
-    Scope_id if_false_scope = symbol_collection_new(scope_id);
+    Scope_id if_true_scope = symbol_collection_new(scope_id, util_literal_name_new());
+    Scope_id if_false_scope = symbol_collection_new(scope_id, util_literal_name_new());
 
     Uast_expr* is_true = NULL;
     switch (parse_generic_binary(&is_true, tokens, if_true_scope, 0, 0)) {
@@ -2125,7 +2125,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         }
 
         Uast_block* if_false_block = NULL;
-        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(if_false_scope))) {
+        if (PARSE_OK != parse_block(&if_false_block, tokens, false, symbol_collection_new(if_false_scope, util_literal_name_new()))) {
             return PARSE_ERROR;
         }
         if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
@@ -2184,7 +2184,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     Name old_default_brk_label = default_brk_label;
     log(LOG_DEBUG, "thing thing: "FMT"\n", name_print(NAME_LOG, default_brk_label));
 
-    Scope_id parent = symbol_collection_new(grand_parent);
+    Scope_id parent = symbol_collection_new(grand_parent, util_literal_name_new());
     // TODO: (maybe not): extract this if and block_new into separate function
     if (PARSE_OK != label_thing(&default_brk_label, parent)) {
         return PARSE_ERROR;
@@ -2220,7 +2220,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     Uast_case_vec cases = {0};
 
     while (1) {
-        Scope_id case_scope = symbol_collection_new(parent);
+        Scope_id case_scope = symbol_collection_new(parent, util_literal_name_new());
         Uast_stmt* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
@@ -2315,6 +2315,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         assert(new_scope_name.base.count > 0);
     } else if (new_scope_name.base.count < 1) {
         new_scope_name_pos = POS_BUILTIN;
+        log_tokens(LOG_INFO, *tokens);
         new_scope_name = util_literal_name_new_prefix_scope(sv("scope_name"), scope_id);
     }
 
@@ -2382,7 +2383,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_continue_wrap(rtn_stmt);
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id))) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id, util_literal_name_new()))) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_expr_wrap(uast_block_wrap(block_def));
@@ -3170,7 +3171,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
 
     Scope_id new_scope = SCOPE_TOP_LEVEL;
     if (!is_main_mod) {
-        new_scope = symbol_collection_new(SCOPE_BUILTIN);
+        new_scope = symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
     }
     if (new_scope == SCOPE_TOP_LEVEL) {
         log(LOG_DEBUG, "thing 92\n");
@@ -3223,7 +3224,7 @@ error:
 }
 
 bool parse(Uast_block** block, Strv file_path) {
-    symbol_collection_new(SCOPE_BUILTIN);
+    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
     //Uast_mod_alias* dummy = NULL;
