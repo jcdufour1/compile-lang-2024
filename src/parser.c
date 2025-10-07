@@ -3221,7 +3221,7 @@ error:
     return status;
 }
 
-bool parse(Uast_block** block, Strv file_path) {
+bool parse(Strv file_path) {
     symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
@@ -3250,9 +3250,6 @@ bool parse(Uast_block** block, Strv file_path) {
     Uast_def* import = NULL;
     log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
     unwrap(usymbol_lookup(&import, name_new(MOD_PATH_OF_MOD_PATHS, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
-    *block = uast_import_path_unwrap(import)->block;
-    assert((*block)->scope_id == SCOPE_TOP_LEVEL);
-    log(LOG_DEBUG, FMT"\n", uast_block_print(*block));
     return true;
 }
 

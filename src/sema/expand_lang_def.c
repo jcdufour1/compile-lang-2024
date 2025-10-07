@@ -8,7 +8,7 @@
 #include <type_checking.h>
 #include <msg_todo.h>
 #include <lang_type_from_ulang_type.h>
-#include <msg_undefined_symbol.h>
+#include <ast_msg.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 

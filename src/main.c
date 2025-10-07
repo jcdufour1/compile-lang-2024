@@ -57,8 +57,7 @@ void compile_file_to_ir(void) {
 
     // TODO: remove untyped variable here, because block should be in SCOPE_BUILTIN anyway
     //   (also, parse function should not have untyped "parameter")
-    Uast_block* untyped = NULL;
-    bool status = parse(&untyped, params.input_file_path);
+    bool status = parse(params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
         assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
@@ -68,7 +67,6 @@ void compile_file_to_ir(void) {
 
     log(LOG_DEBUG, "\nafter parsing start--------------------\n");
     usymbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG, FMT, uast_block_print(untyped));
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
     arena_reset(&a_print);

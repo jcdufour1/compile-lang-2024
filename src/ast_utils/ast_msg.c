@@ -4,6 +4,14 @@
 
 // TODO: move more functions here
 
+void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Pos sym_pos) {
+    msg_internal(
+        file, line,
+        DIAG_UNDEFINED_SYMBOL, sym_pos,
+        "symbol `"FMT"` is not defined\n", name_print(NAME_MSG, sym_name)
+    );
+}
+
 PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, const Uast_def* new_sym_def) {
     msg_internal(
         file, line, DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),

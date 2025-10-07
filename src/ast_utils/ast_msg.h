@@ -22,4 +22,9 @@ PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, con
 #define msg_redefinition_of_symbol(new_sym_def) \
     msg_redefinition_of_symbol_internal(__FILE__, __LINE__, new_sym_def)
 
+void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Pos sym_pos);
+
+#define msg_undefined_symbol(sym_name, sym_pos) \
+    msg_undefined_symbol_internal(__FILE__, __LINE__, sym_name, sym_pos)
+
 #endif // AST_MSG_H

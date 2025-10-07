@@ -22,7 +22,6 @@
 #include <expand_lang_def.h>
 #include <ulang_type_serialize.h>
 #include <symbol_table.h>
-#include <msg_undefined_symbol.h>
 #include <pos_vec.h>
 #include <check_struct_recursion.h>
 #include <uast_expr_to_ulang_type.h>
