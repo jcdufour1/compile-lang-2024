@@ -19,3 +19,4 @@ PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, con
 
     return PARSE_ERROR;
 }
+

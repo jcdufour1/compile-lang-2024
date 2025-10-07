@@ -1,6 +1,16 @@
 type util import = std.util
 type c import = std.libc
 
+fn min(lhs NumT, rhs NumT, NumT Type) NumT {
+    if lhs < rhs => return lhs
+    return rhs
+}
+
+fn max(lhs NumT, rhs NumT, NumT Type) NumT {
+    if lhs > rhs => return lhs
+    return rhs
+}
+
 fn abs(num NumT, NumT Type) NumT {
     if num < unsafe_cast<NumT>0 {
         // TODO: "-num" should be allowed for floating point types

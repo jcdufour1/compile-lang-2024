@@ -312,6 +312,7 @@ static Uast_type uast_gen_using(const char* prefix) {
     Uast_type using = {.name = uast_name_new(prefix, "using", false)};
 
     append_member(&using.members, "Name", "sym_name");
+    append_member(&using.members, "Strv", "mod_path_to_put_defs");
 
     return using;
 }
@@ -434,6 +435,7 @@ static Uast_type uast_gen_lang_def(const char* prefix) {
 
     append_member(&def.members, "Name", "alias_name");
     append_member(&def.members, "Uast_expr*", "expr");
+    append_member(&def.members, "bool", "is_from_using");
 
     return def;
 }

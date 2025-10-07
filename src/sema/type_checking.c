@@ -625,10 +625,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(uast_def_get_name(sym_def).base));
-    log(LOG_DEBUG, "%zu\n", uast_def_get_name(sym_def).scope_id);
-
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
             function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
@@ -2427,10 +2423,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
-            log(LOG_DEBUG, "before\n");
             // TODO: Uast_param should have Strv instead of name to prevent some bugs and make things simplier?
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx_param)->base->name));
                 if (strv_is_equal(vec_at(&params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     size_t actual_arg_count = curr_arg_count;
                     param = vec_at(&params->params, idx_param);
@@ -2976,9 +2970,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     log(LOG_DEBUG, "%zu "FMT"\n", new_args.info.count, name_print(NAME_MSG, fun_name));
     for (size_t idx = 0; idx < new_args.info.count; idx++) {
         assert(vec_at(&new_args_set, idx));
-        log(LOG_DEBUG, "thing 8\n");
         assert(vec_at(&new_args, idx));
-        log(LOG_DEBUG, "thing 9\n");
     }
 
 error:
@@ -3999,6 +3991,7 @@ bool try_set_using_types(const Uast_using* using) {
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
             Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
             Name alias_name = using->sym_name;
+            alias_name.mod_path = using->mod_path_to_put_defs;
             alias_name.base = curr->name.base;
             Uast_lang_def* lang_def = uast_lang_def_new(
                 using->pos,
@@ -4007,7 +4000,8 @@ bool try_set_using_types(const Uast_using* using) {
                     curr->pos,
                     uast_symbol_new(curr->pos, curr->name),
                     uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
-                ))
+                )),
+                true
             );
             if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
                 msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
@@ -4017,6 +4011,7 @@ bool try_set_using_types(const Uast_using* using) {
         return true;
     } else if (def->type == UAST_MOD_ALIAS) {
         Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
+        bool is_builtin = strv_is_equal(MOD_PATH_BUILTIN, using->sym_name.mod_path);
         // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
         //   eventually, it may be a good idea to speed this up 
         //   (eg. by keeping array of symbols of top level of each module)
@@ -4027,15 +4022,28 @@ bool try_set_using_types(const Uast_using* using) {
             Name curr_name = uast_def_get_name(curr);
             if (strv_is_equal(curr_name.mod_path, mod_path)) {
                 Name alias_name = using->sym_name;
+                log(LOG_INFO, FMT"\n", name_print(NAME_LOG, alias_name));
+                alias_name.mod_path = using->mod_path_to_put_defs;
                 alias_name.base = curr_name.base;
+                alias_name.scope_id = curr_name.scope_id;
                 Uast_lang_def* lang_def = uast_lang_def_new(
                     using->pos,
                     alias_name,
-                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name))
+                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
+                    true
                 );
+                log(LOG_INFO, FMT"\n", uast_lang_def_print(lang_def));
                 if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-                    msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                    status = false;
+                    Uast_def* prev_def = NULL;
+                    unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
+                    if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
+                        if (!is_builtin) {
+                            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias_name));
+                            log(LOG_DEBUG, FMT"\n", uast_def_print(prev_def));
+                            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+                            status = false;
+                        }
+                    }
                 }
             }
         }
