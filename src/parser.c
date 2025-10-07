@@ -3221,7 +3221,7 @@ error:
     return status;
 }
 
-bool parse(Strv file_path) {
+bool parse(void) {
     symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     Uast_mod_alias* dummy = NULL;
@@ -3229,7 +3229,7 @@ bool parse(Strv file_path) {
         &dummy,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
-        file_strip_extension(file_path),
+        file_strip_extension(params.input_file_path),
         false,
         true,
         POS_BUILTIN

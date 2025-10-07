@@ -12,7 +12,7 @@ void tokenize_do_test(void);
 
 bool tokenize(Tk_view* result, Strv file_path);
 
-bool parse(Strv file_path);
+bool parse(void);
 
 Tast_block* change_operators(Tast_block* root);
 
