@@ -476,7 +476,7 @@ static void load_block_stmts(
         }
 
         load_stmt(new_block, pair.defer->child, true);
-        vec_rem_last(pairs);
+        vec_pop(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
             // TODO: expected failure test
@@ -487,7 +487,7 @@ static void load_block_stmts(
     if (parent_of == DEFER_PARENT_OF_FUN) {
         rtn_def = old_rtn_def;
     }
-    vec_rem_last(&defered_collections.coll_stack);
+    vec_pop(&defered_collections.coll_stack);
 
     assert(defered_collections.coll_stack.info.count == old_colls_count);
 }

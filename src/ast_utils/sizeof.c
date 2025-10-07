@@ -123,6 +123,7 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
+    // TODO: use get_next_multiple function?
     uint64_t req_align = 8; // TODO: do not hardcode this
     uint64_t end_alignment = 0;
 
@@ -130,12 +131,12 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
-        end_alignment = MAX(end_alignment, MIN(req_align, sizeof_curr_item));
+        end_alignment = max(end_alignment, min(req_align, sizeof_curr_item));
         if ((total%req_align + sizeof_curr_item)%req_align > req_align) {
             total += req_align - total%req_align;
         }
         if (is_sum_type) {
-            total = MAX(total, sizeof_curr_item);
+            total = max(total, sizeof_curr_item);
         } else {
             total += sizeof_curr_item;
         }

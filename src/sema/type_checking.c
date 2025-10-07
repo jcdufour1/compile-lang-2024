@@ -1976,7 +1976,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
 
     // TODO: word below comment better
     // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
-    size_t amt_args_needed = MAX(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
+    size_t amt_args_needed = max(is_variadic ? params->params.info.count - 1 : params->params.info.count, fun_call->args.info.count);
 
     Tast_expr_vec new_args = {0};
     Bool_vec new_args_set = {0};
@@ -1990,7 +1990,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     }
 
     // TODO: consider case of optional arguments and variadic arguments being used in same function
-    for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
+    for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
@@ -2368,7 +2368,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
-    size_t amt_args_needed = MAX(
+    size_t amt_args_needed = max(
         is_variadic ? params->params.info.count - 1 : params->params.info.count,
         fun_call->args.info.count
     );
@@ -2393,7 +2393,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
 
     // TODO: deduplicate this with below for loop?
-    for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
+    for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);
@@ -2552,7 +2552,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             } else {
                 if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
                     bool infer_success = false;
-                    for (size_t param_idx = 0; status && param_idx < MIN(idx, fun_call->args.info.count); param_idx++) {
+                    for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
                         // prevent printing errors to the user for failed inference
@@ -2785,7 +2785,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     // TODO: consider case of optional arguments and variadic arguments being used in same function
     size_t prev_gen_count = 0;
-    for (size_t param_idx = 0; param_idx < MIN(fun_call->args.info.count, params->params.info.count); param_idx++) {
+    for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx - prev_gen_count;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(&params->params, param_idx);

@@ -181,8 +181,6 @@ void extend_name_msg(String* buf, Name name) {
     extend_name_log_internal(true, buf, name);
 }
 
-// TODO: move this function elsewhere
-// TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
     if (
         mode != UNAME_MSG || !(

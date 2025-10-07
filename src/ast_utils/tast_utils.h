@@ -8,7 +8,6 @@
 #include <lang_type_print.h>
 #include <ulang_type_get_pos.h>
 
-// TODO: remove this forward declaration
 static inline Ulang_type ulang_type_new_int_x(Strv base);
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
@@ -178,7 +177,6 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (gen_args_u8.info.count < 1) {
         vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
     }
-
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,

@@ -261,7 +261,7 @@ static bool get_next_token(
                     vec_append(&a_token, &pos_stack, *pos);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else if (strv_try_consume(&temp_text, '*') && strv_try_consume(&temp_text, '/')) {
-                    vec_rem_last(&pos_stack);
+                    vec_pop(&pos_stack);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else {
                     strv_col_consume(pos, file_text_rem);

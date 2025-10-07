@@ -85,10 +85,9 @@ __attribute__((format (printf, 5, 6)));
 //    return sv("false");
 //}
 
-// TODO: make these macros lowercase for consistancy
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define INLINE static inline __attribute__((always_inline))
 
