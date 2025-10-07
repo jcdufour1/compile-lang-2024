@@ -236,3 +236,32 @@ Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
+
+bool name_is_equal(Name a, Name b) {
+    if (!strv_is_equal(a.mod_path, b.mod_path) || !strv_is_equal(a.base, b.base)) {
+        return false;
+    }
+
+    if (a.gen_args.info.count != b.gen_args.info.count) {
+        return false;
+    }
+    for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool uname_is_equal(Uname a, Uname b) {
+    Name new_a = {0};
+    if (!name_from_uname(&new_a, a, POS_BUILTIN /* TODO */)) {
+        return false;
+    }
+    Name new_b = {0};
+    if (!name_from_uname(&new_b, b, POS_BUILTIN /* TODO */)) {
+        return false;
+    }
+    return name_is_equal(new_a, new_b);
+}

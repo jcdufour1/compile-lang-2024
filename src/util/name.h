@@ -65,4 +65,8 @@ Uname uname_clone(Uname name, bool use_new_scope, Scope_id scope_id);
 
 #define uname_print(mode, name) strv_print(uname_print_internal(mode, name))
 
+bool name_is_equal(Name a, Name b);
+
+bool uname_is_equal(Uname a, Uname b);
+
 #endif // NAME_H

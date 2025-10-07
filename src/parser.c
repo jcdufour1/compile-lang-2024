@@ -3224,33 +3224,16 @@ error:
 bool parse(Strv file_path) {
     symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
-    // TODO: check if there is test case that uses runtime feature, but does not explicitly import any libraries
-    //Uast_mod_alias* dummy = NULL;
-    //unwrap(get_mod_alias_from_path_token(
-    //    &dummy,
-    //    token_new("mod_path_runtime_alias_thing", TOKEN_SYMBOL),
-    //    (Pos) {0} /* TODO */,
-    //    MOD_PATH_RUNTIME
-    //));
-
-    log(LOG_DEBUG, FMT"\n", strv_print(strv_slice(file_path, 0, file_path.count - 4)));
-    Uast_mod_alias* alias = NULL;
-    if (!get_mod_alias_from_path_token(
-        &alias,
+    Uast_mod_alias* dummy = NULL;
+    return get_mod_alias_from_path_token(
+        &dummy,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
         file_strip_extension(file_path),
         false,
         true,
         POS_BUILTIN
-    )) {
-        return false;
-    }
-
-    Uast_def* import = NULL;
-    log(LOG_DEBUG, FMT"\n", strv_print(alias->mod_path));
-    unwrap(usymbol_lookup(&import, name_new(MOD_PATH_OF_MOD_PATHS, alias->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)));
-    return true;
+    );
 }
 
 static void parser_test_parse_expr(const char* input, int test) {

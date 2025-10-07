@@ -1,0 +1,6 @@
+
+
+fn main() i32 {
+    let num u32 = ~0
+    return 0
+}
