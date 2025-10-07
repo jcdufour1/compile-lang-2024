@@ -2,6 +2,9 @@
 #include <env.h>
 
 void string_extend_f(Arena* arena, String* string, const char* format, ...) {
+    // TODO: this function does not work
+    todo();
+
     va_list args1;
     va_start(args1, format);
     va_list args2;
