@@ -318,18 +318,6 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
-    Uast_expr* new_expr = NULL;
-    switch (expand_def_symbol(&new_expr, sym_untyped)) {
-        case EXPAND_NAME_ERROR:
-            return false;
-        case EXPAND_NAME_NORMAL:
-            break;
-        case EXPAND_NAME_NEW_EXPR:
-            return try_set_expr_types(new_tast, new_expr);
-        default:
-            unreachable("");
-    }
-
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
@@ -400,6 +388,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_POISON_DEF:
             return false;
         case UAST_LANG_DEF:
+            log(LOG_DEBUG, FMT"\n", uast_symbol_print(sym_untyped));
+            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             unreachable("lang def alias should have been expanded already");
     }
     unreachable("");
@@ -4052,32 +4042,43 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(void) {
+    {
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Uast_def* curr = NULL;
+        while (usym_tbl_iter_next(&curr, &iter)) {
+            expand_def_def(curr);
+        }
+    }
+    todo();
+
     check_env.lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
-    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
-    Uast_def* curr = NULL;
-    while (usym_tbl_iter_next(&curr, &iter)) {
-        // TODO: make switch for this if for exhausive checking
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
-            // TODO: eventually, we should do also function defs, etc. in this for loop
-            // (change parser to not put function defs, etc. in block)
-            continue;
-        }
+    {
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Uast_def* curr = NULL;
+        while (usym_tbl_iter_next(&curr, &iter)) {
+            // TODO: make switch for this if for exhausive checking
+            if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
+                // TODO: eventually, we should do also function defs, etc. in this for loop
+                // (change parser to not put function defs, etc. in block)
+                continue;
+            }
 
-        switch (try_set_def_types(curr)) {
-            case STMT_NO_STMT:
-                break;
-            case STMT_ERROR:
-                status = false;
-                break;
-            case STMT_OK:
-                break;
-            default:
-                unreachable("");
+            switch (try_set_def_types(curr)) {
+                case STMT_NO_STMT:
+                    break;
+                case STMT_ERROR:
+                    status = false;
+                    break;
+                case STMT_OK:
+                    break;
+                default:
+                    unreachable("");
+            }
         }
     }
 

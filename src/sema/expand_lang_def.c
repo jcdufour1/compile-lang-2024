@@ -126,10 +126,6 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
 }
 
 static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* new_name, Name name, Pos dest_pos) {
-    if (strv_is_equal(name.base, sv("Token"))) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
-    }
-
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
@@ -141,9 +137,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
 
     switch (def->type) {
         case UAST_POISON_DEF:
-            if (strv_is_equal(name.base, sv("Token"))) {
-                todo();
-            }
             return EXPAND_NAME_ERROR;
         case UAST_LANG_DEF:
             break;
@@ -337,6 +330,23 @@ static bool expand_def_if(Uast_if* lang_if) {
 static bool expand_def_member_access(Uast_member_access* access) {
     if (!expand_def_expr(&access->callee, access->callee)) {
         return false;
+    }
+
+    Uast_def* callee_def = NULL;
+    switch (access->callee->type) {
+        case UAST_SYMBOL: {
+            Uast_symbol* sym = uast_symbol_unwrap(access->callee);
+            if (!usymbol_lookup(&callee_def, sym->name)) {
+                msg_undefined_symbol(sym->name, sym->pos);
+                return false;
+            }
+            break;
+        }
+        default:
+            todo();
+    }
+    if (callee_def->type == UAST_MOD_ALIAS) {
+        todo();
     }
 
     Uast_expr* dummy = NULL;
@@ -554,9 +564,8 @@ bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
 }
 
 static bool expand_def_lang_def(Uast_lang_def* def) {
-    log(LOG_DEBUG, FMT"\n", uast_lang_def_print(def));
     (void) def;
-    // TODO
+    // TODO: expand def->expr here to reduce the amount of duplicate work that is done?
     return true;
 }
 
@@ -659,8 +668,10 @@ bool expand_def_function_def(Uast_function_def* def) {
 
 static bool expand_def_mod_alias(Uast_mod_alias* alias) {
     (void) alias;
-    todo();
+    //todo();
     //return expand_def_name(&alias->name) && expand_def_name(&alias->mod_path);
+    // TODO
+    return true;
 }
 
 static bool expand_def_import_path(Uast_import_path* path) {
@@ -717,11 +728,15 @@ bool expand_def_block(Uast_block* block) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
+        //log(LOG_DEBUG, "usym_tbl_iter_next before: "FMT"\n", uast_def_print(curr));
         status = expand_def_def(curr) && status;
+        //log(LOG_DEBUG, "usym_tbl_iter_next after: "FMT"\n", uast_def_print(curr));
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        log(LOG_DEBUG, "block->children before: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
         status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx)) && status;
+        log(LOG_DEBUG, "block->children after: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
     }
 
     return status;
