@@ -182,6 +182,15 @@ continue(<thing>)
         if .some(ch) = fgetc(file) {
 - "_1__7_builtin_str____2658" could be printed as "7builtin_str____2658", 
     because variable names cannot start with digit anyway
+- this should not be parse error:
+    if let .some(file) = io.open_file("examples/read_file.own", "r") {
+        read(file)
+        io.close_file(file)
+    } 
+    else {
+        io.print_str("error: could not open file")
+        return 1
+    }
 
 
 
