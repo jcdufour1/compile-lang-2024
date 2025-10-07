@@ -433,7 +433,6 @@ static Tast_type tast_gen_if_else_chain(const char* prefix) {
     return chain;
 }
 
-// TODO: remove tast_gen_module_alias if it is not used
 static Tast_type tast_gen_module_alias(const char* prefix) {
     const char* base_name = "module_alias";
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
