@@ -4,6 +4,7 @@ type coll import = std.collections
 type util import = std.util
 
 extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) i32
+extern("c") fn own_fprintf(file File, format rt.Slice(<u8>), args opaque...) i32
 extern("c") fn own_stdout() opaque*
 extern("c") fn own_stderr() opaque*
 extern("c") fn own_stdin() opaque*

@@ -87,7 +87,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 81, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 82, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -170,6 +170,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"diag-using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
     {"diag-file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
     {"diag-gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
+    {"diag-if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

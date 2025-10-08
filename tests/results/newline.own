@@ -1,8 +1,11 @@
-compile::stdout 4
+compile::stdout 7
 hello
 bye
 bye
 bye
+yes
+yes
+yes
 
 compile::stderr 0
 

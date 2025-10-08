@@ -794,24 +794,12 @@ void emit_c_from_tree(void) {
             vec_append(&a_main, &cmd, sv("-l"));
             vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
         }
-        for (size_t idx = 0; idx < params.static_libs.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.static_libs, idx));
-        }
-        for (size_t idx = 0; idx < params.dynamic_libs.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.dynamic_libs, idx));
-        }
-        for (size_t idx = 0; idx < params.c_input_files.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.c_input_files, idx));
-        }
-        for (size_t idx = 0; idx < params.object_files.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.object_files, idx));
-        }
-        for (size_t idx = 0; idx < params.lower_s_files.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.lower_s_files, idx));
-        }
-        for (size_t idx = 0; idx < params.upper_s_files.info.count; idx++) {
-            vec_append(&a_main, &cmd, vec_at(&params.upper_s_files, idx));
-        }
+        vec_extend(&a_main, &cmd, &params.static_libs);
+        vec_extend(&a_main, &cmd, &params.dynamic_libs);
+        vec_extend(&a_main, &cmd, &params.c_input_files);
+        vec_extend(&a_main, &cmd, &params.object_files);
+        vec_extend(&a_main, &cmd, &params.lower_s_files);
+        vec_extend(&a_main, &cmd, &params.upper_s_files);
 
         int status = subprocess_call(cmd);
         if (status != 0) {

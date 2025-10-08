@@ -1,0 +1,29 @@
+
+type io import = std.io
+type util import = std.util
+
+fn add(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
+    switch rhs {
+        case .some(rhs_val):
+            if let .some(lhs_val) = lhs {
+                return lhs_val + rhs_val
+            } else {
+                return rhs_val
+            }
+        case .none:
+            if let .some(lhs_val) = lhs {
+                return lhs_val
+            } else {
+                return 0
+            }
+    }
+
+    return 0
+}
+
+fn main() i32 {
+    let num i32 = add(.some(4), .some(5))
+    io.print_int(num)
+
+    return 0
+}

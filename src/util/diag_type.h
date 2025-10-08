@@ -83,6 +83,7 @@ typedef enum {
     DIAG_MISMATCHED_CLOSING_CURLY_BRACE,
     DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
     DIAG_FILE_INVALID_NAME,
+    DIAG_IF_SHOULD_BE_IF_LET,
 
     // count of cases for static asserts
     DIAG_COUNT,
