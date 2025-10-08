@@ -34,6 +34,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
     unreachable("");
 }
 
+// TODO: move this function
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     assert(name.mod_alias.base.count > 0);
 

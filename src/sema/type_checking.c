@@ -3683,6 +3683,7 @@ error:
     return status;
 }
 
+// TODO: remove this function
 bool try_set_using_types(const Uast_using* using) {
     bool status = true;
     Uast_def* def = NULL;
@@ -3959,6 +3960,8 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_USING:
             return true;
+        case UAST_STMT_REMOVED:
+            return true;
     }
     unreachable("");
 }
@@ -4016,12 +4019,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_defer_wrap(new_defer);
             return STMT_OK;
         }
-        case UAST_USING: {
-            if (!try_set_using_types(uast_using_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            return STMT_NO_STMT;
-        }
+        case UAST_USING:
+            unreachable("using should not have made it this far");
         case UAST_YIELD: {
             Tast_yield* new_yield = NULL;
             if (!try_set_yield_types(&new_yield, uast_yield_unwrap(stmt))) {
@@ -4038,6 +4037,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             *new_tast = tast_continue_wrap(new_cont);
             return STMT_OK;
         }
+        case UAST_STMT_REMOVED:
+            return STMT_NO_STMT;
     }
     unreachable("");
 }

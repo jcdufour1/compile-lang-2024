@@ -345,9 +345,11 @@ Uast_defer* uast_defer_clone(const Uast_defer* lang_defer, bool use_new_scope, S
     return uast_defer_new(lang_defer->pos, uast_stmt_clone(lang_defer->child, use_new_scope, new_scope, dest_pos));
 }
 
-Uast_using* uast_using_clone(const Uast_using* using, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+Uast_stmt_removed* uast_stmt_removed_clone(const Uast_stmt_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) new_scope;
+    (void) use_new_scope;
     (void) dest_pos;
-    return uast_using_new(using->pos, name_clone(using->sym_name, use_new_scope, new_scope), using->mod_path_to_put_defs);
+    return uast_stmt_removed_new(removed->pos);
 }
 
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -369,7 +371,9 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
         case UAST_DEFER:
             return uast_defer_wrap(uast_defer_clone(uast_defer_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_USING:
-            return uast_using_wrap(uast_using_clone(uast_using_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
+            unreachable("using should not have made it here");
+        case UAST_STMT_REMOVED:
+            return uast_stmt_removed_wrap(uast_stmt_removed_clone(uast_stmt_removed_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
     }
     unreachable("");
 }

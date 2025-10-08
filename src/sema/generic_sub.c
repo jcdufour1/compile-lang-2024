@@ -213,6 +213,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
         case UAST_YIELD:
             generic_sub_yield(uast_yield_unwrap(stmt), gen_param, gen_arg);
             return;
+        case UAST_STMT_REMOVED:
+            return;
     }
     unreachable("");
 }

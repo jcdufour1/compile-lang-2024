@@ -395,6 +395,15 @@ Strv uast_continue_print_internal(const Uast_continue* cont, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_stmt_removed_print_internal(const Uast_stmt_removed* removed, int indent) {
+    (void) removed;
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "stmt_removed\n", indent);
+
+    return string_to_strv(buf);
+}
+
 Strv uast_assignment_print_internal(const Uast_assignment* assign, int indent) {
     String buf = {0};
 
@@ -769,6 +778,8 @@ Strv uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_using_print_internal(uast_using_const_unwrap(stmt), indent);
         case UAST_CONTINUE:
             return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
+        case UAST_STMT_REMOVED:
+            return uast_stmt_removed_print_internal(uast_stmt_removed_const_unwrap(stmt), indent);
     }
     unreachable("");
 }
