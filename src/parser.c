@@ -2308,6 +2308,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 }
 
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
+    // TODO: use try_consume_newlines(tokens) instead of try_consume(NULL, tokens, TOKEN_NEW_LINE)
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
@@ -2537,6 +2538,8 @@ static PARSE_STATUS parse_block(
         block_end = prev_token;
     }
     (*block)->pos_end = block_end.pos;
+
+    try_consume_newlines(tokens);
 
 end:
     return status;

@@ -47,6 +47,26 @@ main() i32 {
         )
     }
 
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+    else {
+        io.print_str("no")
+    }
+
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+
+    else {
+        io.print_str("no")
+    }
+
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+
+    else => io.print_str("no")
 
     return 0
 }
