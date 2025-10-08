@@ -85,7 +85,6 @@ for generics:
 - mandatory initialization or similar
 - manual zero initialization
 - safe cast (use "cast(<i64>)" to cast num to i64)?
-- prevent collisions with user defined names and compiler defined names
 - test for break in switch case 
 - distinct
 - pointer generic
@@ -94,12 +93,6 @@ for generics:
 - implement == for sum with void inner types, or give error for using ==
 - test case for: let num f32 = 7
 - binary operators with f64 literals on both sides (precomputation)
-- fix this to say f32 instead of std/raylib::f32:
-    main.own:15:39:error:type `u1` cannot be implicitly converted to `std/raylib::f32`
-        14 |         rl.ClearBackground(rl.BLACK());
-        15 |         rl.DrawRectangleLinesEx({0.0, 0, 100, 100}, 0x40400000, rl.RED())
-           |                                       ^
-        16 |
 - consider renaming Llvm_store_another_llvm to Llvm_store
 - consider renaming Llvm_load_another_llvm to Llvm_load
 - expected failure case for:
@@ -114,21 +107,6 @@ continue(<thing>)
     add_fn(<i16>)
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
-- figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
-    switch rhs {
-        case .some(rhs_val):
-            if let .some(lhs_val) = lhs {
-                return lhs_val + rhs_val
-            } else {
-                return rhs_val
-            }
-        case .none:
-            if let .some(lhs_val) = lhs {
-                return lhs_val
-            } else {
-                return 0
-            }
-    }
 - expected failure test for invalid type in unsafe_cast
 - improve immediate representation dump so that it is actually readable
 - make print functions check for null and print <null> or something instead of seg fault
@@ -179,9 +157,6 @@ continue(<thing>)
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend
-- consider implementing this:
-    if let .some(num) = divide(6, 3) => io.printf("result is %d\n", num)
-    else => io.printf("error when dividing (cannot divide by zero\n", num)
 
 
 # in the far future
