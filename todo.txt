@@ -194,7 +194,6 @@ continue(<thing>)
 - fix this parser bug:
     if curr < '0' || curr > '9' => break
     *str = slice_range(*str, 1, str.count - 1)
-- test case for passing "- " into std::collections::str_consume_int
 
 
 

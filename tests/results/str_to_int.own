@@ -1,10 +1,13 @@
-compile::stdout 6
+compile::stdout 9
 83095
 0
 -13
 -1
 0
 9506
+yes 4
+-76
+0
 
 compile::stderr 0
 

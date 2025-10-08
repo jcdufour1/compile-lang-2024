@@ -23,5 +23,17 @@ fn main() i32 {
     defer coll.darr_free(&str3)
     io.print_str(coll.darr_slice(str3))
 
+    let input4 Str = "- 79"
+    if let .some(num4) = coll.str_consume_int(&input4, i32) => assert(0)
+    else => io.print_str("yes 4")
+
+    let input5 Str = "-76"
+    if let .some(num5) = coll.str_consume_int(&input5, i32) => io.print_int(num5)
+    else => assert(0)
+
+    let input6 Str = "0"
+    if let .some(num6) = coll.str_consume_int(&input6, i32) => io.print_int(num6)
+    else => assert(0)
+
     return 0
 }
