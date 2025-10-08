@@ -114,8 +114,6 @@ continue(<thing>)
 - expected failure case for invalid type in extern "c" function
 - check for return statement on all code paths
 - examples directory should be run through test suite as well?
-- if this is typed, compiler should say, "did you mean `if let`", etc.:
-        if .some(ch) = fgetc(file) {
 - "_1__7_builtin_str____2658" could be printed as "7builtin_str2658", 
     because variable names cannot start with digit anyway, and there is no need to encode pointer depth
 - fix this parser bug:
