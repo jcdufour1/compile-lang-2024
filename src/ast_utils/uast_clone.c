@@ -166,9 +166,13 @@ Uast_param* uast_param_clone(const Uast_param* param, bool use_new_scope, Scope_
     );
 }
 
-Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
-    (void) def;
-    todo();
+Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def, bool use_new_scope, Scope_id new_scope) {
+    return uast_lang_def_new(
+        def->pos,
+        name_clone(def->alias_name, use_new_scope, new_scope),
+        uast_expr_clone(def->expr, use_new_scope, new_scope, def->pos),
+        def->is_from_using
+    );
 }
 
 Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
@@ -261,7 +265,7 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
         case UAST_IMPORT_PATH:
             todo();
         case UAST_LANG_DEF:
-            return uast_lang_def_wrap(uast_lang_def_clone(uast_lang_def_const_unwrap(def)));
+            return uast_lang_def_wrap(uast_lang_def_clone(uast_lang_def_const_unwrap(def), use_new_scope, new_scope));
         case UAST_VOID_DEF:
             return uast_void_def_wrap(uast_void_def_clone(uast_void_def_const_unwrap(def)));
         case UAST_LABEL:
