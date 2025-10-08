@@ -39,23 +39,18 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     assert(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    if (!usymbol_lookup(
-        &alias_,
-        name_new(
-            name.mod_alias.mod_path,
-            name.mod_alias.base,
-            (Ulang_type_vec) {0},
-            name.mod_alias.scope_id
-        )
-    )) {
+    Name temp_name = name_new(
+        name.mod_alias.mod_path,
+        name.mod_alias.base,
+        (Ulang_type_vec) {0},
+        name.mod_alias.scope_id
+    );
+    if (!usymbol_lookup(&alias_, temp_name)) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, name_new(name.mod_alias.mod_path,
-                name.mod_alias.base,
-                (Ulang_type_vec) {0},
-                name.mod_alias.scope_id
-            ))
+            name_print(NAME_MSG, temp_name)
         );
+        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, temp_name))));
         return false;
     }
 
@@ -80,6 +75,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(alias_));
             todo();
         case UAST_GENERIC_PARAM:
             todo();
