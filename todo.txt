@@ -130,14 +130,7 @@ continue(<thing>)
             }
     }
 - expected failure test for invalid type in unsafe_cast
-- move std/std_dummy* items from std directory to a different directory
 - improve immediate representation dump so that it is actually readable
-- this should not cause redefinition error:
-    type darr import = arr
-    fn main() i32 {
-        let arr darr.Arr(<i32>)
-        return 0
-    }
 - make print functions check for null and print <null> or something instead of seg fault
 - figure out if I should de-duplilcate string literals, etc.
 - fix printing for lang_type in msg to not put newline
