@@ -738,6 +738,8 @@ void emit_c_from_tree(void) {
         );
 
         Strv_vec cmd = {0};
+        // TODO: change clang to cc by default
+        // TODO: add command line option to choose c compiler
         vec_append(&a_main, &cmd, sv("clang"));
         vec_append(&a_main, &cmd, sv("-std=c99"));
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
