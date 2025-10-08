@@ -6,8 +6,13 @@ typedef struct {
     size_t count;
 } Slice;
 
+typedef struct {
+    FILE* file;
+} File;
+
 #define BUF_SIZE 4096
 
+// TODO: deduplicate own_printf and own_fprintf
 int own_printf(Slice format, ...) {
     va_list args;
     va_start(args, format);  
@@ -19,6 +24,23 @@ int own_printf(Slice format, ...) {
     }
 
     status = vprintf(format_buf, args);
+
+end:
+    va_end(args);
+    return status;
+}
+
+int own_fprintf(File file, Slice format, ...) {
+    va_list args;
+    va_start(args, format);  
+
+    static char format_buf[BUF_SIZE];
+    int status = sprintf(format_buf, "%.*s", (int)format.count, format.buf);
+    if (status < 0) {
+        goto end;
+    }
+
+    status = vfprintf(file.file, format_buf, args);
 
 end:
     va_end(args);

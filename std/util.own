@@ -41,8 +41,15 @@ fn free(buf ItemT*, ItemT Type) {
 // TODO: remove keep_going parameter from std?
 fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
-        // TODO: print to stderr
-        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", unsafe_cast<i32>file.count, file.buf, unsafe_cast<i32>line, unsafe_cast<i32>column, message)
+        io.own_fprintf(
+            io.stderr(),
+            "%.*s:%d:%d:assertion failure: %s\n",
+            unsafe_cast<i32>file.count,
+            file.buf,
+            unsafe_cast<i32>line,
+            unsafe_cast<i32>column,
+            message
+        )
         if (!keep_going) {
             c.abort()
         }
