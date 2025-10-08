@@ -612,6 +612,12 @@ static Uast_type uast_gen_return(const char* prefix) {
     return rtn;
 }
 
+static Uast_type uast_gen_stmt_removed(const char* prefix) {
+    Uast_type removed = {.name = uast_name_new(prefix, "stmt_removed", false)};
+
+    return removed;
+}
+
 static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
@@ -625,6 +631,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_stmt_removed(base_name));
 
     return stmt;
 }

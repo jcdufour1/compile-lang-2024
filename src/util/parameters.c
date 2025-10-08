@@ -216,7 +216,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -346,7 +346,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -398,6 +398,11 @@ static void long_option_error(Strv curr_opt) {
     params.error_opts_changed = true;
 }
 
+static void long_option_no_prelude(Strv curr_opt) {
+    (void) curr_opt;
+    params.do_prelude = false;
+}
+
 static void long_option_log_level(Strv curr_opt) {
     Strv log_level = curr_opt;
     if (!strv_try_consume(&log_level, '=')) {
@@ -428,7 +433,7 @@ static void long_option_log_level(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 17,
+    PARAMETERS_COUNT == 18,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -445,6 +450,7 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
+    {"no-prelude", "TODO", long_option_no_prelude, false},
     {
         "set-log-level",
         "=OPT where OPT is "
@@ -485,6 +491,7 @@ static void parse_long_option(int* argc, char*** argv) {
 
 static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
+    params.do_prelude = true;
 }
 
 static void print_usage(void) {
@@ -517,7 +524,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 18,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (

@@ -168,7 +168,7 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_LANG_DEF:
-            todo();
+            return;
         case UAST_VOID_DEF:
             todo();
         case UAST_LABEL:
@@ -212,6 +212,8 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_YIELD:
             generic_sub_yield(uast_yield_unwrap(stmt), gen_param, gen_arg);
+            return;
+        case UAST_STMT_REMOVED:
             return;
     }
     unreachable("");

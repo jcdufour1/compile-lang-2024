@@ -114,7 +114,8 @@ FILE_TYPE get_file_type(Strv file_path) {
 void file_extend_strv(FILE* file, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         if (EOF == fputc(strv_at(strv, idx), file)) {
-            todo();
+            msg_todo("error message for fputc failing", POS_BUILTIN);
+            return;
         }
     }
 

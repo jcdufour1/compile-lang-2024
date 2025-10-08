@@ -182,6 +182,7 @@ void extend_name_msg(String* buf, Name name) {
 }
 
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
+    log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.mod_path));
     if (
         mode != UNAME_MSG || !(
             strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||

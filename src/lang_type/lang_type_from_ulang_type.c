@@ -5,10 +5,6 @@
 #include <expand_lang_def.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
-    if (!expand_def_ulang_type(&lang_type, POS_BUILTIN /* TODO */)) {
-        return false;
-    }
-
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             if (!try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type))) {
@@ -38,27 +34,23 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
     unreachable("");
 }
 
+// TODO: move this function
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     assert(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    if (!usymbol_lookup(
-        &alias_,
-        name_new(
-            name.mod_alias.mod_path,
-            name.mod_alias.base,
-            (Ulang_type_vec) {0},
-            name.mod_alias.scope_id
-        )
-    )) {
+    Name temp_name = name_new(
+        name.mod_alias.mod_path,
+        name.mod_alias.base,
+        (Ulang_type_vec) {0},
+        name.mod_alias.scope_id
+    );
+    if (!usymbol_lookup(&alias_, temp_name)) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, name_new(name.mod_alias.mod_path,
-                name.mod_alias.base,
-                (Ulang_type_vec) {0},
-                name.mod_alias.scope_id
-            ))
+            name_print(NAME_MSG, temp_name)
         );
+        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, temp_name))));
         return false;
     }
 
@@ -83,6 +75,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(alias_));
             todo();
         case UAST_GENERIC_PARAM:
             todo();

@@ -301,6 +301,9 @@ static bool get_mod_alias_from_path_token(
     Pos import_pos
 ) {
     bool status = true;
+    if (!params.do_prelude) {
+        assert(!strv_is_equal(mod_path, MOD_PATH_PRELUDE));
+    }
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
     Uast_def* prev_def = NULL;
@@ -309,7 +312,11 @@ static bool get_mod_alias_from_path_token(
     Name old_mod_alias = curr_mod_alias;
     if (is_builtin_mod_path_alias) {
         curr_mod_alias = util_literal_name_new();
+    } else if (is_main_mod) {
+        assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
+        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
     } else {
+        assert(curr_mod_path.count > 0);
         curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
@@ -834,6 +841,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
     *pos = lang_type_token.pos;
 
     lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
+    assert(mod_alias.mod_path.count > 0);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -3156,16 +3164,18 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     }
 
     Uast_mod_alias* prelude_alias = NULL;
-    if (!get_mod_alias_from_path_token(
-        &prelude_alias,
-        token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
-        POS_BUILTIN,
-        MOD_PATH_PRELUDE,
-        true,
-        false,
-        POS_BUILTIN
-    )) {
-        return false;
+    if (params.do_prelude) {
+        if (!get_mod_alias_from_path_token(
+            &prelude_alias,
+            token_new(MOD_ALIAS_PRELUDE.base, TOKEN_SYMBOL),
+            POS_BUILTIN,
+            MOD_PATH_PRELUDE,
+            true,
+            false,
+            POS_BUILTIN
+        )) {
+            return false;
+        }
     }
 
     Scope_id new_scope = SCOPE_TOP_LEVEL;
@@ -3198,11 +3208,13 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     }
     log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
-    vec_append(
-        &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
-        &using_params,
-        uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
-    );
+    if (params.do_prelude) {
+        vec_append(
+            &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+            &using_params,
+            uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+        );
+    }
     if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {
         status = false;
         goto error;

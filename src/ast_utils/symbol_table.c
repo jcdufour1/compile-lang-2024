@@ -252,15 +252,6 @@ bool symbol_lookup(Tast_def** result, Name key) {
     return generic_symbol_lookup((void**)result, serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
 }
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
-
 //
 // usymbol implementation
 //
@@ -554,16 +545,21 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 //
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
-    static int count = 0;
-    if (count > 10) {
-        return;
-    }
-    count++;
-
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+        }
+    }
+}
+
+void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
+    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
+        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
+            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }

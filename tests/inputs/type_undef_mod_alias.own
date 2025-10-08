@@ -3,7 +3,7 @@ fn undef_type_in_arg(thing thing.Foo) {
 }
 
 fn undef_variable_type() {
-    let token thing.Token = {.num = 8}
+    let token thing2.Token = {.num = 8}
 }
 
 fn main() i32 {

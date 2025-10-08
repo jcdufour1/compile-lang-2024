@@ -56,7 +56,6 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
     }
     Uast_def* def = {0};
     Name name = {0};
-    unwrap(expand_def_ulang_type_regular(&lang_type, lang_type, lang_type.pos));
     unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
     if (!usymbol_lookup(&def, name)) {
         assert(error_count > 0 && "there is a bug somewhere");
