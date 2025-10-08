@@ -349,18 +349,9 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             sym->name.gen_args = old_gen_args;
             break;
         }
-        case UAST_UNKNOWN:
-            *new_expr = uast_member_access_wrap(access);
-            return true;
-        case UAST_MEMBER_ACCESS:
-            *new_expr = uast_member_access_wrap(access);
-            return true;
-        case UAST_FUNCTION_CALL:
-            *new_expr = uast_member_access_wrap(access);
-            return true;
         default:
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(access->callee));
-            todo();
+            *new_expr = uast_member_access_wrap(access);
+            return true;
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
