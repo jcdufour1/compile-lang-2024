@@ -45,9 +45,9 @@ static void add_primitives(void) {
             exit(EXIT_CODE_FAIL); \
         } \
 \
-        log(LOG_DEBUG, "\nafter " #pass_fn " start--------------------\n");\
+        log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
-        log(LOG_DEBUG, "\nafter " #pass_fn " end--------------------\n");\
+        log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
     } while (0)
@@ -61,9 +61,9 @@ static void add_primitives(void) {
             exit(EXIT_CODE_FAIL); \
         } \
 \
-        log(LOG_DEBUG, "\nafter " #pass_fn " start--------------------\n");\
+        log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
-        log(LOG_DEBUG, "\nafter " #pass_fn " end--------------------\n");\
+        log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
     } while (0)
