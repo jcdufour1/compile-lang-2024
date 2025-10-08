@@ -339,13 +339,20 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
     switch (access->callee->type) {
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(access->callee);
+            Ulang_type_vec old_gen_args = sym->name.gen_args;
+            memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
             if (!usymbol_lookup(&callee_def, sym->name)) {
-                msg_undefined_symbol(sym->name, sym->pos);
-                return false;
+                sym->name.gen_args = old_gen_args;
+                *new_expr = uast_member_access_wrap(access);
+                return true;
             }
+            sym->name.gen_args = old_gen_args;
             break;
         }
         case UAST_UNKNOWN:
+            *new_expr = uast_member_access_wrap(access);
+            return true;
+        case UAST_MEMBER_ACCESS:
             *new_expr = uast_member_access_wrap(access);
             return true;
         case UAST_FUNCTION_CALL:
@@ -754,9 +761,9 @@ bool expand_def_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        log(LOG_DEBUG, "block->children before: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
+        //log(LOG_DEBUG, "block->children before: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
         status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx)) && status;
-        log(LOG_DEBUG, "block->children after: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
+        //log(LOG_DEBUG, "block->children after: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
     }
 
     return status;
