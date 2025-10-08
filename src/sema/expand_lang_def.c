@@ -576,7 +576,7 @@ bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
         case UAST_DEFER:
             return expand_def_defer(uast_defer_unwrap(stmt));
         case UAST_USING:
-            return expand_def_using(uast_using_unwrap(stmt));
+            unreachable("using should have been removed in expand_using");
     }
     unreachable("");
 }

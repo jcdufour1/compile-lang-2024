@@ -29,6 +29,7 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 #include <check_general_assignment.h>
+#include <expand_using.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -4042,6 +4043,17 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(void) {
+    {
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Uast_def* curr = NULL;
+        while (usym_tbl_iter_next(&curr, &iter)) {
+            expand_using_def(curr);
+        }
+    }
+    if (error_count > 0) {
+        return false;
+    }
+
     {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
         Uast_def* curr = NULL;
