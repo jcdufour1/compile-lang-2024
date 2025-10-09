@@ -1149,13 +1149,12 @@ bool try_set_array_literal_types(
         if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_)) {
             return false;
         }
+    } else if (dest_lang_type.type == LANG_TYPE_ARRAY) {
+        gen_arg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
     } else {
         msg_todo("array literal assigned to non-slice type", assign_pos);
         return false;
     }
-
-    Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     
     Tast_expr_vec new_membs = {0};
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
@@ -1171,7 +1170,9 @@ bool try_set_array_literal_types(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    //lang_type_print(LANG_TYPE_MODE_MSG, gen_arg/*tast_expr_get_lang_type(new_rhs)*/),
+                    //lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
                 return false;
@@ -1207,7 +1208,7 @@ bool try_set_array_literal_types(
     );
     Ulang_type dummy = {0};
     if (!lang_type_is_slice(&dummy, dest_lang_type)) {
-        todo();
+        //todo();
     }
 
     Lang_type unary_lang_type = gen_arg;
@@ -1224,7 +1225,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         new_membs.info.count,
-        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8/*TODO*/, 0)))
+        lang_type_new_usize()
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
@@ -2993,7 +2994,19 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     }
 
     Lang_type new_lang_type = tast_expr_get_lang_type(new_callee);
-    if (lang_type_get_pointer_depth(new_lang_type) < 1) {
+
+    int16_t ptr_depth = 0;
+    if (new_lang_type.type == LANG_TYPE_ARRAY) {
+        new_callee = tast_unary_wrap(tast_unary_new(
+            tast_expr_get_pos(new_callee),
+            new_callee,
+            UNARY_REFER,
+        ));
+        ptr_depth = 1; // TODO
+    } else {
+        ptr_depth = lang_type_get_pointer_depth(new_lang_type);
+    }
+    if (ptr_depth < 1) {
         msg_todo(
             "actual error message for this situation "
             "(note: it is possible that `[` and `]` were used on a type that does not support it)",
@@ -3001,7 +3014,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         );
         return false;
     }
-    lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
+    lang_type_set_pointer_depth(&new_lang_type, ptr_depth - 1);
 
     Tast_index* new_index = tast_index_new(
         index->pos,

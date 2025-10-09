@@ -30,6 +30,8 @@ Strv serialize_lang_type_get_prefix(Lang_type lang_type) {
             return sv("VOID");
         case LANG_TYPE_FN:
             return sv("FN");
+        case LANG_TYPE_ARRAY:
+            return sv("ARRAY");
     }
     unreachable("");
 }
@@ -87,6 +89,8 @@ Strv serialize_lang_type(Lang_type lang_type) {
             string_extend_cstr(&a_main, &name, "void");
             return string_to_strv(name);
         }
+        case LANG_TYPE_ARRAY:
+            todo();
     }
     unreachable("");
 }

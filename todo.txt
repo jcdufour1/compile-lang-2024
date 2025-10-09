@@ -122,6 +122,7 @@ continue(<thing>)
     *str = slice_range(*str, 1, str.count - 1)
 - fix bug (def not being eliminated when defining Slice of strs this way):
     Slice(<Str>)
+- ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
 
 
 
