@@ -685,6 +685,14 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             Ir_lang_type new_item_type = rm_tuple_lang_type(*array.item_type, lang_type_pos);
+
+            //static String array_name = {0};
+            //string_extend_cstr(&a_print /* TODO */, &array_name, sv("a"));
+            //string_extend_size_t(&a_print /* TODO */, &array_name, lang_type_array_const_unwrap(lang_type));
+            //vec_reset(&a_print /* TODO */, &array_name);
+
+            Name array_name = serialize_ulang_type(MOD_PATH_ARRAYS, lang_type_to_ulang_type(lang_type), true);
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, array_name));
             todo();
             //return ir_lang_type_array_const_wrap(ir_lang_type_array_new(
             //    lang_type_pos,

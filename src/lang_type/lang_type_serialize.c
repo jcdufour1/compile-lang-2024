@@ -1,3 +1,4 @@
+// TODO: get rid of all functions in this file if they will not be used and bug fixed
 #include <lang_type_serialize.h>
 
 Strv serialize_struct_def_base(Struct_def_base base) {
@@ -41,6 +42,7 @@ Strv serialize_lang_type_struct_thing(Lang_type lang_type) {
     string_extend_strv(&a_main, &name, serialize_lang_type_get_prefix(lang_type));
 
     Tast_def* def = NULL;
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
     unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
     string_extend_strv(&a_main, &name, serialize_struct_def_base(tast_def_get_struct_def_base(def)));
 
@@ -63,6 +65,13 @@ Strv serialize_lang_type_fn(Lang_type_fn lang_type) {
     return string_to_strv(name);
 }
 
+Strv serialize_lang_type_array(Lang_type_array lang_type) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, serialize_lang_type(*lang_type.item_type));
+    string_extend_size_t(&a_main, &name, lang_type.count);
+    return string_to_strv(name);
+}
+
 // TODO: make separate function for Tast_lang_type and Lang_type
 Strv serialize_lang_type(Lang_type lang_type) {
     // TODO: think about memory allocation strategy here
@@ -71,9 +80,8 @@ Strv serialize_lang_type(Lang_type lang_type) {
     //
     // TODO: factor in lang_type.type into serialization
     switch (lang_type.type) {
-        case LANG_TYPE_FN: {
+        case LANG_TYPE_FN:
             return serialize_lang_type_fn(lang_type_fn_const_unwrap(lang_type));
-        }
         case LANG_TYPE_TUPLE:
             return serialize_lang_type_tuple(lang_type_tuple_const_unwrap(lang_type));
         case LANG_TYPE_PRIMITIVE:
@@ -90,7 +98,7 @@ Strv serialize_lang_type(Lang_type lang_type) {
             return string_to_strv(name);
         }
         case LANG_TYPE_ARRAY:
-            todo();
+            return serialize_lang_type_array(lang_type_array_const_unwrap(lang_type));
     }
     unreachable("");
 }

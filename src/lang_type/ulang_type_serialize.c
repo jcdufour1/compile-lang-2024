@@ -29,6 +29,17 @@ Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool inclu
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0 /* TODO */);
 }
 
+Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+        mod_path,
+        *ulang_type.item_type,
+        include_scope
+    )));
+    string_extend_size_t(&a_main, &name, ulang_type.count);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+}
+
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
@@ -65,7 +76,7 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
         case ULANG_TYPE_GEN_PARAM:
             return serialize_ulang_type_gen_param(mod_path);
         case ULANG_TYPE_ARRAY:
-            todo();
+            return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }

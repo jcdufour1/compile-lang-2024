@@ -124,8 +124,15 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 fn.pos
             ));
         }
-        case LANG_TYPE_ARRAY:
-            todo();
+        case LANG_TYPE_ARRAY: {
+            Lang_type_array array = lang_type_array_const_unwrap(lang_type);
+            Ulang_type new_item_type = lang_type_to_ulang_type(*array.item_type);
+            return ulang_type_array_const_wrap(ulang_type_array_new(
+                arena_dup(&a_main, &new_item_type),
+                array.count,
+                array.pos
+            ));
+        }
     }
     unreachable("");
 }
