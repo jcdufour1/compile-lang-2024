@@ -1091,6 +1091,8 @@ bool try_set_struct_literal_types(
     Uast_struct_literal* lit,
     Pos assign_pos
 ) {
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+    todo();
     switch (dest_lang_type.type) {
         case LANG_TYPE_STRUCT:
             break;
@@ -1219,6 +1221,12 @@ bool try_set_array_literal_types(
         UNARY_REFER,
         unary_lang_type
     )));
+
+    if (dest_lang_type.type == LANG_TYPE_ARRAY) {
+        new_inner_lit->lang_type = dest_lang_type;
+        *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_inner_lit));
+        return true;
+    }
 
     Tast_expr_vec new_lit_membs = {0};
     vec_append(&a_main, &new_lit_membs, ptr);

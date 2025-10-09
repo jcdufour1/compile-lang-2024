@@ -1000,9 +1000,6 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         );
 
         load_assignment(new_block, assign);
-        log(LOG_DEBUG, FMT"\n", tast_assignment_print(assign));
-        log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(old_lit));
-        todo();
     }
 
     return new_var;
