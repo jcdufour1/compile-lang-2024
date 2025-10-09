@@ -329,7 +329,6 @@ static bool get_mod_alias_from_path_token(
         goto finish;
     }
 
-    log(LOG_DEBUG, FMT"\n", strv_print(mod_path));
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         NULL,
@@ -1294,9 +1293,6 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     }
 
     *enum_def = uast_enum_def_new(name.pos, base);
-    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print((*enum_def)->base.name.base));
-    log(LOG_DEBUG, "%zu\n", (*enum_def)->base.name.scope_id);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
         msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
@@ -1628,8 +1624,6 @@ static PARSE_STATUS parse_for_range_internal(
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
-
-    log(LOG_DEBUG, FMT"\n", uast_block_print(outer));
 
     *result = outer;
     return PARSE_OK;
@@ -2196,7 +2190,6 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
 static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scope_id grand_parent) {
     assert(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
-    log(LOG_DEBUG, "thing thing: "FMT"\n", name_print(NAME_LOG, default_brk_label));
 
     Scope_id parent = symbol_collection_new(grand_parent, util_literal_name_new());
     // TODO: (maybe not): extract this if and block_new into separate function
@@ -2287,7 +2280,6 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     Uast_stmt_vec chain_ = {0};
     vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
-    log(LOG_DEBUG, "thing 877: %zu\n", parent);
 
     if (cases.info.count < 1) {
         msg(DIAG_SWITCH_NO_CASES, start_token.pos, "switch statement must have at least one case statement\n");
@@ -3114,7 +3106,6 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
-    //log(LOG_DEBUG, FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
@@ -3196,9 +3187,6 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     if (!is_main_mod) {
         new_scope = symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
     }
-    if (new_scope == SCOPE_TOP_LEVEL) {
-        log(LOG_DEBUG, "thing 92\n");
-    }
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
@@ -3212,7 +3200,6 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         status = false;
         goto error;
     }
-    log(LOG_DEBUG, FMT"\n", strv_print(file_path));
     unwrap(file_path_to_text_tbl_add(file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
     Tk_view tokens = {0};
@@ -3220,7 +3207,6 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         status = false;
         goto error;
     }
-    log(LOG_DEBUG, "thing 85: %zu\n", new_scope);
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (params.do_prelude) {
         vec_append(
@@ -3233,7 +3219,6 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         status = false;
         goto error;
     }
-    symbol_log(LOG_TRACE, (*block)->scope_id);
 
     while (tokens.count > 0) {
         Token curr = consume(&tokens);

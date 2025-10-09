@@ -3,14 +3,12 @@ type c import = std.libc
 type coll import = std.collections
 type util import = std.util
 
-extern("c") fn own_printf(format rt.Slice(<u8>), args opaque...) i32
-extern("c") fn own_fprintf(file File, format rt.Slice(<u8>), args opaque...) i32
+extern("c") fn own_printf(format Str, args opaque...) i32
+extern("c") fn own_fprintf(file File, format Str, args opaque...) i32
 extern("c") fn own_stdout() opaque*
 extern("c") fn own_stderr() opaque*
 extern("c") fn own_stdin() opaque*
-// TODO: when possible, remove first definition of own_argv and uncomment second
-extern("c") fn own_argv() rt.Slice(<rt.Slice(<u8>)>)
-//extern("c") fn own_argv() Slice(<Str>)
+extern("c") fn own_argv() rt.Slice(<Str>)
 
 type printf def = c.printf
 type puts def = c.puts
@@ -24,7 +22,7 @@ fn stdout() File => return {own_stdout()}
 fn stderr() File => return {own_stderr()}
 fn stdin() File => return {own_stdin()}
 
-fn argv() rt.Slice(<rt.Slice(<u8>)>) {
+fn argv() rt.Slice(<Str>) {
     return own_argv()
 }
 

@@ -1266,9 +1266,6 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
                 );
                 return false;
             }
-            log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type));
-            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type).str.mod_path));
-            log(LOG_DEBUG, FMT"\n", strv_print(lang_type_get_atom(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type).str.base));
 
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
@@ -1999,12 +1996,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
-    log(LOG_DEBUG, FMT"\n", strv_print(sym_name->mod_path));
-    log(LOG_DEBUG, FMT"\n", strv_print(sym_name->base));
-    log(LOG_DEBUG, "%zu\n", sym_name->gen_args.info.count);
-    if (sym_name->gen_args.info.count > 0) {
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&sym_name->gen_args, 0)));
-    }
     assert(
         sym_name->gen_args.info.count == 0 &&
         "generics are already instanciated, and they should not have been"
@@ -2169,7 +2160,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
             }
             if (!name_found) {
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name));
                 msg(
                     DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                     lhs->pos,
@@ -2272,16 +2262,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         size_t old_error_count = error_count;
                         size_t old_warn_count = warning_count;
 
-                        log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(&fun_call->args, param_idx)));
-
                         params_log_level = LOG_FATAL;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
                             params_log_level = old_log_level;
                             error_count = old_error_count;
                             warning_count = old_warn_count;
-                            log(LOG_DEBUG, "%zu\n", idx);
-
-                            log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(&fun_call->args, param_idx)));
 
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
@@ -2291,8 +2276,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
-                                log(LOG_DEBUG, FMT"\n", tast_expr_print(arg_to_infer_from));
-                                log(LOG_DEBUG, "thing 86: idx_gen_param = %zu, : "FMT"\n", idx_gen_param, name_print(NAME_LOG, param_name));
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
@@ -2326,8 +2309,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
             status = false;
             goto error;
-        } else {
-            //log(LOG_DEBUG, FMT"\n", tast_expr_print(vec_at(&new_args, idx)));
         }
     }
 
@@ -2681,7 +2662,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         new_callee,
         fun_rtn_type
     ));
-    log(LOG_DEBUG, "%zu "FMT"\n", new_args.info.count, name_print(NAME_MSG, fun_name));
+
     for (size_t idx = 0; idx < new_args.info.count; idx++) {
         assert(vec_at(&new_args_set, idx));
         assert(vec_at(&new_args, idx));
@@ -3123,7 +3104,6 @@ bool try_set_function_decl_types(
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
-    log(LOG_DEBUG, FMT"\n", tast_function_decl_print(*new_tast));
     // TODO: figure out how to handle redefinition of extern "c" functions?
     sym_tbl_add(tast_function_decl_wrap(*new_tast));
 
@@ -3585,9 +3565,6 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         }
 
         Scope_id inner_scope = symbol_collection_new(outer_scope_id, scope_to_name_tbl_lookup(old_case->scope_id));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(old_case->scope_id)));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, scope_to_name_tbl_lookup(inner_scope)));
-        log(LOG_DEBUG, FMT"\n", uast_stmt_print(old_case->if_true));
         // TODO: try to remove stmt_clone below (for performance)
         vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_stmt_clone(
             old_case->if_true,
@@ -3652,9 +3629,6 @@ error:
     check_env.parent_of = old_parent_of;
     check_env.break_in_case = false;
     check_env.break_type = check_env.break_type;
-    if (*new_tast) {
-        log(LOG_DEBUG, FMT"\n", tast_block_print(*new_tast));
-    }
     return status;
 }
 
@@ -3697,7 +3671,6 @@ bool try_set_using_types(const Uast_using* using) {
         return false;
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
         Name lang_type_name = {0};
@@ -3754,8 +3727,6 @@ bool try_set_using_types(const Uast_using* using) {
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
                     if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
                         if (!is_builtin) {
-                            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias_name));
-                            log(LOG_DEBUG, FMT"\n", uast_def_print(prev_def));
                             msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
                             status = false;
                         }

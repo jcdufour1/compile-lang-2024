@@ -133,7 +133,17 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         new_name->gen_args = name.gen_args;
         return EXPAND_NAME_NORMAL;
     }
+
     new_name->gen_args = name.gen_args;
+    bool gen_arg_status = true;
+    for (size_t idx = 0; idx < new_name->gen_args.info.count; idx++) {
+        Ulang_type* curr = vec_at_ref(&new_name->gen_args, idx);
+        Pos curr_pos = ulang_type_get_pos(*curr);
+        gen_arg_status = expand_def_ulang_type(curr, curr_pos) && gen_arg_status;
+    }
+    if (!gen_arg_status) {
+        return EXPAND_NAME_ERROR;
+    }
 
     switch (def->type) {
         case UAST_POISON_DEF:
@@ -199,8 +209,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             }
             todo();
 
-            log(LOG_DEBUG, FMT"\n", strv_print(name.mod_path));
-            log(LOG_DEBUG, FMT"\n", strv_print(name.base));
             *new_expr = uast_member_access_wrap(access);
             return EXPAND_NAME_NEW_EXPR;
         }
@@ -746,15 +754,11 @@ bool expand_def_block(Uast_block* block) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        //log(LOG_DEBUG, "usym_tbl_iter_next before: "FMT"\n", uast_def_print(curr));
         status = expand_def_def(curr) && status;
-        //log(LOG_DEBUG, "usym_tbl_iter_next after: "FMT"\n", uast_def_print(curr));
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        //log(LOG_DEBUG, "block->children before: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
         status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx)) && status;
-        //log(LOG_DEBUG, "block->children after: "FMT"\n", uast_stmt_print(vec_at(&block->children, idx)));
     }
 
     return status;
