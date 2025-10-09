@@ -46,6 +46,11 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
             return ulang_type_regular_const_wrap(ulang_type_regular_clone(
                 ulang_type_regular_const_unwrap(lang_type), use_new_scope, new_scope
             ));
+        case ULANG_TYPE_ARRAY:
+            todo();
+            //return ulang_type_array_const_wrap(ulang_type_array_clone(
+            //    ulang_type_array_const_unwrap(lang_type), use_new_scope, new_scope
+            //));
         case ULANG_TYPE_GEN_PARAM:
             return ulang_type_gen_param_const_wrap(ulang_type_gen_param_clone(
                 ulang_type_gen_param_const_unwrap(lang_type)

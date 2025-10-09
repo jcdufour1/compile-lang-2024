@@ -80,6 +80,7 @@ for generics:
 - non-hard coded size_t, etc.
 - printing features
 - global constants
+- global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
 - mandatory initialization or similar
 - manual zero initialization

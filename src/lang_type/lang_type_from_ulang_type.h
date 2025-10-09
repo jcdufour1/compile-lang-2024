@@ -184,6 +184,9 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return lang_type_from_ulang_type_regular(ulang_type_regular_const_unwrap(lang_type));
+        case ULANG_TYPE_ARRAY:
+            todo();
+            //return lang_type_from_ulang_type_regular(ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
             return lang_type_from_ulang_type_tuple(ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:

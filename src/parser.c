@@ -911,6 +911,29 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return false;
     }
 
+    Token open_sq_tk = {0};
+    if (try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+        Token count_tk = {0};
+        if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
+            return false;
+        }
+        if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
+            return false;
+        }
+
+        size_t count = 0;
+        unwrap(try_strv_to_size_t(&count, count_tk.text));
+        Ulang_type item_type_ = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
+        Ulang_type* item_type = arena_dup(&a_main, &item_type_);
+        *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
+        Token open_gen_tk = {0};
+        if (try_consume(&open_gen_tk, tokens, TOKEN_OPEN_GENERIC)) {
+            msg_todo("`(<` after `]` in type", open_gen_tk.pos);
+            return false;
+        }
+        return true;
+    }
+
     if (!try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
         *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
         return true;
