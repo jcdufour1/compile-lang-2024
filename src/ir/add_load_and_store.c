@@ -682,6 +682,16 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 rm_tuple_lang_type_atom(lang_type_struct_const_unwrap(lang_type).atom)
             ));
         }
+        case LANG_TYPE_ARRAY: {
+            Lang_type_array array = lang_type_array_const_unwrap(lang_type);
+            Ir_lang_type new_item_type = rm_tuple_lang_type(*array.item_type, lang_type_pos);
+            return ir_lang_type_array_const_wrap(ir_lang_type_array_new(
+                lang_type_pos,
+                arena_dup(&a_main, &new_item_type),
+                array.count,
+                array.pointer_depth
+            ));
+        }
         case LANG_TYPE_VOID:
             return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
         case LANG_TYPE_FN:
@@ -956,7 +966,54 @@ static Name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_
     return load_ptr_symbol(new_block, tast_symbol_new_from_variable_def(old_call->pos, new_var));
 }
 
+static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block, Tast_struct_literal* old_lit) {
+    Tast_variable_def* new_var = tast_variable_def_new(
+        old_lit->pos,
+        old_lit->lang_type,
+        false,
+        util_literal_name_new()
+    );
+    unwrap(symbol_add(tast_variable_def_wrap(new_var)));
+    load_variable_def(new_block, new_var);
+
+    Lang_type_array old_lit_lang_type = lang_type_array_const_unwrap(old_lit->lang_type);
+    Lang_type_array old_lit_lang_type_ptr = old_lit_lang_type;
+    old_lit_lang_type_ptr.pointer_depth++;
+
+    for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
+        Tast_index* access = tast_index_new(
+            old_lit->pos,
+            *old_lit_lang_type.item_type,
+            tast_literal_wrap(tast_int_wrap(tast_int_new(old_lit->pos, idx, lang_type_new_usize()))),
+            tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                old_lit->pos,
+                tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, new_var)),
+                UNARY_DEREF,
+                lang_type_array_const_wrap(old_lit_lang_type_ptr)
+            )))
+        );
+
+        Tast_assignment* assign = tast_assignment_new(
+            access->pos,
+            tast_index_wrap(access),
+            vec_at(&old_lit->members, idx)
+        );
+
+        load_assignment(new_block, assign);
+        log(LOG_DEBUG, FMT"\n", tast_assignment_print(assign));
+        log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(old_lit));
+        todo();
+    }
+
+    return new_var;
+}
+
 static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast_struct_literal* old_lit) {
+    // TODO: make tast_array_literal type to make this if statement unnessessary?
+    if (old_lit->lang_type.type == LANG_TYPE_ARRAY) {
+        return load_struct_literal_internal_array(new_block, old_lit);
+    }
+
     Tast_variable_def* new_var = tast_variable_def_new(
         old_lit->pos,
         old_lit->lang_type,
@@ -1230,6 +1287,8 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
         case LANG_TYPE_TUPLE:
             // fallthrough
         case LANG_TYPE_FN:
+            // fallthrough
+        case LANG_TYPE_ARRAY:
             // fallthrough
         return ir_tast_get_name(alloca);
     }

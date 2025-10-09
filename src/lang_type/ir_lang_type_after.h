@@ -15,6 +15,10 @@ static inline Name ir_lang_type_get_str(LANG_TYPE_MODE mode, Ir_lang_type ir_lan
 }
 
 static inline int16_t ir_lang_type_get_pointer_depth(Ir_lang_type ir_lang_type) {
+    if (ir_lang_type.type == IR_LANG_TYPE_ARRAY) {
+        return ir_lang_type_array_const_unwrap(ir_lang_type).pointer_depth;
+    }
+
     return ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_lang_type).pointer_depth;
 }
 
@@ -41,6 +45,13 @@ static inline int32_t ir_lang_type_get_bit_width(Ir_lang_type ir_lang_type) {
 }
 
 static inline void ir_lang_type_set_pointer_depth(Ir_lang_type* ir_lang_type, int16_t pointer_depth) {
+    if (ir_lang_type->type == IR_LANG_TYPE_ARRAY) {
+        Ir_lang_type_array array = ir_lang_type_array_const_unwrap(*ir_lang_type);
+        array.pointer_depth = pointer_depth;
+        *ir_lang_type = ir_lang_type_array_const_wrap(array);
+        return;
+    }
+
     Ir_lang_type_atom atom = ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, *ir_lang_type);
     atom.pointer_depth = pointer_depth;
     ir_lang_type_set_atom(ir_lang_type, atom);
@@ -73,6 +84,8 @@ static inline bool llvm_is_struct_like(IR_LANG_TYPE_TYPE type) {
             return true;
         case IR_LANG_TYPE_FN:
             return false;
+        case IR_LANG_TYPE_ARRAY:
+            return true;
     }
     unreachable("");
 }

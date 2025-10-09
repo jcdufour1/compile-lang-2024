@@ -48,6 +48,10 @@ static inline bool ir_lang_type_fn_is_equal(Ir_lang_type_fn a, Ir_lang_type_fn b
     return ir_lang_type_tuple_is_equal(a.params, b.params) && ir_lang_type_is_equal(*a.return_type, *b.return_type);
 }
 
+static inline bool ir_lang_type_array_is_equal(Ir_lang_type_array a, Ir_lang_type_array b) {
+    return ir_lang_type_is_equal(*a.item_type, *b.item_type);
+}
+
 static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     if (a.type != b.type) {
         return false;
@@ -64,6 +68,8 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
             return ir_lang_type_tuple_is_equal(ir_lang_type_tuple_const_unwrap(a), ir_lang_type_tuple_const_unwrap(b));
         case IR_LANG_TYPE_FN:
             return ir_lang_type_fn_is_equal(ir_lang_type_fn_const_unwrap(a), ir_lang_type_fn_const_unwrap(b));
+        case IR_LANG_TYPE_ARRAY:
+            return ir_lang_type_array_is_equal(ir_lang_type_array_const_unwrap(a), ir_lang_type_array_const_unwrap(b));
     }
     unreachable("");
 }

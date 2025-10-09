@@ -186,6 +186,17 @@ static Ir_lang_type_type ir_lang_type_gen_struct(const char* prefix) {
     return sym;
 }
 
+static Ir_lang_type_type ir_lang_type_gen_array(const char* prefix) {
+    const char* base_name = "array";
+    Ir_lang_type_type sym = {.name = ir_lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Ir_lang_type*", "item_type");
+    append_member(&sym.members, "size_t", "count");
+    append_member(&sym.members, "uint16_t", "pointer_depth");
+
+    return sym;
+}
+
 static Ir_lang_type_type ir_lang_type_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Ir_lang_type_type sym = {.name = ir_lang_type_name_new(prefix, base_name, false)};
@@ -211,6 +222,7 @@ static Ir_lang_type_type ir_lang_type_gen_ir_lang_type(void) {
     vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_tuple(base_name));
     vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_void(base_name));
     vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_fn(base_name));
+    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_array(base_name));
 
     return ir_lang_type;
 }

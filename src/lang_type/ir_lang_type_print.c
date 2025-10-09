@@ -20,6 +20,9 @@ void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
         case IR_LANG_TYPE_FN:
             string_extend_cstr(&a_print, buf, "fn");
             return;
+        case IR_LANG_TYPE_ARRAY:
+            string_extend_cstr(&a_print, buf, "array");
+            return;
     }
     unreachable("");
 }
@@ -137,6 +140,14 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 string_extend_cstr(&a_main, string, ")");
             }
             goto end;
+        case IR_LANG_TYPE_ARRAY: {
+            Ir_lang_type_array array = ir_lang_type_array_const_unwrap(ir_lang_type);
+            extend_ir_lang_type_to_string(string, mode, *array.item_type);
+            string_extend_cstr(&a_print, string, "[");
+            string_extend_size_t(&a_print, string, array.count);
+            string_extend_cstr(&a_print, string, "]");
+            goto end;
+        }
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
             string_extend_cstr(&a_main, string, "fn");

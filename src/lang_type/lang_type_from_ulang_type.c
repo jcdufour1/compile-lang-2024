@@ -124,6 +124,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 fn.pos
             ));
         }
+        case LANG_TYPE_ARRAY:
+            todo();
     }
     unreachable("");
 }
