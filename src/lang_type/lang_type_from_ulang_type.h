@@ -9,6 +9,7 @@
 #include <ulang_type_get_pos.h>
 #include <msg.h>
 #include <tast_utils.h>
+#include <ulang_type_serialize.h>
 
 // TODO: remove this forward decl when possible
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
@@ -178,6 +179,45 @@ static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lan
     Lang_type new_lang_type = {0};
     unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type));
     return new_lang_type;
+}
+
+static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type) {
+    Lang_type item_type = {0};
+    if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
+      return false;
+    }
+    Name array_name = name_new(
+        MOD_PATH_ARRAYS,
+        serialize_name_symbol_table(serialize_ulang_type(
+            lang_type_get_str(LANG_TYPE_MODE_LOG, item_type).mod_path,
+            *lang_type.item_type,
+            true
+        )),
+        (Ulang_type_vec) {0},
+        SCOPE_BUILTIN /* TODO */
+    );
+
+    Tast_def* def = NULL;
+    Struct_def_base def_base = {0};
+    if (symbol_lookup(&def, array_name)) {
+        def_base = tast_struct_def_unwrap(def)->base;
+    } else {
+        Tast_variable_def_vec def_membs = {0};
+        for (size_t idx = 0; idx < lang_type.count; idx++) {
+            vec_append(&a_main, &def_membs, tast_variable_def_new(
+                lang_type.pos,
+                item_type,
+                false,
+                util_literal_name_new()
+            ));
+        }
+        Struct_def_base def_base = {.members = def_membs, .name = array_name};
+        def = tast_struct_def_wrap(tast_struct_def_new(lang_type.pos, def_base));
+        unwrap(symbol_add(def));
+    }
+
+    *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, lang_type_atom_new(def_base.name, 0)));
+    return true;
 }
 
 static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {

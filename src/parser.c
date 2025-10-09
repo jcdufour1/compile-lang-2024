@@ -931,6 +931,10 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
             msg_todo("`(<` after `]` in type", open_gen_tk.pos);
             return false;
         }
+        if (try_consume(&open_gen_tk, tokens, TOKEN_ASTERISK)) {
+            msg_todo("`*` after `]` in type", open_gen_tk.pos);
+            return false;
+        }
         return true;
     }
 

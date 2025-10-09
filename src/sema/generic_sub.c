@@ -97,6 +97,8 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
+        case ULANG_TYPE_ARRAY:
+            todo();
         case ULANG_TYPE_FN: {
             Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
             generic_sub_lang_type_fn(

@@ -7,10 +7,7 @@
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            if (!try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type))) {
-                return false;
-            }
-            return true;
+            return try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE: {
             Lang_type_tuple new_tuple = {0};
             if (!try_lang_type_from_ulang_type_tuple(&new_tuple, ulang_type_tuple_const_unwrap(lang_type))) {
@@ -30,6 +27,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         case ULANG_TYPE_GEN_PARAM:
             // TODO: print error?
             return false;
+        case ULANG_TYPE_ARRAY:
+            return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
     }
     unreachable("");
 }

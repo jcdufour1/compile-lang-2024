@@ -126,10 +126,12 @@ typedef size_t Scope_id;
 #define MOD_PATH_RUNTIME (sv("std/runtime")) /* TODO: try to avoid hardcoding path separator? */
 #define MOD_PATH_OF_MOD_PATHS ((Strv) {0})
 #define MOD_PATH_PRELUDE (sv("std/prelude"))
+#define MOD_PATH_ARRAYS (sv("std/does_not_exist/arrays"))
 
 #define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 #define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 #define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
+
 
 #define EXTERN_C_OWN_PREFIX "own"
 
