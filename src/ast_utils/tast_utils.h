@@ -114,6 +114,8 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             // fallthrough
         case LANG_TYPE_STRUCT:
             // fallthrough
+        case LANG_TYPE_ARRAY:
+            // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
         case LANG_TYPE_ENUM:

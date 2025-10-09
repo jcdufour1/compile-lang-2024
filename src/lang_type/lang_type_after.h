@@ -140,6 +140,8 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
             return false;
         case LANG_TYPE_RAW_UNION:
             return true;
+        case LANG_TYPE_ARRAY:
+            return true;
         case LANG_TYPE_VOID:
             return false;
         case LANG_TYPE_ENUM:

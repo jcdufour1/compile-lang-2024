@@ -157,6 +157,9 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
         case LANG_TYPE_FN: {
             todo();
         }
+        case LANG_TYPE_ARRAY: {
+            todo();
+        }
         case LANG_TYPE_VOID: {
             Lang_type_atom atom = lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return atom;
@@ -233,6 +236,9 @@ bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE mode, Lang_ty
         case LANG_TYPE_FN: {
             return false;
         }
+        case LANG_TYPE_ARRAY: {
+            return false;
+        }
         case LANG_TYPE_VOID: {
             *result = lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return true;
@@ -255,6 +261,8 @@ void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
         case LANG_TYPE_RAW_UNION:
             lang_type_raw_union_unwrap(lang_type)->atom = atom;
             return;
+        case LANG_TYPE_ARRAY:
+            unreachable("");
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_FN:

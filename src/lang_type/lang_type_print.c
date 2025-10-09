@@ -26,6 +26,9 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_FN:
             string_extend_cstr(&a_print, buf, "fn");
             return;
+        case LANG_TYPE_ARRAY:
+            string_extend_cstr(&a_print, buf, "array");
+            return;
     }
     unreachable("");
 }
@@ -154,13 +157,21 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             extend_lang_type_to_string(string, mode, *fn.return_type);
             goto end;
         }
+        case LANG_TYPE_ARRAY: {
+            Lang_type_array array = lang_type_array_const_unwrap(lang_type);
+            extend_lang_type_to_string(string, mode, *array.item_type);
+            string_extend_cstr(&a_print, string, "[");
+            string_extend_size_t(&a_print, string, array.count);
+            string_extend_cstr(&a_print, string, "]");
+            goto end;
+        }
         case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
         case LANG_TYPE_STRUCT:
-            // fallthrough
             assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
+            // fallthrough
         case LANG_TYPE_VOID:
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
             goto end;
