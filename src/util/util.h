@@ -131,6 +131,8 @@ typedef size_t Scope_id;
 #define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 #define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_BUILTIN))
 
+#define EXTERN_C_OWN_PREFIX "own"
+
 #define FMT "%.*s"
 
 #endif // UTIL_H

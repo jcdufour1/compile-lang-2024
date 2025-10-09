@@ -34,6 +34,7 @@ void ir_extend_name(String* output, Name name) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         assert(name.gen_args.info.count < 1 && "generic main function should not be allowed");
         name.scope_id = SCOPE_BUILTIN;
+        name.base = sv(EXTERN_C_OWN_PREFIX"_actual_main");
     }
 
     extend_name(NAME_EMIT_IR, output, name);
