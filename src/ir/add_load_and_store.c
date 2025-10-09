@@ -999,8 +999,9 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
     load_variable_def(new_block, new_var);
 
     Lang_type_array old_lit_lang_type = lang_type_array_const_unwrap(old_lit->lang_type);
-    Lang_type_array old_lit_lang_type_ptr = old_lit_lang_type;
-    old_lit_lang_type_ptr.pointer_depth++;
+    Lang_type item_type_lang_type = *old_lit_lang_type.item_type;
+    Lang_type item_type_lang_type_ptr = item_type_lang_type;
+    lang_type_set_pointer_depth(&item_type_lang_type_ptr, lang_type_get_pointer_depth(item_type_lang_type_ptr) + 1);
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
         Tast_variable_def* index_var = tast_variable_def_new(
@@ -1021,13 +1022,13 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
 
         Tast_index* access = tast_index_new(
             old_lit->pos,
-            *old_lit_lang_type.item_type,
+            item_type_lang_type,
             tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, index_var)),
             tast_operator_wrap(tast_unary_wrap(tast_unary_new(
                 old_lit->pos,
                 tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, new_var)),
                 UNARY_REFER,
-                lang_type_array_const_wrap(old_lit_lang_type_ptr)
+                item_type_lang_type_ptr
             )))
         );
 
@@ -2002,6 +2003,9 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
         rm_tuple_lang_type(tast_expr_get_lang_type(old_assign->lhs), old_assign->pos),
         util_literal_name_new_prefix(sv("store_for_assign"))
     );
+    if (old_assign->lhs->type == TAST_INDEX) {
+        log(LOG_DEBUG, FMT"\n", ir_store_another_ir_print(new_store));
+    }
     unwrap(ir_add(ir_store_another_ir_wrap(new_store)));
 
     assert(new_store->ir_src.base.count > 0);
