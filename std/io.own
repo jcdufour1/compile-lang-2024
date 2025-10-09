@@ -8,6 +8,9 @@ extern("c") fn own_fprintf(file File, format rt.Slice(<u8>), args opaque...) i32
 extern("c") fn own_stdout() opaque*
 extern("c") fn own_stderr() opaque*
 extern("c") fn own_stdin() opaque*
+// TODO: when possible, remove first definition of own_argv and uncomment second
+extern("c") fn own_argv() rt.Slice(<rt.Slice(<u8>)>)
+//extern("c") fn own_argv() Slice(<Str>)
 
 type printf def = c.printf
 type puts def = c.puts
@@ -20,6 +23,10 @@ type File struct {
 fn stdout() File => return {own_stdout()}
 fn stderr() File => return {own_stderr()}
 fn stdin() File => return {own_stdin()}
+
+fn argv() rt.Slice(<rt.Slice(<u8>)>) {
+    return own_argv()
+}
 
 fn fgetc(file File) util.Optional(<u8>) {
     let ch i32 = c.fgetc(file.file)

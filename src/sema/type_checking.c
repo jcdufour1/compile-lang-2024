@@ -3013,7 +3013,12 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
 
     Lang_type new_lang_type = tast_expr_get_lang_type(new_callee);
     if (lang_type_get_pointer_depth(new_lang_type) < 1) {
-        todo();
+        msg_todo(
+            "actual error message for this situation "
+            "(note: it is possible that `[` and `]` were used on a type that does not support it)",
+            index->pos
+        );
+        return false;
     }
     lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
 
