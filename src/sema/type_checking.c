@@ -2993,20 +2993,23 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         unreachable("");
     }
 
-    Lang_type new_lang_type = tast_expr_get_lang_type(new_callee);
+    // TODO: rename to callee_lang_type?
+    Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
 
-    int16_t ptr_depth = 0;
-    if (new_lang_type.type == LANG_TYPE_ARRAY) {
-        new_callee = tast_unary_wrap(tast_unary_new(
+    if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+        if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
+            msg_todo("", index->pos);
+            return false;
+        }
+        lang_type_set_pointer_depth(&callee_lang_type, 1);
+        new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
             tast_expr_get_pos(new_callee),
             new_callee,
             UNARY_REFER,
-        ));
-        ptr_depth = 1; // TODO
-    } else {
-        ptr_depth = lang_type_get_pointer_depth(new_lang_type);
+            callee_lang_type
+        )));
     }
-    if (ptr_depth < 1) {
+    if (lang_type_get_pointer_depth(callee_lang_type) < 1) {
         msg_todo(
             "actual error message for this situation "
             "(note: it is possible that `[` and `]` were used on a type that does not support it)",
@@ -3014,7 +3017,14 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         );
         return false;
     }
-    lang_type_set_pointer_depth(&new_lang_type, ptr_depth - 1);
+    lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
+
+    Lang_type new_lang_type = {0};
+    if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+        new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
+    } else {
+        new_lang_type = callee_lang_type;
+    }
 
     Tast_index* new_index = tast_index_new(
         index->pos,

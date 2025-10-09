@@ -219,7 +219,8 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
     *new_lang_type = lang_type_array_const_wrap(lang_type_array_new(
         lang_type.pos,
         arena_dup(&a_main, &item_type),
-        lang_type.count
+        lang_type.count,
+        0
     ));
     return true;
 }
