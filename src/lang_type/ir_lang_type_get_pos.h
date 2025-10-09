@@ -29,8 +29,6 @@ static inline Pos ir_lang_type_get_pos(Ir_lang_type ir_lang_type) {
             return ir_lang_type_void_const_unwrap(ir_lang_type).pos;
         case IR_LANG_TYPE_FN:
             return ir_lang_type_fn_const_unwrap(ir_lang_type).pos;
-        case IR_LANG_TYPE_ARRAY:
-            return ir_lang_type_array_const_unwrap(ir_lang_type).pos;
     }
     unreachable("");
 }

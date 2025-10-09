@@ -172,8 +172,6 @@ Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_lang_type ir_lan
             Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return atom;
         }
-        case IR_LANG_TYPE_ARRAY:
-            unreachable("");
     }
     unreachable("");
 }
@@ -225,8 +223,6 @@ void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom) {
         case IR_LANG_TYPE_VOID:
             // TODO
             return;
-        case IR_LANG_TYPE_ARRAY:
-            unreachable("");
     }
     unreachable("");
 }

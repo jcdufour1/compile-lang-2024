@@ -685,12 +685,13 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             Ir_lang_type new_item_type = rm_tuple_lang_type(*array.item_type, lang_type_pos);
-            return ir_lang_type_array_const_wrap(ir_lang_type_array_new(
-                lang_type_pos,
-                arena_dup(&a_main, &new_item_type),
-                array.count,
-                array.pointer_depth
-            ));
+            todo();
+            //return ir_lang_type_array_const_wrap(ir_lang_type_array_new(
+            //    lang_type_pos,
+            //    arena_dup(&a_main, &new_item_type),
+            //    array.count,
+            //    array.pointer_depth
+            //));
         }
         case LANG_TYPE_VOID:
             return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
