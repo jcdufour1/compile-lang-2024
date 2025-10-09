@@ -193,7 +193,7 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
             *lang_type.item_type,
             true
         )),
-        (Ulang_type_vec) {0},
+        *lang_type.item_type,
         SCOPE_BUILTIN /* TODO */
     );
 
