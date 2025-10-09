@@ -97,6 +97,6 @@ Str_slice own_argv(void) {
 int main(int argc, char** argv) {
     actual_argv = argv;
     actual_argv_count = argc;
-    own_actual_main();
+    return own_actual_main();
 }
 
