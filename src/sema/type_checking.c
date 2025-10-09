@@ -1091,8 +1091,6 @@ bool try_set_struct_literal_types(
     Uast_struct_literal* lit,
     Pos assign_pos
 ) {
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
-    todo();
     switch (dest_lang_type.type) {
         case LANG_TYPE_STRUCT:
             break;

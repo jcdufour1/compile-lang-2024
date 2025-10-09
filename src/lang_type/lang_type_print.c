@@ -163,6 +163,9 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             string_extend_cstr(&a_print, string, "[");
             string_extend_size_t(&a_print, string, array.count);
             string_extend_cstr(&a_print, string, "]");
+            for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
+                vec_append(&a_print, string, '*');
+            }
             goto end;
         }
         case LANG_TYPE_ENUM:

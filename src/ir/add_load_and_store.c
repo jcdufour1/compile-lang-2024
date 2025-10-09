@@ -684,22 +684,35 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
-            Ir_lang_type new_item_type = rm_tuple_lang_type(*array.item_type, lang_type_pos);
-
-            //static String array_name = {0};
-            //string_extend_cstr(&a_print /* TODO */, &array_name, sv("a"));
-            //string_extend_size_t(&a_print /* TODO */, &array_name, lang_type_array_const_unwrap(lang_type));
-            //vec_reset(&a_print /* TODO */, &array_name);
-
             Name array_name = serialize_ulang_type(MOD_PATH_ARRAYS, lang_type_to_ulang_type(lang_type), true);
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, array_name));
-            todo();
-            //return ir_lang_type_array_const_wrap(ir_lang_type_array_new(
-            //    lang_type_pos,
-            //    arena_dup(&a_main, &new_item_type),
-            //    array.count,
-            //    array.pointer_depth
-            //));
+
+            Ir* array_def_ = NULL;
+            if (ir_lookup(&array_def_, array_name)) {
+                return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
+                    lang_type_pos,
+                    ir_lang_type_atom_new(array_name, array.pointer_depth)
+                ));
+            }
+
+            Ir_variable_def_vec membs = {0};
+            vec_append(&a_main, &membs, ir_variable_def_new(
+                array.pos,
+                rm_tuple_lang_type(*array.item_type, lang_type_pos),
+                false,
+                util_literal_name_new(),
+                (Name) {0}
+            ));
+
+            Ir_struct_def* array_def = ir_struct_def_new(
+                array.pos,
+                ((Ir_struct_def_base) {.members = membs, .name = array_name})
+            );
+            unwrap(ir_add(ir_def_wrap(ir_struct_def_wrap(array_def))));
+
+            return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
+                lang_type_pos,
+                ir_lang_type_atom_new(array_name, array.pointer_depth)
+            ));
         }
         case LANG_TYPE_VOID:
             return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
@@ -980,7 +993,7 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         old_lit->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new()
+        old_lit->name
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -990,14 +1003,30 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
     old_lit_lang_type_ptr.pointer_depth++;
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
+        Tast_variable_def* index_var = tast_variable_def_new(
+            tast_expr_get_pos(vec_at(&old_lit->members, idx)), 
+            lang_type_new_usize(),
+            false,
+            util_literal_name_new()
+        );
+        unwrap(symbol_add(tast_variable_def_wrap(index_var)));
+        load_variable_def(new_block, index_var);
+
+        Tast_assignment* index_assign = tast_assignment_new(
+            index_var->pos,
+            tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, index_var)),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(index_var->pos /* TODO */, idx, index_var->lang_type)))
+        );
+        load_assignment(new_block, index_assign);
+
         Tast_index* access = tast_index_new(
             old_lit->pos,
             *old_lit_lang_type.item_type,
-            tast_literal_wrap(tast_int_wrap(tast_int_new(old_lit->pos, idx, lang_type_new_usize()))),
+            tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, index_var)),
             tast_operator_wrap(tast_unary_wrap(tast_unary_new(
                 old_lit->pos,
                 tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, new_var)),
-                UNARY_DEREF,
+                UNARY_REFER,
                 lang_type_array_const_wrap(old_lit_lang_type_ptr)
             )))
         );
@@ -1007,9 +1036,11 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
             tast_index_wrap(access),
             vec_at(&old_lit->members, idx)
         );
-
         load_assignment(new_block, assign);
     }
+
+    log(LOG_DEBUG, FMT"\n", ir_block_print(new_block));
+    //todo();
 
     return new_var;
 }
@@ -1127,6 +1158,7 @@ static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
 }
 
 // TODO: rename to load_int
+// TODO: maybe this function should append to new_block, similar to most other load_* functions
 static Name load_number(Tast_int* old_lit) {
     Ir_int* number = ir_int_new(
         old_lit->pos,
@@ -1138,6 +1170,7 @@ static Name load_number(Tast_int* old_lit) {
     return number->name;
 }
 
+// TODO: maybe this function should append to new_block, similar to most other load_* functions
 static Name load_float(Tast_float* old_lit) {
     Ir_float* number = ir_float_new(
         old_lit->pos,

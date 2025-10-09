@@ -412,6 +412,10 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 #endif // NDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);
+    
+    if (count == 57) {
+        //todo();
+    }
 
     count++;
 
