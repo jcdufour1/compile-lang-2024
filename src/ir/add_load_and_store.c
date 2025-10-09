@@ -177,7 +177,6 @@ static void load_block_stmts(
     Tast_def* dummy = NULL;
     unwrap(!symbol_lookup(&dummy, *yield_dest_name));
 
-    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
     Tast_variable_def* local_rtn_def = NULL;
@@ -307,12 +306,7 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
-    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     assert(break_expr->name.base.count > 0);
-    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
-    log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
-        .lang_type = break_expr->lang_type, .name = break_expr->name
-    })));
 
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
     Tast_assignment* is_yield_assign = tast_assignment_new(
@@ -432,14 +426,11 @@ static void load_block_stmts(
     unwrap(!symbol_lookup(&dummy, break_expr->name));
 
     if (lang_type.type == LANG_TYPE_VOID) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
         assert(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         load_variable_def(new_block, local_rtn_def);
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, local_rtn_def->name));
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
@@ -676,8 +667,6 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             Tast_def* new_def = NULL;
             unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
-            //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_type_def)));
-            log(LOG_DEBUG, FMT"\n", tast_def_print(new_def));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
                 rm_tuple_lang_type_atom(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type))
@@ -1140,13 +1129,6 @@ static Name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
         )
     )));
 
-    log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(tast_struct_literal_new(
-        old_lit->pos,
-        members,
-        util_literal_name_new(),
-        new_lang_type
-    )));
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
     // this is an actual tagged enum
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
@@ -1219,7 +1201,6 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
 
     Tast_def* var_def_ = NULL;
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, old_sym->base.name));
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Ir* alloca = NULL;
@@ -1503,8 +1484,6 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
     switch (def->type) {
         case TAST_STRUCT_DEF: {
             Tast_struct_def* struct_def = tast_struct_def_unwrap(def);
-            log(LOG_DEBUG, FMT"\n", tast_struct_def_print(struct_def));
-            log(LOG_DEBUG, FMT"\n", strv_print(old_access->member_name));
             struct_index = tast_get_member_index(&struct_def->base, old_access->member_name);
             break;
         }
@@ -1707,14 +1686,12 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
                 DEFER_PARENT_OF_BLOCK,
                 tast_block_unwrap(old_expr)->lang_type
             );
-            log(LOG_DEBUG, FMT, ir_block_print(new_block_block));
             for (size_t idx = 0; idx < new_block_block->children.info.count; idx++) {
                 vec_append(
                     &a_main,
                     &new_block->children,
                     vec_at(&new_block_block->children, idx)
                 );
-                log(LOG_DEBUG, FMT, ir_print(vec_at(&new_block_block->children, idx)));
             }
             if (tast_block_unwrap(old_expr)->lang_type.type == LANG_TYPE_VOID) {
                 return load_void(new_block_block->pos);
@@ -1916,8 +1893,6 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 
     Pos pos = old_assign->pos;
 
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(old_assign->lhs));
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(old_assign->rhs));
     Name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Name new_rhs = load_expr(new_block, old_assign->rhs);
 
@@ -2035,7 +2010,6 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     assert(if_else->tasts.info.count > 0);
     Name old_label_if_after = label_if_after;
 
-    log(LOG_DEBUG, "thing 1876: %zu\n", scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id));
     *new_block = ir_block_new(
         if_else->pos,
         util_literal_name_new(),
@@ -2493,7 +2467,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             if (!use_break_out_of) {
                 break;
             }
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
             msg(
                 DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
                 "label `"FMT"` points to a scope that is not a parent of this statement\n",
@@ -2572,7 +2545,6 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 
             Defer_collection* coll = vec_top_ref(&defered_collections.coll_stack);
             Tast_def* def = NULL; 
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, coll->break_name));
             unwrap(symbol_lookup(&def, coll->break_name));
             if (tast_def_get_lang_type(def).type == LANG_TYPE_VOID) {
                 if (tast_yield_unwrap(old_stmt)->do_yield_expr) {

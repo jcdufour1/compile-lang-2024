@@ -43,7 +43,7 @@ static void emit_c_loc(String* output, Loc loc, Pos pos) {
     string_extend_cstr(&a_main, output, " */\n");
 }
 
-// TODO: see if this can be merged with extend_type_call_str in emit_ir.c in some way
+// TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr) {
     if (opaque_ptr && ir_lang_type_get_pointer_depth(ir_lang_type) != 0) {
         string_extend_cstr(&a_main, output, "void*");

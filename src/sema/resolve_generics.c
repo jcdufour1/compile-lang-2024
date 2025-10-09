@@ -283,6 +283,9 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             *type = LANG_TYPE_VOID;
             return true;
         case UAST_LANG_DEF:
+            if (env.silent_generic_resol_errors) {
+                return false;
+            }
             log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
             log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
             unreachable("def should have been eliminated by now");
