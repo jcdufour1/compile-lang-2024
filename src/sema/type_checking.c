@@ -2137,10 +2137,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
-    assert(
-        sym_name->gen_args.info.count == 0 &&
-        "generics are already instanciated, and they should not have been"
-    );
+    // TODO: uncomment (only run this assertion when function call is user generated?)
+    //assert(
+        //sym_name->gen_args.info.count == 0 &&
+        //"generics are already instanciated, and they should not have been"
+    //);
+    sym_name->gen_args = (Ulang_type_vec) {0};
 
     bool status = true;
 
@@ -3162,19 +3164,45 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
 
     if (callee_lang_type.type == LANG_TYPE_ARRAY) {
-        todo();
-        //if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
-        //    msg_todo("", index->pos);
-        //    return false;
-        //}
-        //lang_type_set_pointer_depth(&callee_lang_type, 1);
-        //new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-        //    tast_expr_get_pos(new_callee),
-        //    new_callee,
-        //    UNARY_REFER,
-        //    callee_lang_type
-        //)));
+        Tast_expr* arr = new_callee;
+        Lang_type_array array = lang_type_array_const_unwrap(callee_lang_type);
+        Uast_expr_vec arr_slice_args = {0};
+        vec_append(&a_main, &arr_slice_args, uast_symbol_wrap(uast_symbol_new(tast_expr_get_pos(arr), tast_expr_get_name(arr))));
+        Ulang_type_vec gen_args = {0};
+        vec_append(&a_main, &gen_args, lang_type_to_ulang_type(*array.item_type));
+        Uast_function_call* arr_slice_call = uast_function_call_new(
+            index->pos,
+            arr_slice_args,
+            uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
+                MOD_PATH_RUNTIME,
+                sv("static_array_slice"),
+                gen_args,
+                SCOPE_TOP_LEVEL
+            )))
+        );
+
+        Uast_expr_vec at_args = {0};
+        vec_append(&a_main, &at_args, uast_function_call_wrap(arr_slice_call));
+        vec_append(&a_main, &at_args, index->index);
+        Uast_function_call* at_call = uast_function_call_new(
+            index->pos,
+            at_args,
+            uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
+                MOD_PATH_RUNTIME,
+                sv("slice_at_ref"),
+                gen_args,
+                SCOPE_TOP_LEVEL
+            )))
+        );
+
+        Tast_expr* new_expr = NULL;
+        if (!try_set_expr_types(&new_expr, uast_operator_wrap(uast_unary_wrap(uast_unary_new(at_call->pos, uast_function_call_wrap(at_call), UNARY_DEREF, (Ulang_type) {0}))))) {
+            return false;
+        }
+        *new_tast = tast_expr_wrap(new_expr);
+        return true;
     }
+
     if (lang_type_get_pointer_depth(callee_lang_type) < 1) {
         msg_todo(
             "actual error message for this situation "

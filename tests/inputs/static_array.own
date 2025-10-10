@@ -15,11 +15,24 @@ fn main() i32 {
     }
 
     for idx u64 in 0..nums.count {
-        io.printf("before 2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx, i32), "\n")
+        io.printf("before 2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx), "\n")
         *coll.slice_at_ref(rt.static_array_slice(nums), idx) = 4*unsafe_cast<i32>idx
     }
     for idx u64 in 0..nums.count {
-        io.printf("after  2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx, i32), "\n")
+        io.printf("after  2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx), "\n")
+    }
+
+    for idx u64 in 0..nums.count {
+        io.printf("before 3: %d\n", nums[idx])
+        nums[idx] = 43*unsafe_cast<i32>idx
+    }
+    for idx u64 in 0..nums.count {
+        io.printf("after 3: %d\n", nums[idx])
+    }
+
+    for idx u64 in 0..nums.count {
+        let ptr i32* = &nums[idx]
+        io.printf("thing 4: %d\n", *ptr)
     }
 
     return 0
