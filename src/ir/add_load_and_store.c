@@ -17,6 +17,8 @@
 #include <ir_utils.h>
 #include <ir_operator_type.h>
 
+static int dummy = 0;
+
 // TODO: remove is_brking (use is_yielding instead)
 
 typedef enum {
@@ -2380,6 +2382,22 @@ static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
             todo();
     }
 
+    log(LOG_DEBUG, FMT"\n", tast_unary_print(old_unary));
+
+    if (old_unary->child->type == TAST_OPERATOR) {
+        Tast_operator* oper = tast_operator_unwrap(old_unary->child);
+        if (oper->type != TAST_UNARY) {
+            goto next;
+        }
+        Tast_unary* unary = tast_unary_unwrap(oper);
+        if (unary->token_type != UNARY_REFER) {
+            goto next;
+        }
+        return load_ptr_expr(new_block, unary->child);
+    }
+
+next:
+    dummy = 0;
     Name ptr = load_ptr_expr(new_block, old_unary->child);
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_unary->pos,
@@ -2398,6 +2416,9 @@ static Name load_ptr_unary(Ir_block* new_block, Tast_unary* old_unary) {
     switch (old_unary->token_type) {
         case UNARY_DEREF:
             return load_ptr_deref(new_block, old_unary);
+        case UNARY_REFER:
+            log(LOG_DEBUG, FMT"\n", tast_unary_print(old_unary));
+            todo();
         default:
             todo();
     }

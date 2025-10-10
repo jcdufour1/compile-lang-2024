@@ -1548,7 +1548,51 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
 bool try_set_function_call_builtin_types(Tast_expr** new_call, Name fun_name, Uast_function_call* fun_call) {
     Strv fun_base = fun_name.base;
     if (strv_is_equal(fun_base, sv("static_array_access"))) {
-        todo();
+        Tast_expr* new_callee = NULL;
+        Tast_expr* new_inner_index = NULL;
+        if (!try_set_expr_types(&new_callee, vec_at(&fun_call->args, 0))) {
+            return false;
+        }
+        if (!try_set_expr_types(&new_inner_index, vec_at(&fun_call->args, 1))) {
+            return false;
+        }
+
+        Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
+
+        if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
+            msg_todo("", fun_call->pos);
+            return false;
+        }
+        lang_type_set_pointer_depth(&callee_lang_type, 1);
+        new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            tast_expr_get_pos(new_callee),
+            new_callee,
+            UNARY_REFER,
+            callee_lang_type
+        )));
+
+        unwrap(lang_type_get_pointer_depth(callee_lang_type) > 0);
+        lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
+
+        Lang_type new_lang_type = {0};
+        if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+            new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
+        } else {
+            new_lang_type = callee_lang_type;
+        }
+
+        Tast_index* new_index = tast_index_new(fun_call->pos, new_lang_type, new_inner_index, new_callee);
+
+        Lang_type new_lang_type_ptr = new_lang_type;
+        lang_type_set_pointer_depth(&new_lang_type_ptr, lang_type_get_pointer_depth(new_lang_type_ptr) + 1);
+        *new_call = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            fun_call->pos, 
+            tast_index_wrap(new_index),
+            UNARY_REFER,
+            new_lang_type_ptr
+        )));
+        return true;
+
     } else {
         msg_todo("calling this builtin as a function", fun_call->pos);
         return false;
@@ -3055,21 +3099,21 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         unreachable("");
     }
 
-    // TODO: rename to callee_lang_type?
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
 
     if (callee_lang_type.type == LANG_TYPE_ARRAY) {
-        if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
-            msg_todo("", index->pos);
-            return false;
-        }
-        lang_type_set_pointer_depth(&callee_lang_type, 1);
-        new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-            tast_expr_get_pos(new_callee),
-            new_callee,
-            UNARY_REFER,
-            callee_lang_type
-        )));
+        todo();
+        //if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
+        //    msg_todo("", index->pos);
+        //    return false;
+        //}
+        //lang_type_set_pointer_depth(&callee_lang_type, 1);
+        //new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        //    tast_expr_get_pos(new_callee),
+        //    new_callee,
+        //    UNARY_REFER,
+        //    callee_lang_type
+        //)));
     }
     if (lang_type_get_pointer_depth(callee_lang_type) < 1) {
         msg_todo(
@@ -3088,12 +3132,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         new_lang_type = callee_lang_type;
     }
 
-    Tast_index* new_index = tast_index_new(
-        index->pos,
-        new_lang_type,
-        new_inner_index,
-        new_callee
-    );
+    Tast_index* new_index = tast_index_new(index->pos, new_lang_type, new_inner_index, new_callee);
 
     *new_tast = tast_expr_wrap(tast_index_wrap(new_index));
     return true;
