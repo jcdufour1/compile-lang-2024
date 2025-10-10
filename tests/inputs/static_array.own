@@ -2,11 +2,11 @@ type io import = std.io
 
 
 fn main() i32 {
-    let nums i32[2] = [8, 76]
+    let nums i32[3] = [8, 76, 77]
 
-   for idx i32 in 0..2 {
-       io.print_int(nums[idx], "\n", i32)
-   }
+    for idx i32 in 0..3 {
+        io.print_int(nums[idx], "\n", i32)
+    }
 
     return 0
 }

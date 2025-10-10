@@ -195,7 +195,8 @@ static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def
 static void ir_struct_def_base_graphvis_internal(String* buf, const Ir_struct_def_base* base) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         arrow_names(buf, base->name, vec_at(&base->members, idx)->name_self);
-        ir_variable_def_graphvis_internal(buf, vec_at(&base->members, idx));
+        todo();
+        //ir_variable_def_graphvis_internal(buf, vec_at(&base->members, idx));
     }
 }
 
@@ -432,6 +433,8 @@ static bool ir_graphvis_do_next_arrow(const Ir* ir) {
             return true;
         case IR_STORE_ANOTHER_IR:
             return true;
+        case IR_STRUCT_MEMB_DEF:
+            todo();
         case IR_IMPORT_PATH:
             todo();
         case IR_REMOVED:
@@ -479,6 +482,8 @@ static void ir_graphvis_internal(String* buf, const Ir* ir) {
         case IR_STORE_ANOTHER_IR:
             ir_store_another_ir_graphvis_internal(buf, ir_store_another_ir_const_unwrap(ir));
             return;
+        case IR_STRUCT_MEMB_DEF:
+            todo();
         case IR_IMPORT_PATH:
             todo();
         case IR_REMOVED:

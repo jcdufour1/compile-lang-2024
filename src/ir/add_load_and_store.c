@@ -694,13 +694,12 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 ));
             }
 
-            Ir_variable_def_vec membs = {0};
-            vec_append(&a_main, &membs, ir_variable_def_new(
+            Ir_struct_memb_def_vec membs = {0};
+            vec_append(&a_main, &membs, ir_struct_memb_def_new(
                 array.pos,
                 rm_tuple_lang_type(*array.item_type, lang_type_pos),
-                false,
                 util_literal_name_new(),
-                (Name) {0}
+                array.count
             ));
 
             Ir_struct_def* array_def = ir_struct_def_new(
@@ -772,6 +771,8 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
 
 static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
+static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def);
+
 static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
     Ir_alloca* alloca = ir_alloca_new(
         var_def->pos,
@@ -813,10 +814,19 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) 
     );
 }
 
+static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def) {
+    return ir_struct_memb_def_new(
+        old_var_def->pos,
+        rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
+        old_var_def->name,
+        1
+    );
+}
+
 static Ir_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
-    Ir_variable_def_vec new_membs = {0};
+    Ir_struct_memb_def_vec new_membs = {0};
     for (size_t idx = 0; idx < old_def->base.members.info.count; idx++) {
-        vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, idx)));
+        vec_append(&a_main, &new_membs, load_variable_def_clone_struct_def_memb(vec_at(&old_def->base.members, idx)));
     }
     return ir_struct_def_new(
         old_def->pos,
@@ -826,8 +836,8 @@ static Ir_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
 
 static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
     size_t largest_idx = struct_def_base_get_idx_largest_member(old_def->base);
-    Ir_variable_def_vec new_membs = {0};
-    vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
+    Ir_struct_memb_def_vec new_membs = {0};
+    vec_append(&a_main, &new_membs, load_variable_def_clone_struct_def_memb(vec_at(&old_def->base.members, largest_idx)));
     return ir_struct_def_new(
         old_def->pos,
         ((Ir_struct_def_base) {.members = new_membs, .name = old_def->base.name})

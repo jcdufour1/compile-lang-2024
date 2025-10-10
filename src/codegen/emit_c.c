@@ -141,7 +141,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        Ir_variable_def* curr = vec_at(&def->base.members, idx);
+        Ir_struct_memb_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
         if (llvm_is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
@@ -170,6 +170,12 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         c_extend_type_call_str(&buf, ir_lang_type, true);
         string_extend_cstr(&a_temp, &buf, " ");
         ir_extend_name(&buf, curr->name_self);
+        assert(curr->count > 0);
+        if (curr->count > 1) {
+            string_extend_cstr(&a_temp, &buf, "[");
+            string_extend_size_t(&a_temp, &buf, curr->count);
+            string_extend_cstr(&a_temp, &buf, "]");
+        }
         string_extend_cstr(&a_temp, &buf, ";\n");
     }
 
@@ -212,7 +218,6 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
             emit_c_def_out_of_line(strs, ir_def_const_unwrap(ir));
-            return;
         case IR_BLOCK:
             return;
         case IR_EXPR:
@@ -223,15 +228,12 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
             unreachable("");
         case IR_RETURN:
             unreachable("");
-            return;
         case IR_GOTO:
             unreachable("");
-            return;
         case IR_ALLOCA:
             return;
         case IR_COND_GOTO:
             unreachable("");
-            return;
         case IR_STORE_ANOTHER_IR:
             return;
         case IR_LOAD_ANOTHER_IR:
@@ -241,6 +243,8 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
         case IR_IMPORT_PATH:
             emit_c_import_path(strs, ir_import_path_const_unwrap(ir));
             return;
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
         case IR_REMOVED:
             return;
     }
@@ -476,7 +480,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
             return;
         case IR_IMPORT_PATH:
             unreachable("");
-            return;
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
         case IR_REMOVED:
             return;
     }

@@ -330,7 +330,7 @@ static void extend_ir_struct_def_base(String* buf, const char* type_name, Ir_str
     string_extend_cstr(&a_print, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = ir_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = ir_struct_memb_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, buf, memb_text);
     }
 }
@@ -419,6 +419,20 @@ Strv ir_variable_def_print_internal(const Ir_variable_def* def, int indent) {
     return string_to_strv(buf);
 }
 
+Strv ir_struct_memb_def_print_internal(const Ir_struct_memb_def* def, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "struct_memb_def", indent);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
+    extend_name(NAME_LOG, &buf, def->name_self);
+    string_extend_cstr(&a_print, &buf, "[");
+    string_extend_size_t(&a_print, &buf, def->count);
+    string_extend_cstr(&a_print, &buf, "]");
+    string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv ir_operator_print_internal(const Ir_operator* operator, int indent) {
     switch (operator->type) {
         case IR_BINARY:
@@ -489,6 +503,8 @@ Strv ir_print_internal(const Ir* ir, int indent) {
             return ir_store_another_ir_print_internal(ir_store_another_ir_const_unwrap(ir), indent);
         case IR_IMPORT_PATH:
             return ir_import_path_print_internal(ir_import_path_const_unwrap(ir), indent);
+        case IR_STRUCT_MEMB_DEF:
+            return ir_struct_memb_def_print_internal(ir_struct_memb_def_const_unwrap(ir), indent);
         case IR_REMOVED:
             return ir_removed_print_internal(ir_removed_const_unwrap(ir), indent);
     }

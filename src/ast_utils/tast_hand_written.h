@@ -15,7 +15,7 @@ typedef struct {
 } Struct_def_base;
 
 typedef struct {
-    Ir_variable_def_vec members;
+    Ir_struct_memb_def_vec members;
     Name name;
 } Ir_struct_def_base;
 
