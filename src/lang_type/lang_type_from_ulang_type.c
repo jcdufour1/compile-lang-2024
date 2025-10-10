@@ -86,6 +86,8 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             todo();
         case UAST_LABEL:
             todo();
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }

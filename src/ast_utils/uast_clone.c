@@ -270,6 +270,8 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
             return uast_void_def_wrap(uast_void_def_clone(uast_void_def_const_unwrap(def)));
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(def), use_new_scope, new_scope));
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }

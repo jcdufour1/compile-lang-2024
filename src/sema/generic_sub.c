@@ -176,6 +176,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_LABEL:
             generic_sub_label(uast_label_unwrap(def), gen_param, gen_arg);
             return;
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }

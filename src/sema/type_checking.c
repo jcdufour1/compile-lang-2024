@@ -388,6 +388,9 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
+        case UAST_BUILTIN_DEF: {
+            todo();
+        }
         case UAST_LABEL:
             // TODO
             todo();
@@ -1433,6 +1436,8 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
             }
             return STMT_NO_STMT;
         case UAST_LANG_DEF:
+            return STMT_NO_STMT;
+        case UAST_BUILTIN_DEF:
             return STMT_NO_STMT;
     }
     unreachable("");
@@ -2918,6 +2923,8 @@ bool try_set_member_access_types_finish(
         case UAST_MOD_ALIAS:
             unreachable("");
         case UAST_VOID_DEF:
+            unreachable("");
+        case UAST_BUILTIN_DEF:
             unreachable("");
         case UAST_LANG_DEF:
             unreachable("lang def should have been eliminated by now");

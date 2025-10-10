@@ -307,6 +307,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             todo();
         case UAST_LABEL:
             todo();
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }
@@ -374,6 +376,8 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_VOID_DEF:
             unreachable("");
         case UAST_LABEL:
+            todo();
+        case UAST_BUILTIN_DEF:
             todo();
     }
     unreachable("");

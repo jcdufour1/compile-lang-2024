@@ -135,6 +135,8 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             return uast_lang_def_const_unwrap(def)->alias_name;
         case UAST_LABEL:
             return uast_label_const_unwrap(def)->name;
+        case UAST_BUILTIN_DEF:
+            return uast_builtin_def_const_unwrap(def)->name;
     }
     unreachable("");
 }
@@ -170,6 +172,8 @@ static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, co
             return false;
         case UAST_LANG_DEF:
             todo();
+        case UAST_BUILTIN_DEF:
+            return false;
         case UAST_LABEL:
             return false;
     }

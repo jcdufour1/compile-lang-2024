@@ -35,6 +35,8 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             unreachable("");
         case UAST_LANG_DEF:
             unreachable("");
+        case UAST_BUILTIN_DEF:
+            unreachable("");
         case UAST_VOID_DEF:
             *result = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
             return true;
@@ -77,6 +79,8 @@ Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
         case UAST_MOD_ALIAS:
             unreachable("");
         case UAST_LANG_DEF:
+            unreachable("");
+        case UAST_BUILTIN_DEF:
             unreachable("");
         case UAST_VOID_DEF:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), POS_BUILTIN));

@@ -5,7 +5,15 @@ fn main() i32 {
     let nums i32[3] = [8, 76, 77]
 
     for idx i32 in 0..nums.count {
-        io.print_int(nums[idx], "\n", i32)
+        io.print_int(*static_array_access(nums, idx), "\n", i32)
+        *static_array_access(nums, idx) = idx
+        io.print_int(*static_array_access(nums, idx), "\n", i32)
+    }
+
+    for idx i32 in 0..nums.count {
+        //io.print_int(nums[idx], "\n", i32)
+        //*static_array_access(nums, idx) = idx
+        //io.print_int(nums[idx], "\n", i32)
     }
 
     return 0
