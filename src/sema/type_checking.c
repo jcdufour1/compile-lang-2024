@@ -186,11 +186,18 @@ static void msg_invalid_count_struct_literal_args_internal(
     Uast_expr_vec membs,
     size_t min_args,
     size_t max_args,
-    Pos pos
+    Pos pos,
+    bool is_array
 ) {
     String message = {0};
     string_extend_size_t(&a_print, &message, membs.info.count);
-    string_extend_cstr(&a_print, &message, " arguments are passed to struct literal, but ");
+    string_extend_cstr(&a_print, &message, " arguments are passed to ");
+    if (is_array) {
+        string_extend_cstr(&a_print, &message, "array");
+    } else {
+        string_extend_cstr(&a_print, &message, "struct");
+    }
+    string_extend_cstr(&a_print, &message, " literal, but ");
     string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
         string_extend_cstr(&a_print, &message, " or more");
@@ -202,8 +209,8 @@ static void msg_invalid_count_struct_literal_args_internal(
     );
 }
 
-#define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos) \
-    msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos)
+#define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos, is_array) \
+    msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos, is_array)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (is_auto_inserted) {
@@ -1032,7 +1039,7 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
 
 static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs, Pos pos) {
     if (membs.info.count != memb_defs.info.count) {
-        msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos);
+        msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos, false);
         return false;
     }
 
@@ -1151,6 +1158,13 @@ bool try_set_array_literal_types(
         }
     } else if (dest_lang_type.type == LANG_TYPE_ARRAY) {
         gen_arg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
+        Lang_type_array array = lang_type_array_const_unwrap(dest_lang_type);
+        size_t count = array.count;
+        if (count != lit->members.info.count) {
+            msg_invalid_count_struct_literal_args(lit->members, count, count, lit->pos, true);
+            msg(DIAG_NOTE, array.pos, "statically sized array defined as containing %zu elements\n", count);
+            return false;
+        }
     } else {
         msg_todo("array literal assigned to non-slice type", assign_pos);
         return false;
