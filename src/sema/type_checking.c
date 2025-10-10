@@ -1545,6 +1545,17 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
 }
 
 
+bool try_set_function_call_builtin_types(Tast_expr** new_call, Name fun_name, Uast_function_call* fun_call) {
+    Strv fun_base = fun_name.base;
+    if (strv_is_equal(fun_base, sv("static_array_access"))) {
+        todo();
+    } else {
+        msg_todo("calling this builtin as a function", fun_call->pos);
+        return false;
+    }
+    unreachable("");
+}
+
 bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
@@ -2069,6 +2080,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
         case UAST_FUNCTION_DECL:
             return try_set_function_call_types_old(new_call, fun_call);
+        case UAST_BUILTIN_DEF:
+            log(LOG_DEBUG, FMT"\n", uast_def_print(fun_decl_temp_));
+            return try_set_function_call_builtin_types(new_call, *sym_name, fun_call);
         default:
             unreachable("");
     }

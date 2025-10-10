@@ -37,6 +37,19 @@ static void add_primitives(void) {
     add_void();
 }
 
+static void add_builtin_def(Strv name) {
+    unwrap(usym_tbl_add(uast_builtin_def_wrap(uast_builtin_def_new(POS_BUILTIN, name_new(
+        MOD_PATH_RUNTIME,
+        name,
+        (Ulang_type_vec) {0},
+        SCOPE_BUILTIN
+    )))));
+}
+
+static void add_builtin_defs(void) {
+    add_builtin_def(sv("static_array_access"));
+}
+
 #define do_pass(pass_fn, sym_log_fn) \
     do { \
         pass_fn(); \
@@ -77,6 +90,7 @@ void compile_file_to_ir(void) {
     symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     add_primitives();
+    add_builtin_defs();
 
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,

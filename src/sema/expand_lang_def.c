@@ -199,7 +199,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_LABEL:
             todo();
         case UAST_BUILTIN_DEF:
-            todo();
+            return EXPAND_NAME_NORMAL;
     }
 
     // TODO: this clone is expensive I think
@@ -758,7 +758,7 @@ bool expand_def_def(Uast_def* def) {
         case UAST_LABEL:
             return true;
         case UAST_BUILTIN_DEF:
-            todo();
+            return true;
     }
     unreachable("");
 }
