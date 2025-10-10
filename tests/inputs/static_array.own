@@ -1,20 +1,25 @@
 type io import = std.io
 type rt import = std.runtime
+type coll import = std.collections
 
 
 fn main() i32 {
     let nums i32[3] = [8, 76, 77]
 
-    for idx i32 in 0..nums.count {
-        io.print_int(*rt.static_array_access(nums, idx), "\n", i32)
-        *rt.static_array_access(nums, idx) = idx
-        io.print_int(*rt.static_array_access(nums, idx), "\n", i32)
+    for idx u64 in 0..nums.count {
+        io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n")
+        *rt.static_array_access(nums, idx) = unsafe_cast<i32>idx
+    }
+    for idx u64 in 0..nums.count {
+        io.printf("after  1: %d\n", *rt.static_array_access(nums, idx), "\n")
     }
 
-    for idx i32 in 0..nums.count {
-        //io.print_int(nums[idx], "\n", i32)
-        //*static_array_access(nums, idx) = idx
-        //io.print_int(nums[idx], "\n", i32)
+    for idx u64 in 0..nums.count {
+        io.printf("before 2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx, i32), "\n")
+        *coll.slice_at_ref(rt.static_array_slice(nums), idx) = 4*unsafe_cast<i32>idx
+    }
+    for idx u64 in 0..nums.count {
+        io.printf("after  2: %d\n", *coll.slice_at_ref(rt.static_array_slice(nums), idx, i32), "\n")
     }
 
     return 0

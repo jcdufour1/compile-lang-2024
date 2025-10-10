@@ -17,8 +17,12 @@ fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str 
 }
 
 fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    return *slice_at_ref(slice, index, ItemT, file, line, column)
+}
+
+fn slice_at_ref(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
-    return slice.buf[index]
+    return &slice.buf[index]
 }
 
 fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {

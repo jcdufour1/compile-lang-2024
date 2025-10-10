@@ -69,6 +69,8 @@ for generics:
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
 - proper print functions for Ulang_type_regular, etc.
+- this can crash the compiler (because of the i32):
+    io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

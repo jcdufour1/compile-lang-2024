@@ -48,6 +48,7 @@ static void add_builtin_def(Strv name) {
 
 static void add_builtin_defs(void) {
     add_builtin_def(sv("static_array_access"));
+    add_builtin_def(sv("static_array_slice"));
 }
 
 #define do_pass(pass_fn, sym_log_fn) \
