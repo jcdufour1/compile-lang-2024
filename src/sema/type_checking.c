@@ -2921,6 +2921,27 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     switch (new_callee->type) {
         case TAST_SYMBOL: {
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
+            if (sym->base.lang_type.type == LANG_TYPE_ARRAY) {
+                if (access->member_name->name.gen_args.info.count > 0) {
+                    // TODO
+                    msg_todo("", access->pos);
+                    return false;
+                }
+
+                if (!strv_is_equal(access->member_name->name.base, sv("count"))) {
+                    msg_invalid_member(access->member_name->name, access);
+                    return false;
+                }
+
+                Lang_type_array array = lang_type_array_const_unwrap(sym->base.lang_type);
+                *new_tast = tast_expr_wrap(tast_literal_wrap(tast_int_wrap(tast_int_new(
+                    access->pos,
+                    array.count,
+                    *array.item_type
+                ))));
+                return true;
+            }
+
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
                 log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));

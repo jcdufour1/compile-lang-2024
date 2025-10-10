@@ -126,7 +126,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
-// TODO: this function should call try_lang_type_get_atom
+// TODO: remove this function and use try_lang_type_get_atom instead
 Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE: {
@@ -168,7 +168,6 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     unreachable("");
 }
 
-// TODO: remove this function?
 void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
         case LANG_TYPE_CHAR:
