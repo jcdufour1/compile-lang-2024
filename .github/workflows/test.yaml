@@ -11,4 +11,4 @@ jobs:
       - run: sudo apt update 
       - run: sudo apt install clang python3 mypy
       - run: mypy do_test.py
-      - run: python3 do_test.py --test
+      - run: python3 do_test.py --test --path-c-compiler=clang
