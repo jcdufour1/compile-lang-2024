@@ -44,10 +44,11 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 18
+#define PARAMETERS_COUNT 19
 typedef struct {
     Strv input_file_path;
     Strv output_file_path;
+    Strv path_c_compiler;
     Strv_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
     Strv_vec static_libs;
     Strv_vec dynamic_libs;

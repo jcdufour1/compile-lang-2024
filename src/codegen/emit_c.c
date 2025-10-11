@@ -739,18 +739,23 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 18,
+            PARAMETERS_COUNT == 19,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
         Strv_vec cmd = {0};
-        // TODO: change clang to cc by default
-        // TODO: add command line option to choose c compiler
-        vec_append(&a_main, &cmd, sv("clang"));
+        vec_append(&a_main, &cmd, params.path_c_compiler);
         vec_append(&a_main, &cmd, sv("-std=c99"));
+
+        // supress clang warnings
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));
         vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
         vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
+        vec_append(&a_main, &cmd, sv("-Wno-unknown-warning-option"));
+
+        // supress gcc warnings
+        vec_append(&a_main, &cmd, sv("-Wno-builtin-declaration-mismatch"));
+
 #       ifdef NDEBUG
             vec_append(&a_main, &cmd, sv("-Wno-unused-command-line-argument"));
 #       endif // DNDEBUG

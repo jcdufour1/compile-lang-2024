@@ -116,7 +116,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_GEN_IR) {
@@ -161,7 +161,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
