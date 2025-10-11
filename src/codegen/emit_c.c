@@ -739,7 +739,7 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 20,
+            PARAMETERS_COUNT == 22,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 

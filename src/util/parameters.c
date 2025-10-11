@@ -2,43 +2,19 @@
 #include <file.h>
 #include <msg.h>
 #include <msg_todo.h>
+#include <util.h>
 
 static Strv compiler_exe_name;
 
 static void print_usage(void);
 
-static TARGET_ARCH get_default_arch(void) {
-#   if defined(__x86_64__) || defined(_M_X64)
-        return ARCH_X86_64;
-#   else
-        // TODO: return ARCH_UNKNOWN?
-#       error "unsupported architecture"
-#   endif
-}
-
-static TARGET_OS get_default_os(void) {
-#   ifdef __linux__
-        return OS_LINUX;
-#   else
-        // TODO: return OS_UNKNOWN?
-#       error "unsupported operating system"
-#   endif
-}
-
-static TARGET_ABI get_default_abi(void) {
-#   ifdef __GLIBC__
-        return ABI_GNU;
-#   else
-        // TODO: return ABI_UNKNOWN?
-#       error "unsupported abi"
-#   endif
-}
-
-static struct {
+typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
     unsigned int usize_size; // in bits
-} arch_table[] = {
+} Arch_row;
+
+static Arch_row arch_table[] = {
     {ARCH_X86_64, "x86_64", 64},
 };
 
@@ -56,13 +32,47 @@ static struct {
     {ABI_GNU, "gnu"},
 };
 
-Strv strv_from_target_arch(TARGET_ARCH arch) {
+static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
+static TARGET_ARCH get_default_arch(void) {
+#   if defined(__x86_64__) || defined(_M_X64)
+        return ARCH_X86_64;
+#   else
+        // TODO: return ARCH_UNKNOWN?
+#       error "unsupported architecture"
+#   endif
+}
+
+static_assert(array_count(os_table) == 1, "exhausive handling of operating systems");
+static TARGET_OS get_default_os(void) {
+#   ifdef __linux__
+        return OS_LINUX;
+#   else
+        // TODO: return OS_UNKNOWN?
+#       error "unsupported operating system"
+#   endif
+}
+
+static_assert(array_count(abi_table) == 1, "exhausive handling of abis");
+static TARGET_ABI get_default_abi(void) {
+#   ifdef __GLIBC__
+        return ABI_GNU;
+#   else
+        // TODO: return ABI_UNKNOWN?
+#       error "unsupported abi"
+#   endif
+}
+
+static Arch_row get_arch_row_from_arch(TARGET_ARCH arch) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
         if (arch_table[idx].arch == arch) {
-            return sv(arch_table[idx].arch_cstr);
+            return arch_table[idx];
         }
     }
     unreachable("");
+}
+
+Strv strv_from_target_arch(TARGET_ARCH arch) {
+    return sv(get_arch_row_from_arch(arch).arch_cstr);
 }
 
 Strv strv_from_target_os(TARGET_OS os) {
@@ -335,7 +345,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -465,7 +475,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -605,7 +615,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 20,
+    PARAMETERS_COUNT == 22,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -674,7 +684,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 20,
+    PARAMETERS_COUNT == 22,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -714,7 +724,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 20,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -769,6 +779,13 @@ void parse_args(int argc, char** argv) {
         }
     }
 
-
+    Arch_row arch_row = get_arch_row_from_arch(params.target_triplet.arch);
+    params.usize_size = arch_row.usize_size;
+    unwrap(
+        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u%u", params.usize_size) <
+        array_count(params.usize_size_ux) &&
+        "the buffer (params.usize_size_ux) is too small"
+    );
+    params.usize_size = arch_row.usize_size;
 }
 

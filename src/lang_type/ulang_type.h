@@ -7,6 +7,7 @@
 #include <name.h>
 #include <lang_type_mode.h>
 #include <msg_todo.h>
+#include <parameters.h>
 
 typedef struct Ulang_type_atom_ {
     Uname str;
@@ -237,7 +238,7 @@ static inline Ulang_type ulang_type_new_int_x(Strv base) {
 }
 
 static inline Ulang_type ulang_type_new_usize(void) {
-    return ulang_type_new_int_x(sv("u64" /* TODO: change based on target */));
+    return ulang_type_new_int_x(sv(params.usize_size_ux));
 }
 
 static inline bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {

@@ -27,7 +27,7 @@ Ir_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
         case IR_VOID:
             return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit)));
         case IR_FUNCTION_NAME:
-            return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 64/* TODO */, 1)));
+            return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), params.usize_size, 1)));
     }
     unreachable("");
 }
