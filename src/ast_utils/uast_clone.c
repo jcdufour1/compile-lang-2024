@@ -117,7 +117,8 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
     return uast_function_call_new(
         fun_call->pos,
         uast_expr_vec_clone(fun_call->args, use_new_scope, new_scope, dest_pos),
-        uast_expr_clone(fun_call->callee, use_new_scope, new_scope, dest_pos)
+        uast_expr_clone(fun_call->callee, use_new_scope, new_scope, dest_pos),
+        fun_call->is_user_generated
     );
 }
 

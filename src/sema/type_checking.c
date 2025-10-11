@@ -2136,10 +2136,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     // TODO: uncomment (only run this assertion when function call is user generated?)
-    //assert(
-        //sym_name->gen_args.info.count == 0 &&
-        //"generics are already instanciated, and they should not have been"
-    //);
+    if (fun_call->is_user_generated) {
+        assert(
+            sym_name->gen_args.info.count == 0 &&
+            "generics are already instanciated, and they should not have been"
+        );
+    }
     sym_name->gen_args = (Ulang_type_vec) {0};
 
     bool status = true;
@@ -3176,7 +3178,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 sv("static_array_slice"),
                 gen_args,
                 SCOPE_TOP_LEVEL
-            )))
+            ))),
+            false
         );
 
         Uast_expr_vec at_args = {0};
@@ -3190,11 +3193,20 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 sv("slice_at_ref"),
                 gen_args,
                 SCOPE_TOP_LEVEL
-            )))
+            ))),
+            false
         );
 
         Tast_expr* new_expr = NULL;
-        if (!try_set_expr_types(&new_expr, uast_operator_wrap(uast_unary_wrap(uast_unary_new(at_call->pos, uast_function_call_wrap(at_call), UNARY_DEREF, (Ulang_type) {0}))))) {
+        if (!try_set_expr_types(
+            &new_expr,
+            uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                at_call->pos,
+                uast_function_call_wrap(at_call),
+                UNARY_DEREF,
+                (Ulang_type) {0}
+            )))
+        )) {
             return false;
         }
         *new_tast = tast_expr_wrap(new_expr);

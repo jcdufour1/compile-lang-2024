@@ -271,6 +271,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
 
     append_member(&call.members, "Uast_expr_vec", "args");
     append_member(&call.members, "Uast_expr*", "callee");
+    append_member(&call.members, "bool", "is_user_generated");
 
     return call;
 }

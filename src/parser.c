@@ -1947,7 +1947,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
         return PARSE_ERROR;
     }
 
-    *child = uast_function_call_new(uast_expr_get_pos(callee), args, callee);
+    *child = uast_function_call_new(uast_expr_get_pos(callee), args, callee, true);
     return PARSE_OK;
 }
 
@@ -2931,7 +2931,8 @@ static PARSE_EXPR_STATUS parse_unary(
                     sv("bitwise_not"),
                     (Ulang_type_vec) {0},
                     SCOPE_TOP_LEVEL
-                )))
+                ))),
+                false
             ));
         } break;
         case TOKEN_LOGICAL_NOT:
