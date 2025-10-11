@@ -11,11 +11,12 @@ static void print_usage(void);
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
-    unsigned int usize_size;
+    unsigned int sizeof_usize;
+    unsigned int sizeof_ptr_non_fn;
 } Arch_row;
 
 static Arch_row arch_table[] = {
-    {ARCH_X86_64, "x86_64", 64},
+    {ARCH_X86_64, "x86_64", 64, 64},
 };
 
 static struct {
@@ -360,7 +361,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -490,7 +491,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -630,7 +631,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 21,
+    PARAMETERS_COUNT == 22,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -699,7 +700,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 21,
+    PARAMETERS_COUNT == 22,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -739,7 +740,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 21,
+        PARAMETERS_COUNT == 22,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -795,12 +796,13 @@ void parse_args(int argc, char** argv) {
     }
 
     Arch_row arch_row = get_arch_row_from_arch(params.target_triplet.arch);
-    params.usize_size = arch_row.usize_size;
+    params.sizeof_usize = arch_row.sizeof_usize;
+    params.sizeof_ptr_non_fn = arch_row.sizeof_ptr_non_fn;
     unwrap(
-        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u%u", params.usize_size) <
+        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u%u", params.sizeof_usize) <
         array_count(params.usize_size_ux) &&
         "the buffer (params.usize_size_ux) is too small"
     );
-    params.usize_size = arch_row.usize_size;
+    params.sizeof_usize = arch_row.sizeof_usize;
 }
 

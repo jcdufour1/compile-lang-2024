@@ -14,9 +14,8 @@ static uint64_t bit_width_to_bytes(uint64_t bit_width) {
 }
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
-    // TODO: platform specific pointer size, etc.
     if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
-        return 8;
+        return params.sizeof_ptr_non_fn;
     }
 
     switch (primitive.type) {
@@ -37,7 +36,7 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
     if (ir_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
-        return 8;
+        return params.sizeof_ptr_non_fn;
     }
 
     switch (primitive.type) {
@@ -247,6 +246,9 @@ uint64_t ir_sizeof_item(const Ir* item) {
     }
 }
 
+// TODO: update or remove this function
+// TODO: if ir_sizeof* functions are kept, make a single set of unit tests that work for both so that
+//   differences between tast_sizeof* and ir_sizeof* can be caught
 uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 

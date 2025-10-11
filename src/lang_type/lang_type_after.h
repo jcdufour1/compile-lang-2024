@@ -126,7 +126,7 @@ static inline Lang_type lang_type_new_ux(int32_t bit_width) {
 
 static inline Lang_type lang_type_new_usize(void) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, params.usize_size, 0)
+        lang_type_unsigned_int_new(POS_BUILTIN, params.sizeof_usize, 0)
     ));
 }
 

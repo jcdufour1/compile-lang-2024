@@ -71,6 +71,12 @@ for generics:
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
+- this operation should not return type f32:
+    8.7 <= 7.7
+- this operation should not be allowed (or should give warning):
+    let lhs f32 = 8.6
+    let rhs f32 = 8.4
+    lhs == rhs
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
