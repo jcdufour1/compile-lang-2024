@@ -87,6 +87,12 @@ __attribute__((format (printf, 5, 6)));
 
 #define array_count(array) (sizeof(array)/sizeof((array)[0]))
 
+#define array_at(array, index) \
+    (unwrap((index) < array_count(array) && "out of bounds"), (array)[index])
+
+#define array_at_ref(array, index) \
+    (unwrap((index) < array_count(array) && "out of bounds"), &(array)[index])
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -11,12 +11,11 @@ static void print_usage(void);
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
-    unsigned int usize_size; // in bits // TODO: change to bytes
-    unsigned int abi_max_align; // in bits // TODO: change to bytes
+    unsigned int usize_size;
 } Arch_row;
 
 static Arch_row arch_table[] = {
-    {ARCH_X86_64, "x86_64", 64, 64},
+    {ARCH_X86_64, "x86_64", 64},
 };
 
 static struct {
@@ -31,6 +30,13 @@ static struct {
     const char* abi_cstr;
 } abi_table[] = {
     {ABI_GNU, "gnu"},
+};
+
+static struct {
+    Target_triplet triplet;
+    unsigned int abi_max_align;
+} triplet_to_abi_max_align[] = {
+    {(Target_triplet) {ARCH_X86_64, OS_LINUX, ABI_GNU}, 16*8},
 };
 
 static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
@@ -65,8 +71,8 @@ static TARGET_ABI get_default_abi(void) {
 
 static Arch_row get_arch_row_from_arch(TARGET_ARCH arch) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
-        if (arch_table[idx].arch == arch) {
-            return arch_table[idx];
+        if (array_at(arch_table, idx).arch == arch) {
+            return array_at(arch_table, idx);
         }
     }
     unreachable("");
@@ -78,8 +84,8 @@ Strv strv_from_target_arch(TARGET_ARCH arch) {
 
 Strv strv_from_target_os(TARGET_OS os) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
-        if (os_table[idx].os == os) {
-            return sv(os_table[idx].os_cstr);
+        if (array_at(os_table, idx).os == os) {
+            return sv(array_at(os_table, idx).os_cstr);
         }
     }
     unreachable("");
@@ -87,8 +93,8 @@ Strv strv_from_target_os(TARGET_OS os) {
 
 Strv strv_from_target_abi(TARGET_ABI abi) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
-        if (abi_table[idx].abi == abi) {
-            return sv(abi_table[idx].abi_cstr);
+        if (array_at(abi_table, idx).abi == abi) {
+            return sv(array_at(abi_table, idx).abi_cstr);
         }
     }
     unreachable("");
@@ -96,8 +102,8 @@ Strv strv_from_target_abi(TARGET_ABI abi) {
 
 static bool try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
-        if (strv_is_equal(sv(arch_table[idx].arch_cstr), strv)) {
-            *arch = arch_table[idx].arch;
+        if (strv_is_equal(sv(array_at(arch_table, idx).arch_cstr), strv)) {
+            *arch = array_at(arch_table, idx).arch;
             return true;
         }
     }
@@ -106,8 +112,8 @@ static bool try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
 
 static bool try_target_os_from_strv(TARGET_OS* os, Strv strv) {
     for (size_t idx = 0; idx < array_count(os_table); idx++) {
-        if (strv_is_equal(sv(os_table[idx].os_cstr), strv)) {
-            *os = os_table[idx].os;
+        if (strv_is_equal(sv(array_at(os_table, idx).os_cstr), strv)) {
+            *os = array_at(os_table, idx).os;
             return true;
         }
     }
@@ -116,8 +122,8 @@ static bool try_target_os_from_strv(TARGET_OS* os, Strv strv) {
 
 static bool try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
     for (size_t idx = 0; idx < array_count(abi_table); idx++) {
-        if (strv_is_equal(sv(abi_table[idx].abi_cstr), strv)) {
-            *abi = abi_table[idx].abi;
+        if (strv_is_equal(sv(array_at(abi_table, idx).abi_cstr), strv)) {
+            *abi = array_at(abi_table, idx).abi;
             return true;
         }
     }
@@ -127,6 +133,20 @@ static bool try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
 bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
     return a.arch == b.arch && a.os == b.os && a.abi == b.abi;
 }
+
+Strv target_triplet_print_internal(Target_triplet triplet) {
+    String buf = {0};
+
+    string_extend_strv(&a_print, &buf, strv_from_target_arch(triplet.arch));
+    string_extend_cstr(&a_print, &buf, "-");
+    string_extend_strv(&a_print, &buf, strv_from_target_os(triplet.os));
+    string_extend_cstr(&a_print, &buf, "-");
+    string_extend_strv(&a_print, &buf, strv_from_target_abi(triplet.abi));
+
+    return string_to_strv(buf);
+}
+
+#define target_triplet_print(triplet) strv_print(target_triplet_print_internal(triplet))
 
 Target_triplet get_default_target_triplet(void) {
     return (Target_triplet) {
@@ -216,7 +236,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 82, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 83, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -293,13 +313,14 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"unknown-on-non-enum-type", DIAG_UNKNOWN_ON_NON_ENUM_TYPE, LOG_ERROR, true},
     {"invalid-label-pos", DIAG_INVALID_LABEL_POS, LOG_ERROR, true},
     {"invalid-countof", DIAG_INVALID_COUNTOF, LOG_ERROR, true},
-    {"diag-redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
-    {"diag-switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
-    {"diag-wrong-gen-type", DIAG_WRONG_GEN_TYPE, LOG_ERROR, true},
-    {"diag-using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
-    {"diag-file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
-    {"diag-gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
-    {"diag-if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
+    {"redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
+    {"switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
+    {"wrong-gen-type", DIAG_WRONG_GEN_TYPE, LOG_ERROR, true},
+    {"using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
+    {"file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
+    {"gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
+    {"if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
+    {"unsupported-target-triplet", DIAG_UNSUPPORTED_TARGET_TRIPLET, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -308,8 +329,8 @@ static Expect_fail_str_to_curr_log_level
 expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
 
 bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
-        if (strv_is_equal(sv(expect_fail_pair[idx].str), strv)) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
+        if (strv_is_equal(sv(array_at(expect_fail_pair, idx).str), strv)) {
             *type = expect_fail_pair[idx].type;
             *idx_result = idx;
             return true;
@@ -319,7 +340,7 @@ bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) 
 }
 
 static size_t expect_fail_type_get_idx(DIAG_TYPE type) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
         if (expect_fail_pair[idx].type == type) {
             return idx;
         }
@@ -332,14 +353,14 @@ Strv expect_fail_type_print_internal(DIAG_TYPE type) {
 }
 
 static void expect_fail_str_to_curr_log_level_init(void) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
         expect_fail_str_to_curr_log_level_pair[idx].str = expect_fail_pair[idx].str;
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = expect_fail_pair[idx].default_level;
     }
 }
 
 LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
-    return expect_fail_str_to_curr_log_level_pair[expect_fail_type_get_idx(type)].curr_level;
+    return array_at(expect_fail_str_to_curr_log_level_pair, expect_fail_type_get_idx(type)).curr_level;
 }
 
 static void parse_file_option(int* argc, char*** argv) {
@@ -524,7 +545,7 @@ static void long_option_error(Strv curr_opt) {
         );
         exit(EXIT_CODE_FAIL);
     }
-    expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
+    array_at_ref(expect_fail_str_to_curr_log_level_pair, idx)->curr_level = LOG_ERROR;
     params.error_opts_changed = true;
 }
 
@@ -663,8 +684,8 @@ Long_option_pair long_options[] = {
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
-    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
-        Long_option_pair curr = long_options[idx];
+    for (size_t idx = 0; idx < array_count(long_options); idx++) {
+        Long_option_pair curr = array_at(long_options, idx);
         if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
             if (curr.arg_expected && curr_opt.count < 1) {
@@ -701,8 +722,8 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
     msg(DIAG_INFO, POS_BUILTIN, "options:\n");
-    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
-        Long_option_pair curr = long_options[idx];
+    for (size_t idx = 0; idx < array_count(long_options); idx++) {
+        Long_option_pair curr = array_at(long_options, idx);
         msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
         msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
         msg(DIAG_INFO, POS_BUILTIN, "\n");
@@ -788,6 +809,25 @@ void parse_args(int argc, char** argv) {
         "the buffer (params.usize_size_ux) is too small"
     );
     params.usize_size = arch_row.usize_size;
-    params.abi_max_align = 16*8; // TODO
+
+    bool did_find_max_align = false;
+    for (size_t array_idx = 0; array_idx < array_count(triplet_to_abi_max_align); array_idx++) {
+        Target_triplet curr = array_at(triplet_to_abi_max_align, array_idx).triplet;
+        if (target_triplet_is_equal(curr, params.target_triplet)) {
+            params.abi_max_align = array_at(triplet_to_abi_max_align, array_idx).abi_max_align;
+            did_find_max_align = true;
+            break;
+        }
+    }
+    if (!did_find_max_align) {
+        msg(
+            DIAG_UNSUPPORTED_TARGET_TRIPLET,
+            POS_BUILTIN,
+            "target triplet `"FMT"` is not explicitly supported\n",
+            target_triplet_print(params.target_triplet)
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+    assert(params.abi_max_align > 0);
 }
 
