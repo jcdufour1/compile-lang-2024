@@ -11,11 +11,12 @@ static void print_usage(void);
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
-    unsigned int usize_size; // in bits
+    unsigned int usize_size; // in bits // TODO: change to bytes
+    unsigned int abi_max_align; // in bits // TODO: change to bytes
 } Arch_row;
 
 static Arch_row arch_table[] = {
-    {ARCH_X86_64, "x86_64", 64},
+    {ARCH_X86_64, "x86_64", 64, 64},
 };
 
 static struct {
@@ -787,5 +788,6 @@ void parse_args(int argc, char** argv) {
         "the buffer (params.usize_size_ux) is too small"
     );
     params.usize_size = arch_row.usize_size;
+    params.abi_max_align = 16*8; // TODO
 }
 

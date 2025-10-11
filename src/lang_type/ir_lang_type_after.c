@@ -62,8 +62,10 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_la
                 string_extend_cstr(&a_main, &string, "float");
             } else if (bit_width == 64) {
                 string_extend_cstr(&a_main, &string, "double");
+            } else if (bit_width == 128) {
+                string_extend_cstr(&a_main, &string, "long double");
             } else {
-                    msg_todo("bit widths other than 32 or 64 (for floating point numbers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
+                msg_todo("bit widths other than 32, 64, or 128 (for floating point numbers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
             }
             return ir_lang_type_atom_new(
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),

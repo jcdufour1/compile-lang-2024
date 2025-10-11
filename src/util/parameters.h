@@ -66,6 +66,7 @@ typedef enum {
 typedef struct {
     Target_triplet target_triplet;
     int16_t usize_size; 
+    int16_t abi_max_align;
     char usize_size_ux[8]; // eg. "u64"
     Strv input_file_path;
     Strv output_file_path;

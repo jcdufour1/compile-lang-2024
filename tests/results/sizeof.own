@@ -1,4 +1,4 @@
-compile::stdout 21
+compile::stdout 23
 sizeof nothing = 0
 sizeof num = 4
 sizeof(num) = 4
@@ -9,6 +9,8 @@ sizeof div3 = 8
 sizeof div4 = 8
 sizeof div5 = 8
 sizeof div6 = 24
+sizeof div7 = 4
+sizeof div8 = 32
 sizeof token1 = 24
 sizeof token2 = 24
 sizeof token3 = 16
