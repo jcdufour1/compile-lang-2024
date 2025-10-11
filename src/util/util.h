@@ -85,6 +85,8 @@ __attribute__((format (printf, 5, 6)));
 //    return sv("false");
 //}
 
+#define array_count(array) (sizeof(array)/sizeof((array)[0]))
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -34,16 +34,82 @@ static TARGET_ABI get_default_abi(void) {
 #   endif
 }
 
-static TARGET_ARCH try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
-    todo();
+static struct {
+    TARGET_ARCH arch;
+    const char* arch_cstr;
+} arch_table[] = {
+    {ARCH_X86_64, "x86_64"},
+};
+
+static struct {
+    TARGET_OS os;
+    const char* os_cstr;
+} os_table[] = {
+    {OS_LINUX, "linux"},
+};
+
+static struct {
+    TARGET_ABI abi;
+    const char* abi_cstr;
+} abi_table[] = {
+    {ABI_GNU, "gnu"},
+};
+
+Strv strv_from_target_arch(TARGET_ARCH arch) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (arch_table[idx].arch == arch) {
+            return sv(arch_table[idx].arch_cstr);
+        }
+    }
+    unreachable("");
 }
 
-static TARGET_OS try_target_os_from_strv(TARGET_OS* os, Strv strv) {
-    todo();
+Strv strv_from_target_os(TARGET_OS os) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (os_table[idx].os == os) {
+            return sv(os_table[idx].os_cstr);
+        }
+    }
+    unreachable("");
 }
 
-static TARGET_ABI try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
-    todo();
+Strv strv_from_target_abi(TARGET_ABI abi) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (abi_table[idx].abi == abi) {
+            return sv(abi_table[idx].abi_cstr);
+        }
+    }
+    unreachable("");
+}
+
+static bool try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (strv_is_equal(sv(arch_table[idx].arch_cstr), strv)) {
+            *arch = arch_table[idx].arch;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_os_from_strv(TARGET_OS* os, Strv strv) {
+    for (size_t idx = 0; idx < array_count(os_table); idx++) {
+        if (strv_is_equal(sv(os_table[idx].os_cstr), strv)) {
+            *os = os_table[idx].os;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
+    for (size_t idx = 0; idx < array_count(abi_table); idx++) {
+        if (strv_is_equal(sv(abi_table[idx].abi_cstr), strv)) {
+            *abi = abi_table[idx].abi;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
