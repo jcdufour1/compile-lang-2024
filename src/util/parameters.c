@@ -37,8 +37,9 @@ static TARGET_ABI get_default_abi(void) {
 static struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
+    unsigned int usize_size; // in bits
 } arch_table[] = {
-    {ARCH_X86_64, "x86_64"},
+    {ARCH_X86_64, "x86_64", 64},
 };
 
 static struct {
@@ -767,5 +768,7 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
         }
     }
+
+
 }
 
