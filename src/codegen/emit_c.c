@@ -739,13 +739,18 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 19,
+            PARAMETERS_COUNT == 20,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
         Strv_vec cmd = {0};
         vec_append(&a_main, &cmd, params.path_c_compiler);
         vec_append(&a_main, &cmd, sv("-std=c99"));
+
+        if (!target_triplet_is_equal(params.target_triplet, get_default_target_triplet())) {
+            msg_todo("non-default target triplet", POS_BUILTIN);
+            return;
+        }
 
         // supress clang warnings
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));

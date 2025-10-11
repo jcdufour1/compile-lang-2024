@@ -6,6 +6,24 @@
 #include <diag_type.h>
 #include <strv_vec.h>
 
+typedef enum {
+    ARCH_X86_64,
+} TARGET_ARCH;
+
+typedef enum {
+    OS_LINUX,
+} TARGET_OS;
+
+typedef enum {
+    ABI_GNU,
+} TARGET_ABI;
+
+typedef struct {
+    TARGET_ARCH arch;
+    TARGET_OS os;
+    TARGET_ABI abi;
+} Target_triplet;
+
 typedef struct {
     Vec_base info;
     DIAG_TYPE* buf;
@@ -44,8 +62,9 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 19
+#define PARAMETERS_COUNT 20
 typedef struct {
+    Target_triplet target_triplet;
     Strv input_file_path;
     Strv output_file_path;
     Strv path_c_compiler;
@@ -70,6 +89,10 @@ typedef struct {
 #define stop_after_print(stop_after) strv_print(stop_after_print_internal(stop_after))
 
 Strv stop_after_print_internal(STOP_AFTER stop_after);
+
+bool target_triplet_is_equal(Target_triplet a, Target_triplet b);
+
+Target_triplet get_default_target_triplet(void);
 
 bool is_compiling(void);
 

@@ -7,6 +7,57 @@ static Strv compiler_exe_name;
 
 static void print_usage(void);
 
+static TARGET_ARCH get_default_arch(void) {
+#   if defined(__x86_64__) || defined(_M_X64)
+        return ARCH_X86_64;
+#   else
+        // TODO: return ARCH_UNKNOWN?
+#       error "unsupported architecture"
+#   endif
+}
+
+static TARGET_OS get_default_os(void) {
+#   ifdef __linux__
+        return OS_LINUX;
+#   else
+        // TODO: return OS_UNKNOWN?
+#       error "unsupported operating system"
+#   endif
+}
+
+static TARGET_ABI get_default_abi(void) {
+#   ifdef __GLIBC__
+        return ABI_GNU;
+#   else
+        // TODO: return ABI_UNKNOWN?
+#       error "unsupported abi"
+#   endif
+}
+
+static TARGET_ARCH try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
+    todo();
+}
+
+static TARGET_OS try_target_os_from_strv(TARGET_OS* os, Strv strv) {
+    todo();
+}
+
+static TARGET_ABI try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
+    todo();
+}
+
+bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
+    return a.arch == b.arch && a.os == b.os && a.abi == b.abi;
+}
+
+Target_triplet get_default_target_triplet(void) {
+    return (Target_triplet) {
+        .arch = get_default_arch(),
+        .os = get_default_os(),
+        .abi = get_default_abi(),
+    };
+}
+
 Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
         case STOP_AFTER_NONE:
@@ -217,7 +268,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -347,7 +398,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -409,6 +460,48 @@ static void long_option_path_c_compiler(Strv curr_opt) {
     params.path_c_compiler = cc;
 }
 
+static void long_option_target_triplet(Strv curr_opt) {
+    Strv cc = curr_opt;
+    if (!strv_try_consume(&cc, '=') || cc.count < 1) {
+        log(LOG_FATAL, "expected =<target-triplet> after `target-triplet`\n");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    Strv temp = {0};
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "architecture was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp)) {
+        log(LOG_FATAL, "unsupported architecture `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!try_target_os_from_strv(&params.target_triplet.os, temp)) {
+        log(LOG_FATAL, "unsupported operating system `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "abi (application binary interface, a.k.a. environment type) was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp)) {
+        log(LOG_FATAL, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (cc.count > 0) {
+        log(LOG_FATAL, "target triplet has too many sub-strings\n");
+        exit(EXIT_CODE_FAIL);
+    }
+}
+
 static void long_option_no_prelude(Strv curr_opt) {
     (void) curr_opt;
     params.do_prelude = false;
@@ -445,7 +538,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 19,
+    PARAMETERS_COUNT == 20,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -462,6 +555,12 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
+    {
+        "target-triplet",
+        "=ARCH-OS-ABI    (eg. \"target-triplet=x86_64-linux-gnu\"",
+        long_option_target_triplet,
+        true
+    },
     {
         "path-c-compiler",
         "specify the c compiler to use to compile program",
@@ -507,10 +606,15 @@ static void parse_long_option(int* argc, char*** argv) {
     exit(EXIT_CODE_FAIL);
 }
 
+static_assert(
+    PARAMETERS_COUNT == 20,
+    "exhausive handling of params (not all parameters are explicitly handled)"
+);
 static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
     params.path_c_compiler = sv("cc"); // TODO: this should depend on the platform that the
+    params.target_triplet = get_default_target_triplet();
 }
 
 static void print_usage(void) {
@@ -543,7 +647,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 20,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
