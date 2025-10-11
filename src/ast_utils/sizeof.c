@@ -90,7 +90,8 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
 uint64_t alignof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
-            return min((uint64_t)params.abi_max_align/8, sizeof_primitive(lang_type_primitive_const_unwrap(lang_type)));
+            // TODO: this may not work correctly with big ints if they use Lang_type_primitive
+            return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
@@ -177,18 +178,13 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
-    uint64_t req_align = params.abi_max_align/8;
     uint64_t end_alignment = 0;
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
-        end_alignment = max(end_alignment, min(req_align, alignof_lang_type(memb_def->lang_type)));
-        // TODO: use get_next_multiple function
-        if ((total%req_align + sizeof_curr_item)%req_align > req_align) {
-            total += req_align - total%req_align;
-        }
+        end_alignment = max(end_alignment, alignof_lang_type(memb_def->lang_type));
         if (is_sum_type) {
             total = max(total, sizeof_curr_item);
         } else {
@@ -196,22 +192,17 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
         }
     }
 
-    assert(end_alignment <= req_align);
     // TODO: use get_next_multiple function or similar function
     total += (end_alignment - total%end_alignment)%end_alignment;
-    log(LOG_DEBUG, FMT": %zu\n", name_print(NAME_LOG, base->name), end_alignment);
     return total;
 }
 
 uint64_t alignof_struct_def_base(const Struct_def_base* base) {
-    uint64_t req_align = params.abi_max_align/8;
-
     uint64_t max_align = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         max_align = max(max_align, alignof_lang_type(vec_at(&base->members, idx)->lang_type));
     }
-
-    return min(max_align, req_align);
+    return max_align;
 }
 
 uint64_t sizeof_struct_expr(const Tast_expr* struct_literal_or_def) {

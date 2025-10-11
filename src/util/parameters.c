@@ -32,13 +32,6 @@ static struct {
     {ABI_GNU, "gnu"},
 };
 
-static struct {
-    Target_triplet triplet;
-    unsigned int abi_max_align;
-} triplet_to_abi_max_align[] = {
-    {(Target_triplet) {ARCH_X86_64, OS_LINUX, ABI_GNU}, 16*8},
-};
-
 static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
 static TARGET_ARCH get_default_arch(void) {
 #   if defined(__x86_64__) || defined(_M_X64)
@@ -367,7 +360,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -497,7 +490,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -637,7 +630,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 22,
+    PARAMETERS_COUNT == 21,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -706,7 +699,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 22,
+    PARAMETERS_COUNT == 21,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -746,7 +739,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 21,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -809,25 +802,5 @@ void parse_args(int argc, char** argv) {
         "the buffer (params.usize_size_ux) is too small"
     );
     params.usize_size = arch_row.usize_size;
-
-    bool did_find_max_align = false;
-    for (size_t array_idx = 0; array_idx < array_count(triplet_to_abi_max_align); array_idx++) {
-        Target_triplet curr = array_at(triplet_to_abi_max_align, array_idx).triplet;
-        if (target_triplet_is_equal(curr, params.target_triplet)) {
-            params.abi_max_align = array_at(triplet_to_abi_max_align, array_idx).abi_max_align;
-            did_find_max_align = true;
-            break;
-        }
-    }
-    if (!did_find_max_align) {
-        msg(
-            DIAG_UNSUPPORTED_TARGET_TRIPLET,
-            POS_BUILTIN,
-            "target triplet `"FMT"` is not explicitly supported\n",
-            target_triplet_print(params.target_triplet)
-        );
-        exit(EXIT_CODE_FAIL);
-    }
-    assert(params.abi_max_align > 0);
 }
 
