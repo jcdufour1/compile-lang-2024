@@ -89,7 +89,7 @@ def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
 # TODO: try to avoid using do_debug for both function name and parameter name
-def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release_text: str) -> TestResult:
+def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
@@ -107,14 +107,23 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
     compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=INFO")
     compile_cmd.append("-o")
-    compile_cmd.append("test")
     compile_cmd.append("--error=no-main-function")
+    if path_c_compiler is not None:
+        compile_cmd.append("--path-c-compiler=" + path_c_compiler)
     compile_cmd.append("--run")
 
     print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
-def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action: Action, count_threads: int, keep_going: bool):
+def do_tests(
+    files_to_test: list[str],
+    do_debug: bool,
+    output_name: str,
+    action: Action,
+    count_threads: int,
+    keep_going: bool,
+    path_c_compiler: Optional[str]
+):
     success = True
 
     debug_env: str
@@ -137,7 +146,7 @@ def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action:
 
     # TODO: run multiple tests at once
     for file in get_files_to_test(files_to_test):
-        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text):
+        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text, path_c_compiler):
             if not keep_going:
                 sys.exit(1)
             success = False
@@ -149,8 +158,16 @@ def normalize(string: str) -> str:
     return string.replace("\r", "")
 
 # return true if test was successful
-def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action, debug_release_text: str) -> bool:
-    result: TestResult = compile_test(do_debug, output_name, file, debug_release_text)
+def test_file(
+    file: FileItem,
+    do_debug: bool,
+    expected_output: str,
+    output_name: str,
+    action: Action,
+    debug_release_text: str,
+    path_c_compiler: Optional[str]
+) -> bool:
+    result: TestResult = compile_test(do_debug, output_name, file, debug_release_text, path_c_compiler)
 
     process_result: str = get_result_from_test_result(result)
     if action == Action.UPDATE:
@@ -209,12 +226,13 @@ def append_all_files(list_or_map: list | dict, callback: Callable):
 def add_to_map(map: dict, path: str):
     map[path] = 0
 
-def parse_args() -> Tuple[list[str], str, Action, bool]:
+def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str]]:
     action: Action = Action.TEST
     test_output = "test.c" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     keep_going: bool = True
     has_found_flag = False
+    path_c_compiler: Optional[str] = None
     for arg in sys.argv[1:]:
         if arg.startswith("--keep-going"):
             keep_going = True
@@ -225,7 +243,9 @@ def parse_args() -> Tuple[list[str], str, Action, bool]:
         elif arg.startswith("--test"):
             action = Action.TEST
         elif arg.startswith("--output-file="):
-            test_output = arg.split("--output-file=")[1]
+            test_output = arg[len("--output-file="):]
+        elif arg.startswith("--path-c-compiler="):
+            path_c_compiler = arg[len("--path-c-compiler="):]
         elif arg.startswith("--exclude="):
             to_exclude_raw = arg[len("--exclude="):]
             for idx, path in enumerate(to_exclude_raw.split(",")):
@@ -250,14 +270,14 @@ def parse_args() -> Tuple[list[str], str, Action, bool]:
     to_include_list: list[str] = []
     for path in to_include:
         to_include_list.append(path)
-    return to_include_list, test_output, action, keep_going
+    return to_include_list, test_output, action, keep_going, path_c_compiler
 
 def main() -> None:
     files_to_test: list[str]
     test_output: str
     action: Action
     keep_going: bool
-    files_to_test, test_output, action, keep_going = parse_args()
+    files_to_test, test_output, action, keep_going, path_c_compiler = parse_args()
 
     count_threads: int
     try:
@@ -267,8 +287,8 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_tests(files_to_test, True, test_output, action, count_threads, keep_going)
-    do_tests(files_to_test, False, test_output, action, count_threads, keep_going)
+    do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler)
+    do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler)
     print_success("all tests passed")
 
 if __name__ == '__main__':
