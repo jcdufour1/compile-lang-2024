@@ -217,7 +217,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -282,7 +282,7 @@ typedef struct {
     const char* text;
     const char* description;
     Long_option_action action;
-    bool arg_expected;
+    bool arg_expected; // TODO: instead of bool, use enum to specify whether `=` is used, etc.
 } Long_option_pair;
 
 static void long_option_help(Strv curr_opt) {
@@ -347,7 +347,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -382,7 +382,7 @@ static void long_option_upper_o2(Strv curr_opt) {
 static void long_option_error(Strv curr_opt) {
     Strv error = curr_opt;
     if (!strv_try_consume(&error, '=') || error.count < 1) {
-        log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
+        log(LOG_FATAL, "expected =<error1[,error2,...]> after `error`\n");
         exit(EXIT_CODE_FAIL);
     }
 
@@ -397,6 +397,16 @@ static void long_option_error(Strv curr_opt) {
     }
     expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
     params.error_opts_changed = true;
+}
+
+static void long_option_path_c_compiler(Strv curr_opt) {
+    Strv cc = curr_opt;
+    if (!strv_try_consume(&cc, '=') || cc.count < 1) {
+        log(LOG_FATAL, "expected =<c_compiler_path> after `path_c_compiler`\n");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    params.path_c_compiler = cc;
 }
 
 static void long_option_no_prelude(Strv curr_opt) {
@@ -433,8 +443,9 @@ static void long_option_log_level(Strv curr_opt) {
     }
 }
 
+// TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 18,
+    PARAMETERS_COUNT == 19,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -451,6 +462,12 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
+    {
+        "path-c-compiler",
+        "specify the c compiler to use to compile program",
+        long_option_path_c_compiler,
+        true
+    },
     {"no-prelude", "TODO", long_option_no_prelude, false},
     {
         "set-log-level",
@@ -493,6 +510,7 @@ static void parse_long_option(int* argc, char*** argv) {
 static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
+    params.path_c_compiler = sv("cc"); // TODO: this should depend on the platform that the
 }
 
 static void print_usage(void) {
@@ -525,7 +543,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 18,
+        PARAMETERS_COUNT == 19,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
