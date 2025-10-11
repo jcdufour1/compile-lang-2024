@@ -12,7 +12,7 @@ void msg_internal(
     Pos pos, const char* format, ...
 );
 
-// TODO: msg_todo should accept only Strv for simplicity
+// TODO: msg_todo should accept only Strv for simplicity?
 #define msg_todo(feature, pos) \
     msg_todo_internal(__FILE__, __LINE__, sv(feature), pos);
 

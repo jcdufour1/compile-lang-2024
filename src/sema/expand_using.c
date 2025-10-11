@@ -171,6 +171,8 @@ void expand_using_def(Uast_def* def) {
             return;
         case UAST_FUNCTION_DECL:
             return;
+        case UAST_BUILTIN_DEF:
+            return;
     }
     unreachable("");
 }

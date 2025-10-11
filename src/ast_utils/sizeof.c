@@ -72,6 +72,11 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def(def);
         }
+        case LANG_TYPE_ARRAY: {
+            Tast_def* def = NULL;
+            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
+        }
         case LANG_TYPE_VOID:
             return 0;
         case LANG_TYPE_TUPLE:

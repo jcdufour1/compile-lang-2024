@@ -19,7 +19,7 @@ typedef enum {
 typedef struct {
     Strv mod_path;
     Strv base;
-    Ulang_type_vec gen_args;
+    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
 } Name;
 
@@ -27,7 +27,7 @@ typedef struct {
 typedef struct {
     Name mod_alias;
     Strv base;
-    Ulang_type_vec gen_args;
+    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
 } Uname;
 

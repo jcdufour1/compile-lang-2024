@@ -1,0 +1,17 @@
+
+type io import = std.io
+
+
+fn main() i32 {
+    let nums i32[3] = [8, 76]
+
+    for idx u64 in 0..nums.count {
+        io.print_int(nums[idx], "\n", i32)
+    }
+
+    let nums2 i32[3] = [87, 23, 5, 1]
+
+    let count_things i32 = nums.count_things
+
+    return 0
+}

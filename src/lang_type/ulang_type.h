@@ -6,6 +6,7 @@
 #include <vector.h>
 #include <name.h>
 #include <lang_type_mode.h>
+#include <msg_todo.h>
 
 typedef struct Ulang_type_atom_ {
     Uname str;
@@ -44,6 +45,9 @@ typedef struct Ulang_type_fn_ Ulang_type_fn;
 struct Ulang_type_regular_;
 typedef struct Ulang_type_regular_ Ulang_type_regular;
 
+struct Ulang_type_array_;
+typedef struct Ulang_type_array_ Ulang_type_array;
+
 struct Ulang_type_;
 typedef struct Ulang_type_ Ulang_type;
 
@@ -64,6 +68,12 @@ typedef struct Ulang_type_regular_ {
     Pos pos;
 }Ulang_type_regular;
 
+typedef struct Ulang_type_array_ {
+    Ulang_type* item_type;
+    size_t count; 
+    Pos pos;
+}Ulang_type_array;
+
 typedef struct Ulang_type_gen_param_ {
     Pos pos;
 }Ulang_type_gen_param;
@@ -72,12 +82,14 @@ typedef union Ulang_type_as_ {
     Ulang_type_tuple ulang_type_tuple;
     Ulang_type_fn ulang_type_fn;
     Ulang_type_regular ulang_type_regular;
+    Ulang_type_array ulang_type_array;
     Ulang_type_gen_param ulang_type_gen_param;
 }Ulang_type_as;
 typedef enum ULANG_TYPE_TYPE_ {
     ULANG_TYPE_TUPLE,
     ULANG_TYPE_FN,
     ULANG_TYPE_REGULAR,
+    ULANG_TYPE_ARRAY,
     ULANG_TYPE_GEN_PARAM,
 }ULANG_TYPE_TYPE;
 typedef struct Ulang_type_ {
@@ -105,6 +117,14 @@ static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_ty
     unwrap(ulang_type->type == ULANG_TYPE_REGULAR);
     return &ulang_type->as.ulang_type_regular;
 }
+static inline Ulang_type_array ulang_type_array_const_unwrap(const Ulang_type ulang_type) {
+    unwrap(ulang_type.type == ULANG_TYPE_ARRAY);
+    return ulang_type.as.ulang_type_array;
+}
+static inline Ulang_type_array* ulang_type_array_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_ARRAY);
+    return &ulang_type->as.ulang_type_array;
+}
 static inline Ulang_type ulang_type_gen_param_const_wrap(Ulang_type_gen_param ulang_type) {
     Ulang_type new_ulang_type = {0};
     new_ulang_type.type = ULANG_TYPE_GEN_PARAM;
@@ -129,6 +149,12 @@ static inline Ulang_type ulang_type_regular_const_wrap(Ulang_type_regular ulang_
     new_ulang_type.as.ulang_type_regular = ulang_type;
     return new_ulang_type;
 }
+static inline Ulang_type ulang_type_array_const_wrap(Ulang_type_array ulang_type) {
+    Ulang_type new_ulang_type = {0};
+    new_ulang_type.type = ULANG_TYPE_ARRAY;
+    new_ulang_type.as.ulang_type_array = ulang_type;
+    return new_ulang_type;
+}
 #define ulang_type_gen_param_print(ulang_type) strv_print(ulang_type_gen_param_print_internal(ulang_type, 0))
 Strv ulang_type_gen_param_print_internal(const Ulang_type_gen_param* ulang_type, int recursion_depth);
 #define ulang_type_tuple_print(ulang_type) strv_print(ulang_type_tuple_print_internal(ulang_type, 0))
@@ -137,6 +163,8 @@ Strv ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, int rec
 Strv ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, int recursion_depth);
 #define ulang_type_regular_print(ulang_type) strv_print(ulang_type_regular_print_internal(ulang_type, 0))
 Strv ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, int recursion_depth);
+#define ulang_type_array_print(ulang_type) strv_print(ulang_type_array_print_internal(ulang_type, 0))
+Strv ulang_type_array_print_internal(const Ulang_type_array* ulang_type, int recursion_depth);
 static inline Ulang_type_gen_param ulang_type_gen_param_new(Pos pos){
     return (Ulang_type_gen_param) { .pos = pos};
 }
@@ -148,6 +176,9 @@ static inline Ulang_type_fn ulang_type_fn_new(Ulang_type_tuple params, Ulang_typ
 }
 static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Pos pos){
     return (Ulang_type_regular) { .atom = atom, .pos = pos};
+}
+static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, size_t count, Pos pos){
+    return (Ulang_type_array) { .item_type = item_type, .count = count, .pos = pos};
 }
 
 static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
@@ -161,6 +192,10 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
             todo();
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
+        case ULANG_TYPE_ARRAY:
+            // TODO: add pointer_depth to Ulang_type_array?
+            msg_todo("", ulang_type_array_const_unwrap(lang_type).pos);
+            todo();
     }
     unreachable("");
 }
@@ -179,6 +214,8 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
         case ULANG_TYPE_REGULAR:
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
             return;
+        case ULANG_TYPE_ARRAY:
+            todo();
     }
     unreachable("");
 }
@@ -219,6 +256,9 @@ static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
     switch (a.type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_is_equal(ulang_type_regular_const_unwrap(a), ulang_type_regular_const_unwrap(b));
+        case ULANG_TYPE_ARRAY:
+            // TODO
+            todo();
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:

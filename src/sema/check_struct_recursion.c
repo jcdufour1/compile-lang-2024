@@ -91,6 +91,8 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
             todo();
         case UAST_LABEL:
             todo();
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }

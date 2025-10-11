@@ -52,6 +52,14 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
+        case ULANG_TYPE_ARRAY: {
+            Ulang_type_array array = ulang_type_array_const_unwrap(lang_type);
+            extend_ulang_type_to_string(string, mode, *array.item_type);
+            string_extend_cstr(&a_print, string, "[");
+            string_extend_size_t(&a_print, string, array.count);
+            string_extend_cstr(&a_print, string, "]");
+            return;
+        }
         case ULANG_TYPE_REGULAR:
             extend_ulang_type_atom_to_string(string, mode, ulang_type_regular_const_unwrap(lang_type).atom);
             return;

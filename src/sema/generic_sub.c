@@ -97,6 +97,8 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
+        case ULANG_TYPE_ARRAY:
+            todo();
         case ULANG_TYPE_FN: {
             Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
             generic_sub_lang_type_fn(
@@ -174,6 +176,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_LABEL:
             generic_sub_label(uast_label_unwrap(def), gen_param, gen_arg);
             return;
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }

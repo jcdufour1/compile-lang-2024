@@ -120,6 +120,8 @@ next:
             return false; // TODO
         case LANG_TYPE_VOID:
             return true;
+        case LANG_TYPE_ARRAY:
+            return false; // TODO
     }
     unreachable("");
 }

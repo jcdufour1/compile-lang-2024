@@ -117,7 +117,8 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
     return uast_function_call_new(
         fun_call->pos,
         uast_expr_vec_clone(fun_call->args, use_new_scope, new_scope, dest_pos),
-        uast_expr_clone(fun_call->callee, use_new_scope, new_scope, dest_pos)
+        uast_expr_clone(fun_call->callee, use_new_scope, new_scope, dest_pos),
+        fun_call->is_user_generated
     );
 }
 
@@ -183,6 +184,10 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : label->name.scope_id;
     return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope));
+}
+
+Uast_builtin_def* uast_builtin_def_clone(const Uast_builtin_def* def, bool use_new_scope, Scope_id new_scope) {
+    return uast_builtin_def_new(def->pos, name_clone(def->name, use_new_scope, new_scope));
 }
 
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, bool use_new_scope, Scope_id new_scope) {
@@ -270,6 +275,8 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
             return uast_void_def_wrap(uast_void_def_clone(uast_void_def_const_unwrap(def)));
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(def), use_new_scope, new_scope));
+        case UAST_BUILTIN_DEF:
+            return uast_builtin_def_wrap(uast_builtin_def_clone(uast_builtin_def_const_unwrap(def), use_new_scope, new_scope));
     }
     unreachable("");
 }

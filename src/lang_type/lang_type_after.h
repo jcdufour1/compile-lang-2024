@@ -37,6 +37,13 @@ static inline int32_t lang_type_get_bit_width(Lang_type lang_type) {
 }
 
 static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t pointer_depth) {
+    if (lang_type->type == LANG_TYPE_ARRAY) {
+        Lang_type_array array = lang_type_array_const_unwrap(*lang_type);
+        array.pointer_depth = pointer_depth;
+        *lang_type = lang_type_array_const_wrap(array);
+        return;
+    }
+
     Lang_type_atom atom = lang_type_get_atom(LANG_TYPE_MODE_LOG, *lang_type);
     atom.pointer_depth = pointer_depth;
     lang_type_set_atom(lang_type, atom);
@@ -140,6 +147,8 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
             return false;
         case LANG_TYPE_RAW_UNION:
             return true;
+        case LANG_TYPE_ARRAY:
+            return true;
         case LANG_TYPE_VOID:
             return false;
         case LANG_TYPE_ENUM:
@@ -157,6 +166,10 @@ static inline Name lang_type_get_str(LANG_TYPE_MODE mode, Lang_type lang_type) {
 }
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type) {
+    if (lang_type.type == LANG_TYPE_ARRAY) {
+        return lang_type_array_const_unwrap(lang_type).pointer_depth;
+    }
+
     return lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).pointer_depth;
 }
 

@@ -478,6 +478,16 @@ Strv uast_label_print_internal(const Uast_label* label, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_builtin_def_print_internal(const Uast_builtin_def* def, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "builtin_def", indent);
+    extend_name(NAME_LOG, &buf, def->name);
+    string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv uast_import_path_print_internal(const Uast_import_path* import, int indent) {
     String buf = {0};
 
@@ -713,6 +723,8 @@ Strv uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
         case UAST_LABEL:
             return uast_label_print_internal(uast_label_const_unwrap(def), indent);
+        case UAST_BUILTIN_DEF:
+            return uast_builtin_def_print_internal(uast_builtin_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

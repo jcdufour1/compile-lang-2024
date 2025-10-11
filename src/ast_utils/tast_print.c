@@ -86,7 +86,9 @@ Strv tast_member_access_print_internal(const Tast_member_access* access, int ind
 Strv tast_index_print_internal(const Tast_index* index, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "index_typed\n", indent);
+    string_extend_cstr_indent(&a_print, &buf, "index_typed", indent);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, index->lang_type);
+    string_extend_cstr(&a_print, &buf, "\n");
     string_extend_strv(&a_print, &buf, tast_expr_print_internal(index->index, indent + INDENT_WIDTH));
     string_extend_strv(&a_print, &buf, tast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 

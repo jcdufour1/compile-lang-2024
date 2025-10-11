@@ -149,14 +149,15 @@ static void msg_invalid_count_function_args_internal(
     const char* file,
     int line,
     const Uast_function_call* fun_call,
-    const Uast_function_decl* fun_decl,
+    Name fun_decl_name,
+    Pos fun_decl_pos,
     size_t min_args,
     size_t max_args
 ) {
     String message = {0};
     string_extend_size_t(&a_print, &message, fun_call->args.info.count);
     string_extend_cstr(&a_print, &message, " arguments are passed to function `");
-    extend_name(NAME_MSG, &message, fun_decl->name);
+    extend_name(NAME_MSG, &message, fun_decl_name);
     string_extend_cstr(&a_print, &message, "`, but ");
     string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
@@ -169,16 +170,16 @@ static void msg_invalid_count_function_args_internal(
     );
 
     msg_internal(
-        file, line, DIAG_NOTE, uast_function_decl_get_pos(fun_decl),
-        "function `"FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
+        file, line, DIAG_NOTE, fun_decl_pos,
+        "function `"FMT"` defined here\n", name_print(NAME_MSG, fun_decl_name)
     );
 }
 
 #define msg_invalid_function_arg(argument, corres_param, is_fun_callback) \
     msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param, is_fun_callback)
 
-#define msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args) \
-    msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl, min_args, max_args)
+#define msg_invalid_count_function_args(fun_call, fun_decl_name, fun_decl_pos, min_args, max_args) \
+    msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl_name, fun_decl_pos, min_args, max_args)
 
 static void msg_invalid_count_struct_literal_args_internal(
     const char* file,
@@ -186,11 +187,18 @@ static void msg_invalid_count_struct_literal_args_internal(
     Uast_expr_vec membs,
     size_t min_args,
     size_t max_args,
-    Pos pos
+    Pos pos,
+    bool is_array
 ) {
     String message = {0};
     string_extend_size_t(&a_print, &message, membs.info.count);
-    string_extend_cstr(&a_print, &message, " arguments are passed to struct literal, but ");
+    string_extend_cstr(&a_print, &message, " arguments are passed to ");
+    if (is_array) {
+        string_extend_cstr(&a_print, &message, "array");
+    } else {
+        string_extend_cstr(&a_print, &message, "struct");
+    }
+    string_extend_cstr(&a_print, &message, " literal, but ");
     string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
         string_extend_cstr(&a_print, &message, " or more");
@@ -202,8 +210,8 @@ static void msg_invalid_count_struct_literal_args_internal(
     );
 }
 
-#define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos) \
-    msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos)
+#define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos, is_array) \
+    msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos, is_array)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (is_auto_inserted) {
@@ -380,6 +388,10 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
+        }
+        case UAST_BUILTIN_DEF: {
+            msg_todo("", uast_def_get_pos(sym_def));
+            return false;
         }
         case UAST_LABEL:
             // TODO
@@ -1032,7 +1044,7 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
 
 static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs, Pos pos) {
     if (membs.info.count != memb_defs.info.count) {
-        msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos);
+        msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos, false);
         return false;
     }
 
@@ -1149,13 +1161,19 @@ bool try_set_array_literal_types(
         if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_)) {
             return false;
         }
+    } else if (dest_lang_type.type == LANG_TYPE_ARRAY) {
+        gen_arg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
+        Lang_type_array array = lang_type_array_const_unwrap(dest_lang_type);
+        size_t count = array.count;
+        if (count != lit->members.info.count) {
+            msg_invalid_count_struct_literal_args(lit->members, count, count, lit->pos, true);
+            msg(DIAG_NOTE, array.pos, "statically sized array defined as containing %zu elements\n", count);
+            return false;
+        }
     } else {
         msg_todo("array literal assigned to non-slice type", assign_pos);
         return false;
     }
-
-    Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     
     Tast_expr_vec new_membs = {0};
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
@@ -1171,7 +1189,7 @@ bool try_set_array_literal_types(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
                 return false;
@@ -1207,7 +1225,7 @@ bool try_set_array_literal_types(
     );
     Ulang_type dummy = {0};
     if (!lang_type_is_slice(&dummy, dest_lang_type)) {
-        todo();
+        //todo();
     }
 
     Lang_type unary_lang_type = gen_arg;
@@ -1219,12 +1237,18 @@ bool try_set_array_literal_types(
         unary_lang_type
     )));
 
+    if (dest_lang_type.type == LANG_TYPE_ARRAY) {
+        new_inner_lit->lang_type = dest_lang_type;
+        *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_inner_lit));
+        return true;
+    }
+
     Tast_expr_vec new_lit_membs = {0};
     vec_append(&a_main, &new_lit_membs, ptr);
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         new_membs.info.count,
-        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8/*TODO*/, 0)))
+        lang_type_new_usize()
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
@@ -1413,6 +1437,8 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
             return STMT_NO_STMT;
         case UAST_LANG_DEF:
             return STMT_NO_STMT;
+        case UAST_BUILTIN_DEF:
+            return STMT_NO_STMT;
     }
     unreachable("");
 }
@@ -1518,6 +1544,118 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
     return fun_decl;
 }
 
+
+bool try_set_function_call_builtin_types(
+    Tast_expr** new_call,
+    Name fun_name,
+    Uast_function_call* fun_call,
+    Pos fun_decl_pos
+) {
+    Strv fun_base = fun_name.base;
+    if (strv_is_equal(fun_base, sv("static_array_access"))) {
+        if (fun_call->args.info.count != 2) {
+            msg_invalid_count_function_args(fun_call, fun_name, fun_decl_pos, 2, 2);
+            return false;
+        }
+
+        Tast_expr* new_callee = NULL;
+        Tast_expr* new_inner_index = NULL;
+        if (!try_set_expr_types(&new_callee, vec_at(&fun_call->args, 0))) {
+            return false;
+        }
+        if (!try_set_expr_types(&new_inner_index, vec_at(&fun_call->args, 1))) {
+            return false;
+        }
+
+        Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
+
+        if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
+            msg_todo("", fun_call->pos);
+            return false;
+        }
+        lang_type_set_pointer_depth(&callee_lang_type, 1);
+        new_callee = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            tast_expr_get_pos(new_callee),
+            new_callee,
+            UNARY_REFER,
+            callee_lang_type
+        )));
+
+        unwrap(lang_type_get_pointer_depth(callee_lang_type) > 0);
+        lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
+
+        Lang_type new_lang_type = {0};
+        if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+            new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
+        } else {
+            todo();
+            new_lang_type = callee_lang_type;
+        }
+
+        Tast_index* new_index = tast_index_new(fun_call->pos, new_lang_type, new_inner_index, new_callee);
+
+        Lang_type new_lang_type_ptr = new_lang_type;
+        lang_type_set_pointer_depth(&new_lang_type_ptr, lang_type_get_pointer_depth(new_lang_type_ptr) + 1);
+        *new_call = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            fun_call->pos, 
+            tast_index_wrap(new_index),
+            UNARY_REFER,
+            new_lang_type_ptr
+        )));
+        return true;
+    } else if (strv_is_equal(fun_base, sv("static_array_slice"))) {
+        if (fun_call->args.info.count != 1) {
+            msg_invalid_count_function_args(fun_call, fun_name, fun_decl_pos, 1, 1);
+            return false;
+        }
+
+        Tast_expr* new_arr = NULL;
+        if (!try_set_expr_types(&new_arr, vec_at(&fun_call->args, 0))) {
+            return false;
+        }
+        Pos new_arr_pos = tast_expr_get_pos(new_arr);
+        if (tast_expr_get_lang_type(new_arr).type != LANG_TYPE_ARRAY) {
+            msg_todo("error message", new_arr_pos);
+            return false;
+        }
+        Lang_type_array array = lang_type_array_const_unwrap(tast_expr_get_lang_type(new_arr));
+        Lang_type_array array_ptr = array;
+        array_ptr.pointer_depth++;
+        Ulang_type item_type = lang_type_to_ulang_type(*array.item_type);
+        Ulang_type item_type_ptr = item_type;
+        ulang_type_set_pointer_depth(&item_type_ptr, ulang_type_get_pointer_depth(item_type_ptr) + 1);
+
+        Tast_expr_vec membs = {0};
+        vec_append(&a_main, &membs, tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            new_arr_pos,
+            tast_symbol_wrap(tast_symbol_new(new_arr_pos, (Sym_typed_base) {
+                .lang_type = lang_type_array_const_wrap(array),
+                .name = tast_expr_get_name(new_arr)
+            })),
+            UNARY_REFER,
+            lang_type_array_const_wrap(array_ptr)
+        ))));
+        vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(new_arr_pos, array.count, lang_type_new_usize()))));
+
+        Ulang_type_vec new_gen_args = {0};
+        vec_append(&a_main, &new_gen_args, item_type);
+        
+        *new_call = tast_struct_literal_wrap(tast_struct_literal_new(
+            fun_call->pos,
+            membs,
+            util_literal_name_new(),
+            lang_type_struct_const_wrap(lang_type_struct_new(array.pos, lang_type_atom_new(
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL),
+                0
+            )))
+        ));
+        return true;
+    } else {
+        msg_todo("calling this builtin as a function", fun_call->pos);
+        return false;
+    }
+    unreachable("");
+}
 
 bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
     Tast_expr* new_callee = NULL;
@@ -1714,7 +1852,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
-            msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
+            msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
         }
@@ -1838,7 +1976,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args(fun_call, fun_decl, params->params.info.count, params->params.info.count);
+        msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, params->params.info.count, params->params.info.count);
         status = false;
         goto error;
     }
@@ -1901,7 +2039,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 if (is_variadic) {
                     max_args = SIZE_MAX; 
                 }
-                msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args);
+                msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, min_args, max_args);
             } else {
                 msg(
                     DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
@@ -1996,10 +2134,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
-    assert(
-        sym_name->gen_args.info.count == 0 &&
-        "generics are already instanciated, and they should not have been"
-    );
+    if (fun_call->is_user_generated) {
+        assert(
+            sym_name->gen_args.info.count == 0 &&
+            "generics are already instanciated, and they should not have been"
+        );
+    }
+    sym_name->gen_args = (Ulang_type_vec) {0};
 
     bool status = true;
 
@@ -2043,19 +2184,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
         case UAST_FUNCTION_DECL:
             return try_set_function_call_types_old(new_call, fun_call);
+        case UAST_BUILTIN_DEF:
+            return try_set_function_call_builtin_types(new_call, *sym_name, fun_call, uast_def_get_pos(fun_decl_temp_));
         default:
             unreachable("");
     }
     Uast_function_decl* fun_decl_temp = uast_function_def_unwrap(fun_decl_temp_)->decl;
-
-    //vec_append(
-    //    &a_main,
-    //    &uast_symbol_unwrap(fun_call->callee)->name.gen_args,
-    //    ulang_type_regular_const_wrap(ulang_type_regular_new(
-    //        ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-    //        (Pos) {0}
-    //    ))
-    //);
 
     Uast_function_params* params = fun_decl_temp->params;
     Name fun_name = fun_decl_temp->name;
@@ -2094,7 +2228,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_gens_set, false);
     }
 
-
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx;
@@ -2113,7 +2246,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
-            msg_invalid_count_function_args(fun_call, fun_decl_temp, param_idx + 1, param_idx + 1);
+            msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
         }
@@ -2222,7 +2355,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args(fun_call, fun_decl_temp, params->params.info.count, params->params.info.count);
+        msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, params->params.info.count, params->params.info.count);
         status = false;
         goto error;
     }
@@ -2250,7 +2383,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 if (is_variadic) {
                     max_args = SIZE_MAX; 
                 }
-                msg_invalid_count_function_args(fun_call, fun_decl_temp, min_args, max_args);
+                msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, min_args, max_args);
             } else {
                 if (vec_at(&params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
                     bool infer_success = false;
@@ -2496,7 +2629,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else {
             todo();
             // TODO: print max count correctly for variadic functions
-            msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
+            msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, param_idx + 1, param_idx + 1);
             status = false;
             goto error;
         }
@@ -2734,7 +2867,7 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
 static void msg_invalid_member_internal(
     const char* file,
     int line,
-    Name base_name,
+    Name base_name, // TODO: give this parameter a more descriptive name
     const Uast_member_access* access
 ) {
     msg_internal(
@@ -2898,6 +3031,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_VOID_DEF:
             unreachable("");
+        case UAST_BUILTIN_DEF:
+            unreachable("");
         case UAST_LANG_DEF:
             unreachable("lang def should have been eliminated by now");
     }
@@ -2914,6 +3049,27 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     switch (new_callee->type) {
         case TAST_SYMBOL: {
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
+            if (sym->base.lang_type.type == LANG_TYPE_ARRAY) {
+                if (access->member_name->name.gen_args.info.count > 0) {
+                    // TODO
+                    msg_todo("", access->pos);
+                    return false;
+                }
+
+                if (!strv_is_equal(access->member_name->name.base, sv("count"))) {
+                    msg_invalid_member(sym->base.name, access);
+                    return false;
+                }
+
+                Lang_type_array array = lang_type_array_const_unwrap(sym->base.lang_type);
+                *new_tast = tast_expr_wrap(tast_literal_wrap(tast_int_wrap(tast_int_new(
+                    access->pos,
+                    array.count,
+                    lang_type_new_usize()
+                ))));
+                return true;
+            }
+
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
                 log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
@@ -2992,8 +3148,59 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         unreachable("");
     }
 
-    Lang_type new_lang_type = tast_expr_get_lang_type(new_callee);
-    if (lang_type_get_pointer_depth(new_lang_type) < 1) {
+    Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
+
+    if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+        Tast_expr* arr = new_callee;
+        Lang_type_array array = lang_type_array_const_unwrap(callee_lang_type);
+        Uast_expr_vec arr_slice_args = {0};
+        vec_append(&a_main, &arr_slice_args, uast_symbol_wrap(uast_symbol_new(tast_expr_get_pos(arr), tast_expr_get_name(arr))));
+        Ulang_type_vec gen_args = {0};
+        vec_append(&a_main, &gen_args, lang_type_to_ulang_type(*array.item_type));
+        Uast_function_call* arr_slice_call = uast_function_call_new(
+            index->pos,
+            arr_slice_args,
+            uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
+                MOD_PATH_RUNTIME,
+                sv("static_array_slice"),
+                gen_args,
+                SCOPE_TOP_LEVEL
+            ))),
+            false
+        );
+
+        Uast_expr_vec at_args = {0};
+        vec_append(&a_main, &at_args, uast_function_call_wrap(arr_slice_call));
+        vec_append(&a_main, &at_args, index->index);
+        Uast_function_call* at_call = uast_function_call_new(
+            index->pos,
+            at_args,
+            uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
+                MOD_PATH_RUNTIME,
+                sv("slice_at_ref"),
+                gen_args,
+                SCOPE_TOP_LEVEL
+            ))),
+            false
+        );
+
+        Tast_expr* new_expr = NULL;
+        if (!try_set_expr_types(
+            &new_expr,
+            uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                at_call->pos,
+                uast_function_call_wrap(at_call),
+                UNARY_DEREF,
+                (Ulang_type) {0}
+            )))
+        )) {
+            return false;
+        }
+        *new_tast = tast_expr_wrap(new_expr);
+        return true;
+    }
+
+    if (lang_type_get_pointer_depth(callee_lang_type) < 1) {
         msg_todo(
             "actual error message for this situation "
             "(note: it is possible that `[` and `]` were used on a type that does not support it)",
@@ -3001,14 +3208,16 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         );
         return false;
     }
-    lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
+    lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
 
-    Tast_index* new_index = tast_index_new(
-        index->pos,
-        new_lang_type,
-        new_inner_index,
-        new_callee
-    );
+    Lang_type new_lang_type = {0};
+    if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+        new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
+    } else {
+        new_lang_type = callee_lang_type;
+    }
+
+    Tast_index* new_index = tast_index_new(index->pos, new_lang_type, new_inner_index, new_callee);
 
     *new_tast = tast_expr_wrap(tast_index_wrap(new_index));
     return true;

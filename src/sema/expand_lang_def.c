@@ -53,6 +53,18 @@ bool expand_def_ulang_type_regular(
     unreachable("");
 }
 
+static bool expand_def_ulang_type_array(
+    Ulang_type_array* new_lang_type,
+    Ulang_type_array lang_type,
+    Pos dest_pos
+) {
+    if (!expand_def_ulang_type(lang_type.item_type, dest_pos)) {
+        return false;
+    }
+    *new_lang_type = lang_type;
+    return true;
+}
+
 static bool expand_def_ulang_type_fn(
     Ulang_type_fn* new_lang_type,
     Ulang_type_fn lang_type,
@@ -99,6 +111,14 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
                 return false;
             }
             *lang_type = ulang_type_regular_const_wrap(new_lang_type);
+            return true;
+        }
+        case ULANG_TYPE_ARRAY: {
+            Ulang_type_array new_lang_type = {0};
+            if (!expand_def_ulang_type_array(&new_lang_type, ulang_type_array_const_unwrap(*lang_type), dest_pos)) {
+                return false;
+            }
+            *lang_type = ulang_type_array_const_wrap(new_lang_type);
             return true;
         }
         case ULANG_TYPE_FN: {
@@ -178,6 +198,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
         case UAST_LABEL:
             todo();
+        case UAST_BUILTIN_DEF:
+            return EXPAND_NAME_NORMAL;
     }
 
     // TODO: this clone is expensive I think
@@ -734,6 +756,8 @@ bool expand_def_def(Uast_def* def) {
         case UAST_VOID_DEF:
             return true;
         case UAST_LABEL:
+            return true;
+        case UAST_BUILTIN_DEF:
             return true;
     }
     unreachable("");

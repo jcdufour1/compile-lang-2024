@@ -271,6 +271,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
 
     append_member(&call.members, "Uast_expr_vec", "args");
     append_member(&call.members, "Uast_expr*", "callee");
+    append_member(&call.members, "bool", "is_user_generated");
 
     return call;
 }
@@ -404,6 +405,14 @@ static Uast_type uast_gen_function_decl(const char* prefix) {
     return def;
 }
 
+static Uast_type uast_gen_builtin_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "builtin_def", false)};
+
+    append_member(&def.members, "Name", "name");
+
+    return def;
+}
+
 static Uast_type uast_gen_function_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "function_def", false)};
 
@@ -498,6 +507,7 @@ static Uast_type uast_gen_def(const char* prefix) {
     vec_append(&gen_a, &def.sub_types, uast_gen_lang_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_primitive_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_function_decl(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_builtin_def(base_name));
 
     return def;
 }

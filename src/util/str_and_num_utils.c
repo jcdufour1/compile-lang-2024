@@ -412,7 +412,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 #endif // NDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);
-
+    
     count++;
 
     return string_to_strv(var_name);

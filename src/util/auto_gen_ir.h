@@ -441,6 +441,17 @@ static Ir_type ir_gen_import_path(void) {
     return mod;
 }
 
+static Ir_type ir_gen_struct_memb_def(void) {
+    Ir_type def = {.name = ir_name_new("ir", "struct_memb_def", false)};
+
+    append_member(&def.members, "Ir_lang_type", "lang_type");
+    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "size_t", "count");
+
+
+    return def;
+}
+
 static Ir_type ir_gen_ir(void) {
     Ir_type ir = {.name = ir_name_new("ir", "", true)};
 
@@ -457,6 +468,7 @@ static Ir_type ir_gen_ir(void) {
     vec_append(&gen_a, &ir.sub_types, ir_gen_load_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_store_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_import_path());
+    vec_append(&gen_a, &ir.sub_types, ir_gen_struct_memb_def());
     vec_append(&gen_a, &ir.sub_types, ir_gen_removed());
 
     return ir;

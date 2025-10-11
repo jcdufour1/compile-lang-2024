@@ -69,10 +69,11 @@ for generics:
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
 - proper print functions for Ulang_type_regular, etc.
+- this can crash the compiler (because of the i32):
+    io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
-- argv
 - constraints in generics
 - slices
 - orelse, !!, ??, etc.
@@ -80,6 +81,7 @@ for generics:
 - non-hard coded size_t, etc.
 - printing features
 - global constants
+- global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
 - mandatory initialization or similar
 - manual zero initialization
@@ -121,6 +123,13 @@ continue(<thing>)
     *str = slice_range(*str, 1, str.count - 1)
 - fix bug (def not being eliminated when defining Slice of strs this way):
     Slice(<Str>)
+- ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
+    lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
+- TODO: size_t may not be the correct type
+     for lang_type_array.count, because
+     lang_type_array.count is not
+     nessessarily based on memory size
+     of computer that compilation happens
 
 
 
