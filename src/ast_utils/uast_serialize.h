@@ -1,6 +1,7 @@
 #ifndef UAST_SERIALIZE_H
 #define UAST_SERIALIZE_H
 
+// TODO: remove this header file
 #include <uast_utils.h>
 
 static inline Strv serialize_uast_struct_def(const Uast_struct_def* def) {

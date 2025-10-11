@@ -157,9 +157,8 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
         case LANG_TYPE_FN: {
             todo();
         }
-        case LANG_TYPE_ARRAY: {
-            todo();
-        }
+        case LANG_TYPE_ARRAY:
+            unreachable("");
         case LANG_TYPE_VOID: {
             Lang_type_atom atom = lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return atom;
@@ -168,6 +167,7 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     unreachable("");
 }
 
+// TODO: remove this function?
 void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
         case LANG_TYPE_CHAR:

@@ -42,7 +42,6 @@ Strv serialize_lang_type_struct_thing(Lang_type lang_type) {
     string_extend_strv(&a_main, &name, serialize_lang_type_get_prefix(lang_type));
 
     Tast_def* def = NULL;
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
     unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
     string_extend_strv(&a_main, &name, serialize_struct_def_base(tast_def_get_struct_def_base(def)));
 

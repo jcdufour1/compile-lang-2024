@@ -1,6 +1,8 @@
 #ifndef ULANG_TYPE_GET_POS_H
 #define ULANG_TYPE_GET_POS_H
 
+#include <ulang_type.h>
+
 // TODO: include header file and remove this forward declaration
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos);
 

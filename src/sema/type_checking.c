@@ -390,7 +390,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_BUILTIN_DEF: {
-            todo();
+            msg_todo("", uast_def_get_pos(sym_def));
+            return false;
         }
         case UAST_LABEL:
             // TODO
@@ -1188,8 +1189,6 @@ bool try_set_array_literal_types(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                    //lang_type_print(LANG_TYPE_MODE_MSG, gen_arg/*tast_expr_get_lang_type(new_rhs)*/),
-                    //lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
@@ -2135,7 +2134,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
-    // TODO: uncomment (only run this assertion when function call is user generated?)
     if (fun_call->is_user_generated) {
         assert(
             sym_name->gen_args.info.count == 0 &&
@@ -2187,21 +2185,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_FUNCTION_DECL:
             return try_set_function_call_types_old(new_call, fun_call);
         case UAST_BUILTIN_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(fun_decl_temp_));
             return try_set_function_call_builtin_types(new_call, *sym_name, fun_call, uast_def_get_pos(fun_decl_temp_));
         default:
             unreachable("");
     }
     Uast_function_decl* fun_decl_temp = uast_function_def_unwrap(fun_decl_temp_)->decl;
-
-    //vec_append(
-    //    &a_main,
-    //    &uast_symbol_unwrap(fun_call->callee)->name.gen_args,
-    //    ulang_type_regular_const_wrap(ulang_type_regular_new(
-    //        ulang_type_atom_new(uname_new(name_new(sv(""), sv(""), (Ulang_type_vec) {0}, SCOPE_BUILTIN), sv("i32"), (Ulang_type_vec) {0}, SCOPE_BUILTIN), 0),
-    //        (Pos) {0}
-    //    ))
-    //);
 
     Uast_function_params* params = fun_decl_temp->params;
     Name fun_name = fun_decl_temp->name;
@@ -2239,7 +2227,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
         vec_append(&a_main, &new_gens_set, false);
     }
-
 
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {

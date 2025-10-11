@@ -218,6 +218,7 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
             emit_c_def_out_of_line(strs, ir_def_const_unwrap(ir));
+            return;
         case IR_BLOCK:
             return;
         case IR_EXPR:

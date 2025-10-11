@@ -121,7 +121,7 @@ next:
         case LANG_TYPE_VOID:
             return true;
         case LANG_TYPE_ARRAY:
-            todo();
+            return false; // TODO
     }
     unreachable("");
 }

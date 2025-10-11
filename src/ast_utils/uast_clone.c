@@ -186,6 +186,10 @@ Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_
     return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope));
 }
 
+Uast_builtin_def* uast_builtin_def_clone(const Uast_builtin_def* def, bool use_new_scope, Scope_id new_scope) {
+    return uast_builtin_def_new(def->pos, name_clone(def->name, use_new_scope, new_scope));
+}
+
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, bool use_new_scope, Scope_id new_scope) {
     (void) alias;
     (void) new_scope;
@@ -272,7 +276,7 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(def), use_new_scope, new_scope));
         case UAST_BUILTIN_DEF:
-            todo();
+            return uast_builtin_def_wrap(uast_builtin_def_clone(uast_builtin_def_const_unwrap(def), use_new_scope, new_scope));
     }
     unreachable("");
 }

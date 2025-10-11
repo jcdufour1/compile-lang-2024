@@ -74,7 +74,6 @@ for generics:
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
-- argv
 - constraints in generics
 - slices
 - orelse, !!, ??, etc.
@@ -125,6 +124,7 @@ continue(<thing>)
 - fix bug (def not being eliminated when defining Slice of strs this way):
     Slice(<Str>)
 - ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
+    lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
 - TODO: size_t may not be the correct type
      for lang_type_array.count, because
      lang_type_array.count is not

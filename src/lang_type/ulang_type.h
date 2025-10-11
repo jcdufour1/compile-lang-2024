@@ -6,6 +6,7 @@
 #include <vector.h>
 #include <name.h>
 #include <lang_type_mode.h>
+#include <msg_todo.h>
 
 typedef struct Ulang_type_atom_ {
     Uname str;
@@ -192,6 +193,8 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
         case ULANG_TYPE_ARRAY:
+            // TODO: add pointer_depth to Ulang_type_array?
+            msg_todo("", ulang_type_array_const_unwrap(lang_type).pos);
             todo();
     }
     unreachable("");

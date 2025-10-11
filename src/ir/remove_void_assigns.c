@@ -109,7 +109,7 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_IMPORT_PATH:
             return rm_void_import_path(ir_import_path_unwrap(ir));
         case IR_STRUCT_MEMB_DEF:
-            todo();
+            return ir;
         case IR_REMOVED:
             return ir;
     }

@@ -59,35 +59,35 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
             return true;
         }
-        case UAST_IMPORT_PATH:
-            todo();
-        case UAST_STRUCT_DEF:
-            todo();
-        case UAST_RAW_UNION_DEF:
-            todo();
-        case UAST_ENUM_DEF:
-            todo();
-        case UAST_PRIMITIVE_DEF:
-            todo();
-        case UAST_FUNCTION_DEF:
-            todo();
-        case UAST_FUNCTION_DECL:
-            todo();
-        case UAST_VARIABLE_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(alias_));
-            todo();
-        case UAST_GENERIC_PARAM:
-            todo();
         case UAST_POISON_DEF:
             return false;
+        case UAST_IMPORT_PATH:
+            // fallthrough
+        case UAST_STRUCT_DEF:
+            // fallthrough
+        case UAST_RAW_UNION_DEF:
+            // fallthrough
+        case UAST_ENUM_DEF:
+            // fallthrough
+        case UAST_PRIMITIVE_DEF:
+            // fallthrough
+        case UAST_FUNCTION_DEF:
+            // fallthrough
+        case UAST_FUNCTION_DECL:
+            // fallthrough
+        case UAST_VARIABLE_DEF:
+            // fallthrough
+        case UAST_GENERIC_PARAM:
+            // fallthrough
         case UAST_LANG_DEF:
-            todo();
+            // fallthrough
         case UAST_VOID_DEF:
-            todo();
+            // fallthrough
         case UAST_LABEL:
-            todo();
+            // fallthrough
         case UAST_BUILTIN_DEF:
-            todo();
+            msg_todo("error message for this situation", uast_def_get_pos(alias_));
+            return false;
     }
     unreachable("");
 }

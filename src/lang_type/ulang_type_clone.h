@@ -26,6 +26,11 @@ static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lan
     );
 }
 
+static inline Ulang_type_array ulang_type_array_clone(Ulang_type_array lang_type, bool use_new_scope, Scope_id new_scope) {
+    Ulang_type new_item_type = ulang_type_clone(*lang_type.item_type, use_new_scope, new_scope);
+    return ulang_type_array_new(arena_dup(&a_main, &new_item_type), lang_type.count, lang_type.pos);
+}
+
 static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, bool use_new_scope, Scope_id new_scope) {
     Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type));
     *rtn_type = ulang_type_clone(*lang_type.return_type, use_new_scope, new_scope);
@@ -47,10 +52,9 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
                 ulang_type_regular_const_unwrap(lang_type), use_new_scope, new_scope
             ));
         case ULANG_TYPE_ARRAY:
-            todo();
-            //return ulang_type_array_const_wrap(ulang_type_array_clone(
-            //    ulang_type_array_const_unwrap(lang_type), use_new_scope, new_scope
-            //));
+            return ulang_type_array_const_wrap(ulang_type_array_clone(
+                ulang_type_array_const_unwrap(lang_type), use_new_scope, new_scope
+            ));
         case ULANG_TYPE_GEN_PARAM:
             return ulang_type_gen_param_const_wrap(ulang_type_gen_param_clone(
                 ulang_type_gen_param_const_unwrap(lang_type)

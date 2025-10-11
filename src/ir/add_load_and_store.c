@@ -1052,9 +1052,6 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         load_assignment(new_block, assign);
     }
 
-    log(LOG_DEBUG, FMT"\n", ir_block_print(new_block));
-    //todo();
-
     return new_var;
 }
 
@@ -2016,9 +2013,6 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
         rm_tuple_lang_type(tast_expr_get_lang_type(old_assign->lhs), old_assign->pos),
         util_literal_name_new_prefix(sv("store_for_assign"))
     );
-    if (old_assign->lhs->type == TAST_INDEX) {
-        log(LOG_DEBUG, FMT"\n", ir_store_another_ir_print(new_store));
-    }
     unwrap(ir_add(ir_store_another_ir_wrap(new_store)));
 
     assert(new_store->ir_src.base.count > 0);
@@ -2383,8 +2377,6 @@ static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
             todo();
     }
 
-    log(LOG_DEBUG, FMT"\n", tast_unary_print(old_unary));
-
     if (old_unary->child->type == TAST_OPERATOR) {
         Tast_operator* oper = tast_operator_unwrap(old_unary->child);
         if (oper->type != TAST_UNARY) {
@@ -2418,8 +2410,7 @@ static Name load_ptr_unary(Ir_block* new_block, Tast_unary* old_unary) {
         case UNARY_DEREF:
             return load_ptr_deref(new_block, old_unary);
         case UNARY_REFER:
-            log(LOG_DEBUG, FMT"\n", tast_unary_print(old_unary));
-            todo();
+            unreachable("");
         default:
             todo();
     }
