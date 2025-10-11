@@ -24,7 +24,7 @@ fn main() i32 {
 
     for idx u64 in 0..nums.count {
         io.printf("before 3: %d\n", nums[idx])
-        nums[idx] = 43*unsafe_cast<i32>idx
+        nums[idx] = 43*unsafe_cast<i32>idx + 1
     }
     for idx u64 in 0..nums.count {
         io.printf("after 3: %d\n", nums[idx])

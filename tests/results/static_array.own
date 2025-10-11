@@ -1,0 +1,27 @@
+compile::stdout 21
+before 1: 8
+before 1: 76
+before 1: 77
+after  1: 0
+after  1: 1
+after  1: 2
+before 2: 0
+before 2: 1
+before 2: 2
+after  2: 0
+after  2: 4
+after  2: 8
+before 3: 0
+before 3: 4
+before 3: 8
+after 3: 1
+after 3: 44
+after 3: 87
+thing 4: 1
+thing 4: 44
+thing 4: 87
+
+compile::stderr 0
+
+compile::return_code 0
+

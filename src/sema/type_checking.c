@@ -593,8 +593,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
             );
-            log(LOG_DEBUG, FMT"\n", tast_expr_print(new_rhs));
-            todo();
             return false;
         }
     }
@@ -2880,7 +2878,7 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
 static void msg_invalid_member_internal(
     const char* file,
     int line,
-    Name base_name,
+    Name base_name, // TODO: give this parameter a more descriptive name
     const Uast_member_access* access
 ) {
     msg_internal(
@@ -3070,7 +3068,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 }
 
                 if (!strv_is_equal(access->member_name->name.base, sv("count"))) {
-                    msg_invalid_member(access->member_name->name, access);
+                    msg_invalid_member(sym->base.name, access);
                     return false;
                 }
 
