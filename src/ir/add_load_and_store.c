@@ -1180,13 +1180,6 @@ static Name load_float(Tast_float* old_lit) {
     return number->name;
 }
 
-static Name load_char(Tast_char* old_lit) {
-    Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
-    Ir_int* lang_char = ir_int_new(old_lit->pos, old_lit->data, rm_tuple_lang_type(new_lang_type, old_lit->pos), util_literal_name_new());
-    unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(lang_char)))));
-    return lang_char->name;
-}
-
 static Name load_function_lit(Tast_function_lit* old_lit) {
     Ir_function_name* name = ir_function_name_new(
         old_lit->pos,
@@ -1273,8 +1266,6 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
             return load_void(tast_void_unwrap(old_lit)->pos);
         case TAST_ENUM_TAG_LIT:
             return load_enum_tag_lit(tast_enum_tag_lit_unwrap(old_lit));
-        case TAST_CHAR:
-            return load_char(tast_char_unwrap(old_lit));
         case TAST_INT:
             return load_number(tast_int_unwrap(old_lit));
         case TAST_FLOAT:
@@ -1404,9 +1395,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
     vec_append(&a_main, &if_false_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
         tast_symbol_wrap(tast_symbol_new_from_variable_def(old_bin->pos, new_var)),
-        tast_literal_wrap(
-            util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
-        )
+        util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
     ))));
 
     Tast_if* if_true = tast_if_new(
@@ -1414,9 +1403,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
             old_bin->lhs,
-            tast_literal_wrap(
-                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-            ),
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
             if_true_type,
             lang_type_new_u1()
         ))),
@@ -1435,12 +1422,8 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
         old_bin->pos,
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
-            tast_literal_wrap(
-                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-            ),
-            tast_literal_wrap(
-                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-            ),
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
         ))),

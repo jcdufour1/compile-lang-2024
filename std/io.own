@@ -26,14 +26,14 @@ fn argv() rt.Slice(<Str>) {
     return own_argv()
 }
 
-fn fgetc(file File) util.Optional(<u8>) {
+fn fgetc(file File) util.Optional(<char>) {
     let ch i32 = c.fgetc(file.file)
     if ch == c.EOF => return .none
-    return .some(unsafe_cast<u8>ch)
+    return .some(unsafe_cast<char>ch)
 }
 
-fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
-    let new_str coll.Darr(<u8>) = coll.darr_new(u8)
+fn getline(file File, delim char = '\n') util.Optional(<coll.Darr(<char>)>) {
+    let new_str coll.Darr(<char>) = coll.darr_new(char)
     for 1 {
         if let .some(ch) = fgetc(file) {
             coll.darr_append(&new_str, ch)

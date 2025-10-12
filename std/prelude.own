@@ -6,7 +6,7 @@ type math import = std.math
 type rt import = std.runtime
 
 type Str def = coll.Str
-type Dstr def = coll.Darr(<u8>)
+type Dstr def = coll.Darr(<char>)
 type Darr def = coll.Darr
 
 type assert def = util.assert

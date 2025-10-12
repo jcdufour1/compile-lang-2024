@@ -316,16 +316,6 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
                 old_void->pos
             ));
         }
-        case UAST_CHAR: {
-            // TODO: remove uast_char
-            Uast_char* old_char = uast_char_unwrap(literal);
-            return tast_struct_literal_new(
-                old_char->pos,
-                struct_literal_membs_new_char(old_char->pos, old_char->data),
-                util_literal_name_new(),
-                lang_type_new_char()
-            );
-        }
     }
     unreachable("");
 }
@@ -521,7 +511,7 @@ static Tast_literal* precalulate_number(
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
+    return tast_literal_unwrap(util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos));
 }
 
 static bool precalulate_float(
@@ -539,16 +529,6 @@ static bool precalulate_float(
     return true;
 }
 
-static Tast_literal* precalulate_char(
-    const Tast_char* lhs,
-    const Tast_char* rhs,
-    BINARY_TYPE token_type,
-    Pos pos
-) {
-    int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
-}
-
 static Tast_literal* precalulate_enum_lit(
     const Tast_enum_lit* lhs,
     const Tast_enum_lit* rhs,
@@ -556,7 +536,7 @@ static Tast_literal* precalulate_enum_lit(
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->tag->data, rhs->tag->data, token_type);
-    return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
+    return tast_literal_unwrap(util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos));
 }
 
 bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
@@ -633,14 +613,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 )) {
                     return false;
                 }
-                break;
-            case TAST_CHAR:
-                literal = precalulate_char(
-                    tast_char_const_unwrap(lhs_lit),
-                    tast_char_const_unwrap(rhs_lit),
-                    oper_token_type,
-                    oper_pos
-                );
                 break;
             case TAST_ENUM_LIT: {
                 Tast_enum_lit* lhs = tast_enum_lit_unwrap(lhs_lit);
@@ -724,10 +696,18 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             case BINARY_LOGICAL_OR:
                 // fallthrough
             case BINARY_LOGICAL_AND: {
-                Tast_literal* new_lit_lhs = util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_lhs));
+                Tast_literal* new_lit_lhs = tast_literal_unwrap(util_tast_literal_new_from_int64_t(
+                    0,
+                    TOKEN_INT_LITERAL,
+                    tast_expr_get_pos(new_lhs)
+                ));
                 tast_literal_set_lang_type(new_lit_lhs, tast_expr_get_lang_type(new_lhs));
 
-                Tast_literal* new_lit_rhs = util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_rhs));
+                Tast_literal* new_lit_rhs = tast_literal_unwrap(util_tast_literal_new_from_int64_t(
+                    0,
+                    TOKEN_INT_LITERAL,
+                    tast_expr_get_pos(new_rhs)
+                ));
                 tast_literal_set_lang_type(new_lit_rhs, tast_expr_get_lang_type(new_rhs));
 
                 *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
@@ -920,11 +900,11 @@ bool try_set_unary_types_finish(
             *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                 unary_pos,
                 new_child,
-                tast_literal_wrap(util_tast_literal_new_from_int64_t(
+                util_tast_literal_new_from_int64_t(
                     0,
                     TOKEN_INT_LITERAL,
                     unary_pos
-                )),
+                ),
                 BINARY_DOUBLE_EQUAL,
                 new_lang_type // TODO: make this u1?
             )));
@@ -1367,8 +1347,14 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_ARRAY_LITERAL:
+            // TODO: set array literal types here?
             unreachable("");
         case UAST_STRUCT_LITERAL:
+            // TODO: set struct literal types here?
+
+            msg(DIAG_CHILD_PROCESS_FAILURE, uast_expr_get_pos(uast), "askdflandsfl\n");
+            //Iif (tast_get_lang_type(uast)
+            todo();
             unreachable("");
     }
     unreachable("");
@@ -2812,10 +2798,10 @@ bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
         *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
         return true;
     } else if (strv_is_equal(macro->name, sv("line"))) {
-        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
+        *new_call = util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos);
         return true;
     } else if (strv_is_equal(macro->name, sv("column"))) {
-        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos));
+        *new_call = util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos);
         return true;
     } else {
         msg_todo("language feature macro (other than `#file`, `#line`, `#column`)", macro->pos);
@@ -3766,9 +3752,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         if (old_case->is_default) {
             cond = uast_condition_new(
                 old_case->pos,
-                uast_condition_get_default_child(uast_literal_wrap(
+                uast_condition_get_default_child(
                     util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, old_case->pos)
-                ))
+                )
             );
         } else {
             cond = uast_condition_new(old_case->pos, uast_binary_wrap(uast_binary_new(
@@ -4068,9 +4054,9 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     )) {
         Uast_return* rtn_statement = uast_return_new(
             block->pos_end,
-            uast_literal_wrap(util_uast_literal_new_from_strv(
+            util_uast_literal_new_from_strv(
                  sv(""), TOKEN_VOID, block->pos_end
-            )),
+            ),
             true
         );
         unwrap(rtn_statement->pos.line != 0);

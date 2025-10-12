@@ -18,6 +18,10 @@ fn null(ItemT Type) ItemT* {
     return unsafe_cast<ItemT*>0
 }
 
+fn bitcast(CastTo Type, item From, From Type) CastTo {
+    return *unsafe_cast<CastTo*>&item
+}
+
 // TODO: return optional, etc.?
 fn alloc(count_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     let buf ItemT* = unsafe_cast<ItemT*>libc.malloc(sizeof(ItemT)*count_items)
@@ -56,15 +60,16 @@ fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, l
 
 // NOTE: cstr_free should be called on the returned string later
 fn str_to_cstr(str coll.Str) u8* {
-    let cstr coll.Arr(<u8>) = coll.arr_new(str.count + 1, u8, str)
+    let cstr coll.Arr(<char>) = coll.arr_new(str.count + 1, char, str)
     coll.arr_append(&cstr, '\0')
-    return cstr.buf
+    return unsafe_cast<u8*>cstr.buf
 }
 
 fn cstr_free(cstr u8*) {
     libc.free(unsafe_cast<opaque*>cstr)
 }
 
-fn slice_from_cstr(cstr u8*) rt.Slice(<u8>) {
+fn slice_from_cstr(cstr u8*) Str {
     return {cstr, strlen(cstr)}
 }
+

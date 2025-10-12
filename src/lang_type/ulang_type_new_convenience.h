@@ -4,6 +4,7 @@
 #include <ulang_type.h>
 #include <env.h>
 #include <util.h>
+#include <uast.h>
 
 static inline Ulang_type ulang_type_new_int_x(Strv base) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
@@ -17,6 +18,16 @@ static inline Ulang_type ulang_type_new_int_x(Strv base) {
 
 static inline Ulang_type ulang_type_new_usize(void) {
     return ulang_type_new_int_x(sv(params.usize_size_ux));
+}
+
+static inline Uast_expr_vec ulang_type_struct_literal_membs_new_char(Pos pos, char data) {
+    Uast_expr_vec membs = {0};
+    vec_append(&a_main, &membs, uast_literal_wrap(uast_int_wrap(uast_int_new(pos, data))));
+    return membs;
+}
+
+static inline Uast_struct_literal* ulang_type_struct_literal_new_char(Pos pos, char data) {
+    return uast_struct_literal_new(pos, ulang_type_struct_literal_membs_new_char(pos, data));
 }
 
 static inline Ulang_type_vec ulang_type_gen_args_char_new(void) {

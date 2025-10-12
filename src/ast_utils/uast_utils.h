@@ -208,12 +208,12 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
+Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 // will print error on failure
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
+bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 static inline bool uast_try_get_member_def(
     Uast_variable_def** member_def,

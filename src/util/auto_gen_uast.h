@@ -239,14 +239,6 @@ static Uast_type uast_gen_string(const char* prefix) {
     return string;
 }
 
-static Uast_type uast_gen_char(const char* prefix) {
-    Uast_type lang_char = {.name = uast_name_new(prefix, "char", false)};
-
-    append_member(&lang_char.members, "char", "data");
-
-    return lang_char;
-}
-
 static Uast_type uast_gen_void(const char* prefix) {
     Uast_type lang_void = {.name = uast_name_new(prefix, "void", false)};
 
@@ -261,7 +253,6 @@ static Uast_type uast_gen_literal(const char* prefix) {
     vec_append(&gen_a, &lit.sub_types, uast_gen_float(base_name));
     vec_append(&gen_a, &lit.sub_types, uast_gen_string(base_name));
     vec_append(&gen_a, &lit.sub_types, uast_gen_void(base_name));
-    vec_append(&gen_a, &lit.sub_types, uast_gen_char(base_name));
 
     return lit;
 }

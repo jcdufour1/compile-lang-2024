@@ -568,7 +568,7 @@ static inline Lang_type tast_lang_type_from_name(Name name) {
 
 Tast_literal* util_tast_literal_new_from_double(double value, Pos pos);
 
-Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
 Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type);
 

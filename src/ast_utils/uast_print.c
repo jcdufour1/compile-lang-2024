@@ -99,8 +99,6 @@ Strv uast_literal_print_internal(const Uast_literal* lit, int indent) {
             return uast_string_print_internal(uast_string_const_unwrap(lit), indent);
         case UAST_VOID:
             return uast_void_print_internal(uast_void_const_unwrap(lit), indent);
-        case UAST_CHAR:
-            return uast_char_print_internal(uast_char_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -226,16 +224,6 @@ Strv uast_void_print_internal(const Uast_void* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "void\n", indent);
-
-    return string_to_strv(buf);
-}
-
-Strv uast_char_print_internal(const Uast_char* num, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "char", indent);
-    vec_append(&a_print, &buf, num->data);
-    string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
 }

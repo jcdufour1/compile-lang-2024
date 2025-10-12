@@ -32,9 +32,15 @@ static inline Lang_type lang_type_new_char(void) {
     ));
 }
 
-static inline Tast_expr_vec struct_literal_membs_new_char(Pos pos, char data) {
+static inline Tast_expr_vec lang_type_struct_literal_membs_new_char(Pos pos, char data) {
     Tast_expr_vec membs = {0};
-    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, data, lang_type_new_char()))));
+    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, data, lang_type_new_ux(8)))));
+    return membs;
+}
+
+static inline Tast_expr_vec lang_type_struct_literal_new_char(Pos pos, char data) {
+    Tast_expr_vec membs = {0};
+    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, data, lang_type_new_ux(8)))));
     return membs;
 }
 
