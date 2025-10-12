@@ -317,11 +317,14 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             ));
         }
         case UAST_CHAR: {
+            // TODO: remove uast_char
             Uast_char* old_char = uast_char_unwrap(literal);
-            return tast_char_wrap(tast_char_new(
+            return tast_struct_literal_new(
                 old_char->pos,
-                old_char->data
-            ));
+                struct_literal_membs_new_char(old_char->pos, old_char->data),
+                util_literal_name_new(),
+                lang_type_new_char()
+            );
         }
     }
     unreachable("");

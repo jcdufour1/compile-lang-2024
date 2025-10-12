@@ -201,15 +201,6 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
             return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
         case TAST_ENUM_TAG_LIT:
             return tast_enum_tag_lit_const_unwrap(lit)->lang_type;
-        case TAST_CHAR:
-            // TODO: remove tast_char (use tast_struct_literal to represent char instead, etc.)
-            return lang_type_struct_const_wrap(lang_type_struct_new(
-                tast_literal_get_pos(lit),
-                lang_type_atom_new(
-                    name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-                    0
-                )
-            ));
         case TAST_ENUM_LIT:
             return tast_enum_lit_const_unwrap(lit)->enum_lang_type;
         case TAST_RAW_UNION_LIT:
@@ -240,8 +231,6 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
         case TAST_ENUM_TAG_LIT:
             tast_enum_tag_lit_unwrap(lit)->lang_type = lang_type;
             return;
-        case TAST_CHAR:
-            unreachable("");
         case TAST_ENUM_LIT:
             tast_enum_lit_unwrap(lit)->enum_lang_type = lang_type;
             return;
