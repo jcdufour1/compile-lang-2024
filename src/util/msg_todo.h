@@ -4,13 +4,7 @@
 #include <diag_type.h>
 #include <util.h>
 #include <strv.h>
-
-// TODO: remove this forward declaration
-__attribute__((format (printf, 5, 6)))
-void msg_internal(
-    const char* file, int line, DIAG_TYPE msg_expect_fail_type,
-    Pos pos, const char* format, ...
-);
+#include <msg.h>
 
 // TODO: msg_todo should accept only Strv for simplicity?
 #define msg_todo(feature, pos) \
