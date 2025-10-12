@@ -18,11 +18,11 @@
 #include <msg.h>
 #include <str_and_num_utils.h>
  
-static void add_opaque(const char* base_name, int16_t pointer_depth) {
+static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
         lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
+            POS_BUILTIN, pointer_depth
         )))
     );
     unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
@@ -33,7 +33,7 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_opaque("opaque", 0);
+    add_opaque(0);
     add_void();
 }
 

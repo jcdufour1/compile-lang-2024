@@ -159,7 +159,7 @@ static Lang_type_type lang_type_gen_opaque(const char* prefix) {
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     // TODO: get rid of these unneeded atoms
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

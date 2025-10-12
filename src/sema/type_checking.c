@@ -1921,10 +1921,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
         if (lang_type_is_equal(
             lang_type_from_ulang_type(param->base->lang_type),
             lang_type_primitive_const_wrap(
-                lang_type_opaque_const_wrap(lang_type_opaque_new(
-                    POS_BUILTIN,
-                    lang_type_atom_new_from_cstr("opaque", 0, 0)
-                ))
+                lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0))
             )
         )) {
             // arguments for variadic parameter will be checked later
@@ -2674,7 +2671,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         Tast_expr* new_arg = NULL;
 
         // TODO: remove "0 && " below?
-        if (0 && lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, lang_type_atom_new_from_cstr("opaque", 0, 0)))))) {
+        if (0 && lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0))))) {
             // arguments for variadic parameter will be checked later
             // TODO: uncomment below?:
             // unreachable();
