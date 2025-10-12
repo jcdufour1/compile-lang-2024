@@ -5,6 +5,7 @@
 #include <lang_type_get_pos.h>
 #include <lang_type_after.h>
 #include <str_and_num_utils.h>
+#include <parameters.h>
 
 Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primitive lang_type);
 
@@ -125,7 +126,7 @@ static inline Lang_type lang_type_new_ux(int32_t bit_width) {
 
 static inline Lang_type lang_type_new_usize(void) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 64 /* TODO: change based on target */, 0)
+        lang_type_unsigned_int_new(POS_BUILTIN, params.sizeof_usize, 0)
     ));
 }
 

@@ -2,10 +2,186 @@
 #include <file.h>
 #include <msg.h>
 #include <msg_todo.h>
+#include <util.h>
 
 static Strv compiler_exe_name;
 
 static void print_usage(void);
+
+typedef struct {
+    TARGET_ARCH arch;
+    const char* arch_cstr;
+    unsigned int sizeof_usize;
+    unsigned int sizeof_ptr_non_fn;
+} Arch_row;
+static Arch_row arch_table[] = {
+    {ARCH_X86_64, "x86_64", 64, 64},
+};
+
+static struct {
+    TARGET_VENDOR vendor;
+    const char* vendor_cstr;
+} vendor_table[] = {
+    {VENDOR_UNKNOWN, "unknown"},
+    {VENDOR_PC, "pc"},
+};
+
+static struct {
+    TARGET_OS os;
+    const char* os_cstr;
+} os_table[] = {
+    {OS_LINUX, "linux"},
+    {OS_WINDOWS, "windows"},
+};
+
+static struct {
+    TARGET_ABI abi;
+    const char* abi_cstr;
+} abi_table[] = {
+    {ABI_GNU, "gnu"},
+};
+
+static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
+static TARGET_ARCH get_default_arch(void) {
+#   if defined(__x86_64__) || defined(_M_X64)
+        return ARCH_X86_64;
+#   else
+        // TODO: return ARCH_UNKNOWN?
+#       error "unsupported architecture"
+#   endif
+}
+
+static TARGET_VENDOR get_default_vendor(void) {
+    return VENDOR_UNKNOWN; // TODO
+}
+
+static_assert(array_count(os_table) == 2, "exhausive handling of operating systems");
+static TARGET_OS get_default_os(void) {
+    // TODO: add ifdef for windows
+#   ifdef __linux__
+        return OS_LINUX;
+#   else
+        // TODO: return OS_UNKNOWN?
+#       error "unsupported operating system"
+#   endif
+}
+
+static_assert(array_count(abi_table) == 1, "exhausive handling of abis");
+static TARGET_ABI get_default_abi(void) {
+#   ifdef __GLIBC__
+        return ABI_GNU;
+#   else
+        // TODO: return ABI_UNKNOWN?
+#       error "unsupported abi"
+#   endif
+}
+
+static Arch_row get_arch_row_from_arch(TARGET_ARCH arch) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (array_at(arch_table, idx).arch == arch) {
+            return array_at(arch_table, idx);
+        }
+    }
+    unreachable("");
+}
+
+Strv strv_from_target_arch(TARGET_ARCH arch) {
+    return sv(get_arch_row_from_arch(arch).arch_cstr);
+}
+
+Strv strv_from_target_vendor(TARGET_VENDOR vendor) {
+    for (size_t idx = 0; idx < array_count(vendor_table); idx++) {
+        if (array_at(vendor_table, idx).vendor == vendor) {
+            return sv(array_at(vendor_table, idx).vendor_cstr);
+        }
+    }
+    unreachable("");
+}
+
+Strv strv_from_target_os(TARGET_OS os) {
+    for (size_t idx = 0; idx < array_count(os_table); idx++) {
+        if (array_at(os_table, idx).os == os) {
+            return sv(array_at(os_table, idx).os_cstr);
+        }
+    }
+    unreachable("");
+}
+
+Strv strv_from_target_abi(TARGET_ABI abi) {
+    for (size_t idx = 0; idx < array_count(abi_table); idx++) {
+        if (array_at(abi_table, idx).abi == abi) {
+            return sv(array_at(abi_table, idx).abi_cstr);
+        }
+    }
+    unreachable("");
+}
+
+static bool try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
+    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+        if (strv_is_equal(sv(array_at(arch_table, idx).arch_cstr), strv)) {
+            *arch = array_at(arch_table, idx).arch;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_vendor_from_strv(TARGET_VENDOR* vendor, Strv strv) {
+    for (size_t idx = 0; idx < array_count(vendor_table); idx++) {
+        if (strv_is_equal(sv(array_at(vendor_table, idx).vendor_cstr), strv)) {
+            *vendor = array_at(vendor_table, idx).vendor;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_os_from_strv(TARGET_OS* os, Strv strv) {
+    for (size_t idx = 0; idx < array_count(os_table); idx++) {
+        if (strv_is_equal(sv(array_at(os_table, idx).os_cstr), strv)) {
+            *os = array_at(os_table, idx).os;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
+    for (size_t idx = 0; idx < array_count(abi_table); idx++) {
+        if (strv_is_equal(sv(array_at(abi_table, idx).abi_cstr), strv)) {
+            *abi = array_at(abi_table, idx).abi;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
+    return a.arch == b.arch && a.vendor == b.vendor && a.os == b.os && a.abi == b.abi;
+}
+
+Strv target_triplet_print_internal(Target_triplet triplet) {
+    String buf = {0};
+
+    string_extend_strv(&a_print, &buf, strv_from_target_arch(triplet.arch));
+    string_extend_cstr(&a_print, &buf, "-");
+    string_extend_strv(&a_print, &buf, strv_from_target_os(triplet.os));
+    string_extend_cstr(&a_print, &buf, "-");
+    string_extend_strv(&a_print, &buf, strv_from_target_abi(triplet.abi));
+
+    return string_to_strv(buf);
+}
+
+#define target_triplet_print(triplet) strv_print(target_triplet_print_internal(triplet))
+
+Target_triplet get_default_target_triplet(void) {
+    return (Target_triplet) {
+        .arch = get_default_arch(),
+        .vendor = get_default_vendor(),
+        .os = get_default_os(),
+        .abi = get_default_abi(),
+    };
+}
 
 Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
@@ -87,7 +263,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 82, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 83, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -164,13 +340,14 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"unknown-on-non-enum-type", DIAG_UNKNOWN_ON_NON_ENUM_TYPE, LOG_ERROR, true},
     {"invalid-label-pos", DIAG_INVALID_LABEL_POS, LOG_ERROR, true},
     {"invalid-countof", DIAG_INVALID_COUNTOF, LOG_ERROR, true},
-    {"diag-redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
-    {"diag-switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
-    {"diag-wrong-gen-type", DIAG_WRONG_GEN_TYPE, LOG_ERROR, true},
-    {"diag-using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
-    {"diag-file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
-    {"diag-gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
-    {"diag-if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
+    {"redef-struct-base-member", DIAG_REDEF_STRUCT_BASE_MEMBER, LOG_ERROR, true},
+    {"switch-no-cases", DIAG_SWITCH_NO_CASES, LOG_ERROR, true},
+    {"wrong-gen-type", DIAG_WRONG_GEN_TYPE, LOG_ERROR, true},
+    {"using-on-non-struct-or-mod-alias", DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS, LOG_ERROR, true},
+    {"file-invalid-name", DIAG_FILE_INVALID_NAME, LOG_ERROR, true},
+    {"gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
+    {"if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
+    {"unsupported-target-triplet", DIAG_UNSUPPORTED_TARGET_TRIPLET, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -179,8 +356,8 @@ static Expect_fail_str_to_curr_log_level
 expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
 
 bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
-        if (strv_is_equal(sv(expect_fail_pair[idx].str), strv)) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
+        if (strv_is_equal(sv(array_at(expect_fail_pair, idx).str), strv)) {
             *type = expect_fail_pair[idx].type;
             *idx_result = idx;
             return true;
@@ -190,7 +367,7 @@ bool expect_fail_type_from_strv(size_t* idx_result, DIAG_TYPE* type, Strv strv) 
 }
 
 static size_t expect_fail_type_get_idx(DIAG_TYPE type) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
         if (expect_fail_pair[idx].type == type) {
             return idx;
         }
@@ -203,21 +380,21 @@ Strv expect_fail_type_print_internal(DIAG_TYPE type) {
 }
 
 static void expect_fail_str_to_curr_log_level_init(void) {
-    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+    for (size_t idx = 0; idx < array_count(expect_fail_pair); idx++) {
         expect_fail_str_to_curr_log_level_pair[idx].str = expect_fail_pair[idx].str;
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = expect_fail_pair[idx].default_level;
     }
 }
 
 LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
-    return expect_fail_str_to_curr_log_level_pair[expect_fail_type_get_idx(type)].curr_level;
+    return array_at(expect_fail_str_to_curr_log_level_pair, expect_fail_type_get_idx(type)).curr_level;
 }
 
 static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -347,7 +524,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -395,7 +572,7 @@ static void long_option_error(Strv curr_opt) {
         );
         exit(EXIT_CODE_FAIL);
     }
-    expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
+    array_at_ref(expect_fail_str_to_curr_log_level_pair, idx)->curr_level = LOG_ERROR;
     params.error_opts_changed = true;
 }
 
@@ -407,6 +584,62 @@ static void long_option_path_c_compiler(Strv curr_opt) {
     }
 
     params.path_c_compiler = cc;
+    params.is_path_c_compiler = true;
+}
+
+static void long_option_target_triplet(Strv curr_opt) {
+    Strv cc = curr_opt;
+    if (!strv_try_consume(&cc, '=') || cc.count < 1) {
+        log(LOG_FATAL, "expected =<target-triplet> after `target-triplet`\n");
+        exit(EXIT_CODE_FAIL);
+    }
+
+    Strv temp = {0};
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "architecture was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    strv_consume(&cc);
+    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp)) {
+        log(LOG_FATAL, "unsupported architecture `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    strv_consume(&cc);
+    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp)) {
+        log(LOG_FATAL, "unsupported vendor `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    strv_consume(&cc);
+    if (!try_target_os_from_strv(&params.target_triplet.os, temp)) {
+        log(LOG_FATAL, "unsupported operating system `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    Strv dummy = {0};
+    if (strv_try_consume_until(&dummy, &cc, '-')) {
+        log(LOG_FATAL, "target triplet has too many sub-strings\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    temp = cc;
+    if (temp.count < 1) {
+        log(LOG_FATAL, "abi (application binary interface, a.k.a. environment type) was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp)) {
+        log(LOG_FATAL, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
 }
 
 static void long_option_no_prelude(Strv curr_opt) {
@@ -445,7 +678,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 19,
+    PARAMETERS_COUNT == 24,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -462,6 +695,12 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
+    {
+        "target-triplet",
+        "=ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
+        long_option_target_triplet,
+        true
+    },
     {
         "path-c-compiler",
         "specify the c compiler to use to compile program",
@@ -486,8 +725,8 @@ Long_option_pair long_options[] = {
 static void parse_long_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
-    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
-        Long_option_pair curr = long_options[idx];
+    for (size_t idx = 0; idx < array_count(long_options); idx++) {
+        Long_option_pair curr = array_at(long_options, idx);
         if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
             if (curr.arg_expected && curr_opt.count < 1) {
@@ -507,10 +746,14 @@ static void parse_long_option(int* argc, char*** argv) {
     exit(EXIT_CODE_FAIL);
 }
 
+static_assert(
+    PARAMETERS_COUNT == 24,
+    "exhausive handling of params (not all parameters are explicitly handled)"
+);
 static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
-    params.path_c_compiler = sv("cc"); // TODO: this should depend on the platform that the
+    params.target_triplet = get_default_target_triplet();
 }
 
 static void print_usage(void) {
@@ -519,8 +762,8 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
     msg(DIAG_INFO, POS_BUILTIN, "options:\n");
-    for (size_t idx = 0; idx < sizeof(long_options)/sizeof(long_options[0]); idx++) {
-        Long_option_pair curr = long_options[idx];
+    for (size_t idx = 0; idx < array_count(long_options); idx++) {
+        Long_option_pair curr = array_at(long_options, idx);
         msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
         msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
         msg(DIAG_INFO, POS_BUILTIN, "\n");
@@ -543,7 +786,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 19,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -597,5 +840,15 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
         }
     }
+
+    Arch_row arch_row = get_arch_row_from_arch(params.target_triplet.arch);
+    params.sizeof_usize = arch_row.sizeof_usize;
+    params.sizeof_ptr_non_fn = arch_row.sizeof_ptr_non_fn;
+    unwrap(
+        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u%u", params.sizeof_usize) <
+        array_count(params.usize_size_ux) &&
+        "the buffer (params.usize_size_ux) is too small"
+    );
+    params.sizeof_usize = arch_row.sizeof_usize;
 }
 
