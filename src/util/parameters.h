@@ -11,7 +11,13 @@ typedef enum {
 } TARGET_ARCH;
 
 typedef enum {
+    VENDOR_UNKNOWN,
+    VENDOR_PC,
+} TARGET_VENDOR;
+
+typedef enum {
     OS_LINUX,
+    OS_WINDOWS,
 } TARGET_OS;
 
 typedef enum {
@@ -20,6 +26,7 @@ typedef enum {
 
 typedef struct {
     TARGET_ARCH arch;
+    TARGET_VENDOR vendor;
     TARGET_OS os;
     TARGET_ABI abi;
 } Target_triplet;
@@ -62,7 +69,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 22
+#define PARAMETERS_COUNT 24
 typedef struct {
     Target_triplet target_triplet;
     int16_t sizeof_usize; 
@@ -86,6 +93,7 @@ typedef struct {
     bool all_errors_fatal : 1;
     bool error_opts_changed : 1;
     bool do_prelude : 1;
+    bool is_path_c_compiler : 1;
     Backend_info backend_info;
 } Parameters;
 

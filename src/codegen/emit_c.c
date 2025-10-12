@@ -742,18 +742,24 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 22,
+            PARAMETERS_COUNT == 24,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 
-        Strv_vec cmd = {0};
-        vec_append(&a_main, &cmd, params.path_c_compiler);
-        vec_append(&a_main, &cmd, sv("-std=c99"));
-
-        if (!target_triplet_is_equal(params.target_triplet, get_default_target_triplet())) {
-            msg_todo("non-default target triplet", POS_BUILTIN);
-            return;
+        Strv path_c_compiler = {0};
+        if (params.is_path_c_compiler) {
+            path_c_compiler = params.path_c_compiler;
+        } else {
+            if (!target_triplet_is_equal(params.target_triplet, get_default_target_triplet())) {
+                msg_todo("cross compiling without explicit \"path-c-compiler\" passed to the command line", POS_BUILTIN);
+                return;
+            }
+            path_c_compiler = sv("cc");
         }
+
+        Strv_vec cmd = {0};
+        vec_append(&a_main, &cmd, path_c_compiler);
+        vec_append(&a_main, &cmd, sv("-std=c99"));
 
         // supress clang warnings
         vec_append(&a_main, &cmd, sv("-Wno-override-module"));

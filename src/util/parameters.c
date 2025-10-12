@@ -14,9 +14,16 @@ typedef struct {
     unsigned int sizeof_usize;
     unsigned int sizeof_ptr_non_fn;
 } Arch_row;
-
 static Arch_row arch_table[] = {
     {ARCH_X86_64, "x86_64", 64, 64},
+};
+
+static struct {
+    TARGET_VENDOR vendor;
+    const char* vendor_cstr;
+} vendor_table[] = {
+    {VENDOR_UNKNOWN, "unknown"},
+    {VENDOR_PC, "pc"},
 };
 
 static struct {
@@ -24,6 +31,7 @@ static struct {
     const char* os_cstr;
 } os_table[] = {
     {OS_LINUX, "linux"},
+    {OS_WINDOWS, "windows"},
 };
 
 static struct {
@@ -43,8 +51,13 @@ static TARGET_ARCH get_default_arch(void) {
 #   endif
 }
 
-static_assert(array_count(os_table) == 1, "exhausive handling of operating systems");
+static TARGET_VENDOR get_default_vendor(void) {
+    return VENDOR_UNKNOWN; // TODO
+}
+
+static_assert(array_count(os_table) == 2, "exhausive handling of operating systems");
 static TARGET_OS get_default_os(void) {
+    // TODO: add ifdef for windows
 #   ifdef __linux__
         return OS_LINUX;
 #   else
@@ -76,8 +89,17 @@ Strv strv_from_target_arch(TARGET_ARCH arch) {
     return sv(get_arch_row_from_arch(arch).arch_cstr);
 }
 
+Strv strv_from_target_vendor(TARGET_VENDOR vendor) {
+    for (size_t idx = 0; idx < array_count(vendor_table); idx++) {
+        if (array_at(vendor_table, idx).vendor == vendor) {
+            return sv(array_at(vendor_table, idx).vendor_cstr);
+        }
+    }
+    unreachable("");
+}
+
 Strv strv_from_target_os(TARGET_OS os) {
-    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+    for (size_t idx = 0; idx < array_count(os_table); idx++) {
         if (array_at(os_table, idx).os == os) {
             return sv(array_at(os_table, idx).os_cstr);
         }
@@ -86,7 +108,7 @@ Strv strv_from_target_os(TARGET_OS os) {
 }
 
 Strv strv_from_target_abi(TARGET_ABI abi) {
-    for (size_t idx = 0; idx < array_count(arch_table); idx++) {
+    for (size_t idx = 0; idx < array_count(abi_table); idx++) {
         if (array_at(abi_table, idx).abi == abi) {
             return sv(array_at(abi_table, idx).abi_cstr);
         }
@@ -98,6 +120,16 @@ static bool try_target_arch_from_strv(TARGET_ARCH* arch, Strv strv) {
     for (size_t idx = 0; idx < array_count(arch_table); idx++) {
         if (strv_is_equal(sv(array_at(arch_table, idx).arch_cstr), strv)) {
             *arch = array_at(arch_table, idx).arch;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool try_target_vendor_from_strv(TARGET_VENDOR* vendor, Strv strv) {
+    for (size_t idx = 0; idx < array_count(vendor_table); idx++) {
+        if (strv_is_equal(sv(array_at(vendor_table, idx).vendor_cstr), strv)) {
+            *vendor = array_at(vendor_table, idx).vendor;
             return true;
         }
     }
@@ -125,7 +157,7 @@ static bool try_target_abi_from_strv(TARGET_ABI* abi, Strv strv) {
 }
 
 bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
-    return a.arch == b.arch && a.os == b.os && a.abi == b.abi;
+    return a.arch == b.arch && a.vendor == b.vendor && a.os == b.os && a.abi == b.abi;
 }
 
 Strv target_triplet_print_internal(Target_triplet triplet) {
@@ -145,6 +177,7 @@ Strv target_triplet_print_internal(Target_triplet triplet) {
 Target_triplet get_default_target_triplet(void) {
     return (Target_triplet) {
         .arch = get_default_arch(),
+        .vendor = get_default_vendor(),
         .os = get_default_os(),
         .abi = get_default_abi(),
     };
@@ -361,7 +394,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -491,7 +524,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -551,6 +584,7 @@ static void long_option_path_c_compiler(Strv curr_opt) {
     }
 
     params.path_c_compiler = cc;
+    params.is_path_c_compiler = true;
 }
 
 static void long_option_target_triplet(Strv curr_opt) {
@@ -566,6 +600,7 @@ static void long_option_target_triplet(Strv curr_opt) {
         log(LOG_FATAL, "architecture was not specified in target-triplet\n");
         exit(EXIT_CODE_FAIL);
     }
+    strv_consume(&cc);
     if (!try_target_arch_from_strv(&params.target_triplet.arch, temp)) {
         log(LOG_FATAL, "unsupported architecture `"FMT"`\n", strv_print(temp));
         exit(EXIT_CODE_FAIL);
@@ -575,22 +610,34 @@ static void long_option_target_triplet(Strv curr_opt) {
         log(LOG_FATAL, "operating system was not specified in target-triplet\n");
         exit(EXIT_CODE_FAIL);
     }
+    strv_consume(&cc);
+    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp)) {
+        log(LOG_FATAL, "unsupported vendor `"FMT"`\n", strv_print(temp));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!strv_try_consume_until(&temp, &cc, '-')) {
+        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    strv_consume(&cc);
     if (!try_target_os_from_strv(&params.target_triplet.os, temp)) {
         log(LOG_FATAL, "unsupported operating system `"FMT"`\n", strv_print(temp));
         exit(EXIT_CODE_FAIL);
     }
 
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
+    Strv dummy = {0};
+    if (strv_try_consume_until(&dummy, &cc, '-')) {
+        log(LOG_FATAL, "target triplet has too many sub-strings\n");
+        exit(EXIT_CODE_FAIL);
+    }
+    temp = cc;
+    if (temp.count < 1) {
         log(LOG_FATAL, "abi (application binary interface, a.k.a. environment type) was not specified in target-triplet\n");
         exit(EXIT_CODE_FAIL);
     }
     if (!try_target_abi_from_strv(&params.target_triplet.abi, temp)) {
         log(LOG_FATAL, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
-    if (cc.count > 0) {
-        log(LOG_FATAL, "target triplet has too many sub-strings\n");
         exit(EXIT_CODE_FAIL);
     }
 }
@@ -631,7 +678,7 @@ static void long_option_log_level(Strv curr_opt) {
 
 // TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
-    PARAMETERS_COUNT == 22,
+    PARAMETERS_COUNT == 24,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -650,7 +697,7 @@ Long_option_pair long_options[] = {
     {"error", "TODO", long_option_error, true},
     {
         "target-triplet",
-        "=ARCH-OS-ABI    (eg. \"target-triplet=x86_64-linux-gnu\"",
+        "=ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
         long_option_target_triplet,
         true
     },
@@ -700,13 +747,12 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 22,
+    PARAMETERS_COUNT == 24,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
-    params.path_c_compiler = sv("cc"); // TODO: this should depend on the platform that the
     params.target_triplet = get_default_target_triplet();
 }
 
@@ -740,7 +786,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 22,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
