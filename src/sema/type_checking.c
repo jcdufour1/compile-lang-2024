@@ -96,6 +96,7 @@ static int64_t bit_width_needed_float(double num) {
 }
 
 static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(expr)));
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
         unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
@@ -3041,6 +3042,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
     }
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_callee));
     new_callee = auto_deref_to_0(new_callee);
 
     switch (new_callee->type) {

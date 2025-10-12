@@ -174,10 +174,7 @@ static inline void tast_operator_set_lang_type(Tast_operator* operator, Lang_typ
 static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(
-            lang_type_char_new(
-                str->pos,
-                lang_type_atom_new_from_cstr("u8", 1, 0)
-            )
+            lang_type_char_new(str->pos, 1)
         ));
     }
 
@@ -205,7 +202,10 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_ENUM_TAG_LIT:
             return tast_enum_tag_lit_const_unwrap(lit)->lang_type;
         case TAST_CHAR:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0, 0))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(
+                tast_literal_get_pos(lit),
+                0
+            )));
         case TAST_ENUM_LIT:
             return tast_enum_lit_const_unwrap(lit)->enum_lang_type;
         case TAST_RAW_UNION_LIT:
@@ -290,7 +290,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
         case TAST_MODULE_ALIAS:
-            return (Lang_type) {0} /* TODO */;
+            return lang_type_void_const_wrap(lang_type_void_new(tast_expr_get_pos(expr)));
     }
     unreachable("");
 }

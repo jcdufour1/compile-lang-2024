@@ -149,7 +149,7 @@ static Lang_type_type lang_type_gen_char(const char* prefix) {
     const char* base_name = "char";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

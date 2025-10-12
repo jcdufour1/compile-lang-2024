@@ -600,7 +600,7 @@ static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive l
             return ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(
                 lang_type_pos,
                 8,
-                rm_tuple_lang_type_atom(lang_char.atom).pointer_depth
+                lang_char.pointer_depth
             ));
         }
         case LANG_TYPE_SIGNED_INT: {
