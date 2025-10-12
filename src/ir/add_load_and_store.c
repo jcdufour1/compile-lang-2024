@@ -631,7 +631,7 @@ static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive l
             Lang_type_opaque opaque = lang_type_opaque_const_unwrap(lang_type);
             return ir_lang_type_opaque_const_wrap(ir_lang_type_opaque_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(opaque.atom)
+                rm_tuple_lang_type_atom(opaque.atom).pointer_depth
             ));
         }
     }
