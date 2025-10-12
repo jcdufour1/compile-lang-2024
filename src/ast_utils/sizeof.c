@@ -25,8 +25,6 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
             return bit_width_to_bytes(lang_type_unsigned_int_const_unwrap(primitive).bit_width);
         case LANG_TYPE_FLOAT:
             return bit_width_to_bytes(lang_type_float_const_unwrap(primitive).bit_width);
-        case LANG_TYPE_CHAR:
-            return 1;
         case LANG_TYPE_OPAQUE:
             unreachable("");
     }

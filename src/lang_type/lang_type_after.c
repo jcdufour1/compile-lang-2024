@@ -2,11 +2,6 @@
 
 Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            return lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
-                0
-            );
         case LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
@@ -168,10 +163,6 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
 // TODO: remove this function?
 void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
-        case LANG_TYPE_CHAR:
-            assert(strv_is_equal(atom.str.base, sv("u8")));
-            assert(atom.pointer_depth == 0);
-            return;
         case LANG_TYPE_SIGNED_INT:
             lang_type_signed_int_unwrap(lang_type)->bit_width = strv_to_int64_t(
                 POS_BUILTIN,

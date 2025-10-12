@@ -30,6 +30,7 @@
 #include <ast_msg.h>
 #include <check_general_assignment.h>
 #include <expand_using.h>
+#include <lang_type_new_convenience.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {

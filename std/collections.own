@@ -4,7 +4,7 @@ type io import = std.io
 type rt import = std.runtime
 
 type Slice def = rt.Slice
-type Str def = Slice(<u8>)
+type Str def = Slice(<char>)
 
 // TODO: make alloc function instead of using malloc directly
 

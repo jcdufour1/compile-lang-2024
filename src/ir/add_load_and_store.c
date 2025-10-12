@@ -16,6 +16,7 @@
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
 #include <ir_operator_type.h>
+#include <lang_type_new_convenience.h>
 
 static int dummy = 0;
 
@@ -594,15 +595,6 @@ static Ir_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
 
 static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR: {
-            // TODO: should this always be signed
-            Lang_type_char lang_char = lang_type_char_const_unwrap(lang_type);
-            return ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(
-                lang_type_pos,
-                8,
-                lang_char.pointer_depth
-            ));
-        }
         case LANG_TYPE_SIGNED_INT: {
             Lang_type_signed_int num = lang_type_signed_int_const_unwrap(lang_type);
             return ir_lang_type_signed_int_const_wrap(ir_lang_type_signed_int_new(
@@ -1118,11 +1110,6 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         return string->name;
     }
 
-    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
-    if (gen_args_u8.info.count < 1) {
-        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
-    }
-
     Tast_expr_vec args = {0};
     Tast_string* inner_str = tast_string_clone(old_lit);
     inner_str->is_cstr = true;
@@ -1146,7 +1133,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         membs,
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL), 0
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL), 0
         )))
     ));
 }

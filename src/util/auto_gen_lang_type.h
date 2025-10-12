@@ -145,15 +145,6 @@ static Lang_type_type lang_type_gen_float(const char* prefix) {
     return sym;
 }
 
-static Lang_type_type lang_type_gen_char(const char* prefix) {
-    const char* base_name = "char";
-    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
-
-    append_member(&sym.members, "int16_t", "pointer_depth");
-
-    return sym;
-}
-
 static Lang_type_type lang_type_gen_opaque(const char* prefix) {
     const char* base_name = "opaque";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -168,7 +159,6 @@ static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_char(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_unsigned_int(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float(base_name));
