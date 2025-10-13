@@ -73,3 +73,12 @@ fn slice_from_cstr(cstr u8*) Str {
     return {cstr, strlen(cstr)}
 }
 
+// This function casts the char to an int. it will NOT return 0 if the char is '0'
+fn char_to_int(ch char, NumT Type) NumT {
+    return bitcast(NumT, ch)
+}
+
+// This function gets the char and casts it to the int value. of the char; it will NOT return '0' if num is 0
+fn int_to_char(num NumT, NumT Type) char {
+    return bitcast(char, num)
+}

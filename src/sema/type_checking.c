@@ -54,6 +54,8 @@ static Strv parent_of_print_internal(PARENT_OF parent_of) {
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
+static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type);
+
 static Type_checking_env check_env = {0};
 
 // result is rounded up
@@ -646,6 +648,15 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
         *new_tast = tast_literal_wrap(literal);
     } else {
+        Lang_type lhs_lang_type = tast_expr_get_lang_type(new_lhs);
+        // TODO: == for tagged enum will get past this if statement, then fail in backend. This should be done better.
+        if (lhs_lang_type.type != LANG_TYPE_PRIMITIVE && new_lhs->type != TAST_ENUM_GET_TAG && new_lhs->type != TAST_LITERAL && new_rhs->type != TAST_LITERAL) {
+            if (lang_type_get_pointer_depth(lhs_lang_type) < 1) {
+                msg_todo("operations on non-primitive types", oper_pos);
+                return false;
+            }
+        }
+
         switch (oper_token_type) {
             case BINARY_SHIFT_LEFT:
                 // fallthrough
@@ -832,14 +843,6 @@ bool try_set_unary_types_finish(
             return true;
         case UNARY_COUNTOF: {
             Lang_type_atom atom = {0};
-            //if (lang_type.type != ULANG_TYPE_REGULAR) {
-            //    msg(
-            //        DIAG_INVALID_COUNTOF, unary_pos,
-            //        "type `"FMT"` is not a valid operand to `countof`\n",
-            //        ulang_type_print(LANG_TYPE_MODE_LOG, lang_type)
-            //    );
-            //    return false;
-            //}
             if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
                 msg(
                     DIAG_INVALID_COUNTOF, unary_pos,
@@ -870,15 +873,20 @@ bool try_set_unary_types_finish(
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
             assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
-            if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
+            if (lang_type_is_equal(cast_to, tast_expr_get_lang_type(new_child))) {
+                *new_tast = new_child;
+                return true;
+            } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_NOTE, FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
-                log(LOG_NOTE, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
-                log(LOG_NOTE, FMT, tast_expr_print(new_child));
-                todo();
+                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
+                log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
+                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, cast_to));
+                log(LOG_DEBUG, FMT, tast_expr_print(new_child));
+                msg_todo("error message for using unsafe_cast in this situation", unary_pos);
+                return false;
             }
             *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
                 unary_pos,
@@ -916,17 +924,18 @@ bool try_set_unary_types_finish(
 }
 
 bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
-    Tast_expr* new_child;
-    if (!try_set_expr_types(&new_child, unary->child)) {
-        return false;
-    }
-
     // TODO: try_lang_type_from_ulang_type function is always run even when cast_to lang_type is
     //   not need, which could slow compile times
     Lang_type cast_to = {0};
     if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type)) {
         return false;
     }
+
+    Tast_expr* new_child;
+    if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to)) {
+        return false;
+    }
+
     return try_set_unary_types_finish(new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, cast_to);
 }
 
@@ -1245,7 +1254,7 @@ bool try_set_array_literal_types(
     return true;
 }
 
-bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type) {
+static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type) {
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
@@ -2415,7 +2424,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         size_t old_error_count = error_count;
                         size_t old_warn_count = warning_count;
 
-                        //params_log_level = LOG_FATAL;
+                        // TODO: this can hide some actual errors from the user
+                        params_log_level = LOG_FATAL;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
                             params_log_level = old_log_level;
                             error_count = old_error_count;

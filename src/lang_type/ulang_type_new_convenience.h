@@ -5,6 +5,8 @@
 #include <env.h>
 #include <util.h>
 #include <uast.h>
+#include <lang_type_new_convenience.h>
+#include <lang_type_from_ulang_type.h>
 
 static inline Ulang_type ulang_type_new_int_x(Strv base) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
@@ -20,14 +22,23 @@ static inline Ulang_type ulang_type_new_usize(void) {
     return ulang_type_new_int_x(sv(params.usize_size_ux));
 }
 
+static inline Ulang_type ulang_type_new_char_pointer_depth_0(void) {
+    return env.ulang_type_char_pointer_depth_0;
+}
+
 static inline Uast_expr_vec ulang_type_struct_literal_membs_new_char(Pos pos, char data) {
     Uast_expr_vec membs = {0};
     vec_append(&a_main, &membs, uast_literal_wrap(uast_int_wrap(uast_int_new(pos, data))));
     return membs;
 }
 
-static inline Uast_struct_literal* ulang_type_struct_literal_new_char(Pos pos, char data) {
-    return uast_struct_literal_new(pos, ulang_type_struct_literal_membs_new_char(pos, data));
+static inline Uast_unary* ulang_type_struct_literal_new_char(Pos pos, char data) {
+    return uast_unary_new(
+        pos,
+        uast_struct_literal_wrap(uast_struct_literal_new(pos, ulang_type_struct_literal_membs_new_char(pos, data))),
+        UNARY_UNSAFE_CAST,
+        ulang_type_new_char_pointer_depth_0()
+    );
 }
 
 static inline Ulang_type_vec ulang_type_gen_args_char_new(void) {

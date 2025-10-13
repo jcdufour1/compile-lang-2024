@@ -47,6 +47,8 @@ static void add_primitives(void) {
             )
         ))
     ));
+
+    env.ulang_type_char_pointer_depth_0 = lang_type_to_ulang_type(lang_type_new_char());
 }
 
 static void add_builtin_def(Strv name) {

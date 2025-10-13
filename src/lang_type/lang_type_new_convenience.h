@@ -38,12 +38,6 @@ static inline Tast_expr_vec lang_type_struct_literal_membs_new_char(Pos pos, cha
     return membs;
 }
 
-static inline Tast_expr_vec lang_type_struct_literal_new_char(Pos pos, char data) {
-    Tast_expr_vec membs = {0};
-    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, data, lang_type_new_ux(8)))));
-    return membs;
-}
-
 static inline Lang_type lang_type_new_void(void) {
     return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 }

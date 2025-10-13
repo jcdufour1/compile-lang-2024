@@ -512,6 +512,7 @@ Strv uast_generic_param_print_internal(const Uast_generic_param* param, int inde
     string_extend_cstr_indent(&a_print, &buf, "generic_params\n", indent);
     string_extend_strv_indent(&a_print, &buf, sv(""), indent + INDENT_WIDTH);
     extend_name(NAME_LOG, &buf, param->name);
+    string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
 }

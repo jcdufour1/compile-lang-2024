@@ -139,7 +139,7 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
             if (!try_strv_to_char(&raw, pos, value)) {
                 return false;
             }
-            *new_lit = uast_struct_literal_wrap(ulang_type_struct_literal_new_char(pos, raw));
+            *new_lit = uast_operator_wrap(uast_unary_wrap(ulang_type_struct_literal_new_char(pos, raw)));
             break;
         }
         default:
@@ -175,7 +175,7 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
         }
         case TOKEN_CHAR_LITERAL: {
             assert(value <= INT8_MAX);
-            new_literal = uast_struct_literal_wrap(ulang_type_struct_literal_new_char(pos, value));
+            new_literal = uast_operator_wrap(uast_unary_wrap(ulang_type_struct_literal_new_char(pos, value)));
             break;
         }
         default:
