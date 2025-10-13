@@ -2737,25 +2737,25 @@ static void load_single_is_rtn_check_internal(const char* file, int line, Ir_blo
 
 // TODO: document what this function does
 static void load_all_is_rtn_checks(Ir_block* new_block) {
-    Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
-    unwrap(pairs->info.count > 0 && "not implemented");
+    Defer_pair_vec pairs = vec_top(defered_collections.coll_stack).pairs;
+    unwrap(pairs.info.count > 0 && "not implemented");
 
     // is_rtn_check
     // TODO: maybe this check should only be done at top level of function
     //   (and is yield check should be used for child scopes)
     //   (this may not be nessessary because optimization passes could remove unnessessary assignments)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
-    load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(*pairs).label->name, after_check_rtn);
+    load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
     add_label(new_block, after_check_rtn, new_block->pos);
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, vec_top(*pairs).label->name, after_yield_check);
+    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, vec_top(pairs).label->name, after_yield_check);
     add_label(new_block, after_yield_check, new_block->pos);
 
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_cont2ing, vec_top(*pairs).label->name, after_cont2_check);
+    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_cont2ing, vec_top(pairs).label->name, after_cont2_check);
     add_label(new_block, after_cont2_check, new_block->pos);
 }
 
