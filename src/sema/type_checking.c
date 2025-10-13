@@ -921,6 +921,8 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
         return false;
     }
 
+    // TODO: try_lang_type_from_ulang_type function is always run even when cast_to lang_type is
+    //   not need, which could slow compile times
     Lang_type cast_to = {0};
     if (!try_lang_type_from_ulang_type(&cast_to, unary->lang_type)) {
         return false;
@@ -1083,7 +1085,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
 }
 
 bool try_set_struct_literal_types(
-    Tast_stmt** new_tast,
+    Tast_struct_literal** new_tast,
     Lang_type dest_lang_type,
     Uast_struct_literal* lit,
     Pos assign_pos
@@ -1122,14 +1124,12 @@ bool try_set_struct_literal_types(
         return false;
     }
 
-    Tast_struct_literal* new_lit = tast_struct_literal_new(
+    *new_tast = tast_struct_literal_new(
         lit->pos,
         new_membs,
         util_literal_name_new(),
         dest_lang_type
     );
-    *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
-
     return true;
 }
 
@@ -1245,7 +1245,7 @@ bool try_set_array_literal_types(
     return true;
 }
 
-bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
+bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type) {
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
@@ -1346,18 +1346,50 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_if_else_chain_wrap(new_for);
             return true;
         }
-        case UAST_ARRAY_LITERAL:
-            // TODO: set array literal types here?
-            unreachable("");
-        case UAST_STRUCT_LITERAL:
-            // TODO: set struct literal types here?
+        case UAST_ARRAY_LITERAL: {
+            Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
-            msg(DIAG_CHILD_PROCESS_FAILURE, uast_expr_get_pos(uast), "askdflandsfl\n");
-            //Iif (tast_get_lang_type(uast)
-            todo();
-            unreachable("");
+            msg(
+                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                lit->pos,
+                "the type of array literal could not be infered; "
+                "consider casting the struct literal to the desired type"
+                "(note: casting array literal not yet implemented\n)"
+            );
+            return false;
+        }
+        case UAST_STRUCT_LITERAL: {
+            Uast_struct_literal* lit = uast_struct_literal_unwrap(uast);
+
+            if (is_type) {
+                Tast_struct_literal* new_lit = NULL;
+                if (!try_set_struct_literal_types(
+                     &new_lit,
+                     type,
+                     uast_struct_literal_unwrap(uast),
+                     uast_struct_literal_unwrap(uast)->pos
+                )) {
+                    return false;
+                }
+                *new_tast = tast_struct_literal_wrap(new_lit);
+                return true;
+            }
+
+            msg(
+                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                lit->pos,
+                "the type of struct literal could not be infered; "
+                "consider casting the struct literal to the desired type"
+                "(note: casting array literal not yet implemented\n)"
+            );
+            return false;
+        }
     }
     unreachable("");
+}
+
+bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
+    return try_set_expr_types_internal(new_tast, uast, false, (Lang_type) {0});
 }
 
 STMT_STATUS try_set_def_types(Uast_def* uast) {
@@ -2383,7 +2415,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         size_t old_error_count = error_count;
                         size_t old_warn_count = warning_count;
 
-                        params_log_level = LOG_FATAL;
+                        //params_log_level = LOG_FATAL;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(&fun_call->args, param_idx))) {
                             params_log_level = old_log_level;
                             error_count = old_error_count;

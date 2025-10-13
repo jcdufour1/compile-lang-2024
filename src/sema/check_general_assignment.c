@@ -178,7 +178,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
     Pos pos
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
-        Tast_stmt* new_src_ = NULL;
+        Tast_struct_literal* new_src_ = NULL;
         if (!try_set_struct_literal_types(
              &new_src_,
              dest_lang_type,
@@ -186,7 +186,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
         )) {
             return CHECK_ASSIGN_ERROR;
         }
-        *new_src = tast_expr_unwrap(new_src_);
+        *new_src = tast_struct_literal_wrap(new_src_);
     } else if (src->type == UAST_ARRAY_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_array_literal_types(

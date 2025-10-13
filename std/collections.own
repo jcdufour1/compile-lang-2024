@@ -240,7 +240,7 @@ fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line,
 fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) NumT {
     let should_neg u1 = 0
     // TODO: remove bitcasts when possible
-    if util.bitcast(u8, slice_at(str, 0, .file = file, .line = line, .column = column)) == util.bitcast(u8, '-') {
+    if util.bitcast(u8, slice_at(str, 0, .file = file, .line = line, .column = column)) == util.bitcast(u8, '-', char) {
         should_neg = 1
         str = slice_range(str, 1, str.count - 1)
     }
@@ -251,7 +251,7 @@ fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32
 
         let curr char = slice_at(str, idx, .file = file, .line = line, .column = column)
         assert(curr >= '0' && curr <= '9', "str contains nonzero digits", .file = file, .line = line, .column = column)
-        result += curr - '0'
+        result += util.bitcast(NumT, curr) - util.bitcast(NumT, '0')
     }
 
     if should_neg {
