@@ -75,7 +75,7 @@ static void expand_using_using(Uast_using* using) {
                     Uast_def* prev_def = NULL;
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
                     if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-                        if (!is_builtin) {
+                        if (!is_builtin || !strv_starts_with(uast_def_get_name(prev_def).mod_path, MOD_PATH_STD)) {
                             msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
                         }
                     }

@@ -707,7 +707,7 @@ Long_option_pair long_options[] = {
         long_option_path_c_compiler,
         true
     },
-    {"no-prelude", "TODO", long_option_no_prelude, false},
+    {"no-prelude", "disable the prelude (std::prelude)", long_option_no_prelude, false},
     {
         "set-log-level",
         "=OPT where OPT is "

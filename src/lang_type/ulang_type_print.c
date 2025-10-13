@@ -4,7 +4,6 @@
 #include <lang_type_print.h>
 #include <env.h>
 
-// TODO: move this to ulang_type.c, or make ulang_type_print.h header
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     bool old_silent_resol_errors = env.silent_generic_resol_errors;
     env.silent_generic_resol_errors = true;
