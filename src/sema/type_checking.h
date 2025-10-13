@@ -85,15 +85,13 @@ bool try_set_unary_types_finish(
 bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary);
 
 bool try_set_tuple_assignment_types(
-     
     Tast_tuple** new_tast,
     Lang_type dest_lang_type,
     Uast_tuple* tuple
 );
 
 bool try_set_struct_literal_types(
-     
-    Tast_stmt** new_tast,
+    Tast_struct_literal** new_tast,
     Lang_type dest_lang_type,
     Uast_struct_literal* lit,
     Pos assign_pos

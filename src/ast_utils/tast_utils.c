@@ -8,8 +8,10 @@ Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
     return try_set_literal_types(util_uast_literal_new_from_double(value, pos));
 }
 
-Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
+Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    Tast_expr* new_lit = NULL;
+    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos)));
+    return new_lit;
 }
 
 Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
@@ -24,9 +26,7 @@ Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE 
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_expr_get_pos(if_cond_child),
-        tast_literal_wrap(
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
-        ),
+        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child)),
         if_cond_child,
         BINARY_NOT_EQUAL,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), 32, 0)))

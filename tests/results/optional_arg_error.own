@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/optional_arg_error.own:2:20:[1;31merror[0;39m:argument is of type `Slice(<u8>)`, but the corresponding parameter `text` is of type `u8`
+tests/inputs/optional_arg_error.own:2:20:[1;31merror[0;39m:argument is of type `Slice(<char>)`, but the corresponding parameter `text` is of type `u8`
      1 | 
      2 | fn thing(text u8 = "hello") {
        |                    ^

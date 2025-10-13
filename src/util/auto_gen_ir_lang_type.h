@@ -150,7 +150,7 @@ static Ir_lang_type_type ir_lang_type_gen_opaque(const char* prefix) {
     Ir_lang_type_type sym = {.name = ir_lang_type_name_new(prefix, base_name, false)};
 
     // TODO: get rid of these unneeded atoms
-    append_member(&sym.members, "Ir_lang_type_atom", "atom");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

@@ -3,8 +3,6 @@
 
 #include <uast.h>
 
-Uast_char* uast_char_clone(const Uast_char* lit);
-
 Uast_literal* uast_literal_clone(const Uast_literal* lit);
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id new_scope, Pos dest_pos);

@@ -19,8 +19,6 @@ static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type);
 
 static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            unreachable("");
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
         case LANG_TYPE_SIGNED_INT:
@@ -59,8 +57,6 @@ static inline bool lang_type_is_number_like(Lang_type lang_type) {
         return false;
     }
     switch (lang_type_primitive_const_unwrap(lang_type).type) {
-        case LANG_TYPE_CHAR:
-            return true;
         case LANG_TYPE_SIGNED_INT:
             return true;
         case LANG_TYPE_UNSIGNED_INT:
@@ -76,8 +72,6 @@ static inline bool lang_type_is_number_like(Lang_type lang_type) {
 // for general use
 static inline bool lang_type_primitive_is_number(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            return false;
         case LANG_TYPE_SIGNED_INT:
             return true;
         case LANG_TYPE_UNSIGNED_INT:
@@ -116,28 +110,6 @@ static inline bool lang_type_is_unsigned(Lang_type lang_type) {
 static inline int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
     return strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1));
-}
-
-static inline Lang_type lang_type_new_ux(int32_t bit_width) {
-    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
-    ));
-}
-
-static inline Lang_type lang_type_new_usize(void) {
-    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, params.sizeof_usize, 0)
-    ));
-}
-
-static inline Lang_type lang_type_new_u1(void) {
-    return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-    ));
-}
-
-static inline Lang_type lang_type_new_void(void) {
-    return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 }
 
 static inline bool is_struct_like(LANG_TYPE_TYPE type) {

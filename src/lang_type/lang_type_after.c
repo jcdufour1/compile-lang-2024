@@ -2,12 +2,6 @@
 
 Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR: {
-            // TODO: remove lang_type_atom from lang_type_char?
-            Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            return atom;
-        }
         case LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
@@ -48,11 +42,10 @@ Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type
             return atom;
         }
         case LANG_TYPE_OPAQUE: {
-            // TODO: remove atom from LANG_TYPE_OPAQUE
-            Lang_type_atom atom = lang_type_opaque_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
+            return lang_type_atom_new(
+                name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+                lang_type_opaque_const_unwrap(lang_type).pointer_depth
+            );
         }
     }
     unreachable("");
@@ -170,9 +163,6 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
 // TODO: remove this function?
 void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
-        case LANG_TYPE_CHAR:
-            lang_type_char_unwrap(lang_type)->atom = atom;
-            return;
         case LANG_TYPE_SIGNED_INT:
             lang_type_signed_int_unwrap(lang_type)->bit_width = strv_to_int64_t(
                 POS_BUILTIN,
@@ -195,7 +185,8 @@ void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom
             lang_type_float_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
         case LANG_TYPE_OPAQUE:
-            lang_type_opaque_unwrap(lang_type)->atom = atom;
+            assert(strv_is_equal(atom.str.base, sv("opaque")));
+            lang_type_opaque_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
     }
     unreachable("");

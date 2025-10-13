@@ -107,8 +107,6 @@ Strv tast_literal_print_internal(const Tast_literal* lit, int indent) {
             return tast_void_print_internal(tast_void_const_unwrap(lit), indent);
         case TAST_ENUM_TAG_LIT:
             return tast_enum_tag_lit_print_internal(tast_enum_tag_lit_const_unwrap(lit), indent);
-        case TAST_CHAR:
-            return tast_char_print_internal(tast_char_const_unwrap(lit), indent);
         case TAST_ENUM_LIT:
             return tast_enum_lit_print_internal(tast_enum_lit_const_unwrap(lit), indent);
         case TAST_RAW_UNION_LIT:
@@ -291,17 +289,6 @@ Strv tast_void_print_internal(const Tast_void* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "void\n", indent);
-
-    return string_to_strv(buf);
-}
-
-Strv tast_char_print_internal(const Tast_char* num, int indent) {
-    (void) num;
-    String buf = {0};
-
-    string_extend_cstr_indent(&a_print, &buf, "char", indent);
-    vec_append(&a_print, &buf, num->data);
-    string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
 }

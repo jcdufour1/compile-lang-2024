@@ -123,7 +123,8 @@ def do_tests(
     action: Action,
     count_threads: int,
     keep_going: bool,
-    path_c_compiler: Optional[str]
+    path_c_compiler: Optional[str],
+    do_color: bool
 ):
     success = True
 
@@ -147,7 +148,7 @@ def do_tests(
 
     # TODO: run multiple tests at once
     for file in get_files_to_test(files_to_test):
-        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text, path_c_compiler):
+        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text, path_c_compiler, do_color):
             if not keep_going:
                 sys.exit(1)
             success = False
@@ -166,7 +167,8 @@ def test_file(
     output_name: str,
     action: Action,
     debug_release_text: str,
-    path_c_compiler: Optional[str]
+    path_c_compiler: Optional[str],
+    do_color: bool
 ) -> bool:
     result: TestResult = compile_test(do_debug, output_name, file, debug_release_text, path_c_compiler)
 
@@ -181,36 +183,53 @@ def test_file(
         raise AssertionError("uncovered case")
 
     if normalize(process_result) != normalize(expected_output):
-        stdout_color: str = ""
+        actual_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
         diff = difflib.SequenceMatcher(None, expected_output, process_result)
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':
-                stdout_color += Changes.ADDED + \
-                                process_result[stdout_start:stdout_end] + \
-                                Changes.TO_NORMAL
+                if do_color:
+                    actual_color += Changes.ADDED + \
+                                    process_result[stdout_start:stdout_end] + \
+                                    Changes.TO_NORMAL
+                else:
+                    actual_color = process_result[stdout_start:stdout_end]
             elif tag == 'equal':
                 expected_color += process_result[stdout_start:stdout_end]
-                stdout_color += process_result[stdout_start:stdout_end]
+                actual_color += process_result[stdout_start:stdout_end]
             elif tag == 'replace':
-                expected_color += Changes.REMOVED + \
-                                  expected_output[expected_start:expected_end] + \
-                                  Changes.TO_NORMAL
-                stdout_color += Changes.ADDED + \
-                                process_result[stdout_start:stdout_end] + \
-                                Changes.TO_NORMAL
+                if do_color:
+                    expected_color += Changes.REMOVED + \
+                                      expected_output[expected_start:expected_end] + \
+                                      Changes.TO_NORMAL
+                    actual_color += Changes.ADDED + \
+                                    process_result[stdout_start:stdout_end] + \
+                                    Changes.TO_NORMAL
+                else:
+                    expected_color = expected_output[expected_start:expected_end]
+                    actual_color += process_result[stdout_start:stdout_end]
             elif tag == 'delete':
-                expected_color += Changes.REMOVED + \
-                                  expected_output[expected_start:expected_end] + \
-                                  Changes.TO_NORMAL
+                if do_color:
+                    expected_color += Changes.REMOVED + \
+                                      expected_output[expected_start:expected_end] + \
+                                      Changes.TO_NORMAL
+                else:
+                    expected_color += expected_output[expected_start:expected_end]
+                                      
             else:
                 print_error("tag unregonized:" + tag)
                 assert False
         print_info("expected output:")
-        print(expected_color)
+        if do_color:
+            print(expected_color)
+        else:
+            print(expected_output)
         print_info("actual output:")
-        print(stdout_color)
+        if do_color:
+            print(actual_color)
+        else:
+            print(process_result)
         return False
 
     print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
@@ -227,13 +246,14 @@ def append_all_files(list_or_map: list | dict, callback: Callable):
 def add_to_map(map: dict, path: str):
     map[path] = 0
 
-def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str]]:
+def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str], bool]:
     action: Action = Action.TEST
     test_output = "test.c" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     keep_going: bool = True
     has_found_flag = False
     path_c_compiler: Optional[str] = None
+    do_color: bool = True
     for arg in sys.argv[1:]:
         if arg.startswith("--keep-going"):
             keep_going = True
@@ -245,6 +265,8 @@ def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str]]:
             action = Action.TEST
         elif arg.startswith("--output-file="):
             test_output = arg[len("--output-file="):]
+        elif arg.startswith("--no-color"):
+            do_color = False
         elif arg.startswith("--path-c-compiler="):
             path_c_compiler = arg[len("--path-c-compiler="):]
         elif arg.startswith("--exclude="):
@@ -271,14 +293,16 @@ def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str]]:
     to_include_list: list[str] = []
     for path in to_include:
         to_include_list.append(path)
-    return to_include_list, test_output, action, keep_going, path_c_compiler
+    return to_include_list, test_output, action, keep_going, path_c_compiler, do_color
 
 def main() -> None:
     files_to_test: list[str]
     test_output: str
     action: Action
     keep_going: bool
-    files_to_test, test_output, action, keep_going, path_c_compiler = parse_args()
+    do_color: bool
+    # TODO: make a class with params because there are many parameters being passed around now
+    files_to_test, test_output, action, keep_going, path_c_compiler, do_color = parse_args()
 
     count_threads: int
     try:
@@ -288,8 +312,9 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler)
-    do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler)
+    # TODO: when --update is used, only one of debug or release should be ran (to save time)
+    do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
+    do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     print_success("all tests passed")
 
 if __name__ == '__main__':

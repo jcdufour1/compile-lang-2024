@@ -72,25 +72,19 @@ static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, 
 
 // TODO: this function should also actually do the implicit conversion I think
 bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
-    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
-    if (gen_args_u8.info.count < 1) {
-        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
-    }
-
     if (dest.type != LANG_TYPE_PRIMITIVE) {
         goto next;
-    } 
-    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_CHAR && lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
+    }
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
         goto next;
-    } 
+    }
     if (lang_type_get_pointer_depth(dest) != 1) {
         goto next;
-    } 
+    }
     if (src.type != LANG_TYPE_STRUCT) {
         goto next;
-    } 
-
-    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+    }
+    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL))) {
         goto next;
     }
     return true;
@@ -184,7 +178,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
     Pos pos
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
-        Tast_stmt* new_src_ = NULL;
+        Tast_struct_literal* new_src_ = NULL;
         if (!try_set_struct_literal_types(
              &new_src_,
              dest_lang_type,
@@ -192,7 +186,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
         )) {
             return CHECK_ASSIGN_ERROR;
         }
-        *new_src = tast_expr_unwrap(new_src_);
+        *new_src = tast_struct_literal_wrap(new_src_);
     } else if (src->type == UAST_ARRAY_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_array_literal_types(

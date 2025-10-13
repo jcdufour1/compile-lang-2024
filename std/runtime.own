@@ -6,6 +6,10 @@ type Slice struct(<ItemT>) {
     count u64
 }
 
+type char struct {
+    item u8
+}
+
 fn slice_at_ref(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return &slice.buf[index]
