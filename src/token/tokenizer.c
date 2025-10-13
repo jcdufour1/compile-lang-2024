@@ -252,7 +252,7 @@ static bool get_next_token(
                 if (file_text_rem->base.count < 2) {
                     msg(
                         DIAG_MISSING_CLOSE_MULTILINE, 
-                        vec_top(&pos_stack), "unmatched opening `/*`\n"
+                        vec_top(pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;
                 }
@@ -688,7 +688,7 @@ bool tokenize(Tk_view* result, Strv file_path) {
         // avoid consecutive newline tokens
         if (
             tokens.info.count > 1 && 
-            vec_top(&tokens).type == TOKEN_NEW_LINE &&
+            vec_top(tokens).type == TOKEN_NEW_LINE &&
             curr_token.type == TOKEN_NEW_LINE
         ) {
             continue;

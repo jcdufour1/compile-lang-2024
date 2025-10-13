@@ -70,7 +70,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_print, string, ", ");
                 }
-                extend_ulang_type_to_string(string, mode, vec_at(&tuple.ulang_types, idx));
+                extend_ulang_type_to_string(string, mode, vec_at(tuple.ulang_types, idx));
             }
             vec_append(&a_print, string, ')');
             return;

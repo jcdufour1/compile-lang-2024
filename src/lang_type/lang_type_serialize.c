@@ -4,7 +4,7 @@
 Strv serialize_struct_def_base(Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Lang_type curr = vec_at(&base.members, idx)->lang_type;
+        Lang_type curr = vec_at(base.members, idx)->lang_type;
         string_extend_strv(&a_main, &name, serialize_lang_type(curr));
         //string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(curr));
         //string_extend_cstr(&a_main, &name, "_");
@@ -51,7 +51,7 @@ Strv serialize_lang_type_struct_thing(Lang_type lang_type) {
 Strv serialize_lang_type_tuple(Lang_type_tuple lang_type) {
     String name = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        Lang_type curr = vec_at_const(lang_type.lang_types, idx);
+        Lang_type curr = vec_at(lang_type.lang_types, idx);
         string_extend_strv(&a_main, &name, serialize_lang_type(curr));
     }
     return string_to_strv(name);

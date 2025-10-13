@@ -179,7 +179,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
+        const Tast_variable_def* memb_def = vec_at(base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         end_alignment = max(end_alignment, alignof_lang_type(memb_def->lang_type));
         if (is_sum_type) {
@@ -197,7 +197,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
 uint64_t alignof_struct_def_base(const Struct_def_base* base) {
     uint64_t max_align = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        max_align = max(max_align, alignof_lang_type(vec_at(&base->members, idx)->lang_type));
+        max_align = max(max_align, alignof_lang_type(vec_at(base->members, idx)->lang_type));
     }
     return max_align;
 }
@@ -252,7 +252,7 @@ uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
+        const Tast_variable_def* memb_def = vec_at(base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;

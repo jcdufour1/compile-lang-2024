@@ -43,7 +43,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
-        Ulang_type curr = vec_at_const(ulang_type.ulang_types, idx);
+        Ulang_type curr = vec_at(ulang_type.ulang_types, idx);
         string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, curr, include_scope)));
     }
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0);
@@ -60,7 +60,7 @@ Name serialize_ulang_type_gen_param(Strv mod_path) {
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, vec_at(&vec, idx), include_scope)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, vec_at(vec, idx), include_scope)));
     }
     return string_to_strv(name);
 }

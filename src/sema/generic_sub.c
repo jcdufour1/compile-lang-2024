@@ -54,7 +54,7 @@ void generic_sub_lang_type_regular(
     lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
+        generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(*gen_args, idx), gen_param, gen_arg);
     }
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
@@ -72,7 +72,7 @@ void generic_sub_lang_type_gen_param(
 
 void generic_sub_lang_type_tuple(Ulang_type_tuple* lang_type, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lang_type->ulang_types.info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(&lang_type->ulang_types, idx), gen_param, gen_arg);
+        generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(lang_type->ulang_types, idx), gen_param, gen_arg);
     }
 }
 
@@ -139,7 +139,7 @@ void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
     generic_sub_name(&base->name, gen_param, gen_arg);
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        generic_sub_lang_type(&vec_at(&base->members, idx)->lang_type, vec_at(&base->members, idx)->lang_type, gen_param, gen_arg);
+        generic_sub_lang_type(&vec_at(base->members, idx)->lang_type, vec_at(base->members, idx)->lang_type, gen_param, gen_arg);
     }
 }
 
@@ -230,20 +230,20 @@ void generic_sub_if(Uast_if* lang_if, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-        generic_sub_if(vec_at(&if_else->uasts, idx), gen_param, gen_arg);
+        generic_sub_if(vec_at(if_else->uasts, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_array_literal(Uast_array_literal* lit, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        generic_sub_expr(vec_at(&lit->members, idx), gen_param, gen_arg);
+        generic_sub_expr(vec_at(lit->members, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
-        generic_sub_case(vec_at(&lang_switch->cases, idx), gen_param, gen_arg);
+        generic_sub_case(vec_at(lang_switch->cases, idx), gen_param, gen_arg);
     }
 }
 
@@ -276,7 +276,7 @@ void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using na
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
+        generic_sub_stmt(vec_at(block->children, idx), gen_param, gen_arg);
     }
 }
 
@@ -335,14 +335,14 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        generic_sub_expr(vec_at(&fun_call->args, idx), gen_param, gen_arg);
+        generic_sub_expr(vec_at(fun_call->args, idx), gen_param, gen_arg);
     }
     generic_sub_expr(fun_call->callee, gen_param, gen_arg);
 }
 
 void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        generic_sub_expr(vec_at(&lit->members, idx), gen_param, gen_arg);
+        generic_sub_expr(vec_at(lit->members, idx), gen_param, gen_arg);
     }
 }
 
@@ -410,7 +410,7 @@ void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
         return;
     }
     for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(&name->gen_args, idx), vec_at(&name->gen_args, idx), gen_param, gen_arg);
+        generic_sub_lang_type(vec_at_ref(&name->gen_args, idx), vec_at(name->gen_args, idx), gen_param, gen_arg);
     }
     // TODO
 }

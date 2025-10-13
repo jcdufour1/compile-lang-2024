@@ -58,7 +58,7 @@ Strv uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     extend_pos(&buf, sym->pos);
     extend_name(NAME_LOG, &buf, sym->name);
     for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
-        extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&sym->name.gen_args, idx));
+        extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(sym->name.gen_args, idx));
     }
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -110,7 +110,7 @@ Strv uast_function_call_print_internal(const Uast_function_call* fun_call, int i
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Strv arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
+        Strv arg_text = uast_expr_print_internal(vec_at(fun_call->args, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
@@ -124,7 +124,7 @@ Strv uast_struct_literal_print_internal(const Uast_struct_literal* lit, int inde
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
@@ -138,7 +138,7 @@ Strv uast_array_literal_print_internal(const Uast_array_literal* lit, int indent
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
@@ -152,7 +152,7 @@ Strv uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
     string_extend_cstr(&a_print, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Strv memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_expr_print_internal(vec_at(lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
@@ -241,16 +241,16 @@ Strv uast_block_print_internal(const Uast_block* block, int indent) {
     string_extend_cstr(&a_print, &buf, "\n");
 
     string_extend_cstr_indent(&a_print, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
-    usymbol_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
+    usymbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_print, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-    symbol_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
+    symbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_print, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-    alloca_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
+    alloca_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Strv arg_text = uast_stmt_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = uast_stmt_print_internal(vec_at(block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
@@ -263,7 +263,7 @@ Strv uast_function_params_print_internal(const Uast_function_params* function_pa
     string_extend_cstr_indent(&a_print, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Strv arg_text = uast_param_print_internal(vec_at(&function_params->params, idx), indent);
+        Strv arg_text = uast_param_print_internal(vec_at(function_params->params, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -322,7 +322,7 @@ Strv uast_switch_print_internal(const Uast_switch* lang_switch, int indent) {
     string_extend_cstr_indent(&a_print, &buf, "switch\n", indent);
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(lang_switch->operand, indent + INDENT_WIDTH));
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
-        string_extend_strv(&a_print, &buf, uast_case_print_internal(vec_at(&lang_switch->cases, idx), indent + INDENT_WIDTH));
+        string_extend_strv(&a_print, &buf, uast_case_print_internal(vec_at(lang_switch->cases, idx), indent + INDENT_WIDTH));
     }
 
     return string_to_strv(buf);
@@ -575,7 +575,7 @@ Strv uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int in
     string_extend_cstr_indent(&a_print, &buf, "if_else_chain\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-        Strv arg_text = uast_if_print_internal(vec_at(&if_else->uasts, idx), indent);
+        Strv arg_text = uast_if_print_internal(vec_at(if_else->uasts, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -614,7 +614,7 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
     string_extend_cstr(&a_print, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_variable_def_print_internal(vec_at(base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, buf, memb_text);
     }
 }

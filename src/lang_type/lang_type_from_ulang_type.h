@@ -59,12 +59,12 @@ static inline bool try_lang_type_from_ulang_type_tuple(
 ) {
     Lang_type_vec new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
-        if (vec_at(&lang_type.ulang_types, idx).type == ULANG_TYPE_GEN_PARAM) {
+        if (vec_at(lang_type.ulang_types, idx).type == ULANG_TYPE_GEN_PARAM) {
             continue;
         }
 
         Lang_type new_child = {0};
-        if (!try_lang_type_from_ulang_type(&new_child, vec_at(&lang_type.ulang_types, idx))) {
+        if (!try_lang_type_from_ulang_type(&new_child, vec_at(lang_type.ulang_types, idx))) {
             return false;
         }
         vec_append(&a_main, &new_lang_types, new_child);
@@ -216,7 +216,7 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
     // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
     Ulang_type_vec new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
+        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
     }
     return ulang_type_tuple_new(new_types, lang_type.pos);
 }

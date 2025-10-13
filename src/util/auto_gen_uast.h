@@ -657,7 +657,7 @@ static void uast_gen_uast_forward_decl(Uast_type uast) {
     String output = {0};
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_forward_decl(vec_at(&uast.sub_types, idx));
+        uast_gen_uast_forward_decl(vec_at(uast.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -681,7 +681,7 @@ static void uast_gen_uast_struct_as(String* output, Uast_type uast) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(&uast.sub_types, idx);
+        Uast_type curr = vec_at(uast.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_uast_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -704,7 +704,7 @@ static void uast_gen_uast_struct_enum(String* output, Uast_type uast) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(&uast.sub_types, idx);
+        Uast_type curr = vec_at(uast.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_uast_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -721,7 +721,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
     String output = {0};
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_struct(vec_at(&uast.sub_types, idx));
+        uast_gen_uast_struct(vec_at(uast.sub_types, idx));
     }
 
     if (uast.sub_types.info.count > 0) {
@@ -755,7 +755,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
     }
 
     for (size_t idx = 0; idx < uast.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&uast.members, idx));
+        extend_struct_member(&output, vec_at(uast.members, idx));
     }
 
     if (uast.sub_types.info.count < 1) {
@@ -773,7 +773,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
 
 static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        uast_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -819,7 +819,7 @@ static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
 
 static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        uast_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -870,7 +870,7 @@ void uast_gen_uast_wrap(Uast_type uast) {
 // TODO: deduplicate these functions (use same function for Ir and Uast)
 static void uast_gen_print_forward_decl(Uast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        uast_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     if (type.name.is_topmost) {
@@ -896,7 +896,7 @@ static void uast_gen_print_forward_decl(Uast_type type) {
 
 static void uast_gen_new_internal(Uast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        uast_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -921,7 +921,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, ", ");
         }
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -951,7 +951,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, "    uast_");
             extend_strv_lower(&function, type.name.base);
@@ -979,7 +979,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
 
 static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
+        uast_gen_internal_get_pos(vec_at(type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -1005,7 +1005,7 @@ static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    switch (uast->type) {\n");
 
             for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-                Uast_type curr = vec_at(&type.sub_types, idx);
+                Uast_type curr = vec_at(type.sub_types, idx);
                 string_extend_cstr(&gen_a, &function, "        case ");
                 extend_uast_name_upper(&function, curr.name);
                 string_extend_cstr(&gen_a, &function, ":\n");
@@ -1051,7 +1051,7 @@ static void gen_uast_define_get_pos(Uast_type uast) {
 
 static void gen_uast_vecs(Uast_type uast) {
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        gen_uast_vecs(vec_at(&uast.sub_types, idx));
+        gen_uast_vecs(vec_at(uast.sub_types, idx));
     }
 
     String vec_name = {0};

@@ -41,7 +41,7 @@ bool read_file(Strv* result, Strv file_path) {
 
     fclose(file);
 
-    if (file_text.info.count < 1 || vec_at(&file_text, file_text.info.count - 1) != '\n') {
+    if (file_text.info.count < 1 || vec_at(file_text, file_text.info.count - 1) != '\n') {
         vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
     }
     *result = string_to_strv(file_text);

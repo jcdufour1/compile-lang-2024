@@ -32,7 +32,7 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
 Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec, bool use_new_scope, Scope_id new_scope) {
     Uast_generic_param_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(&vec, idx), use_new_scope, new_scope));
+        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(vec, idx), use_new_scope, new_scope));
     }
     return new_vec;
 }
@@ -40,7 +40,7 @@ Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec, 
 Uast_param_vec uast_param_vec_clone(Uast_param_vec vec, bool use_new_scope, Scope_id new_scope) {
     Uast_param_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_param_clone(vec_at(&vec, idx), use_new_scope, new_scope));
+        vec_append(&a_main, &new_vec, uast_param_clone(vec_at(vec, idx), use_new_scope, new_scope));
     }
     return new_vec;
 }
@@ -48,7 +48,7 @@ Uast_param_vec uast_param_vec_clone(Uast_param_vec vec, bool use_new_scope, Scop
 Uast_if_vec uast_if_vec_clone(Uast_if_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     Uast_if_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_if_clone(vec_at(&vec, idx), use_new_scope, new_scope, dest_pos));
+        vec_append(&a_main, &new_vec, uast_if_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
     }
     return new_vec;
 }
@@ -56,7 +56,7 @@ Uast_if_vec uast_if_vec_clone(Uast_if_vec vec, bool use_new_scope, Scope_id new_
 Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     Uast_expr_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(&vec, idx), use_new_scope, new_scope, dest_pos));
+        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
     }
     return new_vec;
 }
@@ -64,7 +64,7 @@ Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec, bool use_new_scope, Scope_i
 Uast_case_vec uast_case_vec_clone(Uast_case_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     Uast_case_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_case_clone(vec_at(&vec, idx), use_new_scope, new_scope, dest_pos));
+        vec_append(&a_main, &new_vec, uast_case_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
     }
     return new_vec;
 }
@@ -418,7 +418,7 @@ Uast_block* uast_block_clone(const Uast_block* block, bool use_new_scope, Scope_
     Uast_stmt_vec new_children = {0};
     Scope_id scope = use_new_scope ? scope_id_clone(block->scope_id, parent) : block->scope_id;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), use_new_scope, scope, dest_pos));
+        vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(block->children, idx), use_new_scope, scope, dest_pos));
     }
     return uast_block_new(block->pos, new_children, block->pos_end, scope);
 }

@@ -636,7 +636,7 @@ static bool expand_def_param(Uast_param* param) {
 bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
-        status = expand_def_generic_param(vec_at(params, idx)) && status;
+        status = expand_def_generic_param(vec_at(*params, idx)) && status;
     }
     return status;
 }
@@ -644,7 +644,7 @@ bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
 bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
-        status = expand_def_variable_def(vec_at(defs, idx)) && status;
+        status = expand_def_variable_def(vec_at(*defs, idx)) && status;
     }
     return status;
 }
@@ -652,7 +652,7 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
 bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
-        status = expand_def_expr(vec_at_ref(exprs, idx), vec_at(exprs, idx)) && status;
+        status = expand_def_expr(vec_at_ref(exprs, idx), vec_at(*exprs, idx)) && status;
     }
     return status;
 }
@@ -660,7 +660,7 @@ bool expand_def_expr_vec(Uast_expr_vec* exprs) {
 bool expand_def_case_vec(Uast_case_vec* cases) {
     bool status = true;
     for (size_t idx = 0; idx < cases->info.count; idx++) {
-        if (!expand_def_case(vec_at(cases, idx))) {
+        if (!expand_def_case(vec_at(*cases, idx))) {
             status = false;
         }
     }
@@ -670,7 +670,7 @@ bool expand_def_case_vec(Uast_case_vec* cases) {
 bool expand_def_if_vec(Uast_if_vec* ifs) {
     bool status = true;
     for (size_t idx = 0; idx < ifs->info.count; idx++) {
-        if (!expand_def_if(vec_at(ifs, idx))) {
+        if (!expand_def_if(vec_at(*ifs, idx))) {
             status = false;
         }
     }
@@ -680,7 +680,7 @@ bool expand_def_if_vec(Uast_if_vec* ifs) {
 static bool expand_def_function_params(Uast_function_params* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        if (!expand_def_param(vec_at(&params->params, idx))) {
+        if (!expand_def_param(vec_at(params->params, idx))) {
             status = false;
         }
     }
@@ -780,7 +780,7 @@ bool expand_def_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(&block->children, idx)) && status;
+        status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(block->children, idx)) && status;
     }
 
     return status;

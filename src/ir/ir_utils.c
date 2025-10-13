@@ -220,7 +220,7 @@ Ir* ir_from_get_name(Name name) {
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Name memb_name) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        if (name_is_equal(vec_at(&def->base.members, idx)->name_self, memb_name)) {
+        if (name_is_equal(vec_at(def->base.members, idx)->name_self, memb_name)) {
             return idx;
         }
     }

@@ -478,7 +478,7 @@ static void ir_gen_ir_forward_decl(Ir_type ir) {
     String output = {0};
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        ir_gen_ir_forward_decl(vec_at(&ir.sub_types, idx));
+        ir_gen_ir_forward_decl(vec_at(ir.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -502,7 +502,7 @@ static void ir_gen_ir_struct_as(String* output, Ir_type ir) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        Ir_type curr = vec_at(&ir.sub_types, idx);
+        Ir_type curr = vec_at(ir.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -525,7 +525,7 @@ static void ir_gen_ir_struct_enum(String* output, Ir_type ir) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        Ir_type curr = vec_at(&ir.sub_types, idx);
+        Ir_type curr = vec_at(ir.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -542,7 +542,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
     String output = {0};
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        ir_gen_ir_struct(vec_at(&ir.sub_types, idx));
+        ir_gen_ir_struct(vec_at(ir.sub_types, idx));
     }
 
     if (ir.sub_types.info.count > 0) {
@@ -576,7 +576,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
     }
 
     for (size_t idx = 0; idx < ir.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&ir.members, idx));
+        extend_struct_member(&output, vec_at(ir.members, idx));
     }
 
     if (ir.sub_types.info.count < 1) {
@@ -597,7 +597,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
 
 static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        ir_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -642,7 +642,7 @@ static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
 
 static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        ir_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -691,7 +691,7 @@ void ir_gen_ir_wrap(Ir_type ir) {
 
 static void ir_gen_print_forward_decl(Ir_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        ir_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     String function = {0};
@@ -722,7 +722,7 @@ static void ir_gen_print_forward_decl(Ir_type type) {
 
 static void ir_gen_new_internal(Ir_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        ir_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -745,7 +745,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ", ");
             }
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " ");
             string_extend_strv(&gen_a, &function, curr.name);
@@ -763,7 +763,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ", ");
             }
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " ");
             string_extend_strv(&gen_a, &function, curr.name);
@@ -787,7 +787,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, ", ");
         }
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -820,7 +820,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, "    ir_");
             extend_strv_lower(&function, type.name.base);
@@ -846,7 +846,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
 
 static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
+        ir_gen_internal_get_pos(vec_at(type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -872,7 +872,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    switch (ir->type) {\n");
 
             for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-                Ir_type curr = vec_at(&type.sub_types, idx);
+                Ir_type curr = vec_at(type.sub_types, idx);
                 string_extend_cstr(&gen_a, &function, "        case ");
                 extend_ir_name_upper(&function, curr.name);
                 string_extend_cstr(&gen_a, &function, ":\n");
@@ -917,7 +917,7 @@ static void gen_ir_define_get_pos(Ir_type ir) {
 
 static void gen_ir_vecs(Ir_type ir) {
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        gen_ir_vecs(vec_at(&ir.sub_types, idx));
+        gen_ir_vecs(vec_at(ir.sub_types, idx));
     }
 
     String vec_name = {0};

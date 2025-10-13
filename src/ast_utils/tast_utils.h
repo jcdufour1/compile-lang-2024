@@ -33,7 +33,7 @@ static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_ve
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ir_lang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!ir_lang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
             return false;
         }
     }
@@ -88,7 +88,7 @@ static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!lang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!lang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
             return false;
         }
     }
@@ -247,7 +247,7 @@ static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chai
     if (if_else->tasts.info.count < 1) {
         return lang_type_void_const_wrap(lang_type_void_new(if_else->pos));
     }
-    return vec_at(&if_else->tasts, 0)->yield_type;
+    return vec_at(if_else->tasts, 0)->yield_type;
 }
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
@@ -578,7 +578,7 @@ size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        const Tast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }

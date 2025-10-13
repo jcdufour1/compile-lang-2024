@@ -68,10 +68,6 @@ typedef struct {
     } while(0)
 
 #define vec_at(vector, index) \
-    (unwrap((vector)->info.count > (index) && "out of bounds"), (vector)->buf[(index)])
-
-// TODO: make `vec_at_const` the new at function everywhere
-#define vec_at_const(vector, index) \
     (unwrap((vector).info.count > (index) && "out of bounds"), (vector).buf[(index)])
 
 #define vec_at_ref(vector, index) \
@@ -93,7 +89,7 @@ typedef struct {
     } while(0)
 
 #define vec_top(vector) \
-    (unwrap((vector)->info.count > 0 && "out of bounds"), vec_at((vector), (vector)->info.count - 1))
+    (unwrap((vector).info.count > 0 && "out of bounds"), vec_at((vector), (vector).info.count - 1))
 
 #define vec_top_ref(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), vec_at_ref((vector), (vector)->info.count - 1))
