@@ -312,6 +312,7 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
+    # TODO: when --update is used, only one of debug or release should be ran (to save time)
     do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     print_success("all tests passed")
