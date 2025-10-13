@@ -2498,13 +2498,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     }
     while (1) {
         Name curr_scope = vec_at(defered_collections.coll_stack, idx).curr_scope_name;
-        if (
-            use_break_out_of &&
-            name_is_equal(
-                curr_scope,
-                break_out_of_scope
-            )
-        ) {
+        if (use_break_out_of && name_is_equal(curr_scope, break_out_of_scope)) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2534,6 +2528,8 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                     load_assignment(new_block, new_assign);
                 }
             }
+
+            break;
         } else {
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
@@ -2546,27 +2542,14 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             load_assignment(new_block, is_brk_assign_aux);
         }
 
-        // NOTE: if tast_def_from_name fails, then there is a bug in the type checking pass
-        // TODO: figure out why this if statement is duplicated in this function
-        if (
-            use_break_out_of &&
-            name_is_equal(
-                curr_scope,
-                break_out_of_scope 
-            )
-        ) {
-            break;
-        }
-
         if (idx < 1) {
-            if (!use_break_out_of) {
-                break;
+            if (use_break_out_of) {
+                msg(
+                    DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
+                    "label `"FMT"` points to a scope that is not a parent of this statement\n",
+                    name_print(NAME_MSG, break_out_of)
+                );
             }
-            msg(
-                DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
-                "label `"FMT"` points to a scope that is not a parent of this statement\n",
-                name_print(NAME_MSG, break_out_of)
-            );
             break;
         }
         unwrap(idx > 0);
@@ -2786,8 +2769,6 @@ static Ir_block* load_block(
         util_literal_name_new_prefix(sv("yield_dest"))
     );
     *yield_dest_name = yield_dest->name;
-    //unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
-    //load_variable_def(new_block, yield_dest);
 
     Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
     Tast_def* curr = NULL;
