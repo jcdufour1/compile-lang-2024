@@ -85,6 +85,7 @@ typedef enum {
     DIAG_FILE_INVALID_NAME,
     DIAG_IF_SHOULD_BE_IF_LET,
     DIAG_UNSUPPORTED_TARGET_TRIPLET,
+    DIAG_INVALID_LITERAL_PREFIX,
 
     // count of cases for static asserts
     DIAG_COUNT,

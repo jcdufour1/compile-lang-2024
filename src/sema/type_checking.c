@@ -1413,7 +1413,7 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
             if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
-                assert(error_count > 0);
+                assert(env.error_count > 0);
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
@@ -2421,15 +2421,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
                         // prevent printing errors to the user for failed inference
                         LOG_LEVEL old_log_level = params_log_level;
-                        size_t old_error_count = error_count;
-                        size_t old_warn_count = warning_count;
+                        size_t old_error_count = env.error_count;
+                        size_t old_warn_count = env.warning_count;
 
                         // TODO: this can hide some actual errors from the user
                         params_log_level = LOG_FATAL;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
                             params_log_level = old_log_level;
-                            error_count = old_error_count;
-                            warning_count = old_warn_count;
+                            env.error_count = old_error_count;
+                            env.warning_count = old_warn_count;
 
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
@@ -2445,8 +2445,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             }
                         } else {
                             params_log_level = old_log_level;
-                            error_count = old_error_count;
-                            warning_count = old_warn_count;
+                            env.error_count = old_error_count;
+                            env.warning_count = old_warn_count;
                         }
 
                         if (infer_success) {
@@ -3312,7 +3312,7 @@ bool try_set_variable_def_types(
 ) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
-        unwrap(error_count > 0);
+        unwrap(env.error_count > 0);
         return false;
     }
 
@@ -4151,7 +4151,7 @@ error:
     if (status) {
         assert(*new_tast);
     } else {
-        assert(error_count > 0);
+        assert(env.error_count > 0);
     }
     return status;
 }
@@ -4267,7 +4267,7 @@ bool try_set_types(void) {
             expand_using_def(curr);
         }
     }
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         return false;
     }
 
@@ -4278,7 +4278,7 @@ bool try_set_types(void) {
             expand_def_def(curr);
         }
     }
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         return false;
     }
 

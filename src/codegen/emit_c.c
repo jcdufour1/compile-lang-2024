@@ -713,7 +713,7 @@ void emit_c_from_tree(void) {
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);
         }
-        if (error_count > 0) {
+        if (env.error_count > 0) {
             return;
         }
 

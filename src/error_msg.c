@@ -74,9 +74,9 @@ void msg_internal(
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fatal;
-        error_count++;
+        env.error_count++;
     } else if (log_level == LOG_WARNING) {
-        warning_count++;
+        env.warning_count++;
     }
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {

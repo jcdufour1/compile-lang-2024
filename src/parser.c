@@ -2538,7 +2538,7 @@ static PARSE_STATUS parse_block(
                 assert(child);
                 break;
             case PARSE_EXPR_ERROR:
-                assert(error_count > 0 && "error_count not incremented\n");
+                assert(env.error_count > 0 && "error_count not incremented\n");
                 sync(tokens);
                 if (tokens->count < 1) {
                     should_stop = true;

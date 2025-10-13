@@ -263,7 +263,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 83, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 84, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -348,6 +348,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"gen-infer-more-than-64-wide", DIAG_GEN_INFER_MORE_THAN_64_WIDE, LOG_WARNING, false},
     {"if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
     {"unsupported-target-triplet", DIAG_UNSUPPORTED_TARGET_TRIPLET, LOG_ERROR, true},
+    {"invalid-literal-prefix", DIAG_INVALID_LITERAL_PREFIX, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -676,7 +677,6 @@ static void long_option_log_level(Strv curr_opt) {
     }
 }
 
-// TODO: add assertion that that are no collisions between any existing parameters?
 static_assert(
     PARAMETERS_COUNT == 24,
     "exhausive handling of params (not all parameters are explicitly handled)"
@@ -773,6 +773,23 @@ static void print_usage(void) {
 void parse_args(int argc, char** argv) {
     set_params_to_defaults();
     expect_fail_str_to_curr_log_level_init();
+
+#   ifndef NDEBUG
+        for (size_t last = 0; last < array_count(long_options); last++) {
+            for (size_t first = 0; first < last; first++) {
+                if (first == last) {
+                    continue;
+                }
+
+                Strv first_str = sv(array_at(long_options, first).text);
+                Strv last_str = sv(array_at(long_options, last).text);
+                if (strv_starts_with(first_str, last_str) || strv_starts_with(last_str, first_str)) {
+                    log(LOG_FATAL, "options with indices %zu and %zu have overlapping names\n", first, last);
+                    exit(EXIT_CODE_FAIL);
+                }
+            }
+        }
+#   endif // NDEBUG
 
     // consume compiler executable name
     compiler_exe_name = consume_arg(&argc, &argv, sv("internal error"));

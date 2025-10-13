@@ -348,7 +348,7 @@ static bool get_next_token(
             token->text = result;
             char dummy = '\0';
             if (!try_strv_to_char(&dummy, pos_open, token->text)) {
-                assert(error_count > 0);
+                assert(env.error_count > 0);
             }
             return true;
         } else if (equals.base.count == 2) {
@@ -670,7 +670,7 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //}
 
 bool tokenize(Tk_view* result, Strv file_path) {
-    size_t prev_err_count = error_count;
+    size_t prev_err_count = env.error_count;
     Token_vec tokens = {0};
 
     Strv* file_con = NULL;
@@ -717,6 +717,6 @@ bool tokenize(Tk_view* result, Strv file_path) {
     vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
 
     *result = (Tk_view) {.tokens = tokens.buf, .count = tokens.info.count};
-    return error_count == prev_err_count;
+    return env.error_count == prev_err_count;
 }
 
