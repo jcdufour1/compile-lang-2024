@@ -204,9 +204,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
 
     // TODO: this clone is expensive I think
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
+    uast_expr_get_pos_ref(expr)->expanded_from = uast_def_get_pos_ref(def);
     switch (expr->type) {
-        case UAST_BLOCK:
-            todo();
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
             unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
@@ -220,13 +219,11 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
-                    new_name->pos.expanded_from = def;
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true);
                 }
 
                 if (result->type == UAST_VARIABLE_DEF) {
                     *new_expr = uast_member_access_wrap(access);
-                    todo();
                     return EXPAND_NAME_NEW_EXPR;
                 }
                 todo();
@@ -248,37 +245,38 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             } else {
                 new_name->gen_args = name.gen_args;
             }
-            todo();
             return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, false);
         }
-        case UAST_IF_ELSE_CHAIN:
-            todo();
-        case UAST_SWITCH:
-            todo();
-        case UAST_UNKNOWN:
-            todo();
         case UAST_OPERATOR:
             *new_expr = expr;
-            todo();
             return EXPAND_NAME_NEW_EXPR;
+        case UAST_BLOCK:
+            // fallthrough
+        case UAST_IF_ELSE_CHAIN:
+            // fallthrough
+        case UAST_SWITCH:
+            // fallthrough
+        case UAST_UNKNOWN:
+            // fallthrough
         case UAST_INDEX:
-            todo();
+            // fallthrough
         case UAST_LITERAL:
-            todo();
+            // fallthrough
         case UAST_FUNCTION_CALL:
-            todo();
+            // fallthrough
         case UAST_STRUCT_LITERAL:
-            todo();
+            // fallthrough
         case UAST_ARRAY_LITERAL:
-            todo();
+            // fallthrough
         case UAST_TUPLE:
-            todo();
+            // fallthrough
         case UAST_MACRO:
-            todo();
+            // fallthrough
         case UAST_ENUM_ACCESS:
-            todo();
+            // fallthrough
         case UAST_ENUM_GET_TAG:
-            todo();
+            msg_todo("", uast_expr_get_pos(expr));
+            return EXPAND_NAME_ERROR;
     }
     unreachable("");
 }

@@ -62,6 +62,17 @@ static void show_location_error(Pos pos) {
     }
 }
 
+static void msg_internal_internal(Pos pos, LOG_LEVEL log_level, const char* format, va_list args) {
+    if (pos.line < 1) {
+        fprintf(stderr, "%s:", get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+    } else {
+        fprintf(stderr, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+        show_location_error(pos);
+    }
+}
+
 __attribute__((format (printf, 5, 6)))
 void msg_internal(
     const char* file, int line, DIAG_TYPE msg_expect_fail_type,
@@ -80,14 +91,13 @@ void msg_internal(
     }
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
-        if (pos.line < 1) {
-            fprintf(stderr, "%s:", get_log_level_str(log_level));
-            vfprintf(stderr, format, args);
-        } else {
-            fprintf(stderr, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
-            vfprintf(stderr, format, args);
-            show_location_error(pos);
+        msg_internal_internal(pos, log_level, format, args);
+
+        Pos* expanded_from = pos.expanded_from;
+        if (expanded_from) {
+            todo();
         }
+
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 
