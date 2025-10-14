@@ -91,14 +91,16 @@ void msg_internal(
 
         Pos* exp_from = pos.expanded_from;
         while (exp_from) {
-            
-            if (pos.line < 1) {
-                fprintf(stderr, "%s:", get_log_level_str(LOG_NOTE));
-                vfprintf(stderr, format, args);
+            assert(!pos_is_equal(*exp_from, POS_BUILTIN));
+            assert(!pos_is_equal(*exp_from, (Pos) {0}));
+            //fprintf(stderr, "%s:", get_log_level_str(LOG_NOTE));
+            if (1 || exp_from->line > 0) {
+                fprintf(stderr, FMT":%d:%d:%s:", strv_print(exp_from->file_path), exp_from->line, exp_from->column, get_log_level_str(LOG_NOTE));
+                fprintf(stderr, "in expansion of def\n");
             } else {
                 fprintf(stderr, "in expansion of def\n");
             }
-            if (pos.line < 1) {
+            if (exp_from->line > 0) {
                 show_location_error(*exp_from);
             }
 

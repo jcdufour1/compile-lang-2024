@@ -1354,6 +1354,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         expr,
         false
     );
+    assert((*def)->pos.file_path.count != SIZE_MAX);
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
@@ -2044,7 +2045,6 @@ static PARSE_STATUS parse_if_else_chain_internal(
     if (PARSE_OK != label_thing(&dummy, parent)) {
         return PARSE_ERROR;
     }
-    //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
     if_stmt = uast_if_new(if_token.pos, NULL, NULL);
@@ -2223,7 +2223,6 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     if (PARSE_OK != label_thing(&default_brk_label, parent)) {
         return PARSE_ERROR;
     }
-    //*block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, parent);
 
     PARSE_STATUS status = PARSE_OK;
 
@@ -2490,7 +2489,7 @@ static PARSE_STATUS parse_block(
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
         status = PARSE_ERROR;
     }
-    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, (Pos) {0}, new_scope);
+    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, POS_BUILTIN /* TODO */, new_scope);
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -3238,7 +3237,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         vec_append(
             &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
             &using_params,
-            uast_using_new(prelude_alias->pos, prelude_alias->name, file_strip_extension(file_path))
+            uast_using_new((Pos) {.line = 0, .file_path = MOD_PATH_PRELUDE} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );
     }
     if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {

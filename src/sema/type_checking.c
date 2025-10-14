@@ -2250,7 +2250,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Bool_vec new_gens_set = {0};
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
     while (new_gens.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new((Pos) {0} /* TODO */)));
+        vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(POS_BUILTIN)));
     }
     vec_reserve(&a_main, &new_gens_set, fun_decl_temp->generics.info.count);
     while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
@@ -4131,7 +4131,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         }
         Lang_type_fn new_lang_type = {0};
         Name new_name = {0};
-        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
+        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
             status = false;
         }
     }

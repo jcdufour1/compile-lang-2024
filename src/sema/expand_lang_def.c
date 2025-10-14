@@ -48,6 +48,7 @@ bool expand_def_ulang_type_regular(
             *new_lang_type = lang_type;
             new_lang_type->atom.str = name_to_uname(uast_symbol_unwrap(new_expr)->name);
             new_lang_type->pos.expanded_from = uast_symbol_unwrap(new_expr)->pos.expanded_from;
+            assert(!pos_is_equal(*new_lang_type->pos.expanded_from, (Pos) {0}));
             return true;
         default:
             msg_todo("", uast_expr_get_pos(new_expr));
@@ -199,6 +200,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             if (always_new_expr) {
                 if (is_expanded_from) {
                     dest_pos.expanded_from = expanded_from;
+                    assert(!pos_is_equal(*dest_pos.expanded_from, (Pos) {0}));
                 }
                 *new_expr = uast_symbol_wrap(uast_symbol_new(dest_pos /* TODO */, name));
                 assert(uast_expr_get_pos(*new_expr).expanded_from);
@@ -215,8 +217,11 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
     if (is_expanded_from) {
         uast_expr_get_pos_ref(expr)->expanded_from = expanded_from;
+        assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     } else {
         uast_expr_get_pos_ref(expr)->expanded_from = uast_def_get_pos_ref(def);
+        log(LOG_DEBUG, FMT"\n", uast_def_print(def));
+        assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     }
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
@@ -232,6 +237,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
+                    assert(!pos_is_equal(*uast_expr_get_pos(expr).expanded_from, (Pos) {0}));
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, uast_expr_get_pos(expr).expanded_from);
                 }
 
@@ -338,7 +344,7 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
     if (!expand_def_ulang_type(&def->lang_type, def->pos /* TODO */)) {
         return false;
     }
-    Uast_expr* new_expr = NULL;
+    //Uast_expr* new_expr = NULL;
     //switch (expand_def_name(&new_expr, &def->name, def->pos /* TODO */)) {
     //    case EXPAND_NAME_NORMAL:
     //        return true;
@@ -363,6 +369,7 @@ static bool expand_def_function_call(Uast_function_call* call) {
     bool status = expand_def_expr_vec(&call->args);
     status = expand_def_expr(&call->callee, call->callee) && status;
     call->pos.expanded_from = uast_expr_get_pos(call->callee).expanded_from;
+    assert(!call->pos.expanded_from || !pos_is_equal(*call->pos.expanded_from, (Pos) {0}));
     return status;
 }
 

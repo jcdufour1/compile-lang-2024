@@ -120,6 +120,11 @@ static inline const char* strv_to_cstr(Arena* arena, Strv strv) {
     return buf;
 }
 
+// TODO: move this function
+static inline bool pos_is_equal(Pos a, Pos b) {
+    return strv_is_equal(a.file_path, b.file_path) && a.line == b.line && a.column == b.column;
+}
+
 #define strv_print(strv) (int)((strv).count), (strv).str
 
 #endif // STR_VIEW_H

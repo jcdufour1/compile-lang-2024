@@ -71,6 +71,8 @@ static void expand_using_using(Uast_using* using) {
                     uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
                     true
                 );
+                lang_def->pos.expanded_from = uast_def_get_pos_ref(curr);
+                assert(!pos_is_equal(lang_def->pos, (Pos) {0}));
                 if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
                     Uast_def* prev_def = NULL;
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));

@@ -48,6 +48,7 @@ typedef struct Pos_ {
     struct Pos_* expanded_from;
 } Pos;
 
+// TODO: do not set count to SIZE_MAX
 #define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
 
 // log* functions and macros print messages that are intended for debugging

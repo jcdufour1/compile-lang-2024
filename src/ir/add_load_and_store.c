@@ -1227,7 +1227,7 @@ static Name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
 
 static Name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
     Tast_def* union_def_ = NULL;
-    unwrap(symbol_lookup(&union_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, (Pos) {0}))));
+    unwrap(symbol_lookup(&union_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN))));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
     Tast_variable_def* active_memb = vec_at(union_def->base.members, (size_t)old_lit->tag->data);
 
@@ -2093,7 +2093,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         if_else->pos,
         util_literal_name_new(),
         (Ir_vec) {0},
-        (Pos) {0},
+        POS_BUILTIN /* TODO */,
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(if_else->tasts, 0)->body->scope_id), util_literal_name_new())
     );
 

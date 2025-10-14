@@ -9,7 +9,14 @@
 #include <symbol_table.h>
 
 static void extend_pos(String* buf, Pos pos) {
-    string_extend_cstr(&a_print, buf, "((line:");
+    string_extend_cstr(&a_print, buf, "((");
+    string_extend_cstr(&a_print, buf, "file_path_count:");
+    string_extend_size_t(&a_print, buf, pos.file_path.count);
+    string_extend_cstr(&a_print, buf, ";file_path:");
+    if (pos.file_path.count != SIZE_MAX /* TODO: always run code in if body when possible */) {
+        string_extend_strv(&a_print, buf, pos.file_path);
+    }
+    string_extend_cstr(&a_print, buf, ";line:");
     string_extend_int64_t(&a_print, buf, pos.line);
     string_extend_cstr(&a_print, buf, " ))");
 }
@@ -531,6 +538,7 @@ Strv uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "lang_def", indent);
+    extend_pos(&buf, def->pos);
     extend_name(NAME_LOG, &buf, def->alias_name);
     string_extend_cstr(&a_print, &buf, "\n");
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(def->expr, indent + INDENT_WIDTH));
@@ -621,7 +629,7 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
 
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent) {
     String buf = {0};
-    extend_ustruct_def_base(&buf, "<unknown>", base, indent, (Pos) {0});
+    extend_ustruct_def_base(&buf, "<unknown>", base, indent, POS_BUILTIN);
     return string_to_strv(buf);
 }
 
