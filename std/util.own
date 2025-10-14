@@ -60,7 +60,7 @@ fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, l
 
 // NOTE: cstr_free should be called on the returned string later
 fn str_to_cstr(str coll.Str) u8* {
-    let cstr coll.Arr(<char>) = coll.arr_new(str.count + 1, char, str)
+    let cstr coll.Arr(<u8>) = coll.arr_new(str.count + 1, u8, str)
     coll.arr_append(&cstr, '\0')
     return unsafe_cast<u8*>cstr.buf
 }
@@ -71,14 +71,4 @@ fn cstr_free(cstr u8*) {
 
 fn slice_from_cstr(cstr u8*) Str {
     return {cstr, strlen(cstr)}
-}
-
-// This function casts the char to an int. it will NOT return 0 if the char is '0'
-fn char_to_int(ch char, NumT Type) NumT {
-    return bitcast(NumT, ch)
-}
-
-// This function gets the char and casts it to the int value. of the char; it will NOT return '0' if num is 0
-fn int_to_char(num NumT, NumT Type) char {
-    return bitcast(char, num)
 }
