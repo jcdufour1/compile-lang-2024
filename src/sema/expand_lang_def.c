@@ -208,7 +208,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_LABEL:
             todo();
         case UAST_BUILTIN_DEF:
-        todo();
             return EXPAND_NAME_NORMAL;
     }
 
@@ -233,8 +232,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
-                    todo();
-                    //return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true);
+                    return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, uast_expr_get_pos(expr).expanded_from);
                 }
 
                 if (result->type == UAST_VARIABLE_DEF) {
@@ -309,6 +307,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
             *name = name_to_uname(new_name);
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
+            return EXPAND_NAME_NEW_EXPR;
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             return EXPAND_NAME_NEW_EXPR;
@@ -334,20 +333,23 @@ EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_po
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
+    log(LOG_DEBUG, FMT"\n", uast_variable_def_print(def));
     (void) def;
     if (!expand_def_ulang_type(&def->lang_type, def->pos /* TODO */)) {
         return false;
     }
     Uast_expr* new_expr = NULL;
-    switch (expand_def_name(&new_expr, &def->name, def->pos /* TODO */)) {
-        case EXPAND_NAME_NORMAL:
-            return true;
-        case EXPAND_NAME_NEW_EXPR:
-            // TODO
-            todo();
-        case EXPAND_NAME_ERROR:
-            todo();
-    }
+    //switch (expand_def_name(&new_expr, &def->name, def->pos /* TODO */)) {
+    //    case EXPAND_NAME_NORMAL:
+    //        return true;
+    //    case EXPAND_NAME_NEW_EXPR:
+    //        log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr));
+    //        // TODO
+    //        todo();
+    //    case EXPAND_NAME_ERROR:
+    //        todo();
+    //}
+    return true;
     unreachable("");
 }
 
@@ -425,19 +427,8 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
         return expand_def_symbol(new_expr, uast_symbol_new(access->pos, name));
     }
 
-    switch (expand_def_symbol(new_expr, access->member_name)) {
-        case EXPAND_NAME_NORMAL:
-            // TODO: access->member_name should possibly not be subsituted at all
-            *new_expr = uast_member_access_wrap(access);
-            return true;
-        case EXPAND_NAME_NEW_EXPR:
-            // TODO: this may not be right, but this switch will be refactored in the 
-            //   future anyway when changing access->member_name type
-            return true;
-        case EXPAND_NAME_ERROR:
-            return false;
-    }
-    unreachable("");
+    *new_expr = uast_member_access_wrap(access);
+    return true;
 }
 
 static bool expand_def_index(Uast_index* index) {
