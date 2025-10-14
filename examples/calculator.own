@@ -139,7 +139,7 @@ fn calculate(line Str) {
 
 fn main() i32 {
     for 1 {
-        if let .some(line) = io.get(io.stdin()) {
+        if let .some(line) = io.getline(io.stdin()) {
             calculate(coll.darr_slice(line))
             coll.darr_free(&line)
         } else {
