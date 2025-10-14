@@ -42,7 +42,7 @@ static void add_primitives(void) {
         lang_type_struct_const_wrap(lang_type_struct_new(
             POS_BUILTIN,
             lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
                 0
             )
         ))
