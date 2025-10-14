@@ -233,6 +233,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             if (access->callee->type == UAST_SYMBOL) {
                 if (!usymbol_lookup(&result, uast_symbol_unwrap(access->callee)->name)) {
                     msg_undefined_symbol(uast_symbol_unwrap(access->callee)->name, uast_symbol_unwrap(access->callee)->pos);
+                    return EXPAND_NAME_ERROR;
                 }
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
@@ -245,9 +246,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                     *new_expr = uast_member_access_wrap(access);
                     return EXPAND_NAME_NEW_EXPR;
                 }
-                todo();
             }
-            todo();
 
             *new_expr = uast_member_access_wrap(access);
             todo();

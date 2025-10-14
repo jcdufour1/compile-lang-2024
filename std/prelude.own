@@ -6,12 +6,10 @@ type math import = std.math
 type rt import = std.runtime
 
 type Str def = coll.Str
-type Dstr def = coll.Darr(<char>)
+type Dstr def = coll.Darr(<u8>)
 type Darr def = coll.Darr
 
 type assert def = util.assert
 
 type min def = math.min
 type max def = math.max
-
-type char def = rt.char

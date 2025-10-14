@@ -5,7 +5,7 @@ extern("c") fn fopen(file_path u8*, flags u8*) opaque*
 extern("c") fn fclose(file opaque*) i32
 extern("c") fn fgetc(file opaque*) i32
 
-extern("c") fn isdigit(character i32) i32
+extern("c") fn isdigit(u8acter i32) i32
 extern("c") fn abort()
 extern("c") fn malloc(size u64) opaque*
 extern("c") fn realloc(ptr opaque*, size u64) opaque*

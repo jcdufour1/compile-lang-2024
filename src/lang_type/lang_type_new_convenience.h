@@ -23,19 +23,7 @@ static inline Lang_type lang_type_new_u1(void) {
 }
 
 static inline Lang_type lang_type_new_char(void) {
-    return lang_type_struct_const_wrap(lang_type_struct_new(
-        POS_BUILTIN,
-        lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-            0
-        )
-    ));
-}
-
-static inline Tast_expr_vec lang_type_struct_literal_membs_new_char(Pos pos, char data) {
-    Tast_expr_vec membs = {0};
-    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, data, lang_type_new_ux(8)))));
-    return membs;
+    return lang_type_new_ux(8);
 }
 
 static inline Lang_type lang_type_new_void(void) {

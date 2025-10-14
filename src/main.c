@@ -38,17 +38,7 @@ static void add_primitives(void) {
     add_opaque(0);
     add_void();
 
-    vec_append(&a_main, &env.gen_args_char, lang_type_to_ulang_type(
-        lang_type_struct_const_wrap(lang_type_struct_new(
-            POS_BUILTIN,
-            lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-                0
-            )
-        ))
-    ));
-
-    env.ulang_type_char_pointer_depth_0 = lang_type_to_ulang_type(lang_type_new_char());
+    vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
 }
 
 static void add_builtin_def(Strv name) {

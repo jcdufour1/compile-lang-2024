@@ -78,6 +78,7 @@ for generics:
     let rhs f32 = 8.4
     lhs == rhs
 - do_test.py should print how many tests passed, failed, and total
+- assert statement to catch mod_path (other than MOD_PATH_BUILTIN) used for primitive types
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

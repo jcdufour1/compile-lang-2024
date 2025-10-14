@@ -110,6 +110,8 @@ static inline bool lang_type_array_is_equal(Lang_type_array a, Lang_type_array b
 
 // TOOD: move these lang_type functions
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, a));
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, b));
     if (a.type != b.type) {
         return false;
     }
@@ -177,7 +179,7 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
             lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
                 0
             )
         ));
