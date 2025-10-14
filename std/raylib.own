@@ -49,7 +49,7 @@ extern("c") fn SetTargetFPS(fps i32) // Set target FPS (maximum)
 extern("c") fn DrawFPS(posX i32, posY i32);                                                     // Draw current FPS
 extern("c") fn DrawText(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
 
-// Text strings management functions (no UTF-8 strings, only byte u8s)
+// Text strings management functions (no UTF-8 strings, only byte chars)
 // NOTE: Some strings allocate memory internally for returned strings, just be careful!
 extern("c") fn TextFormat(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
 

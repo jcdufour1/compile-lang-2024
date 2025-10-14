@@ -10,7 +10,7 @@ type Token enum {
     div Div
     num i32
     string u8*
-    u8acter u8
+    character u8
 }
 
 fn main() i32 {

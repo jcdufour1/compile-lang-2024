@@ -62,7 +62,7 @@ fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, l
 fn str_to_cstr(str coll.Str) u8* {
     let cstr coll.Arr(<u8>) = coll.arr_new(str.count + 1, u8, str)
     coll.arr_append(&cstr, '\0')
-    return unsafe_cast<u8*>cstr.buf
+    return cstr.buf
 }
 
 fn cstr_free(cstr u8*) {
