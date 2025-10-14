@@ -34,9 +34,6 @@ typedef struct Env_ {
     Usymbol_table struct_like_tbl;
 
     Strv mod_path_main_fn;
-
-    Ulang_type_vec gen_args_char;
-    Ulang_type ulang_type_char_pointer_depth_0;
 } Env;
 
 #endif // ENV_H

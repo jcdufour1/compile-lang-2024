@@ -119,8 +119,14 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
     } else if (strv_is_equal(atom.str.base, sv("void"))) {
         return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0, 0))) {
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
+    } else if (strv_is_equal(atom.str.base, sv("u8"))) {
+        // TODO: does this make sense for u8**, etc.?
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (strv_is_equal(atom.str.base, sv("opaque"))) {
-        return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, atom.pointer_depth)));
+        // TODO: does this make sense?
+        return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, atom)));
     } else {
         log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();

@@ -5,6 +5,8 @@
 
 static inline Pos lang_type_primitive_get_pos(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
+        case LANG_TYPE_CHAR:
+            return lang_type_char_const_unwrap(lang_type).pos;
         case LANG_TYPE_SIGNED_INT:
             return lang_type_signed_int_const_unwrap(lang_type).pos;
         case LANG_TYPE_UNSIGNED_INT:

@@ -1,6 +1,5 @@
 .PHONY: all setup build gdb test_quick clean
 
-# TODO: use cc by default?
 CC_COMPILER ?= clang
 
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion

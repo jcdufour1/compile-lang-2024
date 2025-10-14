@@ -43,10 +43,11 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
             return atom;
         }
         case IR_LANG_TYPE_OPAQUE: {
-            return ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
-                ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
-            );
+            // TODO: remove atom from IR_LANG_TYPE_OPAQUE
+            Ir_lang_type_atom atom = ir_lang_type_opaque_const_unwrap(ir_lang_type).atom;
+            assert(!strv_is_equal(atom.str.base, sv("void")));
+            assert(atom.str.base.count > 0);
+            return atom;
         }
     }
     unreachable("");
@@ -129,7 +130,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_la
         case IR_LANG_TYPE_OPAQUE:
             return ir_lang_type_atom_new(
                 name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
-                ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
+                ir_lang_type_opaque_const_unwrap(ir_lang_type).atom.pointer_depth
             );
     }
     unreachable("");
@@ -202,8 +203,7 @@ void ir_lang_type_primitive_set_atom(Ir_lang_type_primitive* ir_lang_type, Ir_la
             ir_lang_type_float_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
             return;
         case IR_LANG_TYPE_OPAQUE:
-            assert(strv_is_equal(atom.str.base, sv("opaque")));
-            ir_lang_type_opaque_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
+            ir_lang_type_opaque_unwrap(ir_lang_type)->atom = atom;
             return;
     }
     unreachable("");

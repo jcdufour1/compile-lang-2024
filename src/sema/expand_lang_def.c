@@ -467,6 +467,8 @@ static bool expand_def_literal(Uast_literal* lit) {
             return true;
         case UAST_VOID:
             return true;
+        case UAST_CHAR:
+            return true;
     }
     unreachable("");
 }

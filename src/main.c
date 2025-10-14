@@ -17,14 +17,12 @@
 #include <symbol_iter.h>
 #include <msg.h>
 #include <str_and_num_utils.h>
-#include <lang_type_from_ulang_type.h>
-#include <lang_type.h>
  
-static void add_opaque(int16_t pointer_depth) {
+static void add_opaque(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
         lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN, pointer_depth
+            POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
         )))
     );
     unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
@@ -35,20 +33,8 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_opaque(0);
+    add_opaque("opaque", 0);
     add_void();
-
-    vec_append(&a_main, &env.gen_args_char, lang_type_to_ulang_type(
-        lang_type_struct_const_wrap(lang_type_struct_new(
-            POS_BUILTIN,
-            lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("char"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-                0
-            )
-        ))
-    ));
-
-    env.ulang_type_char_pointer_depth_0 = lang_type_to_ulang_type(lang_type_new_char());
 }
 
 static void add_builtin_def(Strv name) {
