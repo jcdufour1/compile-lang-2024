@@ -13,5 +13,3 @@ type assert def = util.assert
 
 type min def = math.min
 type max def = math.max
-
-type u8 def = rt.u8
