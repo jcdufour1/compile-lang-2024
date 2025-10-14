@@ -16,7 +16,6 @@
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
 #include <ir_operator_type.h>
-#include <lang_type_new_convenience.h>
 
 static int dummy = 0;
 
@@ -595,6 +594,15 @@ static Ir_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
 
 static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
+        case LANG_TYPE_CHAR: {
+            // TODO: should this always be signed
+            Lang_type_char lang_char = lang_type_char_const_unwrap(lang_type);
+            return ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(
+                lang_type_pos,
+                8,
+                rm_tuple_lang_type_atom(lang_char.atom).pointer_depth
+            ));
+        }
         case LANG_TYPE_SIGNED_INT: {
             Lang_type_signed_int num = lang_type_signed_int_const_unwrap(lang_type);
             return ir_lang_type_signed_int_const_wrap(ir_lang_type_signed_int_new(
@@ -623,7 +631,7 @@ static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive l
             Lang_type_opaque opaque = lang_type_opaque_const_unwrap(lang_type);
             return ir_lang_type_opaque_const_wrap(ir_lang_type_opaque_new(
                 lang_type_pos,
-                opaque.pointer_depth
+                rm_tuple_lang_type_atom(opaque.atom)
             ));
         }
     }
@@ -1110,6 +1118,11 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         return string->name;
     }
 
+    static Ulang_type_vec gen_args_u8 = {0}; // TODO: make this a global variable?
+    if (gen_args_u8.info.count < 1) {
+        vec_append(&a_main, &gen_args_u8, ulang_type_new_int_x(sv("u8")));
+    }
+
     Tast_expr_vec args = {0};
     Tast_string* inner_str = tast_string_clone(old_lit);
     inner_str->is_cstr = true;
@@ -1133,7 +1146,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         membs,
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL), 0
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL), 0
         )))
     ));
 }
@@ -1178,6 +1191,13 @@ static Name load_float(Tast_float* old_lit) {
     );
     unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_float_wrap(number)))));
     return number->name;
+}
+
+static Name load_char(Tast_char* old_lit) {
+    Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
+    Ir_int* lang_char = ir_int_new(old_lit->pos, old_lit->data, rm_tuple_lang_type(new_lang_type, old_lit->pos), util_literal_name_new());
+    unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(lang_char)))));
+    return lang_char->name;
 }
 
 static Name load_function_lit(Tast_function_lit* old_lit) {
@@ -1266,6 +1286,8 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
             return load_void(tast_void_unwrap(old_lit)->pos);
         case TAST_ENUM_TAG_LIT:
             return load_enum_tag_lit(tast_enum_tag_lit_unwrap(old_lit));
+        case TAST_CHAR:
+            return load_char(tast_char_unwrap(old_lit));
         case TAST_INT:
             return load_number(tast_int_unwrap(old_lit));
         case TAST_FLOAT:
@@ -1395,7 +1417,9 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
     vec_append(&a_main, &if_false_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
         tast_symbol_wrap(tast_symbol_new_from_variable_def(old_bin->pos, new_var)),
-        util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
+        tast_literal_wrap(
+            util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
+        )
     ))));
 
     Tast_if* if_true = tast_if_new(
@@ -1403,7 +1427,9 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
             old_bin->lhs,
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
             if_true_type,
             lang_type_new_u1()
         ))),
@@ -1422,8 +1448,12 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
         old_bin->pos,
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
         ))),

@@ -12,7 +12,6 @@
 #include <msg.h>
 #include <errno.h>
 #include <msg_todo.h>
-#include <newstring.h>
 
 Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
     String cmd_str = {0};

@@ -252,11 +252,11 @@ bool name_is_equal(Name a, Name b) {
 
 bool uname_is_equal(Uname a, Uname b) {
     Name new_a = {0};
-    if (!name_from_uname(&new_a, a, POS_BUILTIN)) {
+    if (!name_from_uname(&new_a, a, POS_BUILTIN /* TODO */)) {
         return false;
     }
     Name new_b = {0};
-    if (!name_from_uname(&new_b, b, POS_BUILTIN)) {
+    if (!name_from_uname(&new_b, b, POS_BUILTIN /* TODO */)) {
         return false;
     }
     return name_is_equal(new_a, new_b);

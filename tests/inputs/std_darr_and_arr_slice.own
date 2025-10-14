@@ -3,14 +3,14 @@ type io import = std.io
 type coll import = std.collections
 
 fn darr1() {
-    let string coll.Darr(<char>) = coll.darr_new(char)
+    let string coll.Darr(<u8>) = coll.darr_new(u8)
     defer coll.darr_free(&string)
 
     io.own_printf(coll.darr_slice(string))
 }
 
 fn darr2() {
-    let string coll.Darr(<char>) = coll.darr_new(char, "hello, world\n")
+    let string coll.Darr(<u8>) = coll.darr_new(u8, "hello, world\n")
     defer coll.darr_free(&string)
 
     io.own_printf(coll.darr_slice(string))
@@ -20,14 +20,14 @@ fn darr2() {
 }
 
 fn arr1() {
-    let string coll.Arr(<char>) = coll.arr_new(0, char)
+    let string coll.Arr(<u8>) = coll.arr_new(0, u8)
     defer coll.arr_free(&string)
 
     io.own_printf(coll.arr_slice(string))
 }
 
 fn arr2() {
-    let string coll.Arr(<char>) = coll.arr_new(15, char, "hello, world\n")
+    let string coll.Arr(<u8>) = coll.arr_new(15, u8, "hello, world\n")
     defer coll.arr_free(&string)
 
     io.own_printf(coll.arr_slice(string))
