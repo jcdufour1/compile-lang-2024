@@ -113,7 +113,8 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
         compile_cmd.append("--path-c-compiler=" + path_c_compiler)
     compile_cmd.append("--run")
 
-    print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
+    # TODO: print when --verbose flag
+    #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
 def do_tests(
@@ -232,8 +233,9 @@ def test_file(
             print(process_result)
         return False
 
-    print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
-    print()
+    # TODO: print when --verbose flag
+    #print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
+    #print()
     return True
 
 def append_all_files(list_or_map: list | dict, callback: Callable):

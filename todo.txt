@@ -77,7 +77,7 @@ for generics:
     let lhs f32 = 8.6
     let rhs f32 = 8.4
     lhs == rhs
-- errors with defs should print notes of where they expanded from
+- do_test.py should print how many tests passed, failed, and total
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
