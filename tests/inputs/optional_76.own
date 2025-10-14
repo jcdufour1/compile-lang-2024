@@ -3,7 +3,7 @@
 //let temp Optional(<i32>) = number.some
 
 extern("c") fn printf(str_to_print u8*, args opaque...) i32
-extern("c") fn isdigit(character i32) i32
+extern("c") fn isdigit(u8acter i32) i32
 
 type Optional_int enum {
     some i34

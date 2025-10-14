@@ -2,36 +2,34 @@ type io import = std.io
 type util import = std.util
 type coll import = std.collections
 
-// TODO: use == to compare chars when possible
-
 fn string_comparison() {
-    let string Str = "hello"
+    let string u8* = "hello"
 
-    if util.char_to_int(coll.slice_at(string, 0), i32) == util.char_to_int('h', i32) {
+    if string[0] == 'h' {
         io.printf("yes1\n");
     } else {
         io.printf("no1\n");
     }
 
-    if util.char_to_int(coll.slice_at(string, 0), i32) > util.char_to_int('a', i32) {
+    if string[0] > 'a' {
         io.printf("yes2\n");
     } else {
         io.printf("no2\n");
     }
 
-    if util.char_to_int(coll.slice_at(string, 0), i32) > util.char_to_int('z', i32) {
+    if string[0] > 'z' {
         io.printf("no3\n");
     } else {
         io.printf("yes3\n");
     }
 
-    if util.char_to_int(coll.slice_at(string, 0), i32) < util.char_to_int('a', i32) {
+    if string[0] < 'a' {
         io.printf("no4\n");
     } else {
         io.printf("yes4\n");
     }
 
-    if util.char_to_int(coll.slice_at(string, 0), i32) < util.char_to_int('z', i32) {
+    if string[0] < 'z' {
         io.printf("yes5\n");
     } else {
         io.printf("no5\n");
@@ -39,31 +37,31 @@ fn string_comparison() {
 }
 
 fn literal_comparison() {
-    if util.char_to_int('h', i32) == util.char_to_int('h', i32) {
+    if 'h' == 'h' {
         io.printf("yes6\n");
     } else {
         io.printf("no6\n");
     }
 
-    if util.char_to_int('h', i32) > util.char_to_int('a', i32) {
+    if 'h' > 'a' {
         io.printf("yes7\n");
     } else {
         io.printf("no7\n");
     }
 
-    if util.char_to_int('h', i32) > util.char_to_int('z', i32) {
+    if 'h' > 'z' {
         io.printf("no8\n");
     } else {
         io.printf("yes8\n");
     }
 
-    if util.char_to_int('h', i32) < util.char_to_int('a', i32) {
+    if 'h' < 'a' {
         io.printf("no9\n");
     } else {
         io.printf("yes9\n");
     }
 
-    if util.char_to_int('h', i32) < util.char_to_int('z', i32) {
+    if 'h' < 'z' {
         io.printf("yes10\n");
     } else {
         io.printf("no10\n");
@@ -71,8 +69,8 @@ fn literal_comparison() {
 }
 
 fn newline() {
-    let string Str = "hello\n"
-    if util.char_to_int(coll.slice_at(string, 5), i32) == util.char_to_int('\n', i32) {
+    let string u8* = "hello\n"
+    if string[5] == '\n' {
         io.printf("yes11\n")
     } else {
         io.printf("no11\n")

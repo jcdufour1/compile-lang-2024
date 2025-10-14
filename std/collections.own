@@ -239,8 +239,7 @@ fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line,
 // TODO: call str_consume_int function to reduce duplication
 fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) NumT {
     let should_neg u1 = 0
-    // TODO: remove usage of util.u8_to_int function when operators are overloaded for u8
-    if util.u8_to_int(slice_at(str, 0, .file = file, .line = line, .column = column), NumT) == util.u8_to_int('-', NumT) {
+    if slice_at(str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1
         str = slice_range(str, 1, str.count - 1)
     }
@@ -250,15 +249,14 @@ fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32
         result *= 10
 
         let curr u8 = slice_at(str, idx, .file = file, .line = line, .column = column)
-        // TODO: remove usage of util.u8_to_int function when operators are overloaded for u8
         assert(
-            util.u8_to_int(curr, i32) >= util.u8_to_int('0', i32) && util.u8_to_int(curr, i32) <= util.u8_to_int('9', i32),
+            curr >= '0' && curr <= '9',
             "str contains nonzero digits",
             .file = file,
             .line = line,
             .column = column
         )
-        result += util.bitcast(NumT, curr) - util.bitcast(NumT, '0')
+        result += unsafe_cast<u8>curr - '0'
     }
 
     if should_neg {
@@ -271,7 +269,7 @@ fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32
 // TODO: check for overflow
 fn str_consume_int(str Str*, NumT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<NumT>) {
     let should_neg u1 = 0
-    if util.u8_to_int(slice_at(*str, 0, .file = file, .line = line, .column = column), i32) == util.u8_to_int('-', i32) {
+    if slice_at(*str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1
         *str = slice_range(*str, 1, str.count - 1)
     }
@@ -279,14 +277,13 @@ fn str_consume_int(str Str*, NumT Type, file Str = #file, line i32 = #line, colu
     let result NumT = 0
     let is_some u1 = 0
     for str.count > 0 {
-
-        let curr NumT = util.u8_to_int(slice_at(*str, 0), NumT)
-        if curr < util.u8_to_int('0', NumT) || curr > util.u8_to_int('9', NumT) => break
+        let curr NumT = unsafe_cast<NumT>slice_at(*str, 0)
+        if curr < '0' || curr > '9' => break
 
         is_some = 1
         *str = slice_range(*str, 1, str.count - 1)
         result *= 10
-        result += curr - util.u8_to_int('0', NumT)
+        result += curr - '0'
     }
 
     if !is_some => return .none
@@ -311,7 +308,7 @@ fn str_from_int(num NumT, NumT Type, file Str = #file, line i32 = #line, column 
 
     for num > 0 {
         // TODO: try to avoid insert at start of darr?
-        darr_insert(&result, util.int_to_u8(util.u8_to_int('0', NumT) + num%10), 0)
+        darr_insert(&result, '0' + unsafe_cast<u8>(num%10), 0)
         num /= 10
     }
     if should_neg {

@@ -36,7 +36,6 @@ typedef struct Env_ {
     Strv mod_path_main_fn;
 
     Ulang_type_vec gen_args_char;
-    Ulang_type ulang_type_char_pointer_depth_0;
 } Env;
 
 #endif // ENV_H

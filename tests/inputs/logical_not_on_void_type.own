@@ -1,5 +1,5 @@
 
-extern("c") fn isdigit(character i32)
+extern("c") fn isdigit(u8acter i32)
 
 type Opt_int enum {
     number i32

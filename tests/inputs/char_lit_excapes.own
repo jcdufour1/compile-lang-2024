@@ -2,7 +2,7 @@ type io import = std.io
 
 
 fn main() i32 {
-    let ch char = '\n'
+    let ch u8 = '\n'
 
     ch = '\a'
     ch = '\b'
