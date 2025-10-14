@@ -25,6 +25,7 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
+    // TODO: do not create new alias every time; make MOD_PATH_AUX_UNAMES, etc.
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         util_literal_name_new(),

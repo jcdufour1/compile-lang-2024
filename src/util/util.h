@@ -35,10 +35,17 @@ typedef enum {
 struct Env_;
 typedef struct Env_ Env;
 
-typedef struct {
+struct Uast_def_;
+typedef struct Uast_def_ Uast_def;
+
+// TODO: try to eventually store only uint64_t directly in Pos to improve compile times?
+typedef struct Pos_ {
     Strv file_path;
     uint32_t line;
     uint32_t column;
+
+    // NULL means that that is nothing that this expression was expanded from
+    struct Pos_* expanded_from;
 } Pos;
 
 #define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})

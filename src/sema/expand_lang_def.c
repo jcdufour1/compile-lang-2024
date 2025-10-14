@@ -220,11 +220,13 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
+                    new_name->pos.expanded_from = def;
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true);
                 }
 
                 if (result->type == UAST_VARIABLE_DEF) {
                     *new_expr = uast_member_access_wrap(access);
+                    todo();
                     return EXPAND_NAME_NEW_EXPR;
                 }
                 todo();
@@ -232,6 +234,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             todo();
 
             *new_expr = uast_member_access_wrap(access);
+            todo();
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_SYMBOL: {
@@ -245,6 +248,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             } else {
                 new_name->gen_args = name.gen_args;
             }
+            todo();
             return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, false);
         }
         case UAST_IF_ELSE_CHAIN:
@@ -255,6 +259,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             todo();
         case UAST_OPERATOR:
             *new_expr = expr;
+            todo();
             return EXPAND_NAME_NEW_EXPR;
         case UAST_INDEX:
             todo();
