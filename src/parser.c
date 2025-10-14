@@ -1594,7 +1594,7 @@ static PARSE_STATUS parse_for_range_internal(
         uast_operator_wrap(uast_binary_wrap(uast_binary_new(
             var_def_builtin->pos,
             uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound)),
             BINARY_ADD
         )))
     );
@@ -1893,7 +1893,7 @@ error:
     return status;
 }
 
-static PARSE_STATUS parse_literal(Uast_literal** lit, Tk_view* tokens) {
+static PARSE_STATUS parse_literal(Uast_expr** lit, Tk_view* tokens) {
     Token token = consume(tokens);
     assert(token_is_literal(token));
 
@@ -1963,11 +1963,11 @@ static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_
         case PARSE_EXPR_NONE:
             *rtn_stmt = uast_return_new(
                 prev_token.pos,
-                uast_literal_wrap(util_uast_literal_new_from_strv(
+                util_uast_literal_new_from_strv(
                     sv(""),
                     TOKEN_VOID,
                     prev_token.pos
-                )),
+                ),
                 false
             );
             break;
@@ -2094,9 +2094,9 @@ static PARSE_STATUS parse_if_else_chain_internal(
             }
         } else {
             if_stmt->condition = uast_condition_new(if_token.pos, NULL);
-            if_stmt->condition->child = uast_condition_get_default_child(uast_literal_wrap(
+            if_stmt->condition->child = uast_condition_get_default_child(
                 util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
-            ));
+            );
         }
 
         if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_vec) {0})) {
@@ -2710,11 +2710,9 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             return PARSE_EXPR_ERROR;
         }
     } else if (token_is_literal(tk_view_front(*tokens))) {
-        Uast_literal* lit = NULL;
-        if (PARSE_OK != parse_literal(&lit, tokens)) {
+        if (PARSE_OK != parse_literal(result, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = uast_literal_wrap(lit);
     } else if (tk_view_front(*tokens).type == TOKEN_MACRO) {
         Pos pos = tk_view_front(*tokens).pos;
         *result = uast_macro_wrap(uast_macro_new(pos, tk_view_front(*tokens).text, pos));

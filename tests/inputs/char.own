@@ -1,4 +1,6 @@
 type io import = std.io
+type util import = std.util
+type coll import = std.collections
 
 fn string_comparison() {
     let string u8* = "hello"

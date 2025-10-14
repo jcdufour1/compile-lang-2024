@@ -1,5 +1,6 @@
 #include <uast_utils.h>
 #include <str_and_num_utils.h>
+#include <lang_type_new_convenience.h>
 
 bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics) {
     switch (def->type) {
@@ -103,7 +104,7 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
 }
 
 // will print error on failure
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
+bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             int64_t raw = 0;
@@ -111,7 +112,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv valu
                 return false;
             }
             Uast_int* literal = uast_int_new(pos, raw);
-            *new_lit = uast_int_wrap(literal);
+            *new_lit = uast_literal_wrap(uast_int_wrap(literal));
             break;
         }
         case TOKEN_FLOAT_LITERAL: {
@@ -120,17 +121,17 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv valu
                 return false;
             }
             Uast_float* literal = uast_float_new(pos, raw);
-            *new_lit = uast_float_wrap(literal);
+            *new_lit = uast_literal_wrap(uast_float_wrap(literal));
             break;
         }
         case TOKEN_STRING_LITERAL: {
             Uast_string* string = uast_string_new(pos, value);
-            *new_lit = uast_string_wrap(string);
+            *new_lit = uast_literal_wrap(uast_string_wrap(string));
             break;
         }
         case TOKEN_VOID: {
             Uast_void* lang_void = uast_void_new(pos);
-            *new_lit = uast_void_wrap(lang_void);
+            *new_lit = uast_literal_wrap(uast_void_wrap(lang_void));
             break;
         }
         case TOKEN_CHAR_LITERAL: {
@@ -138,8 +139,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv valu
             if (!try_strv_to_char(&raw, pos, value)) {
                 return false;
             }
-            Uast_char* lang_char = uast_char_new(pos, raw);
-            *new_lit = uast_char_wrap(lang_char);
+            *new_lit = uast_literal_wrap(uast_int_wrap(uast_int_new(pos, raw)));
             break;
         }
         default:
@@ -150,41 +150,39 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv valu
     return true;
 }
 
-Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
-    Uast_literal* lit = NULL;
+Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_expr* lit = NULL;
     unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
     return lit;
 }
 
-Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    Uast_literal* new_literal = NULL;
+Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_expr* new_lit = NULL;
 
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             Uast_int* literal = uast_int_new(pos, value);
             literal->data = value;
-            new_literal = uast_int_wrap(literal);
+            new_lit = uast_literal_wrap(uast_int_wrap(literal));
             break;
         }
         case TOKEN_STRING_LITERAL:
             unreachable("");
         case TOKEN_VOID: {
             Uast_void* literal = uast_void_new(pos);
-            new_literal = uast_void_wrap(literal);
+            new_lit = uast_literal_wrap(uast_void_wrap(literal));
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            assert(value < INT8_MAX);
-            Uast_char* literal = uast_char_new(pos, value);
-            new_literal = uast_char_wrap(literal);
+            assert(value <= INT8_MAX);
+            new_lit = uast_literal_wrap(uast_int_wrap(uast_int_new(pos, value)));
             break;
         }
         default:
             unreachable("");
     }
 
-    assert(new_literal);
-    return new_literal;
+    return new_lit;
 }
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
@@ -195,9 +193,7 @@ Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     Uast_binary* binary = uast_binary_new(
         uast_expr_get_pos(if_cond_child),
-        uast_literal_wrap(
-            util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
-        ),
+        util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child)),
         if_cond_child,
         BINARY_NOT_EQUAL
     );

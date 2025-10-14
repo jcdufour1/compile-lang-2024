@@ -293,25 +293,33 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_IMPORT_PATH:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_MOD_ALIAS:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_GENERIC_PARAM:
             // TODO: explain why it is unreachable
             log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             unreachable("");
         case UAST_FUNCTION_DEF:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_FUNCTION_DECL:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_VARIABLE_DEF:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_LABEL:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
         case UAST_BUILTIN_DEF:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
     }
     unreachable("");
 }

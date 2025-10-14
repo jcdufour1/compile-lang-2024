@@ -815,16 +815,16 @@ void emit_c_from_tree(void) {
         }
 
         // non-.own files to build
-        for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
-            vec_append(&a_main, &cmd, sv("-l"));
-            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
-        }
         vec_extend(&a_main, &cmd, &params.static_libs);
-        vec_extend(&a_main, &cmd, &params.dynamic_libs);
         vec_extend(&a_main, &cmd, &params.c_input_files);
         vec_extend(&a_main, &cmd, &params.object_files);
         vec_extend(&a_main, &cmd, &params.lower_s_files);
         vec_extend(&a_main, &cmd, &params.upper_s_files);
+        vec_extend(&a_main, &cmd, &params.dynamic_libs);
+        for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
+            vec_append(&a_main, &cmd, sv("-l"));
+            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
+        }
 
         int status = subprocess_call(cmd);
         if (status != 0) {

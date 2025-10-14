@@ -261,6 +261,7 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool usymbol_add(Uast_def* item) {
+    assert(item);
     Name name = uast_def_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(name),
@@ -383,6 +384,7 @@ void ir_tbl_update(Ir* item) {
 }
 
 void usymbol_update(Uast_def* item) {
+    assert(item);
     Name name = uast_def_get_name(item);
     generic_symbol_update(
         serialize_name_symbol_table(name),

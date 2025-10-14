@@ -77,6 +77,8 @@ for generics:
     let lhs f32 = 8.6
     let rhs f32 = 8.4
     lhs == rhs
+- expected failure case for circular defs
+- assert statement to catch mod_path (other than MOD_PATH_BUILTIN) used for primitive types
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

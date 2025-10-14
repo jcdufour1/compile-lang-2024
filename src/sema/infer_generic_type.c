@@ -59,8 +59,6 @@ bool infer_generic_type(
                     lang_type_float_const_wrap(lang_float)
                 );
             } break;
-            case LANG_TYPE_CHAR:
-                break;
             case LANG_TYPE_OPAQUE:
                 break;
             default:
