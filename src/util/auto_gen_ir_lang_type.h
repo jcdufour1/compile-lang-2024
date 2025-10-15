@@ -149,7 +149,6 @@ static Ir_lang_type_type ir_lang_type_gen_opaque(const char* prefix) {
     const char* base_name = "opaque";
     Ir_lang_type_type sym = {.name = ir_lang_type_name_new(prefix, base_name, false)};
 
-    // TODO: get rid of these unneeded atoms
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -219,7 +218,7 @@ static void ir_lang_type_gen_ir_lang_type_forward_decl(Ir_lang_type_type ir_lang
     String output = {0};
 
     for (size_t idx = 0; idx < ir_lang_type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_ir_lang_type_forward_decl(vec_at(&ir_lang_type.sub_types, idx));
+        ir_lang_type_gen_ir_lang_type_forward_decl(vec_at(ir_lang_type.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -243,7 +242,7 @@ static void ir_lang_type_gen_ir_lang_type_struct_as(String* output, Ir_lang_type
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir_lang_type.sub_types.info.count; idx++) {
-        Ir_lang_type_type curr = vec_at(&ir_lang_type.sub_types, idx);
+        Ir_lang_type_type curr = vec_at(ir_lang_type.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_lang_type_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -266,7 +265,7 @@ static void ir_lang_type_gen_ir_lang_type_struct_enum(String* output, Ir_lang_ty
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir_lang_type.sub_types.info.count; idx++) {
-        Ir_lang_type_type curr = vec_at(&ir_lang_type.sub_types, idx);
+        Ir_lang_type_type curr = vec_at(ir_lang_type.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_lang_type_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -283,7 +282,7 @@ static void ir_lang_type_gen_ir_lang_type_struct(Ir_lang_type_type ir_lang_type)
     String output = {0};
 
     for (size_t idx = 0; idx < ir_lang_type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_ir_lang_type_struct(vec_at(&ir_lang_type.sub_types, idx));
+        ir_lang_type_gen_ir_lang_type_struct(vec_at(ir_lang_type.sub_types, idx));
     }
 
     if (ir_lang_type.sub_types.info.count > 0) {
@@ -317,7 +316,7 @@ static void ir_lang_type_gen_ir_lang_type_struct(Ir_lang_type_type ir_lang_type)
     }
 
     for (size_t idx = 0; idx < ir_lang_type.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&ir_lang_type.members, idx));
+        extend_struct_member(&output, vec_at(ir_lang_type.members, idx));
     }
 
     if (ir_lang_type.sub_types.info.count < 1) {
@@ -335,7 +334,7 @@ static void ir_lang_type_gen_ir_lang_type_struct(Ir_lang_type_type ir_lang_type)
 
 static void ir_lang_type_gen_internal_unwrap(Ir_lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        ir_lang_type_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -396,7 +395,7 @@ static void ir_lang_type_gen_internal_unwrap(Ir_lang_type_type type, bool is_con
 
 static void ir_lang_type_gen_internal_wrap(Ir_lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        ir_lang_type_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -456,7 +455,7 @@ void ir_lang_type_gen_ir_lang_type_wrap(Ir_lang_type_type ir_lang_type) {
 // TODO: deduplicate these functions (use same function for Ir and Ir_lang_type)
 static void ir_lang_type_gen_print_forward_decl(Ir_lang_type_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        ir_lang_type_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     if (type.name.is_topmost) {
@@ -482,7 +481,7 @@ static void ir_lang_type_gen_print_forward_decl(Ir_lang_type_type type) {
 
 static void ir_lang_type_gen_new_internal(Ir_lang_type_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_lang_type_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        ir_lang_type_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -503,7 +502,7 @@ static void ir_lang_type_gen_new_internal(Ir_lang_type_type type, bool implement
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
         string_extend_cstr(&gen_a, &function, ", ");
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -522,7 +521,7 @@ static void ir_lang_type_gen_new_internal(Ir_lang_type_type type, bool implement
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             string_extend_cstr(&gen_a, &function, ", ");
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");
             extend_strv_lower(&function, curr.name);
@@ -550,7 +549,7 @@ static void gen_ir_lang_type_new_define(Ir_lang_type_type ir_lang_type) {
 
 static void gen_ir_lang_type_vecs(Ir_lang_type_type ir_lang_type) {
     for (size_t idx = 0; idx < ir_lang_type.sub_types.info.count; idx++) {
-        gen_ir_lang_type_vecs(vec_at(&ir_lang_type.sub_types, idx));
+        gen_ir_lang_type_vecs(vec_at(ir_lang_type.sub_types, idx));
     }
 
     String vec_name = {0};

@@ -80,10 +80,10 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     }
 
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(&base->members, idx);
+        Uast_variable_def* curr = vec_at(base->members, idx);
 
         for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
-            if (name_is_equal(vec_at(&base->members, prev_idx)->name, curr->name)) {
+            if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
                 if (env.silent_generic_resol_errors) {
                     return false;
                 }
@@ -94,7 +94,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
                     name_print(NAME_MSG, curr->name)
                 );
                 msg(
-                    DIAG_NOTE, vec_at(&base->members, prev_idx)->pos,
+                    DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
                     "member `"FMT"` previously defined here\n",
                     name_print(NAME_MSG, curr->name)
                 );
@@ -170,12 +170,12 @@ static bool resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb), false, 0));
+        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(old_base.members, idx_memb), false, 0));
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
-        Name gen_def = vec_at(&old_base.generics, idx_gen)->name;
-        generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
+        Name gen_def = vec_at(old_base.generics, idx_gen)->name;
+        generic_sub_struct_def_base(new_base, gen_def, vec_at(gen_args, idx_gen));
     }
 
     assert(old_base.members.info.count == new_base->members.info.count);
@@ -432,7 +432,7 @@ static bool resolve_generics_serialize_function_decl(
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), true, new_block->scope_id));
+        vec_append(&a_main, &params, uast_param_clone(vec_at(old_decl->params->params, idx), true, new_block->scope_id));
     }
 
     Ulang_type new_rtn_type = old_decl->return_type;
@@ -451,13 +451,13 @@ static bool resolve_generics_serialize_function_decl(
         }
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-            Name curr_arg = vec_at(&old_decl->generics, idx_arg)->name;
+            Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
             // TODO: same params are being replaced both here and in generic_sub_block?
-            generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
+            generic_sub_param(vec_at(params, idx_fun_param), curr_arg, vec_at(gen_args, idx_arg));
         }
-        Name curr_gen = vec_at(&old_decl->generics, idx_arg)->name;
-        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
-        generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
+        Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
+        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
+        generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
     }
 
     if (idx_arg < old_decl->generics.info.count) {
@@ -498,7 +498,7 @@ bool resolve_generics_function_def_call(
         // TODO: consider caching ulang_types
         Ulang_type_vec ulang_types = {0};
         for (size_t idx = 0; idx < cached->params->params.info.count; idx++) {
-            vec_append(&a_main, &ulang_types, vec_at(&cached->params->params, idx)->base->lang_type);
+            vec_append(&a_main, &ulang_types, vec_at(cached->params->params, idx)->base->lang_type);
         }
 
         Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
@@ -524,11 +524,11 @@ bool resolve_generics_function_def_call(
     decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
         for (size_t idx_gen_param = 0; idx_gen_param < gen_args.info.count; idx_gen_param++) {
-            Name gen_param = vec_at(&decl->generics, idx_gen_param)->name;
-            Ulang_type gen_arg = vec_at(&gen_args, idx_gen_param);
+            Name gen_param = vec_at(decl->generics, idx_gen_param)->name;
+            Ulang_type gen_arg = vec_at(gen_args, idx_gen_param);
             generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
             for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
-                Uast_param* param = vec_at(&decl->params->params, idx_param);
+                Uast_param* param = vec_at(decl->params->params, idx_param);
                 if (param->base->lang_type.type != ULANG_TYPE_GEN_PARAM) {
                     generic_sub_param(param, gen_param, gen_arg);
                 }
@@ -543,7 +543,7 @@ bool resolve_generics_function_def_call(
     // TODO: consider caching ulang_types
     Ulang_type_vec ulang_types = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &ulang_types, vec_at(&decl->params->params, idx)->base->lang_type);
+        vec_append(&a_main, &ulang_types, vec_at(decl->params->params, idx)->base->lang_type);
     }
 
     Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));

@@ -87,9 +87,9 @@ bool infer_generic_type(
                 log(LOG_DEBUG, "thing 287:\n");
                 if (infer_generic_type(
                     infered,
-                    lang_type_from_ulang_type(vec_at_const(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
+                    lang_type_from_ulang_type(vec_at(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
                     false,
-                    uast_variable_def_new(pos_arg /* TODO */, vec_at(&reg.atom.str.gen_args, idx), util_literal_name_new()),
+                    uast_variable_def_new(pos_arg /* TODO */, vec_at(reg.atom.str.gen_args, idx), util_literal_name_new()),
                     name_to_infer,
                     pos_arg
                 )) {

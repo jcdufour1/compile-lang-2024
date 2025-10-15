@@ -58,7 +58,7 @@ static void add_builtin_defs(void) {
 #define do_pass(pass_fn, sym_log_fn) \
     do { \
         pass_fn(); \
-        if (error_count > 0) { \
+        if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             exit(EXIT_CODE_FAIL); \
         } \
@@ -73,7 +73,7 @@ static void add_builtin_defs(void) {
 #define do_pass_status(pass_fn, sym_log_fn) \
     do { \
         bool status = pass_fn(); \
-        if (error_count > 0) { \
+        if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
             exit(EXIT_CODE_FAIL); \
@@ -146,7 +146,7 @@ void do_passes(void) {
         }
     }
 
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         unreachable("should have exited before now\n");
     }
 
@@ -185,7 +185,7 @@ void do_passes(void) {
         }
     }
 
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }
 }

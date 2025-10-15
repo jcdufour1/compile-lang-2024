@@ -683,7 +683,7 @@ static void tast_gen_tast_forward_decl(Tast_type tast) {
     String output = {0};
 
     for (size_t idx = 0; idx < tast.sub_types.info.count; idx++) {
-        tast_gen_tast_forward_decl(vec_at(&tast.sub_types, idx));
+        tast_gen_tast_forward_decl(vec_at(tast.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -707,7 +707,7 @@ static void tast_gen_tast_struct_as(String* output, Tast_type tast) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < tast.sub_types.info.count; idx++) {
-        Tast_type curr = vec_at(&tast.sub_types, idx);
+        Tast_type curr = vec_at(tast.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_tast_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -730,7 +730,7 @@ static void tast_gen_tast_struct_enum(String* output, Tast_type tast) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < tast.sub_types.info.count; idx++) {
-        Tast_type curr = vec_at(&tast.sub_types, idx);
+        Tast_type curr = vec_at(tast.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_tast_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -747,7 +747,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
     String output = {0};
 
     for (size_t idx = 0; idx < tast.sub_types.info.count; idx++) {
-        tast_gen_tast_struct(vec_at(&tast.sub_types, idx));
+        tast_gen_tast_struct(vec_at(tast.sub_types, idx));
     }
 
     if (tast.sub_types.info.count > 0) {
@@ -781,7 +781,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
     }
 
     for (size_t idx = 0; idx < tast.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&tast.members, idx));
+        extend_struct_member(&output, vec_at(tast.members, idx));
     }
 
     if (tast.sub_types.info.count < 1) {
@@ -799,7 +799,7 @@ static void tast_gen_tast_struct(Tast_type tast) {
 
 static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        tast_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -845,7 +845,7 @@ static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
 
 static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        tast_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -894,7 +894,7 @@ void tast_gen_tast_wrap(Tast_type tast) {
 
 static void tast_gen_print_forward_decl(Tast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        tast_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     if (type.name.is_topmost) {
@@ -920,7 +920,7 @@ static void tast_gen_print_forward_decl(Tast_type type) {
 
 static void tast_gen_new_internal(Tast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        tast_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -945,7 +945,7 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, ", ");
         }
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -975,7 +975,7 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, "    tast_");
             extend_strv_lower(&function, type.name.base);
@@ -1001,7 +1001,7 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
 
 static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
+        tast_gen_internal_get_pos(vec_at(type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -1027,7 +1027,7 @@ static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    switch (tast->type) {\n");
 
             for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-                Tast_type curr = vec_at(&type.sub_types, idx);
+                Tast_type curr = vec_at(type.sub_types, idx);
                 string_extend_cstr(&gen_a, &function, "        case ");
                 extend_tast_name_upper(&function, curr.name);
                 string_extend_cstr(&gen_a, &function, ":\n");
@@ -1073,7 +1073,7 @@ static void gen_tast_define_get_pos(Tast_type tast) {
 
 static void gen_tast_vecs(Tast_type tast) {
     for (size_t idx = 0; idx < tast.sub_types.info.count; idx++) {
-        gen_tast_vecs(vec_at(&tast.sub_types, idx));
+        gen_tast_vecs(vec_at(tast.sub_types, idx));
     }
 
     String vec_name = {0};

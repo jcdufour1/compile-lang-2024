@@ -1,11 +1,12 @@
 compile::stdout 0
 
-compile::stderr 20
-tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `Str`
-     2 | type io import = std.io
-     3 | using io
-       | ^
-     4 | 
+compile::stderr 26
+[1;31merror[0;39m:redefinition of symbol `Str`
+std/prelude.own:8:6:[1;34mnote[0;39m:in expansion of def
+     7 | 
+     8 | type Str def = coll.Str
+       |      ^
+     9 | type Dstr def = coll.Darr(<u8>)
 tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`Str` originally defined here
      4 | 
      5 | type Str def = Local_str
@@ -16,6 +17,11 @@ tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `put
      3 | using io
        | ^
      4 | 
+std/io.own:14:6:[1;34mnote[0;39m:in expansion of def
+    13 | type printf def = c.printf
+    14 | type puts def = c.puts
+       |      ^
+    15 | type fopen def = c.fopen
 tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`puts` originally defined here
     11 | 
     12 | fn puts() i32 {

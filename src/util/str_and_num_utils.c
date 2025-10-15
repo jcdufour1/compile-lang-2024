@@ -166,7 +166,7 @@ bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
                 );
             }
 
-            msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix `0%c`\n", curr_char);
+            msg(DIAG_INVALID_LITERAL_PREFIX, pos, "invalid literal prefix `0%c`\n", curr_char);
             return false;
         }
 

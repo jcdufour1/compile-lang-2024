@@ -116,7 +116,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_strv(&a_main, &string, strv_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
-    return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
+    return lang_type_atom_new(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
 // TODO: remove this function and use try_lang_type_get_atom instead

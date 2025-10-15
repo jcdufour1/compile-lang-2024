@@ -21,7 +21,7 @@ Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
             string_extend_cstr(arena, &cmd_str, " ");
         }
         // TODO: consider arguments that contain spaces, etc.
-        string_extend_strv(arena, &cmd_str, vec_at(&cmd, idx));
+        string_extend_strv(arena, &cmd_str, vec_at(cmd, idx));
     }
     return string_to_strv(cmd_str);
 }
@@ -41,11 +41,11 @@ int subprocess_call(Strv_vec cmd) {
         // child process
         Cstr_vec cstrs = {0};
         for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            const char* curr = strv_to_cstr(&a_temp, vec_at(&cmd, idx));
+            const char* curr = strv_to_cstr(&a_temp, vec_at(cmd, idx));
             vec_append(&a_temp, &cstrs, curr);
         }
         vec_append(&a_temp, &cstrs, NULL);
-        execvpe(strv_to_cstr(&a_temp, vec_at(&cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
+        execvpe(strv_to_cstr(&a_temp, vec_at(cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));
         msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));

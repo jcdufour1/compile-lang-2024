@@ -3,6 +3,7 @@
 #include <symbol_table.h>
 #include <stdarg.h>
 #include <parameters.h>
+#include <pos_util.h>
 
 static void show_location_error(Pos pos) {
     Strv* file_con_ = NULL;
@@ -74,9 +75,9 @@ void msg_internal(
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fatal;
-        error_count++;
+        env.error_count++;
     } else if (log_level == LOG_WARNING) {
-        warning_count++;
+        env.warning_count++;
     }
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
@@ -88,6 +89,25 @@ void msg_internal(
             vfprintf(stderr, format, args);
             show_location_error(pos);
         }
+
+        Pos* exp_from = pos.expanded_from;
+        while (exp_from) {
+            assert(!pos_is_equal(*exp_from, POS_BUILTIN));
+            assert(!pos_is_equal(*exp_from, (Pos) {0}));
+            //fprintf(stderr, "%s:", get_log_level_str(LOG_NOTE));
+            if (1 || exp_from->line > 0) {
+                fprintf(stderr, FMT":%d:%d:%s:", strv_print(exp_from->file_path), exp_from->line, exp_from->column, get_log_level_str(LOG_NOTE));
+                fprintf(stderr, "in expansion of def\n");
+            } else {
+                fprintf(stderr, "in expansion of def\n");
+            }
+            if (exp_from->line > 0) {
+                show_location_error(*exp_from);
+            }
+
+            exp_from = exp_from->expanded_from;
+        }
+
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 

@@ -3,6 +3,7 @@
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
 #include <ulang_type_get_atom.h>
+#include <pos_util.h>
 
 typedef enum {
     USING_STMT_KEEP,
@@ -30,7 +31,7 @@ static void expand_using_using(Uast_using* using) {
         // TODO: expected failure case for using `using` on enum, etc.
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-            Uast_variable_def* curr = vec_at(&struct_def->base.members, idx);
+            Uast_variable_def* curr = vec_at(struct_def->base.members, idx);
             Name alias_name = using->sym_name;
             alias_name.mod_path = using->mod_path_to_put_defs;
             alias_name.base = curr->name.base;
@@ -71,11 +72,13 @@ static void expand_using_using(Uast_using* using) {
                     uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
                     true
                 );
+                lang_def->pos.expanded_from = uast_def_get_pos_ref(curr);
+                assert(!pos_is_equal(lang_def->pos, (Pos) {0}));
                 if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
                     Uast_def* prev_def = NULL;
                     unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
                     if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-                        if (!is_builtin) {
+                        if (!is_builtin || !strv_starts_with(uast_def_get_name(prev_def).mod_path, MOD_PATH_STD)) {
                             msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
                         }
                     }

@@ -94,7 +94,7 @@ Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     Ulang_type_vec params = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, vec_at(&decl->params->params, idx)->base->lang_type);
+        vec_append(&a_main, &params, vec_at(decl->params->params, idx)->base->lang_type);
     }
 
     Ulang_type* return_type = arena_alloc(&a_main, sizeof(*return_type));

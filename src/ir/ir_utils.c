@@ -196,7 +196,7 @@ Name ir_tast_get_name(const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return name_new((Strv) {0}, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+            return name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:
@@ -220,7 +220,7 @@ Ir* ir_from_get_name(Name name) {
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Name memb_name) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        if (name_is_equal(vec_at(&def->base.members, idx)->name_self, memb_name)) {
+        if (name_is_equal(vec_at(def->base.members, idx)->name_self, memb_name)) {
             return idx;
         }
     }

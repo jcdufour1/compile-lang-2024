@@ -149,7 +149,6 @@ static Lang_type_type lang_type_gen_opaque(const char* prefix) {
     const char* base_name = "opaque";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    // TODO: get rid of these unneeded atoms
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -251,7 +250,7 @@ static void lang_type_gen_lang_type_forward_decl(Lang_type_type lang_type) {
     String output = {0};
 
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
-        lang_type_gen_lang_type_forward_decl(vec_at(&lang_type.sub_types, idx));
+        lang_type_gen_lang_type_forward_decl(vec_at(lang_type.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -275,7 +274,7 @@ static void lang_type_gen_lang_type_struct_as(String* output, Lang_type_type lan
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
-        Lang_type_type curr = vec_at(&lang_type.sub_types, idx);
+        Lang_type_type curr = vec_at(lang_type.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_lang_type_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -298,7 +297,7 @@ static void lang_type_gen_lang_type_struct_enum(String* output, Lang_type_type l
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
-        Lang_type_type curr = vec_at(&lang_type.sub_types, idx);
+        Lang_type_type curr = vec_at(lang_type.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_lang_type_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -315,7 +314,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
     String output = {0};
 
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
-        lang_type_gen_lang_type_struct(vec_at(&lang_type.sub_types, idx));
+        lang_type_gen_lang_type_struct(vec_at(lang_type.sub_types, idx));
     }
 
     if (lang_type.sub_types.info.count > 0) {
@@ -349,7 +348,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
     }
 
     for (size_t idx = 0; idx < lang_type.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&lang_type.members, idx));
+        extend_struct_member(&output, vec_at(lang_type.members, idx));
     }
 
     if (lang_type.sub_types.info.count < 1) {
@@ -367,7 +366,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
 
 static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        lang_type_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -428,7 +427,7 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
 
 static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        lang_type_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -488,7 +487,7 @@ void lang_type_gen_lang_type_wrap(Lang_type_type lang_type) {
 // TODO: deduplicate these functions (use same function for Ir and Lang_type)
 static void lang_type_gen_print_forward_decl(Lang_type_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        lang_type_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     if (type.name.is_topmost) {
@@ -514,7 +513,7 @@ static void lang_type_gen_print_forward_decl(Lang_type_type type) {
 
 static void lang_type_gen_new_internal(Lang_type_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        lang_type_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -535,7 +534,7 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
         string_extend_cstr(&gen_a, &function, ", ");
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -554,7 +553,7 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             string_extend_cstr(&gen_a, &function, ", ");
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");
             extend_strv_lower(&function, curr.name);
@@ -582,7 +581,7 @@ static void gen_lang_type_new_define(Lang_type_type lang_type) {
 
 static void gen_lang_type_vecs(Lang_type_type lang_type) {
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
-        gen_lang_type_vecs(vec_at(&lang_type.sub_types, idx));
+        gen_lang_type_vecs(vec_at(lang_type.sub_types, idx));
     }
 
     String vec_name = {0};

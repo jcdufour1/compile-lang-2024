@@ -25,6 +25,7 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
+    // TODO: do not create new alias every time; make MOD_PATH_AUX_UNAMES, etc.
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         util_literal_name_new(),
@@ -105,7 +106,7 @@ Strv serialize_name_symbol_table(Name name) {
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx), false)));
+            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
         }
     }
 
@@ -167,7 +168,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         if (idx > 0) {
             string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_print, buf, ">)");
@@ -198,7 +199,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_print, buf, ">)");
@@ -242,7 +243,7 @@ bool name_is_equal(Name a, Name b) {
         return false;
     }
     for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
+        if (!ulang_type_is_equal(vec_at(a.gen_args, idx), vec_at(b.gen_args, idx))) {
             return false;
         }
     }

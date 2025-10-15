@@ -10,7 +10,7 @@
 
 #define usymbol_log(log_level, scope_id) usymbol_log_internal(log_level, __FILE__, __LINE__,  0, scope_id);
 
-#define usymbol_log_level(log_level, scope_id) usymbol_level_log_internal(log_level, __FILE__, __LINE__, vec_at(&env.symbol_tables, scope_id).usymbol_table, 0);
+#define usymbol_log_level(log_level, scope_id) usymbol_level_log_internal(log_level, __FILE__, __LINE__, vec_at(env.symbol_tables, scope_id).usymbol_table, 0);
 
 static inline void usymbol_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Usymbol_table level, int recursion_depth) {
     String buf = {0};
@@ -23,7 +23,7 @@ static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, i
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        Usymbol_table curr = vec_at(&env.symbol_tables, curr_scope).usymbol_table;
+        Usymbol_table curr = vec_at(env.symbol_tables, curr_scope).usymbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         usymbol_level_log_internal(log_level, file, line, curr, recursion_depth + INDENT_WIDTH);
         if (curr_scope == 0) {
@@ -40,7 +40,7 @@ static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, i
 
 #define symbol_log(log_level, scope_id) symbol_log_internal(log_level, __FILE__, __LINE__,  0, scope_id);
 
-#define symbol_log_level(log_level, scope_id) symbol_level_log_internal(log_level, __FILE__, __LINE__, vec_at(&env.symbol_tables, scope_id).symbol_table, 0);
+#define symbol_log_level(log_level, scope_id) symbol_level_log_internal(log_level, __FILE__, __LINE__, vec_at(env.symbol_tables, scope_id).symbol_table, 0);
 
 static inline void symbol_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Symbol_table level, int recursion_depth) {
     String buf = {0};
@@ -53,7 +53,7 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        Symbol_table curr = vec_at(&env.symbol_tables, curr_scope).symbol_table;
+        Symbol_table curr = vec_at(env.symbol_tables, curr_scope).symbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
         if (curr_scope == 0) {
@@ -70,7 +70,7 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
 
 #define ir_log(log_level, scope_id) ir_log_internal(log_level, __FILE__, __LINE__,  0, scope_id);
 
-#define ir_log_level(log_level, scope_id) ir_level_log_internal(log_level, __FILE__, __LINE__, vec_at(&env.symbol_tables, scope_id).alloca_table, 0);
+#define ir_log_level(log_level, scope_id) ir_level_log_internal(log_level, __FILE__, __LINE__, vec_at(env.symbol_tables, scope_id).alloca_table, 0);
 
 static inline void ir_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Ir_table level, int recursion_depth) {
     String buf = {0};
@@ -83,7 +83,7 @@ static inline void ir_log_internal(LOG_LEVEL log_level, const char* file, int li
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        Ir_table curr = vec_at(&env.symbol_tables, curr_scope).alloca_table;
+        Ir_table curr = vec_at(env.symbol_tables, curr_scope).alloca_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         ir_level_log_internal(log_level, file, line, curr, recursion_depth);
         if (curr_scope == 0) {

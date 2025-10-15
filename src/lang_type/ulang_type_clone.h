@@ -6,7 +6,7 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
 static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_new_scope, Scope_id new_scope) {
     Ulang_type_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, ulang_type_clone(vec_at(&vec, idx), use_new_scope, new_scope));
+        vec_append(&a_main, &new_vec, ulang_type_clone(vec_at(vec, idx), use_new_scope, new_scope));
     }
     return new_vec;
 }

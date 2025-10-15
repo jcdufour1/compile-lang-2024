@@ -194,7 +194,7 @@ static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!ulang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
             return false;
         }
     }
@@ -221,7 +221,7 @@ static inline bool uast_try_get_member_def(
     Strv member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             *member_def = curr_member;
             return true;
@@ -232,7 +232,7 @@ static inline bool uast_try_get_member_def(
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        const Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }

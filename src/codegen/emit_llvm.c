@@ -161,7 +161,7 @@
 //
 //static void emit_function_params(String* output, const Ir_function_params* fun_params) {
 //    for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-//        const Ir_variable_def* curr_param = vec_at(&fun_params->params, idx);
+//        const Ir_variable_def* curr_param = vec_at(fun_params->params, idx);
 //
 //        if (idx > 0) {
 //            string_extend_cstr(&a_main, output, ", ");
@@ -237,7 +237,7 @@
 //
 //static void emit_function_call_arguments(String* output, String* literals, const Ir_function_call* fun_call) {
 //    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-//        Name arg_name = vec_at(&fun_call->args, idx);
+//        Name arg_name = vec_at(fun_call->args, idx);
 //        Ir* argument = NULL;
 //        unwrap(ir_lookup(&argument, arg_name));
 //
@@ -782,7 +782,7 @@
 //        if (!is_first) {
 //            string_extend_cstr(&a_main, output, ", ");
 //        }
-//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(&base->members, idx))), false);
+//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(base->members, idx))), false);
 //        is_first = false;
 //    }
 //
@@ -879,7 +879,7 @@
 //
 //static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* block) {
 //    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-//        const Ir* stmt = vec_at(&block->children, idx);
+//        const Ir* stmt = vec_at(block->children, idx);
 //        switch (stmt->type) {
 //            case IR_EXPR:
 //                emit_expr(output, literals, ir_expr_const_unwrap(stmt));

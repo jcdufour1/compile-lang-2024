@@ -17,7 +17,7 @@ static inline bool lang_type_is_slice(Ulang_type* gen_arg, Lang_type lang_type) 
         return false;
     }
     unwrap(lang_type_struct.atom.str.gen_args.info.count == 1);
-    *gen_arg = vec_at_const(lang_type_struct.atom.str.gen_args, 0);
+    *gen_arg = vec_at(lang_type_struct.atom.str.gen_args, 0);
     return true;
 }
 

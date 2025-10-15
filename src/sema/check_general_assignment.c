@@ -51,8 +51,8 @@ static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tu
 
     for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
         if (!can_be_implicitly_converted(
-             vec_at(&dest.lang_types, idx),
-             vec_at(&src.lang_types, idx),
+             vec_at(dest.lang_types, idx),
+             vec_at(src.lang_types, idx),
              false,
              implicit_pointer_depth
         )) {
@@ -145,9 +145,9 @@ static CHECK_ASSIGN_STATUS check_general_assignment_finish(
                 "enum case with non-void inner type cannot be assigned without using (); "
                 "use `"FMT"."FMT"()` instead of `"FMT"."FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name),
+                name_print(NAME_MSG, vec_at(enum_def.members, (size_t)callee->tag->data)->name),
                 lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(&enum_def.members, (size_t)callee->tag->data)->name)
+                name_print(NAME_MSG, vec_at(enum_def.members, (size_t)callee->tag->data)->name)
             );
             return CHECK_ASSIGN_ERROR;
         }

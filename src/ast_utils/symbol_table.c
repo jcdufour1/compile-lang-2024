@@ -311,7 +311,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
         );
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
@@ -322,7 +322,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
         );
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
@@ -333,7 +333,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
         );
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
@@ -507,7 +507,7 @@ static Scope_id_vec scope_id_to_parent;
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    return vec_at(&scope_id_to_parent, key);
+    return vec_at(scope_id_to_parent, key);
 }
 
 void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
@@ -528,7 +528,7 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
 static Name_vec scope_to_name;
 
 Name scope_to_name_tbl_lookup(Scope_id key) {
-    return vec_at(&scope_to_name, key);
+    return vec_at(scope_to_name, key);
 }
 
 void scope_to_name_tbl_add(Scope_id key, Name scope_name) {

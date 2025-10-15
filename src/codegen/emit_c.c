@@ -60,7 +60,7 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
                 if (idx > 0) {
                     string_extend_cstr(&a_main, output, ", ");
                 }
-                c_extend_type_call_str(output, vec_at(&fn.params.ir_lang_types, idx), opaque_ptr);
+                c_extend_type_call_str(output, vec_at(fn.params.ir_lang_types, idx), opaque_ptr);
             }
             string_extend_cstr(&a_main, output, "))");
             return;
@@ -90,15 +90,15 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
             string_extend_cstr(&a_main, output, ", ");
         }
 
-        if (vec_at(&params->params, idx)->is_variadic) {
+        if (vec_at(params->params, idx)->is_variadic) {
             string_extend_cstr(&a_main, output, "... ");
             assert(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
             return;
         }
 
-        c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type, true);
+        c_extend_type_call_str(output, vec_at(params->params, idx)->lang_type, true);
         string_extend_cstr(&a_main, output, " ");
-        ir_extend_name(output, vec_at(&params->params, idx)->name_self);
+        ir_extend_name(output, vec_at(params->params, idx)->name_self);
     }
 }
 
@@ -141,11 +141,11 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        Ir_struct_memb_def* curr = vec_at(&def->base.members, idx);
+        Ir_struct_memb_def* curr = vec_at(def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
-        if (llvm_is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
-            Name ori_name = ir_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
+        if (llvm_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
+            Name ori_name = ir_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -285,7 +285,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
             if (idx > 0) {
                 string_extend_cstr(&a_main, &strs->output, ", ");
             }
-            emit_c_expr_piece(strs, vec_at(&fun_call->args, idx));
+            emit_c_expr_piece(strs, vec_at(fun_call->args, idx));
         }
     }
     string_extend_cstr(&a_main, &strs->output, ");\n");
@@ -595,7 +595,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     string_extend_cstr(&a_main, &strs->output, ")");
     ir_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
-    ir_extend_name(&strs->output, vec_at(&ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
+    ir_extend_name(&strs->output, vec_at(ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
@@ -639,7 +639,7 @@ static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
 static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     emit_c_loc(&strs->output, block->loc, block->pos);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Ir* stmt = vec_at(&block->children, idx);
+        const Ir* stmt = vec_at(block->children, idx);
         switch (stmt->type) {
             case IR_EXPR:
                 emit_c_expr(strs, ir_expr_const_unwrap(stmt));
@@ -713,7 +713,7 @@ void emit_c_from_tree(void) {
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);
         }
-        if (error_count > 0) {
+        if (env.error_count > 0) {
             return;
         }
 
@@ -823,7 +823,7 @@ void emit_c_from_tree(void) {
         vec_extend(&a_main, &cmd, &params.dynamic_libs);
         for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
             vec_append(&a_main, &cmd, sv("-l"));
-            vec_append(&a_main, &cmd, vec_at(&params.l_flags, idx));
+            vec_append(&a_main, &cmd, vec_at(params.l_flags, idx));
         }
 
         int status = subprocess_call(cmd);
