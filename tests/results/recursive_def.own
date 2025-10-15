@@ -1,11 +1,7 @@
 compile::stdout 0
 
-compile::stderr 33
-tests/inputs/recursive_def.own:1:21:[1;31merror[0;39m:def recursion detected
-     1 | type num_num1 def = num
-       |                     ^
-     2 | type num def = num_num1
-tests/inputs/recursive_def.own:2:16:[1;34mnote[0;39m:in expansion of def
+compile::stderr 34
+tests/inputs/recursive_def.own:2:16:[1;31merror[0;39m:def recursion detected
      1 | type num_num1 def = num
      2 | type num def = num_num1
        |                ^
@@ -14,12 +10,12 @@ tests/inputs/recursive_def.own:1:21:[1;34mnote[0;39m:in expansion of def
      1 | type num_num1 def = num
        |                     ^
      2 | type num def = num_num1
-tests/inputs/recursive_def.own:5:23:[1;31merror[0;39m:def recursion detected
-     4 | type thing_num2 def = thing
-     5 | type thing_num1 def = thing_num2
-       |                       ^
-     6 | type thing def = thing_num1
-tests/inputs/recursive_def.own:6:18:[1;34mnote[0;39m:in expansion of def
+tests/inputs/recursive_def.own:2:16:[1;34mnote[0;39m:in expansion of def
+     1 | type num_num1 def = num
+     2 | type num def = num_num1
+       |                ^
+     3 | 
+tests/inputs/recursive_def.own:6:18:[1;31merror[0;39m:def recursion detected
      5 | type thing_num1 def = thing_num2
      6 | type thing def = thing_num1
        |                  ^
@@ -34,6 +30,11 @@ tests/inputs/recursive_def.own:5:23:[1;34mnote[0;39m:in expansion of def
      5 | type thing_num1 def = thing_num2
        |                       ^
      6 | type thing def = thing_num1
+tests/inputs/recursive_def.own:6:18:[1;34mnote[0;39m:in expansion of def
+     5 | type thing_num1 def = thing_num2
+     6 | type thing def = thing_num1
+       |                  ^
+     7 | 
 
 compile::return_code 1
 
