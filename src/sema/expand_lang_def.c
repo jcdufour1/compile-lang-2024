@@ -151,8 +151,6 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
 }
 
 static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* new_name, Name name, Pos dest_pos, bool always_new_expr, bool is_expanded_from, Pos* expanded_from) {
-    //log(LOG_DEBUG, "%s pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", is_expanded_from ? "true" : "false", pos_deep_print(uast_expr_get_pos_ref(expr)));
-
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
@@ -202,10 +200,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             if (always_new_expr) {
                 if (is_expanded_from) {
                     dest_pos.expanded_from = expanded_from;
-                    //assert(!pos_is_equal(*dest_pos.expanded_from, (Pos) {0}));
                 }
                 *new_expr = uast_symbol_wrap(uast_symbol_new(dest_pos /* TODO */, name));
-                //assert(uast_expr_get_pos(*new_expr).expanded_from);
                 return EXPAND_NAME_NEW_EXPR;
             }
             return EXPAND_NAME_NORMAL;
@@ -338,24 +334,7 @@ EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_po
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
-    log(LOG_DEBUG, FMT"\n", uast_variable_def_print(def));
-    (void) def;
-    if (!expand_def_ulang_type(&def->lang_type, def->pos /* TODO */)) {
-        return false;
-    }
-    //Uast_expr* new_expr = NULL;
-    //switch (expand_def_name(&new_expr, &def->name, def->pos /* TODO */)) {
-    //    case EXPAND_NAME_NORMAL:
-    //        return true;
-    //    case EXPAND_NAME_NEW_EXPR:
-    //        log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr));
-    //        // TODO
-    //        todo();
-    //    case EXPAND_NAME_ERROR:
-    //        todo();
-    //}
-    return true;
-    unreachable("");
+    return expand_def_ulang_type(&def->lang_type, def->pos /* TODO */);
 }
 
 static bool expand_def_case(Uast_case* lang_case) {
