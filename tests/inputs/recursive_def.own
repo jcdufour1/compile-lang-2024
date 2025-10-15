@@ -1,5 +1,9 @@
+type num_num1 def = num
+type num def = num_num1
 
-type new_num def = new
-type new def = new_num
+type thing_num2 def = thing
+type thing_num1 def = thing_num2
+type thing def = thing_num1
 
-new()
+num()
+thing()

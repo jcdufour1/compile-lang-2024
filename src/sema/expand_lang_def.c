@@ -217,12 +217,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     // TODO: this clone is expensive I think
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
     if (is_expanded_from) {
-        log(LOG_DEBUG, FMT"\n", pos_deep_print(expanded_from));
-        log(LOG_DEBUG, FMT"\n", pos_deep_print(uast_expr_get_pos_ref(expr)));
-        log(LOG_DEBUG, FMT"\n", pos_deep_print(expanded_from));
-        pos_expanded_from_append(expanded_from, uast_expr_get_pos_ref(expr));
-        uast_expr_get_pos_ref(expr)->expanded_from = expanded_from;
-        assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
+        pos_expanded_from_append(uast_expr_get_pos_ref(expr), expanded_from);
     } else {
         pos_expanded_from_append(uast_expr_get_pos_ref(expr), uast_def_get_pos_ref(def));
         assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
@@ -232,12 +227,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     while (exp_from) {
         exp_from = exp_from->expanded_from;
 
-        if (exp_from) {
-            log(LOG_DEBUG, FMT" "FMT"\n", pos_print(*exp_from), pos_print(*uast_expr_get_pos_ref(expr)->expanded_from));
-        }
-
         if (exp_from && pos_is_equal(*exp_from, *uast_expr_get_pos_ref(expr)->expanded_from)) {
-            uast_expr_get_pos_ref(expr)->expanded_from = NULL;
             msg(DIAG_DEF_RECURSION, *uast_expr_get_pos_ref(expr), "def recursion detected\n");
             return EXPAND_NAME_ERROR;
         }
@@ -284,7 +274,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 new_name->gen_args = name.gen_args;
             }
             assert(sym->pos.expanded_from);
-            return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, sym->pos.expanded_from);
+            return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, &sym->pos);
         }
         case UAST_OPERATOR:
             *new_expr = expr;
