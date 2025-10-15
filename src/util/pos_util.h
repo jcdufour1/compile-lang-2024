@@ -1,5 +1,5 @@
-#ifndef POS_H
-#define POS_H
+#ifndef POS_UTIL_H
+#define POS_UTIL_H
 
 #include <newstring.h>
 #include <util.h>
@@ -61,6 +61,10 @@ static inline size_t pos_expanded_from_count(Pos* pos) {
     return count;
 }
 
+static inline bool pos_is_equal(Pos a, Pos b) {
+    return strv_is_equal(a.file_path, b.file_path) && a.line == b.line && a.column == b.column;
+}
+
 static inline bool pos_is_recursion(Pos pos) {
     Pos* exp_from = pos.expanded_from;
     while (exp_from) {
@@ -73,8 +77,4 @@ static inline bool pos_is_recursion(Pos pos) {
     return false;
 }
 
-static inline bool pos_is_equal(Pos a, Pos b) {
-    return strv_is_equal(a.file_path, b.file_path) && a.line == b.line && a.column == b.column;
-}
-
-#endif // POS_H
+#endif // POS_UTIL_H

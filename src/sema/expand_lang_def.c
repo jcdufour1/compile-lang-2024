@@ -9,7 +9,7 @@
 #include <msg_todo.h>
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
-#include <pos.h>
+#include <pos_util.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 

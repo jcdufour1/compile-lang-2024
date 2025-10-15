@@ -5,7 +5,7 @@
 #include <util.h>
 #include <ulang_type.h>
 #include <lang_type_print.h>
-#include <pos.h>
+#include <pos_util.h>
 #include <symbol_table.h>
 
 static void extend_pos(String* buf, Pos pos) {

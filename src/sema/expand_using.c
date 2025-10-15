@@ -3,6 +3,7 @@
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
 #include <ulang_type_get_atom.h>
+#include <pos_util.h>
 
 typedef enum {
     USING_STMT_KEEP,
