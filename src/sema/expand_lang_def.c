@@ -49,7 +49,7 @@ bool expand_def_ulang_type_regular(
             *new_lang_type = lang_type;
             new_lang_type->atom.str = name_to_uname(uast_symbol_unwrap(new_expr)->name);
             new_lang_type->pos.expanded_from = uast_symbol_unwrap(new_expr)->pos.expanded_from;
-            assert(!pos_is_equal(*new_lang_type->pos.expanded_from, (Pos) {0}));
+            //assert(!pos_is_equal(*new_lang_type->pos.expanded_from, (Pos) {0}));
             return true;
         default:
             msg_todo("", uast_expr_get_pos(new_expr));
@@ -151,6 +151,8 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
 }
 
 static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* new_name, Name name, Pos dest_pos, bool always_new_expr, bool is_expanded_from, Pos* expanded_from) {
+    //log(LOG_DEBUG, "%s pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", is_expanded_from ? "true" : "false", pos_deep_print(uast_expr_get_pos_ref(expr)));
+
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
@@ -205,10 +207,10 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             if (always_new_expr) {
                 if (is_expanded_from) {
                     dest_pos.expanded_from = expanded_from;
-                    assert(!pos_is_equal(*dest_pos.expanded_from, (Pos) {0}));
+                    //assert(!pos_is_equal(*dest_pos.expanded_from, (Pos) {0}));
                 }
                 *new_expr = uast_symbol_wrap(uast_symbol_new(dest_pos /* TODO */, name));
-                assert(uast_expr_get_pos(*new_expr).expanded_from);
+                //assert(uast_expr_get_pos(*new_expr).expanded_from);
                 return EXPAND_NAME_NEW_EXPR;
             }
             return EXPAND_NAME_NORMAL;
@@ -220,47 +222,31 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
 
     // TODO: this clone is expensive I think
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
+    bool should_append_exp_from = uast_expr_get_pos(expr).expanded_from == NULL;
+    unwrap(should_append_exp_from);
     if (pos_is_recursion(uast_expr_get_pos(expr))) {
         todo();
         msg(DIAG_DEF_RECURSION, *uast_expr_get_pos_ref(expr), "def recursion detected\n");
         return EXPAND_NAME_ERROR;
     }
     if (is_expanded_from) {
-        if (pos_is_recursion(uast_expr_get_pos(expr))) {
-            todo();
+        if (should_append_exp_from) {
+            pos_expanded_from_append(uast_expr_get_pos_ref(expr), expanded_from);
         }
-        if (pos_is_recursion(*expanded_from)) {
-            todo();
-        }
-        if (pos_is_recursion(*expanded_from->expanded_from)) {
-            todo();
-        }
-        log(LOG_DEBUG, FMT"\n", uast_expr_print(expr));
-        log(LOG_DEBUG, "pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", pos_deep_print(uast_expr_get_pos_ref(expr)));
-        pos_expanded_from_append(uast_expr_get_pos_ref(expr), expanded_from);
-        log(LOG_DEBUG, "pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", pos_deep_print(uast_expr_get_pos_ref(expr)));
-        if (pos_is_recursion(uast_expr_get_pos(expr))) {
-            if (pos_is_recursion(*expanded_from)) {
-                todo();
-            }
-            msg(DIAG_NOTE, uast_def_get_pos(def), FMT"\n", uast_def_print(def));
-            msg(DIAG_NOTE, uast_def_get_pos(def), FMT"\n", name_print(NAME_LOG, name));
-            todo();
-        }
-        log(LOG_DEBUG, "pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", pos_deep_print(uast_expr_get_pos_ref(expr)));
         //*uast_expr_get_pos_ref_ref(expr) = expanded_from;
         //assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     } else {
-        pos_expanded_from_append(uast_expr_get_pos_ref(expr), uast_def_get_pos_ref(def));
-        assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
+        if (should_append_exp_from) {
+            //pos_expanded_from_append(uast_expr_get_pos_ref(expr), uast_def_get_pos_ref(def));
+        }
+        //assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     }
 
     log(LOG_DEBUG, "%s pos_deep_print(uast_expr_get_pos_ref(expr)): "FMT"\n", is_expanded_from ? "true" : "false", pos_deep_print(uast_expr_get_pos_ref(expr)));
-    if (pos_is_recursion(*uast_expr_get_pos(expr).expanded_from)) {
-        todo();
-    }
+    //if (pos_is_recursion(*uast_expr_get_pos(expr).expanded_from)) {
+    //    todo();
+    //}
     if (pos_is_recursion(uast_expr_get_pos(expr))) {
-        todo();
         msg(DIAG_DEF_RECURSION, *uast_expr_get_pos_ref(expr), "def recursion detected\n");
         return EXPAND_NAME_ERROR;
     }
@@ -280,7 +266,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
                 if (result->type == UAST_MOD_ALIAS) {
                     new_name->mod_path = uast_mod_alias_unwrap(result)->mod_path;
                     new_name->base = access->member_name->name.base;
-                    assert(!pos_is_equal(*uast_expr_get_pos(expr).expanded_from, (Pos) {0}));
+                    //assert(!pos_is_equal(*uast_expr_get_pos(expr).expanded_from, (Pos) {0}));
                     return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, uast_expr_get_pos(expr).expanded_from);
                 }
 
@@ -304,11 +290,11 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             } else {
                 new_name->gen_args = name.gen_args;
             }
-            assert(sym->pos.expanded_from);
+            //assert(sym->pos.expanded_from);
             if (pos_is_recursion(sym->pos)) {
                 todo();
             }
-            if (pos_is_recursion(*sym->pos.expanded_from)) {
+            if (sym->pos.expanded_from && pos_is_recursion(*sym->pos.expanded_from)) {
                 todo();
             }
             if (is_expanded_from) {
