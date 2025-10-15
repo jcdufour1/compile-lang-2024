@@ -263,7 +263,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 84, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 85, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -349,6 +349,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"if-should-be-if-let", DIAG_IF_SHOULD_BE_IF_LET, LOG_ERROR, true},
     {"unsupported-target-triplet", DIAG_UNSUPPORTED_TARGET_TRIPLET, LOG_ERROR, true},
     {"invalid-literal-prefix", DIAG_INVALID_LITERAL_PREFIX, LOG_ERROR, true},
+    {"def-recursion", DIAG_DEF_RECURSION, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

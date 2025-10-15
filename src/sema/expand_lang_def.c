@@ -9,6 +9,7 @@
 #include <msg_todo.h>
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
+#include <pos.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 
@@ -216,13 +217,32 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     // TODO: this clone is expensive I think
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
     if (is_expanded_from) {
+        log(LOG_DEBUG, FMT"\n", pos_deep_print(expanded_from));
+        log(LOG_DEBUG, FMT"\n", pos_deep_print(uast_expr_get_pos_ref(expr)));
+        log(LOG_DEBUG, FMT"\n", pos_deep_print(expanded_from));
+        pos_expanded_from_append(expanded_from, uast_expr_get_pos_ref(expr));
         uast_expr_get_pos_ref(expr)->expanded_from = expanded_from;
         assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     } else {
-        uast_expr_get_pos_ref(expr)->expanded_from = uast_def_get_pos_ref(def);
-        log(LOG_DEBUG, FMT"\n", uast_def_print(def));
+        pos_expanded_from_append(uast_expr_get_pos_ref(expr), uast_def_get_pos_ref(def));
         assert(!pos_is_equal(*uast_expr_get_pos_ref(expr)->expanded_from, (Pos) {0}));
     }
+
+    Pos* exp_from = uast_expr_get_pos_ref(expr)->expanded_from;
+    while (exp_from) {
+        exp_from = exp_from->expanded_from;
+
+        if (exp_from) {
+            log(LOG_DEBUG, FMT" "FMT"\n", pos_print(*exp_from), pos_print(*uast_expr_get_pos_ref(expr)->expanded_from));
+        }
+
+        if (exp_from && pos_is_equal(*exp_from, *uast_expr_get_pos_ref(expr)->expanded_from)) {
+            uast_expr_get_pos_ref(expr)->expanded_from = NULL;
+            msg(DIAG_DEF_RECURSION, *uast_expr_get_pos_ref(expr), "def recursion detected\n");
+            return EXPAND_NAME_ERROR;
+        }
+    }
+
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
