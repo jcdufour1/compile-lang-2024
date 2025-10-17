@@ -117,7 +117,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
     else:
         assert(False and "not implemented")
 
-    compile_cmd.append(os.path.join(os.path.realpath(INPUTS_DIR), file.path_base))
+    compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=INFO")
     compile_cmd.append("-o")
@@ -330,7 +330,6 @@ def main() -> None:
         count_threads = 2
 
     # TODO: when --update is used, only one of debug or release should be ran (to save time)
-    print(files_to_test)
     do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     print_success("all tests passed")
