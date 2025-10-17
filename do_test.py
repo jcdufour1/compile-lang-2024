@@ -50,13 +50,21 @@ def print_success(*base, **kargs) -> None:
 def print_info(*base, **kargs) -> None:
     print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
+def list_files_recursively(dir: str) -> list[str]:
+    result: list[str] = []
+    for root, _, files in os.walk(dir):
+        for file_path in files:
+            result.append(os.path.join(root, file_path))
+    return result
+
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
     possible_path: str
-    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
-        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
+    for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
+        possible_path = os.path.realpath(possible_base)
+        actual_base = possible_path[len(os.path.realpath(INPUTS_DIR)) + 1:]
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileItem(possible_base))
+            files.append(FileItem(actual_base))
     return files
 
 def get_expected_output(file: FileItem) -> str:
@@ -69,7 +77,7 @@ def get_expected_output(file: FileItem) -> str:
         print_warning(
             "result file not found for " +
             os.path.join(INPUTS_DIR, expect_base) +
-            "; if this test input generates correct results, use --test --include=" +
+            "; if this test input generates correct results, use --update --include=" +
             os.path.join(INPUTS_DIR, expect_base)
         )
         print(e)
@@ -175,7 +183,10 @@ def test_file(
 
     process_result: str = get_result_from_test_result(result)
     if action == Action.UPDATE:
-        with open(os.path.join(RESULTS_DIR, file.path_base), "w") as newResult:
+        path = os.path.join(RESULTS_DIR, file.path_base)
+        dir = path[:path.rfind('/')]
+        os.makedirs(dir, exist_ok = True)
+        with open(path, "w") as newResult:
             newResult.write(process_result)
         return True
     elif action == Action.TEST:
