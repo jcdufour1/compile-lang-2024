@@ -58,6 +58,7 @@ def list_files_recursively(dir: str) -> list[str]:
     return result
 
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
+    # TODO: print error for invalid path in files_to_test
     files: list[FileItem] = []
     possible_path: str
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
@@ -67,21 +68,26 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
             files.append(FileItem(actual_base))
     return files
 
-def get_expected_output(file: FileItem) -> str:
-    expect_base: str = file.path_base
-    expected: str = os.path.join(RESULTS_DIR, expect_base)
-    try:
-        with open(expected, "r") as input:
-            return input.read()
-    except FileNotFoundError as e:
-        print_warning(
-            "result file not found for " +
-            os.path.join(INPUTS_DIR, expect_base) +
-            "; if this test input generates correct results, use --update --include=" +
-            os.path.join(INPUTS_DIR, expect_base)
-        )
-        print(e)
-        return ""
+def get_expected_output(file: FileItem, action: Action) -> str:
+    if action == Action.TEST:
+        expect_base: str = file.path_base
+        expected: str = os.path.join(RESULTS_DIR, expect_base)
+        try:
+            with open(expected, "r") as input:
+                return input.read()
+        except FileNotFoundError as e:
+            print_warning(
+                "result file not found for " +
+                os.path.join(INPUTS_DIR, expect_base) +
+                "; if this test input generates correct results, use --update --include=" +
+                os.path.join(INPUTS_DIR, expect_base)
+            )
+            print(e)
+            return ""
+    elif action == Action.UPDATE:
+        pass
+    else:
+        assert(False and "not implemented")
 
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
@@ -111,7 +117,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
     else:
         assert(False and "not implemented")
 
-    compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
+    compile_cmd.append(os.path.join(os.path.realpath(INPUTS_DIR), file.path_base))
     compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=INFO")
     compile_cmd.append("-o")
@@ -157,7 +163,7 @@ def do_tests(
 
     # TODO: run multiple tests at once
     for file in get_files_to_test(files_to_test):
-        if not test_file(file, do_debug, get_expected_output(file), output_name, action, debug_release_text, path_c_compiler, do_color):
+        if not test_file(file, do_debug, get_expected_output(file, action), output_name, action, debug_release_text, path_c_compiler, do_color):
             if not keep_going:
                 sys.exit(1)
             success = False
@@ -251,10 +257,8 @@ def test_file(
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
-    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
-        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
-        if os.path.isfile(possible_path):
-            callback(list_or_map, possible_path)
+    for possible_base in list_files_recursively(INPUTS_DIR):
+        callback(list_or_map, os.path.realpath(possible_base))
 
 def add_to_map(map: dict, path: str):
     map[path] = 0
@@ -326,6 +330,7 @@ def main() -> None:
         count_threads = 2
 
     # TODO: when --update is used, only one of debug or release should be ran (to save time)
+    print(files_to_test)
     do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
     print_success("all tests passed")
