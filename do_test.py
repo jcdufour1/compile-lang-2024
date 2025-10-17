@@ -27,6 +27,16 @@ class FileItem:
 class TestResult:
     compile: subprocess.CompletedProcess[str]
 
+@dataclass
+class Parameters:
+    files_to_test: list[str]
+    test_output: str
+    action: Action
+    keep_going: bool
+    path_c_compiler: Optional[str]
+    do_color: bool
+    count_threads: int
+
 INPUTS_DIR = os.path.join("tests", "inputs")
 RESULTS_DIR = os.path.join("tests", "results")
 
@@ -85,9 +95,9 @@ def get_expected_output(file: FileItem, action: Action) -> str:
             print(e)
             return ""
     elif action == Action.UPDATE:
-        pass
+        return ""
     else:
-        assert(False and "not implemented")
+        raise NotImplementedError
 
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
@@ -131,16 +141,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
-def do_tests(
-    files_to_test: list[str],
-    do_debug: bool,
-    output_name: str,
-    action: Action,
-    count_threads: int,
-    keep_going: bool,
-    path_c_compiler: Optional[str],
-    do_color: bool
-):
+def do_tests(do_debug: bool, params: Parameters):
     success = True
 
     debug_env: str
@@ -152,7 +153,7 @@ def do_tests(
         debug_release_text = "release"
         debug_env = "0"
 
-    cmd = ["make", "-j", str(count_threads), "build"]
+    cmd = ["make", "-j", str(params.count_threads), "build"]
     print_info("compiling " + debug_release_text + " :")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": debug_env}))
     if process.returncode != 0:
@@ -162,9 +163,9 @@ def do_tests(
     print()
 
     # TODO: run multiple tests at once
-    for file in get_files_to_test(files_to_test):
-        if not test_file(file, do_debug, get_expected_output(file, action), output_name, action, debug_release_text, path_c_compiler, do_color):
-            if not keep_going:
+    for file in get_files_to_test(params.files_to_test):
+        if not test_file(file, do_debug, get_expected_output(file, params.action), params.test_output, params.action, debug_release_text, params.path_c_compiler, params.do_color):
+            if not params.keep_going:
                 sys.exit(1)
             success = False
     if not success:
@@ -175,6 +176,7 @@ def normalize(string: str) -> str:
     return string.replace("\r", "")
 
 # return true if test was successful
+# TODO: this should accept Parameter
 def test_file(
     file: FileItem,
     do_debug: bool,
@@ -263,7 +265,7 @@ def append_all_files(list_or_map: list | dict, callback: Callable):
 def add_to_map(map: dict, path: str):
     map[path] = 0
 
-def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str], bool]:
+def parse_args() -> Parameters:
     action: Action = Action.TEST
     test_output = "test.c" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
@@ -310,16 +312,6 @@ def parse_args() -> Tuple[list[str], str, Action, bool, Optional[str], bool]:
     to_include_list: list[str] = []
     for path in to_include:
         to_include_list.append(path)
-    return to_include_list, test_output, action, keep_going, path_c_compiler, do_color
-
-def main() -> None:
-    files_to_test: list[str]
-    test_output: str
-    action: Action
-    keep_going: bool
-    do_color: bool
-    # TODO: make a class with params because there are many parameters being passed around now
-    files_to_test, test_output, action, keep_going, path_c_compiler, do_color = parse_args()
 
     count_threads: int
     try:
@@ -329,9 +321,15 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
+    return Parameters(to_include_list, test_output, action, keep_going, path_c_compiler, do_color, count_threads)
+
+def main() -> None:
+    # TODO: make a class with params because there are many parameters being passed around now
+    params: Parameters = parse_args()
+
     # TODO: when --update is used, only one of debug or release should be ran (to save time)
-    do_tests(files_to_test, True, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
-    do_tests(files_to_test, False, test_output, action, count_threads, keep_going, path_c_compiler, do_color)
+    do_tests(True, params)
+    do_tests(False, params)
     print_success("all tests passed")
 
 if __name__ == '__main__':
