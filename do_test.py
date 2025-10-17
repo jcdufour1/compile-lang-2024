@@ -164,7 +164,7 @@ def do_tests(do_debug: bool, params: Parameters):
 
     # TODO: run multiple tests at once
     for file in get_files_to_test(params.files_to_test):
-        if not test_file(file, do_debug, get_expected_output(file, params.action), params.test_output, params.action, debug_release_text, params.path_c_compiler, params.do_color):
+        if not test_file(file, do_debug, debug_release_text, params):
             if not params.keep_going:
                 sys.exit(1)
             success = False
@@ -176,31 +176,22 @@ def normalize(string: str) -> str:
     return string.replace("\r", "")
 
 # return true if test was successful
-# TODO: this should accept Parameter
-def test_file(
-    file: FileItem,
-    do_debug: bool,
-    expected_output: str,
-    output_name: str,
-    action: Action,
-    debug_release_text: str,
-    path_c_compiler: Optional[str],
-    do_color: bool
-) -> bool:
-    result: TestResult = compile_test(do_debug, output_name, file, debug_release_text, path_c_compiler)
-
+def test_file(file: FileItem, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
+    result: TestResult = compile_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
     process_result: str = get_result_from_test_result(result)
-    if action == Action.UPDATE:
+    expected_output: str = get_expected_output(file, params.action)
+
+    if params.action == Action.UPDATE:
         path = os.path.join(RESULTS_DIR, file.path_base)
         dir = path[:path.rfind('/')]
         os.makedirs(dir, exist_ok = True)
         with open(path, "w") as newResult:
             newResult.write(process_result)
         return True
-    elif action == Action.TEST:
+    elif params.action == Action.TEST:
         pass
     else:
-        raise AssertionError("uncovered case")
+        raise NotImplementedError
 
     if normalize(process_result) != normalize(expected_output):
         actual_color: str = ""
@@ -209,7 +200,7 @@ def test_file(
         diff = difflib.SequenceMatcher(None, expected_output, process_result)
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':
-                if do_color:
+                if params.do_color:
                     actual_color += Changes.ADDED + \
                                     process_result[stdout_start:stdout_end] + \
                                     Changes.TO_NORMAL
@@ -219,7 +210,7 @@ def test_file(
                 expected_color += process_result[stdout_start:stdout_end]
                 actual_color += process_result[stdout_start:stdout_end]
             elif tag == 'replace':
-                if do_color:
+                if params.do_color:
                     expected_color += Changes.REMOVED + \
                                       expected_output[expected_start:expected_end] + \
                                       Changes.TO_NORMAL
@@ -230,7 +221,7 @@ def test_file(
                     expected_color = expected_output[expected_start:expected_end]
                     actual_color += process_result[stdout_start:stdout_end]
             elif tag == 'delete':
-                if do_color:
+                if params.do_color:
                     expected_color += Changes.REMOVED + \
                                       expected_output[expected_start:expected_end] + \
                                       Changes.TO_NORMAL
@@ -241,12 +232,12 @@ def test_file(
                 print_error("tag unregonized:" + tag)
                 assert False
         print_info("expected output:")
-        if do_color:
+        if params.do_color:
             print(expected_color)
         else:
             print(expected_output)
         print_info("actual output:")
-        if do_color:
+        if params.do_color:
             print(actual_color)
         else:
             print(process_result)
@@ -324,7 +315,6 @@ def parse_args() -> Parameters:
     return Parameters(to_include_list, test_output, action, keep_going, path_c_compiler, do_color, count_threads)
 
 def main() -> None:
-    # TODO: make a class with params because there are many parameters being passed around now
     params: Parameters = parse_args()
 
     # TODO: when --update is used, only one of debug or release should be ran (to save time)
