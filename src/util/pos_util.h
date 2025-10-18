@@ -48,7 +48,7 @@ static inline void pos_expanded_from_append(Pos* pos, Pos* new_exp_from) {
         curr = curr->expanded_from;
     }
     assert(!curr->expanded_from);
-    curr->expanded_from = arena_dup(&a_main, new_exp_from);
+    curr->expanded_from = new_exp_from;
 }
 
 static inline size_t pos_expanded_from_count(Pos* pos) {
