@@ -1,15 +1,18 @@
 
+// TODO: mod alias name leaks into user programs 
+//   (this should be fixed, possibly by making these aliases private in the future)
+//   (these verbose alias names are a temporary solution)
 
-type coll import = std.collections
-type util import = std.util
-type math import = std.math
-type rt import = std.runtime
+type _builtin__coll import = std.collections
+type _builtin__util import = std.util
+type _builtin__math import = std.math
+type _builtin__rt import = std.runtime
 
-type Str def = coll.Str
-type Dstr def = coll.Darr(<u8>)
-type Darr def = coll.Darr
+type Str def = _builtin__coll.Str
+type Dstr def = _builtin__coll.Darr(<u8>)
+type Darr def = _builtin__coll.Darr
 
-type assert def = util.assert
+type assert def = _builtin__util.assert
 
-type min def = math.min
-type max def = math.max
+type min def = _builtin__math.min
+type max def = _builtin__math.max

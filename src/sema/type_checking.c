@@ -1257,7 +1257,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
-            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false)) {
+            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false, false)) {
                 return false;
             }
             *new_tast = tast_block_wrap(new_for);
@@ -1392,6 +1392,15 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             );
             return false;
         }
+        case UAST_EXPR_REMOVED: {
+            Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
+            String buf = {0};
+            string_extend_cstr(&a_print, &buf, "expected expression ");
+            string_extend_strv(&a_print, &buf, removed->msg_suffix);
+            msg(DIAG_EXPECTED_EXPRESSION, removed->pos, FMT"\n", string_print(buf));
+            return false;
+        }
+
     }
     unreachable("");
 }
@@ -1745,11 +1754,12 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
                              vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
                         ))
-                   );
-                   status = false;
-                   break;
+                    );
+                    status = false;
+                    break;
                 case CHECK_ASSIGN_ERROR:
-                    todo();
+                    status = false;
+                    break;
                 default:
                     unreachable("");
             }
@@ -2102,7 +2112,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     fun_call = uast_function_call_clone(fun_call, false, 0, fun_call->pos /* TODO */);
 
     Name* sym_name = NULL;
+    // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
+        case UAST_EXPR_REMOVED:
+            todo();
         case TAST_BLOCK:
             todo();
         case TAST_MODULE_ALIAS:
@@ -3157,6 +3170,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     unreachable("");
 }
 
+// TODO: rename this function to try_set_index_types
 bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Tast_expr* new_callee = NULL;
     Tast_expr* new_inner_index = NULL;
@@ -3166,7 +3180,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     if (!try_set_expr_types(&new_inner_index, index->index)) {
         return false;
     }
-    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= 64) {
+    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= params.sizeof_usize) {
         unwrap(try_set_unary_types_finish(
             &new_inner_index,
             new_inner_index,
@@ -3175,7 +3189,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             lang_type_new_usize()
         ));
     } else {
-        unreachable("");
+        msg_todo("index type larger than usize", tast_expr_get_pos(new_inner_index));
+        return false;
     }
 
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
@@ -3199,7 +3214,17 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Ulang_type slice_item_type = {0};
     if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
         Uast_expr_vec args = {0};
-        vec_append(&a_main, &args, index->callee);
+        Uast_expr* callee = index->callee;
+        // TODO: uncomment
+        //for (int16_t idx = 0; idx < lang_type_get_pointer_depth(tast_expr_get_lang_type(new_callee)); idx++) {
+        //    callee = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+        //        uast_expr_get_pos(callee),
+        //        callee,
+        //        UNARY_DEREF,
+        //        (Ulang_type) {0}
+        //    )));
+        //}
+        vec_append(&a_main, &args, callee);
         vec_append(&a_main, &args, index->index);
 
         Ulang_type_vec gen_args = {0};
@@ -3319,14 +3344,12 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 }
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
-    todo();
-    unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
+    (void) tast;
     return true;
 }
 
 // TODO: see if uast_void_def can be removed?
 bool try_set_void_def_types(Uast_void_def* tast) {
-    todo();
     (void) tast;
     return true;
 }
@@ -3337,7 +3360,7 @@ bool try_set_label_def_types(Uast_label* tast) {
 }
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
-    return try_set_block_types(new_tast, tast->block, false);
+    return try_set_block_types(new_tast, tast->block, false, true);
 }
 
 bool try_set_variable_def_types(
@@ -3544,7 +3567,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(&new_body, uast->body, false)) {
+    if (!try_set_block_types(&new_body, uast->body, false, false)) {
         status = false;
     }
 
@@ -3571,7 +3594,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     vec_reset(&check_env.switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
-    if (!(status && try_set_block_types(&new_body, uast->body, false))) {
+    if (!(status && try_set_block_types(&new_body, uast->body, false, false))) {
         status = false;
     }
 
@@ -4079,7 +4102,7 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_unsigned(8));
 }
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
+bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool is_top_level) {
     do_test_bit_width();
 
     bool status = true;
@@ -4111,7 +4134,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);
         Tast_stmt* new_stmt = NULL;
-        switch (try_set_stmt_types(&new_stmt, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
+        switch (try_set_stmt_types(&new_stmt, curr_tast, is_top_level)) {
             case STMT_OK:
                 assert(curr_tast);
                 vec_append(&a_main, &new_tasts, new_stmt);
@@ -4152,24 +4175,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         assert(rtn_statement);
         assert(new_rtn_statement);
         vec_append(&a_main, &new_tasts, new_rtn_statement);
-    }
-
-    if (block->scope_id == SCOPE_TOP_LEVEL) {
-        Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
-            // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
-            // TODO: use warn for warnings instead of msg to reduce mistakes?
-            goto error;
-        }
-        if (main_fn_->type != UAST_FUNCTION_DEF) {
-            todo();
-        }
-        Lang_type_fn new_lang_type = {0};
-        Name new_name = {0};
-        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
-            status = false;
-        }
     }
 
 error:
@@ -4297,7 +4302,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 
 bool try_set_types(void) {
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             expand_using_def(curr);
@@ -4308,7 +4313,7 @@ bool try_set_types(void) {
     }
 
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             expand_def_def(curr);
@@ -4325,7 +4330,7 @@ bool try_set_types(void) {
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             // TODO: make switch for this if for exhausive checking
@@ -4348,6 +4353,27 @@ bool try_set_types(void) {
             }
         }
     }
+
+    Uast_def* main_fn_ = NULL;
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (main_fn_->type != UAST_FUNCTION_DEF) {
+            msg_todo(
+                "actual error message for symbol that is named `main` but is not a function",
+                uast_def_get_pos(main_fn_)
+            );
+            status = false;
+            goto after_main;
+        }
+        Lang_type_fn new_lang_type = {0};
+        Name new_name = {0};
+        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
+            status = false;
+        }
+    } else {
+        msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
+        // TODO: use warn for warnings instead of msg to reduce mistakes?
+    }
+after_main:
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);

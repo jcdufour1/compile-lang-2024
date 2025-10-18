@@ -16,13 +16,13 @@ Name util_literal_name_new_prefix_scope_internal(
 );
 
 #define util_literal_name_new_prefix(debug_prefix) \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_BUILTIN)
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_TOP_LEVEL)
 
 #define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
 
 #define util_literal_name_new() \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_BUILTIN)
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
 bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 

@@ -1,8 +1,8 @@
 
-type io import = std.io
-type coll import = std.collections
-using io
-using coll
+type io2 import = std.io
+type coll2 import = std.collections
+using io2
+using coll2
 
 type Token struct {
     num i32

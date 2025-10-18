@@ -42,13 +42,17 @@ bool infer_generic_type(
                 );
             } break;
             case LANG_TYPE_UNSIGNED_INT: {
-                // TODO: change Lang_type_unsigned_int to Lang_type_signed_int?
                 Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
-                if (!bit_width_calculation(&unsign.bit_width, unsign.bit_width, pos_arg)) {
+                Lang_type_signed_int sign = lang_type_signed_int_new(
+                    pos_arg,
+                    unsign.bit_width,
+                    unsign.pointer_depth
+                );
+                if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos_arg)) {
                     return false;
                 }
                 arg_to_infer_from = lang_type_primitive_const_wrap(
-                    lang_type_unsigned_int_const_wrap(unsign)
+                    lang_type_signed_int_const_wrap(sign)
                 );
             } break;
             case LANG_TYPE_FLOAT: {

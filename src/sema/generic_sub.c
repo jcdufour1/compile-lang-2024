@@ -268,7 +268,6 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member (consider if Strv can be used for gen_param)*/, Ulang_type gen_arg) {
-    assert(gen_param.scope_id > 0);
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
@@ -328,6 +327,8 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             return;
         case UAST_MACRO:
             // TODO
+            return;
+        case UAST_EXPR_REMOVED:
             return;
     }
     unreachable("");

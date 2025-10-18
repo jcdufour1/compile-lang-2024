@@ -100,7 +100,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos);
+static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos);
 
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
@@ -314,10 +314,10 @@ static bool get_mod_alias_from_path_token(
         curr_mod_alias = util_literal_name_new();
     } else if (is_main_mod) {
         assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
-        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     } else {
         assert(curr_mod_path.count > 0);
-        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
@@ -325,7 +325,7 @@ static bool get_mod_alias_from_path_token(
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
+    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
         goto finish;
     }
 
@@ -338,11 +338,12 @@ static bool get_mod_alias_from_path_token(
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), is_main_mod, import_pos)) {
+    if (!parse_file(&block, string_to_strv(file_path), import_pos)) {
         status = false;
         goto finish;
     }
 
+    assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
@@ -911,52 +912,50 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return false;
     }
 
-    Token open_sq_tk = {0};
-    if (try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-        if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
-            Ulang_type gen_arg = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-            *lang_type = ulang_type_new_slice(pos, gen_arg, 0);
-            return true;
-        }
-
-        Token count_tk = {0};
-        if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
+    if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
+        if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
             return false;
         }
-        if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
-            return false;
-        }
-
-        size_t count = 0;
-        unwrap(try_strv_to_size_t(&count, count_tk.text));
-        Ulang_type item_type_ = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-        Ulang_type* item_type = arena_dup(&a_main, &item_type_);
-        *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
-        Token open_gen_tk = {0};
-        if (try_consume(&open_gen_tk, tokens, TOKEN_OPEN_GENERIC)) {
-            msg_todo("`(<` after `]` in type", open_gen_tk.pos);
-            return false;
-        }
-        if (try_consume(&open_gen_tk, tokens, TOKEN_ASTERISK)) {
-            msg_todo("`*` after `]` in type", open_gen_tk.pos);
-            return false;
-        }
-        return true;
-    }
-
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
-        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-        return true;
-    }
-
-    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
-        return false;
-    }
-    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        atom.pointer_depth++;
     }
 
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
+
+    Token open_sq_tk = {0};
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK) {
+        while (1) {
+            if (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+                ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+                continue;
+            }
+
+            if (!try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+                break;
+            }
+
+            if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+                *lang_type = ulang_type_new_slice(pos, *lang_type, 0);
+                continue;
+            }
+
+            Token count_tk = {0};
+            if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
+                return false;
+            }
+            if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
+                return false;
+            }
+
+            size_t count = 0;
+            unwrap(try_strv_to_size_t(&count, count_tk.text));
+            Ulang_type* item_type = arena_dup(&a_main, lang_type);
+            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
+        }
+    }
+
+    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+    }
+
     return true;
 }
 
@@ -2862,7 +2861,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 MOD_ALIAS_BUILTIN,
                 sv("i32"),
                 (Ulang_type_vec) {0},
-                SCOPE_BUILTIN
+                SCOPE_TOP_LEVEL
             ),
             0
         ),
@@ -2993,8 +2992,8 @@ static PARSE_STATUS parse_expr_index(
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(*tokens, "after opening `[`");
-            return PARSE_ERROR;
+            index_index = uast_expr_removed_wrap(uast_expr_removed_new(tk_view_front(*tokens).pos, sv("after `[`")));
+            break;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         default:
@@ -3178,7 +3177,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos) {
+static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     bool status = true;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
@@ -3214,10 +3213,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         }
     }
 
-    Scope_id new_scope = SCOPE_TOP_LEVEL;
-    if (!is_main_mod) {
-        new_scope = symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
-    }
+    Scope_id new_scope = symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
@@ -3264,8 +3260,6 @@ error:
 }
 
 bool parse(void) {
-    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
-
     Uast_mod_alias* dummy = NULL;
     return get_mod_alias_from_path_token(
         &dummy,

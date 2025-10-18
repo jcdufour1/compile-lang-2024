@@ -261,6 +261,22 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool usymbol_add(Uast_def* item) {
+#ifndef NDEBUG
+    Name prim_key = uast_def_get_name(item);
+    prim_key.scope_id = 0;
+    prim_key.mod_path = MOD_PATH_BUILTIN;
+    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    }
+#endif // NDEBUG
+
     assert(item);
     Name name = uast_def_get_name(item);
     return generic_symbol_add(
@@ -384,6 +400,22 @@ void ir_tbl_update(Ir* item) {
 }
 
 void usymbol_update(Uast_def* item) {
+#ifndef NDEBUG
+    Name prim_key = uast_def_get_name(item);
+    prim_key.scope_id = 0;
+    prim_key.mod_path = MOD_PATH_BUILTIN;
+    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    }
+#endif // NDEBUG
+
     assert(item);
     Name name = uast_def_get_name(item);
     generic_symbol_update(

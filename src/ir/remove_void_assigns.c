@@ -131,7 +131,7 @@ static Ir* rm_void_block(Ir_block* block) {
 }
 
 void remove_void_assigns(void) {
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr);

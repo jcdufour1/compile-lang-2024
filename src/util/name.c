@@ -25,6 +25,14 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
+    if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    }
+
     // TODO: do not create new alias every time; make MOD_PATH_AUX_UNAMES, etc.
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
@@ -254,11 +262,15 @@ bool name_is_equal(Name a, Name b) {
 bool uname_is_equal(Uname a, Uname b) {
     Name new_a = {0};
     if (!name_from_uname(&new_a, a, POS_BUILTIN)) {
+        todo();
         return false;
     }
     Name new_b = {0};
     if (!name_from_uname(&new_b, b, POS_BUILTIN)) {
+        todo();
         return false;
     }
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_a));
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_b));
     return name_is_equal(new_a, new_b);
 }

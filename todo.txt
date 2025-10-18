@@ -78,6 +78,8 @@ for generics:
     let rhs f32 = 8.4
     lhs == rhs
 - assert statement to catch mod_path (other than MOD_PATH_BUILTIN) used for primitive types
+- top level of file should actually have SCOPE_TOP_LEVEL
+    (for this to work, scope_iter function needs to consider mod path in addition to scope_id)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

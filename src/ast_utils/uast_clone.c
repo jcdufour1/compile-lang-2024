@@ -230,6 +230,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_ARRAY_LITERAL:
             return uast_array_literal_wrap(uast_array_literal_clone(uast_array_literal_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_EXPR_REMOVED:
+            return uast_expr_removed_wrap(uast_expr_removed_clone(uast_expr_removed_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
     }
     unreachable("");
 }
@@ -324,6 +326,13 @@ Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, 
 
 Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_array_literal_new(if_else->pos, uast_expr_vec_clone(if_else->members, use_new_scope, new_scope, dest_pos));
+}
+
+Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) use_new_scope;
+    (void) new_scope;
+    (void) dest_pos;
+    return uast_expr_removed_new(removed->pos, removed->msg_suffix);
 }
 
 Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

@@ -8,7 +8,7 @@ extern("c") fn own_fprintf(file File, format Str, args opaque...) i32
 extern("c") fn own_stdout() opaque*
 extern("c") fn own_stderr() opaque*
 extern("c") fn own_stdin() opaque*
-extern("c") fn own_argv() rt.Slice(<Str>)
+extern("c") fn own_argv() Str[]
 
 type printf def = c.printf
 type puts def = c.puts
@@ -22,7 +22,7 @@ fn stdout() File => return {own_stdout()}
 fn stderr() File => return {own_stderr()}
 fn stdin() File => return {own_stdin()}
 
-fn argv() rt.Slice(<Str>) {
+fn argv() Str[] {
     return own_argv()
 }
 
