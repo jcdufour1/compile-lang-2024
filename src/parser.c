@@ -913,6 +913,12 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
 
     Token open_sq_tk = {0};
     if (try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+        if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+            Ulang_type gen_arg = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
+            *lang_type = ulang_type_new_slice(pos, gen_arg, 0);
+            return true;
+        }
+
         Token count_tk = {0};
         if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
             return false;

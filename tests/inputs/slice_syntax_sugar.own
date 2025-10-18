@@ -1,0 +1,16 @@
+
+type coll import = std.collections
+type io import = std.io
+
+fn read(slice u8[]) {
+    for idx u64 in 0..slice.count {
+        //io.printf("%c", slice[idx])
+        io.printf("%c", coll.slice_at(slice, idx))
+    }
+    io.printf("\n")
+}
+
+fn main() i32 {
+    read("hello")
+    return 0
+}
