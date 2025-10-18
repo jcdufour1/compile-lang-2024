@@ -100,7 +100,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 static bool is_unary(TOKEN_TYPE token_type);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos);
+static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos);
 
 static bool prev_is_newline(void) {
     return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
@@ -338,7 +338,7 @@ static bool get_mod_alias_from_path_token(
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), is_main_mod, import_pos)) {
+    if (!parse_file(&block, string_to_strv(file_path), import_pos)) {
         status = false;
         goto finish;
     }
@@ -3177,7 +3177,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
 static void parser_do_tests(void);
 
-static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos import_pos) {
+static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     bool status = true;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {

@@ -4357,7 +4357,12 @@ bool try_set_types(void) {
     Uast_def* main_fn_ = NULL;
     if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
         if (main_fn_->type != UAST_FUNCTION_DEF) {
-            todo();
+            msg_todo(
+                "actual error message for symbol that is named `main` but is not a function",
+                uast_def_get_pos(main_fn_)
+            );
+            status = false;
+            goto after_main;
         }
         Lang_type_fn new_lang_type = {0};
         Name new_name = {0};
@@ -4368,6 +4373,7 @@ bool try_set_types(void) {
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
         // TODO: use warn for warnings instead of msg to reduce mistakes?
     }
+after_main:
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
