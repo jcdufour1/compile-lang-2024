@@ -911,52 +911,50 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return false;
     }
 
-    Token open_sq_tk = {0};
-    if (try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-        if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
-            Ulang_type gen_arg = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-            *lang_type = ulang_type_new_slice(pos, gen_arg, 0);
-            return true;
-        }
-
-        Token count_tk = {0};
-        if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
+    if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
+        if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
             return false;
         }
-        if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
-            return false;
-        }
-
-        size_t count = 0;
-        unwrap(try_strv_to_size_t(&count, count_tk.text));
-        Ulang_type item_type_ = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-        Ulang_type* item_type = arena_dup(&a_main, &item_type_);
-        *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
-        Token open_gen_tk = {0};
-        if (try_consume(&open_gen_tk, tokens, TOKEN_OPEN_GENERIC)) {
-            msg_todo("`(<` after `]` in type", open_gen_tk.pos);
-            return false;
-        }
-        if (try_consume(&open_gen_tk, tokens, TOKEN_ASTERISK)) {
-            msg_todo("`*` after `]` in type", open_gen_tk.pos);
-            return false;
-        }
-        return true;
-    }
-
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
-        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
-        return true;
-    }
-
-    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
-        return false;
-    }
-    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        atom.pointer_depth++;
     }
 
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
+
+    Token open_sq_tk = {0};
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK) {
+        while (1) {
+            if (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+                ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+                continue;
+            }
+
+            if (!try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+                break;
+            }
+
+            if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+                *lang_type = ulang_type_new_slice(pos, *lang_type, 0);
+                continue;
+            }
+
+            Token count_tk = {0};
+            if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
+                return false;
+            }
+            if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
+                return false;
+            }
+
+            size_t count = 0;
+            unwrap(try_strv_to_size_t(&count, count_tk.text));
+            Ulang_type* item_type = arena_dup(&a_main, lang_type);
+            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
+        }
+    }
+
+    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+    }
+
     return true;
 }
 

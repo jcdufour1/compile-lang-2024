@@ -80,7 +80,6 @@ bool expand_def_ulang_type_regular(
             return true;
         }
         default:
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr));
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
     }

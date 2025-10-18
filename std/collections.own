@@ -3,7 +3,6 @@ type util import = std.util
 type io import = std.io
 type rt import = std.runtime
 
-type Slice def = rt.Slice
 type Str def = u8[]
 
 // TODO: make alloc function instead of using malloc directly
@@ -22,8 +21,7 @@ fn slice_at(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #
 
 type slice_at_ref def = rt.slice_at_ref 
 
-// TODO: change Slice(<ItemT>) to ItemT[]
-fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
+fn slice_consume(slice ItemT[]*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
     if slice_at(*slice, 0) != to_consume => return .none
 
@@ -31,8 +29,7 @@ fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str =
     return .some(slice_at(*slice, 0))
 }
 
-// TODO: change Slice(<ItemT>) to ItemT[]
-fn slice_try_get(slice Slice(<ItemT>)*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
+fn slice_try_get(slice ItemT[]*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
     if !should_get(slice_at(*slice, 0)) => return .none
 
