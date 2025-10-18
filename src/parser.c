@@ -2993,8 +2993,8 @@ static PARSE_STATUS parse_expr_index(
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(*tokens, "after opening `[`");
-            return PARSE_ERROR;
+            index_index = uast_expr_removed_wrap(uast_expr_removed_new(tk_view_front(*tokens).pos));
+            break;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         default:

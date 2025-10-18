@@ -44,4 +44,6 @@ Uast_enum_get_tag* uast_enum_get_tag_clone(
     Pos dest_pos
 );
 
+Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
+
 #endif // UAST_CLONE_H

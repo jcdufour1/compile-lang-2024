@@ -4,11 +4,11 @@ type io import = std.io
 type rt import = std.runtime
 
 type Slice def = rt.Slice
-type Str def = Slice(<u8>)
+type Str def = u8[]
 
 // TODO: make alloc function instead of using malloc directly
 
-fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+fn slice_range(slice ItemT[], start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     if count < 1 {
         return {util.null(ItemT), 0}
     }
@@ -16,12 +16,13 @@ fn slice_range(slice Slice(<ItemT>), start u64, count u64, ItemT Type, file Str 
     return {&slice.buf[start], count}
 }
 
-fn slice_at(slice Slice(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn slice_at(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return *slice_at_ref(slice, index, ItemT, file, line, column)
 }
 
 type slice_at_ref def = rt.slice_at_ref 
 
+// TODO: change Slice(<ItemT>) to ItemT[]
 fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
     if slice_at(*slice, 0) != to_consume => return .none
@@ -30,6 +31,7 @@ fn slice_consume(slice Slice(<ItemT>)*, to_consume ItemT, ItemT Type, file Str =
     return .some(slice_at(*slice, 0))
 }
 
+// TODO: change Slice(<ItemT>) to ItemT[]
 fn slice_try_get(slice Slice(<ItemT>)*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
     if !should_get(slice_at(*slice, 0)) => return .none
@@ -38,9 +40,10 @@ fn slice_try_get(slice Slice(<ItemT>)*, should_get fn (ItemT) u1, ItemT Type, fi
     return .some(slice_at(*slice, 0))
 }
 
-fn slice_starts_with(slice Slice(<ItemT>), start Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
+fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
     if slice.count < start.count => return 0
     for idx u64 in 0..start.count {
+        // TODO: change slice_at(...) to slice[idx]
         if slice_at(slice, idx) != slice_at(start, idx) => return 0
     }
     return 1
@@ -60,18 +63,18 @@ type Arr struct(<ItemT>) {
     max u64
 }
 
-fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+fn arr_new(max_capacity u64, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
     let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
-fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+fn arr_slice(arr Arr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     let actual_count u64 = arr.count - start
     if let .some(num) = count {
         actual_count = num
     }
-    let slice Slice(<ItemT>) = {arr.buf, arr.count}
+    let slice ItemT[] = {arr.buf, arr.count}
     return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
     // TODO: uncomment below line (figure out why it will not compile)
     //return slice_range({arr.buf, arr.count}, start, actual_count)
@@ -102,7 +105,7 @@ fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line 
     arr.count += 1
 }
 
-fn arr_extend(dest Arr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+fn arr_extend(dest Arr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
         arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
     }
@@ -143,18 +146,18 @@ type Darr struct(<ItemT>) {
     capacity u64
 }
 
-fn darr_new(ItemT Type, init_elems Slice(<ItemT>) = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
+fn darr_new(ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
     let darr Darr(<ItemT>) = {util.null(ItemT), 0, 0}
     darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
     return darr
 }
 
-fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) Slice(<ItemT>) {
+fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     let actual_count u64 = darr.count - start
     if let .some(num) = count {
         actual_count = num
     }
-    let slice Slice(<ItemT>) = {darr.buf, darr.count}
+    let slice ItemT[] = {darr.buf, darr.count}
     return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
     // TODO: uncomment below line (figure out why it will not compile)
     //return slice_range({darr.buf, darr.count}, start, actual_count)
@@ -202,7 +205,7 @@ fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, li
     darr.count += 1
 }
 
-fn darr_extend(dest Darr(<ItemT>)*, src Slice(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+fn darr_extend(dest Darr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
         darr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
     }

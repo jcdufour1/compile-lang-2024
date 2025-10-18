@@ -84,6 +84,9 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
         case UAST_ENUM_GET_TAG:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return false;
+        case UAST_EXPR_REMOVED:
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            return false;
     }
     unreachable("");
 }

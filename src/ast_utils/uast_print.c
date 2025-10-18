@@ -578,6 +578,16 @@ Strv uast_macro_print_internal(const Uast_macro* macro, int indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_expr_removed_print_internal(const Uast_expr_removed* removed, int indent) {
+    (void) removed;
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "expr_removed", indent);
+    string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int indent) {
     String buf = {0};
 
@@ -764,6 +774,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(expr), indent);
         case UAST_MACRO:
             return uast_macro_print_internal(uast_macro_const_unwrap(expr), indent);
+        case UAST_EXPR_REMOVED:
+            return uast_expr_removed_print_internal(uast_expr_removed_const_unwrap(expr), indent);
     }
     unreachable("");
 }

@@ -345,6 +345,12 @@ static Uast_type uast_gen_if_else_chain(const char* prefix) {
     return chain;
 }
 
+static Uast_type uast_gen_expr_removed(const char* prefix) {
+    Uast_type removed = {.name = uast_name_new(prefix, "expr_removed", false)};
+
+    return removed;
+}
+
 static Uast_type uast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
@@ -365,6 +371,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_macro(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_access(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_get_tag(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;
 }

@@ -18,7 +18,6 @@ bool expand_def_ulang_type_regular(
     Ulang_type_regular lang_type,
     Pos dest_pos
 ) {
-
     (void) new_lang_type;
     Uast_expr* new_expr = NULL;
     switch (expand_def_uname(&new_expr, &lang_type.atom.str, lang_type.pos, dest_pos)) {
@@ -49,9 +48,39 @@ bool expand_def_ulang_type_regular(
             *new_lang_type = lang_type;
             new_lang_type->atom.str = name_to_uname(uast_symbol_unwrap(new_expr)->name);
             new_lang_type->pos.expanded_from = uast_symbol_unwrap(new_expr)->pos.expanded_from;
-            //assert(!pos_is_equal(*new_lang_type->pos.expanded_from, (Pos) {0}));
             return true;
+        case UAST_INDEX: {
+            Uast_index* index = uast_index_unwrap(new_expr);
+            if (index->index->type != UAST_EXPR_REMOVED) {
+                msg_todo("", index->pos);
+                return false;
+            }
+
+            Ulang_type_regular index_ulang_type = {0};
+            if (index->callee->type != UAST_SYMBOL) {
+                msg_todo("", uast_expr_get_pos(index->callee));
+                return false;
+            }
+            if (!expand_def_ulang_type_regular(
+                &index_ulang_type,
+                ulang_type_regular_new(
+                    ulang_type_atom_new(name_to_uname(uast_symbol_unwrap(index->callee)->name), 0),
+                    uast_expr_get_pos(index->callee)
+                ),
+                uast_expr_get_pos(index->callee)
+            )) {
+                return false;
+            }
+
+            *new_lang_type = ulang_type_regular_const_unwrap(ulang_type_new_slice(
+                index->pos,
+                ulang_type_regular_const_wrap(index_ulang_type),
+                0
+            ));
+            return true;
+        }
         default:
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr));
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
     }
@@ -265,6 +294,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_OPERATOR:
             *new_expr = expr;
             return EXPAND_NAME_NEW_EXPR;
+        case UAST_INDEX:
+            *new_expr = expr;
+            return EXPAND_NAME_NEW_EXPR;
         case UAST_BLOCK:
             // fallthrough
         case UAST_IF_ELSE_CHAIN:
@@ -272,8 +304,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_SWITCH:
             // fallthrough
         case UAST_UNKNOWN:
-            // fallthrough
-        case UAST_INDEX:
             // fallthrough
         case UAST_LITERAL:
             // fallthrough
@@ -288,6 +318,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
         case UAST_MACRO:
             // fallthrough
         case UAST_ENUM_ACCESS:
+            // fallthrough
+        case UAST_EXPR_REMOVED:
             // fallthrough
         case UAST_ENUM_GET_TAG:
             msg_todo("", uast_expr_get_pos(expr));
@@ -537,6 +569,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
             todo();
         case UAST_ENUM_GET_TAG:
             todo();
+        case UAST_EXPR_REMOVED:
+            return true;
     }
     unreachable("");
 }
