@@ -806,8 +806,23 @@ void emit_c_from_tree(void) {
         }
 
         // output file
-        vec_append(&a_main, &cmd, sv("-o"));
-        vec_append(&a_main, &cmd, params.output_file_path);
+        size_t count_files_compile = 
+            params.c_input_files.info.count +
+            params.lower_s_files.info.count +
+            params.upper_s_files.info.count;
+        if (params.compile_own) {
+            count_files_compile++;
+        }
+        if (
+            params.stop_after == STOP_AFTER_RUN ||
+            params.stop_after == STOP_AFTER_BIN ||
+            count_files_compile < 2
+        ) {
+            vec_append(&a_main, &cmd, sv("-o"));
+            vec_append(&a_main, &cmd, params.output_file_path);
+        } else {
+            // TODO: user should have error (in src/util/parameters) if using -o <file path> in this situation
+        }
 
         // .own file, compiled to .c
         if (params.compile_own) {

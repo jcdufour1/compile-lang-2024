@@ -41,6 +41,8 @@ class Parameters:
     path_c_compiler: Optional[str]
     do_color: bool
     count_threads: int
+    do_debug_internal: bool
+    do_release_internal: bool
 
 EXAMPLES_DIR = "examples"
 INPUTS_DIR = os.path.join("tests", "inputs")
@@ -147,12 +149,24 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         raise NotImplementedError
     compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=INFO")
-    compile_cmd.append("-o")
-    compile_cmd.append("test")
+    if isinstance(file, FileNormal):
+        compile_cmd.append("-o")
+        compile_cmd.append("test")
+    elif isinstance(file, FileExample):
+        compile_cmd.append("-c")
+        compile_cmd.append("-o")
+        compile_cmd.append("test.o")
+    else:
+        raise NotImplementedError
     compile_cmd.append("--error=no-main-function")
     if path_c_compiler is not None:
         compile_cmd.append("--path-c-compiler=" + path_c_compiler)
-    compile_cmd.append("--run")
+    if isinstance(file, FileNormal):
+        compile_cmd.append("--run")
+    elif isinstance(file, FileExample):
+        pass
+    else:
+        raise NotImplementedError
 
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
@@ -311,7 +325,9 @@ def parse_args() -> Parameters:
     keep_going: bool = True
     has_found_flag = False
     path_c_compiler: Optional[str] = None
-    do_color: bool = True
+    do_color:bool = True
+    do_release: Optional[bool] = True
+    do_debug: Optional[bool] = True
     for arg in sys.argv[1:]:
         if arg.startswith("--keep-going"):
             keep_going = True
@@ -319,6 +335,15 @@ def parse_args() -> Parameters:
             keep_going = False
         elif arg.startswith("--update"):
             action = Action.UPDATE
+        elif arg.startswith("--release-only"):
+             do_release = True
+             do_debug = False
+        elif arg.startswith("--debug-only"):
+             do_release = False
+             do_debug = True
+        elif arg.startswith("--debug-and-release"):
+             do_debug = True
+             do_release = True
         elif arg.startswith("--test"):
             action = Action.TEST
         elif arg.startswith("--output-file="):
@@ -359,6 +384,16 @@ def parse_args() -> Parameters:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
+    do_debug_actual: bool = True
+    if action == Action.UPDATE:
+        do_debug_actual = False
+    if do_debug is not None:
+        do_debug_actual = do_debug
+
+    do_release_actual: bool = True
+    if do_release is not None:
+        do_release_actual = do_release
+
     return Parameters(
         to_include_list,
         test_output,
@@ -366,19 +401,18 @@ def parse_args() -> Parameters:
         keep_going,
         path_c_compiler,
         do_color,
-        count_threads
+        count_threads,
+        do_debug_actual,
+        do_release_actual
     )
 
 def main() -> None:
     params: Parameters = parse_args()
 
-    if params.action == Action.TEST:
+    if params.do_debug_internal:
         do_tests(True, params)
+    if params.do_release_internal:
         do_tests(False, params)
-    elif params.action == Action.UPDATE:
-        do_tests(False, params)
-    else:
-        raise NotImplementedError
 
     print_success("all tests passed")
 
