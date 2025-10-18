@@ -139,7 +139,12 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     else:
         assert(False and "not implemented")
 
-    compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
+    if isinstance(file, FileNormal):
+        compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
+    elif isinstance(file, FileExample):
+        compile_cmd.append(os.path.join(EXAMPLES_DIR, file.path_base))
+    else:
+        raise NotImplementedError
     compile_cmd.append("-lm")
     compile_cmd.append("--set-log-level=INFO")
     compile_cmd.append("-o")
@@ -187,9 +192,13 @@ def do_tests(do_debug: bool, params: Parameters):
                 success = False
                 fail_count += 1
         elif isinstance(file, FileExample):
-            if compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler):
+            result: TestResult = compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
+            if result.compile.returncode == 0:
                 success_count += 1
             else:
+                print_error("example compilation fail:" + os.path.join(EXAMPLES_DIR, file.path_base) + " (" + debug_release_text + ")")
+                print_error("compile error:")
+                print(get_result_from_test_result(result))
                 if not params.keep_going:
                     sys.exit(1)
                 success = False
@@ -288,6 +297,8 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
     for possible_base in list_files_recursively(INPUTS_DIR):
+        callback(list_or_map, os.path.realpath(possible_base))
+    for possible_base in list_files_recursively(EXAMPLES_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
 
 def add_to_map(map: dict, path: str):
