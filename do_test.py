@@ -18,9 +18,14 @@ class Action(Enum):
     TEST = 1
     UPDATE = 2
 
-
+# FileNormal will be compiled, and test output will be checked
 @dataclass
-class FileItem:
+class FileNormal:
+    path_base: str
+
+# FileExample will only be compiled
+@dataclass
+class FileExample:
     path_base: str
 
 @dataclass
@@ -37,6 +42,7 @@ class Parameters:
     do_color: bool
     count_threads: int
 
+EXAMPLES_DIR = "examples"
 INPUTS_DIR = os.path.join("tests", "inputs")
 RESULTS_DIR = os.path.join("tests", "results")
 
@@ -67,18 +73,24 @@ def list_files_recursively(dir: str) -> list[str]:
             result.append(os.path.join(root, file_path))
     return result
 
-def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
+def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample]:
     # TODO: print error for invalid path in files_to_test
-    files: list[FileItem] = []
+    files: list[FileNormal | FileExample] = []
     possible_path: str
+
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
         possible_path = os.path.realpath(possible_base)
-        actual_base = possible_path[len(os.path.realpath(INPUTS_DIR)) + 1:]
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileItem(actual_base))
+            files.append(FileNormal(possible_path[len(os.path.realpath(INPUTS_DIR)) + 1:]))
+
+    for possible_base in map(to_str, list_files_recursively(EXAMPLES_DIR)):
+        possible_path = os.path.realpath(possible_base)
+        if os.path.isfile(possible_path) and possible_path in files_to_test:
+            files.append(FileExample(possible_path[len(os.path.realpath(EXAMPLES_DIR)) + 1:]))
+
     return files
 
-def get_expected_output(file: FileItem, action: Action) -> str:
+def get_expected_output(file: FileNormal, action: Action) -> str:
     if action == Action.TEST:
         expect_base: str = file.path_base
         expected: str = os.path.join(RESULTS_DIR, expect_base)
@@ -113,7 +125,7 @@ def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
 # TODO: try to avoid using do_debug for both function name and parameter name
-def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
+def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | FileExample, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
@@ -143,6 +155,8 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem, debug_release
 
 def do_tests(do_debug: bool, params: Parameters):
     success = True
+    success_count = 0
+    fail_count = 0
 
     debug_env: str
     debug_release_text: str
@@ -164,10 +178,33 @@ def do_tests(do_debug: bool, params: Parameters):
 
     # TODO: run multiple tests at once
     for file in get_files_to_test(params.files_to_test):
-        if not test_file(file, do_debug, debug_release_text, params):
-            if not params.keep_going:
-                sys.exit(1)
-            success = False
+        if isinstance(file, FileNormal):
+            if test_file(file, do_debug, debug_release_text, params):
+                success_count += 1
+            else:
+                if not params.keep_going:
+                    sys.exit(1)
+                success = False
+                fail_count += 1
+        elif isinstance(file, FileExample):
+            if compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler):
+                success_count += 1
+            else:
+                if not params.keep_going:
+                    sys.exit(1)
+                success = False
+                fail_count += 1
+        else:
+            raise NotImplementedError
+            
+        if file.path_base.startswith(EXAMPLES_DIR):
+            assert(0)
+
+    print("testing " + debug_release_text + " done")
+    print("    tests total:  " + str(fail_count + success_count))
+    print("    tests failed: " + str(fail_count))
+    print("    tests passed: " + str(success_count))
+
     if not success:
         sys.exit(1)
 
@@ -176,8 +213,8 @@ def normalize(string: str) -> str:
     return string.replace("\r", "")
 
 # return true if test was successful
-def test_file(file: FileItem, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
-    result: TestResult = compile_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
+def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
+    result: TestResult = compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
     process_result: str = get_result_from_test_result(result)
     expected_output: str = get_expected_output(file, params.action)
 
@@ -301,8 +338,7 @@ def parse_args() -> Parameters:
         append_all_files(to_include, add_to_map)
 
     to_include_list: list[str] = []
-    for path in to_include:
-        to_include_list.append(path)
+    to_include_list.extend(to_include)
 
     count_threads: int
     try:
@@ -312,14 +348,27 @@ def parse_args() -> Parameters:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    return Parameters(to_include_list, test_output, action, keep_going, path_c_compiler, do_color, count_threads)
+    return Parameters(
+        to_include_list,
+        test_output,
+        action,
+        keep_going,
+        path_c_compiler,
+        do_color,
+        count_threads
+    )
 
 def main() -> None:
     params: Parameters = parse_args()
 
-    # TODO: when --update is used, only one of debug or release should be ran (to save time)
-    do_tests(True, params)
-    do_tests(False, params)
+    if params.action == Action.TEST:
+        do_tests(True, params)
+        do_tests(False, params)
+    elif params.action == Action.UPDATE:
+        do_tests(False, params)
+    else:
+        raise NotImplementedError
+
     print_success("all tests passed")
 
 if __name__ == '__main__':
