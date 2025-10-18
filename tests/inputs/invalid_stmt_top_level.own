@@ -1,3 +1,19 @@
 {
 }
 
+type Token enum {
+    num i32
+    none
+}
+
+let token Token = .none
+switch token {
+    case .num(num): break
+    case .none: break
+}
+
+for i i32 in 0..2 {
+}
+
+if 1 {
+}

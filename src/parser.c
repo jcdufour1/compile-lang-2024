@@ -3213,7 +3213,7 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
         }
     }
 
-    Scope_id new_scope = SCOPE_TOP_LEVEL;
+    Scope_id new_scope = symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG

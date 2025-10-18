@@ -65,7 +65,7 @@ bool try_set_binary_types_finish(
 // returns false if unsuccessful
 bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator);
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def);
+bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def, bool is_top_level);
 
 STMT_STATUS try_set_stmt_types(Tast_stmt** new_stmt, Uast_stmt* stmt, bool is_at_top_level);
 

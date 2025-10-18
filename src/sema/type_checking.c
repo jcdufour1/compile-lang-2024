@@ -1257,7 +1257,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
-            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false)) {
+            if (!try_set_block_types(&new_for, uast_block_unwrap(uast), false, false)) {
                 return false;
             }
             *new_tast = tast_block_wrap(new_for);
@@ -1460,8 +1460,6 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            log(LOG_DEBUG, FMT"\n", tast_block_print(new_block));
-            todo();
             // TODO: make tast node type to hold this new block
             unwrap(sym_tbl_add(tast_import_path_wrap(tast_import_path_new(
                 new_block->pos,
@@ -3362,7 +3360,7 @@ bool try_set_label_def_types(Uast_label* tast) {
 }
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
-    return try_set_block_types(new_tast, tast->block, false);
+    return try_set_block_types(new_tast, tast->block, false, true);
 }
 
 bool try_set_variable_def_types(
@@ -3569,7 +3567,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(&new_body, uast->body, false)) {
+    if (!try_set_block_types(&new_body, uast->body, false, false)) {
         status = false;
     }
 
@@ -3596,7 +3594,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     vec_reset(&check_env.switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
-    if (!(status && try_set_block_types(&new_body, uast->body, false))) {
+    if (!(status && try_set_block_types(&new_body, uast->body, false, false))) {
         status = false;
     }
 
@@ -4104,7 +4102,7 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_unsigned(8));
 }
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
+bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool is_top_level) {
     do_test_bit_width();
 
     bool status = true;
@@ -4136,7 +4134,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);
         Tast_stmt* new_stmt = NULL;
-        switch (try_set_stmt_types(&new_stmt, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
+        switch (try_set_stmt_types(&new_stmt, curr_tast, is_top_level)) {
             case STMT_OK:
                 assert(curr_tast);
                 vec_append(&a_main, &new_tasts, new_stmt);
