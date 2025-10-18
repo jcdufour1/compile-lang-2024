@@ -3181,6 +3181,43 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
 
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
 
+    Ulang_type slice_item_type = {0};
+    if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
+        Uast_expr_vec args = {0};
+        vec_append(&a_main, &args, uast_symbol_wrap(uast_symbol_new(tast_expr_get_pos(new_callee), tast_expr_get_name(new_callee))));
+        vec_append(&a_main, &args, index->index);
+
+        Ulang_type_vec gen_args = {0};
+        vec_append(&a_main, &gen_args, slice_item_type);
+
+        Uast_function_call* call = uast_function_call_new(
+            index->pos,
+            args,
+            uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
+                MOD_PATH_RUNTIME,
+                sv("slice_at_ref"),
+                gen_args,
+                SCOPE_TOP_LEVEL
+            ))),
+            false
+        );
+
+        Tast_expr* new_expr = NULL;
+        if (!try_set_expr_types(
+            &new_expr,
+            uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                call->pos,
+                uast_function_call_wrap(call),
+                UNARY_DEREF,
+                (Ulang_type) {0}
+            )))
+        )) {
+            return false;
+        }
+        *new_tast = tast_expr_wrap(new_expr);
+        return true;
+    }
+
     if (callee_lang_type.type == LANG_TYPE_ARRAY) {
         Tast_expr* arr = new_callee;
         Lang_type_array array = lang_type_array_const_unwrap(callee_lang_type);

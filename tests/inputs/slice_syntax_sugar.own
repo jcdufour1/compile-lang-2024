@@ -2,15 +2,44 @@
 type coll import = std.collections
 type io import = std.io
 
+type Token struct {
+    num i32
+}
+
 fn read(slice u8[]) {
     for idx u64 in 0..slice.count {
-        //io.printf("%c", slice[idx])
-        io.printf("%c", coll.slice_at(slice, idx))
+        io.printf("%c", slice[idx])
+    }
+    io.printf("\n")
+
+    for idx u64 in 0..slice.count {
+        slice[0] = 'a'
+    }
+
+    for idx u64 in 0..slice.count {
+        io.printf("%c", slice[idx])
+    }
+    io.printf("\n")
+}
+
+fn read2(slice Token[]) {
+    for idx u64 in 0..slice.count {
+        io.printf("%d ", slice[idx].num)
+    }
+    io.printf("\n")
+
+    for idx u64 in 0..slice.count {
+        slice[0] = {8}
+    }
+
+    for idx u64 in 0..slice.count {
+        io.printf("%d ", slice[idx].num)
     }
     io.printf("\n")
 }
 
 fn main() i32 {
+    //read2([{4}, {6}])
     read("hello")
     return 0
 }
