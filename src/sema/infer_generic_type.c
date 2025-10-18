@@ -88,7 +88,6 @@ bool infer_generic_type(
                     return false;
                 }
                 ulang_type_set_pointer_depth(infered, new_ptr_depth);
-                log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *infered));
                 return true;
             }
 
