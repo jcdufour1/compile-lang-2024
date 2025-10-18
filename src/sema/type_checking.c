@@ -99,7 +99,6 @@ static int64_t bit_width_needed_float(double num) {
 }
 
 static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(expr)));
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
         unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
@@ -3181,10 +3180,26 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
 
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
 
+    if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
+        lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
+
+        Lang_type new_lang_type = {0};
+        if (callee_lang_type.type == LANG_TYPE_ARRAY) {
+            new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
+        } else {
+            new_lang_type = callee_lang_type;
+        }
+
+        Tast_index* new_index = tast_index_new(index->pos, new_lang_type, new_inner_index, new_callee);
+
+        *new_tast = tast_expr_wrap(tast_index_wrap(new_index));
+        return true;
+    }
+
     Ulang_type slice_item_type = {0};
     if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
         Uast_expr_vec args = {0};
-        vec_append(&a_main, &args, uast_symbol_wrap(uast_symbol_new(tast_expr_get_pos(new_callee), tast_expr_get_name(new_callee))));
+        vec_append(&a_main, &args, index->callee);
         vec_append(&a_main, &args, index->index);
 
         Ulang_type_vec gen_args = {0};
@@ -3219,10 +3234,9 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     }
 
     if (callee_lang_type.type == LANG_TYPE_ARRAY) {
-        Tast_expr* arr = new_callee;
         Lang_type_array array = lang_type_array_const_unwrap(callee_lang_type);
         Uast_expr_vec arr_slice_args = {0};
-        vec_append(&a_main, &arr_slice_args, uast_symbol_wrap(uast_symbol_new(tast_expr_get_pos(arr), tast_expr_get_name(arr))));
+        vec_append(&a_main, &arr_slice_args, index->callee);
         Ulang_type_vec gen_args = {0};
         vec_append(&a_main, &gen_args, lang_type_to_ulang_type(*array.item_type));
         Uast_function_call* arr_slice_call = uast_function_call_new(
@@ -3268,27 +3282,12 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         return true;
     }
 
-    if (lang_type_get_pointer_depth(callee_lang_type) < 1) {
-        msg_todo(
-            "actual error message for this situation "
-            "(note: it is possible that `[` and `]` were used on a type that does not support it)",
-            index->pos
-        );
-        return false;
-    }
-    lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
-
-    Lang_type new_lang_type = {0};
-    if (callee_lang_type.type == LANG_TYPE_ARRAY) {
-        new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
-    } else {
-        new_lang_type = callee_lang_type;
-    }
-
-    Tast_index* new_index = tast_index_new(index->pos, new_lang_type, new_inner_index, new_callee);
-
-    *new_tast = tast_expr_wrap(tast_index_wrap(new_index));
-    return true;
+    msg_todo(
+        "actual error message for this situation "
+        "(note: it is possible that `[` and `]` were used on a type that does not support it)",
+        index->pos
+    );
+    return false;
 }
 
 static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* cond) {

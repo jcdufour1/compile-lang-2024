@@ -42,6 +42,7 @@ bool infer_generic_type(
                 );
             } break;
             case LANG_TYPE_UNSIGNED_INT: {
+                // TODO: change Lang_type_unsigned_int to Lang_type_signed_int?
                 Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
                 if (!bit_width_calculation(&unsign.bit_width, unsign.bit_width, pos_arg)) {
                     return false;
@@ -80,6 +81,14 @@ bool infer_generic_type(
                     return false;
                 }
                 *infered = lang_type_to_ulang_type(arg_to_infer_from);
+                int16_t new_ptr_depth = ulang_type_get_pointer_depth(*infered) - reg.atom.pointer_depth;
+                if (new_ptr_depth < 0) {
+                    // TODO
+                    msg_todo("error message for this situation", pos_arg);
+                    return false;
+                }
+                ulang_type_set_pointer_depth(infered, new_ptr_depth);
+                log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *infered));
                 return true;
             }
 
