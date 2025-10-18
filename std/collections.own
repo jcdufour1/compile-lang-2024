@@ -46,6 +46,12 @@ fn slice_starts_with(slice Slice(<ItemT>), start Slice(<ItemT>), ItemT Type, fil
     return 1
 }
 
+fn slice_reverse_in_place(slice ItemT[], ItemT Type) {
+    for idx u64 in 0..slice.count/2 {
+        util.swap(&slice[idx], &slice[slice.count - 1 - idx])
+    }
+}
+
 // TODO: count and max should be usize by default when usize is implemented
 // TODO: make max compile time when possible
 type Arr struct(<ItemT>) {
@@ -155,8 +161,7 @@ fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .n
 }
 
 fn darr_free(using darr Darr(<ItemT>)*, ItemT Type) {
-    // TODO: remove ItemT explicit parameter below when possible
-    util.free(buf, ItemT);
+    util.free(buf);
     buf = util.null(ItemT)
     count = 0
     capacity = 0
@@ -175,8 +180,7 @@ fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
-            // TODO: remove explicit ItemT when possible
-            darr.buf = util.realloc(darr.buf, darr.capacity, ItemT)
+            darr.buf = util.realloc(darr.buf, darr.capacity)
         }
     }
 }
@@ -209,8 +213,7 @@ fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, lin
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     darr.count -= 1
     if (darr.count - index > 0) {
-        // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index, ItemT);
+        util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index);
     }
     return darr.buf[index]
 }
@@ -307,13 +310,14 @@ fn str_from_int(num NumT, NumT Type, file Str = #file, line i32 = #line, column 
     }
 
     for num > 0 {
-        // TODO: try to avoid insert at start of darr?
-        darr_insert(&result, '0' + unsafe_cast<u8>(num%10), 0)
+        darr_append(&result, '0' + unsafe_cast<u8>(num%10))
         num /= 10
     }
     if should_neg {
-        darr_insert(&result, '-', 0)
+        darr_append(&result, '-')
     }
+
+    slice_reverse_in_place(darr_slice(result))
     return result
 }
 

@@ -22,6 +22,12 @@ fn bitcast(CastTo Type, item From, From Type) CastTo {
     return *unsafe_cast<CastTo*>&item
 }
 
+fn swap(lhs ItemT*, rhs ItemT*, ItemT Type) {
+    let temp ItemT = *lhs
+    *lhs = *rhs
+    *rhs = temp
+}
+
 // TODO: return optional, etc.?
 fn alloc(count_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     let buf ItemT* = unsafe_cast<ItemT*>libc.malloc(sizeof(ItemT)*count_items)
