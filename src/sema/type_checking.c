@@ -1754,11 +1754,12 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
                              vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
                         ))
-                   );
-                   status = false;
-                   break;
+                    );
+                    status = false;
+                    break;
                 case CHECK_ASSIGN_ERROR:
-                    todo();
+                    status = false;
+                    break;
                 default:
                     unreachable("");
             }
@@ -3169,6 +3170,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     unreachable("");
 }
 
+// TODO: rename this function to try_set_index_types
 bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Tast_expr* new_callee = NULL;
     Tast_expr* new_inner_index = NULL;
@@ -3178,7 +3180,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     if (!try_set_expr_types(&new_inner_index, index->index)) {
         return false;
     }
-    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= 64) {
+    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= params.sizeof_usize) {
         unwrap(try_set_unary_types_finish(
             &new_inner_index,
             new_inner_index,
@@ -3187,7 +3189,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             lang_type_new_usize()
         ));
     } else {
-        unreachable("");
+        msg_todo("index type larger than usize", tast_expr_get_pos(new_inner_index));
+        return false;
     }
 
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
@@ -3211,7 +3214,17 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Ulang_type slice_item_type = {0};
     if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
         Uast_expr_vec args = {0};
-        vec_append(&a_main, &args, index->callee);
+        Uast_expr* callee = index->callee;
+        // TODO: uncomment
+        //for (int16_t idx = 0; idx < lang_type_get_pointer_depth(tast_expr_get_lang_type(new_callee)); idx++) {
+        //    callee = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+        //        uast_expr_get_pos(callee),
+        //        callee,
+        //        UNARY_DEREF,
+        //        (Ulang_type) {0}
+        //    )));
+        //}
+        vec_append(&a_main, &args, callee);
         vec_append(&a_main, &args, index->index);
 
         Ulang_type_vec gen_args = {0};

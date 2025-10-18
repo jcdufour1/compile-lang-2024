@@ -3,6 +3,7 @@ type util import = std.util
 type io import = std.io
 type rt import = std.runtime
 
+type Slice def = rt.Slice
 type Str def = u8[]
 
 // TODO: make alloc function instead of using malloc directly
@@ -23,25 +24,25 @@ type slice_at_ref def = rt.slice_at_ref
 
 fn slice_consume(slice ItemT[]*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    if slice_at(*slice, 0) != to_consume => return .none
+    if (*slice)[0] != to_consume => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some(slice_at(*slice, 0))
+    return .some((*slice)[0])
 }
 
 fn slice_try_get(slice ItemT[]*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    if !should_get(slice_at(*slice, 0)) => return .none
+    // TODO: remove ugly *slice deref
+    if !should_get((*slice)[0]) => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some(slice_at(*slice, 0))
+    return .some((*slice)[0])
 }
 
 fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
     if slice.count < start.count => return 0
     for idx u64 in 0..start.count {
-        // TODO: change slice_at(...) to slice[idx]
-        if slice_at(slice, idx) != slice_at(start, idx) => return 0
+        if slice[idx] != start[idx] => return 0
     }
     return 1
 }
@@ -104,7 +105,7 @@ fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line 
 
 fn arr_extend(dest Arr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
-        arr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+        arr_append(dest, src[idx], .file = file, .line = line, .column = column)
     }
 }
 
@@ -204,7 +205,7 @@ fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, li
 
 fn darr_extend(dest Darr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     for idx u64 in 0..src.count {
-        darr_append(dest, slice_at(src, idx), .file = file, .line = line, .column = column)
+        darr_append(dest, src[idx], .file = file, .line = line, .column = column)
     }
 }
 
@@ -280,7 +281,9 @@ fn str_consume_int(str Str*, NumT Type, file Str = #file, line i32 = #line, colu
     let result NumT = 0
     let is_some u1 = 0
     for str.count > 0 {
-        let curr NumT = unsafe_cast<NumT>slice_at(*str, 0)
+        // TODO: remove line directly below, and uncomment line below that (array pointer arithmetic must use function syntax other than [<index>])
+        let curr NumT = unsafe_cast<NumT>(*str)[0]
+        //let curr NumT = unsafe_cast<NumT>str[0]
         if curr < '0' || curr > '9' => break
 
         is_some = 1
