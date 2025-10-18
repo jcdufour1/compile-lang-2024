@@ -1392,6 +1392,15 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             );
             return false;
         }
+        case UAST_EXPR_REMOVED: {
+            Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
+            String buf = {0};
+            string_extend_cstr(&a_print, &buf, "expected expression ");
+            string_extend_strv(&a_print, &buf, removed->msg_suffix);
+            msg(DIAG_EXPECTED_EXPRESSION, removed->pos, FMT"\n", string_print(buf));
+            return false;
+        }
+
     }
     unreachable("");
 }
@@ -2102,7 +2111,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     fun_call = uast_function_call_clone(fun_call, false, 0, fun_call->pos /* TODO */);
 
     Name* sym_name = NULL;
+    // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
+        case UAST_EXPR_REMOVED:
+            todo();
         case TAST_BLOCK:
             todo();
         case TAST_MODULE_ALIAS:

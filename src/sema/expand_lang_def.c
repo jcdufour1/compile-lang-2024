@@ -75,7 +75,7 @@ bool expand_def_ulang_type_regular(
             *new_lang_type = ulang_type_regular_const_unwrap(ulang_type_new_slice(
                 index->pos,
                 ulang_type_regular_const_wrap(index_ulang_type),
-                0
+                lang_type.atom.pointer_depth
             ));
             return true;
         }

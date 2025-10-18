@@ -332,7 +332,7 @@ Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, boo
     (void) use_new_scope;
     (void) new_scope;
     (void) dest_pos;
-    return uast_expr_removed_new(removed->pos);
+    return uast_expr_removed_new(removed->pos, removed->msg_suffix);
 }
 
 Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

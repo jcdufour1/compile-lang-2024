@@ -348,6 +348,8 @@ static Uast_type uast_gen_if_else_chain(const char* prefix) {
 static Uast_type uast_gen_expr_removed(const char* prefix) {
     Uast_type removed = {.name = uast_name_new(prefix, "expr_removed", false)};
 
+    append_member(&removed.members, "Strv", "msg_suffix");
+
     return removed;
 }
 

@@ -2,4 +2,5 @@
 fn main() i32 {
     let ptr i32*
     let num i32 = ptr[]
+    return 0
 }
