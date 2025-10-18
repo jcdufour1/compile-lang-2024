@@ -314,10 +314,10 @@ static bool get_mod_alias_from_path_token(
         curr_mod_alias = util_literal_name_new();
     } else if (is_main_mod) {
         assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
-        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     } else {
         assert(curr_mod_path.count > 0);
-        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
@@ -325,7 +325,7 @@ static bool get_mod_alias_from_path_token(
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN))) {
+    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
         goto finish;
     }
 
@@ -343,6 +343,7 @@ static bool get_mod_alias_from_path_token(
         goto finish;
     }
 
+    assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
@@ -2860,7 +2861,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 MOD_ALIAS_BUILTIN,
                 sv("i32"),
                 (Ulang_type_vec) {0},
-                SCOPE_BUILTIN
+                SCOPE_TOP_LEVEL
             ),
             0
         ),
@@ -3213,9 +3214,6 @@ static bool parse_file(Uast_block** block, Strv file_path, bool is_main_mod, Pos
     }
 
     Scope_id new_scope = SCOPE_TOP_LEVEL;
-    if (!is_main_mod) {
-        new_scope = symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
-    }
 
     // TODO: DNDEBUG should be spelled NDEBUG
 #ifndef DNDEBUG
@@ -3262,8 +3260,6 @@ error:
 }
 
 bool parse(void) {
-    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
-
     Uast_mod_alias* dummy = NULL;
     return get_mod_alias_from_path_token(
         &dummy,

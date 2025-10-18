@@ -708,7 +708,7 @@ void emit_c_from_tree(void) {
             string_extend_cstr(&a_main, &header, "#include <assert.h>\n");
 #       endif // NDEBUG
 
-        Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+        Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);

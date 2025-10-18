@@ -26,7 +26,7 @@ Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool inclu
     String name = {0};
     extend_name(NAME_LOG, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type, include_scope)));
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope) {
@@ -37,7 +37,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
         include_scope
     )));
     string_extend_size_t(&a_main, &name, ulang_type.count);
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
@@ -50,7 +50,7 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
-    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {

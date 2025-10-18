@@ -584,7 +584,7 @@ bool resolve_generics_function_def_implementation(Name name) {
         unwrap(usymbol_lookup(&result, name_plain));
         unwrap(function_decl_tbl_lookup(&dummy_3, name));
         Uast_function_def* def = uast_function_def_unwrap(result);
-        Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id, true, def->body->pos);
+        Uast_block* new_block = uast_block_clone(def->body, true, def->decl->name.scope_id, def->body->pos);
         assert(new_block != def->body);
 
         Uast_function_decl* new_decl = NULL;

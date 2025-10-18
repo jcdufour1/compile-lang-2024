@@ -25,7 +25,7 @@ static inline Ulang_type_atom ulang_type_atom_new(Uname str, int16_t pointer_dep
 
 static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth) {
     return ulang_type_atom_new(
-        uname_new(MOD_ALIAS_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+        uname_new(MOD_ALIAS_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         pointer_depth
     );
 }

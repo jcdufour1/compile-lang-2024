@@ -1014,7 +1014,7 @@
 //    String output = {0};
 //    String literals = {0};
 //
-//    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+//    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
 //    Ir* curr = NULL;
 //    while (ir_tbl_iter_next(&curr, &iter)) {
 //        emit_out_of_line(&struct_defs, &output, &literals, curr);

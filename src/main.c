@@ -46,7 +46,7 @@ static void add_builtin_def(Strv name) {
         MOD_PATH_RUNTIME,
         name,
         (Ulang_type_vec) {0},
-        SCOPE_BUILTIN
+        SCOPE_TOP_LEVEL
     )))));
 }
 
@@ -64,7 +64,7 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
+        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
@@ -80,7 +80,7 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN);\
+        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
@@ -92,7 +92,7 @@ void compile_file_to_ir(void) {
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
+    symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
     add_primitives();
     add_builtin_defs();
@@ -101,7 +101,7 @@ void compile_file_to_ir(void) {
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
-        SCOPE_BUILTIN
+        SCOPE_TOP_LEVEL
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
@@ -134,7 +134,7 @@ void do_passes(void) {
         } else {
             String contents = {0};
 
-            Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+            Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
                 string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));

@@ -108,7 +108,7 @@ static bool get_next_token(
     token->pos.file_path = pos->file_path;
 
     static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only keywords are explicitly handled)");
-    if (isalpha(strv_col_front(*file_text_rem))) {
+    if (isalpha(strv_col_front(*file_text_rem)) || strv_col_front(*file_text_rem) == '_') {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;

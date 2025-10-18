@@ -1460,6 +1460,8 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
             if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
+            log(LOG_DEBUG, FMT"\n", tast_block_print(new_block));
+            todo();
             // TODO: make tast node type to hold this new block
             unwrap(sym_tbl_add(tast_import_path_wrap(tast_import_path_new(
                 new_block->pos,
@@ -3344,14 +3346,12 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 }
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
-    todo();
-    unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
+    (void) tast;
     return true;
 }
 
 // TODO: see if uast_void_def can be removed?
 bool try_set_void_def_types(Uast_void_def* tast) {
-    todo();
     (void) tast;
     return true;
 }
@@ -4179,24 +4179,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
-    if (block->scope_id == SCOPE_TOP_LEVEL) {
-        Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
-            // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
-            // TODO: use warn for warnings instead of msg to reduce mistakes?
-            goto error;
-        }
-        if (main_fn_->type != UAST_FUNCTION_DEF) {
-            todo();
-        }
-        Lang_type_fn new_lang_type = {0};
-        Name new_name = {0};
-        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
-            status = false;
-        }
-    }
-
 error:
     check_env.dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
@@ -4322,7 +4304,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 
 bool try_set_types(void) {
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             expand_using_def(curr);
@@ -4333,7 +4315,7 @@ bool try_set_types(void) {
     }
 
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             expand_def_def(curr);
@@ -4350,7 +4332,7 @@ bool try_set_types(void) {
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             // TODO: make switch for this if for exhausive checking
@@ -4372,6 +4354,21 @@ bool try_set_types(void) {
                     unreachable("");
             }
         }
+    }
+
+    Uast_def* main_fn_ = NULL;
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (main_fn_->type != UAST_FUNCTION_DEF) {
+            todo();
+        }
+        Lang_type_fn new_lang_type = {0};
+        Name new_name = {0};
+        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
+            status = false;
+        }
+    } else {
+        msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
+        // TODO: use warn for warnings instead of msg to reduce mistakes?
     }
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {

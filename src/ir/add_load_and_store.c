@@ -2797,7 +2797,7 @@ static Ir_block* load_block(
 void add_load_and_store(void) {
     assert(defered_collections.coll_stack.info.count == 0);
 
-    Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
+    Symbol_iter iter = sym_tbl_iter_new(SCOPE_TOP_LEVEL);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         load_def_sometimes(curr);

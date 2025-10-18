@@ -44,7 +44,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
         }
         case IR_LANG_TYPE_OPAQUE: {
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+                name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
                 ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -170,7 +170,7 @@ Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_lang_type ir_lan
             return atom;
         }
         case IR_LANG_TYPE_VOID: {
-            Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
+            Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("void", 0, SCOPE_TOP_LEVEL);
             return atom;
         }
     }
