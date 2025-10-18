@@ -1,0 +1,32 @@
+
+type coll import = std.collections
+type io import = std.io
+
+type Token struct {
+    num i32
+}
+
+fn read(slice u8[]) {
+    for idx u64 in 0..slice.count {
+        io.printf("%c", slice[idx])
+    }
+    io.printf("\n")
+
+    for idx u64 in 0..slice.count {
+        slice[idx] = 'a' + unsafe_cast<u8>idx
+    }
+
+    for idx u64 in 0..slice.count {
+        io.printf("%c", slice[idx])
+    }
+    io.printf("\n")
+}
+
+fn main() i32 {
+    let arr coll.Arr(<u8>) = coll.arr_new(6, u8, "hello")
+    defer coll.arr_free(&arr);
+
+    read(coll.arr_slice(arr));
+
+    return 0
+}

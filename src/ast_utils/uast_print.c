@@ -91,8 +91,8 @@ Strv uast_index_print_internal(const Uast_index* index, int indent) {
     string_extend_cstr_indent(&a_print, &buf, "index_untyped", indent);
     extend_pos(&buf, index->pos);
     string_extend_cstr(&a_print, &buf, "\n");
-    string_extend_strv(&a_print, &buf, uast_expr_print_internal(index->index, indent + INDENT_WIDTH));
     string_extend_strv(&a_print, &buf, uast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
+    string_extend_strv(&a_print, &buf, uast_expr_print_internal(index->index, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
