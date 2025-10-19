@@ -98,9 +98,9 @@ static int64_t bit_width_needed_float(double num) {
     return 32;
 }
 
-static Tast_expr* tast_auto_deref_to_0(Tast_expr* expr) {
+static Tast_expr* tast_auto_deref_to_n(Tast_expr* expr, int16_t n) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
-    while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
+    while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > n) {
         unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
         assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
@@ -108,8 +108,8 @@ static Tast_expr* tast_auto_deref_to_0(Tast_expr* expr) {
     return expr;
 }
 
-static Uast_expr* uast_auto_deref_to_0(Uast_expr* expr, int16_t init_ptr_depth) {
-    for (int16_t idx = 0; idx < init_ptr_depth; idx++) {
+static Uast_expr* uast_auto_deref_n_times(Uast_expr* expr, int16_t n) {
+    for (int16_t idx = 0; idx < n; idx++) {
         expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
             uast_expr_get_pos(expr),
             expr,
@@ -558,37 +558,16 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         tast_literal_unwrap(new_rhs)->type == TAST_INT &&
         tast_int_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
 
-    if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
-        new_lhs = tast_auto_deref_to_0(new_lhs);
-        new_rhs = tast_auto_deref_to_0(new_rhs);
+    if (oper_token_type != BINARY_SINGLE_EQUAL) {
+        new_lhs = tast_auto_deref_to_n(new_lhs, lang_type_get_pointer_depth(tast_expr_get_lang_type(new_rhs)));
+        new_rhs = tast_auto_deref_to_n(new_rhs, lang_type_get_pointer_depth(tast_expr_get_lang_type(new_lhs)));
+    }
 
-        if (do_implicit_convertions(
-            tast_expr_get_lang_type(new_lhs),
-            &new_rhs,
-            src_is_zero,
-            true
-        )) {
-            //if (new_rhs->type == TAST_LITERAL) {
-            //    new_lhs = tast_auto_deref_to_0(new_lhs);
-            //    new_rhs = tast_auto_deref_to_0(new_rhs);
-            //    tast_literal_set_lang_type(tast_literal_unwrap(new_rhs), tast_expr_get_lang_type(new_lhs));
-            //} else {
-            //    unwrap(try_set_unary_types_finish(&new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
-            //}
-        } else if (do_implicit_convertions(
-            tast_expr_get_lang_type(new_rhs),
-            &new_lhs,
-            src_is_zero,
-            true
-        )) {
-            //if (new_lhs->type == TAST_LITERAL) {
-            //    new_lhs = tast_auto_deref_to_0(new_lhs);
-            //    new_rhs = tast_auto_deref_to_0(new_rhs);
-            //    tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
-            //} else {
-            //    unwrap(try_set_unary_types_finish(&new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
-            //}
-        } else {
+    if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
+        if (
+            !do_implicit_convertions(tast_expr_get_lang_type(new_lhs), &new_rhs, src_is_zero, true) && 
+            !do_implicit_convertions(tast_expr_get_lang_type(new_rhs), &new_lhs, src_is_zero, true)
+        ) {
             msg(
                 DIAG_BINARY_MISMATCHED_TYPES, oper_pos,
                 "types `"FMT"` and `"FMT"` are not valid operands to binary expression\n",
@@ -3154,8 +3133,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
     }
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_callee));
-    new_callee = tast_auto_deref_to_0(new_callee);
+    new_callee = tast_auto_deref_to_n(new_callee, 0);
 
     switch (new_callee->type) {
         case TAST_SYMBOL: {
@@ -3266,7 +3244,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     Ulang_type slice_item_type = {0};
     if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
         Uast_expr_vec args = {0};
-        Uast_expr* callee = uast_auto_deref_to_0(
+        Uast_expr* callee = uast_auto_deref_n_times(
             index->callee,
             lang_type_get_pointer_depth(tast_expr_get_lang_type(new_callee))
         );
@@ -3307,7 +3285,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     if (callee_lang_type.type == LANG_TYPE_ARRAY) {
         Lang_type_array array = lang_type_array_const_unwrap(callee_lang_type);
         Uast_expr_vec arr_slice_args = {0};
-        Uast_expr* callee = uast_auto_deref_to_0(
+        Uast_expr* callee = uast_auto_deref_n_times(
             index->callee,
             lang_type_get_pointer_depth(tast_expr_get_lang_type(new_callee))
         );
