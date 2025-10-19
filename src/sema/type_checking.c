@@ -1690,6 +1690,46 @@ bool try_set_function_call_builtin_types(
             )))
         ));
         return true;
+    } else if (strv_is_equal(fun_base, sv("buf_at"))) {
+        if (fun_call->args.info.count != 2) {
+            msg_invalid_count_function_args(fun_call, fun_name, fun_decl_pos, 2, 2);
+            return false;
+        }
+
+        Tast_expr* new_callee = NULL;
+        Tast_expr* new_inner_index = NULL;
+        if (!try_set_expr_types(&new_callee, vec_at(fun_call->args, 0))) {
+            return false;
+        }
+        if (!try_set_expr_types(&new_inner_index, vec_at(fun_call->args, 1))) {
+            return false;
+        }
+
+        Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
+        int16_t old_ptr_depth = lang_type_get_pointer_depth(callee_lang_type);
+        if (old_ptr_depth < 1) {
+            msg(
+                DIAG_DEREF_NON_POINTER,
+                tast_expr_get_pos(new_callee),
+                "first argument of buf_at builtin must be a pointer type\n"
+            );
+            return false;
+        }
+        if (!lang_type_is_signed(tast_expr_get_lang_type(new_inner_index)) && !lang_type_is_unsigned(tast_expr_get_lang_type(new_inner_index))) {
+            // TODO
+            msg_todo(
+                "actual error message for using non integer type for second argument for builtin buf_at",
+                tast_expr_get_pos(new_inner_index)
+            );
+            return false;
+        }
+
+        lang_type_set_pointer_depth(&callee_lang_type, old_ptr_depth - 1);
+
+        Tast_index* new_index = tast_index_new(fun_call->pos, callee_lang_type, new_inner_index, new_callee);
+
+        *new_call = tast_index_wrap(new_index);
+        return true;
     } else {
         msg_todo("calling this builtin as a function", fun_call->pos);
         return false;
@@ -3194,22 +3234,6 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     }
 
     Lang_type callee_lang_type = tast_expr_get_lang_type(new_callee);
-
-    if (lang_type_get_pointer_depth(callee_lang_type) > 0) {
-        lang_type_set_pointer_depth(&callee_lang_type, lang_type_get_pointer_depth(callee_lang_type) - 1);
-
-        Lang_type new_lang_type = {0};
-        if (callee_lang_type.type == LANG_TYPE_ARRAY) {
-            new_lang_type = *lang_type_array_const_unwrap(callee_lang_type).item_type;
-        } else {
-            new_lang_type = callee_lang_type;
-        }
-
-        Tast_index* new_index = tast_index_new(index->pos, new_lang_type, new_inner_index, new_callee);
-
-        *new_tast = tast_expr_wrap(tast_index_wrap(new_index));
-        return true;
-    }
 
     Ulang_type slice_item_type = {0};
     if (lang_type_is_slice(&slice_item_type, callee_lang_type)) {
