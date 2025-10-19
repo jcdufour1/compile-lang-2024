@@ -87,6 +87,7 @@ typedef enum {
     DIAG_UNSUPPORTED_TARGET_TRIPLET,
     DIAG_INVALID_LITERAL_PREFIX,
     DIAG_DEF_RECURSION,
+    DIAG_NOT_LVALUE,
 
     // count of cases for static asserts
     DIAG_COUNT,

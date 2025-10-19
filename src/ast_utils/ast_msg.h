@@ -27,4 +27,9 @@ void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Po
 #define msg_undefined_symbol(sym_name, sym_pos) \
     msg_undefined_symbol_internal(__FILE__, __LINE__, sym_name, sym_pos)
 
+void msg_not_lvalue_internal(const char* file, int line, Pos pos);
+
+#define msg_not_lvalue(pos) \
+    msg_not_lvalue_internal(__FILE__, __LINE__, pos)
+
 #endif // AST_MSG_H
