@@ -602,50 +602,48 @@ static void long_option_target_triplet(Strv curr_opt) {
         exit(EXIT_CODE_FAIL);
     }
 
-    Strv temp = {0};
+    Strv temp[4] = {0};
 
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "architecture was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
+    for (size_t idx = 0; idx < 3; idx++) {
+        if (!strv_try_consume_until(&temp[idx], &cc, '-')) {
+            size_t count_substrings = idx;
+            if (cc.count > 0) {
+                count_substrings++;
+            }
+            msg(
+                DIAG_CMD_OPT_INVALID_SYNTAX,
+                POS_BUILTIN,
+                "target triplet has only %zu substrings, but 4 was expected\n",
+                count_substrings
+            );
+            exit(EXIT_CODE_FAIL);
+        }
+        strv_consume(&cc);
     }
-    strv_consume(&cc);
-    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp)) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported architecture `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "operating system was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    strv_consume(&cc);
-    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp)) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported vendor `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "operating system was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    strv_consume(&cc);
-    if (!try_target_os_from_strv(&params.target_triplet.os, temp)) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported operating system `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
     Strv dummy = {0};
     if (strv_try_consume_until(&dummy, &cc, '-')) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "target triplet has too many sub-strings\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "target triplet has too many substrings (4 was expected)\n");
         exit(EXIT_CODE_FAIL);
     }
-    temp = cc;
-    if (temp.count < 1) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "abi (application binary interface, a.k.a. environment type) was not specified in target-triplet\n");
+    temp[3] = cc;
+
+    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp[0])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported architecture `"FMT"`\n", strv_print(temp[0]));
         exit(EXIT_CODE_FAIL);
     }
-    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp)) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp));
+
+    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp[1])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported vendor `"FMT"`\n", strv_print(temp[1]));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!try_target_os_from_strv(&params.target_triplet.os, temp[2])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported operating system `"FMT"`\n", strv_print(temp[2]));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp[3])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp[3]));
         exit(EXIT_CODE_FAIL);
     }
 }
