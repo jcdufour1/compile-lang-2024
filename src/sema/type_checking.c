@@ -559,32 +559,32 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         tast_int_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
 
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
-        if (can_be_implicitly_converted(
+        if (do_implicit_convertions(
             tast_expr_get_lang_type(new_lhs),
-            tast_expr_get_lang_type(new_rhs),
+            new_rhs,
             src_is_zero,
             true
         )) {
-            if (new_rhs->type == TAST_LITERAL) {
-                new_lhs = tast_auto_deref_to_0(new_lhs);
-                new_rhs = tast_auto_deref_to_0(new_rhs);
-                tast_literal_set_lang_type(tast_literal_unwrap(new_rhs), tast_expr_get_lang_type(new_lhs));
-            } else {
-                unwrap(try_set_unary_types_finish(&new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
-            }
-        } else if (can_be_implicitly_converted(
+            //if (new_rhs->type == TAST_LITERAL) {
+            //    new_lhs = tast_auto_deref_to_0(new_lhs);
+            //    new_rhs = tast_auto_deref_to_0(new_rhs);
+            //    tast_literal_set_lang_type(tast_literal_unwrap(new_rhs), tast_expr_get_lang_type(new_lhs));
+            //} else {
+            //    unwrap(try_set_unary_types_finish(&new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
+            //}
+        } else if (do_implicit_convertions(
             tast_expr_get_lang_type(new_rhs),
-            tast_expr_get_lang_type(new_lhs),
+            new_lhs,
             src_is_zero,
             true
         )) {
-            if (new_lhs->type == TAST_LITERAL) {
-                new_lhs = tast_auto_deref_to_0(new_lhs);
-                new_rhs = tast_auto_deref_to_0(new_rhs);
-                tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
-            } else {
-                unwrap(try_set_unary_types_finish(&new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
-            }
+            //if (new_lhs->type == TAST_LITERAL) {
+            //    new_lhs = tast_auto_deref_to_0(new_lhs);
+            //    new_rhs = tast_auto_deref_to_0(new_rhs);
+            //    tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
+            //} else {
+            //    unwrap(try_set_unary_types_finish(&new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
+            //}
         } else {
             msg(
                 DIAG_BINARY_MISMATCHED_TYPES, oper_pos,
