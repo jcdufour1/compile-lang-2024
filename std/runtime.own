@@ -8,7 +8,7 @@ type Slice struct(<ItemT>) {
 
 fn slice_at_ref(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
-    return &slice.buf[index]
+    return &buf_at(slice.buf, index)
 }
 
 extern("c") fn strlen(cstr u8*) u64

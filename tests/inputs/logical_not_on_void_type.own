@@ -15,7 +15,7 @@ fn get_token() Token {
     return {.num = 34, .string = "hello"}
 }
 
-fn read_num(string u8*) Opt_int {
+fn read_num(string Str) Opt_int {
     if (!get_token()) {
         return Opt_int.none(0);
     }

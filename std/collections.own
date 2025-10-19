@@ -13,7 +13,7 @@ fn slice_range(slice ItemT[], start u64, count u64, ItemT Type, file Str = #file
         return {util.null(ItemT), 0}
     }
     assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
-    return {&slice.buf[start], count}
+    return {&rt.buf_at(slice.buf, start), count}
 }
 
 fn slice_at(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -24,19 +24,18 @@ type slice_at_ref def = rt.slice_at_ref
 
 fn slice_consume(slice ItemT[]*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    if (*slice)[0] != to_consume => return .none
+    if slice[0] != to_consume => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some((*slice)[0])
+    return .some(slice[0])
 }
 
 fn slice_try_get(slice ItemT[]*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    // TODO: remove ugly *slice deref
-    if !should_get((*slice)[0]) => return .none
+    if !should_get(slice[0]) => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some((*slice)[0])
+    return .some(slice[0])
 }
 
 fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
@@ -91,15 +90,15 @@ fn arr_insert(arr Arr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #
     assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (arr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&arr.buf[index + 1], &arr.buf[index], arr.count - index, ItemT);
+        util.move_items(&rt.buf_at(arr.buf, index + 1), &rt.buf_at(arr.buf, index), arr.count - index, ItemT);
     }
-    arr.buf[index] = item
+    rt.buf_at(arr.buf, index) = item
     arr.count += 1
 }
 
 fn arr_append(arr Arr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     assert(arr.count < arr.max, "Arr overflow", .file = file, .line = line, .column = column);
-    arr.buf[arr.count] = item
+    rt.buf_at(arr.buf, arr.count) = item
     arr.count += 1
 }
 
@@ -115,18 +114,18 @@ fn arr_remove(arr Arr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i
     arr.count -= 1
     if (arr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&arr.buf[index], &arr.buf[index + 1], arr.count - index, ItemT);
+        util.move_items(&rt.buf_at(arr.buf, index), &rt.buf_at(arr.buf, index + 1), arr.count - index, ItemT);
     }
 }
 
 fn arr_at(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
-    return arr.buf[index]
+    return rt.buf_at(arr.buf, index)
 }
 
 fn arr_at_ref(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
-    return &arr.buf[index]
+    return &rt.buf_at(arr.buf, index)
 }
 
 fn arr_first(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -191,15 +190,15 @@ fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str 
     assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (darr.count - index > 0) {
         // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&darr.buf[index + 1], &darr.buf[index], darr.count - index, ItemT);
+        util.move_items(&rt.buf_at(darr.buf, index + 1), &rt.buf_at(darr.buf, index), darr.count - index, ItemT);
     }
-    darr.buf[index] = item
+    rt.buf_at(darr.buf, index) = item
     darr.count += 1
 }
 
 fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     darr_reserve(darr, 1);
-    darr.buf[darr.count] = item
+    rt.buf_at(darr.buf, darr.count) = item
     darr.count += 1
 }
 
@@ -214,9 +213,9 @@ fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, lin
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     darr.count -= 1
     if (darr.count - index > 0) {
-        util.move_items(&darr.buf[index], &darr.buf[index + 1], darr.count - index);
+        util.move_items(&rt.buf_at(darr.buf, index), &rt.buf_at(darr.buf, index + 1), darr.count - index);
     }
-    return darr.buf[index]
+    return rt.buf_at(darr.buf, index)
 }
 
 fn darr_pop(darr Darr(<ItemT>)*, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -226,7 +225,7 @@ fn darr_pop(darr Darr(<ItemT>)*, ItemT Type, file Str = #file, line i32 = #line,
 
 fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
-    return darr.buf[index]
+    return rt.buf_at(darr.buf, index)
 }
 
 fn darr_first(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
@@ -235,7 +234,7 @@ fn darr_first(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line
 
 fn darr_last(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
-    return darr.buf[darr.count - 1]
+    return rt.buf_at(darr.buf, darr.count - 1)
 }
 
 // TODO: return result, optional, etc. instead of crashing?
@@ -281,8 +280,7 @@ fn str_consume_int(str Str*, NumT Type, file Str = #file, line i32 = #line, colu
     let result NumT = 0
     let is_some u1 = 0
     for str.count > 0 {
-        // TODO: remove line directly below, and uncomment line below that (array pointer arithmetic must use function syntax other than [<index>])
-        let curr NumT = unsafe_cast<NumT>(*str)[0]
+        let curr NumT = unsafe_cast<NumT>str[0]
         //let curr NumT = unsafe_cast<NumT>str[0]
         if curr < '0' || curr > '9' => break
 
