@@ -140,6 +140,7 @@ typedef size_t Scope_id;
 #define MOD_PATH_PRELUDE (sv("std/prelude"))
 #define MOD_PATH_OF_MOD_PATHS (sv("std/does_not_exist/mod_paths"))
 #define MOD_PATH_ARRAYS (sv("std/does_not_exist/arrays"))
+#define MOD_PATH_AUX_ALIASES (sv("std/does_not_exist/aux_aliases"))
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
 #define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))

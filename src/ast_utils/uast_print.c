@@ -8,20 +8,6 @@
 #include <pos_util.h>
 #include <symbol_table.h>
 
-static void extend_pos(String* buf, Pos pos) {
-    strv_extend_pos(buf, pos);
-    //string_extend_cstr(&a_print, buf, "((");
-    //string_extend_cstr(&a_print, buf, "file_path_count:");
-    //string_extend_size_t(&a_print, buf, pos.file_path.count);
-    //string_extend_cstr(&a_print, buf, ";file_path:");
-    //if (pos.file_path.count != SIZE_MAX /* TODO: always run code in if body when possible */) {
-    //    string_extend_strv(&a_print, buf, pos.file_path);
-    //}
-    //string_extend_cstr(&a_print, buf, ";line:");
-    //string_extend_int64_t(&a_print, buf, pos.line);
-    //string_extend_cstr(&a_print, buf, " ))");
-}
-
 static void extend_scope(String* buf, Scope_id scope_id, int indent) {
     string_extend_cstr_indent(&a_print, buf, "scope: ", indent);
     string_extend_size_t(&a_print, buf, scope_id);
