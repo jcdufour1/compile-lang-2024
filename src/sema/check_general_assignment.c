@@ -5,8 +5,15 @@
 #include <msg.h>
 
 // TODO: rename this function?
-static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_expr** src, bool src_is_zero, bool implicit_pointer_depth) {
-    Lang_type src_type_ = tast_expr_get_lang_type(*src);
+static bool do_implicit_convertions_primitive(
+    Lang_type_primitive dest,
+    Tast_expr** new_src,
+    Tast_expr* src,
+    bool src_is_zero,
+    bool implicit_pointer_depth
+) {
+    *new_src = src;
+    Lang_type src_type_ = tast_expr_get_lang_type(*new_src);
     Lang_type_primitive src_type = lang_type_primitive_const_unwrap(src_type_);
 
     if (!implicit_pointer_depth) {
@@ -48,8 +55,8 @@ static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_exp
         return false;
     }
 
-    if ((*src)->type == TAST_LITERAL) {
-        Tast_literal* lit = tast_literal_unwrap(*src);
+    if ((*new_src)->type == TAST_LITERAL) {
+        Tast_literal* lit = tast_literal_unwrap(*new_src);
         switch (lit->type) {
             case TAST_INT:
                 tast_int_unwrap(lit)->lang_type = lang_type_primitive_const_wrap(dest);
@@ -58,7 +65,7 @@ static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_exp
                 tast_float_unwrap(lit)->lang_type = lang_type_primitive_const_wrap(dest);
                 return true;
             case TAST_ENUM_LIT:
-                msg_todo("", tast_expr_get_pos(*src));
+                msg_todo("", tast_expr_get_pos(*new_src));
                 return false;
             case TAST_FUNCTION_LIT:
                 goto after;
@@ -75,9 +82,9 @@ static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_exp
     }
 
 after:
-    *src = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-        tast_expr_get_pos(*src),
-        *src,
+    *new_src = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        tast_expr_get_pos(*new_src),
+        *new_src,
         UNARY_UNSAFE_CAST,
         lang_type_primitive_const_wrap(dest)
     )));
@@ -125,11 +132,13 @@ static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive 
 
 bool do_implicit_convertions(
     Lang_type dest,
-    Tast_expr** src,
+    Tast_expr** new_src,
+    Tast_expr* src,
     bool src_is_zero,
     bool implicit_pointer_depth
 ) {
-    Lang_type src_type = tast_expr_get_lang_type(*src);
+    *new_src = src;
+    Lang_type src_type = tast_expr_get_lang_type(*new_src);
     if (dest.type != LANG_TYPE_PRIMITIVE) {
         goto next;
     }
@@ -145,7 +154,7 @@ bool do_implicit_convertions(
     if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL))) {
         goto next;
     }
-    tast_string_unwrap(tast_literal_unwrap(*src))->is_cstr = true;
+    tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
     return true;
 
 next:
@@ -161,7 +170,8 @@ next:
         case LANG_TYPE_PRIMITIVE:
             return do_implicit_convertions_primitive(
                 lang_type_primitive_const_unwrap(dest),
-                src,
+                new_src,
+                *new_src,
                 src_is_zero,
                 implicit_pointer_depth
             );

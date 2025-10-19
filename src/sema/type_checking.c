@@ -565,8 +565,8 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (
-            !do_implicit_convertions(tast_expr_get_lang_type(new_lhs), &new_rhs, src_is_zero, true) && 
-            !do_implicit_convertions(tast_expr_get_lang_type(new_rhs), &new_lhs, src_is_zero, true)
+            !do_implicit_convertions(tast_expr_get_lang_type(new_lhs), &new_rhs, new_rhs, src_is_zero, true) && 
+            !do_implicit_convertions(tast_expr_get_lang_type(new_rhs), &new_lhs, new_lhs, src_is_zero, true)
         ) {
             msg(
                 DIAG_BINARY_MISMATCHED_TYPES, oper_pos,
