@@ -5,8 +5,8 @@
 #include <msg.h>
 
 // TODO: rename this function?
-static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_expr* src, bool src_is_zero, bool implicit_pointer_depth) {
-    Lang_type src_type_ = tast_expr_get_lang_type(src);
+static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_expr** src, bool src_is_zero, bool implicit_pointer_depth) {
+    Lang_type src_type_ = tast_expr_get_lang_type(*src);
     Lang_type_primitive src_type = lang_type_primitive_const_unwrap(src_type_);
 
     if (!implicit_pointer_depth) {
@@ -48,36 +48,40 @@ static bool do_implicit_convertions_primitive(Lang_type_primitive dest, Tast_exp
         return false;
     }
 
-    switch (src->type) {
-        TAST_BLOCK,
-        TAST_MODULE_ALIAS,
-        TAST_IF_ELSE_CHAIN,
-        TAST_ASSIGNMENT,
-        TAST_OPERATOR,
-        TAST_SYMBOL,
-        TAST_MEMBER_ACCESS,
-        TAST_INDEX,
-        TAST_LITERAL,
-        TAST_FUNCTION_CALL,
-        TAST_STRUCT_LITERAL,
-        TAST_TUPLE,
-        TAST_ENUM_CALLEE,
-        TAST_ENUM_CASE,
-        TAST_ENUM_GET_TAG,
-        TAST_ENUM_ACCESS,
+    if ((*src)->type == TAST_LITERAL) {
+        Tast_literal* lit = tast_literal_unwrap(*src);
+        switch (lit->type) {
+            case TAST_INT:
+                tast_int_unwrap(lit)->lang_type = lang_type_primitive_const_wrap(dest);
+                return true;
+            case TAST_FLOAT:
+                tast_float_unwrap(lit)->lang_type = lang_type_primitive_const_wrap(dest);
+                return true;
+            case TAST_ENUM_LIT:
+                msg_todo("", tast_expr_get_pos(*src));
+                return false;
+            case TAST_FUNCTION_LIT:
+                goto after;
+            case TAST_STRING:
+                goto after;
+            case TAST_VOID:
+                goto after;
+            case TAST_ENUM_TAG_LIT:
+                goto after;
+            case TAST_RAW_UNION_LIT:
+                goto after;
+        }
+        unreachable("");
     }
 
-    switch (src->type) {
-        case TAST_INT:
-            tast_int_unwrap(src)->lang_type = lang_type_primitive_const_wrap(dest);
-            return true;
-        case TAST_FLOAT:
-            tast_float_unwrap(src)->lang_type = lang_type_primitive_const_wrap(dest);
-            return true;
-        default:
-            unreachable("");
-    }
-    unreachable("");
+after:
+    *src = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        tast_expr_get_pos(*src),
+        *src,
+        UNARY_UNSAFE_CAST,
+        lang_type_primitive_const_wrap(dest)
+    )));
+    return true;
 }
 
 static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
@@ -121,11 +125,11 @@ static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive 
 
 bool do_implicit_convertions(
     Lang_type dest,
-    Tast_expr* src,
+    Tast_expr** src,
     bool src_is_zero,
     bool implicit_pointer_depth
 ) {
-    Lang_type src_type = tast_expr_get_lang_type(src);
+    Lang_type src_type = tast_expr_get_lang_type(*src);
     if (dest.type != LANG_TYPE_PRIMITIVE) {
         goto next;
     }
@@ -141,7 +145,7 @@ bool do_implicit_convertions(
     if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL))) {
         goto next;
     }
-    tast_string_unwrap(tast_literal_unwrap(src))->is_cstr = true;
+    tast_string_unwrap(tast_literal_unwrap(*src))->is_cstr = true;
     return true;
 
 next:
@@ -151,11 +155,9 @@ next:
 
     switch (src_type.type) {
         case LANG_TYPE_FN:
-            todo();
-            return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src_type), implicit_pointer_depth);
+            return false;
         case LANG_TYPE_TUPLE:
-            todo();
-            return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src_type), implicit_pointer_depth);
+            return false;
         case LANG_TYPE_PRIMITIVE:
             return do_implicit_convertions_primitive(
                 lang_type_primitive_const_unwrap(dest),
@@ -164,19 +166,14 @@ next:
                 implicit_pointer_depth
             );
         case LANG_TYPE_ENUM:
-            todo();
             return false; // TODO
         case LANG_TYPE_STRUCT:
-            todo();
             return false; // TODO
         case LANG_TYPE_RAW_UNION:
-            todo();
             return false; // TODO
         case LANG_TYPE_VOID:
-            todo();
             return true;
         case LANG_TYPE_ARRAY:
-            todo();
             return false; // TODO
     }
     unreachable("");
@@ -210,9 +207,9 @@ next:
 
     switch (src.type) {
         case LANG_TYPE_FN:
-            return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
+            return false;
         case LANG_TYPE_TUPLE:
-            return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
+            return false;
         case LANG_TYPE_PRIMITIVE:
             return can_be_implicitly_converted_lang_type_primitive(
                 lang_type_primitive_const_unwrap(dest),

@@ -559,9 +559,12 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         tast_int_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
 
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
+        new_lhs = tast_auto_deref_to_0(new_lhs);
+        new_rhs = tast_auto_deref_to_0(new_rhs);
+
         if (do_implicit_convertions(
             tast_expr_get_lang_type(new_lhs),
-            new_rhs,
+            &new_rhs,
             src_is_zero,
             true
         )) {
@@ -574,7 +577,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             //}
         } else if (do_implicit_convertions(
             tast_expr_get_lang_type(new_rhs),
-            new_lhs,
+            &new_lhs,
             src_is_zero,
             true
         )) {

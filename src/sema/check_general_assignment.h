@@ -24,7 +24,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
 
 bool do_implicit_convertions(
     Lang_type dest,
-    Tast_expr* src,
+    Tast_expr** src,
     bool src_is_zero,
     bool implicit_pointer_depth
 );
