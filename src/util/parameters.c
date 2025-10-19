@@ -722,9 +722,7 @@ Long_option_pair long_options[] = {
         true
     },
 
-    // run should be at the bottom for now
-    // TODO: consider moving run elsewhere, because run is not a regular option
-    {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
+    {"run", "n/a", long_option_run, false},
 };
 
 static void parse_long_option(int* argc, char*** argv) {
@@ -766,13 +764,20 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
     msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
-    msg(DIAG_INFO, POS_BUILTIN, "options:\n");
+
+    String buf = {0};
+    string_extend_cstr(&a_print, &buf, "options:\n");
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
-        msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
-        msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
-        msg(DIAG_INFO, POS_BUILTIN, "\n");
+        if (!strv_is_equal(sv(curr.text), sv("run"))) {
+            string_extend_cstr(&a_print, &buf, "    -");
+            string_extend_cstr(&a_print, &buf, curr.text);
+            string_extend_cstr(&a_print, &buf, "\n        ");
+            string_extend_cstr(&a_print, &buf, curr.description);
+            string_extend_cstr(&a_print, &buf, "\n\n");
+        }
     }
+    msg(DIAG_INFO, POS_BUILTIN, FMT, string_print(buf));
 }
 
 void parse_args(int argc, char** argv) {
@@ -875,7 +880,11 @@ void parse_args(int argc, char** argv) {
             params.stop_after != STOP_AFTER_BIN &&
             count_files_compile > 1
         ) {
-            msg(DIAG_INVALID_O_CMD_OPT, POS_BUILTIN, "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n");
+            msg(
+                DIAG_INVALID_O_CMD_OPT,
+                POS_BUILTIN,
+                "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n"
+            );
             exit(EXIT_CODE_FAIL);
         }
     }
