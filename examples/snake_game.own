@@ -48,7 +48,7 @@ fn mod(a i32, b i32) i32 {
 fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
     let new_pos Pos = snake_first(*snake)
     util.assert(snake.nodes.count > 0)
-    let last_pos Pos = snake.nodes.buf[snake.nodes.count - 1]
+    let last_pos Pos = coll.arr_at(snake.nodes, snake.nodes.count - 1)
     switch snake.dir {
         case .down: new_pos.y += 1
         case .up: new_pos.y -= 1
@@ -60,18 +60,18 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
 
     // detect snake collisions with itself
     for idx u64 in 0..snake.nodes.count {
-        if pos_is_equal(snake.nodes.buf[idx], new_pos) {
+        if pos_is_equal(coll.arr_at(snake.nodes, idx), new_pos) {
             return 0
         }
     }
     
-    let pos_at_1 Pos = snake.nodes.buf[1]
+    let pos_at_1 Pos = coll.arr_at(snake.nodes, 1)
     for idx_ u64 in 1..(snake.nodes.count) {
         let idx u64 = snake.nodes.count - idx_
         util.assert(idx < snake.nodes.count, "out of bounds")
-        snake.nodes.buf[idx] = snake.nodes.buf[idx - 1]
+        *coll.arr_at_ref(snake.nodes, idx) = coll.arr_at(snake.nodes, idx - 1)
     }
-    snake.nodes.buf[0] = new_pos
+    *coll.arr_at_ref(snake.nodes, 0) = new_pos
 
     if do_grow {
         coll.arr_append(&snake.nodes, last_pos)
@@ -92,7 +92,7 @@ fn draw_items(canvas Pos, border_width i32, square_width i32, snake Snake, apple
     rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>canvas.x, unsafe_cast<f32>canvas.y}, unsafe_cast<f32>border_width, rl.WHITE())
 
     for idx u64 in 0..snake.nodes.count {
-        let curr Pos = snake.nodes.buf[idx]
+        let curr Pos = coll.arr_at(snake.nodes, idx)
         rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.YELLOW())
     }
     for idx u64 in 0..apples.count {
@@ -178,7 +178,7 @@ fn main() i32 {
 
                 // check for apple collision
                 for snake_ u64 in 0..snake.nodes.count {
-                    let curr Pos = snake.nodes.buf[snake_]
+                    let curr Pos = coll.arr_at(snake.nodes, snake_)
                     for apple u64 in 0..apples.count {
                         if pos_is_equal(curr, coll.arr_at(apples, apple)) {
                             do_grow_snake = 1
