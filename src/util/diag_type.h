@@ -88,6 +88,9 @@ typedef enum {
     DIAG_INVALID_LITERAL_PREFIX,
     DIAG_DEF_RECURSION,
     DIAG_NOT_LVALUE,
+    DIAG_INVALID_O_CMD_OPT,
+    DIAG_CMD_OPT_INVALID_SYNTAX,
+    DIAG_CMD_OPT_INVALID_OPTION,
 
     // count of cases for static asserts
     DIAG_COUNT,
