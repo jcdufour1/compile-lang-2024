@@ -773,6 +773,11 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
 
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
+        if (!tast_expr_is_lvalue(new_lhs)) {
+            msg_not_lvalue(tast_expr_get_pos(new_lhs));
+            return false;
+        }
+
         switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
             case CHECK_ASSIGN_OK:
                 *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, new_lhs, new_rhs));
@@ -944,6 +949,10 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
 
     Tast_expr* new_child;
     if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to)) {
+        return false;
+    }
+    if (unary->token_type == UNARY_REFER && !tast_expr_is_lvalue(new_child)) {
+        msg_not_lvalue(tast_expr_get_pos(new_child));
         return false;
     }
 
@@ -1498,6 +1507,10 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
 bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment) {
     Tast_expr* new_lhs = NULL;
     if (!try_set_expr_types(&new_lhs, assignment->lhs)) {
+        return false;
+    }
+    if (!tast_expr_is_lvalue(new_lhs)) {
+        msg_not_lvalue(tast_expr_get_pos(new_lhs));
         return false;
     }
 

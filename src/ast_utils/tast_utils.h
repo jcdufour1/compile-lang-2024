@@ -588,5 +588,52 @@ static inline size_t tast_get_member_index(const Struct_def_base* struct_def, St
     unreachable("member not found");
 }
 
+static inline bool tast_operator_is_lvalue(const Tast_operator* oper) {
+    switch (oper->type) {
+        case TAST_BINARY:
+            return false;
+        case TAST_UNARY:
+            return tast_unary_const_unwrap(oper)->token_type == UNARY_DEREF;
+    }
+    unreachable("");
+}
+
+static inline bool tast_expr_is_lvalue(const Tast_expr* expr) {
+    switch (expr->type) {
+        case TAST_BLOCK:
+            return false;
+        case TAST_MODULE_ALIAS:
+            return false;
+        case TAST_IF_ELSE_CHAIN:
+            return false;
+        case TAST_ASSIGNMENT:
+            return false;
+        case TAST_OPERATOR:
+            return tast_operator_is_lvalue(tast_operator_const_unwrap(expr));
+        case TAST_SYMBOL:
+            return true;
+        case TAST_MEMBER_ACCESS:
+            return true;
+        case TAST_INDEX:
+            return true;
+        case TAST_LITERAL:
+            return false;
+        case TAST_FUNCTION_CALL:
+            return false;
+        case TAST_STRUCT_LITERAL:
+            return false;
+        case TAST_TUPLE:
+            return false;
+        case TAST_ENUM_CALLEE:
+            unreachable("this should not be in lhs");
+        case TAST_ENUM_CASE:
+            unreachable("this should not be in lhs");
+        case TAST_ENUM_GET_TAG:
+            return false;
+        case TAST_ENUM_ACCESS:
+            return false;
+    }
+    unreachable("");
+}
 
 #endif // TAST_UTIL_H

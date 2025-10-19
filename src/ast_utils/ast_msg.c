@@ -28,3 +28,6 @@ PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, con
     return PARSE_ERROR;
 }
 
+void msg_not_lvalue_internal(const char* file, int line, Pos pos) {
+    msg_internal(file, line, DIAG_NOT_LVALUE, pos, "expression is not an lvalue (lvalue is required)\n");
+}
