@@ -276,14 +276,8 @@ static CHECK_ASSIGN_STATUS check_general_assignment_finish(
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(dest_lang_type, tast_expr_get_lang_type(src), src_is_zero, false)) {
-        if (src->type == TAST_LITERAL) {
-            *new_src = src;
-            tast_expr_set_lang_type(*new_src, dest_lang_type);
-            return CHECK_ASSIGN_OK;
-        }
-        msg_todo("non literal implicit conversion", tast_expr_get_pos(src));
-        return CHECK_ASSIGN_ERROR;
+    if (do_implicit_convertions(dest_lang_type, new_src, src, src_is_zero, false)) {
+        return CHECK_ASSIGN_OK;
     } else {
         return CHECK_ASSIGN_INVALID;
     }

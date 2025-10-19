@@ -1,9 +1,9 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/binary_mismatched_types.own:5:22:[1;31merror[0;39m:language feature `non literal implicit conversion` not yet implemented (may or may not be implemented in the future)
-     4 |     let string: u8* = "hello"
-     5 |     let num1: i32 = 7*string
+tests/inputs/binary_mismatched_types.own:5:22:[1;31merror[0;39m:types `u3` and `Slice(<u8>)` are not valid operands to binary expression
+     4 |     let string1: Str = "hello"
+     5 |     let num1: i32 = 7*string1
        |                      ^
      6 |     return 0
 
