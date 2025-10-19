@@ -24,19 +24,18 @@ type slice_at_ref def = rt.slice_at_ref
 
 fn slice_consume(slice ItemT[]*, to_consume ItemT, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    if (*slice)[0] != to_consume => return .none
+    if slice[0] != to_consume => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some((*slice)[0])
+    return .some(slice[0])
 }
 
 fn slice_try_get(slice ItemT[]*, should_get fn (ItemT) u1, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
     if slice.count < 1 => return .none
-    // TODO: remove ugly *slice deref
-    if !should_get((*slice)[0]) => return .none
+    if !should_get(slice[0]) => return .none
 
     defer *slice = slice_range(*slice, 1, slice.count - 1)
-    return .some((*slice)[0])
+    return .some(slice[0])
 }
 
 fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
@@ -281,8 +280,7 @@ fn str_consume_int(str Str*, NumT Type, file Str = #file, line i32 = #line, colu
     let result NumT = 0
     let is_some u1 = 0
     for str.count > 0 {
-        // TODO: remove line directly below, and uncomment line below that (array pointer arithmetic must use function syntax other than [<index>])
-        let curr NumT = unsafe_cast<NumT>(*str)[0]
+        let curr NumT = unsafe_cast<NumT>str[0]
         //let curr NumT = unsafe_cast<NumT>str[0]
         if curr < '0' || curr > '9' => break
 
