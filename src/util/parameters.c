@@ -546,6 +546,7 @@ static void long_option_run(Strv curr_opt) {
 }
 
 static void long_option_lower_o(Strv curr_opt) {
+    params.is_output_file_path = true;
     params.output_file_path = curr_opt;
 }
 
@@ -822,7 +823,7 @@ void parse_args(int argc, char** argv) {
         exit(EXIT_CODE_FAIL);
     }
 
-    if (params.compile_own) {
+    if (params.compile_own && (params.stop_after == STOP_AFTER_BIN || params.stop_after == STOP_AFTER_RUN)) {
         vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
     }
 
@@ -832,6 +833,7 @@ void parse_args(int argc, char** argv) {
         switch (params.stop_after) {
             case STOP_AFTER_NONE:
                 unreachable("");
+                // TODO: rename STOP_AFTER_GEN_IR to STOP_AFTER_IR
             case STOP_AFTER_GEN_IR:
                 if (params.dump_dot) {
                     params.output_file_path = sv("test.dot");
@@ -839,9 +841,11 @@ void parse_args(int argc, char** argv) {
                     params.output_file_path = sv("test.ownir");
                 }
                 break;
+                // TODO: rename STOP_AFTER_GEN_BACKEND_IR to STOP_AFTER_BACKEND_IR
             case STOP_AFTER_GEN_BACKEND_IR:
                 params.output_file_path = sv("test.c");
                 break;
+                // TODO: rename STOP_AFTER_LOWER_S to STOP_AFTER_UPPER_S
             case STOP_AFTER_LOWER_S:
                 params.output_file_path = sv("test.s");
                 break;
@@ -857,6 +861,23 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
             default:
                 unreachable("");
+        }
+    } else {
+        assert(params.is_output_file_path);
+        size_t count_files_compile = 
+            params.c_input_files.info.count +
+            params.lower_s_files.info.count +
+            params.upper_s_files.info.count;
+        if (params.compile_own) {
+            count_files_compile++;
+        }
+        if (
+            params.stop_after != STOP_AFTER_RUN &&
+            params.stop_after != STOP_AFTER_BIN &&
+            count_files_compile > 1
+        ) {
+            log(LOG_FATAL, "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n");
+            exit(EXIT_CODE_FAIL);
         }
     }
 

@@ -94,6 +94,7 @@ typedef struct {
     bool error_opts_changed : 1;
     bool do_prelude : 1;
     bool is_path_c_compiler : 1;
+    bool is_output_file_path : 1;
     Backend_info backend_info;
 } Parameters;
 
