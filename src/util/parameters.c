@@ -187,11 +187,11 @@ Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
         case STOP_AFTER_NONE:
             return sv("none");
-        case STOP_AFTER_GEN_IR:
+        case STOP_AFTER_IR:
             return sv("gen_ir");
-        case STOP_AFTER_GEN_BACKEND_IR:
+        case STOP_AFTER_BACKEND_IR:
             return sv("gen_backend_ir");
-        case STOP_AFTER_LOWER_S:
+        case STOP_AFTER_UPPER_S:
             return sv("lower_s");
         case STOP_AFTER_OBJ:
             return sv("obj");
@@ -499,17 +499,17 @@ static void long_option_all_errors_fetal(Strv curr_opt) {
 
 static void long_option_dump_backend_ir(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_GEN_BACKEND_IR;
+    params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
 static void long_option_dump_ir(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_GEN_IR;
+    params.stop_after = STOP_AFTER_IR;
 }
 
 static void long_option_upper_s(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_LOWER_S;
+    params.stop_after = STOP_AFTER_UPPER_S;
 }
 
 static void long_option_upper_c(Strv curr_opt) {
@@ -520,7 +520,7 @@ static void long_option_upper_c(Strv curr_opt) {
 static void long_option_dump_dot(Strv curr_opt) {
     msg_todo("dump_dot", POS_BUILTIN);
     (void) curr_opt;
-    //params.stop_after = STOP_AFTER_GEN_IR;
+    //params.stop_after = STOP_AFTER_IR;
     //params.dump_dot = true;
 }
 
@@ -833,20 +833,17 @@ void parse_args(int argc, char** argv) {
         switch (params.stop_after) {
             case STOP_AFTER_NONE:
                 unreachable("");
-                // TODO: rename STOP_AFTER_GEN_IR to STOP_AFTER_IR
-            case STOP_AFTER_GEN_IR:
+            case STOP_AFTER_IR:
                 if (params.dump_dot) {
                     params.output_file_path = sv("test.dot");
                 } else {
                     params.output_file_path = sv("test.ownir");
                 }
                 break;
-                // TODO: rename STOP_AFTER_GEN_BACKEND_IR to STOP_AFTER_BACKEND_IR
-            case STOP_AFTER_GEN_BACKEND_IR:
+            case STOP_AFTER_BACKEND_IR:
                 params.output_file_path = sv("test.c");
                 break;
-                // TODO: rename STOP_AFTER_LOWER_S to STOP_AFTER_UPPER_S
-            case STOP_AFTER_LOWER_S:
+            case STOP_AFTER_UPPER_S:
                 params.output_file_path = sv("test.s");
                 break;
             case STOP_AFTER_OBJ:

@@ -704,7 +704,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 
 void emit_c_from_tree(void) {
     Strv test_output = sv("test.c");
-    if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
+    if (params.stop_after == STOP_AFTER_BACKEND_IR) {
         test_output = params.output_file_path;
     }
 
@@ -748,7 +748,7 @@ void emit_c_from_tree(void) {
         fclose(file);
     }
 
-    if (params.stop_after == STOP_AFTER_GEN_BACKEND_IR) {
+    if (params.stop_after == STOP_AFTER_BACKEND_IR) {
         return;
     }
 
@@ -807,7 +807,7 @@ void emit_c_from_tree(void) {
                 break;
             case STOP_AFTER_BIN:
                 break;
-            case STOP_AFTER_LOWER_S:
+            case STOP_AFTER_UPPER_S:
                 vec_append(&a_main, &cmd, sv("-S"));
                 break;
             case STOP_AFTER_OBJ:
