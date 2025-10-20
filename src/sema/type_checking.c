@@ -700,19 +700,16 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             case BINARY_LOGICAL_OR:
                 // fallthrough
             case BINARY_LOGICAL_AND: {
-                Tast_literal* new_lit_lhs = tast_literal_unwrap(util_tast_literal_new_from_int64_t(
+                Tast_literal* new_lit_lhs = tast_int_wrap(tast_int_new(
+                    tast_expr_get_pos(new_lhs),
                     0,
-                    TOKEN_INT_LITERAL,
-                    tast_expr_get_pos(new_lhs)
+                    tast_expr_get_lang_type(new_lhs)
                 ));
-                tast_literal_set_lang_type(new_lit_lhs, tast_expr_get_lang_type(new_lhs));
-
-                Tast_literal* new_lit_rhs = tast_literal_unwrap(util_tast_literal_new_from_int64_t(
+                Tast_literal* new_lit_rhs = tast_int_wrap(tast_int_new(
+                    tast_expr_get_pos(new_rhs),
                     0,
-                    TOKEN_INT_LITERAL,
-                    tast_expr_get_pos(new_rhs)
+                    tast_expr_get_lang_type(new_rhs)
                 ));
-                tast_literal_set_lang_type(new_lit_rhs, tast_expr_get_lang_type(new_rhs));
 
                 *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                     oper_pos,
