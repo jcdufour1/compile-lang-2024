@@ -30,7 +30,4 @@ bool do_implicit_convertions(
     bool implicit_pointer_depth
 );
 
-// TODO: remove this function and forward decl
-bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
-
 #endif // CHECK_GENERAL_ASSIGNMENT_H

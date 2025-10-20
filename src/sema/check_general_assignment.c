@@ -91,45 +91,6 @@ after:
     return true;
 }
 
-static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
-    if (!implicit_pointer_depth) {
-        if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
-            return false;
-        }
-    }
-
-    if (!lang_type_primitive_is_number(dest) || !lang_type_primitive_is_number(src)) {
-        return false;
-    }
-
-    int32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
-    int32_t src_bit_width = lang_type_primitive_get_bit_width(src);
-
-    // both or none of types must be float
-    if ((dest.type == LANG_TYPE_FLOAT) != (src.type == LANG_TYPE_FLOAT)) {
-        return false;
-    }
-
-    if (dest.type == LANG_TYPE_UNSIGNED_INT && src.type != LANG_TYPE_UNSIGNED_INT) {
-        return false;
-    }
-
-    if (src_is_zero) {
-        return true;
-    }
-
-    if (dest.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(dest_bit_width > 0);
-        dest_bit_width--;
-    }
-    if (src.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(src_bit_width > 0);
-        src_bit_width--;
-    }
-
-    return dest_bit_width >= src_bit_width;
-}
-
 bool do_implicit_convertions(
     Lang_type dest,
     Tast_expr** new_src,
@@ -151,7 +112,12 @@ bool do_implicit_convertions(
     if (src_type.type != LANG_TYPE_STRUCT) {
         goto next;
     }
-    if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL))) {
+    if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+        MOD_PATH_RUNTIME,
+        sv("Slice"),
+        ulang_type_gen_args_char_new(),
+        SCOPE_TOP_LEVEL
+    ))) {
         goto next;
     }
     tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
@@ -192,55 +158,6 @@ next:
 
 // TODO: this function should also actually do the implicit conversion I think
 // TODO: remove this function
-bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
-    if (dest.type != LANG_TYPE_PRIMITIVE) {
-        goto next;
-    }
-    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
-        goto next;
-    }
-    if (lang_type_get_pointer_depth(dest) != 1) {
-        goto next;
-    }
-    if (src.type != LANG_TYPE_STRUCT) {
-        goto next;
-    }
-    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL))) {
-        goto next;
-    }
-    return true;
-
-next:
-    if (dest.type != src.type) {
-        return false;
-    }
-
-    switch (src.type) {
-        case LANG_TYPE_FN:
-            return false;
-        case LANG_TYPE_TUPLE:
-            return false;
-        case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_primitive(
-                lang_type_primitive_const_unwrap(dest),
-                lang_type_primitive_const_unwrap(src),
-                src_is_zero,
-                implicit_pointer_depth
-            );
-        case LANG_TYPE_ENUM:
-            return false; // TODO
-        case LANG_TYPE_STRUCT:
-            return false; // TODO
-        case LANG_TYPE_RAW_UNION:
-            return false; // TODO
-        case LANG_TYPE_VOID:
-            return true;
-        case LANG_TYPE_ARRAY:
-            return false; // TODO
-    }
-    unreachable("");
-}
-
 typedef enum {
     IMPLICIT_CONV_INVALID_TYPES,
     IMPLICIT_CONV_CONVERTED,
@@ -284,7 +201,6 @@ static CHECK_ASSIGN_STATUS check_general_assignment_finish(
     unreachable("");
 }
 
-// TODO: make src/sema/check_general_assignment.c, and also put can_be_implicitly_converted in there?
 CHECK_ASSIGN_STATUS check_general_assignment(
     Type_checking_env* check_env,
     Tast_expr** new_src,
