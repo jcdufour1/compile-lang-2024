@@ -703,7 +703,10 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 }
 
 void emit_c_from_tree(void) {
-    Strv test_output = sv("test.c");
+    String test_output_ = {0};
+    string_extend_strv(&a_main /* TODO */, &test_output_, params.output_file_path);
+    string_extend_cstr(&a_main /* TODO */, &test_output_, ".c");
+    Strv test_output = string_to_strv(test_output_);
     if (params.stop_after == STOP_AFTER_BACKEND_IR) {
         test_output = params.output_file_path;
     }
