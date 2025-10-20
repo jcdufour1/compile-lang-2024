@@ -224,7 +224,6 @@ def do_tests(do_debug: bool, params: Parameters):
     # TODO: having bool, str, and Parameters in every element of regular_files may not be ideal
     regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters]] = []
 
-    # TODO: run multiple tests at once
     for file in get_files_to_test(params.files_to_test):
         regular_files.append((file, do_debug, debug_release_text, params))
 
