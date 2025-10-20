@@ -3876,6 +3876,10 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         }
 
         if (old_case->is_default) {
+            assert(
+                !old_case->expr &&
+                "old_case->expr should be null in default cases (because old_case->expr will not be used)"
+            );
             cond = uast_condition_new(
                 old_case->pos,
                 uast_condition_get_default_child(

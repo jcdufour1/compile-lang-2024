@@ -393,10 +393,14 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
 }
 
 Uast_case* uast_case_clone(const Uast_case* lang_case, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Uast_expr* new_expr = NULL;
+    if (!lang_case->is_default) {
+        new_expr = uast_expr_clone(lang_case->expr, use_new_scope, new_scope, dest_pos);
+    }
     return uast_case_new(
         lang_case->pos,
         lang_case->is_default,
-        uast_expr_clone(lang_case->expr, use_new_scope, new_scope, dest_pos),
+        new_expr,
         uast_stmt_clone(lang_case->if_true, use_new_scope, new_scope, dest_pos),
         new_scope
     );

@@ -24,5 +24,22 @@ fn main() i32 {
         io.printf("no 4: %d\n", num)
     }
 
+    let result1 util.Result(<i32, Str>) = .ok(6)
+    if let .ok(num) = result1 {
+        let num2 i32 = num
+        io.printf("yes 5: %d\n", num)
+    } else .error(str) {
+        io.printf("no 5: ")
+        io.print_str(str)
+    }
+
+    let result2 util.Result(<i32, Str>) = .error("did not work")
+    if let .ok(num) = result2 {
+        io.printf("no 6: %d\n", num)
+    } else .error(str) {
+        io.printf("yes 6: ")
+        io.print_str(str)
+    }
+
     return 0
 }

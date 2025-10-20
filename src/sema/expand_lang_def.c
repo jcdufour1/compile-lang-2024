@@ -369,7 +369,7 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
 }
 
 static bool expand_def_case(Uast_case* lang_case) {
-    bool status = expand_def_expr(&lang_case->expr, lang_case->expr);
+    bool status = lang_case->is_default || expand_def_expr(&lang_case->expr, lang_case->expr);
     status = expand_def_stmt(&lang_case->if_true, lang_case->if_true) && status;
     return status;
 }

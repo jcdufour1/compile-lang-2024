@@ -258,7 +258,9 @@ void generic_sub_condition(Uast_condition* cond, Name gen_param, Ulang_type gen_
 }
 
 void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(lang_case->expr, gen_param, gen_arg);
+    if (!lang_case->is_default) {
+        generic_sub_expr(lang_case->expr, gen_param, gen_arg);
+    }
     generic_sub_stmt(lang_case->if_true, gen_param, gen_arg);
 }
 
