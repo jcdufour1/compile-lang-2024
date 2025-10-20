@@ -18,8 +18,6 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
-static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type);
-    
 static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
@@ -110,8 +108,6 @@ static inline bool lang_type_array_is_equal(Lang_type_array a, Lang_type_array b
 
 // TOOD: move these lang_type functions
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, a));
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, b));
     if (a.type != b.type) {
         return false;
     }
@@ -164,16 +160,6 @@ static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operato
     }
 }
 
-static inline void tast_operator_set_lang_type(Tast_operator* operator, Lang_type lang_type) {
-    if (operator->type == TAST_UNARY) {
-        tast_unary_unwrap(operator)->lang_type = lang_type;
-    } else if (operator->type == TAST_BINARY) {
-        tast_binary_unwrap(operator)->lang_type = lang_type;
-    } else {
-        unreachable("");
-    }
-}
-
 static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
@@ -209,38 +195,6 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
             return tast_expr_get_lang_type(tast_enum_lit_const_unwrap(lit)->item);
         case TAST_FUNCTION_LIT:
             return tast_function_lit_const_unwrap(lit)->lang_type;
-    }
-    unreachable("");
-}
-
-// TODO: get rid of this function (do this stuff in can_be_implicitly_converted instead, etc.)
-static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_type) {
-    switch (lit->type) {
-        case TAST_INT:
-            tast_int_unwrap(lit)->lang_type = lang_type;
-            return;
-        case TAST_FLOAT:
-            tast_float_unwrap(lit)->lang_type = lang_type;
-            return;
-        case TAST_STRING: {
-            // TODO: not checking that lang_type is actually cstr 
-            //   because tast_literal_set_lang_type will eventually be removed anyway
-            tast_string_unwrap(lit)->is_cstr = true;
-            return;
-        }
-        case TAST_VOID:
-            unreachable("");
-        case TAST_ENUM_TAG_LIT:
-            tast_enum_tag_lit_unwrap(lit)->lang_type = lang_type;
-            return;
-        case TAST_ENUM_LIT:
-            tast_enum_lit_unwrap(lit)->enum_lang_type = lang_type;
-            return;
-        case TAST_RAW_UNION_LIT:
-            tast_expr_set_lang_type(tast_raw_union_lit_unwrap(lit)->item, lang_type);
-            return;
-        case TAST_FUNCTION_LIT:
-            unreachable("");
     }
     unreachable("");
 }
@@ -326,46 +280,6 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     unreachable("");
 }
 
-static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type) {
-    switch (expr->type) {
-        case TAST_BLOCK:
-            unreachable("");
-        case TAST_OPERATOR:
-            todo();
-        case TAST_SYMBOL:
-            todo();
-        case TAST_MEMBER_ACCESS:
-            todo();
-        case TAST_INDEX:
-            todo();
-        case TAST_LITERAL:
-            tast_literal_set_lang_type(tast_literal_unwrap(expr), lang_type);
-            return;
-        case TAST_FUNCTION_CALL:
-            tast_function_call_unwrap(expr)->lang_type = lang_type;
-            return;
-        case TAST_STRUCT_LITERAL:
-            todo();
-        case TAST_TUPLE:
-            todo();
-        case TAST_ENUM_CALLEE:
-            todo();
-        case TAST_ENUM_CASE:
-            unreachable("");
-        case TAST_ENUM_GET_TAG:
-            unreachable("");
-        case TAST_ENUM_ACCESS:
-            unreachable("");
-        case TAST_ASSIGNMENT:
-            unreachable("");
-        case TAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case TAST_MODULE_ALIAS:
-            unreachable("");
-    }
-    todo();
-}
-
 static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
     switch (stmt->type) {
         case TAST_DEF:
@@ -393,57 +307,6 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
 
 static inline Lang_type tast_get_lang_type(const Tast* tast) {
     (void) tast;
-    unreachable("");
-}
-
-static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
-    switch (def->type) {
-        case TAST_FUNCTION_DEF:
-            unreachable("");
-        case TAST_RAW_UNION_DEF:
-            unreachable("");
-        case TAST_VARIABLE_DEF:
-            unreachable("");
-        case TAST_FUNCTION_DECL:
-            unreachable("");
-        case TAST_STRUCT_DEF:
-            unreachable("");
-        case TAST_PRIMITIVE_DEF:
-            unreachable("");
-        case TAST_ENUM_DEF:
-            unreachable("");
-        case TAST_IMPORT_PATH:
-            unreachable("");
-        case TAST_LABEL:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-// TODO: remove this function
-static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type) {
-    switch (stmt->type) {
-        case TAST_DEF:
-            tast_def_set_lang_type(tast_def_unwrap(stmt));
-            return;
-        case TAST_EXPR:
-            tast_expr_set_lang_type(tast_expr_unwrap(stmt), lang_type);
-            return;
-        case TAST_RETURN:
-            tast_expr_set_lang_type(tast_return_unwrap(stmt)->child, lang_type);
-            return;
-        case TAST_ACTUAL_BREAK:
-            tast_expr_set_lang_type(tast_actual_break_unwrap(stmt)->break_expr, lang_type);
-            return;
-        case TAST_DEFER:
-            unreachable("");
-        case TAST_FOR_WITH_COND:
-            unreachable("");
-        case TAST_YIELD:
-            unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
-    }
     unreachable("");
 }
 
