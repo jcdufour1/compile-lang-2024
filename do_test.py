@@ -130,7 +130,6 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[str], 
 def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
-# TODO: try to avoid using do_debug for both function name and parameter name
 def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | FileExample, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
@@ -159,7 +158,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     elif isinstance(file, FileExample):
         compile_cmd.append("-c")
         compile_cmd.append("-o")
-        compile_cmd.append("test.o")
+        compile_cmd.append(os.path.basename(remove_extension(file.path_base)) + ".o")
     else:
         raise NotImplementedError
     compile_cmd.append("--error=no-main-function")
@@ -236,6 +235,7 @@ def do_tests(do_debug: bool, params: Parameters):
                     success_count += 1
                 else:
                     fail_count += 1
+                    success = False
             except Exception as e:
                 print_error(e)
                 raise Exception

@@ -1,5 +1,5 @@
 compile::stdout 1
-./test
+./argv
 
 compile::stderr 0
 
