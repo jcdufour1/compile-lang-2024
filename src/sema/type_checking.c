@@ -2160,20 +2160,18 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     switch (fun_call->callee->type) {
         case UAST_EXPR_REMOVED:
             todo();
-        case TAST_BLOCK:
+        case UAST_BLOCK:
             todo();
-        case TAST_MODULE_ALIAS:
+        case UAST_IF_ELSE_CHAIN:
             todo();
-        case TAST_IF_ELSE_CHAIN:
+        case UAST_ASSIGNMENT:
             todo();
-        case TAST_ASSIGNMENT:
+        case UAST_OPERATOR:
             todo();
-        case TAST_OPERATOR:
-            todo();
-        case TAST_SYMBOL:
+        case UAST_SYMBOL:
             sym_name = &uast_symbol_unwrap(fun_call->callee)->name;
             break;
-        case TAST_MEMBER_ACCESS: {
+        case UAST_MEMBER_ACCESS: {
             // TODO: put mod path in sym_name or whatever?
             // TODO: make helper function for this?
             //
@@ -2199,23 +2197,45 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             sym_name->mod_path = uast_mod_alias_unwrap(mod_path_)->mod_path;
             break;
         }
-        case TAST_INDEX:
-            todo();
-        case TAST_LITERAL:
+        case UAST_LITERAL:
             return try_set_function_call_types_old(new_call, fun_call);
-        case TAST_FUNCTION_CALL:
+        case UAST_FUNCTION_CALL:
             todo();
-        case TAST_STRUCT_LITERAL:
+        case UAST_STRUCT_LITERAL:
             todo();
-        case TAST_TUPLE:
+        case UAST_TUPLE:
             todo();
-        case TAST_ENUM_CALLEE:
+        case UAST_ENUM_GET_TAG:
             todo();
-        case TAST_ENUM_CASE:
+        case UAST_ENUM_ACCESS:
             todo();
-        case TAST_ENUM_GET_TAG:
+        case UAST_SWITCH:
             todo();
-        case TAST_ENUM_ACCESS:
+        case UAST_UNKNOWN: {
+            Uast_def* def = NULL;
+            unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.switch_lang_type)));
+            Uast_variable_def_vec membs = uast_enum_def_unwrap(def)->base.members;
+            if (membs.info.count != 2) {
+                msg_todo("", fun_call->pos);
+                return false;
+            }
+            return try_set_function_call_types(new_call, uast_function_call_new(
+                fun_call->pos,
+                fun_call->args,
+                uast_member_access_wrap(uast_member_access_new(
+                    fun_call->pos,
+                    uast_symbol_new(
+                        fun_call->pos,
+                        vec_at(membs, check_env.switch_prev_idx == 0 ? 1 : 0)->name
+                    ),
+                    uast_unknown_wrap(uast_unknown_new(fun_call->pos))
+                )),
+                false
+            ));
+        }
+        case UAST_ARRAY_LITERAL:
+            todo();
+        case UAST_MACRO:
             todo();
     }
 
@@ -3747,6 +3767,7 @@ static bool check_for_exhaustiveness_inner(
             }
             *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
             vec_append(&a_print, &exhaustive_data->covered_pos, curr_lit->pos);
+            check_env.switch_prev_idx = (size_t)curr_lit->data;
             return true;
         }
         default:
@@ -3838,6 +3859,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
 
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
+    size_t old_switch_prev_idx = check_env.switch_prev_idx;
     check_env.break_in_case = false;
     if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
         check_env.break_type = check_env.lhs_lang_type;
@@ -3876,6 +3898,10 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         }
 
         if (old_case->is_default) {
+            assert(
+                !old_case->expr &&
+                "old_case->expr should be null in default cases (because old_case->expr will not be used)"
+            );
             cond = uast_condition_new(
                 old_case->pos,
                 uast_condition_get_default_child(
@@ -3903,8 +3929,10 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             inner_scope
         );
                 
+        Lang_type old_switch_lang_type = check_env.switch_lang_type;
         check_env.parent_of = PARENT_OF_CASE;
         check_env.parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
+        check_env.switch_lang_type = tast_expr_get_lang_type(new_operand_typed);
         Tast_if* new_if = NULL;
         if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
             status = false;
@@ -3915,6 +3943,7 @@ error_inner:
         check_env.parent_of_operand = NULL;
         check_env.parent_of = PARENT_OF_NONE;
         check_env.break_in_case = false;
+        check_env.switch_lang_type = old_switch_lang_type;
         if (!status) {
             goto error;
         }
@@ -3953,6 +3982,7 @@ error:
     check_env.parent_of = old_parent_of;
     check_env.break_in_case = false;
     check_env.break_type = check_env.break_type;
+    check_env.switch_prev_idx = old_switch_prev_idx;
     return status;
 }
 

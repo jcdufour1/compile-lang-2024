@@ -47,6 +47,9 @@ typedef struct {
     
     bool is_in_defer;
     Pos parent_defer_pos;
+
+    Lang_type switch_lang_type;
+    size_t switch_prev_idx;
 } Type_checking_env;
 
 bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment);

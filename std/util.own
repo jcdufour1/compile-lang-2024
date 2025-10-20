@@ -8,6 +8,11 @@ type Optional enum(<ItemT>) {
     none
 }
 
+type Result enum(<OkT, ErrorT>) {
+    ok OkT
+    error ErrorT
+}
+
 // overlapping regions are allowed
 // count_items is the number of items to move, not the number of bytes
 fn move_items(dest ItemT*, src ItemT*, count_items u64, ItemT Type) {
