@@ -2176,7 +2176,19 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         }
 
         if (!starts_with_block(*tokens)) {
-            switch (parse_expr(&is_false_cond, tokens, if_false_scope)) {
+            Token open_par_tk = {0};
+            if (!try_consume(&open_par_tk, tokens, TOKEN_OPEN_PAR)) {
+                msg_parser_expected(
+                    tk_view_front(*tokens),
+                    "after `else` in if let statement",
+                    TOKEN_OPEN_PAR,
+                    TOKEN_ONE_LINE_BLOCK_START,
+                    TOKEN_OPEN_CURLY_BRACE
+                );
+                return false;
+            }
+            Uast_expr* arg = NULL;
+            switch (parse_expr(&arg, tokens, if_false_scope)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -2186,6 +2198,17 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
                     return PARSE_ERROR;
                 default:
                     unreachable("");
+            }
+            Uast_expr_vec args = {0};
+            vec_append(&a_main, &args, arg);
+            is_false_cond = uast_function_call_wrap(uast_function_call_new(
+                open_par_tk.pos,
+                args,
+                uast_unknown_wrap(uast_unknown_new(open_par_tk.pos)),
+                true
+            ));
+            if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_PAR)) {
+                return false;
             }
         }
 
