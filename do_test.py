@@ -221,6 +221,7 @@ def do_tests(do_debug: bool, params: Parameters):
     print_success("compiling " + debug_release_text + " : done")
     print()
 
+    # TODO: having bool, str, and Parameters in every element of regular_files may not be ideal
     regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters]] = []
 
     # TODO: run multiple tests at once
@@ -230,15 +231,11 @@ def do_tests(do_debug: bool, params: Parameters):
     with ProcessPoolExecutor(max_workers = params.count_threads) as executor:
         futures = executor.map(do_regular_test, regular_files)
         for future in futures:
-            try:
-                if future:
-                    success_count += 1
-                else:
-                    fail_count += 1
-                    success = False
-            except Exception as e:
-                print_error(e)
-                raise Exception
+            if future:
+                success_count += 1
+            else:
+                fail_count += 1
+                success = False
 
     print("testing " + debug_release_text + " done")
     print("    tests total:  " + str(fail_count + success_count))
