@@ -14,7 +14,6 @@ typedef enum {
     CHECK_ASSIGN_ERROR, // error was printed, and new_src is not valid for printing purposes
 } CHECK_ASSIGN_STATUS;
 
-// TODO: make src/sema/check_general_assignment.c, and also put can_be_implicitly_converted in there?
 CHECK_ASSIGN_STATUS check_general_assignment(
     Type_checking_env* check_env,
     Tast_expr** new_src,
@@ -23,6 +22,12 @@ CHECK_ASSIGN_STATUS check_general_assignment(
     Pos pos
 );
 
-bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
+bool do_implicit_convertions(
+    Lang_type dest,
+    Tast_expr** new_src,
+    Tast_expr* src,
+    bool src_is_zero,
+    bool implicit_pointer_depth
+);
 
 #endif // CHECK_GENERAL_ASSIGNMENT_H

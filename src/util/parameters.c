@@ -187,11 +187,11 @@ Strv stop_after_print_internal(STOP_AFTER stop_after) {
     switch (stop_after) {
         case STOP_AFTER_NONE:
             return sv("none");
-        case STOP_AFTER_GEN_IR:
+        case STOP_AFTER_IR:
             return sv("gen_ir");
-        case STOP_AFTER_GEN_BACKEND_IR:
+        case STOP_AFTER_BACKEND_IR:
             return sv("gen_backend_ir");
-        case STOP_AFTER_LOWER_S:
+        case STOP_AFTER_UPPER_S:
             return sv("lower_s");
         case STOP_AFTER_OBJ:
             return sv("obj");
@@ -263,7 +263,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 86, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 89, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false},
     {"note", DIAG_NOTE, LOG_NOTE, false},
@@ -351,6 +351,9 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-literal-prefix", DIAG_INVALID_LITERAL_PREFIX, LOG_ERROR, true},
     {"def-recursion", DIAG_DEF_RECURSION, LOG_ERROR, true},
     {"diag-not-lvalue", DIAG_NOT_LVALUE, LOG_ERROR, true},
+    {"diag-invalid-o-cmd-opt", DIAG_INVALID_O_CMD_OPT, LOG_FATAL, true},
+    {"diag-cmd-opt-invalid-syntax", DIAG_CMD_OPT_INVALID_SYNTAX, LOG_FATAL, true},
+    {"diag-cmd-opt-invalid-option", DIAG_CMD_OPT_INVALID_OPTION, LOG_FATAL, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -478,7 +481,7 @@ static void long_option_l(Strv curr_opt) {
 static void long_option_backend(Strv curr_opt) {
     Strv backend = curr_opt;
     if (!strv_try_consume(&backend, '=') || backend.count < 1) {
-        log(LOG_FATAL, "expected =<backend> after `backend`");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected =<backend> after `backend`");
         exit(EXIT_CODE_FAIL);
     }
 
@@ -487,7 +490,7 @@ static void long_option_backend(Strv curr_opt) {
     } else if (strv_is_equal(backend, sv("llvm"))) {
         set_backend(BACKEND_LLVM);
     } else {
-        log(LOG_FATAL, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
         exit(EXIT_CODE_FAIL);
     }
 }
@@ -499,17 +502,17 @@ static void long_option_all_errors_fetal(Strv curr_opt) {
 
 static void long_option_dump_backend_ir(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_GEN_BACKEND_IR;
+    params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
 static void long_option_dump_ir(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_GEN_IR;
+    params.stop_after = STOP_AFTER_IR;
 }
 
 static void long_option_upper_s(Strv curr_opt) {
     (void) curr_opt;
-    params.stop_after = STOP_AFTER_LOWER_S;
+    params.stop_after = STOP_AFTER_UPPER_S;
 }
 
 static void long_option_upper_c(Strv curr_opt) {
@@ -520,7 +523,7 @@ static void long_option_upper_c(Strv curr_opt) {
 static void long_option_dump_dot(Strv curr_opt) {
     msg_todo("dump_dot", POS_BUILTIN);
     (void) curr_opt;
-    //params.stop_after = STOP_AFTER_GEN_IR;
+    //params.stop_after = STOP_AFTER_IR;
     //params.dump_dot = true;
 }
 
@@ -532,12 +535,13 @@ static void long_option_run(Strv curr_opt) {
         "(not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_NONE) {
-        log(LOG_FATAL, "file to be compiled must be specified prior to `--run` argument\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "file to be compiled must be specified prior to `--run` argument\n");
         exit(EXIT_CODE_FAIL);
     }
     if (!is_compiling()) {
-        log(
-            LOG_FATAL,
+        msg(
+            DIAG_CMD_OPT_INVALID_OPTION,
+            POS_BUILTIN,
             "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
         );
         exit(EXIT_CODE_FAIL);
@@ -546,6 +550,7 @@ static void long_option_run(Strv curr_opt) {
 }
 
 static void long_option_lower_o(Strv curr_opt) {
+    params.is_output_file_path = true;
     params.output_file_path = curr_opt;
 }
 
@@ -562,7 +567,7 @@ static void long_option_upper_o2(Strv curr_opt) {
 static void long_option_error(Strv curr_opt) {
     Strv error = curr_opt;
     if (!strv_try_consume(&error, '=') || error.count < 1) {
-        log(LOG_FATAL, "expected =<error1[,error2,...]> after `error`\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected =<error1[,error2,...]> after `error`\n");
         exit(EXIT_CODE_FAIL);
     }
 
@@ -582,7 +587,7 @@ static void long_option_error(Strv curr_opt) {
 static void long_option_path_c_compiler(Strv curr_opt) {
     Strv cc = curr_opt;
     if (!strv_try_consume(&cc, '=') || cc.count < 1) {
-        log(LOG_FATAL, "expected =<c_compiler_path> after `path_c_compiler`\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected =<c_compiler_path> after `path_c_compiler`\n");
         exit(EXIT_CODE_FAIL);
     }
 
@@ -593,54 +598,52 @@ static void long_option_path_c_compiler(Strv curr_opt) {
 static void long_option_target_triplet(Strv curr_opt) {
     Strv cc = curr_opt;
     if (!strv_try_consume(&cc, '=') || cc.count < 1) {
-        log(LOG_FATAL, "expected =<target-triplet> after `target-triplet`\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected =<target-triplet> after `target-triplet`\n");
         exit(EXIT_CODE_FAIL);
     }
 
-    Strv temp = {0};
+    Strv temp[4] = {0};
 
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        log(LOG_FATAL, "architecture was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
+    for (size_t idx = 0; idx < 3; idx++) {
+        if (!strv_try_consume_until(&temp[idx], &cc, '-')) {
+            size_t count_substrings = idx;
+            if (cc.count > 0) {
+                count_substrings++;
+            }
+            msg(
+                DIAG_CMD_OPT_INVALID_SYNTAX,
+                POS_BUILTIN,
+                "target triplet has only %zu substrings, but 4 was expected\n",
+                count_substrings
+            );
+            exit(EXIT_CODE_FAIL);
+        }
+        strv_consume(&cc);
     }
-    strv_consume(&cc);
-    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp)) {
-        log(LOG_FATAL, "unsupported architecture `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    strv_consume(&cc);
-    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp)) {
-        log(LOG_FATAL, "unsupported vendor `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
-    if (!strv_try_consume_until(&temp, &cc, '-')) {
-        log(LOG_FATAL, "operating system was not specified in target-triplet\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    strv_consume(&cc);
-    if (!try_target_os_from_strv(&params.target_triplet.os, temp)) {
-        log(LOG_FATAL, "unsupported operating system `"FMT"`\n", strv_print(temp));
-        exit(EXIT_CODE_FAIL);
-    }
-
     Strv dummy = {0};
     if (strv_try_consume_until(&dummy, &cc, '-')) {
-        log(LOG_FATAL, "target triplet has too many sub-strings\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "target triplet has too many substrings (4 was expected)\n");
         exit(EXIT_CODE_FAIL);
     }
-    temp = cc;
-    if (temp.count < 1) {
-        log(LOG_FATAL, "abi (application binary interface, a.k.a. environment type) was not specified in target-triplet\n");
+    temp[3] = cc;
+
+    if (!try_target_arch_from_strv(&params.target_triplet.arch, temp[0])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported architecture `"FMT"`\n", strv_print(temp[0]));
         exit(EXIT_CODE_FAIL);
     }
-    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp)) {
-        log(LOG_FATAL, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp));
+
+    if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp[1])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported vendor `"FMT"`\n", strv_print(temp[1]));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!try_target_os_from_strv(&params.target_triplet.os, temp[2])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported operating system `"FMT"`\n", strv_print(temp[2]));
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (!try_target_abi_from_strv(&params.target_triplet.abi, temp[3])) {
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp[3]));
         exit(EXIT_CODE_FAIL);
     }
 }
@@ -653,7 +656,7 @@ static void long_option_no_prelude(Strv curr_opt) {
 static void long_option_log_level(Strv curr_opt) {
     Strv log_level = curr_opt;
     if (!strv_try_consume(&log_level, '=')) {
-        log(LOG_FATAL, "expected =<log level> after `log-level`");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected =<log level> after `log-level`");
         exit(EXIT_CODE_FAIL);
     }
 
@@ -674,7 +677,7 @@ static void long_option_log_level(Strv curr_opt) {
     } else if (strv_is_equal(log_level, sv("TRACE"))) {
         params_log_level = LOG_TRACE;
     } else {
-        log(LOG_FATAL, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
         exit(EXIT_CODE_FAIL);
     }
 }
@@ -719,9 +722,7 @@ Long_option_pair long_options[] = {
         true
     },
 
-    // run should be at the bottom for now
-    // TODO: consider moving run elsewhere, because run is not a regular option
-    {"run", "compile and run the program (NOTE: arguments after `--run` are passed to the program, and are not interpreted as build options)", long_option_run, false},
+    {"run", "n/a", long_option_run, false},
 };
 
 static void parse_long_option(int* argc, char*** argv) {
@@ -744,7 +745,7 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     }
 
-    log(LOG_FATAL, "invalid option: "FMT"\n", strv_print(curr_opt));
+    msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "invalid option: "FMT"\n", strv_print(curr_opt));
     exit(EXIT_CODE_FAIL);
 }
 
@@ -763,13 +764,20 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
     msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
     msg(DIAG_INFO, POS_BUILTIN, "\n");
-    msg(DIAG_INFO, POS_BUILTIN, "options:\n");
+
+    String buf = {0};
+    string_extend_cstr(&a_print, &buf, "options:\n");
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
-        msg(DIAG_INFO, POS_BUILTIN, "    -"FMT"\n", strv_print(sv(curr.text)));
-        msg(DIAG_INFO, POS_BUILTIN, "        "FMT"\n", strv_print(sv(curr.description)));
-        msg(DIAG_INFO, POS_BUILTIN, "\n");
+        if (!strv_is_equal(sv(curr.text), sv("run"))) {
+            string_extend_cstr(&a_print, &buf, "    -");
+            string_extend_cstr(&a_print, &buf, curr.text);
+            string_extend_cstr(&a_print, &buf, "\n        ");
+            string_extend_cstr(&a_print, &buf, curr.description);
+            string_extend_cstr(&a_print, &buf, "\n\n");
+        }
     }
+    msg(DIAG_INFO, POS_BUILTIN, FMT, string_print(buf));
 }
 
 void parse_args(int argc, char** argv) {
@@ -822,7 +830,7 @@ void parse_args(int argc, char** argv) {
         exit(EXIT_CODE_FAIL);
     }
 
-    if (params.compile_own) {
+    if (params.compile_own && (params.stop_after == STOP_AFTER_BIN || params.stop_after == STOP_AFTER_RUN)) {
         vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
     }
 
@@ -832,17 +840,17 @@ void parse_args(int argc, char** argv) {
         switch (params.stop_after) {
             case STOP_AFTER_NONE:
                 unreachable("");
-            case STOP_AFTER_GEN_IR:
+            case STOP_AFTER_IR:
                 if (params.dump_dot) {
                     params.output_file_path = sv("test.dot");
                 } else {
                     params.output_file_path = sv("test.ownir");
                 }
                 break;
-            case STOP_AFTER_GEN_BACKEND_IR:
+            case STOP_AFTER_BACKEND_IR:
                 params.output_file_path = sv("test.c");
                 break;
-            case STOP_AFTER_LOWER_S:
+            case STOP_AFTER_UPPER_S:
                 params.output_file_path = sv("test.s");
                 break;
             case STOP_AFTER_OBJ:
@@ -857,6 +865,27 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
             default:
                 unreachable("");
+        }
+    } else {
+        assert(params.is_output_file_path);
+        size_t count_files_compile = 
+            params.c_input_files.info.count +
+            params.lower_s_files.info.count +
+            params.upper_s_files.info.count;
+        if (params.compile_own) {
+            count_files_compile++;
+        }
+        if (
+            params.stop_after != STOP_AFTER_RUN &&
+            params.stop_after != STOP_AFTER_BIN &&
+            count_files_compile > 1
+        ) {
+            msg(
+                DIAG_INVALID_O_CMD_OPT,
+                POS_BUILTIN,
+                "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n"
+            );
+            exit(EXIT_CODE_FAIL);
         }
     }
 

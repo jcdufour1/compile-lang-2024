@@ -57,9 +57,9 @@ typedef enum {
 
 typedef enum {
     STOP_AFTER_NONE = 0,
-    STOP_AFTER_GEN_IR,
-    STOP_AFTER_GEN_BACKEND_IR,
-    STOP_AFTER_LOWER_S,
+    STOP_AFTER_IR,
+    STOP_AFTER_BACKEND_IR,
+    STOP_AFTER_UPPER_S,
     STOP_AFTER_OBJ,
     STOP_AFTER_BIN,
     STOP_AFTER_RUN,
@@ -94,6 +94,7 @@ typedef struct {
     bool error_opts_changed : 1;
     bool do_prelude : 1;
     bool is_path_c_compiler : 1;
+    bool is_output_file_path : 1;
     Backend_info backend_info;
 } Parameters;
 

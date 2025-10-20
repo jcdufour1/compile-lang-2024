@@ -33,15 +33,13 @@ Uname name_to_uname(Name name) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
-    // TODO: do not create new alias every time; make MOD_PATH_AUX_UNAMES, etc.
-    Uast_mod_alias* new_alias = uast_mod_alias_new(
-        POS_BUILTIN,
-        util_literal_name_new(),
-        name.mod_path,
-        name.scope_id
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new_internal(new_alias->name, name.base, name.gen_args, name.scope_id);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+#   ifndef NDEBUG
+        Uast_def* dummy = NULL;
+        unwrap(usymbol_lookup(&dummy, alias_name));
+#   endif // NDEBUG
+
+    return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
@@ -192,6 +190,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
     if (
         mode != UNAME_MSG || !(
             strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||
+            strv_is_equal(name.mod_alias.mod_path, MOD_PATH_AUX_ALIASES) ||
             name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) ||
             name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)
         )

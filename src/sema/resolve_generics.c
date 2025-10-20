@@ -1,7 +1,6 @@
 #include <resolve_generics.h>
 #include <type_checking.h>
 #include <lang_type_serialize.h>
-#include <uast_serialize.h>
 #include <ulang_type.h>
 #include <uast_clone.h>
 #include <uast_utils.h>

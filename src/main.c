@@ -124,7 +124,7 @@ void do_passes(void) {
         PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
-    if (params.stop_after == STOP_AFTER_GEN_IR) {
+    if (params.stop_after == STOP_AFTER_IR) {
         if (params.dump_dot) {
             // TODO: add logic in parse_args to catch below error:
             unwrap(params.compile_own && "this should have been caught in parse_args");
@@ -151,7 +151,7 @@ void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
-    if (params.stop_after > STOP_AFTER_GEN_IR) {
+    if (params.stop_after > STOP_AFTER_IR) {
         switch (params.backend_info.backend) {
             case BACKEND_NONE:
                 unreachable("this should have been caught eariler");

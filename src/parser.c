@@ -335,6 +335,15 @@ static bool get_mod_alias_from_path_token(
         mod_path
     ))));
 
+
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
+        POS_BUILTIN,
+        alias_name,
+        mod_path,
+        SCOPE_TOP_LEVEL
+    ))));
+
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Uast_block* block = NULL;
@@ -3260,6 +3269,14 @@ error:
 }
 
 bool parse(void) {
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
+        POS_BUILTIN,
+        alias_name,
+        MOD_PATH_BUILTIN,
+        SCOPE_TOP_LEVEL
+    ))));
+
     Uast_mod_alias* dummy = NULL;
     return get_mod_alias_from_path_token(
         &dummy,

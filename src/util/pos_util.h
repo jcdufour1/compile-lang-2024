@@ -5,8 +5,7 @@
 #include <util.h>
 #include <strv.h>
 
-// TODO: use this function everywhere
-static inline void strv_extend_pos(String* buf, Pos pos) {
+static inline void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&a_print, buf, "((");
     string_extend_cstr(&a_print, buf, ";file_path:");
     if (pos.file_path.count != SIZE_MAX /* TODO: always run code in if body when possible */) {
@@ -21,7 +20,7 @@ static inline void strv_extend_pos(String* buf, Pos pos) {
 
 static inline Strv pos_print_internal(Pos pos) {
     String buf = {0};
-    strv_extend_pos(&buf, pos);
+    extend_pos(&buf, pos);
     return string_to_strv(buf);
 }
 
@@ -31,7 +30,7 @@ static inline Strv pos_deep_print_internal(Pos* pos, int indent) {
     }
 
     String buf = {0};
-    strv_extend_pos(&buf, *pos);
+    extend_pos(&buf, *pos);
     string_extend_strv(&a_print, &buf, pos_deep_print_internal(pos->expanded_from, indent + INDENT_WIDTH));
     return string_to_strv(buf);
 }
