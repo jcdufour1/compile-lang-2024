@@ -1807,7 +1807,8 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             util_literal_name_new(),
             (Ir_vec) {0},
             old_fun_def->body->pos_end,
-            old_fun_def->body->scope_id
+            old_fun_def->body->scope_id,
+            (Cfg_node_vec) {0}
         )
     );
 
@@ -1970,7 +1971,8 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
         util_literal_name_new(),
         (Ir_vec) {0},
         inner_block->pos_end,
-        if_statement->body->scope_id
+        if_statement->body->scope_id,
+        (Cfg_node_vec) {0}
     );
 
     Tast_condition* if_cond = if_statement->condition;
@@ -2038,7 +2040,8 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         util_literal_name_new(),
         (Ir_vec) {0},
         (Pos) {0},
-        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id))
+        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id)),
+        (Cfg_node_vec) {0}
     );
 
     // TODO: remove?
@@ -2137,7 +2140,8 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         util_literal_name_new(),
         (Ir_vec) {0},
         old_for->body->pos_end,
-        old_for->body->scope_id
+        old_for->body->scope_id,
+        (Cfg_node_vec) {0}
     );
 
     size_t for_count = 0;
@@ -2710,7 +2714,8 @@ static Ir_block* load_block(
         util_literal_name_new(),
         (Ir_vec) {0},
         old_block->pos_end,
-        old_block->scope_id
+        old_block->scope_id,
+        (Cfg_node_vec) {0}
     );
     unwrap(ir_add(ir_block_wrap(new_block)));
 

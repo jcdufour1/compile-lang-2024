@@ -123,6 +123,7 @@ static Ir_type ir_gen_block(void) {
     append_member(&block.members, "Ir_vec", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
+    append_member(&block.members, "Cfg_node_vec", "cfg");
 
     return block;
 }
@@ -939,6 +940,7 @@ static void gen_all_irs(const char* file_path, bool implementation) {
         gen_gen("#include <symbol_table.h>\n");
         gen_gen("#include <token.h>\n");
         gen_gen("#include <vecs.h>\n");
+        gen_gen("#include <cfg.h>\n");
     } else {
         gen_gen("#ifndef IR_FORWARD_DECL_H\n");
         gen_gen("#define IR_FORWARD_DECL_H\n");
