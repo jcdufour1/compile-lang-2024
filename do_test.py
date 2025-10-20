@@ -1,6 +1,7 @@
 import os, subprocess, sys, pathlib, difflib, multiprocessing
 from typing import Callable, Tuple, Optional
 from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 
 class Changes:
@@ -52,6 +53,9 @@ BUILD_DEBUG_DIR = os.path.join("build", "debug")
 BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 EXE_BASE_NAME = "main"
+
+def remove_extension(file_path: str) -> str:
+    return file_path[:file_path.rfind(".")]
 
 def to_str(a):
     return str(a)
@@ -151,7 +155,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     compile_cmd.append("--set-log-level=INFO")
     if isinstance(file, FileNormal):
         compile_cmd.append("-o")
-        compile_cmd.append("test")
+        compile_cmd.append(os.path.basename(remove_extension(file.path_base)))
     elif isinstance(file, FileExample):
         compile_cmd.append("-c")
         compile_cmd.append("-o")
@@ -171,6 +175,29 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
+
+def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
+    if isinstance(file[0], FileNormal):
+        if test_file(file[0], file[1], file[2], file[3]):
+            return True
+        else:
+            if not file[3].keep_going:
+                sys.exit(1)
+            return False
+    elif isinstance(file[0], FileExample):
+        result: TestResult = compile_and_run_test(file[1], file[3].test_output, file[0], file[2], file[3].path_c_compiler)
+        if result.compile.returncode == 0:
+            return True
+            #success_count += 1
+        else:
+            print_error("example compilation fail:" + os.path.join(EXAMPLES_DIR, file[0].path_base) + " (" + file[2] + ")")
+            print_error("compile error:")
+            print(get_result_from_test_result(result))
+            if not file[3].keep_going:
+                sys.exit(1)
+            return False
+    else:
+        raise NotImplementedError
 
 def do_tests(do_debug: bool, params: Parameters):
     success = True
@@ -195,33 +222,23 @@ def do_tests(do_debug: bool, params: Parameters):
     print_success("compiling " + debug_release_text + " : done")
     print()
 
+    regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters]] = []
+
     # TODO: run multiple tests at once
     for file in get_files_to_test(params.files_to_test):
-        if isinstance(file, FileNormal):
-            if test_file(file, do_debug, debug_release_text, params):
-                success_count += 1
-            else:
-                if not params.keep_going:
-                    sys.exit(1)
-                success = False
-                fail_count += 1
-        elif isinstance(file, FileExample):
-            result: TestResult = compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
-            if result.compile.returncode == 0:
-                success_count += 1
-            else:
-                print_error("example compilation fail:" + os.path.join(EXAMPLES_DIR, file.path_base) + " (" + debug_release_text + ")")
-                print_error("compile error:")
-                print(get_result_from_test_result(result))
-                if not params.keep_going:
-                    sys.exit(1)
-                success = False
-                fail_count += 1
-        else:
-            raise NotImplementedError
-            
-        if file.path_base.startswith(EXAMPLES_DIR):
-            assert(0)
+        regular_files.append((file, do_debug, debug_release_text, params))
+
+    with ProcessPoolExecutor(max_workers = params.count_threads) as executor:
+        futures = executor.map(do_regular_test, regular_files)
+        for future in futures:
+            try:
+                if future:
+                    success_count += 1
+                else:
+                    fail_count += 1
+            except Exception as e:
+                print_error(e)
+                raise Exception
 
     print("testing " + debug_release_text + " done")
     print("    tests total:  " + str(fail_count + success_count))
