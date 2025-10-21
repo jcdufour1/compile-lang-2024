@@ -19,6 +19,8 @@ Tast_block* remove_tuples(Tast_block* root);
 
 void add_load_and_store(void);
 
+void construct_cfgs(void);
+
 void remove_void_assigns(void);
 
 void check_uninitialized(void);

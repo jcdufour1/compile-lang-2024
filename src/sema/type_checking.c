@@ -4058,6 +4058,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
+            log(LOG_DEBUG, FMT"\n", uast_def_print(main_fn_));
             todo();
         }
         Lang_type_fn new_lang_type = {0};

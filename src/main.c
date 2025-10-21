@@ -107,6 +107,8 @@ void compile_file_to_ir(void) {
         exit(EXIT_CODE_FAIL);
     }
     //assert(ir_root);
+    
+    construct_cfgs();
 
     remove_void_assigns();
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
