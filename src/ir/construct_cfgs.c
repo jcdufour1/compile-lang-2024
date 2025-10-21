@@ -30,23 +30,19 @@ static void construct_cfg_label(Ir_label* label, bool prev_is_cond_goto) {
           //
     Cfg_node new_node = (Cfg_node) {.label_name = label->name, .pos_in_block = curr_pos};
     if (!prev_is_cond_goto && curr_cfg->info.count > 0) {
-        vec_append(&a_main, &new_node.preds, vec_top(curr_cfg).pos_in_block);
-        vec_append(&a_main, &vec_top_ref(curr_cfg)->succs, curr_pos);
+        vec_append(&a_main, &new_node.preds, curr_cfg->info.count - 1);
+        vec_append(&a_main, &vec_top_ref(curr_cfg)->succs, curr_cfg->info.count);
     }
 
     vec_append(&a_main, curr_cfg, new_node);
 }
 
 static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
-    log(LOG_DEBUG, "curr_pos: %zu\n", curr_pos);
-    log(LOG_DEBUG, "curr_cfg_idx_for_cond_goto: %zu\n", curr_cfg_idx_for_cond_goto);
-
     size_t if_true_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, cond_goto->if_true)) {
-            if_true_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
-            //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+            if_true_idx = idx;
+            vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
         }
     }}
@@ -55,58 +51,31 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
     size_t if_false_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, cond_goto->if_false)) {
-            if_false_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
-            //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+            if_false_idx = idx;
+            vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
         }
-        //log(LOG_DEBUG, "%zu out of %zu\n", idx, curr_cfg->info.count);
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr->label_name));
     }}
-    Ir* if_false_result = NULL;
-    unwrap(ir_lookup(&if_false_result, cond_goto->if_false));
-    log(LOG_DEBUG, FMT"\n", loc_print(ir_label_unwrap(ir_def_unwrap(if_false_result))->loc));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, cond_goto->if_false));
     unwrap(if_false_idx != SIZE_MAX && "could not find if false cfg node");
 
     Cfg_node* node = vec_at_ref(curr_cfg, curr_cfg_idx_for_cond_goto);
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
     vec_append(&a_main, &node->succs, if_true_idx);
     vec_append(&a_main, &node->succs, if_false_idx);
-    //vec_append(&a_main, &node->succs, if_false_node->pos_in_block);
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*if_true_node));
-    //log(LOG_DEBUG, FMT"\n", ir_cond_goto_print(cond_goto));
-    //todo();
-    //vec_append(&a_main, &node->succs, if_false_idx);
-    //todo();
 }
 
 static void construct_cfg_goto(Ir_goto* lang_goto) {
-    log(LOG_DEBUG, "curr_pos: %zu\n", curr_pos);
-    log(LOG_DEBUG, "curr_cfg_idx_for_cond_goto: %zu\n", curr_cfg_idx_for_cond_goto);
-
     size_t branch_to_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, lang_goto->label)) {
-            branch_to_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
-            log(LOG_DEBUG, FMT"\n", cfg_node_print(*curr));
+            branch_to_idx = idx;
+            vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
         }
     }}
     unwrap(branch_to_idx != SIZE_MAX && "could not find if true cfg node");
 
     Cfg_node* node = vec_at_ref(curr_cfg, curr_cfg_idx_for_cond_goto);
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
     vec_append(&a_main, &node->succs, branch_to_idx);
-    //vec_append(&a_main, &node->succs, if_false_node->pos_in_block);
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
-    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*if_true_node));
-    //log(LOG_DEBUG, FMT"\n", ir_cond_goto_print(cond_goto));
-    //todo();
-    //vec_append(&a_main, &node->succs, if_false_idx);
-    //todo();
 }
 
 static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
@@ -167,7 +136,7 @@ static void construct_cfg_block(Ir_block* block) {
     }}
 
     vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
-        log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+        log(LOG_DEBUG, "%zu: "FMT"\n", idx, cfg_node_print(curr));
     }}
     vec_foreach(idx, Ir*, curr, block->children) {
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));

@@ -1859,6 +1859,7 @@ static Name load_return(Ir_block* new_block, Tast_return* old_return) {
             unreachable("");
     }
 
+    // TODO: remove below assertion?
     //assert(fun_decl->return_type->lang_type.info.count == 1);
     Ir_lang_type rtn_type = rm_tuple_lang_type(fun_decl->return_type, fun_decl->pos);
 
