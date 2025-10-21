@@ -84,6 +84,7 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
 
     void* buf_to_return = (char*)(*curr_buf) + (*curr_buf)->count;
     (*curr_buf)->count += capacity_needed;
+    // TODO: cast to intptr_t, etc instead of uint64_t?
     assert((uint64_t)buf_to_return%ALIGN_SIZE == 0 && "buf_to_return is not actually aligned");
     return buf_to_return;
 }

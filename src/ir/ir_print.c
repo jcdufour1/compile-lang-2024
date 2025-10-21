@@ -227,8 +227,12 @@ Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "cond_goto", indent);
+    indent += INDENT_WIDTH;
+    string_extend_cstr(&a_print, &buf, "\n");
+    string_extend_cstr_indent(&a_print, &buf, "", indent);
     extend_name(NAME_LOG, &buf, cond_goto->if_true);
-    string_extend_cstr(&a_print, &buf, " ");
+    string_extend_cstr(&a_print, &buf, "\n");
+    string_extend_cstr_indent(&a_print, &buf, "", indent);
     extend_name(NAME_LOG, &buf, cond_goto->if_false);
     string_extend_cstr(&a_print, &buf, "\n");
 

@@ -1,8 +1,13 @@
 #include <do_passes.h>
 #include <symbol_iter.h>
+#include <ulang_type_get_pos.h>
+
+// TODO: figure out why blocks are encountered directly when iterating over scope builtin
+//   (blocks should only be in functions, etc.)
 
 static Cfg_node_vec* curr_cfg;
 static size_t curr_pos;
+static size_t curr_cfg_idx_for_cond_goto;
 
 static void construct_cfg_ir_from_block(Ir* ir);
 static void construct_cfg_ir_from_scope_builtin(Ir* ir);
@@ -26,8 +31,48 @@ static void construct_cfg_label(Ir_label* label) {
 }
 
 static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
-    size_t cfg_node_
-    todo();
+    log(LOG_DEBUG, "curr_pos: %zu\n", curr_pos);
+    log(LOG_DEBUG, "curr_cfg_idx_for_cond_goto: %zu\n", curr_cfg_idx_for_cond_goto);
+
+    size_t if_true_idx = SIZE_MAX;
+    vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
+        if (name_is_equal(curr.label_name, cond_goto->if_true)) {
+            if_true_idx = curr.pos_in_block;
+            vec_append(&a_main, &curr.preds, curr_pos);
+            //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+            break;
+        }
+    }}
+    unwrap(if_true_idx != SIZE_MAX && "could not find if true cfg node");
+
+    size_t if_false_idx = SIZE_MAX;
+    vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
+        if (name_is_equal(curr.label_name, cond_goto->if_false)) {
+            if_false_idx = curr.pos_in_block;
+            vec_append(&a_main, &curr.preds, curr_pos);
+            //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+            break;
+        }
+        //log(LOG_DEBUG, "%zu out of %zu\n", idx, curr_cfg->info.count);
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr.label_name));
+    }}
+    Ir* if_false_result = NULL;
+    unwrap(ir_lookup(&if_false_result, cond_goto->if_false));
+    log(LOG_DEBUG, FMT"\n", loc_print(ir_label_unwrap(ir_def_unwrap(if_false_result))->loc));
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, cond_goto->if_false));
+    unwrap(if_false_idx != SIZE_MAX && "could not find if false cfg node");
+
+    Cfg_node* node = vec_at_ref(curr_cfg, curr_cfg_idx_for_cond_goto);
+    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
+    vec_append(&a_main, &node->succs, if_true_idx);
+    vec_append(&a_main, &node->succs, if_false_idx);
+    //vec_append(&a_main, &node->succs, if_false_node->pos_in_block);
+    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*node));
+    //log(LOG_DEBUG, FMT"\n", cfg_node_print(*if_true_node));
+    //log(LOG_DEBUG, FMT"\n", ir_cond_goto_print(cond_goto));
+    //todo();
+    //vec_append(&a_main, &node->succs, if_false_idx);
+    //todo();
 }
 
 static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
@@ -53,6 +98,7 @@ static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
 
 static void construct_cfg_block(Ir_block* block) {
     assert(!curr_cfg);
+    assert(curr_cfg_idx_for_cond_goto == 0);
     curr_cfg = &block->cfg;
 
     Size_t_vec succs = {0};
@@ -62,6 +108,7 @@ static void construct_cfg_block(Ir_block* block) {
     vec_foreach(idx, Ir*, curr, block->children) {
         curr_pos = idx;
         if (curr->type == IR_DEF && ir_def_unwrap(curr)->type == IR_LABEL) {
+            log(LOG_DEBUG, FMT"\n", ir_print(curr));
             construct_cfg_label(ir_label_unwrap(ir_def_unwrap(curr)));
         }
     }}
@@ -72,9 +119,17 @@ static void construct_cfg_block(Ir_block* block) {
     vec_foreach(idx, Ir*, curr, block->children) {
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
     }}
+    log(LOG_DEBUG, "%zu\n", block->children.info.count);
 
     vec_foreach(idx, Ir*, curr, block->children) {
         curr_pos = idx;
+        if (vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block == SIZE_MAX) {
+            curr_cfg_idx_for_cond_goto++;
+        }
+        if (curr_cfg_idx_for_cond_goto + 1 < curr_cfg->info.count && vec_at(curr_cfg, curr_cfg_idx_for_cond_goto + 1).pos_in_block <= idx) {
+            curr_cfg_idx_for_cond_goto++;
+        }
+        log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
         construct_cfg_ir_from_block(curr);
     }}
 
@@ -84,9 +139,14 @@ static void construct_cfg_block(Ir_block* block) {
     vec_foreach(idx, Ir*, curr, block->children) {
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
     }}
-    todo();
+    static int count = 0;
+    if (count > 0) {
+        todo();
+    }
+    count++;
 
     curr_cfg = NULL;
+    curr_cfg_idx_for_cond_goto = 0;
 }
 
 static void construct_cfg_import_path(Ir_import_path* import) {
@@ -132,7 +192,6 @@ static void construct_cfg_ir_from_block(Ir* ir) {
 static void construct_cfg_ir_from_scope_builtin(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
-            construct_cfg_block(ir_block_unwrap(ir));
             return;
         case IR_EXPR:
             return;

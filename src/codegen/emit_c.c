@@ -648,8 +648,7 @@ static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
 
 static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     emit_c_loc(&strs->output, block->loc, block->pos);
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Ir* stmt = vec_at(&block->children, idx);
+    vec_foreach(idx, Ir*, stmt, block->children) {
         switch (stmt->type) {
             case IR_EXPR:
                 emit_c_expr(strs, ir_expr_const_unwrap(stmt));
@@ -691,7 +690,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 ir_printf(stmt);
                 todo();
         }
-    }
+    }}
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
