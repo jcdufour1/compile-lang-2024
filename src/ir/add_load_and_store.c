@@ -129,7 +129,8 @@ static Ir_block* load_block(
     Tast_block* old_block,
     Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
-    Lang_type lang_type
+    Lang_type lang_type,
+    bool is_top_level
 );
 
 static Name load_expr(Ir_block* new_block, Tast_expr* old_expr);
@@ -165,7 +166,8 @@ static void load_block_stmts(
     Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Pos pos,
-    Lang_type lang_type
+    Lang_type lang_type,
+    bool is_top_level // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
 ) {
     Tast_def* dummy = NULL;
     unwrap(!symbol_lookup(&dummy, *yield_dest_name));
@@ -174,7 +176,9 @@ static void load_block_stmts(
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
     // append initial label (for cfg)
-    load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
+    if (!is_top_level) {
+        load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
+    }
 
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
@@ -1697,7 +1701,8 @@ static Name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
                 tast_block_unwrap(old_expr),
                 &yield_dest,
                 DEFER_PARENT_OF_BLOCK,
-                tast_block_unwrap(old_expr)->lang_type
+                tast_block_unwrap(old_expr)->lang_type,
+                false
             );
             log(LOG_DEBUG, FMT, ir_block_print(new_block_block));
             for (size_t idx = 0; idx < new_block_block->children.info.count; idx++) {
@@ -1830,7 +1835,8 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         &yield_name,
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
-        old_fun_def->decl->return_type
+        old_fun_def->decl->return_type,
+        false
     );
 
     unwrap(ir_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
@@ -1969,7 +1975,8 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
         old_block,
         &dummy,
         DEFER_PARENT_OF_IF,
-        if_statement->yield_type
+        if_statement->yield_type,
+        false
     );
     Ir_block* new_block = ir_block_new(
         old_block->pos,
@@ -2205,7 +2212,8 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         &yield_name,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
-        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */
+        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
+        false
     );
     add_label(new_block, after_inner_block, pos);
 
@@ -2274,7 +2282,7 @@ static void load_import(Tast_import* old_import) {
     Name yield_name = util_literal_name_new();
     unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
         old_import->pos,
-        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void()),
+        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void(), true),
         old_import->mod_path
     ))));
 }
@@ -2708,7 +2716,8 @@ static Ir_block* load_block(
     Tast_block* old_block,
     Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
-    Lang_type lang_type
+    Lang_type lang_type,
+    bool is_top_level
 ) {
     memset(yield_dest_name, 0, sizeof(*yield_dest_name));
 
@@ -2741,7 +2750,7 @@ static Ir_block* load_block(
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(new_block, old_block->children, yield_dest_name, parent_of, old_block->pos, lang_type);
+    load_block_stmts(new_block, old_block->children, yield_dest_name, parent_of, old_block->pos, lang_type, is_top_level);
 
     if (defered_collections.coll_stack.info.count > 0) {
         load_all_is_rtn_checks(new_block);

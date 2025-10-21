@@ -143,7 +143,7 @@ static void construct_cfg_block(Ir_block* block) {
     }}
     static int count = 0;
     if (count > 0) {
-        todo();
+        //todo();
     }
     count++;
 
