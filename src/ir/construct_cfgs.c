@@ -29,7 +29,7 @@ static void construct_cfg_label(Ir_label* label, bool prev_is_cond_goto) {
 #   endif // NDEBUG
           //
     Cfg_node new_node = (Cfg_node) {.label_name = label->name, .pos_in_block = curr_pos};
-    if (!prev_is_cond_goto) {
+    if (!prev_is_cond_goto && curr_cfg->info.count > 0) {
         vec_append(&a_main, &new_node.preds, vec_top(curr_cfg).pos_in_block);
         vec_append(&a_main, &vec_top_ref(curr_cfg)->succs, curr_pos);
     }
@@ -45,7 +45,7 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, cond_goto->if_true)) {
             if_true_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, curr_pos);
+            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
             //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
             break;
         }
@@ -56,7 +56,7 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, cond_goto->if_false)) {
             if_false_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, curr_pos);
+            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
             //log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
             break;
         }
@@ -90,7 +90,7 @@ static void construct_cfg_goto(Ir_goto* lang_goto) {
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
         if (name_is_equal(curr->label_name, lang_goto->label)) {
             branch_to_idx = curr->pos_in_block;
-            vec_append(&a_main, &curr->preds, curr_pos);
+            vec_append(&a_main, &curr->preds, vec_at(curr_cfg, curr_cfg_idx_for_cond_goto).pos_in_block);
             log(LOG_DEBUG, FMT"\n", cfg_node_print(*curr));
             break;
         }
@@ -135,10 +135,6 @@ static void construct_cfg_block(Ir_block* block) {
     assert(curr_cfg_idx_for_cond_goto == 0);
     curr_cfg = &block->cfg;
 
-    Size_t_vec succs = {0};
-    //vec_append(&a_main, &succs, 0);
-    vec_append(&a_main, curr_cfg, ((Cfg_node) {.succs = succs, .pos_in_block = CFG_NODE_START_OF_BLOCK}));
-
     bool prev_is_cond_goto = false;
     vec_foreach(idx, Ir*, curr, block->children) {
         curr_pos = idx;
@@ -146,6 +142,8 @@ static void construct_cfg_block(Ir_block* block) {
         if (curr->type == IR_DEF && ir_def_unwrap(curr)->type == IR_LABEL) {
             log(LOG_DEBUG, FMT"\n", ir_print(curr));
             construct_cfg_label(ir_label_unwrap(ir_def_unwrap(curr)), prev_is_cond_goto);
+        } else if (idx == 0) {
+            unreachable("the first ir of the block must be a label");
         }
 
         prev_is_cond_goto = curr->type == IR_COND_GOTO || curr->type == IR_GOTO;

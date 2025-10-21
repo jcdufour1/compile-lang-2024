@@ -173,6 +173,9 @@ static void load_block_stmts(
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     size_t old_colls_count = defered_collections.coll_stack.info.count;
 
+    // append initial label (for cfg)
+    load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
+
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
@@ -1935,7 +1938,8 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
     Ir* alloca = NULL;
     if (!ir_lookup(&alloca, new_var_def->name_self)) {
         alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
-        vec_insert(&a_main, &new_block->children, 0, alloca);
+        // TODO: this insert takes O(n) time. A more efficient solution should be used
+        vec_insert(&a_main, &new_block->children, 1, alloca);
     }
 
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));
