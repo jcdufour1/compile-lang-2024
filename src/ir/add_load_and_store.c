@@ -160,6 +160,7 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
     );
 }
 
+// TODO: this function should not load allocas, labels, gotos, cond_gotos, etc. in top level blocks
 static void load_block_stmts(
     Ir_block* new_block,
     Tast_stmt_vec children,

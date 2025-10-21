@@ -16,12 +16,17 @@ typedef enum {
     NAME_EMIT_IR,
 } NAME_MODE;
 
+// TODO: nodes should store Name_id (which would contain size_t) instead of Name?
+//   lookup table should store actual name struct associated with Name_id
 typedef struct {
     Strv mod_path;
     Strv base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
 } Name;
+
+// TODO: nodes should store Uname_id (which would contain size_t) instead of Uname?
+//   lookup table should store actual name struct associated with Uname_id
 
 // eg. in symbol `io.Optional`, mod_alias == "io" and base == "Optional"
 typedef struct {

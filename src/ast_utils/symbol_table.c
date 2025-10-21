@@ -462,6 +462,10 @@ bool init_symbol_lookup(Init_table_vec* init_tables, Name name) {
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Name name) {
+    while (init_tables->info.count < name.scope_id + 2) {
+        vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));
+    }
+    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
     return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), NULL, name.scope_id);
 }
 

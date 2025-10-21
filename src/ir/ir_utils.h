@@ -64,4 +64,8 @@ Ir* ir_from_get_name(Name name);
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* base, Name memb_name);
 
+static inline bool ir_is_label(const Ir* ir) {
+    return ir->type == IR_DEF && ir_def_const_unwrap(ir)->type == IR_LABEL;
+}
+
 #endif // IR_UTIL_H

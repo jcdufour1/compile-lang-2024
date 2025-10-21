@@ -6,6 +6,8 @@
 #include <ulang_type_get_pos.h>
 #include <bool_vec.h>
 
+static void check_unit_ir_builtin(const Ir* ir);
+
 static Bool_vec bool_vec_clone(Bool_vec vec) {
     Bool_vec new_vec = {0};
     vec_extend(&a_main /* TODO */, &new_vec, &vec);
@@ -92,10 +94,6 @@ static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec sub
 
 typedef struct {
     Init_table_vec init_tables;
-    Name label_to_cont;
-    Bool_vec prev_desisions; // true on element [0] means that is_true path was taken on first cond_goto,
-                             // true on element [1] means that is_true path was taken on second cond_goto,
-                             // etc.
 } Frame;
 
 typedef struct {
@@ -103,8 +101,8 @@ typedef struct {
     Frame* buf;
 } Frame_vec;
 
-static Frame frame_new(Init_table_vec init_tables, Name label_to_cont, Bool_vec prev_desisions) {
-    return (Frame) {.init_tables = init_tables, .label_to_cont = label_to_cont, .prev_desisions = prev_desisions};
+static Frame frame_new(Init_table_vec init_tables) {
+    return (Frame) {.init_tables = init_tables};
 }
 
 static Init_table init_table_clone(Init_table table) {
@@ -128,12 +126,14 @@ static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
     return new_vec;
 }
 
-static size_t block_idx = 0;
-static bool goto_or_cond_goto = false;
-static Frame curr_frame = {0};
-static Frame_vec frames = {0};
-static Frame_vec already_run_frames = {0};
+//static size_t block_idx = 0;
+static bool at_end_of_cfg_node = false;
+//static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
+
+static Frame* curr_frame = {0};
+static Frame_vec frames = {0};
+static bool print_errors_for_unit;
 
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
@@ -242,7 +242,7 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     //   (because otherwise it would be required to modify the add_load_and_store pass or
     //   ignore impossible paths (eg. neither the if nor else is taken).
     //   consider if builtin symbols should be checked or not
-    if (!init_symbol_lookup(&curr_frame.init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
+    if (print_errors_for_unit && !init_symbol_lookup(&curr_frame->init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
         if (check_unit_is_struct(name)) {
             msg(
                 DIAG_UNINITIALIZED_VARIABLE, pos,
@@ -305,7 +305,7 @@ static void check_unit_src(const Name src, Pos pos) {
 }
 
 static void check_unit_dest(const Name dest) {
-    if (!init_symbol_add(&curr_frame.init_tables, dest)) {
+    if (!init_symbol_add(&curr_frame->init_tables, dest)) {
     }
 }
 
@@ -334,102 +334,181 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
     unreachable("label should have been found");
 }
 
-static void check_unit_block(const Ir_block* block) {
-    assert(frames.info.count == 0);
-    assert(block_idx == 0);
-    assert(goto_or_cond_goto == false);
-    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
-
-    while (frames.info.count > 0) {
-        bool frame_not_needed = false;
-        curr_frame = vec_pop(&frames);
-        for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
-            Frame curr_already = vec_at(&already_run_frames, idx);
-            // TODO: init_table_vec_is_equal: look at subset/superset instead of just is_equal
-            //   init_table_vec_is_subset
-            if (
-                name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont) &&
-                init_table_vec_is_subset(curr_frame.init_tables, curr_already.init_tables)
-            ) {
-                frame_not_needed = true;
-                break;
-            }
-        }
-
-        if (frame_not_needed) {
-            continue;
-        }
-        vec_append(&a_main /* TODO */, &already_run_frames, curr_frame);
-
-        curr_frame.init_tables = curr_frame.init_tables;
-        if (curr_frame.label_to_cont.base.count < 1) {
-            assert(block_idx == 0);
-        } else {
-            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
-            //   this for loop. this may cause bugs?
-            block_idx = label_name_to_block_idx(block->children, curr_frame.label_to_cont);
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_frame.label_to_cont));
-        }
-
-
-        // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
-        while (block_idx < block->children.info.count) {
-            check_unit_ir_from_block(vec_at(&block->children, block_idx));
-            if (check_unit_src_internal_name_failed) {
-                size_t temp_block_idx = 0;
-                size_t bool_idx = 0;
-
-                uint32_t prev_line = 0;
-                while (temp_block_idx < block->children.info.count) {
-                    const Ir* curr = vec_at(&block->children, temp_block_idx);
-                    if (curr->type == IR_COND_GOTO) {
-                        const Ir_cond_goto* cond_goto = ir_cond_goto_const_unwrap(curr);
-                        if (cond_goto->pos.line != prev_line) {
-                            msg(
-                                DIAG_NOTE,
-                                cond_goto->pos,
-                                "tracing path of uninitialized variable use\n"
-                            );
-                            prev_line = cond_goto->pos.line;
-                        }
-
-                        Name next_label = vec_at(&curr_frame.prev_desisions, bool_idx) ?
-                            cond_goto->if_true : cond_goto->if_false;
-                        temp_block_idx = label_name_to_block_idx(block->children, next_label);
-                        bool_idx++;
-
-                        if (bool_idx >= curr_frame.prev_desisions.info.count) {
-                            break;
-                        }
-                    } else if (curr->type == IR_GOTO) {
-                        const Ir_goto* lang_goto = ir_goto_const_unwrap(curr);
-                        temp_block_idx = label_name_to_block_idx(block->children, lang_goto->label);
-                    } else {
-                        temp_block_idx++;
-                    }
-                }
-
-                assert(bool_idx == curr_frame.prev_desisions.info.count);
-            }
-
-            if (goto_or_cond_goto) {
-                goto_or_cond_goto = false;
-                break;
-            }
-
-            block_idx++;
-            goto_or_cond_goto = false;
-            check_unit_src_internal_name_failed = false;
-        }
-        block_idx = 0;
+static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
+    static int count = 0;
+    log(LOG_DEBUG, "%d\n", count);
+    if (!is_main) {
+        return;
     }
 
-    memset(&curr_frame.init_tables, 0, sizeof(curr_frame.init_tables));
+    log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+    vec_foreach(idx, Ir*, curr, block->children) {//{
+        log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
+    }}
+
+    // do one iter on cfg for now
+
+    print_errors_for_unit = false;
+
     assert(frames.info.count == 0);
+    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+        (void) curr;
+        vec_append(&a_main /* TODO */, &frames, ((Frame) {0}));
+    }}
+
+    // TODO: keep running this for loop until there are no changes
+    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+        curr_frame = vec_at_ref(&frames, idx);
+
+        // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
+        //   global variable will not be needed for several ir passes
+        //   (this could be done by making special foreach macros/functions?)
+        at_end_of_cfg_node = false;
+
+        for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+
+            if (
+                block_idx + 1 < block->children.info.count &&
+                ir_is_label(vec_at(&block->children, block_idx + 1))
+            ) {
+                at_end_of_cfg_node = true;
+            }
+
+            if (block_idx + 1 >= block->children.info.count) {
+                at_end_of_cfg_node = true;
+            }
+        }
+        
+        // TODO: update succs with information gathered here
+    }}
+
+    print_errors_for_unit = true;
+
+    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+        curr_frame = vec_at_ref(&frames, idx);
+
+        // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
+        //   global variable will not be needed for several ir passes
+        //   (this could be done by making special foreach macros/functions?)
+        at_end_of_cfg_node = false;
+
+        for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+
+            if (
+                block_idx + 1 < block->children.info.count &&
+                ir_is_label(vec_at(&block->children, block_idx + 1))
+            ) {
+                at_end_of_cfg_node = true;
+            }
+
+            if (block_idx + 1 >= block->children.info.count) {
+                at_end_of_cfg_node = true;
+            }
+        }
+    }}
+
+    todo();
 }
 
+//static void check_unit_block(const Ir_block* block) {
+//    assert(frames.info.count == 0);
+//    assert(block_idx == 0);
+//    assert(goto_or_cond_goto == false);
+//    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
+//
+//    while (frames.info.count > 0) {
+//        bool frame_not_needed = false;
+//        curr_frame = vec_pop(&frames);
+//        for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
+//            Frame curr_already = vec_at(&already_run_frames, idx);
+//            // TODO: init_table_vec_is_equal: look at subset/superset instead of just is_equal
+//            //   init_table_vec_is_subset
+//            if (
+//                name_is_equal(curr_already.label_to_cont, curr_frame.label_to_cont) &&
+//                init_table_vec_is_subset(curr_frame.init_tables, curr_already.init_tables)
+//            ) {
+//                frame_not_needed = true;
+//                break;
+//            }
+//        }
+//
+//        if (frame_not_needed) {
+//            continue;
+//        }
+//        vec_append(&a_main /* TODO */, &already_run_frames, curr_frame);
+//
+//        curr_frame.init_tables = curr_frame.init_tables;
+//        if (curr_frame.label_to_cont.base.count < 1) {
+//            assert(block_idx == 0);
+//        } else {
+//            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
+//            //   this for loop. this may cause bugs?
+//            block_idx = label_name_to_block_idx(block->children, curr_frame.label_to_cont);
+//            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_frame.label_to_cont));
+//        }
+//
+//
+//        // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
+//        while (block_idx < block->children.info.count) {
+//            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+//            if (check_unit_src_internal_name_failed) {
+//                size_t temp_block_idx = 0;
+//                size_t bool_idx = 0;
+//
+//                uint32_t prev_line = 0;
+//                while (temp_block_idx < block->children.info.count) {
+//                    const Ir* curr = vec_at(&block->children, temp_block_idx);
+//                    if (curr->type == IR_COND_GOTO) {
+//                        const Ir_cond_goto* cond_goto = ir_cond_goto_const_unwrap(curr);
+//                        if (cond_goto->pos.line != prev_line) {
+//                            msg(
+//                                DIAG_NOTE,
+//                                cond_goto->pos,
+//                                "tracing path of uninitialized variable use\n"
+//                            );
+//                            prev_line = cond_goto->pos.line;
+//                        }
+//
+//                        Name next_label = vec_at(&curr_frame.prev_desisions, bool_idx) ?
+//                            cond_goto->if_true : cond_goto->if_false;
+//                        temp_block_idx = label_name_to_block_idx(block->children, next_label);
+//                        bool_idx++;
+//
+//                        if (bool_idx >= curr_frame.prev_desisions.info.count) {
+//                            break;
+//                        }
+//                    } else if (curr->type == IR_GOTO) {
+//                        const Ir_goto* lang_goto = ir_goto_const_unwrap(curr);
+//                        temp_block_idx = label_name_to_block_idx(block->children, lang_goto->label);
+//                    } else {
+//                        temp_block_idx++;
+//                    }
+//                }
+//
+//                assert(bool_idx == curr_frame.prev_desisions.info.count);
+//            }
+//
+//            if (goto_or_cond_goto) {
+//                goto_or_cond_goto = false;
+//                break;
+//            }
+//
+//            block_idx++;
+//            goto_or_cond_goto = false;
+//            check_unit_src_internal_name_failed = false;
+//        }
+//        block_idx = 0;
+//    }
+//
+//    memset(&curr_frame.init_tables, 0, sizeof(curr_frame.init_tables));
+//    assert(frames.info.count == 0);
+//}
+
 static void check_unit_import_path(const Ir_import_path* import) {
-    check_unit_block(import->block);
+    log(LOG_DEBUG, FMT"\n", strv_print(import->mod_path));
+    check_unit_block(import->block, false);
 }
 
 static void check_unit_function_params(const Ir_function_params* params) {
@@ -444,17 +523,18 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 }
 
 static void check_unit_function_def(const Ir_function_def* def) {
-    assert(curr_frame.init_tables.info.count == 0);
+    log(LOG_DEBUG, FMT"\n", ir_function_def_print(def));
+    assert(!curr_frame);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
-    check_unit_block(def->body);
+    check_unit_block(def->body, strv_is_equal(def->decl->name.base, sv("main")));
 }
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos);
     check_unit_dest(store->ir_dest);
-    unwrap(init_symbol_add(&curr_frame.init_tables, store->name));
+    init_symbol_add(&curr_frame->init_tables, store->name);
 }
 
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
@@ -462,33 +542,28 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
-    unwrap(init_symbol_add(&curr_frame.init_tables, load->name));
+    init_symbol_add(&curr_frame->init_tables, load->name);
 }
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos);
-    unwrap(init_symbol_add(&curr_frame.init_tables, load->name_self));
+    unwrap(init_symbol_add(&curr_frame->init_tables, load->name_self));
 }
 
 static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->index, access->pos);
     check_unit_src(access->callee, access->pos);
-    unwrap(init_symbol_add(&curr_frame.init_tables, access->name_self));
+    unwrap(init_symbol_add(&curr_frame->init_tables, access->name_self));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
-    goto_or_cond_goto = true;
-    vec_append(&a_main /* TODO */, &frames, frame_new(curr_frame.init_tables, lang_goto->label, curr_frame.prev_desisions));
+    (void) lang_goto;
+    at_end_of_cfg_node = true;
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
-    goto_or_cond_goto = true;
-    Bool_vec if_true_decisions = curr_frame.prev_desisions;
-    Bool_vec if_false_decisions = bool_vec_clone(curr_frame.prev_desisions);
-    vec_append(&a_main, &if_true_decisions, true);
-    vec_append(&a_main, &if_false_decisions, false);
-    vec_append(&a_main /* TODO */, &frames, frame_new(curr_frame.init_tables, cond_goto->if_true, if_true_decisions));
-    vec_append(&a_main /* TODO */, &frames, frame_new(init_table_vec_clone(curr_frame.init_tables), cond_goto->if_false, if_false_decisions));
+    (void) cond_goto;
+    at_end_of_cfg_node = true;
 }
 
 static void check_unit_def(const Ir_def* def) {
@@ -506,7 +581,6 @@ static void check_unit_def(const Ir_def* def) {
         case IR_FUNCTION_DECL:
             todo();
         case IR_LABEL:
-            // TODO
             return;
         case IR_LITERAL_DEF:
             todo();
