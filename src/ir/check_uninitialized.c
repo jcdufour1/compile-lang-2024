@@ -379,6 +379,20 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 at_end_of_cfg_node = true;
             }
         }
+        vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
+            vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
+                Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+                Strv curr = {0};
+                while (init_tbl_iter_next(&curr, &iter)) {
+                    Frame succ_frame = vec_at(frames, succ_idx);
+                    void* result = NULL;
+                    if (init_symbol_lookup_internal(&succ_frame->init_tables))
+                    todo();
+                }
+                todo();
+            }}
+            todo();
+        }}
         
         // TODO: update succs with information gathered here
     }}
