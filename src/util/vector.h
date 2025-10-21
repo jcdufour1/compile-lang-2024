@@ -113,4 +113,10 @@ typedef struct {
         Item_type item_name = {0}; \
         for (size_t idx_name = 0; item_name = (idx_name < (vector).info.count) ? vec_at(&vector, idx_name) : ((Item_type) {0}), idx_name < (vector).info.count; idx_name++) 
 
+// NOTE: `}}` must be used to end foreach body instead of `}`
+#define vec_foreach_ref(idx_name, Item_type, item_name, vector) \
+    { \
+        Item_type* item_name = NULL; \
+        for (size_t idx_name = 0; item_name = (idx_name < (vector).info.count) ? vec_at_ref(&vector, idx_name) : NULL, idx_name < (vector).info.count; idx_name++) 
+
 #endif // VECTOR_H

@@ -5,7 +5,7 @@
 #include <vector.h>
 #include <size_t_vec.h>
 
-#define CFG_NODE_START_OF_BLOCK SIZE_MAX
+#define CFG_NODE_START_OF_BLOCK 0
 
 typedef struct {
     Size_t_vec preds;
