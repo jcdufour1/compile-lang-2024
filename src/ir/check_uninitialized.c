@@ -135,7 +135,7 @@ static bool check_unit_src_internal_name_failed = false;
 
 static size_t block_pos = {0};
 static size_t frame_idx = 0;
-static Frame* curr_frame = {0};
+static Frame* curr_frame = NULL;
 static Frame_vec frames = {0};
 static bool print_errors_for_unit;
 
@@ -374,9 +374,15 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
     print_errors_for_unit = false;
 
+    log(LOG_DEBUG, "%zu\n", frames.info.count);
     assert(frames.info.count == 0);
+    assert(curr_frame);
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
         (void) curr;
+        if (idx == 0) {
+            vec_append(&a_main /* TODO */, &frames, *curr_frame);
+            continue;
+        }
         vec_append(&a_main /* TODO */, &frames, ((Frame) {0}));
     }}
 
@@ -458,6 +464,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }}
 
     frames = (Frame_vec) {0};
+    curr_frame = arena_alloc(&a_main /* todo */, sizeof(*curr_frame));
 }
 
 //static void check_unit_block(const Ir_block* block) {
@@ -572,7 +579,7 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 
 static void check_unit_function_def(const Ir_function_def* def) {
     log(LOG_DEBUG, FMT"\n", ir_function_def_print(def));
-    assert(!curr_frame);
+    assert(curr_frame);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body, strv_is_equal(def->decl->name.base, sv("main")));
@@ -799,6 +806,8 @@ static void check_unit_ir_builtin(const Ir* ir) {
 }
 
 void check_uninitialized(void) {
+    curr_frame = arena_alloc(&a_main /* todo */, sizeof(*curr_frame));
+
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
