@@ -421,21 +421,20 @@ static bool init_symbol_lookup_internal(Init_table_vec* init_tables, void** resu
         return false;
     }
 
-    while (scope_id + 10 /* TODO */ > init_tables->info.count) {
-        // TODO: use different arena then a_main, because this vector is only needed for one pass
-        vec_append(&a_main, init_tables, (Init_table) {0});
-    }
-
-    Scope_id curr_scope = scope_id;
     while (true) {
-        void* tbl = vec_at_ref(init_tables, curr_scope);
+        while (scope_id + 1 /* TODO */ > init_tables->info.count) {
+            // TODO: use different arena then a_main, because this vector is only needed for one pass
+            vec_append(&a_main, init_tables, (Init_table) {0});
+        }
+
+        void* tbl = vec_at_ref(init_tables, scope_id);
         if (generic_tbl_lookup(result, tbl, key)) {
              return true;
         }
-        if (curr_scope == 0) {
+        if (scope_id == 0) {
             break;
         }
-        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+        scope_id = scope_get_parent_tbl_lookup(scope_id);
     }
 
     return false;

@@ -178,6 +178,13 @@ static void load_block_stmts(
 
     // append initial label (for cfg)
     if (!is_top_level) {
+        // if these assertions fail, it may be nessessary to put this in caller of load_block_stmts
+        //   before load_block_stmts call:
+        //
+        //     if (!is_top_level) {
+        //         load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
+        //     }
+        //
         assert(new_block->children.info.count > 0);
         assert(ir_is_label(vec_at(&new_block->children, 0)));
     }
@@ -1826,7 +1833,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         )
     );
 
-    load_label(new_fun_def->body, tast_label_new(pos, util_literal_name_new(), new_fun_def->body->scope_id));
+    load_label(new_fun_def->body, tast_label_new(new_fun_def->pos, util_literal_name_new(), new_fun_def->body->scope_id));
 
     Lang_type new_lang_type = {0};
     new_fun_def->decl->params = load_function_parameters(
@@ -1977,6 +1984,7 @@ static void load_struct_def(Tast_struct_def* old_def) {
 }
 
 static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, bool is_last_if) {
+    (void) is_last_if; // TODO: remove is_last_if?
     Tast_block* old_block = if_statement->body;
     Name dummy = {0};
     Ir_block* inner_block = load_block(
@@ -1994,6 +2002,7 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
         if_statement->body->scope_id,
         (Cfg_node_vec) {0}
     );
+    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), new_block->scope_id));
 
     Tast_condition* if_cond = if_statement->condition;
 
@@ -2001,17 +2010,18 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
 
     Name if_body = util_literal_name_new_prefix(sv("if_body"));
 
-    if (is_last_if) {
-        Ir_goto* lang_goto = ir_goto_new_internal(
-            if_statement->pos,
-            loc_new(),
-            util_literal_name_new(),
-            if_body
-        );
-        vec_append(&a_main, &new_block->children, ir_goto_wrap(lang_goto));
-    } else {
-        if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
-    }
+    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    //if (is_last_if) {
+    //    Ir_goto* lang_goto = ir_goto_new_internal(
+    //        if_statement->pos,
+    //        loc_new(),
+    //        util_literal_name_new(),
+    //        if_body
+    //    );
+    //    vec_append(&a_main, &new_block->children, ir_goto_wrap(lang_goto));
+    //} else {
+    //    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    //}
 
     add_label(new_block, if_body, old_block->pos);
 
@@ -2063,6 +2073,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id)),
         (Cfg_node_vec) {0}
     );
+    load_label(*new_block, tast_label_new((*new_block)->pos, util_literal_name_new(), (*new_block)->scope_id));
 
     // TODO: remove?
     Tast_variable_def* yield_dest = NULL;
@@ -2163,6 +2174,8 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         old_for->body->scope_id,
         (Cfg_node_vec) {0}
     );
+
+    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), new_block->scope_id));
 
     size_t for_count = 0;
     for (size_t idx_ = defered_collections.coll_stack.info.count; idx_ > 0; idx_--) {
@@ -2758,7 +2771,9 @@ static Ir_block* load_block(
         load_def_sometimes(curr);
     }
 
-    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), new_block->scope_id));
+    if (!is_top_level) {
+        load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), new_block->scope_id));
+    }
     load_block_stmts(new_block, old_block->children, yield_dest_name, parent_of, old_block->pos, lang_type, is_top_level);
 
     if (defered_collections.coll_stack.info.count > 0) {

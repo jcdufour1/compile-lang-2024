@@ -620,8 +620,11 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->index, access->pos);
     check_unit_src(access->callee, access->pos);
-    todo();
-    //unwrap(init_symbol_add(&curr_frame->init_tables, access->name_self));
+    init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
+        .name = access->name_self,
+        .cfg_node_of_init = frame_idx,
+        .block_pos_of_init = block_pos
+    });
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
@@ -643,15 +646,15 @@ static void check_unit_def(const Ir_def* def) {
             // TODO: this could be used to check whether user uses variable before assignment
             return;
         case IR_STRUCT_DEF:
-            todo();
+            return;
         case IR_PRIMITIVE_DEF:
-            todo();
+            return;
         case IR_FUNCTION_DECL:
-            todo();
+            return;
         case IR_LABEL:
             return;
         case IR_LITERAL_DEF:
-            todo();
+            return;
     }
     unreachable("");
 }
