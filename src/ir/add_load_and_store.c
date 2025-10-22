@@ -1,3 +1,4 @@
+
 #include <tast.h>
 #include <uast.h>
 #include <ir.h>
@@ -15,6 +16,7 @@
 #include <ir_lang_type_print.h>
 #include <str_and_num_utils.h>
 #include <ir_utils.h>
+
 
 // TODO: remove is_brking (use is_yielding instead) and remove Tast_actual_break
 
@@ -2010,18 +2012,18 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
 
     Name if_body = util_literal_name_new_prefix(sv("if_body"));
 
-    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
-    //if (is_last_if) {
-    //    Ir_goto* lang_goto = ir_goto_new_internal(
-    //        if_statement->pos,
-    //        loc_new(),
-    //        util_literal_name_new(),
-    //        if_body
-    //    );
-    //    vec_append(&a_main, &new_block->children, ir_goto_wrap(lang_goto));
-    //} else {
-    //    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
-    //}
+    //if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    if (is_last_if) {
+        Ir_goto* lang_goto = ir_goto_new_internal(
+            if_statement->pos,
+            loc_new(),
+            util_literal_name_new(),
+            if_body
+        );
+        vec_append(&a_main, &new_block->children, ir_goto_wrap(lang_goto));
+    } else {
+        if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
+    }
 
     add_label(new_block, if_body, old_block->pos);
 

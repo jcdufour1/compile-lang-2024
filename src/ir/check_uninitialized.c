@@ -363,6 +363,7 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
 }
 
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
+    (void) is_main;
     static int count = 0;
     log(LOG_DEBUG, "%d\n", count);
     log(LOG_DEBUG, FMT"\n", ir_block_print(block));
@@ -387,56 +388,80 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }}
 
     // TODO: keep running this for loop until there are no changes
-    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
-        frame_idx = idx;
-        curr_frame = vec_at_ref(&frames, idx);
+    for (size_t idx = 0; idx < 30; idx++) {
+        vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+            frame_idx = idx;
+            curr_frame = vec_at_ref(&frames, idx);
 
-        // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
-        //   global variable will not be needed for several ir passes
-        //   (this could be done by making special foreach macros/functions?)
-        at_end_of_cfg_node = false;
+            // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
+            //   global variable will not be needed for several ir passes
+            //   (this could be done by making special foreach macros/functions?)
+            at_end_of_cfg_node = false;
 
-        for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
-            block_pos = block_idx;
-            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+            for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+                block_pos = block_idx;
+                check_unit_ir_from_block(vec_at(&block->children, block_idx));
 
-            if (
-                block_idx + 1 < block->children.info.count &&
-                ir_is_label(vec_at(&block->children, block_idx + 1))
-            ) {
-                at_end_of_cfg_node = true;
-            }
-
-            if (block_idx + 1 >= block->children.info.count) {
-                at_end_of_cfg_node = true;
-            }
-        }
-        vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
-            vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
-                Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-                Init_table_node curr_in_tbl = {0};
-                while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-                    Frame* succ_frame = vec_at_ref(&frames, succ);
-                    Init_table_node* dummy = NULL;
-                    if (!init_symbol_lookup(&succ_frame->init_tables, &dummy, curr_in_tbl.name)) {
-                        //for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
-                        //    init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
-                        //}
-                        unwrap(init_symbol_add(&succ_frame->init_tables, curr_in_tbl));
-                        //if (!strv_is_equal(curr_in_tbl.mod_path, sv("builtin")) && !strv_is_equal(curr_in_tbl.mod_path, sv("")) && !strv_is_equal(curr_in_tbl.mod_path, (Strv) {0})) {
-                        //    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_in_tbl));
-                        //    for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
-                        //        init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
-                        //    }
-                        //}
-                    }
+                if (
+                    block_idx + 1 < block->children.info.count &&
+                    ir_is_label(vec_at(&block->children, block_idx + 1))
+                ) {
+                    at_end_of_cfg_node = true;
                 }
-            }}
+
+                if (block_idx + 1 >= block->children.info.count) {
+                    at_end_of_cfg_node = true;
+                }
+            }
+
+            //vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
+            //    vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
+            //        Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+            //        Init_table_node curr_in_tbl = {0};
+            //        while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+            //            Frame* succ_frame = vec_at_ref(&frames, succ);
+            //            Init_table_node* dummy = NULL;
+            //            if (!init_symbol_lookup(&succ_frame->init_tables, &dummy, curr_in_tbl.name)) {
+            //                unwrap(init_symbol_add(&succ_frame->init_tables, curr_in_tbl));
+            //            }
+            //        }
+            //    }}
+            //}}
+
+            // TODO: make function to iterate over Init_table_vec automatically
+            if (curr.preds.info.count > 0) {
+                size_t pred_0 = vec_at(&curr.preds, 0);
+                vec_foreach(frame_idx, Init_table, curr_table, vec_at_ref(&frames, pred_0)->init_tables) {/*{*/
+                    Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+                    Init_table_node curr_in_tbl = {0};
+                    bool is_init_in_pred = true;
+                    while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+                        Init_table_node* dummy = NULL;
+                        if (init_symbol_lookup(&curr_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                            continue;
+                        }
+
+                        vec_foreach(pred_idx, size_t, pred, curr.preds) {/*{*/
+                            Frame* pred_frame = vec_at_ref(&frames, pred);
+                            Init_table_node* dummy = NULL;
+                            if (!init_symbol_lookup(&pred_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                                is_init_in_pred = false;
+                                break;
+                            }
+                        }}
+
+                        if (is_init_in_pred) {
+                            unwrap(init_symbol_add(&curr_frame->init_tables, curr_in_tbl));
+                        }
+                    }
+                }}
+            }
+
         }}
-    }}
+
+    }
 
     print_errors_for_unit = true;
-
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
         frame_idx = idx;
         curr_frame = vec_at_ref(&frames, idx);
