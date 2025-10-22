@@ -365,10 +365,6 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
     static int count = 0;
     log(LOG_DEBUG, "%d\n", count);
-    if (!is_main) {
-        return;
-    }
-
     log(LOG_DEBUG, FMT"\n", ir_block_print(block));
     vec_foreach(idx, Ir*, curr, block->children) {//{
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
@@ -431,10 +427,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 }
             }}
         }}
-        
-        // TODO: update succs with information gathered here
     }}
-
 
     print_errors_for_unit = true;
 
@@ -464,6 +457,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         }
     }}
 
+    frames = (Frame_vec) {0};
 }
 
 //static void check_unit_block(const Ir_block* block) {

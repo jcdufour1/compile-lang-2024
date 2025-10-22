@@ -178,7 +178,8 @@ static void load_block_stmts(
 
     // append initial label (for cfg)
     if (!is_top_level) {
-        load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
+        assert(new_block->children.info.count > 0);
+        assert(ir_is_label(vec_at(&new_block->children, 0)));
     }
 
     // TODO: avoid making this def on LANG_TYPE_VOID?
@@ -438,7 +439,10 @@ static void load_block_stmts(
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
-        load_variable_def(new_block, local_rtn_def);
+        if (!is_top_level) {
+            assert(new_block->children.info.count > 0);
+            load_variable_def(new_block, local_rtn_def);
+        }
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, local_rtn_def->name));
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
@@ -817,7 +821,8 @@ static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_bloc
         param->name_self = param->name_corr_param;
         ir_add(ir_def_wrap(ir_variable_def_wrap(param)));
     } else {
-        vec_insert(&a_main, &new_block->children, 0, ir_alloca_wrap(
+        // TODO: try not to insert at the start of the dynamic array
+        vec_insert(&a_main, &new_block->children, 1, ir_alloca_wrap(
             add_load_and_store_alloca_new(param)
         ));
     }
@@ -1821,6 +1826,8 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         )
     );
 
+    load_label(new_fun_def->body, tast_label_new(pos, util_literal_name_new(), new_fun_def->body->scope_id));
+
     Lang_type new_lang_type = {0};
     new_fun_def->decl->params = load_function_parameters(
          new_fun_def->body,
@@ -2751,6 +2758,7 @@ static Ir_block* load_block(
         load_def_sometimes(curr);
     }
 
+    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), new_block->scope_id));
     load_block_stmts(new_block, old_block->children, yield_dest_name, parent_of, old_block->pos, lang_type, is_top_level);
 
     if (defered_collections.coll_stack.info.count > 0) {

@@ -79,6 +79,7 @@ typedef struct {
 
 #define vec_insert(arena, vector, index, item_to_insert) \
     do { \
+        (unwrap((vector)->info.count >= (index) && "out of bounds"), &(vector)->buf[(index)]); \
         vec_reserve(arena, vector, 1); \
         memmove((vector)->buf + index + 1, (vector)->buf + index, sizeof((vector)->buf[0])*((vector)->info.count - (index))); \
         (vector)->buf[(index)] = item_to_insert; \
