@@ -143,5 +143,7 @@ bool struct_like_tbl_lookup(Uast_def** def, Name key);
 
 Scope_id symbol_collection_new(Scope_id parent);
 
+void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth);
+
 #endif // SYMBOL_TABLE_H
 

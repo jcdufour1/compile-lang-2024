@@ -5,6 +5,7 @@
 #include <name.h>
 #include <ulang_type_get_pos.h>
 #include <bool_vec.h>
+#include <symbol_log.h>
 
 static void check_unit_ir_builtin(const Ir* ir);
 
@@ -106,16 +107,18 @@ static Frame frame_new(Init_table_vec init_tables) {
 }
 
 static Init_table init_table_clone(Init_table table) {
-    Init_table new_table = {
-        .table_tasts = arena_alloc(&a_main /* TODO */, sizeof(new_table.table_tasts[0])*table.capacity), 
-        .count = table.count,
-        .capacity = table.capacity
-    };
-    for (size_t idx = 0; idx < table.capacity; idx++) {
-        Usymbol_table_tast curr = table.table_tasts[idx];
-        new_table.table_tasts[idx] = (Usymbol_table_tast) {.key = curr.key, .status = curr.status};
-    }
-    return new_table;
+    (void) table;
+    todo();
+    //Init_table new_table = {
+    //    .table_tasts = arena_alloc(&a_main /* TODO */, sizeof(new_table.table_tasts[0])*table.capacity), 
+    //    .count = table.count,
+    //    .capacity = table.capacity
+    //};
+    //for (size_t idx = 0; idx < table.capacity; idx++) {
+    //    Usymbol_table_tast curr = table.table_tasts[idx];
+    //    new_table.table_tasts[idx] = (Usymbol_table_tast) {.key = curr.key, .status = curr.status};
+    //}
+    //return new_table;
 }
 
 static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
@@ -382,20 +385,28 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
             vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
                 Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-                Strv curr = {0};
-                while (init_tbl_iter_next(&curr, &iter)) {
-                    Frame succ_frame = vec_at(frames, succ_idx);
-                    void* result = NULL;
-                    if (init_symbol_lookup_internal(&succ_frame->init_tables))
-                    todo();
+                Name curr_in_tbl = {0};
+                while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+                    Frame* succ_frame = vec_at_ref(&frames, succ);
+                    if (!init_symbol_lookup(&succ_frame->init_tables, curr_in_tbl)) {
+                        for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
+                            init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
+                        }
+                        unwrap(init_symbol_add(&succ_frame->init_tables, curr_in_tbl));
+                        if (!strv_is_equal(curr_in_tbl.mod_path, sv("builtin")) && !strv_is_equal(curr_in_tbl.mod_path, sv("")) && !strv_is_equal(curr_in_tbl.mod_path, (Strv) {0})) {
+                            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_in_tbl));
+                            for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
+                                init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
+                            }
+                        }
+                    }
                 }
-                todo();
             }}
-            todo();
         }}
         
         // TODO: update succs with information gathered here
     }}
+
 
     print_errors_for_unit = true;
 

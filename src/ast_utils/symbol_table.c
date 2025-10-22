@@ -421,7 +421,7 @@ static bool init_symbol_lookup_internal(Init_table_vec* init_tables, void** resu
         return false;
     }
 
-    while (scope_id + 1 > init_tables->info.count) {
+    while (scope_id + 10 /* TODO */ > init_tables->info.count) {
         // TODO: use different arena then a_main, because this vector is only needed for one pass
         vec_append(&a_main, init_tables, (Init_table) {0});
     }
@@ -447,6 +447,11 @@ bool init_symbol_add_internal(
     void* item,
     Scope_id scope_id
 ) {
+    while (scope_id + 10 /* TODO */ > init_tables->info.count) {
+        // TODO: use different arena then a_main, because this vector is only needed for one pass
+        vec_append(&a_main, init_tables, (Init_table) {0});
+    }
+
     void* dummy;
     if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
         return false;
@@ -465,8 +470,10 @@ bool init_symbol_add(Init_table_vec* init_tables, Name name) {
     while (init_tables->info.count < name.scope_id + 2) {
         vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));
     }
+    Name* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
+    *buf = name;
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), NULL, name.scope_id);
+    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), buf, name.scope_id);
 }
 
 //
@@ -583,6 +590,7 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
 //
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+    // TODO: remove this count stuff
     static int count = 0;
     if (count > 10) {
         return;
@@ -593,6 +601,16 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
             string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+        }
+    }
+}
+
+void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth) {
+    (void) recursion_depth;
+    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
+        Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            extend_name(NAME_LOG, buf, *sym_tast->tast);
         }
     }
 }

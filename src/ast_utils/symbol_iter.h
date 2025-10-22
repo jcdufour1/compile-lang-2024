@@ -89,11 +89,11 @@ static inline Init_table_iter init_tbl_iter_new_table(Init_table tbl) {
     return (Init_table_iter) {.bucket_idx = 0, .tbl = tbl};
 }
 
-static inline bool init_tbl_iter_next(Strv* result, Init_table_iter* iter) {
+static inline bool init_tbl_iter_next(Name* result, Init_table_iter* iter) {
     bool was_found = false;
     while (!was_found && iter->bucket_idx < iter->tbl.capacity) {
         if (iter->tbl.table_tasts[iter->bucket_idx].status == SYM_TBL_OCCUPIED) {
-            *result = iter->tbl.table_tasts[iter->bucket_idx].key;
+            *result = *iter->tbl.table_tasts[iter->bucket_idx].tast;
             was_found = true;
         }
         iter->bucket_idx++;

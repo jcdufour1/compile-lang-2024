@@ -51,13 +51,13 @@ typedef struct {
 
 
 typedef struct {
-    void* tast;
+    Name* tast;
     Strv key;
     SYM_TBL_STATUS status;
 } Init_table_tast;
 
 typedef struct {
-    Usymbol_table_tast* table_tasts;
+    Init_table_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
 } Init_table;
