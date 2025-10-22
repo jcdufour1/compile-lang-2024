@@ -129,11 +129,12 @@ static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
     return new_vec;
 }
 
-//static size_t block_idx = 0;
 static bool at_end_of_cfg_node = false;
 //static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
+static size_t block_pos = {0};
+static size_t frame_idx = 0;
 static Frame* curr_frame = {0};
 static Frame_vec frames = {0};
 static bool print_errors_for_unit;
@@ -245,23 +246,42 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     //   (because otherwise it would be required to modify the add_load_and_store pass or
     //   ignore impossible paths (eg. neither the if nor else is taken).
     //   consider if builtin symbols should be checked or not
-    if (print_errors_for_unit && !init_symbol_lookup(&curr_frame->init_tables, name) && !strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
-        if (check_unit_is_struct(name)) {
-            msg(
-                DIAG_UNINITIALIZED_VARIABLE, pos,
-                "symbol `"FMT"` is used uninitialized on some or all code paths; "
-                "note that struct must be initialized with a struct literal or function call "
-                "(individual member accesses do not satisfy initialization requirements)\n", name_print(NAME_MSG, name));
-        } else {
-            msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
-        }
-
-        for (size_t idx = 0; idx < frames.info.count; idx++) {
-            // prevent printing error for the same symbol on several code paths
-            init_symbol_add(&vec_at_ref(&frames, idx)->init_tables, name);
-        }
-        check_unit_src_internal_name_failed = true;
+    if (!print_errors_for_unit) {
+        return;
     }
+
+    if (strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
+        return;
+    }
+
+    Init_table_node* result = NULL;
+    if (init_symbol_lookup(&curr_frame->init_tables, &result, name)) {
+        if (result->cfg_node_of_init != frame_idx || result->block_pos_of_init < block_pos) {
+            // symbol was initialized before this use
+            return;
+        }
+    }
+
+    if (check_unit_is_struct(name)) {
+        msg(
+            DIAG_UNINITIALIZED_VARIABLE, pos,
+            "symbol `"FMT"` is used uninitialized on some or all code paths; "
+            "note that struct must be initialized with a struct literal or function call "
+            "(individual member accesses do not satisfy initialization requirements)\n", name_print(NAME_MSG, name));
+    } else {
+        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
+    }
+
+    for (size_t idx = 0; idx < frames.info.count; idx++) {
+        // prevent printing error for the same symbol on several code paths
+        init_symbol_add(&vec_at_ref(&frames, idx)->init_tables, (Init_table_node) {
+            .name = name,
+            .cfg_node_of_init = idx,
+            .block_pos_of_init = 0,
+        });
+    }
+
+    check_unit_src_internal_name_failed = true;
 }
 
 static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
@@ -308,7 +328,12 @@ static void check_unit_src(const Name src, Pos pos) {
 }
 
 static void check_unit_dest(const Name dest) {
-    if (!init_symbol_add(&curr_frame->init_tables, dest)) {
+    if (!init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
+        .name = dest,
+        .cfg_node_of_init = frame_idx,
+        .block_pos_of_init = block_pos
+    })) {
+
     }
 }
 
@@ -361,6 +386,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
     // TODO: keep running this for loop until there are no changes
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+        frame_idx = idx;
         curr_frame = vec_at_ref(&frames, idx);
 
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
@@ -369,6 +395,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         at_end_of_cfg_node = false;
 
         for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+            block_pos = block_idx;
             check_unit_ir_from_block(vec_at(&block->children, block_idx));
 
             if (
@@ -385,20 +412,21 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
             vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
                 Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-                Name curr_in_tbl = {0};
+                Init_table_node curr_in_tbl = {0};
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
                     Frame* succ_frame = vec_at_ref(&frames, succ);
-                    if (!init_symbol_lookup(&succ_frame->init_tables, curr_in_tbl)) {
-                        for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
-                            init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
-                        }
+                    Init_table_node* dummy = NULL;
+                    if (!init_symbol_lookup(&succ_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                        //for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
+                        //    init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
+                        //}
                         unwrap(init_symbol_add(&succ_frame->init_tables, curr_in_tbl));
-                        if (!strv_is_equal(curr_in_tbl.mod_path, sv("builtin")) && !strv_is_equal(curr_in_tbl.mod_path, sv("")) && !strv_is_equal(curr_in_tbl.mod_path, (Strv) {0})) {
-                            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_in_tbl));
-                            for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
-                                init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
-                            }
-                        }
+                        //if (!strv_is_equal(curr_in_tbl.mod_path, sv("builtin")) && !strv_is_equal(curr_in_tbl.mod_path, sv("")) && !strv_is_equal(curr_in_tbl.mod_path, (Strv) {0})) {
+                        //    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_in_tbl));
+                        //    for (size_t idx_thing = 0; idx_thing < succ_frame->init_tables.info.count; idx_thing++) {
+                        //        init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, vec_at(&succ_frame->init_tables, idx_thing), 0);
+                        //    }
+                        //}
                     }
                 }
             }}
@@ -411,6 +439,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     print_errors_for_unit = true;
 
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+        frame_idx = idx;
         curr_frame = vec_at_ref(&frames, idx);
 
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
@@ -419,6 +448,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         at_end_of_cfg_node = false;
 
         for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+            block_pos = block_idx;
             check_unit_ir_from_block(vec_at(&block->children, block_idx));
 
             if (
@@ -434,7 +464,6 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         }
     }}
 
-    todo();
 }
 
 //static void check_unit_block(const Ir_block* block) {
@@ -559,7 +588,11 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos);
     check_unit_dest(store->ir_dest);
-    init_symbol_add(&curr_frame->init_tables, store->name);
+    init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
+        .name = store->name,
+        .cfg_node_of_init = frame_idx,
+        .block_pos_of_init = block_pos
+    });
 }
 
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
@@ -567,18 +600,27 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
-    init_symbol_add(&curr_frame->init_tables, load->name);
+    init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
+        .name = load->name,
+        .cfg_node_of_init = frame_idx,
+        .block_pos_of_init = block_pos
+    });
 }
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos);
-    unwrap(init_symbol_add(&curr_frame->init_tables, load->name_self));
+    init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
+        .name = load->name_self,
+        .cfg_node_of_init = frame_idx,
+        .block_pos_of_init = block_pos
+    });
 }
 
 static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->index, access->pos);
     check_unit_src(access->callee, access->pos);
-    unwrap(init_symbol_add(&curr_frame->init_tables, access->name_self));
+    todo();
+    //unwrap(init_symbol_add(&curr_frame->init_tables, access->name_self));
 }
 
 static void check_unit_goto(const Ir_goto* lang_goto) {

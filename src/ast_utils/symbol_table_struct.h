@@ -49,9 +49,14 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } Ir_table;
 
+typedef struct {
+    Name name;
+    size_t cfg_node_of_init;
+    size_t block_pos_of_init;
+} Init_table_node;
 
 typedef struct {
-    Name* tast;
+    Init_table_node* tast;
     Strv key;
     SYM_TBL_STATUS status;
 } Init_table_tast;

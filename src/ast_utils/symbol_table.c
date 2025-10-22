@@ -461,19 +461,19 @@ bool init_symbol_add_internal(
     return true;
 }
 
-bool init_symbol_lookup(Init_table_vec* init_tables, Name name) {
-    void* dummy = NULL;
-    return init_symbol_lookup_internal(init_tables, &dummy, serialize_name_symbol_table(name), name.scope_id);
+bool init_symbol_lookup(Init_table_vec* init_tables, Init_table_node** result, Name name) {
+    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
+    return init_symbol_lookup_internal(init_tables, (void**)result, serialize_name_symbol_table(name), name.scope_id);
 }
 
-bool init_symbol_add(Init_table_vec* init_tables, Name name) {
-    while (init_tables->info.count < name.scope_id + 2) {
+bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
+    while (init_tables->info.count < node.name.scope_id + 2) {
         vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));
     }
-    Name* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
-    *buf = name;
+    Init_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
+    *buf = node;
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(name), buf, name.scope_id);
+    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(node.name), buf, node.name.scope_id);
 }
 
 //
@@ -610,7 +610,8 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            extend_name(NAME_LOG, buf, *sym_tast->tast);
+            todo();
+            //extend_name(NAME_LOG, buf, *sym_tast->tast);
         }
     }
 }
