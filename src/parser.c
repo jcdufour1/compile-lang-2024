@@ -2017,6 +2017,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
     vec_append(&a_main, &ifs, if_stmt);
 
     if_else_chain_consume_newline(tokens);
+    bool has_appended_default = false;
     while (try_consume(NULL, tokens, TOKEN_ELSE)) {
         if_stmt = uast_if_new(if_token.pos, NULL, NULL);
 
@@ -2033,6 +2034,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
                     unreachable("");
             }
         } else {
+            has_appended_default = true;
             if_stmt->condition = uast_condition_new(if_token.pos, NULL);
             if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
                 util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
@@ -2045,6 +2047,22 @@ static PARSE_STATUS parse_if_else_chain_internal(
         vec_append(&a_main, &ifs, if_stmt);
 
         if_else_chain_consume_newline(tokens);
+    }
+
+    if (!has_appended_default) {
+        if_stmt = uast_if_new(
+            if_token.pos,
+            uast_condition_new(if_token.pos, uast_condition_get_default_child(uast_literal_wrap(
+                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_token.pos)
+            ))),
+            uast_block_new(
+                if_stmt->pos,
+                (Uast_stmt_vec) {0},
+                if_stmt->pos,
+                symbol_collection_new(parent)
+            )
+        );
+        vec_append(&a_main, &ifs, if_stmt);
     }
 
     Uast_stmt_vec chain_ = {0};
