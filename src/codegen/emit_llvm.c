@@ -132,14 +132,14 @@
 //        string_extend_cstr(&a_main, output, " @.");
 //        ir_extend_name(output, ir_literal_get_name(literal));
 //    } else if (lang_type_atom_is_signed(lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_literal_get_lang_type(literal)))) {
-//        assert(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+//        unwrap(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
 //        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
 //            todo();
 //        }
 //        vec_append(&a_main, output, ' ');
 //        extend_literal(output, literal);
 //    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_literal_get_lang_type(literal)))) {
-//        assert(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+//        unwrap(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
 //        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
 //            todo();
 //        }
@@ -263,7 +263,7 @@
 //}
 //
 //static void emit_function_call(String* output, String* literals, const Ir_function_call* fun_call) {
-//    //assert(fun_call->ir_id == 0);
+//    //unwrap(fun_call->ir_id == 0);
 //
 //    // start of actual function call
 //    string_extend_cstr(&a_main, output, "    ");
@@ -272,7 +272,7 @@
 //        ir_extend_name(output, fun_call->name_self);
 //        string_extend_cstr(&a_main, output, " = ");
 //    } else {
-//        assert(!strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, sv("void")));
+//        unwrap(!strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, sv("void")));
 //    }
 //    string_extend_cstr(&a_main, output, "call ");
 //    extend_type_call_str(output, fun_call->lang_type);

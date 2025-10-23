@@ -18,31 +18,31 @@ static const char* get_path(const char* build_dir, const char* file_name_in_dir)
 }
 
 int main(int argc, char** argv) {
-    assert(argc == 2 && "invalid count of arguments provided");
+    unwrap(argc == 2 && "invalid count of arguments provided");
 
     gen_lang_type(get_path(argv[1], "lang_type.h"), true);
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_ir_lang_type(get_path(argv[1], "ir_lang_type.h"), true);
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_all_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
-    assert(!global_output);
+    unwrap(!global_output);
     gen_all_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
-    assert(!global_output);
+    unwrap(!global_output);
     gen_all_irs(get_path(argv[1], "ir_forward_decl.h"), false);
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_all_vecs(get_path(argv[1], "vecs.h"));
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_all_tasts(get_path(argv[1], "tast.h"), true);
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_all_uasts(get_path(argv[1], "uast.h"), true);
-    assert(!global_output);
+    unwrap(!global_output);
 
     gen_all_irs(get_path(argv[1], "ir.h"), true);
-    assert(!global_output);
+    unwrap(!global_output);
 }
 

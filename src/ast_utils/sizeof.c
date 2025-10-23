@@ -141,7 +141,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
         }
     }
 
-    assert(end_alignment <= req_align);
+    unwrap(end_alignment <= req_align);
     total += (end_alignment - total%end_alignment)%end_alignment;
     log(LOG_DEBUG, FMT": %zu\n", name_print(NAME_LOG, base->name), end_alignment);
     return total;

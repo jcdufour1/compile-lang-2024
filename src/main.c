@@ -58,10 +58,10 @@ void compile_file_to_ir(void) {
     bool status = parse(&untyped, params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
-        assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
+        unwrap((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
         exit(EXIT_CODE_FAIL);
     }
-    assert(status && "error_count should be zero if parse_file returns true");
+    unwrap(status && "error_count should be zero if parse_file returns true");
 
     log(LOG_DEBUG, "\nafter parsing start--------------------\n");
     usymbol_log_level(LOG_DEBUG, 0);
@@ -72,11 +72,11 @@ void compile_file_to_ir(void) {
     status = try_set_types();
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
-        assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
+        unwrap((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
         exit(EXIT_CODE_FAIL);
     }
     log(LOG_DEBUG, "try_set_block_types succedded\n");
-    assert(status && "error_count should be zero if try_set_types returns true");
+    unwrap(status && "error_count should be zero if try_set_types returns true");
     
     //unwrap(typed);
     arena_reset(&a_print);
@@ -106,7 +106,7 @@ void compile_file_to_ir(void) {
     if (error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }
-    //assert(ir_root);
+    //unwrap(ir_root);
     
     construct_cfgs();
 

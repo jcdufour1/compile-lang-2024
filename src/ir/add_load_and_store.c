@@ -187,8 +187,8 @@ static void load_block_stmts(
         //         load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
         //     }
         //
-        assert(new_block->children.info.count > 0);
-        assert(ir_is_label(vec_at(&new_block->children, 0)));
+        unwrap(new_block->children.info.count > 0);
+        unwrap(ir_is_label(vec_at(&new_block->children, 0)));
     }
 
     // TODO: avoid making this def on LANG_TYPE_VOID?
@@ -204,12 +204,12 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            assert(label_if_break.base.count > 0);
+            unwrap(label_if_break.base.count > 0);
             is_rtning_name = util_literal_name_new_prefix(sv("is_rtning_for"));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            assert(label_if_break.base.count > 0);
+            unwrap(label_if_break.base.count > 0);
             is_rtning_name = util_literal_name_new_prefix(sv("is_rtning_if"));
             break;
         }
@@ -241,7 +241,7 @@ static void load_block_stmts(
                 break;
             }
             case DEFER_PARENT_OF_FOR: {
-                assert(label_if_continue.base.count > 0);
+                unwrap(label_if_continue.base.count > 0);
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_for"));
                 break;
             }
@@ -270,7 +270,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            assert(label_if_continue.base.count > 0);
+            unwrap(label_if_continue.base.count > 0);
             is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_for"));
             break;
         }
@@ -298,7 +298,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            assert(label_if_continue.base.count > 0);
+            unwrap(label_if_continue.base.count > 0);
             is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_for"));
             break;
         }
@@ -320,7 +320,7 @@ static void load_block_stmts(
 
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    assert(break_expr->name.base.count > 0);
+    unwrap(break_expr->name.base.count > 0);
     log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
     log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
         .lang_type = break_expr->lang_type, .name = break_expr->name
@@ -382,7 +382,7 @@ static void load_block_stmts(
             for (size_t idx = 0; idx < children.info.count; idx++) {
                 load_stmt(new_block, vec_at(&children, idx), false);
             }
-            //assert(vec_top(&defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
+            //unwrap(vec_top(&defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
         }
         default:
@@ -424,10 +424,10 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
-            assert(new_block);
-            assert(new_block->scope_id);
-            assert(defer);
-            assert(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id));
+            unwrap(new_block);
+            unwrap(new_block->scope_id);
+            unwrap(defer);
+            unwrap(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id));
             vec_append(&a_main, &vec_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
                 tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), new_block->scope_id)
@@ -444,12 +444,12 @@ static void load_block_stmts(
 
     if (lang_type.type == LANG_TYPE_VOID) {
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
-        assert(break_expr->name.base.count > 0);
+        unwrap(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         if (!is_top_level) {
-            assert(new_block->children.info.count > 0);
+            unwrap(new_block->children.info.count > 0);
             load_variable_def(new_block, local_rtn_def);
         }
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
@@ -502,7 +502,7 @@ static void load_block_stmts(
     }
     vec_rem_last(&defered_collections.coll_stack);
 
-    assert(defered_collections.coll_stack.info.count == old_colls_count);
+    unwrap(defered_collections.coll_stack.info.count == old_colls_count);
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
@@ -531,7 +531,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_def) {
 #   ifndef DNDEBUG
         size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
-        assert(
+        unwrap(
             vec_at(&enum_def->base.members, largest_idx)->lang_type.type != LANG_TYPE_VOID &&
             "enum_def with inner types of only void should never be passed here"
         );
@@ -771,7 +771,7 @@ static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
     );
     ir_lang_type_set_pointer_depth(&alloca->lang_type, ir_lang_type_get_pointer_depth(alloca->lang_type) + 1);
     ir_add(ir_alloca_wrap(alloca));
-    assert(alloca);
+    unwrap(alloca);
     return alloca;
 }
 
@@ -893,8 +893,8 @@ static void if_for_add_cond_goto_internal(
 ) {
     Pos pos = tast_operator_get_pos(old_oper);
 
-    assert(label_name_if_true.base.count > 0);
-    assert(label_name_if_false.base.count > 0);
+    unwrap(label_name_if_true.base.count > 0);
+    unwrap(label_name_if_false.base.count > 0);
     Ir_cond_goto* cond_goto = ir_cond_goto_new_internal(
         pos,
         loc,
@@ -945,7 +945,7 @@ static Name load_function_call(Ir_block* new_block, Tast_function_call* old_call
     vec_append(&a_main, &new_block->children, ir_expr_wrap(ir_function_call_wrap(new_call)));
 
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
-        assert(def_name.base.count > 0);
+        unwrap(def_name.base.count > 0);
 
         Tast_symbol* new_sym = tast_symbol_new(old_call->pos, (Sym_typed_base) {
            .name = def_name,
@@ -1241,9 +1241,9 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
         unwrap(ir_lookup(&alloca, var_def->name_corr_param));
     }
 
-    assert(var_def);
+    unwrap(var_def);
     if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
-        assert(ir_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
+        unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
     }
 
     // TODO: remove this switch and just return ir_tast_get_name(alloca)
@@ -1422,7 +1422,7 @@ static Name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
 }
 
 static Name load_deref(Ir_block* new_block, Tast_unary* old_unary) {
-    assert(old_unary->token_type == UNARY_DEREF);
+    unwrap(old_unary->token_type == UNARY_DEREF);
 
     Name ptr = load_expr(new_block, old_unary->child);
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
@@ -1505,7 +1505,7 @@ static Name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
 
 static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
-    assert(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
+    unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
     unwrap(symbol_lookup(&def, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_callee))));
@@ -1535,8 +1535,8 @@ static Name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_
         util_literal_name_new()
     );
     ir_lang_type_set_pointer_depth(&new_load->lang_type, ir_lang_type_get_pointer_depth(new_load->lang_type) + 1);
-    assert(ir_lang_type_get_pointer_depth(new_load->lang_type) > 0);
-    assert(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_load->ir_src)) > 0);
+    unwrap(ir_lang_type_get_pointer_depth(new_load->lang_type) > 0);
+    unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_load->ir_src)) > 0);
 
     unwrap(ir_add(ir_load_element_ptr_wrap(new_load)));
 
@@ -1883,7 +1883,7 @@ static Name load_return(Ir_block* new_block, Tast_return* old_return) {
     }
 
     // TODO: remove below assertion?
-    //assert(fun_decl->return_type->lang_type.info.count == 1);
+    //unwrap(fun_decl->return_type->lang_type.info.count == 1);
     Ir_lang_type rtn_type = rm_tuple_lang_type(fun_decl->return_type, fun_decl->pos);
 
     bool rtn_is_struct = llvm_is_struct_like(rtn_type.type);
@@ -1927,8 +1927,8 @@ static Name load_return(Ir_block* new_block, Tast_return* old_return) {
 }
 
 static Name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign) {
-    assert(old_assign->lhs);
-    assert(old_assign->rhs);
+    unwrap(old_assign->lhs);
+    unwrap(old_assign->rhs);
 
     Pos pos = old_assign->pos;
 
@@ -1947,9 +1947,9 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
     );
     unwrap(ir_add(ir_store_another_ir_wrap(new_store)));
 
-    assert(new_store->ir_src.base.count > 0);
-    assert(new_store->ir_dest.base.count > 0);
-    assert(old_assign->rhs);
+    unwrap(new_store->ir_src.base.count > 0);
+    unwrap(new_store->ir_dest.base.count > 0);
+    unwrap(old_assign->rhs);
 
     vec_append(&a_main, &new_block->children, ir_store_another_ir_wrap(new_store));
 
@@ -1968,7 +1968,7 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
 
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));
 
-    assert(alloca);
+    unwrap(alloca);
 }
 
 static void load_struct_def(Tast_struct_def* old_def) {
@@ -2063,7 +2063,7 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, boo
 }
 
 static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if_else) {
-    assert(if_else->tasts.info.count > 0);
+    unwrap(if_else->tasts.info.count > 0);
     Name old_label_if_after = label_if_after;
 
     log(LOG_DEBUG, "thing 1876: %zu\n", scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0)->body->scope_id));
@@ -2114,7 +2114,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
             next_if = util_literal_name_new_prefix(sv("next_if"));
         }
 
-        assert(label_if_break.base.count > 0);
+        unwrap(label_if_break.base.count > 0);
         Ir_block* if_block = if_statement_to_branch(
             vec_at(&if_else->tasts, idx),
             next_if,
@@ -2124,13 +2124,13 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         vec_extend(&a_main, &(*new_block)->children, &if_block->children);
 
         if (idx + 1 < if_else->tasts.info.count) {
-            assert(!ir_lookup(&dummy, next_if));
+            unwrap(!ir_lookup(&dummy, next_if));
             add_label((*new_block), next_if, vec_at(&if_else->tasts, idx)->pos);
-            assert(ir_lookup(&dummy, next_if));
+            unwrap(ir_lookup(&dummy, next_if));
         }
     }
 
-    assert(!symbol_lookup(&dummy_def, next_if));
+    unwrap(!symbol_lookup(&dummy_def, next_if));
 
     add_label((*new_block), if_after, if_else->pos);
 
@@ -2140,7 +2140,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
     load_all_is_rtn_checks(*new_block);
 
     add_label((*new_block), next_if, if_else->pos);
-    assert(ir_lookup(&dummy, next_if));
+    unwrap(ir_lookup(&dummy, next_if));
 
     label_if_break = old_label_if_break;
     label_if_after = old_label_if_after;
@@ -2210,7 +2210,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     label_after_for = after_for_loop_label;
     label_if_break = after_for_loop_label;
 
-    assert(label_if_continue.base.count > 0);
+    unwrap(label_if_continue.base.count > 0);
 
     vec_append(&a_main, &new_block->children, ir_goto_wrap(jmp_to_check_cond_label));
 
@@ -2275,13 +2275,13 @@ static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
         ));
     }
 
-    assert(label_if_break.base.count > 0);
+    unwrap(label_if_break.base.count > 0);
 }
 
 static void load_label(Ir_block* new_block, Tast_label* old_label) {
     Ir_label* new_label = ir_label_new(old_label->pos, old_label->name);
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(new_label)));
-    assert(new_label->name.base.count > 0);
+    unwrap(new_label->name.base.count > 0);
     ir_add(ir_def_wrap(ir_label_wrap(new_label)));
 }
 
@@ -2311,7 +2311,7 @@ static void load_import(Tast_import* old_import) {
 }
 
 static Name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
-    assert(old_unary->token_type == UNARY_DEREF);
+    unwrap(old_unary->token_type == UNARY_DEREF);
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
@@ -2473,10 +2473,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
     ////   we need to set is_brking of multiple scopes to break/continue out of for
 
     Scope_id curr_scope = new_block->scope_id;
-    assert(defered_collections.coll_stack.info.count > 0);
+    unwrap(defered_collections.coll_stack.info.count > 0);
     size_t idx = defered_collections.coll_stack.info.count - 1;
     while (1) {
-        assert(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
+        unwrap(tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope != SCOPE_NOT);
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_out_of));
         log(LOG_DEBUG, "%zu\n", curr_scope);
         log(LOG_DEBUG, "%zu\n", tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope);
@@ -2500,7 +2500,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, Name
 
             // TODO: this will not always work for custom scopes
             if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
-                assert(is_yielding);
+                unwrap(is_yielding);
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
@@ -2782,12 +2782,12 @@ static Ir_block* load_block(
         load_all_is_rtn_checks(new_block);
     }
 
-    assert(defered_collections.coll_stack.info.count == old_colls_count);
+    unwrap(defered_collections.coll_stack.info.count == old_colls_count);
     return new_block;
 }
 
 void add_load_and_store(void) {
-    assert(defered_collections.coll_stack.info.count == 0);
+    unwrap(defered_collections.coll_stack.info.count == 0);
 
     Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
@@ -2795,7 +2795,7 @@ void add_load_and_store(void) {
         load_def_sometimes(curr);
     }
 
-    assert(defered_collections.coll_stack.info.count == 0);
+    unwrap(defered_collections.coll_stack.info.count == 0);
 }
 
 

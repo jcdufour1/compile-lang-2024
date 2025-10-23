@@ -5,21 +5,21 @@
 
 static inline Strv serialize_uast_struct_def(const Uast_struct_def* def) {
     Uast_def* dummy = NULL;
-    assert(usymbol_lookup(&dummy,  def->base.name) && "struct def must be in symbol table to be serialized");
+    unwrap(usymbol_lookup(&dummy,  def->base.name) && "struct def must be in symbol table to be serialized");
     todo();
     //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }
 
 static inline Strv serialize_uast_raw_union_def(const Uast_raw_union_def* def) {
     Uast_def* dummy = NULL;
-    assert(usymbol_lookup(&dummy,  def->base.name) && "raw_union def must be in symbol table to be serialized");
+    unwrap(usymbol_lookup(&dummy,  def->base.name) && "raw_union def must be in symbol table to be serialized");
     todo();
     //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }
 
 static inline Strv serialize_uast_enum_def(const Uast_enum_def* def) {
     Uast_def* dummy = NULL;
-    assert(usymbol_lookup(&dummy,  def->base.name) && "enum def must be in symbol table to be serialized");
+    unwrap(usymbol_lookup(&dummy,  def->base.name) && "enum def must be in symbol table to be serialized");
     todo();
     //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }

@@ -20,7 +20,7 @@ static Uname uname_normalize(Uname name) {
 }
 
 static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
-    assert(mod_alias.base.count > 0);
+    unwrap(mod_alias.base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
@@ -36,7 +36,7 @@ Uname name_to_uname(Name name) {
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
-    assert(mod_alias.base.count > 0);
+    unwrap(mod_alias.base.count > 0);
     return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
 }
 

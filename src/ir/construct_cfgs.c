@@ -100,8 +100,8 @@ static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
 }
 
 static void construct_cfg_block(Ir_block* block) {
-    assert(!curr_cfg);
-    assert(curr_cfg_idx_for_cond_goto == 0);
+    unwrap(!curr_cfg);
+    unwrap(curr_cfg_idx_for_cond_goto == 0);
     curr_cfg = &block->cfg;
 
     bool prev_is_cond_goto = false;

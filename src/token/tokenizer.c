@@ -346,7 +346,7 @@ static bool get_next_token(
             token->text = result;
             char dummy = '\0';
             if (!try_strv_to_char(&dummy, pos_open, token->text)) {
-                assert(error_count > 0);
+                unwrap(error_count > 0);
             }
             return true;
         } else if (equals.base.count == 2) {

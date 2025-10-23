@@ -61,7 +61,7 @@ bool try_strv_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Strv str
         *result += curr_char - '0';
     }
 
-    assert(idx > 0);
+    unwrap(idx > 0);
     return true;
 }
 
@@ -90,7 +90,7 @@ bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv)
         *result += increment;
     }
 
-    assert(idx > 0);
+    unwrap(idx > 0);
     return true;
 }
 
@@ -112,7 +112,7 @@ bool try_strv_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Strv strv)
         *result += curr_char - '0';
     }
 
-    assert(idx > 0);
+    unwrap(idx > 0);
     return true;
 }
 
@@ -335,7 +335,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (!try_strv_hex_after_0x_to_int64_t(&result_, pos, strv)) {
                 return false;
             }
-            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            unwrap(result_ <= 0xFF && "this should have been caught in the previous switch");
             *result = (char)result_;
             return true;
         }
@@ -345,7 +345,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (!try_strv_octal_after_0o_to_int64_t(&result_, pos, strv)) {
                 return false;
             }
-            assert(result_ <= 0xFF && "this should have been caught in the previous switch");
+            unwrap(result_ <= 0xFF && "this should have been caught in the previous switch");
             *result = (char)result_;
             return true;
         }
@@ -375,7 +375,7 @@ bool try_strv_to_size_t(size_t* result, Strv strv) {
 }
 
 bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore) {
-    assert(!ignore_underscore && "not implemented");
+    unwrap(!ignore_underscore && "not implemented");
     Strv num = strv_consume_while(strv, isdigit_no_underscore);
     return try_strv_to_size_t(result, num);
 }
@@ -407,9 +407,13 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     //string_extend_cstr(&a_main, &var_name, "_");
 
 #ifndef NDEBUG
-    string_extend_cstr(&a_main, &var_name, "__");
-    string_extend_strv(&a_main, &var_name, debug_prefix);
-    string_extend_cstr(&a_main, &var_name, "__");
+    // TODO: these debug mode only prefixes can cause release to print errors in a different order than debug
+    //   mode, which causes problems for the testing system. disable debug only prefixes, etc. when
+    //   tests are being run, or figure out how to print errors in a consistant order regardless of
+    //   prefixes being added to strings
+    //string_extend_cstr(&a_main, &var_name, "__");
+    //string_extend_strv(&a_main, &var_name, debug_prefix);
+    //string_extend_cstr(&a_main, &var_name, "__");
 #endif // DNDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);

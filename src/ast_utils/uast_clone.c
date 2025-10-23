@@ -178,7 +178,7 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 }
 
 Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_id new_scope) {
-    assert(label->name.scope_id == label->block_scope);
+    unwrap(label->name.scope_id == label->block_scope);
     Scope_id scope = use_new_scope ? new_scope : label->name.scope_id;
     return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope);
 }
@@ -252,8 +252,8 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
         case UAST_VARIABLE_DEF: {
             // TODO: simplify
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def), use_new_scope, new_scope);
-            assert(uast_variable_def_const_unwrap(def) != new_def);
-            assert(def != uast_variable_def_wrap(new_def));
+            unwrap(uast_variable_def_const_unwrap(def) != new_def);
+            unwrap(def != uast_variable_def_wrap(new_def));
             return uast_variable_def_wrap(new_def);
         }
         case UAST_POISON_DEF:

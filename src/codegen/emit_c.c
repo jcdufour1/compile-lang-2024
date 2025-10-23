@@ -92,7 +92,7 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
 
         if (vec_at(&params->params, idx)->is_variadic) {
             string_extend_cstr(&a_main, output, "... ");
-            assert(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
+            unwrap(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
             return;
         }
 
@@ -249,7 +249,7 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
 
 static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_call) {
     emit_c_loc(&strs->output, fun_call->loc, fun_call->pos);
-    //assert(fun_call->ir_id == 0);
+    //unwrap(fun_call->ir_id == 0);
 
     // start of actual function call
     string_extend_cstr(&a_main, &strs->output, "    ");
@@ -259,7 +259,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
         ir_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
-        //assert(!strv_cstr_is_equal(ir_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
+        //unwrap(!strv_cstr_is_equal(ir_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Ir* callee = NULL;

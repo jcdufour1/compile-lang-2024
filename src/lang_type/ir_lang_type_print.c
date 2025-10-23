@@ -146,7 +146,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
         }
         case IR_LANG_TYPE_STRUCT:
             // fallthrough
-            assert(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
+            unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
         case IR_LANG_TYPE_VOID:
             // fallthrough
         case IR_LANG_TYPE_PRIMITIVE:

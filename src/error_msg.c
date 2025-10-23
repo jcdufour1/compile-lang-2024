@@ -8,7 +8,7 @@ static void show_location_error(Pos pos) {
     Strv* file_con_ = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
     Strv file_con = *file_con_;
-    assert(pos.line > 0);
+    unwrap(pos.line > 0);
 
     if (pos.line > 1) {
         uint32_t line = 1;

@@ -12,7 +12,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
         case LANG_TYPE_CHAR: {
             // TODO: remove lang_type_atom from lang_type_char?
             Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
             return atom;
         }
         case LANG_TYPE_SIGNED_INT: {
@@ -24,8 +24,8 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_FLOAT: {
@@ -37,8 +37,8 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_UNSIGNED_INT: {
@@ -50,15 +50,15 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_OPAQUE: {
             // TODO: remove atom from LANG_TYPE_OPAQUE
             Lang_type_atom atom = lang_type_opaque_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
     }
@@ -171,22 +171,22 @@ static inline bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE
         }
         case LANG_TYPE_ENUM: {
             Lang_type_atom atom = lang_type_enum_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             *result = atom;
             return true;
         }
         case LANG_TYPE_STRUCT: {
             Lang_type_atom atom = lang_type_struct_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             *result = atom;
             return true;
         }
         case LANG_TYPE_RAW_UNION: {
             Lang_type_atom atom = lang_type_raw_union_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             *result = atom;
             return true;
         }
@@ -213,20 +213,20 @@ static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_ENUM: {
             Lang_type_atom atom = lang_type_enum_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_STRUCT: {
             Lang_type_atom atom = lang_type_struct_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_RAW_UNION: {
             Lang_type_atom atom = lang_type_raw_union_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_TUPLE: {
@@ -458,14 +458,14 @@ static inline bool lang_type_is_unsigned(Lang_type lang_type) {
 
 // TODO: make separate file for lang_type_atom functions?
 static inline int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
-    //assert(lang_type_atom_is_signed(lang_type));
+    //unwrap(lang_type_atom_is_signed(lang_type));
     return strv_to_int64_t( POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1));
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
 static inline Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     // TODO: remove or change this function
-    assert(lang_type_atom_is_unsigned(lang_type));
+    unwrap(lang_type_atom_is_unsigned(lang_type));
 
     if (lang_type.pointer_depth != 0) {
         todo();

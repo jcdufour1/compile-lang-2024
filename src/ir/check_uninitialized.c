@@ -376,8 +376,8 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     print_errors_for_unit = false;
 
     log(LOG_DEBUG, "%zu\n", frames.info.count);
-    assert(frames.info.count == 0);
-    assert(curr_frame);
+    unwrap(frames.info.count == 0);
+    unwrap(curr_frame);
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
         (void) curr;
         if (idx == 0) {
@@ -493,9 +493,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 }
 
 //static void check_unit_block(const Ir_block* block) {
-//    assert(frames.info.count == 0);
-//    assert(block_idx == 0);
-//    assert(goto_or_cond_goto == false);
+//    unwrap(frames.info.count == 0);
+//    unwrap(block_idx == 0);
+//    unwrap(goto_or_cond_goto == false);
 //    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
 //
 //    while (frames.info.count > 0) {
@@ -521,7 +521,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //
 //        curr_frame.init_tables = curr_frame.init_tables;
 //        if (curr_frame.label_to_cont.base.count < 1) {
-//            assert(block_idx == 0);
+//            unwrap(block_idx == 0);
 //        } else {
 //            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
 //            //   this for loop. this may cause bugs?
@@ -567,7 +567,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //                    }
 //                }
 //
-//                assert(bool_idx == curr_frame.prev_desisions.info.count);
+//                unwrap(bool_idx == curr_frame.prev_desisions.info.count);
 //            }
 //
 //            if (goto_or_cond_goto) {
@@ -583,7 +583,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //    }
 //
 //    memset(&curr_frame.init_tables, 0, sizeof(curr_frame.init_tables));
-//    assert(frames.info.count == 0);
+//    unwrap(frames.info.count == 0);
 //}
 
 static void check_unit_import_path(const Ir_import_path* import) {
@@ -604,7 +604,7 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 
 static void check_unit_function_def(const Ir_function_def* def) {
     log(LOG_DEBUG, FMT"\n", ir_function_def_print(def));
-    assert(curr_frame);
+    unwrap(curr_frame);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body, strv_is_equal(def->decl->name.base, sv("main")));

@@ -60,7 +60,7 @@ __attribute__((format (printf, 4, 5)));
 static void gen_gen_internal(FILE* output, const char* file, int line, const char* format, ...) {
     (void) file;
     (void) line;
-    assert(output);
+    unwrap(output);
 
     va_list args;
     va_start(args, format);

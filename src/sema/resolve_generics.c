@@ -178,7 +178,7 @@ static bool resolve_generics_serialize_struct_def_base(
         generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
-    assert(old_base.members.info.count == new_base->members.info.count);
+    unwrap(old_base.members.info.count == new_base->members.info.count);
 
     new_base->name = new_name;
     return true;
@@ -559,7 +559,7 @@ bool resolve_generics_function_def_implementation(Name name) {
     Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
-    assert(
+    unwrap(
         !symbol_lookup(&dummy_2, name) &&
         "same function has been passed to resolve_generics_function_def_implementation "
         "more than once, and it should not have been"
@@ -575,7 +575,7 @@ bool resolve_generics_function_def_implementation(Name name) {
         unwrap(function_decl_tbl_lookup(&dummy_3, name));
         Uast_function_def* def = uast_function_def_unwrap(result);
         Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id, true, def->body->pos);
-        assert(new_block != def->body);
+        unwrap(new_block != def->body);
 
         Uast_function_decl* new_decl = NULL;
         if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos)) {

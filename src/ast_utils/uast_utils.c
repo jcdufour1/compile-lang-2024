@@ -142,7 +142,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv valu
             unreachable("");
     }
 
-    assert(*new_lit);
+    unwrap(*new_lit);
     return true;
 }
 
@@ -170,7 +170,7 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            assert(value < INT8_MAX);
+            unwrap(value < INT8_MAX);
             Uast_char* literal = uast_char_new(pos, value);
             new_literal = uast_char_wrap(literal);
             break;
@@ -179,7 +179,7 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
             unreachable("");
     }
 
-    assert(new_literal);
+    unwrap(new_literal);
     return new_literal;
 }
 

@@ -16,7 +16,7 @@
 // util
 //
 static size_t sym_tbl_calculate_idx(Strv key, size_t capacity) {
-    assert(capacity > 0);
+    unwrap(capacity > 0);
     return stbds_hash_bytes(key.str, key.count, 0)%capacity;
 }
 
@@ -32,9 +32,9 @@ bool generic_symbol_lookup(void** result, Strv key, Get_tbl_from_collection_fn g
 
 // TODO: symbol_add should call symbol_update to reduce duplication
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Strv key, void* item) {
-    assert(key.count > 0 && "invalid item");
+    unwrap(key.count > 0 && "invalid item");
 
-    assert(capacity > 0);
+    unwrap(capacity > 0);
     size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
@@ -42,7 +42,7 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
-        assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
+        unwrap(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
         (void) init_table_idx;
     }
 
@@ -118,13 +118,13 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 // returns false if symbol has already been added to the table
 bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     generic_tbl_expand_if_nessessary(sym_table);
-    assert(((Generic_symbol_table*)sym_table)->capacity > 0);
+    unwrap(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
         return false;
     }
     Ir* dummy;
     (void) dummy;
-    assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
+    unwrap(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
     return true;
 }

@@ -18,8 +18,8 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case IR_LANG_TYPE_FLOAT: {
@@ -31,8 +31,8 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case IR_LANG_TYPE_UNSIGNED_INT: {
@@ -44,15 +44,15 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
                 name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
             );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case IR_LANG_TYPE_OPAQUE: {
             // TODO: remove atom from IR_LANG_TYPE_OPAQUE
             Ir_lang_type_atom atom = ir_lang_type_opaque_const_unwrap(ir_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
     }
@@ -162,8 +162,8 @@ static inline Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_la
         }
         case IR_LANG_TYPE_STRUCT: {
             Ir_lang_type_atom atom = ir_lang_type_struct_const_unwrap(ir_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(atom.str.base.count > 0);
             return atom;
         }
         case IR_LANG_TYPE_TUPLE: {
@@ -171,7 +171,7 @@ static inline Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_la
         }
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("", 1, 0);
-            assert(!strv_is_equal(atom.str.base, sv("void")));
+            unwrap(!strv_is_equal(atom.str.base, sv("void")));
             return atom;
         }
         case IR_LANG_TYPE_VOID: {
