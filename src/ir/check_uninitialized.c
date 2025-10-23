@@ -294,7 +294,6 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         //}}
 
     }}
-    todo();
 
     for (size_t idx = 0; idx < frames.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
@@ -386,20 +385,86 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
     unreachable("label should have been found");
 }
 
+static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t is_backedge) {
+    vec_foreach(idx, size_t, covered, *already_covered) {//{
+        if (is_backedge == covered) {
+            return false;
+        }
+    }}
+    vec_append(&a_print /* TODO */, already_covered, is_backedge);
+
+    log(LOG_DEBUG, "%zu\n", is_backedge);
+    log(LOG_DEBUG, "%zu\n", cfg.info.count);
+    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {//{
+        if (!pred_is_dead_end(already_covered, cfg, pred)) {
+            return false;
+        }
+    }}
+    return true;
+}
+
+// TODO: move this function
+static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
+    // control == 2, is_backedge == 6
+    vec_foreach(idx, size_t, covered, *already_covered) {//{
+        if (control == covered) {
+            return false;
+        }
+    }}
+    vec_append(&a_print /* TODO */, already_covered, control);
+    if (control == 2 && is_backedge == 0) {
+    }
+    if (control == 2 && is_backedge > 0) {
+        //log(LOG_DEBUG, "thing\n");
+    }
+
+    if (control == is_backedge) {
+        return true;
+    }
+
+    //log(LOG_DEBUG, "%zu\n", control);
+    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
+    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {//{
+        //log(LOG_DEBUG, "%zu\n", succ);
+        if (cfg_node_is_backedge_internal(already_covered, cfg, succ, is_backedge)) {
+            return true;
+        }
+    }}
+
+    return false;
+}
+
+// TODO: move this function
+static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_backedge) {
+    assert(control != is_backedge);
+
+    Size_t_vec already_covered = {0};
+    bool status = pred_is_dead_end(&already_covered, cfg, is_backedge);
+    already_covered = (Size_t_vec) {0};
+    if (!status) {
+        status = cfg_node_is_backedge_internal(&already_covered, cfg, control, is_backedge);
+    }
+
+    arena_reset(&a_print /* TODO */);
+    return status;
+}
+
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
     (void) is_main;
     static int count = 0;
     log(LOG_DEBUG, "%d\n", count);
     log(LOG_DEBUG, FMT"\n", ir_block_print(block));
     vec_foreach(idx, Ir*, curr, block->children) {//{
-        log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
+                                                  //
+        (void) curr;
+        //log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
     }}
 
     // do one iter on cfg for now
 
     print_errors_for_unit = false;
 
-    log(LOG_DEBUG, "%zu\n", frames.info.count);
+    //log(LOG_DEBUG, "%zu\n", frames.info.count);
     unwrap(frames.info.count == 0);
     unwrap(curr_frame);
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
@@ -412,7 +477,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }}
 
     // TODO: keep running this for loop until there are no changes
-    for (size_t idx = 0; idx < 30; idx++) {
+    for (size_t iter_idx = 0; iter_idx < 30; iter_idx++) {
         vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
             frame_idx = idx;
             curr_frame = vec_at_ref(&frames, idx);
@@ -455,7 +520,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
                 size_t pred_0 = vec_at(&curr.preds, 0);
-                vec_foreach(frame_idx, Init_table, curr_table, vec_at_ref(&frames, pred_0)->init_tables) {/*{*/
+                vec_foreach(inner_frame_idx, Init_table, curr_table, vec_at_ref(&frames, pred_0)->init_tables) {/*{*/
                     Init_table_iter iter = init_tbl_iter_new_table(curr_table);
                     Init_table_node curr_in_tbl = {0};
                     bool is_init_in_pred = true;
@@ -464,8 +529,16 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         if (init_symbol_lookup(&curr_frame->init_tables, &dummy, curr_in_tbl.name)) {
                             continue;
                         }
-
+                        if (iter_idx < 10) {
+                            log(LOG_DEBUG, "frame_idx %zu:\n", frame_idx);
+                        }
                         vec_foreach(pred_idx, size_t, pred, curr.preds) {/*{*/
+                            if (iter_idx < 10 && cfg_node_is_backedge(block->cfg, frame_idx, pred)) {
+                                continue;
+                            }
+                            if (iter_idx < 10) {
+                                log(LOG_DEBUG, "  %zu\n", pred);
+                            }
                             Frame* pred_frame = vec_at_ref(&frames, pred);
                             Init_table_node* dummy = NULL;
                             if (!init_symbol_lookup(&pred_frame->init_tables, &dummy, curr_in_tbl.name)) {
@@ -812,7 +885,7 @@ static void check_unit_ir_from_block(const Ir* ir) {
 }
 
 static void check_unit_ir_builtin(const Ir* ir) {
-    log(LOG_DEBUG, FMT"\n", ir_print(ir));
+    //log(LOG_DEBUG, FMT"\n", ir_print(ir));
     switch (ir->type) {
         case IR_BLOCK:
             // TODO: uncomment below unreachable (there should be no block in the top level?)
