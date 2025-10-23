@@ -271,6 +271,30 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     } else {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
     }
+    log(LOG_DEBUG, "%zu\n", frames.info.count);
+
+    // TODO: make function to log entire frames
+    vec_foreach(idx, Frame, frame, frames) {/*{*/
+        log(LOG_DEBUG, "frame %zu:\n", idx);
+        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
+        //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
+            //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+            //Init_table_node curr_in_tbl = {0};
+            //bool is_init_in_pred = true;
+            //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+            //    Init_table_node* dummy = NULL;
+            //    if (init_symbol_lookup(&curr_frame->init_tables, &dummy, curr_in_tbl.name)) {
+            //        continue;
+            //    }
+
+            //    if (is_init_in_pred) {
+            //        unwrap(init_symbol_add(&curr_frame->init_tables, curr_in_tbl));
+            //    }
+            //}
+        //}}
+
+    }}
+    todo();
 
     for (size_t idx = 0; idx < frames.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
@@ -624,7 +648,6 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
-    log(LOG_DEBUG, FMT"\n", ir_load_another_ir_print(load));
     check_unit_src(load->ir_src, load->pos);
     init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = load->name,

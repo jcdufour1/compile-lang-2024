@@ -172,7 +172,7 @@ Strv ir_block_print_internal(const Ir_block* block, int indent) {
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
 
     vec_foreach(idx, Cfg_node, curr, block->cfg) {
-        string_extend_strv(&a_print, &buf, cfg_node_print_internal(curr, indent + INDENT_WIDTH));
+        string_extend_strv(&a_print, &buf, cfg_node_print_internal(curr, idx, indent + INDENT_WIDTH));
     }}
 
     string_extend_cstr_indent(&a_print, &buf, "alloca_table\n", indent + INDENT_WIDTH);

@@ -103,24 +103,20 @@ static inline void ir_log_internal(LOG_LEVEL log_level, const char* file, int li
 
 //#define init_log_level(log_level, scope_id) init_level_log_internal(log_level, __FILE__, __LINE__, vec_at(&env.symbol_tables, scope_id).init_table, 0);
 
-static inline void init_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Init_table level, int recursion_depth) {
+static inline void init_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Scope_id scope_id, Init_table level, int recursion_depth) {
     String buf = {0};
     init_extend_table_internal(&buf, level, recursion_depth);
-    log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"FMT"\n", string_print(buf));
+    if (buf.info.count > 0) {
+        log_internal(log_level, file, line, 0, "scope_id: %zu\n", scope_id);
+        log_internal(log_level, file, line, recursion_depth + INDENT_WIDTH, "\n"FMT"\n", string_print(buf));
+    }
 }
 
 static inline void init_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth, Init_table_vec* init_tables) {
     log_internal(log_level, file, line, 0, "----start init table----\n");
-    Scope_id curr_scope = 0;
-    size_t idx = 0;
-    while (true) {
-        Init_table curr = vec_at(init_tables, curr_scope);
-        log_internal(log_level, file, line, 0, "level: %zu\n", idx);
-        init_level_log_internal(log_level, file, line, curr, recursion_depth + INDENT_WIDTH);
-        if (curr_scope == 0) {
-            break;
-        }
-        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+    for (size_t idx = 0; idx < init_tables->info.count; idx++) {
+        Init_table curr = vec_at(init_tables, idx);
+        init_level_log_internal(log_level, file, line, idx, curr, recursion_depth + INDENT_WIDTH);
     }
     log_internal(log_level, file, line, 0, "----end init table------\n");
 }

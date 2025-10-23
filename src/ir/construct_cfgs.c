@@ -119,7 +119,7 @@ static void construct_cfg_block(Ir_block* block) {
     }}
 
     vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
-        log(LOG_DEBUG, FMT"\n", cfg_node_print(curr));
+        log(LOG_DEBUG, FMT"\n", cfg_node_print(curr, idx));
     }}
     vec_foreach(idx, Ir*, curr, block->children) {
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
@@ -136,7 +136,7 @@ static void construct_cfg_block(Ir_block* block) {
     }}
 
     vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
-        log(LOG_DEBUG, "%zu: "FMT"\n", idx, cfg_node_print(curr));
+        log(LOG_DEBUG, "%zu: "FMT"\n", idx, cfg_node_print(curr, idx));
     }}
     vec_foreach(idx, Ir*, curr, block->children) {
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));

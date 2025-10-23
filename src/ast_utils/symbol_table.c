@@ -609,8 +609,9 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            todo();
-            //extend_name(NAME_LOG, buf, *sym_tast->tast);
+            string_extend_cstr_indent(&a_print, buf, "", recursion_depth*INDENT_WIDTH);
+            extend_name(NAME_LOG, buf, sym_tast->tast->name);
+            string_extend_cstr(&a_print, buf, "\n");
         }
     }
 }

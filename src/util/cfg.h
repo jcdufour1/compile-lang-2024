@@ -19,10 +19,12 @@ typedef struct {
     Cfg_node* buf;
 } Cfg_node_vec;
 
-static inline Strv cfg_node_print_internal(Cfg_node node, int indent)  {
+static inline Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent)  {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_print, &buf, "cfg_node\n", indent);
+    string_extend_cstr_indent(&a_print, &buf, "cfg_node:", indent);
+    string_extend_size_t(&a_print, &buf, idx);
+    string_extend_cstr(&a_print, &buf, "\n");
     indent += INDENT_WIDTH;
 
     string_extend_cstr_indent(&a_print, &buf, "preds: [", indent);
@@ -54,7 +56,7 @@ static inline Strv cfg_node_print_internal(Cfg_node node, int indent)  {
     return string_to_strv(buf);
 }
 
-#define cfg_node_print(node) \
-    strv_print(cfg_node_print_internal(node, 0))
+#define cfg_node_print(node, idx) \
+    strv_print(cfg_node_print_internal(node, idx, 0))
 
 #endif // CFG_H
