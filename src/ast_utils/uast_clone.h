@@ -3,8 +3,6 @@
 
 #include <uast.h>
 
-Uast_char* uast_char_clone(const Uast_char* lit);
-
 Uast_literal* uast_literal_clone(const Uast_literal* lit);
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
@@ -38,5 +36,14 @@ Uast_function_params* uast_function_params_clone(const Uast_function_params* par
 Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
 Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
+
+Uast_enum_get_tag* uast_enum_get_tag_clone(
+    const Uast_enum_get_tag* get_tag,
+    bool use_new_scope,
+    Scope_id new_scope,
+    Pos dest_pos
+);
+
+Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
 #endif // UAST_CLONE_H

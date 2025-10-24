@@ -26,6 +26,9 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_FN:
             string_extend_cstr(&a_print, buf, "fn");
             return;
+        case LANG_TYPE_ARRAY:
+            string_extend_cstr(&a_print, buf, "array");
+            return;
     }
     unreachable("");
 }
@@ -38,7 +41,7 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, vec_at(&types, idx));
+        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, vec_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
@@ -141,7 +144,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_lang_type_to_string(string, mode, vec_at(&lang_types, idx));
+                extend_lang_type_to_string(string, mode, vec_at(lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
@@ -154,12 +157,22 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             extend_lang_type_to_string(string, mode, *fn.return_type);
             goto end;
         }
+        case LANG_TYPE_ARRAY: {
+            Lang_type_array array = lang_type_array_const_unwrap(lang_type);
+            extend_lang_type_to_string(string, mode, *array.item_type);
+            string_extend_cstr(&a_print, string, "[");
+            string_extend_size_t(&a_print, string, array.count);
+            string_extend_cstr(&a_print, string, "]");
+            for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
+                vec_append(&a_print, string, '*');
+            }
+            goto end;
+        }
         case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
         case LANG_TYPE_STRUCT:
-            // fallthrough
             unwrap(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
         case LANG_TYPE_VOID:
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));

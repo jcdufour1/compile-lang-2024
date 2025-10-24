@@ -7,6 +7,8 @@ static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom;
+        case ULANG_TYPE_ARRAY:
+            unreachable("");
         case ULANG_TYPE_TUPLE:
             unreachable("");
         case ULANG_TYPE_FN:

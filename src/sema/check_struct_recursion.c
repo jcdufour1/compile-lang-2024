@@ -7,6 +7,7 @@
 #include <msg.h>
 #include <uast_utils.h>
 #include <check_struct_recursion.h>
+#include <expand_lang_def.h>
 
 // TODO: consider using iterative approach to avoid stack overflow risk
 static Arena struct_like_rec_a = {0};
@@ -15,7 +16,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack)
 
 static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang_type, Name name, Name_vec rec_stack) {
     for (size_t idx = 0; idx < rec_stack.info.count; idx++) {
-        if (name_is_equal(vec_at(&rec_stack, idx), name)) {
+        if (name_is_equal(vec_at(rec_stack, idx), name)) {
             msg(
                 DIAG_STRUCT_LIKE_RECURSION, lang_type.pos,
                 "`"FMT"` recursively includes itself without indirection; consider "
@@ -26,7 +27,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
             Uast_def* prev = def;
             for (size_t idx_stk = idx + 1; idx_stk < rec_stack.info.count; idx_stk++) {
                 Uast_def* curr = NULL;
-                unwrap(usymbol_lookup(&curr, vec_at(&rec_stack, idx_stk)));
+                unwrap(usymbol_lookup(&curr, vec_at(rec_stack, idx_stk)));
                 msg(
                     DIAG_NOTE, uast_def_get_pos(prev),
                     "`"FMT"` contains `"FMT"`\n",
@@ -57,7 +58,7 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
     Name name = {0};
     unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
     if (!usymbol_lookup(&def, name)) {
-        unwrap(error_count > 0 && "there is a bug somewhere");
+        assert(env.error_count > 0 && "there is a bug somewhere");
         return false;
     }
 
@@ -90,6 +91,8 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
             todo();
         case UAST_LABEL:
             todo();
+        case UAST_BUILTIN_DEF:
+            todo();
     }
     unreachable("");
 }
@@ -98,7 +101,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack)
     vec_append(&struct_like_rec_a, &rec_stack, base.name);
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(&base.members, idx);
+        Uast_variable_def* curr = vec_at(base.members, idx);
         switch (curr->lang_type.type) {
             case ULANG_TYPE_REGULAR: {
                 Ulang_type_regular reg = ulang_type_regular_const_unwrap(curr->lang_type);

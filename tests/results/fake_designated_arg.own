@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/fake_designated_arg.own:24:47:[1;31merror[0;39m:function parameter `file` has been assigned to more than once
+    23 |     let arr Local_arr(<i32>) = arr_new(87, i32)
+    24 |     arr_extend(&arr, [], .file = file, column = 8)
+       |                                               ^
+    25 |     return 0
+tests/inputs/fake_designated_arg.own:19:4:[1;34mnote[0;39m:function `arr_extend` defined here
+    18 | 
+    19 | fn arr_extend(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+       |    ^
+    20 | }
+
+compile::return_code 1
+

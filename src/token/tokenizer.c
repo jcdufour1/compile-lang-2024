@@ -107,8 +107,8 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 74, "exhausive handling of token types (only keywords are explicitly handled)");
-    if (isalpha(strv_col_front(*file_text_rem))) {
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only keywords are explicitly handled)");
+    if (isalpha(strv_col_front(*file_text_rem)) || strv_col_front(*file_text_rem) == '_') {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
@@ -160,6 +160,8 @@ static bool get_next_token(
             token->type = TOKEN_COUNTOF;
         } else if (strv_is_equal(text, sv("Type"))) {
             token->type = TOKEN_GENERIC_TYPE;
+        } else if (strv_is_equal(text, sv("using"))) {
+            token->type = TOKEN_USING;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;
@@ -250,7 +252,7 @@ static bool get_next_token(
                 if (file_text_rem->base.count < 2) {
                     msg(
                         DIAG_MISSING_CLOSE_MULTILINE, 
-                        vec_top(&pos_stack), "unmatched opening `/*`\n"
+                        vec_top(pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;
                 }
@@ -259,7 +261,7 @@ static bool get_next_token(
                     vec_append(&a_token, &pos_stack, *pos);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else if (strv_try_consume(&temp_text, '*') && strv_try_consume(&temp_text, '/')) {
-                    vec_rem_last(&pos_stack);
+                    vec_pop(&pos_stack);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else {
                     strv_col_consume(pos, file_text_rem);
@@ -346,7 +348,7 @@ static bool get_next_token(
             token->text = result;
             char dummy = '\0';
             if (!try_strv_to_char(&dummy, pos_open, token->text)) {
-                unwrap(error_count > 0);
+                assert(env.error_count > 0);
             }
             return true;
         } else if (equals.base.count == 2) {
@@ -373,6 +375,10 @@ static bool get_next_token(
     } else if (strv_col_front(*file_text_rem) == '=') {
         Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_equal);
         if (equals.base.count == 1) {
+            if (strv_col_try_consume(pos, file_text_rem, '>')) {
+                token->type = TOKEN_ONE_LINE_BLOCK_START;
+                return true;
+            }
             token->type = TOKEN_SINGLE_EQUAL;
             return true;
         } else if (equals.base.count == 2) {
@@ -663,9 +669,8 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //    test8();
 //}
 
-// TODO: return Tk_view instead of Token_vec
-bool tokenize(Token_vec* result, Strv file_path) {
-    size_t prev_err_count = error_count;
+bool tokenize(Tk_view* result, Strv file_path) {
+    size_t prev_err_count = env.error_count;
     Token_vec tokens = {0};
 
     Strv* file_con = NULL;
@@ -683,7 +688,7 @@ bool tokenize(Token_vec* result, Strv file_path) {
         // avoid consecutive newline tokens
         if (
             tokens.info.count > 1 && 
-            vec_top(&tokens).type == TOKEN_NEW_LINE &&
+            vec_top(tokens).type == TOKEN_NEW_LINE &&
             curr_token.type == TOKEN_NEW_LINE
         ) {
             continue;
@@ -711,7 +716,7 @@ bool tokenize(Token_vec* result, Strv file_path) {
 
     vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
 
-    *result = tokens;
-    return error_count == prev_err_count;
+    *result = (Tk_view) {.tokens = tokens.buf, .count = tokens.info.count};
+    return env.error_count == prev_err_count;
 }
 

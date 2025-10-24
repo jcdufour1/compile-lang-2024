@@ -67,7 +67,7 @@ static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!init_table_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!init_table_is_equal(vec_at(a, idx), vec_at(b, idx))) {
             //log(LOG_INFO, "thing 324: no 2\n");
             return false;
         }
@@ -83,7 +83,7 @@ static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec sub
     }
 
     for (size_t idx = 0; idx < subset.info.count; idx++) {
-        if (!init_table_is_subset(vec_at(&superset, idx), vec_at(&subset, idx))) {
+        if (!init_table_is_subset(vec_at(superset, idx), vec_at(subset, idx))) {
             //log(LOG_INFO, "thing 324: no 2\n");
             return false;
         }
@@ -124,7 +124,7 @@ static Init_table init_table_clone(Init_table table) {
 static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
     Init_table_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main /* TODO */, &new_vec, init_table_clone(vec_at(&vec, idx)));
+        vec_append(&a_main /* TODO */, &new_vec, init_table_clone(vec_at(vec, idx)));
     }
     return new_vec;
 }
@@ -165,7 +165,7 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
 static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos, Loc loc) {
     check_unit_src(call->callee, pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Name curr = vec_at(&call->args, idx);
+        Name curr = vec_at(call->args, idx);
         check_unit_src(curr, pos, loc);
     }
 }
@@ -376,6 +376,8 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
             todo();
         case IR_REMOVED:
             unreachable("");
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -402,7 +404,7 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
     for (size_t idx = 0; idx < block_children.info.count; idx++) {
         // TODO: find a way to avoid O(n) time for finding new block idx 
         //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
-        const Ir* curr = vec_at(&block_children, idx);
+        const Ir* curr = vec_at(block_children, idx);
         if (curr->type == IR_BLOCK) {
             todo();
         }
@@ -486,31 +488,8 @@ static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_bac
 }
 
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
-    //Ir* result = NULL;
-    log(LOG_DEBUG, "thing 57: %zu\n", block->scope_id);
-    if (block->scope_id != SCOPE_TOP_LEVEL && block->scope_id != SCOPE_BUILTIN) {
-        //unwrap(ir_lookup(&result, name_new(
-        //    MOD_PATH_BUILTIN,
-        //    sv("at_fun_start"),
-        //    (Ulang_type_vec) {0},
-        //    block->scope_id
-        //)));
-    }
-    (void) is_main;
-    static int count = 0;
-    log(LOG_DEBUG, "%d\n", count);
-    log(LOG_DEBUG, FMT"\n", ir_block_print(block));
-    vec_foreach(idx, Ir*, curr, block->children) {//{
-                                                  //
-        (void) curr;
-        //log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
-    }}
-
-    // do one iter on cfg for now
-
     print_errors_for_unit = false;
 
-    //log(LOG_DEBUG, "%zu\n", frames.info.count);
     unwrap(frames.info.count == 0);
     unwrap(curr_frame);
     vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
@@ -535,11 +514,11 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
                 block_pos = block_idx;
-                check_unit_ir_from_block(vec_at(&block->children, block_idx));
+                check_unit_ir_from_block(vec_at(block->children, block_idx));
 
                 if (
                     block_idx + 1 < block->children.info.count &&
-                    ir_is_label(vec_at(&block->children, block_idx + 1))
+                    ir_is_label(vec_at(block->children, block_idx + 1))
                 ) {
                     at_end_of_cfg_node = true;
                 }
@@ -551,7 +530,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
-                size_t pred_0 = vec_at(&curr.preds, 0);
+                size_t pred_0 = vec_at(curr.preds, 0);
                 vec_foreach(inner_frame_idx, Init_table, curr_table, vec_at_ref(&frames, pred_0)->init_tables) {/*{*/
                     Init_table_iter iter = init_tbl_iter_new_table(curr_table);
                     Init_table_node curr_in_tbl = {0};
@@ -606,11 +585,11 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
         for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
             block_pos = block_idx;
-            check_unit_ir_from_block(vec_at(&block->children, block_idx));
+            check_unit_ir_from_block(vec_at(block->children, block_idx));
 
             if (
                 block_idx + 1 < block->children.info.count &&
-                ir_is_label(vec_at(&block->children, block_idx + 1))
+                ir_is_label(vec_at(block->children, block_idx + 1))
             ) {
                 at_end_of_cfg_node = true;
             }
@@ -726,8 +705,8 @@ static void check_unit_import_path(const Ir_import_path* import) {
 
 static void check_unit_function_params(const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(&params->params, idx)->name_self));
-        check_unit_dest(vec_at(&params->params, idx)->name_self);
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(params->params, idx)->name_self));
+        check_unit_dest(vec_at(params->params, idx)->name_self);
     }
 }
 
@@ -819,7 +798,7 @@ static void check_unit_def(const Ir_def* def) {
 static void check_unit_function_call(const Ir_function_call* call) {
     check_unit_src(call->callee, call->pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Name curr = vec_at(&call->args, idx);
+        Name curr = vec_at(call->args, idx);
         check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, call->loc);
     }
 }
@@ -916,6 +895,8 @@ static void check_unit_ir_from_block(const Ir* ir) {
             todo();
         case IR_REMOVED:
             return;
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -961,6 +942,8 @@ static void check_unit_ir_builtin(const Ir* ir) {
             return;
         case IR_REMOVED:
             todo();
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -968,7 +951,7 @@ static void check_unit_ir_builtin(const Ir* ir) {
 void check_uninitialized(void) {
     curr_frame = arena_alloc(&a_main /* todo */, sizeof(*curr_frame));
 
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         check_unit_ir_builtin(curr);

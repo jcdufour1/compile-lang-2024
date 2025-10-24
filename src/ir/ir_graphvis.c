@@ -112,8 +112,8 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         bool is_last = idx + 1 >= block->children.info.count;
-        Ir* curr = vec_at(&block->children, idx);
-        Ir* next = is_last ? NULL : vec_at(&block->children, idx + 1);
+        Ir* curr = vec_at(block->children, idx);
+        Ir* next = is_last ? NULL : vec_at(block->children, idx + 1);
 
         if (idx < 1) {
             arrow_names_label(buf, block->name, ir_tast_get_name(curr), sv("next"));
@@ -162,7 +162,7 @@ static void ir_function_params_graphvis_internal(String* buf, const Ir_function_
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
-        arrow_names_label(buf, params->name, vec_at(&params->params, idx)->name_self, string_to_strv(idx_buf));
+        arrow_names_label(buf, params->name, vec_at(params->params, idx)->name_self, string_to_strv(idx_buf));
     }
 }
 
@@ -194,8 +194,9 @@ static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def
 
 static void ir_struct_def_base_graphvis_internal(String* buf, const Ir_struct_def_base* base) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        arrow_names(buf, base->name, vec_at(&base->members, idx)->name_self);
-        ir_variable_def_graphvis_internal(buf, vec_at(&base->members, idx));
+        arrow_names(buf, base->name, vec_at(base->members, idx)->name_self);
+        todo();
+        //ir_variable_def_graphvis_internal(buf, vec_at(base->members, idx));
     }
 }
 
@@ -307,7 +308,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
-        arrow_names_label(buf, args_name, vec_at(&call->args, idx), string_to_strv(idx_buf));
+        arrow_names_label(buf, args_name, vec_at(call->args, idx), string_to_strv(idx_buf));
     }
 
     // TODO: lang_type
@@ -316,7 +317,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
 static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "binary ");
-    string_extend_strv(&a_print, &type_buf, binary_type_to_strv(bin->token_type));
+    string_extend_strv(&a_print, &type_buf, ir_binary_type_to_strv(bin->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
     string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
@@ -328,7 +329,7 @@ static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
 static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     String type_buf = {0};
     string_extend_cstr(&a_print, &type_buf, "unary ");
-    string_extend_strv(&a_print, &type_buf, unary_type_to_strv(unary->token_type));
+    string_extend_strv(&a_print, &type_buf, ir_unary_type_to_strv(unary->token_type));
     string_extend_cstr(&a_print, &type_buf, " ");
     string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
@@ -498,7 +499,7 @@ Strv ir_graphvis(const Ir_block* block) {
     string_extend_cstr(&a_print, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make ir_add_ex)

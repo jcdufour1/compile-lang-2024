@@ -6,7 +6,7 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
 static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_new_scope, Scope_id new_scope) {
     Ulang_type_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, ulang_type_clone(vec_at(&vec, idx), use_new_scope, new_scope));
+        vec_append(&a_main, &new_vec, ulang_type_clone(vec_at(vec, idx), use_new_scope, new_scope));
     }
     return new_vec;
 }
@@ -24,6 +24,11 @@ static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lan
         ulang_type_atom_new(uname_clone(lang_type.atom.str, use_new_scope, new_scope), lang_type.atom.pointer_depth),
         lang_type.pos
     );
+}
+
+static inline Ulang_type_array ulang_type_array_clone(Ulang_type_array lang_type, bool use_new_scope, Scope_id new_scope) {
+    Ulang_type new_item_type = ulang_type_clone(*lang_type.item_type, use_new_scope, new_scope);
+    return ulang_type_array_new(arena_dup(&a_main, &new_item_type), lang_type.count, lang_type.pos);
 }
 
 static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, bool use_new_scope, Scope_id new_scope) {
@@ -45,6 +50,10 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_wrap(ulang_type_regular_clone(
                 ulang_type_regular_const_unwrap(lang_type), use_new_scope, new_scope
+            ));
+        case ULANG_TYPE_ARRAY:
+            return ulang_type_array_const_wrap(ulang_type_array_clone(
+                ulang_type_array_const_unwrap(lang_type), use_new_scope, new_scope
             ));
         case ULANG_TYPE_GEN_PARAM:
             return ulang_type_gen_param_const_wrap(ulang_type_gen_param_clone(

@@ -250,15 +250,6 @@ bool symbol_lookup(Tast_def** result, Name key) {
     return generic_symbol_lookup((void**)result, serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
 }
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
-
 //
 // usymbol implementation
 //
@@ -268,6 +259,23 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool usymbol_add(Uast_def* item) {
+#ifndef NDEBUG
+    Name prim_key = uast_def_get_name(item);
+    prim_key.scope_id = 0;
+    prim_key.mod_path = MOD_PATH_BUILTIN;
+    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return false;
+    }
+#endif // NDEBUG
+
+    assert(item);
     Name name = uast_def_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(name),
@@ -311,31 +319,37 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     Name prim_key = key;
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (usym_tbl_lookup(result, prim_key)) {
-        return true;
-    }
     if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+        if (usym_tbl_lookup(result, prim_key)) {
+            return true;
+        }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
         );
-        unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
+        usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
     } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+        if (usym_tbl_lookup(result, prim_key)) {
+            return true;
+        }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
         );
-        unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
+        usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
     } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+        if (usym_tbl_lookup(result, prim_key)) {
+            return true;
+        }
         int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new((Pos) {0}, bit_width, 0)))
+            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
         );
-        unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
+        usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
     }
@@ -384,6 +398,23 @@ void ir_tbl_update(Ir* item) {
 }
 
 void usymbol_update(Uast_def* item) {
+#ifndef NDEBUG
+    Name prim_key = uast_def_get_name(item);
+    prim_key.scope_id = 0;
+    prim_key.mod_path = MOD_PATH_BUILTIN;
+    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+        msg_todo("", uast_def_get_pos(item));
+        return;
+    }
+#endif // NDEBUG
+
+    assert(item);
     Name name = uast_def_get_name(item);
     generic_symbol_update(
         serialize_name_symbol_table(name),
@@ -570,7 +601,7 @@ static Scope_id_vec scope_id_to_parent;
 // returns parent of key
 // TODO: assert that key is != SCOPE_BUILTIN?
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    return vec_at(&scope_id_to_parent, key);
+    return vec_at(scope_id_to_parent, key);
 }
 
 void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
@@ -585,20 +616,35 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
 }
 
 //
+// Scope_id_to_name implementation
+//
+
+static Name_vec scope_to_name;
+
+Name scope_to_name_tbl_lookup(Scope_id key) {
+    return vec_at(scope_to_name, key);
+}
+
+void scope_to_name_tbl_add(Scope_id key, Name scope_name) {
+    while (scope_to_name.info.count <= key) {
+        vec_append(&a_main, &scope_to_name, (Name) {0});
+    }
+    *vec_at_ref(&scope_to_name, key) = scope_name;
+}
+
+void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
+    *vec_at_ref(&scope_to_name, key) = scope_name;
+}
+
+//
 // not generic
 //
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
-    // TODO: remove this count stuff
-    static int count = 0;
-    if (count > 10) {
-        return;
-    }
-    count++;
-
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
@@ -616,6 +662,16 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
     }
 }
 
+void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
+    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
+        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
+            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
+        }
+    }
+}
+
 void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
@@ -626,11 +682,12 @@ void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int rec
     }
 }
 
-Scope_id symbol_collection_new(Scope_id parent) {
+Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = env.symbol_tables.info.count;
     vec_append(&a_main, &env.symbol_tables, (Symbol_collection) {0});
 
     scope_get_parent_tbl_add(new_scope, parent);
+    scope_to_name_tbl_add(new_scope, scope_name);
     return new_scope;
 }
 

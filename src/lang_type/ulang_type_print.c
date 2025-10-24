@@ -4,7 +4,6 @@
 #include <lang_type_print.h>
 #include <env.h>
 
-// TODO: move this to ulang_type.c, or make ulang_type_print.h header
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     bool old_silent_resol_errors = env.silent_generic_resol_errors;
     env.silent_generic_resol_errors = true;
@@ -52,6 +51,14 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
+        case ULANG_TYPE_ARRAY: {
+            Ulang_type_array array = ulang_type_array_const_unwrap(lang_type);
+            extend_ulang_type_to_string(string, mode, *array.item_type);
+            string_extend_cstr(&a_print, string, "[");
+            string_extend_size_t(&a_print, string, array.count);
+            string_extend_cstr(&a_print, string, "]");
+            return;
+        }
         case ULANG_TYPE_REGULAR:
             extend_ulang_type_atom_to_string(string, mode, ulang_type_regular_const_unwrap(lang_type).atom);
             return;
@@ -62,7 +69,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_print, string, ", ");
                 }
-                extend_ulang_type_to_string(string, mode, vec_at(&tuple.ulang_types, idx));
+                extend_ulang_type_to_string(string, mode, vec_at(tuple.ulang_types, idx));
             }
             vec_append(&a_print, string, ')');
             return;

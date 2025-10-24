@@ -26,20 +26,31 @@ Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool inclu
     String name = {0};
     extend_name(NAME_LOG, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type, include_scope)));
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0 /* TODO */, (Attrs) {0});
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
+Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+        mod_path,
+        *ulang_type.item_type,
+        include_scope
+    )));
+    string_extend_size_t(&a_main, &name, ulang_type.count);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
-        Ulang_type curr = vec_at_const(ulang_type.ulang_types, idx);
+        Ulang_type curr = vec_at(ulang_type.ulang_types, idx);
         string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, curr, include_scope)));
     }
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0, (Attrs) {0});
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
-    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, 0 /* TODO */, (Attrs) {0});
+    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {
@@ -49,7 +60,7 @@ Name serialize_ulang_type_gen_param(Strv mod_path) {
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, vec_at(&vec, idx), include_scope)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, vec_at(vec, idx), include_scope)));
     }
     return string_to_strv(name);
 }
@@ -59,11 +70,13 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_FN:
-            return serialize_ulang_type_fn( mod_path, ulang_type_fn_const_unwrap(ulang_type), include_scope);
+            return serialize_ulang_type_fn(mod_path, ulang_type_fn_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_TUPLE:
-            return serialize_ulang_type_tuple( mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
+            return serialize_ulang_type_tuple(mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_GEN_PARAM:
-            return serialize_ulang_type_gen_param( mod_path);
+            return serialize_ulang_type_gen_param(mod_path);
+        case ULANG_TYPE_ARRAY:
+            return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }

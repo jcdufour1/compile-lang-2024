@@ -1,0 +1,18 @@
+//type io import = std.io
+//type util import = std.util
+
+type Optional enum(<ItemT>) {
+    some ItemT
+    none
+}
+
+fn main() i32 {
+    let opt Optional(<i32>) = .some(3)
+
+    if .some(num) = opt {
+        io.print_str("yes\n")
+    } else {
+        io.print_str("no\n")
+    }
+    return 0
+}

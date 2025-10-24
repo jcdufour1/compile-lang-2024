@@ -174,7 +174,7 @@ fn bitwise_not() {
     }
 
     {
-        let num u32 = 0
+        let num i32 = 0
         num = ~1
         io.printf("%x\n", num)
     }

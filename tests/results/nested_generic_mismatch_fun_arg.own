@@ -1,14 +1,14 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/nested_generic_mismatch_fun_arg.own:18:20:[1;31merror[0;39m:argument is of type `Darr(<Token(<i64, u8*>), i32>)`, but the corresponding parameter `darr` is of type `Darr(<Token(<i64, u16>), i32>)`
-    17 |     let darr Darr(<Token(<i64, u8*>), i32>)
+tests/inputs/nested_generic_mismatch_fun_arg.own:18:20:[1;31merror[0;39m:argument is of type `Local_Darr(<Token(<i64, u8*>), i32>)`, but the corresponding parameter `darr` is of type `Local_Darr(<Token(<i64, u16>), i32>)`
+    17 |     let darr Local_Darr(<Token(<i64, u8*>), i32>)
     18 |     darr_do_things(darr)
        |                    ^
     19 | 
 tests/inputs/nested_generic_mismatch_fun_arg.own:13:19:[1;34mnote[0;39m:corresponding parameter `darr` defined here
     12 | 
-    13 | fn darr_do_things(darr Darr(<Token(<i64, u16>), i32>)) {
+    13 | fn darr_do_things(darr Local_Darr(<Token(<i64, u16>), i32>)) {
        |                   ^
     14 | }
 

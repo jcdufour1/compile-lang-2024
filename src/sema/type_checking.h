@@ -6,10 +6,51 @@
 #include <tast.h>
 
 typedef enum {
+    PARENT_OF_NONE = 0,
+    PARENT_OF_CASE,
+    PARENT_OF_ASSIGN_RHS,
+    PARENT_OF_RETURN,
+    PARENT_OF_BREAK,
+    PARENT_OF_IF,
+} PARENT_OF;
+
+typedef enum {
+    PARENT_OF_DEFER_NONE = 0,
+    PARENT_OF_DEFER_DEFER,
+    PARENT_OF_DEFER_FOR,
+} PARENT_OF_DEFER;
+
+typedef enum {
     STMT_OK,
     STMT_NO_STMT, // new_tast is invalid and should not be added to block
     STMT_ERROR,
 } STMT_STATUS;
+
+typedef struct {
+    int dummy_int;
+    
+    Lang_type break_type;
+    
+    bool break_in_case;
+    
+    Uast_stmt_vec switch_case_defer_add_if_true;
+    Uast_stmt_vec switch_case_defer_add_enum_case_part;
+    
+    Lang_type lhs_lang_type;
+    
+    PARENT_OF parent_of;
+    Uast_expr* parent_of_operand;
+    
+    PARENT_OF_DEFER parent_of_defer;
+    
+    bool is_in_struct_base_def;
+    
+    bool is_in_defer;
+    Pos parent_defer_pos;
+
+    Lang_type switch_lang_type;
+    size_t switch_prev_idx;
+} Type_checking_env;
 
 bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment);
 
@@ -27,7 +68,7 @@ bool try_set_binary_types_finish(
 // returns false if unsuccessful
 bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator);
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def);
+bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def, bool is_top_level);
 
 STMT_STATUS try_set_stmt_types(Tast_stmt** new_stmt, Uast_stmt* stmt, bool is_at_top_level);
 
@@ -47,15 +88,13 @@ bool try_set_unary_types_finish(
 bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary);
 
 bool try_set_tuple_assignment_types(
-     
     Tast_tuple** new_tast,
     Lang_type dest_lang_type,
     Uast_tuple* tuple
 );
 
 bool try_set_struct_literal_types(
-     
-    Tast_stmt** new_tast,
+    Tast_struct_literal** new_tast,
     Lang_type dest_lang_type,
     Uast_struct_literal* lit,
     Pos assign_pos
@@ -110,7 +149,7 @@ bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast);
 
 bool try_set_module_alias_types(Tast_block** new_tast, Uast_mod_alias* tast);
 
-bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang_switch);
+bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch);
 
 bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else);
 

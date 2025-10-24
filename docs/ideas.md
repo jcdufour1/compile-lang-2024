@@ -521,7 +521,7 @@ type struct Things {
 
 fn foreach Things(things Things) {
     for (usize idx = 0; idx < things.items.count; idx++) {
-        yield things.items[idx]
+        for_yield things.items[idx]
     }
 }
 
@@ -531,6 +531,20 @@ fn foreach Things(things Things) {
 // allow count and mut items to be passed to same function
 ```c
 fn darr_at(darr Darr(inout 'T, 'I), index I) inout T {
+}
+```
+# method
+```c
+// this function can be used as either a method or a regular function
+@method
+fn at(darr Darr(<i32>), index i32) {
+    return darr.buf[index]
+}
+
+fn main() i32 {
+    let darr Darr(<i32>) = ..
+    let num i32 = darr.at(0)
+    return 0
 }
 ```
 

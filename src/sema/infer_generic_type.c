@@ -43,11 +43,16 @@ bool infer_generic_type(
             } break;
             case LANG_TYPE_UNSIGNED_INT: {
                 Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
-                if (!bit_width_calculation(&unsign.bit_width, unsign.bit_width, pos_arg)) {
+                Lang_type_signed_int sign = lang_type_signed_int_new(
+                    pos_arg,
+                    unsign.bit_width,
+                    unsign.pointer_depth
+                );
+                if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos_arg)) {
                     return false;
                 }
                 arg_to_infer_from = lang_type_primitive_const_wrap(
-                    lang_type_unsigned_int_const_wrap(unsign)
+                    lang_type_signed_int_const_wrap(sign)
                 );
             } break;
             case LANG_TYPE_FLOAT: {
@@ -59,8 +64,6 @@ bool infer_generic_type(
                     lang_type_float_const_wrap(lang_float)
                 );
             } break;
-            case LANG_TYPE_CHAR:
-                break;
             case LANG_TYPE_OPAQUE:
                 break;
             default:
@@ -82,16 +85,23 @@ bool infer_generic_type(
                     return false;
                 }
                 *infered = lang_type_to_ulang_type(arg_to_infer_from);
+                int16_t new_ptr_depth = ulang_type_get_pointer_depth(*infered) - reg.atom.pointer_depth;
+                if (new_ptr_depth < 0) {
+                    // TODO
+                    msg_todo("error message for this situation", pos_arg);
+                    return false;
+                }
+                ulang_type_set_pointer_depth(infered, new_ptr_depth);
                 return true;
             }
 
-            for (size_t idx = 0; idx < MIN(reg.atom.str.gen_args.info.count, lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args.info.count); idx++) {
+            for (size_t idx = 0; idx < min(reg.atom.str.gen_args.info.count, lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args.info.count); idx++) {
                 log(LOG_DEBUG, "thing 287:\n");
                 if (infer_generic_type(
                     infered,
-                    lang_type_from_ulang_type(vec_at_const(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
+                    lang_type_from_ulang_type(vec_at(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
                     false,
-                    uast_variable_def_new(pos_arg /* TODO */, vec_at(&reg.atom.str.gen_args, idx), util_literal_name_new()),
+                    uast_variable_def_new(pos_arg /* TODO */, vec_at(reg.atom.str.gen_args, idx), util_literal_name_new()),
                     name_to_infer,
                     pos_arg
                 )) {
@@ -108,6 +118,9 @@ bool infer_generic_type(
             // TODO
             return false;
         case ULANG_TYPE_GEN_PARAM:
+            // TODO
+            return false;
+        case ULANG_TYPE_ARRAY:
             // TODO
             return false;
     }

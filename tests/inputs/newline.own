@@ -1,0 +1,72 @@
+
+type io import = std.io
+type coll import = std.collections
+
+type Token struct {
+    num i32
+    str coll.Str
+}
+
+type Node enum {
+    num i32
+    str coll.Str
+}
+
+fn 
+main() i32 {
+    io.print_str(
+        "hello"
+    )
+
+    let token Token = {
+        .num = 8,
+        .str = "bye"
+    }
+    io.print_str(
+        token.
+            str
+    )
+
+
+    let node Node = .str(
+        "bye"
+    )
+    if let .str(
+        string
+    ) = node {
+        io.print_str(
+            string
+        )
+    }
+    if let 
+    .str(
+        string
+    ) = node {
+        io.print_str(
+            string
+        )
+    }
+
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+    else {
+        io.print_str("no")
+    }
+
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+
+    else {
+        io.print_str("no")
+    }
+
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+        io.print_str("yes")
+    } 
+
+    else => io.print_str("no")
+
+    return 0
+}

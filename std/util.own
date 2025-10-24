@@ -1,54 +1,85 @@
 type io import = std.io
 type rt import = std.runtime
+type libc import = std.libc
 type coll import = std.collections
-type c import = std.libc
 
 type Optional enum(<ItemT>) {
     some ItemT
     none
 }
 
-// TODO: make null function or similar
+type Result enum(<OkT, ErrorT>) {
+    ok OkT
+    error ErrorT
+}
 
 // overlapping regions are allowed
 // count_items is the number of items to move, not the number of bytes
 fn move_items(dest ItemT*, src ItemT*, count_items u64, ItemT Type) {
-    c.memmove(unsafe_cast<opaque*>dest, unsafe_cast<opaque*>src, sizeof(ItemT)*count_items);
+    libc.memmove(unsafe_cast<opaque*>dest, unsafe_cast<opaque*>src, sizeof(ItemT)*count_items);
 }
 
 fn null(ItemT Type) ItemT* {
     return unsafe_cast<ItemT*>0
 }
 
+fn bitcast(CastTo Type, item From, From Type) CastTo {
+    return *unsafe_cast<CastTo*>&item
+}
+
+fn swap(lhs ItemT*, rhs ItemT*, ItemT Type) {
+    let temp ItemT = *lhs
+    *lhs = *rhs
+    *rhs = temp
+}
+
 // TODO: return optional, etc.?
-fn alloc(count_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
-    let buf ItemT* = unsafe_cast<ItemT*>c.malloc(sizeof(ItemT)*count_items)
+fn alloc(count_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    let buf ItemT* = unsafe_cast<ItemT*>libc.malloc(sizeof(ItemT)*count_items)
     assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 // TODO: return optional, etc.?
-fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) ItemT* {
-    buf = unsafe_cast<ItemT*>c.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
+fn realloc(buf ItemT*, new_cnt_items u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    buf = unsafe_cast<ItemT*>libc.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
     assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 fn free(buf ItemT*, ItemT Type) {
-    c.free(unsafe_cast<opaque*>buf)
+    libc.free(unsafe_cast<opaque*>buf)
 }
 
 // TODO: remove keep_going parameter from std?
-fn assert(condition u1, message coll.Str = "", keep_going u1 = 0, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
-        // TODO: print to stderr
-        io.own_printf("%.*s:%d:%d:assertion failure: %s\n", unsafe_cast<i32>file.count, file.buf, unsafe_cast<i32>line, unsafe_cast<i32>column, message)
+        io.own_fprintf(
+            io.stderr(),
+            "%.*s:%d:%d:assertion failure: %s\n",
+            unsafe_cast<i32>file.count,
+            file.buf,
+            unsafe_cast<i32>line,
+            unsafe_cast<i32>column,
+            message
+        )
         if (!keep_going) {
-            c.abort()
+            libc.abort()
         }
     }
 }
 
-fn slice_from_cstr(cstr u8*) rt.Slice(<u8>) {
+// NOTE: cstr_free should be called on the returned string later
+fn str_to_cstr(str coll.Str) u8* {
+    let cstr coll.Arr(<u8>) = coll.arr_new(str.count + 1, u8, str)
+    coll.arr_append(&cstr, '\0')
+    return cstr.buf
+}
+
+fn cstr_free(cstr u8*) {
+    libc.free(unsafe_cast<opaque*>cstr)
+}
+
+fn slice_from_cstr(cstr u8*) Str {
     return {cstr, strlen(cstr)}
 }

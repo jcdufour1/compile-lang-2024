@@ -36,6 +36,16 @@ type Div6 struct {
     num2 i32
 }
 
+type Div7 struct {
+    num1 i16
+    num2 i16
+}
+
+type Div8 struct {
+    num1 f128
+    num2 i16
+}
+
 type Token1 enum {
     num1 i64
     num2 Div1
@@ -119,6 +129,10 @@ fn main() i32 {
     io.printf("sizeof div5 = %zu\n", sizeof div5)
     let div6 Div6 = {.num1 = {.num1 = 9, .num2 = 0}, .num2 = 6}
     io.printf("sizeof div6 = %zu\n", sizeof div6)
+    let div7 Div7 = {.num1 = 8, .num2 = 6}
+    io.printf("sizeof div7 = %zu\n", sizeof div7)
+    let div8 Div8 = {.num1 = 8.0, .num2 = 6}
+    io.printf("sizeof div8 = %zu\n", sizeof div8)
 
     let token1 Token1 = .num1(8)
     io.printf("sizeof token1 = %zu\n", sizeof token1)

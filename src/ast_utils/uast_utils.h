@@ -47,6 +47,10 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_CONTINUE:
             unreachable("");
+        case UAST_USING:
+            unreachable("");
+        case UAST_STMT_REMOVED:
+            unreachable("");
     }
     unreachable("");
 }
@@ -70,6 +74,10 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
         case UAST_YIELD:
             unreachable("");
         case UAST_CONTINUE:
+            unreachable("");
+        case UAST_USING:
+            unreachable("");
+        case UAST_STMT_REMOVED:
             unreachable("");
     }
     unreachable("");
@@ -120,13 +128,15 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT_PATH:
-            return name_new((Strv) {0}, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_BUILTIN, (Attrs) {0});
+            return name_new(MOD_PATH_OF_MOD_PATHS, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case UAST_MOD_ALIAS:
             return uast_mod_alias_const_unwrap(def)->name;
         case UAST_LANG_DEF:
             return uast_lang_def_const_unwrap(def)->alias_name;
         case UAST_LABEL:
             return uast_label_const_unwrap(def)->name;
+        case UAST_BUILTIN_DEF:
+            return uast_builtin_def_const_unwrap(def)->name;
     }
     unreachable("");
 }
@@ -162,6 +172,8 @@ static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, co
             return false;
         case UAST_LANG_DEF:
             todo();
+        case UAST_BUILTIN_DEF:
+            return false;
         case UAST_LABEL:
             return false;
     }
@@ -182,7 +194,7 @@ static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+        if (!ulang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
             return false;
         }
     }
@@ -196,12 +208,12 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
+Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 // will print error on failure
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
+bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
 static inline bool uast_try_get_member_def(
     Uast_variable_def** member_def,
@@ -209,7 +221,7 @@ static inline bool uast_try_get_member_def(
     Strv member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             *member_def = curr_member;
             return true;
@@ -220,7 +232,7 @@ static inline bool uast_try_get_member_def(
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        const Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }

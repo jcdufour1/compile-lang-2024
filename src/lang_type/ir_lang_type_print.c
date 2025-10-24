@@ -32,7 +32,7 @@ Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&types, idx));
+        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
@@ -131,7 +131,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_ir_lang_type_to_string(string, mode, vec_at(&ir_lang_types, idx));
+                extend_ir_lang_type_to_string(string, mode, vec_at(ir_lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");

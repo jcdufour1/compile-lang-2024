@@ -122,7 +122,7 @@ static Strv ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        string_extend_strv(&a_print, &buf, ir_graphvis_internal(children_name, vec_at(&block->children, idx)));
+        string_extend_strv(&a_print, &buf, ir_graphvis_internal(children_name, vec_at(block->children, idx)));
     }
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -146,7 +146,7 @@ static Strv ir_function_params_graphvis_internal(Name params_name, const Ir_func
 
     label(&buf, params_name, sv("params"));
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        child_with_arrow1(&buf, params_name, vec_at(&params->params, idx), ir_variable_def_graphvis_internal);
+        child_with_arrow1(&buf, params_name, vec_at(params->params, idx), ir_variable_def_graphvis_internal);
     }
 
     return string_to_strv(buf);
@@ -238,7 +238,7 @@ static Strv ir_function_call_graphvis_internal(const Ir_function_call* call) {
     arrow_names(&buf, call->name_self, args_name);
 
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        child_with_arrow2(&buf, args_name, ir_from_get_name(vec_at(&call->args, idx)), ir_graphvis_internal);
+        child_with_arrow2(&buf, args_name, ir_from_get_name(vec_at(call->args, idx)), ir_graphvis_internal);
     }
 
     return string_to_strv(buf);

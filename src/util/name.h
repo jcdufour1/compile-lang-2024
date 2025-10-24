@@ -22,7 +22,7 @@ typedef enum {
 typedef struct {
     Strv mod_path;
     Strv base;
-    Ulang_type_vec gen_args;
+    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
     Attrs attrs;
 } Name;
@@ -34,7 +34,7 @@ typedef struct {
 typedef struct {
     Name mod_alias;
     Strv base;
-    Ulang_type_vec gen_args;
+    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
 } Uname;
 
@@ -71,5 +71,9 @@ Uname uname_clone(Uname name, bool use_new_scope, Scope_id scope_id);
 #define name_print(mode, name) strv_print(name_print_internal(mode, false, name))
 
 #define uname_print(mode, name) strv_print(uname_print_internal(mode, name))
+
+bool name_is_equal(Name a, Name b);
+
+bool uname_is_equal(Uname a, Uname b);
 
 #endif // NAME_H

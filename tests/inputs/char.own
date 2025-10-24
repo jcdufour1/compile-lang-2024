@@ -1,33 +1,34 @@
 type io import = std.io
+type rt import = std.runtime
 
 fn string_comparison() {
     let string u8* = "hello"
 
-    if string[0] == 'h' {
+    if rt.buf_at(string, 0) == 'h' {
         io.printf("yes1\n");
     } else {
         io.printf("no1\n");
     }
 
-    if string[0] > 'a' {
+    if rt.buf_at(string, 0) > 'a' {
         io.printf("yes2\n");
     } else {
         io.printf("no2\n");
     }
 
-    if string[0] > 'z' {
+    if rt.buf_at(string, 0) > 'z' {
         io.printf("no3\n");
     } else {
         io.printf("yes3\n");
     }
 
-    if string[0] < 'a' {
+    if rt.buf_at(string, 0) < 'a' {
         io.printf("no4\n");
     } else {
         io.printf("yes4\n");
     }
 
-    if string[0] < 'z' {
+    if rt.buf_at(string, 0) < 'z' {
         io.printf("yes5\n");
     } else {
         io.printf("no5\n");
@@ -68,7 +69,7 @@ fn literal_comparison() {
 
 fn newline() {
     let string u8* = "hello\n"
-    if string[5] == '\n' {
+    if rt.buf_at(string, 5) == '\n' {
         io.printf("yes11\n")
     } else {
         io.printf("no11\n")

@@ -1,0 +1,13 @@
+compile::stdout 7
+hello
+bye
+bye
+bye
+yes
+yes
+yes
+
+compile::stderr 0
+
+compile::return_code 0
+

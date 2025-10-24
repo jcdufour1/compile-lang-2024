@@ -1,0 +1,22 @@
+type io import = std.io
+type coll import = std.collections
+type util import = std.util
+
+fn read(file io.File) {
+    for 1 {
+        if let .some(line) = io.getline(file) => io.print_str(coll.darr_slice(line), "")
+        else => return
+    }
+}
+
+fn main() i32 {
+    if let .some(file) = io.open_file("examples/read_file.own", "r") {
+        read(file)
+        io.close_file(file)
+    } else {
+        io.print_str("error: could not open file")
+        return 1
+    }
+
+    return 0
+}

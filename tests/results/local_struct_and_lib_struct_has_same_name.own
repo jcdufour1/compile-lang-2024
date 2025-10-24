@@ -1,0 +1,7 @@
+compile::stdout 1
+r: 8; g: 7; b: 6
+
+compile::stderr 0
+
+compile::return_code 0
+

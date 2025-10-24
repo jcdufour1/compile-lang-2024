@@ -25,14 +25,21 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
-    Uast_mod_alias* new_alias = uast_mod_alias_new(
-        POS_BUILTIN,
-        util_literal_name_new(),
-        name.mod_path,
-        name.scope_id
-    );
-    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return uname_new_internal(new_alias->name, name.base, name.gen_args, name.scope_id);
+    if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+    }
+
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+#   ifndef NDEBUG
+        Uast_def* dummy = NULL;
+        unwrap(usymbol_lookup(&dummy, alias_name));
+#   endif // NDEBUG
+
+    return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
@@ -103,12 +110,9 @@ Strv serialize_name_symbol_table(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-            // TODO: sometimes, it is possible to have multiple function instanciations with the same generic args
-            //   try to serialize Lang_type instead of Ulang_type
-            //
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx), false)));
+            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
         }
     }
 
@@ -170,7 +174,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         if (idx > 0) {
             string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_print, buf, ">)");
@@ -186,10 +190,16 @@ void extend_name_msg(String* buf, Name name) {
     extend_name_log_internal(true, buf, name);
 }
 
-// TODO: move this function elsewhere
-// TODO: move this function elsewhere
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    if (mode != UNAME_MSG || !(name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) || (name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)))) {
+    log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.mod_path));
+    if (
+        mode != UNAME_MSG || !(
+            strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||
+            strv_is_equal(name.mod_alias.mod_path, MOD_PATH_AUX_ALIASES) ||
+            name_is_equal(name.mod_alias, MOD_ALIAS_BUILTIN) ||
+            name_is_equal(name.mod_alias, MOD_ALIAS_TOP_LEVEL)
+        )
+    ) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_print, buf, ".");
     }
@@ -201,7 +211,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_print, buf, ">)");
@@ -234,4 +244,37 @@ Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+}
+
+bool name_is_equal(Name a, Name b) {
+    if (!strv_is_equal(a.mod_path, b.mod_path) || !strv_is_equal(a.base, b.base)) {
+        return false;
+    }
+
+    if (a.gen_args.info.count != b.gen_args.info.count) {
+        return false;
+    }
+    for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(a.gen_args, idx), vec_at(b.gen_args, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool uname_is_equal(Uname a, Uname b) {
+    Name new_a = {0};
+    if (!name_from_uname(&new_a, a, POS_BUILTIN)) {
+        todo();
+        return false;
+    }
+    Name new_b = {0};
+    if (!name_from_uname(&new_b, b, POS_BUILTIN)) {
+        todo();
+        return false;
+    }
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_a));
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_b));
+    return name_is_equal(new_a, new_b);
 }

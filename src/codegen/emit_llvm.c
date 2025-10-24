@@ -161,7 +161,7 @@
 //
 //static void emit_function_params(String* output, const Ir_function_params* fun_params) {
 //    for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-//        const Ir_variable_def* curr_param = vec_at(&fun_params->params, idx);
+//        const Ir_variable_def* curr_param = vec_at(fun_params->params, idx);
 //
 //        if (idx > 0) {
 //            string_extend_cstr(&a_main, output, ", ");
@@ -237,7 +237,7 @@
 //
 //static void emit_function_call_arguments(String* output, String* literals, const Ir_function_call* fun_call) {
 //    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-//        Name arg_name = vec_at(&fun_call->args, idx);
+//        Name arg_name = vec_at(fun_call->args, idx);
 //        Ir* argument = NULL;
 //        unwrap(ir_lookup(&argument, arg_name));
 //
@@ -782,7 +782,7 @@
 //        if (!is_first) {
 //            string_extend_cstr(&a_main, output, ", ");
 //        }
-//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(&base->members, idx))), false);
+//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(base->members, idx))), false);
 //        is_first = false;
 //    }
 //
@@ -800,9 +800,9 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name( load->ir_src);
-//    lang_type_set_pointer_depth( &lang_type, 0);
-//    extend_type_call_str( output, lang_type);
+//    Lang_type lang_type = lang_type_from_get_name(load->ir_src);
+//    lang_type_set_pointer_depth(&lang_type, 0);
+//    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, load->ir_src);
 //    string_extend_cstr(&a_main, output, ", i32 0, i32 ");
@@ -816,13 +816,13 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name( load->callee);
-//    lang_type_set_pointer_depth( &lang_type, 0);
-//    extend_type_call_str( output, lang_type);
+//    Lang_type lang_type = lang_type_from_get_name(load->callee);
+//    lang_type_set_pointer_depth(&lang_type, 0);
+//    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, load->callee);
 //    string_extend_cstr(&a_main, output, ", ");
-//    extend_type_call_str( output, lang_type_from_get_name( load->index));
+//    extend_type_call_str(output, lang_type_from_get_name(load->index));
 //    string_extend_cstr(&a_main, output, " ");
 //
 //    Ir* struct_index = NULL;
@@ -831,7 +831,7 @@
 //        string_extend_cstr(&a_main, output, "%");
 //        ir_extend_name(output, ir_tast_get_name(struct_index));
 //    } else {
-//        emit_operator_operand( output, load->index);
+//        emit_operator_operand(output, load->index);
 //    }
 //
 //    vec_append(&a_main, output, '\n');
@@ -879,7 +879,7 @@
 //
 //static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* block) {
 //    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-//        const Ir* stmt = vec_at(&block->children, idx);
+//        const Ir* stmt = vec_at(block->children, idx);
 //        switch (stmt->type) {
 //            case IR_EXPR:
 //                emit_expr(output, literals, ir_expr_const_unwrap(stmt));
@@ -1014,7 +1014,7 @@
 //    String output = {0};
 //    String literals = {0};
 //
-//    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+//    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
 //    Ir* curr = NULL;
 //    while (ir_tbl_iter_next(&curr, &iter)) {
 //        emit_out_of_line(&struct_defs, &output, &literals, curr);

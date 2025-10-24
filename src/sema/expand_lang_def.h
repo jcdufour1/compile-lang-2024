@@ -45,4 +45,6 @@ bool expand_def_operator(Uast_operator* oper);
 
 bool expand_def_defer(Uast_defer* lang_defer);
 
+EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos);
+
 #endif // EXPAND_LANG_DEF

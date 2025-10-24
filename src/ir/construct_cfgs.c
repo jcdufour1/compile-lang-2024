@@ -128,7 +128,7 @@ static void construct_cfg_block(Ir_block* block) {
 
     vec_foreach(idx, Ir*, curr, block->children) {
         curr_pos = idx;
-        if (curr_cfg_idx_for_cond_goto + 1 < curr_cfg->info.count && vec_at(curr_cfg, curr_cfg_idx_for_cond_goto + 1).pos_in_block <= idx) {
+        if (curr_cfg_idx_for_cond_goto + 1 < curr_cfg->info.count && vec_at(*curr_cfg, curr_cfg_idx_for_cond_goto + 1).pos_in_block <= idx) {
             curr_cfg_idx_for_cond_goto++;
         }
         log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
@@ -187,6 +187,8 @@ static void construct_cfg_ir_from_block(Ir* ir) {
             unreachable("import path should not be contained within blocks?");
         case IR_REMOVED:
             todo();
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -224,12 +226,14 @@ static void construct_cfg_ir_from_scope_builtin(Ir* ir) {
             return;
         case IR_REMOVED:
             todo();
+        case IR_STRUCT_MEMB_DEF:
+            unreachable("");
     }
     unreachable("");
 }
 
 void construct_cfgs(void) {
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         construct_cfg_ir_from_scope_builtin(curr);

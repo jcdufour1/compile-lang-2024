@@ -68,9 +68,6 @@ for generics:
 - make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
-- give error if both -o and -run are used
-- give error for invalid arg at the command line
-- help should not print green on every line, and should not print location when on debug mode
 - make ir output more readable:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
@@ -92,12 +89,36 @@ for generics:
     -- in ir, there should possibly only be one actual scope per function (roughly). a lookup table could map Name.scope_id to ir_scope_id?
     -- or make a vec of scopes that are accociated with a block, and store in Ir_block
     -- after doing one of above, optimize src/ir/check_uninitialized.c to not iterate over every scope
-
-
+- proper print functions for Ulang_type_regular, etc.
+- this can crash the compiler (because of the i32):
+    io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
+- this operation should not return type f32:
+    8.7 <= 7.7
+- this operation should not be allowed (or should give warning):
+    let lhs f32 = 8.6
+    let rhs f32 = 8.4
+    lhs == rhs
+- assert statement to catch mod_path (other than MOD_PATH_BUILTIN) used for primitive types
+- top level of file should actually have SCOPE_TOP_LEVEL?
+    (for this to work, scope_iter function needs to consider mod path in addition to scope_id)
+- "_1__7_builtin_str____2658" could be printed as "7builtin_str2658", 
+    because variable names cannot start with digit anyway, and there is no need to encode pointer depth
+- fix this parser bug:
+    if curr < '0' || curr > '9' => break
+    *str = slice_range(*str, 1, str.count - 1)
+- fix bug (def not being eliminated when defining Slice of strs this way):
+    Slice(<Str>)
+- ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
+    lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
+- TODO: size_t may not be the correct type
+     for lang_type_array.count, because
+     lang_type_array.count is not
+     nessessarily based on memory size
+     of computer that compilation happens
+- check for return statement on all code paths
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
-- argv
 - constraints in generics
 - slices
 - orelse, !!, ??, etc.
@@ -105,11 +126,11 @@ for generics:
 - non-hard coded size_t, etc.
 - printing features
 - global constants
+- global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
 - mandatory initialization or similar
 - manual zero initialization
 - safe cast (use "cast(<i64>)" to cast num to i64)?
-- prevent collisions with user defined names and compiler defined names
 - test for break in switch case 
 - distinct
 - pointer generic
@@ -118,12 +139,6 @@ for generics:
 - implement == for sum with void inner types, or give error for using ==
 - test case for: let num f32 = 7
 - binary operators with f64 literals on both sides (precomputation)
-- fix this to say f32 instead of std/raylib::f32:
-    main.own:15:39:error:type `u1` cannot be implicitly converted to `std/raylib::f32`
-        14 |         rl.ClearBackground(rl.BLACK());
-        15 |         rl.DrawRectangleLinesEx({0.0, 0, 100, 100}, 0x40400000, rl.RED())
-           |                                       ^
-        16 |
 - consider renaming Llvm_store_another_llvm to Llvm_store
 - consider renaming Llvm_load_another_llvm to Llvm_load
 - expected failure case for:
@@ -138,70 +153,12 @@ continue(<thing>)
     add_fn(<i16>)
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
-- figure out why this causes redefinition error: (maybe uast_case should always contain block internally to fix this bug?)
-    switch rhs {
-        case .some(rhs_val):
-            if let .some(lhs_val) = lhs {
-                return lhs_val + rhs_val
-            } else {
-                return rhs_val
-            }
-        case .none:
-            if let .some(lhs_val) = lhs {
-                return lhs_val
-            } else {
-                return 0
-            }
-    }
-- info logs do not seem to be logged when specifying "--set-log-level=INFO" on the command line?
 - expected failure test for invalid type in unsafe_cast
-- move std/std_dummy* items from std directory to a different directory
 - improve immediate representation dump so that it is actually readable
-- error message when specifing module that does not exist
-- this should not cause redefinition error:
-    type darr import = arr
-    fn main() i32 {
-        let arr darr.Arr(<i32>)
-        return 0
-    }
-- make separate UNARY_TYPE and BINARY_TYPE for Ir (to make it easier to manage backends)
 - make print functions check for null and print <null> or something instead of seg fault
 - figure out if I should de-duplilcate string literals, etc.
-- strings should be slice by default instead of u8* to allow for better type inference
 - fix printing for lang_type in msg to not put newline
-- actually use newline to end statement depending on last token of line of line
 - expected failure case for invalid type in extern "c" function
-- when showing error for file not opening while importing module, show note for import location
-- figure out why this function causes compiler to crash ("column = column" used instead of ".column = column"):
-    fn arr_new(max_capacity u64, ItemT Type, init_elems Slice(<ItemT>) = [], file u8* = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
-        let buf ItemT* = unsafe_cast<ItemT*>util.malloc(sizeof(ItemT)*max_capacity)
-        util.assert(buf != unsafe_cast<Token*>0, "out of memory", .file = file, .line = line, .column = column)
-        let arr Arr(<ItemT>) = {buf, 0, max_capacity}
-        arr_extend(&arr, init_elems, .file = file, .line = line, column = column)
-        return arr
-    }
-- test case for local struct with the same base name (Name->base) as std struct, and use std struct (be sure that compiler actually differenciates between the two)
-    eg. (coll.arr_new accepts std::collections::Slice)
-    type coll import = std.collections
-    type Slice struct(<ItemT>) {
-        buf ItemT*
-        count u64
-    }
-    fn main() i32 {
-        let slice coll.Slice(<i32>) = [9, 8]
-        let arr2 coll.Arr(<i32>) = coll.arr_new(5, i32, slice)
-        return 0
-    }
-- expected failure test case for:
-    fn main() i32 {
-        return 0
-    }
-    }
-- allow if body (single statement) to be on the same line as if condition using => or similar
-    this could be accomplished by parsing single statement in parse_block function if `=>` encountered,
-    this way => can also be used in switch, function definition, etc.
-- check for return statement on all code paths
-- examples directory should be run through test suite as well?
 
 
 
@@ -225,9 +182,6 @@ continue(<thing>)
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend
-- consider implementing this:
-    if let .some(num) = divide(6, 3) => io.printf("result is %d\n", num)
-    else => io.printf("error when dividing (cannot divide by zero\n", num)
 
 
 # in the far future

@@ -132,7 +132,7 @@ static Ir_type ir_gen_unary(void) {
     Ir_type unary = {.name = ir_name_new("operator", "unary", false)};
 
     append_member(&unary.members, "Name", "child");
-    append_member(&unary.members, "UNARY_TYPE", "token_type");
+    append_member(&unary.members, "IR_UNARY_TYPE", "token_type");
     append_member(&unary.members, "Ir_lang_type", "lang_type");
     append_member(&unary.members, "Name", "name");
 
@@ -144,7 +144,7 @@ static Ir_type ir_gen_binary(void) {
 
     append_member(&binary.members, "Name", "lhs");
     append_member(&binary.members, "Name", "rhs");
-    append_member(&binary.members, "BINARY_TYPE", "token_type");
+    append_member(&binary.members, "IR_BINARY_TYPE", "token_type");
     append_member(&binary.members, "Ir_lang_type", "lang_type");
     append_member(&binary.members, "Name", "name");
 
@@ -442,6 +442,17 @@ static Ir_type ir_gen_import_path(void) {
     return mod;
 }
 
+static Ir_type ir_gen_struct_memb_def(void) {
+    Ir_type def = {.name = ir_name_new("ir", "struct_memb_def", false)};
+
+    append_member(&def.members, "Ir_lang_type", "lang_type");
+    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "size_t", "count");
+
+
+    return def;
+}
+
 static Ir_type ir_gen_ir(void) {
     Ir_type ir = {.name = ir_name_new("ir", "", true)};
 
@@ -458,6 +469,7 @@ static Ir_type ir_gen_ir(void) {
     vec_append(&gen_a, &ir.sub_types, ir_gen_load_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_store_another_ir());
     vec_append(&gen_a, &ir.sub_types, ir_gen_import_path());
+    vec_append(&gen_a, &ir.sub_types, ir_gen_struct_memb_def());
     vec_append(&gen_a, &ir.sub_types, ir_gen_removed());
 
     return ir;
@@ -467,7 +479,7 @@ static void ir_gen_ir_forward_decl(Ir_type ir) {
     String output = {0};
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        ir_gen_ir_forward_decl(vec_at(&ir.sub_types, idx));
+        ir_gen_ir_forward_decl(vec_at(ir.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -491,7 +503,7 @@ static void ir_gen_ir_struct_as(String* output, Ir_type ir) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        Ir_type curr = vec_at(&ir.sub_types, idx);
+        Ir_type curr = vec_at(ir.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_name_first_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, " ");
@@ -514,7 +526,7 @@ static void ir_gen_ir_struct_enum(String* output, Ir_type ir) {
     string_extend_cstr(&gen_a, output, "{\n");
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        Ir_type curr = vec_at(&ir.sub_types, idx);
+        Ir_type curr = vec_at(ir.sub_types, idx);
         string_extend_cstr(&gen_a, output, "    ");
         extend_ir_name_upper(output, curr.name);
         string_extend_cstr(&gen_a, output, ",\n");
@@ -531,7 +543,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
     String output = {0};
 
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        ir_gen_ir_struct(vec_at(&ir.sub_types, idx));
+        ir_gen_ir_struct(vec_at(ir.sub_types, idx));
     }
 
     if (ir.sub_types.info.count > 0) {
@@ -565,7 +577,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
     }
 
     for (size_t idx = 0; idx < ir.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(&ir.members, idx));
+        extend_struct_member(&output, vec_at(ir.members, idx));
     }
 
     if (ir.sub_types.info.count < 1) {
@@ -586,7 +598,7 @@ static void ir_gen_ir_struct(Ir_type ir) {
 
 static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
+        ir_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -631,7 +643,7 @@ static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
 
 static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
+        ir_gen_internal_wrap(vec_at(type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -680,7 +692,7 @@ void ir_gen_ir_wrap(Ir_type ir) {
 
 static void ir_gen_print_forward_decl(Ir_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+        ir_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
 
     String function = {0};
@@ -711,7 +723,7 @@ static void ir_gen_print_forward_decl(Ir_type type) {
 
 static void ir_gen_new_internal(Ir_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+        ir_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
 
     if (type.name.is_topmost) {
@@ -734,7 +746,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ", ");
             }
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " ");
             string_extend_strv(&gen_a, &function, curr.name);
@@ -752,7 +764,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ", ");
             }
 
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " ");
             string_extend_strv(&gen_a, &function, curr.name);
@@ -776,7 +788,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, ", ");
         }
 
-        Member curr = vec_at(&type.members, idx);
+        Member curr = vec_at(type.members, idx);
 
         string_extend_strv(&gen_a, &function, curr.type);
         string_extend_cstr(&gen_a, &function, " ");
@@ -809,7 +821,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
-            Member curr = vec_at(&type.members, idx);
+            Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, "    ir_");
             extend_strv_lower(&function, type.name.base);
@@ -835,7 +847,7 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
 
 static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ir_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
+        ir_gen_internal_get_pos(vec_at(type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -861,7 +873,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    switch (ir->type) {\n");
 
             for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-                Ir_type curr = vec_at(&type.sub_types, idx);
+                Ir_type curr = vec_at(type.sub_types, idx);
                 string_extend_cstr(&gen_a, &function, "        case ");
                 extend_ir_name_upper(&function, curr.name);
                 string_extend_cstr(&gen_a, &function, ":\n");
@@ -906,7 +918,7 @@ static void gen_ir_define_get_pos(Ir_type ir) {
 
 static void gen_ir_vecs(Ir_type ir) {
     for (size_t idx = 0; idx < ir.sub_types.info.count; idx++) {
-        gen_ir_vecs(vec_at(&ir.sub_types, idx));
+        gen_ir_vecs(vec_at(ir.sub_types, idx));
     }
 
     String vec_name = {0};
@@ -946,7 +958,8 @@ static void gen_all_irs(const char* file_path, bool implementation) {
         gen_gen("#define IR_FORWARD_DECL_H\n");
         gen_gen("#include <ir_lang_type.h>\n");
     }
-
+    gen_gen("#include <ir_operator_type.h>\n");
+    gen_gen("#include <operator_type.h>\n");
 
     if (!implementation) {
         ir_gen_ir_forward_decl(ir);

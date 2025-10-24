@@ -68,7 +68,7 @@ fn main() i32 {
     }
 
     {
-        let token Token ={.number, 0, util.null(u8)} 
+        let token Token = {.number, 0, util.null(u8)} 
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"

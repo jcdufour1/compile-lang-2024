@@ -12,14 +12,13 @@ The language design and implementation are not finished. Breaking changes will o
 - :white_check_mark: Compiles to C for portability
 
 ## Example Programs
+### [Optional](examples/optional.own)
 ```c
 type util import = std.util
 type io import = std.io
 
 fn divide(lhs NumT, rhs NumT, NumT Type) util.Optional(<NumT>) {
-    if rhs == 0 {
-        return .none
-    }
+    if rhs == 0 => return .none
     return .some(lhs/rhs)
 }
 
@@ -35,14 +34,13 @@ fn main() i32 {
     if let .some(num) = divide(6, 3) {
         io.print_str("result is ", "")
         io.print_int(num)
-    } else {
-        io.print_str("error when dividing (cannot divide by zero\n")
-    }
+    } else => io.print_str("error when dividing (cannot divide by zero\n")
 
     return 0
 }
 ```
 
+### [Defer](examples/defer.own)
 ```c
 
 type coll import = std.collections
@@ -62,6 +60,24 @@ fn main() i32 {
     return 0
 }
 ```
+### [Reverse Polish Notation Calculator](examples/calculator.own)
+#### start the calculator
+```sh
+./build/release/main examples/calculator.own -O2 -lm --run
+```
+#### calculate sqrt(9)*45
+```sh
+9 sqrt 45 *
+```
+
+
+### [Snake Game](examples/snake_game.own)  
+![](docs/snake_game.png)
+- This example uses raylib. Raylib is not vendored, so it will need to be installed separately and linked manually.
+- Example command line to run snake game:
+```sh
+./build/release/main examples/snake_game.own -O2 /usr/local/raylib-5.5_linux_amd64/lib/libraylib.a -lm --run
+```
 
 ## Quickstart
 1. clone the repo
@@ -77,4 +93,5 @@ make build
 ```sh
 ./build/release/main examples/readme_1.own --run
 ```
+
 

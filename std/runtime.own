@@ -6,8 +6,14 @@ type Slice struct(<ItemT>) {
     count u64
 }
 
+fn slice_at_ref(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+    assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
+    return &buf_at(slice.buf, index)
+}
+
 extern("c") fn strlen(cstr u8*) u64
 
 fn bitwise_not(num NumT, NumT Type) NumT {
     return unsafe_cast<NumT>(-1)^num
 }
+

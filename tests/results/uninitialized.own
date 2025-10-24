@@ -1,6 +1,11 @@
 compile::stdout 0
 
 compile::stderr 30
+tests/inputs/uninitialized.own:19:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    18 |     let status i32
+    19 |     return status
+       |            ^
+    20 | }
 tests/inputs/uninitialized.own:45:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
     44 |     }
     45 |     return status
@@ -11,26 +16,21 @@ tests/inputs/uninitialized.own:60:17:[1;31merror[0;39m:symbol `token` is used 
     60 |     return token.num
        |                 ^
     61 | }
-tests/inputs/uninitialized.own:24:14:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    23 |     let status i32
-    24 |     aux_1arg(status)
-       |              ^
-    25 |     status = 8
 tests/inputs/uninitialized.own:55:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
     54 |     }
     55 |     return status
        |            ^
     56 | }
+tests/inputs/uninitialized.own:24:14:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    23 |     let status i32
+    24 |     aux_1arg(status)
+       |              ^
+    25 |     status = 8
 tests/inputs/uninitialized.own:71:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
     70 |     let status i32
     71 |     return status
        |            ^
     72 | }
-tests/inputs/uninitialized.own:19:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    18 |     let status i32
-    19 |     return status
-       |            ^
-    20 | }
 
 compile::return_code 1
 

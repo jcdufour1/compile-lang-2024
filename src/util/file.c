@@ -41,7 +41,7 @@ bool read_file(Strv* result, Strv file_path) {
 
     fclose(file);
 
-    if (file_text.info.count < 1 || vec_at(&file_text, file_text.info.count - 1) != '\n') {
+    if (file_text.info.count < 1 || vec_at(file_text, file_text.info.count - 1) != '\n') {
         vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
     }
     *result = string_to_strv(file_text);
@@ -114,8 +114,26 @@ FILE_TYPE get_file_type(Strv file_path) {
 void file_extend_strv(FILE* file, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         if (EOF == fputc(strv_at(strv, idx), file)) {
-            todo();
+            msg_todo("error message for fputc failing", POS_BUILTIN);
+            return;
         }
     }
 
 }
+
+Strv file_strip_extension(Strv file_path) {
+    Strv new_path = file_path;
+    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != '.') {
+        new_path = strv_slice(new_path, 0, new_path.count - 1);
+    }
+    return new_path.count > 0 ? strv_slice(new_path, 0, new_path.count - 1) : file_path;
+}
+
+Strv file_basename(Strv file_path) {
+    Strv new_path = file_path;
+    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != PATH_SEPARATOR) {
+        new_path = strv_slice(new_path, 0, new_path.count - 1);
+    }
+    return strv_slice(file_path, new_path.count, file_path.count - new_path.count);
+}
+

@@ -141,7 +141,13 @@ bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name);
 
 bool struct_like_tbl_lookup(Uast_def** def, Name key);
 
-Scope_id symbol_collection_new(Scope_id parent);
+Name scope_to_name_tbl_lookup(Scope_id key);
+
+void scope_to_name_tbl_add(Scope_id key, Name scope_name);
+
+void scope_to_name_tbl_update(Scope_id key, Name scope_name);
+
+Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 
 void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth);
 

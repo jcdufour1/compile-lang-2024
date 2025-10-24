@@ -1,11 +1,10 @@
 .PHONY: all setup build gdb test_quick clean
 
+# TODO: use cc by default?
 CC_COMPILER ?= clang
 
-# TODO: remove -Wundefined-internal?
-# TODO: change CURR_LOG_LEVEL to MIN_LOG_LEVEL, etc.
 # TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
-C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wno-undefined-internal -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
+C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
 			  -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
@@ -42,6 +41,8 @@ OBJS=\
 	 ${BUILD_DIR}/ast_utils/uast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_print.o \
 	 ${BUILD_DIR}/ast_utils/tast_utils.o \
+	 ${BUILD_DIR}/lang_type/lang_type_after.o \
+	 ${BUILD_DIR}/lang_type/ir_lang_type_after.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
 	 ${BUILD_DIR}/ir/check_uninitialized.o \
@@ -55,16 +56,20 @@ OBJS=\
 	 ${BUILD_DIR}/util/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
+	 ${BUILD_DIR}/util/ir_operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
+	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
+	 ${BUILD_DIR}/sema/expand_using.o \
+	 ${BUILD_DIR}/sema/check_general_assignment.o \
 	 ${BUILD_DIR}/sema/resolve_generics.o \
 	 ${BUILD_DIR}/sema/generic_sub.o \
 	 ${BUILD_DIR}/sema/infer_generic_type.o \
@@ -189,6 +194,12 @@ ${BUILD_DIR}/sema/check_struct_recursion.o: ${DEP_COMMON} src/sema/check_struct_
 ${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c
 
+${BUILD_DIR}/sema/expand_using.o: ${DEP_COMMON} src/sema/expand_using.c
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_using.o src/sema/expand_using.c
+
+${BUILD_DIR}/sema/check_general_assignment.o: ${DEP_COMMON} src/sema/check_general_assignment.c
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/check_general_assignment.o src/sema/check_general_assignment.c
+
 ${BUILD_DIR}/util/file.o: ${DEP_COMMON} src/util/file.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/file.o src/util/file.c
 
@@ -216,8 +227,17 @@ ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/
 ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_utils.o src/ast_utils/tast_utils.c
 
+${BUILD_DIR}/lang_type/lang_type_after.o: ${DEP_COMMON} src/lang_type/lang_type_after.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_after.o src/lang_type/lang_type_after.c
+
+${BUILD_DIR}/lang_type/ir_lang_type_after.o: ${DEP_COMMON} src/lang_type/ir_lang_type_after.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ir_lang_type_after.o src/lang_type/ir_lang_type_after.c
+
 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o: ${DEP_COMMON} src/ast_utils/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_collection_clone.o src/ast_utils/symbol_collection_clone.c
+
+${BUILD_DIR}/ast_utils/ast_msg.o: ${DEP_COMMON} src/ast_utils/ast_msg.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/ast_msg.o src/ast_utils/ast_msg.c
 
 ${BUILD_DIR}/ast_utils/uast_clone.o: ${DEP_COMMON} src/ast_utils/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_clone.o src/ast_utils/uast_clone.c
@@ -254,6 +274,9 @@ ${BUILD_DIR}/token/token.o: ${DEP_COMMON} src/token/token.c
 
 ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/operator_type.o src/util/operator_type.c
+
+${BUILD_DIR}/util/ir_operator_type.o: ${DEP_COMMON} src/util/ir_operator_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/ir_operator_type.o src/util/ir_operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c

@@ -6,12 +6,13 @@
 #include <do_passes.h>
 #include <token_vec.h>
 #include <parameters.h>
+#include <token_view.h>
 
 void tokenize_do_test(void);
 
-bool tokenize(Token_vec* result, Strv file_path);
+bool tokenize(Tk_view* result, Strv file_path);
 
-bool parse(Uast_block** block, Strv file_path);
+bool parse(void);
 
 Tast_block* change_operators(Tast_block* root);
 

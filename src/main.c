@@ -16,12 +16,15 @@
 #include <symbol_iter.h>
 #include <symbol_iter.h>
 #include <msg.h>
+#include <str_and_num_utils.h>
+#include <lang_type_from_ulang_type.h>
+#include <lang_type.h>
  
-static void add_opaque(const char* base_name, int16_t pointer_depth) {
+static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
         lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
+            POS_BUILTIN, pointer_depth
         )))
     );
     unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
@@ -32,9 +35,58 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_opaque("opaque", 0);
+    add_opaque(0);
     add_void();
+
+    vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
 }
+
+static void add_builtin_def(Strv name) {
+    unwrap(usym_tbl_add(uast_builtin_def_wrap(uast_builtin_def_new(POS_BUILTIN, name_new(
+        MOD_PATH_RUNTIME,
+        name,
+        (Ulang_type_vec) {0},
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    )))));
+}
+
+static void add_builtin_defs(void) {
+    add_builtin_def(sv("static_array_access"));
+    add_builtin_def(sv("static_array_slice"));
+    add_builtin_def(sv("buf_at"));
+}
+
+#define do_pass(pass_fn, sym_log_fn) \
+    do { \
+        pass_fn(); \
+        if (env.error_count > 0) { \
+            log(LOG_DEBUG, #pass_fn " failed\n"); \
+            exit(EXIT_CODE_FAIL); \
+        } \
+\
+        log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
+        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
+\
+        arena_reset(&a_print);\
+    } while (0)
+
+#define do_pass_status(pass_fn, sym_log_fn) \
+    do { \
+        bool status = pass_fn(); \
+        if (env.error_count > 0) { \
+            log(LOG_DEBUG, #pass_fn " failed\n"); \
+            assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
+            exit(EXIT_CODE_FAIL); \
+        } \
+\
+        log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
+        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
+\
+        arena_reset(&a_print);\
+    } while (0)
 
 void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
@@ -42,84 +94,28 @@ void compile_file_to_ir(void) {
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    symbol_collection_new(SCOPE_BUILTIN);
+    symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
     add_primitives();
+    add_builtin_defs();
 
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
-        SCOPE_BUILTIN
+        SCOPE_TOP_LEVEL
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
-    Uast_block* untyped = NULL;
-    bool status = parse(&untyped, params.input_file_path);
-    if (error_count > 0) {
-        log(LOG_DEBUG, "parse_file failed\n");
-        unwrap((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    unwrap(status && "error_count should be zero if parse_file returns true");
+    // generate ir from file(s)
+    do_pass_status(parse, usymbol_log_level);
+    do_pass_status(try_set_types, symbol_log_level);
+    do_pass(add_load_and_store, ir_log_level);
 
-    log(LOG_DEBUG, "\nafter parsing start--------------------\n");
-    usymbol_log_level(LOG_DEBUG, 0);
-    log(LOG_DEBUG, FMT, uast_block_print(untyped));
-    log(LOG_DEBUG, "\nafter parsing end--------------------\n");
-
-    arena_reset(&a_print);
-    status = try_set_types();
-    if (error_count > 0) {
-        log(LOG_DEBUG, "try_set_block_types failed\n");
-        unwrap((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    log(LOG_DEBUG, "try_set_block_types succedded\n");
-    unwrap(status && "error_count should be zero if try_set_types returns true");
-    
-    //unwrap(typed);
-    arena_reset(&a_print);
-    log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
-    log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
-    symbol_log_level(LOG_DEBUG, SCOPE_BUILTIN);
-    //log(LOG_DEBUG,FMT, tast_block_print(typed));
-    log(LOG_DEBUG,  "\nafter type checking end--------------------\n");
-
-    add_load_and_store();
-    log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
-    ir_log_level(LOG_DEBUG, 0);
-
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
-    (void) iter;
-    Ir* curr = NULL;
-    (void) curr;
-    // TODO
-    while (ir_tbl_iter_next(&curr, &iter)) {
-        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
-        log(LOG_DEBUG, FMT, ir_print(curr));
-        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
-    }
-    //// TODO: for this to actually do opaquething, we need to iterate on scope_id SCOPE_BUILTIN
-    //log(LOG_DEBUG, FMT, ir_block_print(ir_root));
-    //log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
-    if (error_count > 0) {
-        exit(EXIT_CODE_FAIL);
-    }
-    //unwrap(ir_root);
-    
-    construct_cfgs();
-
-    remove_void_assigns();
-    log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
-    ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
-
-    check_uninitialized();
-    if (error_count > 0) {
-        log(LOG_DEBUG, "check_uninitialized failed\n");
-        exit(EXIT_CODE_FAIL);
-    }
-    ir_log_level(LOG_DEBUG, SCOPE_BUILTIN);
+    // ir passes
+    do_pass(construct_cfgs, ir_log_level);
+    do_pass(remove_void_assigns, ir_log_level);
+    do_pass(check_uninitialized, ir_log_level);
 }
 
 void do_passes(void) {
@@ -128,10 +124,10 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
-    if (params.stop_after == STOP_AFTER_GEN_IR) {
+    if (params.stop_after == STOP_AFTER_IR) {
         if (params.dump_dot) {
             // TODO: add logic in parse_args to catch below error:
             unwrap(params.compile_own && "this should have been caught in parse_args");
@@ -142,7 +138,7 @@ void do_passes(void) {
         } else {
             String contents = {0};
 
-            Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+            Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
                 string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
@@ -154,11 +150,11 @@ void do_passes(void) {
         }
     }
 
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         unreachable("should have exited before now\n");
     }
 
-    if (params.stop_after > STOP_AFTER_GEN_IR) {
+    if (params.stop_after > STOP_AFTER_IR) {
         switch (params.backend_info.backend) {
             case BACKEND_NONE:
                 unreachable("this should have been caught eariler");
@@ -173,7 +169,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 17,
+        PARAMETERS_COUNT == 24,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -193,7 +189,7 @@ void do_passes(void) {
         }
     }
 
-    if (error_count > 0) {
+    if (env.error_count > 0) {
         exit(EXIT_CODE_FAIL);
     }
 }

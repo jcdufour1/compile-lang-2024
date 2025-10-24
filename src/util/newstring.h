@@ -37,7 +37,7 @@ static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t
 }
 
 static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
-    char num_str[32] = {0};
+    char num_str[1000] = {0};
     sprintf(num_str, "%zu", num);
     string_extend_cstr(arena, str, num_str);
 }

@@ -23,7 +23,7 @@ Strv ir_binary_print_internal(const Ir_binary* binary, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "binary", indent);
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
-    string_extend_strv(&a_print, &buf, binary_type_to_strv(binary->token_type));
+    string_extend_strv(&a_print, &buf, ir_binary_type_to_strv(binary->token_type));
     extend_name(NAME_LOG, &buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
     extend_child_name(&buf, "rhs", binary->rhs);
@@ -37,7 +37,7 @@ Strv ir_unary_print_internal(const Ir_unary* unary, int indent) {
 
     string_extend_cstr_indent(&a_print, &buf, "unary", indent);
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
-    string_extend_strv(&a_print, &buf, unary_type_to_strv(unary->token_type));
+    string_extend_strv(&a_print, &buf, ir_unary_type_to_strv(unary->token_type));
     extend_name(NAME_LOG, &buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&a_print, &buf, "\n");
@@ -78,7 +78,7 @@ Strv ir_function_call_print_internal(const Ir_function_call* fun_call, int inden
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         string_extend_cstr_indent(&a_print, &buf, " ", indent + INDENT_WIDTH);
-        extend_name(NAME_LOG, &buf, vec_at(&fun_call->args, idx));
+        extend_name(NAME_LOG, &buf, vec_at(fun_call->args, idx));
         string_extend_cstr(&a_print, &buf, "\n");
     }
 
@@ -176,10 +176,10 @@ Strv ir_block_print_internal(const Ir_block* block, int indent) {
     }}
 
     string_extend_cstr_indent(&a_print, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-    alloca_extend_table_internal(&buf, vec_at(&env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
+    alloca_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Strv arg_text = ir_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = ir_print_internal(vec_at(block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }
 
@@ -192,7 +192,7 @@ Strv ir_function_params_print_internal(const Ir_function_params* function_params
     string_extend_cstr_indent(&a_print, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Strv arg_text = ir_variable_def_print_internal(vec_at(&function_params->params, idx), indent);
+        Strv arg_text = ir_variable_def_print_internal(vec_at(function_params->params, idx), indent);
         string_extend_strv(&a_print, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -331,7 +331,7 @@ static void extend_ir_struct_def_base(String* buf, const char* type_name, Ir_str
     string_extend_cstr(&a_print, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = ir_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = ir_struct_memb_def_print_internal(vec_at(base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, buf, memb_text);
     }
 }
@@ -379,7 +379,7 @@ Strv ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) 
     string_extend_cstr(&a_print, &buf, "\n");
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Strv memb_text = ir_expr_print_internal(vec_at(&def->members, idx), indent);
+        Strv memb_text = ir_expr_print_internal(vec_at(def->members, idx), indent);
         string_extend_strv(&a_print, &buf, memb_text);
     }
 
@@ -415,6 +415,20 @@ Strv ir_variable_def_print_internal(const Ir_variable_def* def, int indent) {
     extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     extend_name(NAME_LOG, &buf, def->name_self);
     extend_child_name(&buf, "corrs_param", def->name_corr_param);
+    string_extend_cstr(&a_print, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Strv ir_struct_memb_def_print_internal(const Ir_struct_memb_def* def, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_print, &buf, "struct_memb_def", indent);
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
+    extend_name(NAME_LOG, &buf, def->name_self);
+    string_extend_cstr(&a_print, &buf, "[");
+    string_extend_size_t(&a_print, &buf, def->count);
+    string_extend_cstr(&a_print, &buf, "]");
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);
@@ -490,6 +504,8 @@ Strv ir_print_internal(const Ir* ir, int indent) {
             return ir_store_another_ir_print_internal(ir_store_another_ir_const_unwrap(ir), indent);
         case IR_IMPORT_PATH:
             return ir_import_path_print_internal(ir_import_path_const_unwrap(ir), indent);
+        case IR_STRUCT_MEMB_DEF:
+            return ir_struct_memb_def_print_internal(ir_struct_memb_def_const_unwrap(ir), indent);
         case IR_REMOVED:
             return ir_removed_print_internal(ir_removed_const_unwrap(ir), indent);
     }

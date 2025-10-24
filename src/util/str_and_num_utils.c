@@ -166,7 +166,7 @@ bool try_strv_to_int64_t(int64_t* result, const Pos pos, Strv strv) {
                 );
             }
 
-            msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix `0%c`\n", curr_char);
+            msg(DIAG_INVALID_LITERAL_PREFIX, pos, "invalid literal prefix `0%c`\n", curr_char);
             return false;
         }
 
@@ -393,7 +393,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     (void) debug_prefix;
     (void) file;
     (void) line;
-    static String_vec literal_strings = {0};
     static size_t count = 0;
 
     String var_name = {0};
@@ -417,15 +416,11 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 #endif // DNDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);
-    vec_append(&a_main, &literal_strings, var_name);
-
     count++;
 
-    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
-    Strv strv = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
-    return strv;
+    return string_to_strv(var_name);
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
-    return name_new(sv("builtin"), util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id, (Attrs) {0});
+    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id, (Attrs) {0});
 }

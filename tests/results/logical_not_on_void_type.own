@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/logical_not_on_void_type.own:19:9:[1;31merror[0;39m:`Token` is not valid operand to logical not operation
-    18 | fn read_num(string u8*) Opt_int {
+    18 | fn read_num(string Str) Opt_int {
     19 |     if (!get_token()) {
        |         ^
     20 |         return Opt_int.none(0);

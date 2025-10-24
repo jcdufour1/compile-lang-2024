@@ -5,16 +5,9 @@
 #include <expand_lang_def.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
-    if (!expand_def_ulang_type(&lang_type, POS_BUILTIN /* TODO */)) {
-        return false;
-    }
-
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            if (!try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type))) {
-                return false;
-            }
-            return true;
+            return try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE: {
             Lang_type_tuple new_tuple = {0};
             if (!try_lang_type_from_ulang_type_tuple(&new_tuple, ulang_type_tuple_const_unwrap(lang_type))) {
@@ -34,10 +27,13 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         case ULANG_TYPE_GEN_PARAM:
             // TODO: print error?
             return false;
+        case ULANG_TYPE_ARRAY:
+            return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
     }
     unreachable("");
 }
 
+// TODO: move this function
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     unwrap(name.mod_alias.base.count > 0);
 
@@ -48,17 +44,35 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             name.mod_alias.mod_path,
             name.mod_alias.base,
             (Ulang_type_vec) {0},
-            name.mod_alias.scope_id
-        , (Attrs) {0})
+            name.mod_alias.scope_id,
+            (Attrs) {0}
+        )
     )) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, name_new(name.mod_alias.mod_path,
+            name_print(NAME_MSG, name_new(
+                name.mod_alias.mod_path,
                 name.mod_alias.base,
                 (Ulang_type_vec) {0},
-                name.mod_alias.scope_id
-            , (Attrs) {0}))
+                name.mod_alias.scope_id,
+                (Attrs) {0}
+            ))
+       );
+    }
+
+    Name temp_name = name_new(
+        name.mod_alias.mod_path,
+        name.mod_alias.base,
+        (Ulang_type_vec) {0},
+        name.mod_alias.scope_id,
+        (Attrs) {0}
+    );
+    if (!usymbol_lookup(&alias_, temp_name)) {
+        msg(
+            DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
+            name_print(NAME_MSG, temp_name)
         );
+        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, temp_name))));
         return false;
     }
 
@@ -68,32 +82,35 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope, (Attrs) {0});
             return true;
         }
-        case UAST_IMPORT_PATH:
-            todo();
-        case UAST_STRUCT_DEF:
-            todo();
-        case UAST_RAW_UNION_DEF:
-            todo();
-        case UAST_ENUM_DEF:
-            todo();
-        case UAST_PRIMITIVE_DEF:
-            todo();
-        case UAST_FUNCTION_DEF:
-            todo();
-        case UAST_FUNCTION_DECL:
-            todo();
-        case UAST_VARIABLE_DEF:
-            todo();
-        case UAST_GENERIC_PARAM:
-            todo();
         case UAST_POISON_DEF:
             return false;
+        case UAST_IMPORT_PATH:
+            // fallthrough
+        case UAST_STRUCT_DEF:
+            // fallthrough
+        case UAST_RAW_UNION_DEF:
+            // fallthrough
+        case UAST_ENUM_DEF:
+            // fallthrough
+        case UAST_PRIMITIVE_DEF:
+            // fallthrough
+        case UAST_FUNCTION_DEF:
+            // fallthrough
+        case UAST_FUNCTION_DECL:
+            // fallthrough
+        case UAST_VARIABLE_DEF:
+            // fallthrough
+        case UAST_GENERIC_PARAM:
+            // fallthrough
         case UAST_LANG_DEF:
-            todo();
+            // fallthrough
         case UAST_VOID_DEF:
-            todo();
+            // fallthrough
         case UAST_LABEL:
-            todo();
+            // fallthrough
+        case UAST_BUILTIN_DEF:
+            msg_todo("error message for this situation", uast_def_get_pos(alias_));
+            return false;
     }
     unreachable("");
 }
@@ -101,11 +118,11 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
-            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple( lang_type_tuple_const_unwrap(lang_type)));
+            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 ulang_type_atom_new_from_cstr("void", 0),
-                (Pos) {0}
+                POS_BUILTIN
             ));
         case LANG_TYPE_PRIMITIVE:
             // fallthrough
@@ -130,6 +147,15 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 lang_type_tuple_to_ulang_type_tuple(fn.params),
                 new_rtn_type,
                 fn.pos
+            ));
+        }
+        case LANG_TYPE_ARRAY: {
+            Lang_type_array array = lang_type_array_const_unwrap(lang_type);
+            Ulang_type new_item_type = lang_type_to_ulang_type(*array.item_type);
+            return ulang_type_array_const_wrap(ulang_type_array_new(
+                arena_dup(&a_main, &new_item_type),
+                array.count,
+                array.pos
             ));
         }
     }

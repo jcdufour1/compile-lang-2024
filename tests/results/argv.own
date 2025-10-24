@@ -1,0 +1,7 @@
+compile::stdout 1
+./argv
+
+compile::stderr 0
+
+compile::return_code 0
+

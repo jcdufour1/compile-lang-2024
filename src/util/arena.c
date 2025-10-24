@@ -68,8 +68,8 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
     Arena_buf** curr_buf = &arena->next;
     while (1) {
         if (!(*curr_buf)) {
-            size_t cap_new_buf = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
-            cap_new_buf = get_next_multiple(MAX(cap_new_buf, capacity_needed + arena_buf_size), ALIGN_SIZE);
+            size_t cap_new_buf = max(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
+            cap_new_buf = get_next_multiple(max(cap_new_buf, capacity_needed + arena_buf_size), ALIGN_SIZE);
             *curr_buf = safe_malloc(cap_new_buf);
             (*curr_buf)->capacity = cap_new_buf;
             (*curr_buf)->count = arena_buf_size;

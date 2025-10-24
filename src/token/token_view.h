@@ -78,7 +78,7 @@ static inline Strv tk_view_print_internal(Arena* arena, Tk_view tk_view) {
 }
 
 static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_view b, bool do_log) {
-    for (size_t idx = 0; idx < MIN(a.count, b.count); idx++) {
+    for (size_t idx = 0; idx < min(a.count, b.count); idx++) {
         if (!token_is_equal(tk_view_at(a, idx), tk_view_at(b, idx))) {
             if (do_log) {
                 log(log_level, "TOKENS actual:\n");

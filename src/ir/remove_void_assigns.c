@@ -108,6 +108,8 @@ static Ir* rm_void_ir(Ir* ir) {
             return rm_void_store_another_ir(ir_store_another_ir_unwrap(ir));
         case IR_IMPORT_PATH:
             return rm_void_import_path(ir_import_path_unwrap(ir));
+        case IR_STRUCT_MEMB_DEF:
+            return ir;
         case IR_REMOVED:
             return ir;
     }
@@ -116,8 +118,8 @@ static Ir* rm_void_ir(Ir* ir) {
 
 static Ir* rm_void_block(Ir_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        unwrap(vec_at(&block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
-        *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(&block->children, idx));
+        assert(vec_at(block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
+        *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(block->children, idx));
     }
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
@@ -129,7 +131,7 @@ static Ir* rm_void_block(Ir_block* block) {
 }
 
 void remove_void_assigns(void) {
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
+    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr);

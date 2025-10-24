@@ -5,8 +5,6 @@
 
 static inline Pos lang_type_primitive_get_pos(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            return lang_type_char_const_unwrap(lang_type).pos;
         case LANG_TYPE_SIGNED_INT:
             return lang_type_signed_int_const_unwrap(lang_type).pos;
         case LANG_TYPE_UNSIGNED_INT:
@@ -35,6 +33,8 @@ static inline Pos lang_type_get_pos(Lang_type lang_type) {
             return lang_type_void_const_unwrap(lang_type).pos;
         case LANG_TYPE_FN:
             return lang_type_fn_const_unwrap(lang_type).pos;
+        case LANG_TYPE_ARRAY:
+            return lang_type_array_const_unwrap(lang_type).pos;
     }
     unreachable("");
 }
