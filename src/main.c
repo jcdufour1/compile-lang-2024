@@ -19,7 +19,7 @@
 #include <str_and_num_utils.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type.h>
-#include <sys/time.h>
+#include <time_utils.h>
 
 static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -60,16 +60,10 @@ static void add_builtin_defs(void) {
 
 #define do_pass(pass_fn, sym_log_fn) \
     do { \
-        struct timeval before = {0}; \
-        struct timeval after = {0}; \
-        gettimeofday(&before, NULL); \
+        uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
-        gettimeofday(&after, NULL); \
-        if (before.tv_usec > after.tv_usec) { \
-            after.tv_usec += 1000000; \
-            after.tv_sec -= 1; \
-        } \
-        log(LOG_VERBOSE, "pass `" #pass_fn "` took %ld.%.6ldsec\n", after.tv_sec - before.tv_sec, after.tv_usec - before.tv_usec);\
+        uint64_t after = get_time_milliseconds(); \
+        log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             exit(EXIT_CODE_FAIL); \
@@ -84,17 +78,11 @@ static void add_builtin_defs(void) {
 
 #define do_pass_status(pass_fn, sym_log_fn) \
     do { \
-        struct timeval before = {0}; \
-        struct timeval after = {0}; \
-        gettimeofday(&before, NULL); \
+        uint64_t before = get_time_milliseconds(); \
         bool status = pass_fn(); \
         (void) status; \
-        gettimeofday(&after, NULL); \
-        if (before.tv_usec > after.tv_usec) { \
-            after.tv_usec += 1000000; \
-            after.tv_sec -= 1; \
-        } \
-        log(LOG_VERBOSE, "pass `" #pass_fn "` took %ld.%.6ldsec\n", after.tv_sec - before.tv_sec, after.tv_usec - before.tv_usec);\
+        uint64_t after = get_time_milliseconds(); \
+        log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
