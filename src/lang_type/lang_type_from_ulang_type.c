@@ -38,41 +38,20 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     unwrap(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    if (!usymbol_lookup(
-        &alias_,
-        name_new(
-            name.mod_alias.mod_path,
-            name.mod_alias.base,
-            (Ulang_type_vec) {0},
-            name.mod_alias.scope_id,
-            (Attrs) {0}
-        )
-    )) {
-        msg(
-            DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, name_new(
-                name.mod_alias.mod_path,
-                name.mod_alias.base,
-                (Ulang_type_vec) {0},
-                name.mod_alias.scope_id,
-                (Attrs) {0}
-            ))
-       );
-    }
-
-    Name temp_name = name_new(
+    Name alias_name = name_new(
         name.mod_alias.mod_path,
         name.mod_alias.base,
         (Ulang_type_vec) {0},
         name.mod_alias.scope_id,
         (Attrs) {0}
     );
-    if (!usymbol_lookup(&alias_, temp_name)) {
+
+    if (!usymbol_lookup(&alias_, alias_name)) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, temp_name)
+            name_print(NAME_MSG, alias_name)
         );
-        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, temp_name))));
+        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, alias_name))));
         return false;
     }
 
