@@ -1836,6 +1836,25 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     );
 
     load_label(new_fun_def->body, tast_label_new(new_fun_def->pos, util_literal_name_new(), new_fun_def->body->scope_id));
+    Tast_variable_def* var_def_thing = tast_variable_def_new(
+        new_fun_def->body->pos,
+        lang_type_new_u1(),
+        false,
+        name_new(
+            MOD_PATH_BUILTIN,
+            sv("at_fun_start"),
+            (Ulang_type_vec) {0},
+            new_fun_def->body->scope_id
+        )
+    );
+    log(LOG_DEBUG, "thing 56: %zu\n", new_fun_def->body->scope_id);
+    unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
+    load_variable_def(new_fun_def->body, var_def_thing);
+    load_assignment(new_fun_def->body, tast_assignment_new(
+        old_fun_def->body->pos,
+        tast_symbol_wrap(tast_symbol_new_from_variable_def(old_fun_def->body->pos, var_def_thing)),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(old_fun_def->body->pos, 0, lang_type_new_u1())))
+    ));
 
     Lang_type new_lang_type = {0};
     new_fun_def->decl->params = load_function_parameters(
@@ -1957,6 +1976,9 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 }
 
 static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def) {
+    Tast_def* dummy = NULL;
+    unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
+
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
     Ir* alloca = NULL;

@@ -250,16 +250,41 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         return;
     }
 
+    //Ir* dummy = NULL;
+    //unwrap(ir_lookup(&dummy, name_new(
+    //    MOD_PATH_BUILTIN,
+    //    sv("at_fun_start"),
+    //    (Ulang_type_vec) {0},
+    //    name.scope_id
+    //)));
+
+    Init_table_node* result = NULL;
+    if (!init_symbol_lookup(&curr_frame->init_tables, &result, name_new(
+        MOD_PATH_BUILTIN,
+        sv("at_fun_start"),
+        (Ulang_type_vec) {0},
+        name.scope_id
+    ))) {
+        // this frame is unreachable, so printing unitinitalized error would not make sense
+        return;
+    }
+
+
     if (strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
         return;
     }
 
-    Init_table_node* result = NULL;
     if (init_symbol_lookup(&curr_frame->init_tables, &result, name)) {
+        log(LOG_DEBUG, "result->cfg_node_of_init: %zu\n", result->cfg_node_of_init);
+        log(LOG_DEBUG, "result->block_pos_of_init: %zu\n", result->block_pos_of_init);
+        log(LOG_DEBUG, "block_pos: %zu\n", block_pos);
         if (result->cfg_node_of_init != frame_idx || result->block_pos_of_init < block_pos) {
             // symbol was initialized before this use
             return;
         }
+        log(LOG_DEBUG, "thing thing\n");
+    } else {
+        log(LOG_DEBUG, "not thing thing\n");
     }
 
     if (check_unit_is_struct(name)) {
@@ -272,6 +297,8 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
     }
     log(LOG_DEBUG, "%zu\n", frames.info.count);
+    log(LOG_DEBUG, "curr_frame idx: %zu\n", frame_idx);
+    log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
 
     // TODO: make function to log entire frames
     vec_foreach(idx, Frame, frame, frames) {/*{*/
@@ -294,6 +321,7 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         //}}
 
     }}
+    todo();
 
     for (size_t idx = 0; idx < frames.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
@@ -450,6 +478,16 @@ static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_bac
 }
 
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
+    //Ir* result = NULL;
+    log(LOG_DEBUG, "thing 57: %zu\n", block->scope_id);
+    if (block->scope_id != SCOPE_TOP_LEVEL && block->scope_id != SCOPE_BUILTIN) {
+        //unwrap(ir_lookup(&result, name_new(
+        //    MOD_PATH_BUILTIN,
+        //    sv("at_fun_start"),
+        //    (Ulang_type_vec) {0},
+        //    block->scope_id
+        //)));
+    }
     (void) is_main;
     static int count = 0;
     log(LOG_DEBUG, "%d\n", count);
