@@ -87,6 +87,11 @@ for generics:
            |     ^
         47 |         case .way1: break
 - do_test.py: command line arg to avoid using red/green background on diff
+- consider making system to print messages in particular order to minimize the frequency of breaking tests?
+- scope issue:
+    -- in ir, there should possibly only be one actual scope per function (roughly). a lookup table could map Name.scope_id to ir_scope_id?
+    -- or make a vec of scopes that are accociated with a block, and store in Ir_block
+    -- after doing one of above, optimize src/ir/check_uninitialized.c to not iterate over every scope
 
 
 

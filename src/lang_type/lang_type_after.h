@@ -21,7 +21,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, lang_type_signed_int_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -34,7 +34,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "f");
             string_extend_int64_t(&a_main, &string, lang_type_float_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -47,7 +47,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
             Lang_type_atom atom = lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -80,7 +80,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
                     msg_todo("bit widths other than 32 or 64 (for floating point numbers) with the c backend", lang_type_primitive_get_pos(lang_type));
             }
             return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
         }
@@ -108,7 +108,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
         }
@@ -135,13 +135,13 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
         }
         case LANG_TYPE_OPAQUE:
             return lang_type_atom_new(
-                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 lang_type_opaque_const_unwrap(lang_type).atom.pointer_depth
             );
     }
@@ -474,7 +474,7 @@ static inline Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom la
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_strv(&a_main, &string, strv_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
-    return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
+    return lang_type_atom_new(name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}), 0);
 }
 
 static inline Lang_type lang_type_new_ux(int32_t bit_width) {

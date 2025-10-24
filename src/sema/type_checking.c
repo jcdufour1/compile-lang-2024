@@ -225,7 +225,7 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
         goto next;
     } 
 
-    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL))) {
+    if (!name_is_equal(lang_type_struct_const_unwrap(src).atom.str, name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
         goto next;
     }
     return true;
@@ -1759,7 +1759,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     sym->name.base,
                     (Ulang_type_vec) {0} /* TODO */,
                     sym->name.scope_id
-                )
+                , (Attrs) {0})
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
                 // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -3264,7 +3264,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.base,
                 access->member_name->name.gen_args,
                 access->member_name->name.scope_id
-            ));
+            , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
             if (!try_set_symbol_types(&new_expr, sym)) {
                 return false;
@@ -4051,7 +4051,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+        if (!usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
             msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
             // TODO: DIAG_NO_MAIN_FUNCTION is a warning, but this goto treats this as an error
             // TODO: use warn for warnings instead of msg to reduce mistakes?

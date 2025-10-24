@@ -142,9 +142,9 @@ static bool print_errors_for_unit;
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
 
-static void check_unit_src_internal_name(Name name, Pos pos);
+static void check_unit_src_internal_name(Name name, Pos pos, Loc loc);
 
-static void check_unit_src(const Name src, Pos pos);
+static void check_unit_src(const Name src, Pos pos, Loc loc);
 
 static void check_unit_src_internal_literal(const Ir_literal* lit) {
     switch (lit->type) {
@@ -162,52 +162,52 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
     unreachable("");
 }
 
-static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos) {
-    check_unit_src(call->callee, pos);
+static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos, Loc loc) {
+    check_unit_src(call->callee, pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         Name curr = vec_at(&call->args, idx);
-        check_unit_src(curr, pos);
+        check_unit_src(curr, pos, loc);
     }
 }
 
-static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos) {
-    check_unit_src(bin->lhs, pos);
-    check_unit_src(bin->rhs, pos);
+static void check_unit_src_internal_binary(const Ir_binary* bin, Pos pos, Loc loc) {
+    check_unit_src(bin->lhs, pos, loc);
+    check_unit_src(bin->rhs, pos, loc);
 }
 
-static void check_unit_src_internal_unary(const Ir_unary* unary, Pos pos) {
-    check_unit_src(unary->child, pos);
+static void check_unit_src_internal_unary(const Ir_unary* unary, Pos pos, Loc loc) {
+    check_unit_src(unary->child, pos, loc);
 }
 
-static void check_unit_src_internal_operator(const Ir_operator* oper, Pos pos) {
+static void check_unit_src_internal_operator(const Ir_operator* oper, Pos pos, Loc loc) {
     switch (oper->type) {
         case IR_BINARY:
-            check_unit_src_internal_binary(ir_binary_const_unwrap(oper), pos);
+            check_unit_src_internal_binary(ir_binary_const_unwrap(oper), pos, loc);
             return;
         case IR_UNARY:
-            check_unit_src_internal_unary(ir_unary_const_unwrap(oper), pos);
+            check_unit_src_internal_unary(ir_unary_const_unwrap(oper), pos, loc);
             return;
     }
     unreachable("");
 }
 
-static void check_unit_src_internal_expr(const Ir_expr* expr, Pos pos) {
+static void check_unit_src_internal_expr(const Ir_expr* expr, Pos pos, Loc loc) {
     switch (expr->type) {
         case IR_OPERATOR:
-            check_unit_src_internal_operator(ir_operator_const_unwrap(expr), pos);
+            check_unit_src_internal_operator(ir_operator_const_unwrap(expr), pos, loc);
             return;
         case IR_LITERAL:
             check_unit_src_internal_literal(ir_literal_const_unwrap(expr));
             return;
         case IR_FUNCTION_CALL:
-            check_unit_src_internal_function_call(ir_function_call_const_unwrap(expr), pos);
+            check_unit_src_internal_function_call(ir_function_call_const_unwrap(expr), pos, loc);
             return;
     }
     unreachable("");
 }
 
 static void check_unit_src_internal_variable_def(const Ir_variable_def* def) {
-    check_unit_src_internal_name(def->name_self, def->pos);
+    check_unit_src_internal_name(def->name_self, def->pos, def->loc);
 }
 
 static void check_unit_src_internal_def(const Ir_def* def) {
@@ -241,11 +241,11 @@ static bool check_unit_is_struct(Name name) {
     return ir_alloca_const_unwrap(def_)->lang_type.type == IR_LANG_TYPE_STRUCT;
 }
 
-static void check_unit_src_internal_name(Name name, Pos pos) {
-    // TODO: !strv_is_equal(sv("builtin")/* TODO */, name.mod_path) is used to avoid checking implementation symbol
-    //   (because otherwise it would be required to modify the add_load_and_store pass or
-    //   ignore impossible paths (eg. neither the if nor else is taken).
-    //   consider if builtin symbols should be checked or not
+static void check_unit_src_internal_name(Name name, Pos pos, Loc loc) {
+    if (name.attrs & ATTR_ALLOW_UNINIT) {
+        return;
+    }
+
     if (!print_errors_for_unit) {
         return;
     }
@@ -263,13 +263,18 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
-        name.scope_id
+        name.scope_id,
+        (Attrs) {0}
     ))) {
         // this frame is unreachable, so printing unitinitalized error would not make sense
         return;
     }
 
 
+    // TODO: !strv_is_equal(sv("builtin")/* TODO */, name.mod_path) is used to avoid checking implementation symbol
+    //   (because otherwise it would be required to modify the add_load_and_store pass or
+    //   ignore impossible paths (eg. neither the if nor else is taken).
+    //   consider if builtin symbols should be checked or not
     if (strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
         return;
     }
@@ -296,9 +301,13 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     } else {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
     }
+    log(LOG_DEBUG, FMT"\n", loc_print(loc));
     log(LOG_DEBUG, "%zu\n", frames.info.count);
     log(LOG_DEBUG, "curr_frame idx: %zu\n", frame_idx);
     log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    name.attrs |= ATTR_ALLOW_UNINIT;
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
 
     // TODO: make function to log entire frames
     vec_foreach(idx, Frame, frame, frames) {/*{*/
@@ -334,12 +343,12 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
     check_unit_src_internal_name_failed = true;
 }
 
-static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
+static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
     switch (ir->type) {
         case IR_BLOCK:
             todo();
         case IR_EXPR:
-            check_unit_src_internal_expr(ir_expr_const_unwrap(ir), pos);
+            check_unit_src_internal_expr(ir_expr_const_unwrap(ir), pos, loc);
             return;
         case IR_FUNCTION_PARAMS:
             todo();
@@ -361,7 +370,7 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
         case IR_ARRAY_ACCESS:
             // fallthrough
         case IR_ALLOCA:
-            check_unit_src_internal_name(ir_tast_get_name(ir), pos);
+            check_unit_src_internal_name(ir_tast_get_name(ir), pos, loc);
             return;
         case IR_IMPORT_PATH:
             todo();
@@ -371,10 +380,10 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos) {
     unreachable("");
 }
 
-static void check_unit_src(const Name src, Pos pos) {
+static void check_unit_src(const Name src, Pos pos, Loc loc) {
     Ir* sym_def = NULL;
     unwrap(ir_lookup(&sym_def, src));
-    check_unit_src_internal_ir(sym_def, pos);
+    check_unit_src_internal_ir(sym_def, pos, loc);
 }
 
 static void check_unit_dest(const Name dest) {
@@ -736,7 +745,7 @@ static void check_unit_function_def(const Ir_function_def* def) {
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
-    check_unit_src(store->ir_src, store->pos);
+    check_unit_src(store->ir_src, store->pos, store->loc);
     check_unit_dest(store->ir_dest);
     init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = store->name,
@@ -748,7 +757,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
-    check_unit_src(load->ir_src, load->pos);
+    check_unit_src(load->ir_src, load->pos, load->loc);
     init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = load->name,
         .cfg_node_of_init = frame_idx,
@@ -757,7 +766,7 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 }
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
-    check_unit_src(load->ir_src, load->pos);
+    check_unit_src(load->ir_src, load->pos, load->loc);
     init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = load->name_self,
         .cfg_node_of_init = frame_idx,
@@ -766,8 +775,8 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 }
 
 static void check_unit_array_access(const Ir_array_access* access) {
-    check_unit_src(access->index, access->pos);
-    check_unit_src(access->callee, access->pos);
+    check_unit_src(access->index, access->pos, access->loc);
+    check_unit_src(access->callee, access->pos, access->loc);
     init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = access->name_self,
         .cfg_node_of_init = frame_idx,
@@ -808,20 +817,20 @@ static void check_unit_def(const Ir_def* def) {
 }
 
 static void check_unit_function_call(const Ir_function_call* call) {
-    check_unit_src(call->callee, call->pos);
+    check_unit_src(call->callee, call->pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         Name curr = vec_at(&call->args, idx);
-        check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */);
+        check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, call->loc);
     }
 }
 
 static void check_unit_binary(const Ir_binary* bin) {
-    check_unit_src(bin->lhs, bin->pos);
-    check_unit_src(bin->rhs, bin->pos);
+    check_unit_src(bin->lhs, bin->pos, bin->loc);
+    check_unit_src(bin->rhs, bin->pos, bin->loc);
 }
 
 static void check_unit_unary(const Ir_unary* unary) {
-    check_unit_src(unary->child, unary->pos);
+    check_unit_src(unary->child, unary->pos, unary->loc);
 }
 
 static void check_unit_operator(const Ir_operator* oper) {

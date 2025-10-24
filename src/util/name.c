@@ -5,14 +5,14 @@
 #include <str_and_num_utils.h>
 #include <uast.h>
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
 }
 
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
     Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id);
+    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
     if (usymbol_lookup(&dummy, possible_new)) {
         return name_to_uname(possible_new);
     }
@@ -175,6 +175,11 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_print, buf, ">)");
     }
+    if (name.attrs > 0) {
+        string_extend_cstr(&a_print, buf, "(*attrs:0x");
+        string_extend_hex_8_digits(&a_print, buf, name.attrs);
+        string_extend_cstr(&a_print, buf, "*)");
+    }
 }
 
 void extend_name_msg(String* buf, Name name) {
@@ -223,7 +228,7 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope, (Attrs) {0});
 }
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {

@@ -49,7 +49,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             name.mod_alias.base,
             (Ulang_type_vec) {0},
             name.mod_alias.scope_id
-        )
+        , (Attrs) {0})
     )) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
@@ -57,7 +57,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
                 name.mod_alias.base,
                 (Ulang_type_vec) {0},
                 name.mod_alias.scope_id
-            ))
+            , (Attrs) {0}))
         );
         return false;
     }
@@ -65,7 +65,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope, (Attrs) {0});
             return true;
         }
         case UAST_IMPORT_PATH:

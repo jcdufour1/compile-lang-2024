@@ -3,6 +3,7 @@
 
 #include <ulang_type_forward_decl.h>
 #include <newstring.h>
+#include <attrs.h>
 
 typedef enum {
     UNAME_MSG,
@@ -23,6 +24,7 @@ typedef struct {
     Strv base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
+    Attrs attrs;
 } Name;
 
 // TODO: nodes should store Uname_id (which would contain size_t) instead of Uname?
@@ -36,7 +38,7 @@ typedef struct {
     Scope_id scope_id;
 } Uname;
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 

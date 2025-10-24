@@ -27,7 +27,7 @@ static inline Lang_type_atom lang_type_atom_new(Name str, int16_t pointer_depth)
 
 static inline Lang_type_atom lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
     return lang_type_atom_new(
-        name_new((Strv) {0}, sv(cstr), (Ulang_type_vec) {0}, scope_id),
+        name_new((Strv) {0}, sv(cstr), (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
         pointer_depth
     );
 }

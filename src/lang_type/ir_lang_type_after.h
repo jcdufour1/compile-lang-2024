@@ -15,7 +15,7 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -28,7 +28,7 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
             string_extend_cstr(&a_main, &string, "f");
             string_extend_int64_t(&a_main, &string, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -41,7 +41,7 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_t
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
             );
             unwrap(!strv_is_equal(atom.str.base, sv("void")));
@@ -72,7 +72,7 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_p
                     msg_todo("bit widths other than 32 or 64 (for floating point numbers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
             }
             return ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -100,7 +100,7 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_p
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -127,13 +127,13 @@ static inline Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_p
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return ir_lang_type_atom_new(
-                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
             );
         }
         case IR_LANG_TYPE_OPAQUE:
             return ir_lang_type_atom_new(
-                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0),
+                name_new((Strv) {0}, sv("void"), (Ulang_type_vec) {0}, 0, (Attrs) {0}),
                 ir_lang_type_opaque_const_unwrap(ir_lang_type).atom.pointer_depth
             );
     }

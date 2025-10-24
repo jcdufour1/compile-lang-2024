@@ -1054,7 +1054,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         args,
         tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
             old_lit->pos,
-            name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
             lang_type_new_ux(64)
         ))),
         lang_type_new_ux(64)
@@ -1065,7 +1065,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         membs,
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL), 0
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args_u8, SCOPE_TOP_LEVEL, (Attrs) {0}), 0
         )))
     ));
 }
@@ -1246,7 +1246,9 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
         unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
     }
 
-    // TODO: remove this switch and just return ir_tast_get_name(alloca)
+    Name sym_name = ir_tast_get_name(alloca);
+
+    // TODO: remove this switch and just return sym_name
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
         case LANG_TYPE_ENUM:
@@ -1263,7 +1265,7 @@ static Name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
             // fallthrough
         case LANG_TYPE_FN:
             // fallthrough
-        return ir_tast_get_name(alloca);
+        return sym_name;
     }
     unreachable("");
 
@@ -1292,11 +1294,14 @@ static Name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
 
     Name ptr = load_ptr_symbol(new_block, old_sym);
 
+    Name load_name = util_literal_name_new(); 
+    load_name.attrs |= ptr.attrs;
+
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
         ptr,
         rm_tuple_lang_type(old_sym->base.lang_type, old_sym->pos),
-        util_literal_name_new()
+        load_name 
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1561,11 +1566,14 @@ static Name load_ptr_index(Ir_block* new_block, Tast_index* old_index) {
 static Name load_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Name ptr = load_ptr_member_access(new_block, old_access);
 
+    Name new_load_name = util_literal_name_new();
+    new_load_name.attrs |= ptr.attrs;
+
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         ptr,
         ir_lang_type_pointer_depth_dec(lang_type_from_get_name(ptr)),
-        util_literal_name_new()
+        new_load_name
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
 
@@ -1688,6 +1696,7 @@ static Name load_tuple(Ir_block* new_block, Tast_tuple* old_tuple) {
 }
 
 // TODO: make separate tuple types for lhs and rhs
+// todo();
 static Name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
     (void) new_block;
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
@@ -1845,7 +1854,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             sv("at_fun_start"),
             (Ulang_type_vec) {0},
             new_fun_def->body->scope_id
-        )
+        , (Attrs) {0})
     );
     log(LOG_DEBUG, "thing 56: %zu\n", new_fun_def->body->scope_id);
     unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
@@ -1956,13 +1965,15 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
     Name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Name new_rhs = load_expr(new_block, old_assign->rhs);
 
+    Name new_store_name = util_literal_name_new_prefix(sv("store_for_assign"));
+
     Ir_store_another_ir* new_store = ir_store_another_ir_new_internal(
         pos,
         (Loc) {.file = file, .line = line},
         new_rhs,
         new_lhs,
         rm_tuple_lang_type(tast_expr_get_lang_type(old_assign->lhs), old_assign->pos),
-        util_literal_name_new_prefix(sv("store_for_assign"))
+        new_store_name
     );
     unwrap(ir_add(ir_store_another_ir_wrap(new_store)));
 
@@ -1978,6 +1989,10 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def) {
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
+
+    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
+        old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
+    }
 
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
