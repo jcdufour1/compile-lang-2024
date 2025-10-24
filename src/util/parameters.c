@@ -758,6 +758,10 @@ static void set_params_to_defaults(void) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
+
+#ifdef NDEBUG
+    params_log_level = LOG_INFO;
+#endif // NDEBUG
 }
 
 static void print_usage(void) {

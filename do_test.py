@@ -151,7 +151,8 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     else:
         raise NotImplementedError
     compile_cmd.append("-lm")
-    compile_cmd.append("--set-log-level=INFO")
+    if do_debug:
+        compile_cmd.append("--set-log-level=INFO")
     if isinstance(file, FileNormal):
         compile_cmd.append("-o")
         compile_cmd.append(os.path.basename(remove_extension(file.path_base)))

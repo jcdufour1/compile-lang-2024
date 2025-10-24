@@ -30,7 +30,7 @@ ifeq ($(DEBUG), 1)
 else
     C_FLAGS = ${C_FLAGS_RELEASE}
 	BUILD_DIR=${BUILD_DIR_RELEASE}
-	LOG_LEVEL ?= "LOG_INFO"
+	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
 OBJS=\
