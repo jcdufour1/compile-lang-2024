@@ -321,7 +321,6 @@ static void check_unit_src_internal_name(Name name, Pos pos) {
         //}}
 
     }}
-    todo();
 
     for (size_t idx = 0; idx < frames.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
@@ -541,20 +540,6 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 }
             }
 
-            //vec_foreach(succ_idx, size_t, succ, curr.succs) {/*{*/
-            //    vec_foreach(frame_idx, Init_table, curr_table, curr_frame->init_tables) {/*{*/
-            //        Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-            //        Init_table_node curr_in_tbl = {0};
-            //        while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-            //            Frame* succ_frame = vec_at_ref(&frames, succ);
-            //            Init_table_node* dummy = NULL;
-            //            if (!init_symbol_lookup(&succ_frame->init_tables, &dummy, curr_in_tbl.name)) {
-            //                unwrap(init_symbol_add(&succ_frame->init_tables, curr_in_tbl));
-            //            }
-            //        }
-            //    }}
-            //}}
-
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
                 size_t pred_0 = vec_at(&curr.preds, 0);
@@ -563,8 +548,12 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                     Init_table_node curr_in_tbl = {0};
                     bool is_init_in_pred = true;
                     while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-                        Init_table_node* dummy = NULL;
-                        if (init_symbol_lookup(&curr_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                        Init_table_node* node = NULL;
+                        if (init_symbol_lookup(&curr_frame->init_tables, &node, curr_in_tbl.name)) {
+                            if (node->cfg_node_of_init != curr_in_tbl.cfg_node_of_init) {
+                                node->cfg_node_of_init = curr_in_tbl.cfg_node_of_init;
+                                node->block_pos_of_init = curr_in_tbl.block_pos_of_init;
+                            }
                             continue;
                         }
                         if (iter_idx < 10) {
