@@ -54,8 +54,6 @@ Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id sco
 
 Uname name_to_uname(Name name);
 
-Name ir_name_to_name(Ir_name name);
-
 Ir_name name_to_ir_name(Name name);
 
 void extend_name_ir(String* buf, Name name);
@@ -63,6 +61,8 @@ void extend_name_ir(String* buf, Name name);
 void serialize_strv(String* buf, Strv strv);
 
 Strv serialize_name_symbol_table(Name name);
+
+Strv serialize_ir_name_symbol_table(Ir_name name);
 
 Strv serialize_name(Name name);
 

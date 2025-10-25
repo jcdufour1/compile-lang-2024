@@ -369,7 +369,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 // returns false if symbol has already been added to the table
 bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
     Ir_name name = ir_tast_get_name(item);
-    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(ir_name_to_name(name)), item);
+    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_ir_name_symbol_table(name), item);
 }
 
 // returns false if symbol has already been added to the table

@@ -46,15 +46,20 @@ Uname name_to_uname(Name name) {
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
 }
 
-Name ir_name_to_name(Ir_name name) {
-    (void) name;
-    todo();
-}
-
 Ir_name name_to_ir_name(Name name) {
-    Scope_id curr_scope = name.scope;
-    while (curr_scope != SCOPE_TOP_LEVEL) {
+    if (name.scope_id == SCOPE_TOP_LEVEL) {
+        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
+        return *(Ir_name*)&name;
     }
+
+    Scope_id curr = name.scope_id;
+    Scope_id prev = SCOPE_NOT;
+    while (curr != SCOPE_TOP_LEVEL) {
+        prev = curr;
+        curr = scope_get_parent_tbl_lookup(curr);
+    }
+    assert(prev != SCOPE_NOT && prev != SCOPE_TOP_LEVEL);
+
     (void) name;
     todo();
 }
@@ -81,6 +86,7 @@ void serialize_strv(String* buf, Strv strv) {
 }
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
+// TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 Strv serialize_name_symbol_table(Name name) {
     String buf = {0};
 
@@ -134,6 +140,11 @@ Strv serialize_name_symbol_table(Name name) {
     }
 
     return string_to_strv(buf);
+}
+
+Strv serialize_ir_name_symbol_table(Ir_name name) {
+    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
+    return serialize_name_symbol_table(*(Name*)&name);;
 }
 
 Strv serialize_name(Name name) {
