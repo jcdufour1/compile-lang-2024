@@ -1331,7 +1331,7 @@ static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     return ir_tast_get_name(alloca);
 }
 
-static Name load_ptr_enum_callee(Ir_block* new_block, Tast_enum_callee* old_callee) {
+static Ir_name load_ptr_enum_callee(Ir_block* new_block, Tast_enum_callee* old_callee) {
     (void) new_block;
     (void) env;
     (void) old_callee;
@@ -2361,7 +2361,7 @@ static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
             old_break->pos,
             tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
                 .lang_type = tast_expr_get_lang_type(old_break->break_expr),
-                .name = load_break_symbol_name
+                .name = ir_name_to_name(load_break_symbol_name)
             })),
             old_break->break_expr
         ));
@@ -2371,7 +2371,7 @@ static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
 }
 
 static void load_label(Ir_block* new_block, Tast_label* old_label) {
-    Ir_label* new_label = ir_label_new(old_label->pos, old_label->name);
+    Ir_label* new_label = ir_label_new(old_label->pos, name_to_ir_name(old_label->name));
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(new_label)));
     unwrap(new_label->name.base.count > 0);
     ir_add(ir_def_wrap(ir_label_wrap(new_label)));
@@ -2439,12 +2439,12 @@ static Ir_name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
 
 next:
     dummy = 0;
-    Name ptr = load_ptr_expr(new_block, old_unary->child);
+    Ir_name ptr = load_ptr_expr(new_block, old_unary->child);
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_unary->pos,
         ptr,
         rm_tuple_lang_type(old_unary->lang_type, old_unary->pos),
-        util_literal_name_new_prefix(sv("load_another_ir"))
+        util_literal_ir_name_new_prefix(sv("load_another_ir"))
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
     ir_lang_type_set_pointer_depth(&new_load->lang_type, ir_lang_type_get_pointer_depth(new_load->lang_type) + 1);
@@ -2575,8 +2575,8 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         break_out_of_scope = tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope;
     }
     while (1) {
-        Name curr_scope = vec_at(defered_collections.coll_stack, idx).curr_scope_name;
-        if (use_break_out_of && name_is_equal(curr_scope, break_out_of_scope)) {
+        Ir_name curr_scope = vec_at(defered_collections.coll_stack, idx).curr_scope_name;
+        if (use_break_out_of && ir_name_is_equal(curr_scope, name_to_ir_name(break_out_of_scope))) {
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2585,7 +2585,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 tast_stmt_get_pos(old_stmt),
                 tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
                     .lang_type = lang_type_new_u1(),
-                    .name = get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx))
+                    .name = ir_name_to_name(get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx)))
                 })),
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1()))) // TODO: call helper functions for making some of these literals
             );
@@ -2598,7 +2598,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
                         .lang_type = tast_expr_get_lang_type(tast_yield_unwrap(old_stmt)->yield_expr),
-                        .name = vec_at(defered_collections.coll_stack, idx).break_name
+                        .name = ir_name_to_name(vec_at(defered_collections.coll_stack, idx).break_name)
                     })),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
@@ -2613,7 +2613,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 tast_stmt_get_pos(old_stmt),
                 tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
                     .lang_type = lang_type_new_u1(),
-                    .name = vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding
+                    .name = ir_name_to_name(vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding)
                 })),
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
             );
@@ -2636,7 +2636,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
     if (pairs->info.count > 0) {
         // jump to the top of the defer stack to execute the defered statements
-        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_name_new(), vec_top(*pairs).label->name);
+        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(vec_top(*pairs).label->name));
         vec_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
 }
@@ -2701,7 +2701,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 
             Defer_collection* coll = vec_top_ref(&defered_collections.coll_stack);
             Tast_def* def = NULL; 
-            unwrap(symbol_lookup(&def, coll->break_name));
+            unwrap(symbol_lookup(&def, ir_name_to_name(coll->break_name)));
             if (tast_def_get_lang_type(def).type == LANG_TYPE_VOID) {
                 if (tast_yield_unwrap(old_stmt)->do_yield_expr) {
                     load_expr(new_block, tast_yield_unwrap(old_stmt)->yield_expr);
@@ -2712,8 +2712,8 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(coll->break_name),
-                        .name = coll->break_name
+                        .lang_type = tast_lang_type_from_name(ir_name_to_name(coll->break_name)),
+                        .name = ir_name_to_name(coll->break_name)
                     })),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
@@ -2776,7 +2776,7 @@ static void load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Name sym_name, Name if_rtning, Name otherwise) {
+static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Ir_name sym_name, Ir_name if_rtning, Ir_name otherwise) {
     if_for_add_cond_goto_internal(
         (Loc) {.file = file, .line = line},
         // if this condition evaluates to true, we are not returning right now
@@ -2784,7 +2784,7 @@ static void load_single_is_rtn_check_internal(const char* file, int line, Ir_blo
             new_block->pos,
             tast_symbol_wrap(tast_symbol_new(new_block->pos, (Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
-                .name = sym_name
+                .name = ir_name_to_name(sym_name)
             })),
             tast_literal_wrap(tast_int_wrap(tast_int_new(new_block->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
@@ -2806,18 +2806,18 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     //   (and is yield check should be used for child scopes)
     //   (this may not be nessessary because optimization passes could remove unnessessary assignments)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
-    load_single_is_rtn_check(new_block, defered_collections.is_rtning, vec_top(pairs).label->name, after_check_rtn);
-    add_label(new_block, after_check_rtn, new_block->pos);
+    load_single_is_rtn_check(new_block, name_to_ir_name(defered_collections.is_rtning), name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_check_rtn));
+    add_label(new_block, name_to_ir_name(after_check_rtn), new_block->pos);
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, vec_top(pairs).label->name, after_yield_check);
-    add_label(new_block, after_yield_check, new_block->pos);
+    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_yield_check));
+    add_label(new_block, name_to_ir_name(after_yield_check), new_block->pos);
 
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_cont2ing, vec_top(pairs).label->name, after_cont2_check);
-    add_label(new_block, after_cont2_check, new_block->pos);
+    load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_cont2_check));
+    add_label(new_block, name_to_ir_name(after_cont2_check), new_block->pos);
 }
 
 static Ir_block* load_block(
@@ -2833,7 +2833,7 @@ static Ir_block* load_block(
 
     Ir_block* new_block = ir_block_new(
         old_block->pos,
-        util_literal_name_new(),
+        util_literal_ir_name_new(),
         (Ir_vec) {0},
         old_block->pos_end,
         old_block->scope_id,
@@ -2862,7 +2862,7 @@ static Ir_block* load_block(
     load_block_stmts(
         new_block,
         old_block->children,
-        scope_to_name_tbl_lookup(old_block->scope_id),
+        name_to_ir_name(scope_to_name_tbl_lookup(old_block->scope_id)),
         yield_dest_name,
         parent_of,
         old_block->pos,

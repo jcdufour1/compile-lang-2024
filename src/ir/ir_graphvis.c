@@ -9,7 +9,7 @@
 // NOTE: arrow from parent to child created in parent corresponding function, not child
 
 
-static Name ir_graphvis_parent_block_next;
+static Ir_name ir_graphvis_parent_block_next;
 static Ir_table already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
@@ -28,13 +28,13 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
     string_extend_cstr(&a_print, buf, "\n");
 }
 
-static void extend_name_graphvis(String* buf, Name name) {
+static void extend_name_graphvis(String* buf, Ir_name name) {
     string_extend_strv(&a_print, buf, serialize_name(name));
 }
 
 #define arrow_names(buf, parent, child) arrow_names_internal(__FILE__, __LINE__, buf, parent, child)
 
-static void arrow_names_internal(const char* file, int line, String* buf, Name parent, Name child) {
+static void arrow_names_internal(const char* file, int line, String* buf, Ir_name parent, Ir_name child) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, parent);
@@ -50,8 +50,8 @@ static void arrow_names_label_internal(
     const char* file,
     int line,
     String* buf,
-    Name parent,
-    Name child,
+    Ir_name parent,
+    Ir_name child,
     Strv label
 ) {
     extend_source_loc_internal(file, line, buf);
@@ -66,7 +66,7 @@ static void arrow_names_label_internal(
 
 #define label(buf, name, label) label_internal(__FILE__, __LINE__, buf, name, label)
 
-static void label_internal(const char* file, int line, String* buf, Name name, Strv label) {
+static void label_internal(const char* file, int line, String* buf, Ir_name name, Strv label) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
@@ -83,7 +83,7 @@ static void label_internal(const char* file, int line, String* buf, Name name, S
 
 #define label_ex(buf, name, label, actual_name) label_ex_internal(__FILE__, __LINE__, buf, name, label, actual_name)
 
-static void label_ex_internal(const char* file, int line, String* buf, Name name, Strv label, Name actual_name) {
+static void label_ex_internal(const char* file, int line, String* buf, Ir_name name, Strv label, Ir_name actual_name) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
@@ -122,8 +122,8 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
         if (ir_tbl_add_ex(&already_visited, curr)) {
-            Name old_parent_block_next = ir_graphvis_parent_block_next;
-            ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_tast_get_name(next);
+            Ir_name old_parent_block_next = ir_graphvis_parent_block_next;
+            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_tast_get_name(next);
             ir_graphvis_internal(buf, curr);
             ir_graphvis_parent_block_next = old_parent_block_next;
         }
@@ -302,7 +302,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     label(buf, call->name_self, sv("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
-    Name args_name = util_literal_name_new();
+    Ir_name args_name = util_literal_name_new();
     label(buf, args_name, sv("args"));
     arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
