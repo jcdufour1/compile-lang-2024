@@ -50,7 +50,7 @@ typedef struct {
 } Ir_table;
 
 typedef struct {
-    Name name;
+    Ir_name name;
     size_t cfg_node_of_init;
     size_t block_pos_of_init;
 } Init_table_node;

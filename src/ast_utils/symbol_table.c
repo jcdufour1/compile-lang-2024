@@ -368,13 +368,13 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
-    Name name = ir_tast_get_name(item);
-    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(name), item);
+    Ir_name name = ir_tast_get_name(item);
+    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(ir_name_to_name(name)), item);
 }
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* item) {
-    Name name = ir_tast_get_name(item);
+    Ir_name name = ir_tast_get_name(item);
     return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
 }
 
@@ -383,9 +383,9 @@ void* ir_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool ir_add(Ir* item) {
-    Name name = ir_tast_get_name(item);
+    Ir_name name = ir_tast_get_name(item);
     return generic_symbol_add(
-        serialize_name_symbol_table(name),
+        serialize_name_symbol_table(ir_name_to_name(name)),
         item,
         (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
         name.scope_id
@@ -393,8 +393,8 @@ bool ir_add(Ir* item) {
 }
 
 void ir_tbl_update(Ir* item) {
-    Name name = ir_tast_get_name(item);
-    generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
+    Ir_name name = ir_tast_get_name(item);
+    generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(ir_name_to_name(name)), item);
 }
 
 void usymbol_update(Uast_def* item) {
@@ -434,10 +434,10 @@ bool ir_tbl_lookup(Ir** result, Name key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
-bool ir_lookup(Ir** result, Name key) {
+bool ir_lookup(Ir** result, Ir_name key) {
     return generic_symbol_lookup(
         (void**)result,
-        serialize_name_symbol_table(key),
+        serialize_name_symbol_table(ir_name_to_name(key)),
         (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
         key.scope_id
     );
@@ -491,9 +491,9 @@ bool init_symbol_add_internal(
     return true;
 }
 
-bool init_symbol_lookup(Init_table_vec* init_tables, Init_table_node** result, Name name) {
+bool init_symbol_lookup(Init_table_vec* init_tables, Init_table_node** result, Ir_name name) {
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_lookup_internal(init_tables, (void**)result, serialize_name_symbol_table(name), name.scope_id);
+    return init_symbol_lookup_internal(init_tables, (void**)result, serialize_name_symbol_table(ir_name_to_name(name)), name.scope_id);
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
@@ -503,7 +503,7 @@ bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
     Init_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
     *buf = node;
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(node.name), buf, node.name.scope_id);
+    return init_symbol_add_internal(init_tables, serialize_name_symbol_table(ir_name_to_name(node.name)), buf, node.name.scope_id);
 }
 
 //
@@ -656,7 +656,7 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
             string_extend_cstr_indent(&a_print, buf, "", recursion_depth*INDENT_WIDTH);
-            extend_name(NAME_LOG, buf, sym_tast->tast->name);
+            extend_ir_name(NAME_LOG, buf, sym_tast->tast->name);
             string_extend_cstr(&a_print, buf, "\n");
         }
     }

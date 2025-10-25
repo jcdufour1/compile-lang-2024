@@ -142,9 +142,9 @@ static bool print_errors_for_unit;
 // TODO: rename unit to uninit?
 static void check_unit_ir_from_block(const Ir* ir);
 
-static void check_unit_src_internal_name(Name name, Pos pos, Loc loc);
+static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc);
 
-static void check_unit_src(const Name src, Pos pos, Loc loc);
+static void check_unit_src(const Ir_name src, Pos pos, Loc loc);
 
 static void check_unit_src_internal_literal(const Ir_literal* lit) {
     switch (lit->type) {
@@ -165,7 +165,7 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
 static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos, Loc loc) {
     check_unit_src(call->callee, pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Name curr = vec_at(call->args, idx);
+        Ir_name curr = vec_at(call->args, idx);
         check_unit_src(curr, pos, loc);
     }
 }
@@ -232,7 +232,7 @@ static void check_unit_src_internal_def(const Ir_def* def) {
 }
 
 // TODO: make helper function in ir_utils or similar (or figure out if I do already and clean it up)
-static bool check_unit_is_struct(Name name) {
+static bool check_unit_is_struct(Ir_name name) {
     Ir* def_ = NULL;
     unwrap(ir_lookup(&def_, name));
     if (def_->type != IR_ALLOCA) {
@@ -241,7 +241,7 @@ static bool check_unit_is_struct(Name name) {
     return ir_alloca_const_unwrap(def_)->lang_type.type == IR_LANG_TYPE_STRUCT;
 }
 
-static void check_unit_src_internal_name(Name name, Pos pos, Loc loc) {
+static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     if (name.attrs & ATTR_ALLOW_UNINIT) {
         return;
     }
@@ -259,7 +259,7 @@ static void check_unit_src_internal_name(Name name, Pos pos, Loc loc) {
     //)));
 
     Init_table_node* result = NULL;
-    if (!init_symbol_lookup(&curr_frame->init_tables, &result, name_new(
+    if (!init_symbol_lookup(&curr_frame->init_tables, &result, ir_name_new(
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
@@ -297,17 +297,17 @@ static void check_unit_src_internal_name(Name name, Pos pos, Loc loc) {
             DIAG_UNINITIALIZED_VARIABLE, pos,
             "symbol `"FMT"` is used uninitialized on some or all code paths; "
             "note that struct must be initialized with a struct literal or function call "
-            "(individual member accesses do not satisfy initialization requirements)\n", name_print(NAME_MSG, name));
+            "(individual member accesses do not satisfy initialization requirements)\n", ir_name_print(NAME_MSG, name));
     } else {
-        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", name_print(NAME_MSG, name));
+        msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
     log(LOG_DEBUG, FMT"\n", loc_print(loc));
     log(LOG_DEBUG, "%zu\n", frames.info.count);
     log(LOG_DEBUG, "curr_frame idx: %zu\n", frame_idx);
     log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
     name.attrs |= ATTR_ALLOW_UNINIT;
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
     // TODO: make function to log entire frames
     vec_foreach(idx, Frame, frame, frames) {/*{*/
@@ -382,13 +382,13 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
     unreachable("");
 }
 
-static void check_unit_src(const Name src, Pos pos, Loc loc) {
+static void check_unit_src(const Ir_name src, Pos pos, Loc loc) {
     Ir* sym_def = NULL;
     unwrap(ir_lookup(&sym_def, src));
     check_unit_src_internal_ir(sym_def, pos, loc);
 }
 
-static void check_unit_dest(const Name dest) {
+static void check_unit_dest(const Ir_name dest) {
     if (!init_symbol_add(&curr_frame->init_tables, (Init_table_node) {
         .name = dest,
         .cfg_node_of_init = frame_idx,
@@ -400,7 +400,7 @@ static void check_unit_dest(const Name dest) {
 
 // returns true if the label was found
 // TODO: move this function elsewhere, since this function may be useful for other passes?
-static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
+static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
     for (size_t idx = 0; idx < block_children.info.count; idx++) {
         // TODO: find a way to avoid O(n) time for finding new block idx 
         //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
@@ -415,11 +415,11 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Name label) {
         if (curr_def->type != IR_LABEL) {
             continue;
         }
-        if (name_is_equal(label, ir_label_const_unwrap(curr_def)->name)) {
+        if (ir_name_is_equal(label, ir_label_const_unwrap(curr_def)->name)) {
             return idx + 1;
         }
     }
-    log(LOG_ERROR, FMT"\n", name_print(NAME_LOG, label));
+    log(LOG_ERROR, FMT"\n", ir_name_print(NAME_LOG, label));
     unreachable("label should have been found");
 }
 
@@ -488,6 +488,7 @@ static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_bac
 }
 
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
+    (void) is_main;
     print_errors_for_unit = false;
 
     unwrap(frames.info.count == 0);
@@ -608,7 +609,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //    unwrap(frames.info.count == 0);
 //    unwrap(block_idx == 0);
 //    unwrap(goto_or_cond_goto == false);
-//    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Name) {0}, (Bool_vec) {0}));
+//    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &frames, frame_new(curr_frame.init_tables, (Ir_name) {0}, (Bool_vec) {0}));
 //
 //    while (frames.info.count > 0) {
 //        bool frame_not_needed = false;
@@ -638,7 +639,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
 //            //   this for loop. this may cause bugs?
 //            block_idx = label_name_to_block_idx(block->children, curr_frame.label_to_cont);
-//            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_frame.label_to_cont));
+//            log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, curr_frame.label_to_cont));
 //        }
 //
 //
@@ -663,7 +664,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 //                            prev_line = cond_goto->pos.line;
 //                        }
 //
-//                        Name next_label = vec_at(&curr_frame.prev_desisions, bool_idx) ?
+//                        Ir_name next_label = vec_at(&curr_frame.prev_desisions, bool_idx) ?
 //                            cond_goto->if_true : cond_goto->if_false;
 //                        temp_block_idx = label_name_to_block_idx(block->children, next_label);
 //                        bool_idx++;
@@ -705,7 +706,7 @@ static void check_unit_import_path(const Ir_import_path* import) {
 
 static void check_unit_function_params(const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, vec_at(params->params, idx)->name_self));
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, vec_at(params->params, idx)->name_self));
         check_unit_dest(vec_at(params->params, idx)->name_self);
     }
 }
@@ -798,7 +799,7 @@ static void check_unit_def(const Ir_def* def) {
 static void check_unit_function_call(const Ir_function_call* call) {
     check_unit_src(call->callee, call->pos, call->loc);
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Name curr = vec_at(call->args, idx);
+        Ir_name curr = vec_at(call->args, idx);
         check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, call->loc);
     }
 }

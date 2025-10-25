@@ -9,6 +9,10 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
 }
 
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
+    return (Ir_name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+}
+
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
     Uast_def* dummy = NULL;
@@ -40,6 +44,16 @@ Uname name_to_uname(Name name) {
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
+}
+
+Name ir_name_to_name(Ir_name name) {
+    (void) name;
+    todo();
+}
+
+Ir_name name_to_ir_name(Name name) {
+    (void) name;
+    todo();
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
@@ -133,7 +147,6 @@ Strv serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
-// TODO: move this macro
 Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
     if (serialize) {
         return serialize_name(name);
@@ -141,6 +154,17 @@ Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
         
     String buf = {0};
     extend_name(mode, &buf, name);
+    return string_to_strv(buf);
+}
+
+Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name) {
+    if (serialize) {
+        static_assert(sizeof(Name) == sizeof(Ir_name), "this type punning below will no longer work");
+        return serialize_name(*(Name*)&name);
+    }
+        
+    String buf = {0};
+    extend_ir_name(mode, &buf, name);
     return string_to_strv(buf);
 }
 
@@ -236,6 +260,26 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
     unreachable("");
 }
 
+void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
+    (void) buf;
+    (void) name;
+    switch (mode) {
+        case NAME_MSG:
+            todo();
+            return;
+        case NAME_LOG:
+            todo();
+            return;
+        case NAME_EMIT_C:
+            todo();
+            return;
+        case NAME_EMIT_IR:
+            todo();
+            return;
+    }
+    unreachable("");
+}
+
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope, (Attrs) {0});
@@ -244,6 +288,12 @@ Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+}
+
+bool ir_name_is_equal(Ir_name a, Ir_name b) {
+    (void) a;
+    (void) b;
+    todo();
 }
 
 bool name_is_equal(Name a, Name b) {

@@ -169,7 +169,7 @@ Name ir_def_get_name(const Ir_def* def) {
 }
 
 // TODO: rename this function to ir_get_name
-Name ir_tast_get_name(const Ir* ir) {
+Ir_name ir_tast_get_name(const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
             return ir_def_get_name(ir_def_const_unwrap(ir));
@@ -206,13 +206,13 @@ Name ir_tast_get_name(const Ir* ir) {
 }
 
 // TODO: rename this function
-Ir_lang_type lang_type_from_get_name(Name name) {
+Ir_lang_type lang_type_from_get_name(Ir_name name) {
     return ir_get_lang_type(ir_from_get_name(name));
 }
 
 // TODO: rename this function
 // TODO: use this instead of the verbose `ir_lookup` in more places
-Ir* ir_from_get_name(Name name) {
+Ir* ir_from_get_name(Ir_name name) {
     Ir* result = NULL;
     unwrap(ir_lookup(&result,  name));
     return result;

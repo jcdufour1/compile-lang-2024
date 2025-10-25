@@ -116,6 +116,7 @@ for generics:
      nessessarily based on memory size
      of computer that compilation happens
 - check for return statement on all code paths
+- rename a_print to a_temp; use a_temp for temporary allocations, a_pass for objects that last the entire pass, and a_main for longer term ones
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

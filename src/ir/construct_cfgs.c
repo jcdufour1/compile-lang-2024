@@ -40,7 +40,7 @@ static void construct_cfg_label(Ir_label* label, bool prev_is_cond_goto) {
 static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
     size_t if_true_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
-        if (name_is_equal(curr->label_name, cond_goto->if_true)) {
+        if (ir_name_is_equal(curr->label_name, cond_goto->if_true)) {
             if_true_idx = idx;
             vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
@@ -50,7 +50,7 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
 
     size_t if_false_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
-        if (name_is_equal(curr->label_name, cond_goto->if_false)) {
+        if (ir_name_is_equal(curr->label_name, cond_goto->if_false)) {
             if_false_idx = idx;
             vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
@@ -66,7 +66,7 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
 static void construct_cfg_goto(Ir_goto* lang_goto) {
     size_t branch_to_idx = SIZE_MAX;
     vec_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
-        if (name_is_equal(curr->label_name, lang_goto->label)) {
+        if (ir_name_is_equal(curr->label_name, lang_goto->label)) {
             branch_to_idx = idx;
             vec_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;

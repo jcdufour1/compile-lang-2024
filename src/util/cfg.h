@@ -10,7 +10,7 @@
 typedef struct {
     Size_t_vec preds;
     Size_t_vec succs;
-    Name label_name; // should be {0} if pos_in_block is at start of block
+    Ir_name label_name; // should be {0} if pos_in_block is at start of block
     size_t pos_in_block;
 } Cfg_node;
 
@@ -19,6 +19,7 @@ typedef struct {
     Cfg_node* buf;
 } Cfg_node_vec;
 
+// TODO: move this function to a .c file
 static inline Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent)  {
     String buf = {0};
 
@@ -46,7 +47,7 @@ static inline Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent
     string_extend_cstr(&a_print, &buf, "]\n");
 
     string_extend_cstr_indent(&a_print, &buf, "name: ", indent);
-    extend_name(NAME_LOG, &buf, node.label_name);
+    extend_ir_name(NAME_LOG, &buf, node.label_name);
     string_extend_cstr(&a_print, &buf, "\n");
 
     string_extend_cstr_indent(&a_print, &buf, "pos_in_block: ", indent);

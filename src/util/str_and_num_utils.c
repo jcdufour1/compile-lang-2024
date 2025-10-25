@@ -424,3 +424,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
     return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id, (Attrs) {0});
 }
+
+Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
+    return name_to_ir_name(util_literal_name_new_prefix_scope_internal(file, line, debug_prefix, scope_id));
+}
