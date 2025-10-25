@@ -58,10 +58,8 @@ Name ir_name_to_name(Ir_name name) {
 
 Ir_name name_to_ir_name(Name name) {
     if (name.scope_id == SCOPE_TOP_LEVEL) {
-        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         Ir_name ir_name = *(Ir_name*)&name;
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
-        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, ir_name));
+        static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
         return ir_name;
     }
@@ -74,8 +72,9 @@ Ir_name name_to_ir_name(Name name) {
     }
     assert(prev != SCOPE_NOT && prev != SCOPE_TOP_LEVEL);
 
-    static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
-    Ir_name ir_name = *(Ir_name*)&name;
+    Name ir_name_ = util_literal_name_new();
+    Ir_name ir_name = *(Ir_name*)&ir_name_;
+    static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
     ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
     return ir_name;
