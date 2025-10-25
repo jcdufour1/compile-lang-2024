@@ -507,6 +507,70 @@ bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
 }
 
 //
+// Ir_name_to_name implementation
+//
+
+static bool ir_name_to_name_lookup_internal(Ir_name_to_name_table_vec* ir_name_tables, void** result, Strv key, Scope_id scope_id) {
+    if (scope_id == SCOPE_NOT) {
+        return false;
+    }
+
+    while (true) {
+        while (scope_id + 1 /* TODO */ > ir_name_tables->info.count) {
+            // TODO: use different arena then a_main, because this vector is only needed for one pass
+            vec_append(&a_main, ir_name_tables, (Ir_name_to_name_table) {0});
+        }
+
+        void* tbl = vec_at_ref(ir_name_tables, scope_id);
+        if (generic_tbl_lookup(result, tbl, key)) {
+             return true;
+        }
+        if (scope_id == 0) {
+            break;
+        }
+        scope_id = scope_get_parent_tbl_lookup(scope_id);
+    }
+
+    return false;
+}
+
+static Ir_name_to_name_table_vec ir_name_tables = {0};
+
+bool ir_name_to_name_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+) {
+    while (scope_id + 10 /* TODO */ > ir_name_tables.info.count) {
+        // TODO: use different arena then a_main, because this vector is only needed for one pass
+        vec_append(&a_main, &ir_name_tables, (Ir_name_to_name_table) {0});
+    }
+
+    void* dummy;
+    if (ir_name_to_name_lookup_internal(&ir_name_tables, (void**)&dummy, key, scope_id)) {
+        return false;
+    }
+    void* curr_tast = vec_at_ref(&ir_name_tables, scope_id);
+    unwrap(generic_tbl_add(curr_tast, key, item));
+    return true;
+}
+
+bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name) {
+    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
+    return ir_name_to_name_lookup_internal(&ir_name_tables, (void**)result, serialize_ir_name_symbol_table(name), name.scope_id);
+}
+
+bool ir_name_to_name_add(Ir_name_to_name_table_node node) {
+    while (ir_name_tables.info.count < node.name_self.scope_id + 2) {
+        vec_append(&a_main /* TODO */, &ir_name_tables, (Ir_name_to_name_table) {0});
+    }
+    Ir_name_to_name_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
+    *buf = node;
+    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
+    return ir_name_to_name_add_internal(serialize_ir_name_symbol_table(node.name_self), buf, node.name_self.scope_id);
+}
+
+//
 // File_path_to_text implementation
 //
 
@@ -529,8 +593,7 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
 static C_forward_struct_tbl c_forward_struct_tbl;
 
 bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key) {
-    todo();
-    //return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_ir_name_symbol_table(key));
 }
 
 // returns false if value has already been added to the table

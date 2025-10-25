@@ -2220,8 +2220,7 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
         }
     }
 
-    todo();
-    //unwrap(!symbol_lookup(&dummy_def, next_if));
+    unwrap(!symbol_lookup(&dummy_def, ir_name_to_name(next_if)));
 
     add_label((*new_block), if_after, if_else->pos);
 

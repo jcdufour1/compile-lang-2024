@@ -74,6 +74,28 @@ typedef struct {
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
 
+typedef struct {
+    Ir_name name_self;
+    Name name_regular;
+} Ir_name_to_name_table_node;
+
+typedef struct {
+    Ir_name_to_name_table_node* tast;
+    Strv key;
+    SYM_TBL_STATUS status;
+} Ir_name_to_name_table_tast;
+
+typedef struct {
+    Ir_name_to_name_table_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Ir_name_to_name_table;
+
+typedef struct {
+    Vec_base info;
+    Ir_name_to_name_table* buf;
+} Ir_name_to_name_table_vec;
+
 
 typedef struct {
     Uast_function_decl* tast;

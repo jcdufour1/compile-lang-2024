@@ -151,5 +151,15 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 
 void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth);
 
+bool ir_name_to_name_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+);
+
+bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name);
+
+bool ir_name_to_name_add(Ir_name_to_name_table_node node);
+
 #endif // SYMBOL_TABLE_H
 

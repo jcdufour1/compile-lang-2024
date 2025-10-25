@@ -196,7 +196,7 @@ Ir_name ir_tast_get_name(const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return ir_name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}));
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:

@@ -259,13 +259,13 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     //)));
 
     Init_table_node* result = NULL;
-    if (!init_symbol_lookup(&curr_frame->init_tables, &result, ir_name_new(
+    if (!init_symbol_lookup(&curr_frame->init_tables, &result, name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
         name.scope_id,
         (Attrs) {0}
-    ))) {
+    )))) {
         // this frame is unreachable, so printing unitinitalized error would not make sense
         return;
     }

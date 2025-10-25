@@ -46,10 +46,24 @@ Uname name_to_uname(Name name) {
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
 }
 
+Name ir_name_to_name(Ir_name name) {
+    Ir_name_to_name_table_node* result = NULL;
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
+    unwrap(
+        ir_name_to_name_lookup(&result, name) &&
+        "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"
+    );
+    return result->name_regular;
+}
+
 Ir_name name_to_ir_name(Name name) {
     if (name.scope_id == SCOPE_TOP_LEVEL) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
-        return *(Ir_name*)&name;
+        Ir_name ir_name = *(Ir_name*)&name;
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, ir_name));
+        ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
+        return ir_name;
     }
 
     Scope_id curr = name.scope_id;
@@ -60,8 +74,11 @@ Ir_name name_to_ir_name(Name name) {
     }
     assert(prev != SCOPE_NOT && prev != SCOPE_TOP_LEVEL);
 
-    (void) name;
-    todo();
+    static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
+    Ir_name ir_name = *(Ir_name*)&name;
+    ir_name.scope_id = prev;
+    ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
+    return ir_name;
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
@@ -275,23 +292,8 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
 }
 
 void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
-    (void) buf;
-    (void) name;
-    switch (mode) {
-        case NAME_MSG:
-            todo();
-            return;
-        case NAME_LOG:
-            todo();
-            return;
-        case NAME_EMIT_C:
-            todo();
-            return;
-        case NAME_EMIT_IR:
-            todo();
-            return;
-    }
-    unreachable("");
+    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
+    extend_name(mode, buf, *(Name*)&name);
 }
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
@@ -305,9 +307,8 @@ Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
 }
 
 bool ir_name_is_equal(Ir_name a, Ir_name b) {
-    (void) a;
-    (void) b;
-    todo();
+    static_assert(sizeof(a) == sizeof(Name) && sizeof(b) == sizeof(Name), "type punning below might not work anymore");
+    return name_is_equal(*(Name*)&a, *(Name*)&b);
 }
 
 bool name_is_equal(Name a, Name b) {
