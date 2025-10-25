@@ -491,9 +491,8 @@ bool init_symbol_add_internal(
     return true;
 }
 
-bool init_symbol_lookup(Init_table_vec* init_tables, Init_table_node** result, Ir_name name) {
-    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_lookup_internal(init_tables, (void**)result, serialize_name_symbol_table(ir_name_to_name(name)), name.scope_id);
+bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_name_symbol_table(ir_name_to_name(name)));
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {

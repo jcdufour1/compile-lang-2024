@@ -60,12 +60,26 @@ fn wrong5() i32 {
     return token.num
 }
 
+fn wrong6() i32 {
+    {
+        let num i32 = 0
+    }
+
+    {
+        let num i32
+        let num2 i32 = num
+    }
+
+    return 0
+}
+
 fn main() i32 {
     wrong1()
     wrong2()
     wrong3()
     wrong4()
     wrong5()
+    wrong6()
     right1()
     let status i32
     return status

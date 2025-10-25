@@ -259,7 +259,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     //)));
 
     Init_table_node* result = NULL;
-    if (!init_symbol_lookup(&curr_cfg_node_area->init_tables, &result, name_to_ir_name(name_new(
+    if (!init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
@@ -279,7 +279,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         return;
     }
 
-    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &result, name)) {
+    if (init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name)) {
         log(LOG_DEBUG, "result->cfg_node_of_init: %zu\n", result->cfg_node_of_init);
         log(LOG_DEBUG, "result->block_pos_of_init: %zu\n", result->block_pos_of_init);
         log(LOG_DEBUG, "block_pos: %zu\n", block_pos);
@@ -531,7 +531,14 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
+                while (curr_cfg_node_area->init_tables.info.count < block->scope_id + 2) {
+                    vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
+                }
+
                 size_t pred_0 = vec_at(curr.preds, 0);
+                while (vec_at_ref(&cfg_node_areas, pred_0)->init_tables.info.count < block->scope_id + 2) {
+                    vec_append(&a_main /* TODO */, &vec_at_ref(&cfg_node_areas, pred_0)->init_tables, (Init_table) {0});
+                }
 
                 Init_table curr_table = vec_at(vec_at_ref(&cfg_node_areas, pred_0)->init_tables, block->scope_id);
                 Init_table_iter iter = init_tbl_iter_new_table(curr_table);
@@ -539,7 +546,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 bool is_init_in_pred = true;
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
                     Init_table_node* node = NULL;
-                    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &node, curr_in_tbl.name)) {
+                    if (init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, block->scope_id), &node, curr_in_tbl.name)) {
                         if (node->cfg_node_of_init != curr_in_tbl.cfg_node_of_init) {
                             node->cfg_node_of_init = curr_in_tbl.cfg_node_of_init;
                             node->block_pos_of_init = curr_in_tbl.block_pos_of_init;
@@ -558,7 +565,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         }
                         Frame* pred_frame = vec_at_ref(&cfg_node_areas, pred);
                         Init_table_node* dummy = NULL;
-                        if (!init_symbol_lookup(&pred_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                        if (!init_symbol_lookup(vec_at_ref(&pred_frame->init_tables, block->scope_id), &dummy, curr_in_tbl.name)) {
                             is_init_in_pred = false;
                             break;
                         }
