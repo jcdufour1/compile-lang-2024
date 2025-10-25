@@ -6,6 +6,6 @@
 
 bool is_extern_c(const Ir* ir);
 
-void ir_extend_name(String* output, Name name);
+void ir_extend_name(String* output, Ir_name name);
 
 #endif // COMMON_H

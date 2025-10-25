@@ -22,7 +22,7 @@ static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
-    return name_is_equal(a.str, b.str);
+    return ir_name_is_equal(a.str, b.str);
 }
 
 static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {

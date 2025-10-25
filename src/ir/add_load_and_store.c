@@ -618,7 +618,7 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
 }
 
 static Ir_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
-    return ir_lang_type_atom_new(atom.str, atom.pointer_depth);
+    return ir_lang_type_atom_new(name_to_ir_name(atom.str), atom.pointer_depth);
 }
 
 static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
@@ -706,10 +706,10 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
-            Name array_name = serialize_ulang_type(MOD_PATH_ARRAYS, lang_type_to_ulang_type(lang_type), true);
+            Ir_name array_name = name_to_ir_name(serialize_ulang_type(MOD_PATH_ARRAYS, lang_type_to_ulang_type(lang_type), true));
 
             Ir* array_def_ = NULL;
-            if (ir_lookup(&array_def_, name_to_ir_name(array_name))) {
+            if (ir_lookup(&array_def_, array_name)) {
                 return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                     lang_type_pos,
                     ir_lang_type_atom_new(array_name, array.pointer_depth)
@@ -726,7 +726,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             Ir_struct_def* array_def = ir_struct_def_new(
                 array.pos,
-                ((Ir_struct_def_base) {.members = membs, .name = name_to_ir_name(array_name)})
+                ((Ir_struct_def_base) {.members = membs, .name = array_name})
             );
             unwrap(ir_add(ir_def_wrap(ir_struct_def_wrap(array_def))));
 
@@ -1093,7 +1093,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
 
     Tast_def* struct_def_ = NULL;
     // TODO: this symbol lookup to get struct_def may not be nessessary (get lang_type from vec_at(old_lit->members))?
-    unwrap(symbol_lookup(&struct_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos))));
+    unwrap(symbol_lookup(&struct_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)))));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
@@ -1256,7 +1256,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
 
 static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
     Tast_def* union_def_ = NULL;
-    unwrap(symbol_lookup(&union_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN))));
+    unwrap(symbol_lookup(&union_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)))));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
     Tast_variable_def* active_memb = vec_at(union_def->base.members, (size_t)old_lit->tag->data);
 
@@ -1566,7 +1566,7 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
     unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
-    unwrap(symbol_lookup(&def, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_callee))));
+    unwrap(symbol_lookup(&def, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(new_callee)))));
 
     int64_t struct_index = {0};
     switch (def->type) {

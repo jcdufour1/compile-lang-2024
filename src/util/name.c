@@ -52,6 +52,9 @@ Name ir_name_to_name(Ir_name name) {
 }
 
 Ir_name name_to_ir_name(Name name) {
+    Scope_id curr_scope = name.scope;
+    while (curr_scope != SCOPE_TOP_LEVEL) {
+    }
     (void) name;
     todo();
 }

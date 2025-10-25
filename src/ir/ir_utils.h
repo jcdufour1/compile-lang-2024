@@ -38,17 +38,17 @@ Ir* ir_get_expr_dest(Ir_expr* expr);
 
 Ir* get_ir_dest(Ir* ir);
 
-Name ir_literal_get_name(const Ir_literal* lit);
+Ir_name ir_literal_get_name(const Ir_literal* lit);
 
-Name ir_operator_get_name(const Ir_operator* operator);
+Ir_name ir_operator_get_name(const Ir_operator* operator);
 
-Name ir_expr_get_name(const Ir_expr* expr);
+Ir_name ir_expr_get_name(const Ir_expr* expr);
 
-Name ir_literal_def_get_name(const Ir_literal_def* lit_def);
+Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def);
 
-Name ir_def_get_name(const Ir_def* def);
+Ir_name ir_def_get_name(const Ir_def* def);
 
-Name ir_ir_expr_get_name(const Ir_expr* expr);
+Ir_name ir_ir_expr_get_name(const Ir_expr* expr);
 
 Ir_name ir_tast_get_name(const Ir* ir);
 
@@ -62,7 +62,7 @@ Ir_lang_type lang_type_from_get_name(Ir_name name);
 
 Ir* ir_from_get_name(Ir_name name);
 
-size_t struct_def_get_idx_matching_member(Ir_struct_def* base, Name memb_name);
+size_t struct_def_get_idx_matching_member(Ir_struct_def* base, Ir_name memb_name);
 
 static inline bool ir_is_label(const Ir* ir) {
     return ir->type == IR_DEF && ir_def_const_unwrap(ir)->type == IR_LABEL;

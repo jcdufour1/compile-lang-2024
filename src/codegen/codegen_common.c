@@ -37,6 +37,6 @@ void ir_extend_name(String* output, Ir_name name) {
         name.base = sv(EXTERN_C_OWN_PREFIX"_actual_main");
     }
 
-    extend_name(NAME_EMIT_IR, output, name);
+    extend_ir_name(NAME_EMIT_IR, output, name);
 }
 

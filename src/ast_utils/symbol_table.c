@@ -528,13 +528,14 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
 // this is used to define additional structs to get around the requirement of in order definitions in c
 static C_forward_struct_tbl c_forward_struct_tbl;
 
-bool c_forward_struct_tbl_lookup(Name** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key));
+bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key) {
+    todo();
+    //return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key));
 }
 
 // returns false if value has already been added to the table
-bool c_forward_struct_tbl_add(Name* value, Name key) {
-    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(key), value);
+bool c_forward_struct_tbl_add(Ir_name* value, Ir_name key) {
+    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(ir_name_to_name(key)), value);
 }
 
 //

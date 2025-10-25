@@ -29,7 +29,10 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
 }
 
 static void extend_name_graphvis(String* buf, Ir_name name) {
-    string_extend_strv(&a_print, buf, serialize_name(name));
+    (void) buf;
+    (void) name;
+    todo();
+    //string_extend_strv(&a_print, buf, serialize_name(name));
 }
 
 #define arrow_names(buf, parent, child) arrow_names_internal(__FILE__, __LINE__, buf, parent, child)
@@ -302,7 +305,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     label(buf, call->name_self, sv("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
-    Ir_name args_name = util_literal_name_new();
+    Ir_name args_name = util_literal_ir_name_new();
     label(buf, args_name, sv("args"));
     arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {

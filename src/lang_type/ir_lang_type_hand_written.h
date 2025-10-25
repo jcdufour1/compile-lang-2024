@@ -6,7 +6,7 @@
 #include <ulang_type.h>
 
 typedef struct {
-    Name str;
+    Ir_name str;
     int16_t pointer_depth; // for function parameter: 2 means that function argument must also have 2 for this field
                            // and that in function, variable is already referenced twice
                            //
@@ -21,13 +21,13 @@ typedef struct {
     Ir_lang_type* buf;
 } Ir_lang_type_vec;
 
-static inline Ir_lang_type_atom ir_lang_type_atom_new(Name str, int16_t pointer_depth) {
+static inline Ir_lang_type_atom ir_lang_type_atom_new(Ir_name str, int16_t pointer_depth) {
     return (Ir_lang_type_atom) {.str = str, .pointer_depth = pointer_depth};
 }
 
 static inline Ir_lang_type_atom ir_lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
     return ir_lang_type_atom_new(
-        name_new(MOD_PATH_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
+        ir_name_new(MOD_PATH_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
         pointer_depth
     );
 }
