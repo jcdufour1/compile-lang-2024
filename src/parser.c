@@ -1198,6 +1198,7 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
     return PARSE_OK;
 }
 
+// TODO: rename to parse_struct_def_base
 static PARSE_STATUS parse_struct_base_def(
     Ustruct_def_base* base,
     Name name,
@@ -1219,7 +1220,7 @@ static PARSE_STATUS parse_struct_base_def(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member = NULL;
-        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
+        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, SCOPE_NOT)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:

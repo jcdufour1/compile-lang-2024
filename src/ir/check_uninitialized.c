@@ -251,14 +251,24 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         return;
     }
 
-    Init_table_node* result = NULL;
-    if (!init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name_to_ir_name(name_new(
+    //if (strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
+        //log(LOG_TRACE, "\n");
+    //}
+
+    Ir_name thing = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
         name.scope_id,
         (Attrs) {0}
-    )))) {
+    ));
+    if (strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
+        init_log_internal(LOG_INFO, __FILE__, __LINE__, 0, &curr_cfg_node_area->init_tables);
+        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, thing));
+    }
+
+    Init_table_node* result = NULL;
+    if (!init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, thing)) {
         //todo();
         // this frame is unreachable, so printing uninitalized error would not make sense
         return;
@@ -356,6 +366,7 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_ARRAY_ACCESS:
             // fallthrough
         case IR_ALLOCA:
+            // TODO: check_unit_src_internal_name is probably unnessessary for IR_ALLOCA
             check_unit_src_internal_name(ir_tast_get_name(ir), pos, loc);
             return;
         case IR_IMPORT_PATH:
@@ -595,8 +606,37 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         }
     }}
 
+    // TODO: make function to log entire cfg_node_areas
+    vec_foreach(idx, Frame, frame, cfg_node_areas) {/*{*/
+        log(LOG_INFO, "frame %zu:\n", idx);
+        init_log_internal(LOG_INFO, __FILE__, __LINE__, 0, &frame.init_tables);
+        log(LOG_INFO, "\n");
+        //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
+            //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+            //Init_table_node curr_in_tbl = {0};
+            //bool is_init_in_pred = true;
+            //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+            //    Init_table_node* dummy = NULL;
+            //    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &dummy, curr_in_tbl.name)) {
+            //        continue;
+            //    }
+
+            //    if (is_init_in_pred) {
+            //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
+            //    }
+            //}
+        //}}
+
+    }}
+    log(LOG_INFO, "\n\n");
+
     cfg_node_areas = (Frame_vec) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
+    assert(!curr_cfg_node_area->init_tables.buf);
+    assert(curr_cfg_node_area->init_tables.info.count == 0);
+    assert(curr_cfg_node_area->init_tables.info.capacity == 0);
+
+
 }
 
 //static void check_unit_block(const Ir_block* block) {
@@ -740,6 +780,9 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 }
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
+    if (print_errors_for_unit) {
+        log(LOG_TRACE, "\n");
+    }
     check_unit_src(load->ir_src, load->pos, load->loc);
     init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
         .name = load->name_self,

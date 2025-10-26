@@ -47,6 +47,11 @@ Uname name_to_uname(Name name) {
 }
 
 Name ir_name_to_name(Ir_name name) {
+    if (name.scope_id == SCOPE_NOT) {
+        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
+        return *(Name*)&name;
+    }
+
     Ir_name_to_name_table_node* result = NULL;
     //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_EMIT_C, name));
     unwrap(
@@ -57,16 +62,25 @@ Name ir_name_to_name(Ir_name name) {
 }
 
 Ir_name name_to_ir_name(Name name) {
+    if (name.scope_id == SCOPE_NOT) {
+        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
+        return *(Ir_name*)&name;
+    }
+
     Name_to_ir_name_table_node* result = NULL;
     if (name_to_ir_name_lookup(&result, name)) {
         if (strv_is_equal(name.base, sv("num"))) {
-            log(LOG_VERBOSE, FMT"\n", ir_name_print(NAME_LOG, result->ir_name));
-            log(LOG_VERBOSE, "name.scope_id: %zu\n", name.scope_id);
+            log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, result->ir_name));
+            log(LOG_INFO, "name.scope_id: %zu\n", name.scope_id);
+            //todo();
         }
         return result->ir_name;
     }
 
     if (name.scope_id == SCOPE_TOP_LEVEL) {
+        if (strv_is_equal(name.base, sv("num"))) {
+            todo();
+        }
         Ir_name ir_name = *(Ir_name*)&name;
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
@@ -80,17 +94,20 @@ Ir_name name_to_ir_name(Name name) {
         prev = curr;
         curr = scope_get_parent_tbl_lookup(curr);
     }
-    assert(prev != SCOPE_NOT && prev != SCOPE_TOP_LEVEL);
+    assert(prev != SCOPE_TOP_LEVEL && prev != SCOPE_NOT);
 
     Name ir_name_ = util_literal_name_new();
     Ir_name ir_name = *(Ir_name*)&ir_name_;
     static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
     if (strv_is_equal(name.base, sv("num"))) {
-        log(LOG_VERBOSE, FMT"\n", ir_name_print(NAME_EMIT_C, ir_name));
-        log(LOG_VERBOSE, "name.scope_id: %zu\n", name.scope_id);
-        log(LOG_VERBOSE, "prev: %zu\n", prev);
+        log(LOG_INFO, FMT"\n", ir_name_print(NAME_EMIT_C, ir_name));
+        log(LOG_INFO, "name.scope_id: %zu\n", name.scope_id);
+        log(LOG_INFO, "prev: %zu\n", prev);
+        //todo();
     }
+    assert(ir_name.scope_id != SCOPE_TOP_LEVEL);
+    assert(name.scope_id != SCOPE_TOP_LEVEL);
     unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
     unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
     return ir_name;
