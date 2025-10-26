@@ -477,6 +477,7 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
+        log(LOG_VERBOSE, "load_stmt: "FMT"\n", tast_stmt_print(vec_at(children, idx)));
         load_stmt(new_block, vec_at(children, idx), false);
     }
 
@@ -977,6 +978,7 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
 
     for (size_t idx = 0; idx < old_call->args.info.count; idx++) {
         Tast_expr* old_arg = vec_at(old_call->args, idx);
+        // TODO: rename thing to new_arg
         Ir_name thing = load_expr(new_block, old_arg);
         vec_append(&a_main, &new_call->args, thing);
         Ir* result = NULL;
@@ -1318,9 +1320,30 @@ static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Ir* alloca = NULL;
+    if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
+        log(LOG_INFO, "load_ptr_symbol thing: "FMT"\n", tast_symbol_print(old_sym));
+        log(LOG_INFO, "%zu\n", new_block->scope_id);
+        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, var_def->name_corr_param));
+    }
     if (!ir_lookup(&alloca, var_def->name_corr_param)) {
+        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
+            log(LOG_INFO, "yes\n");
+        }
         load_variable_def(new_block, tast_variable_def_unwrap(var_def_));
+        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, var_def->name_corr_param));
         unwrap(ir_lookup(&alloca, var_def->name_corr_param));
+        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
+            //log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, ir_tast_get_name(alloca)));
+        }
+    } else {
+        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
+            log(LOG_INFO, "no\n");
+            log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, ir_tast_get_name(alloca)));
+        }
+    }
+
+    if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
+        log(LOG_INFO, "\n\n");
     }
 
     unwrap(var_def);
@@ -2050,9 +2073,16 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
 
     Ir* alloca = NULL;
     if (!ir_lookup(&alloca, new_var_def->name_self)) {
+        //if (strv_is_equal(old_var_def->name.base, sv("num"))) {
+            log(LOG_VERBOSE, "adding thing: "FMT"\n", tast_variable_def_print(old_var_def));
+        //}
         alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
         vec_insert(&a_main, &new_block->children, 1, alloca);
+    } else {
+        //if (strv_is_equal(old_var_def->name.base, sv("num"))) {
+            log(LOG_VERBOSE, "not adding thing: "FMT"\n", tast_variable_def_print(old_var_def));
+        //}
     }
 
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));

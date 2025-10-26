@@ -124,6 +124,7 @@ void compile_file_to_ir(void) {
     do_pass(construct_cfgs, ir_log_level);
     do_pass(remove_void_assigns, ir_log_level);
     do_pass(check_uninitialized, ir_log_level);
+    todo();
 }
 
 void do_passes(void) {

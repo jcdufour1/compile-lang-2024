@@ -243,20 +243,13 @@ static bool check_unit_is_struct(Ir_name name) {
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     if (name.attrs & ATTR_ALLOW_UNINIT) {
+        todo();
         return;
     }
 
     if (!print_errors_for_unit) {
         return;
     }
-
-    //Ir* dummy = NULL;
-    //unwrap(ir_lookup(&dummy, name_new(
-    //    MOD_PATH_BUILTIN,
-    //    sv("at_fun_start"),
-    //    (Ulang_type_vec) {0},
-    //    name.scope_id
-    //)));
 
     Init_table_node* result = NULL;
     if (!init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name_to_ir_name(name_new(
@@ -266,20 +259,13 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         name.scope_id,
         (Attrs) {0}
     )))) {
-        // this frame is unreachable, so printing unitinitalized error would not make sense
-        return;
-    }
-
-
-    // TODO: !strv_is_equal(sv("builtin")/* TODO */, name.mod_path) is used to avoid checking implementation symbol
-    //   (because otherwise it would be required to modify the add_load_and_store pass or
-    //   ignore impossible paths (eg. neither the if nor else is taken).
-    //   consider if builtin symbols should be checked or not
-    if (strv_is_equal(sv("builtin")/* TODO */, name.mod_path)) {
+        //todo();
+        // this frame is unreachable, so printing uninitalized error would not make sense
         return;
     }
 
     if (init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name)) {
+        //log(LOG_DEBUG, FMT"\n", );
         log(LOG_DEBUG, "result->cfg_node_of_init: %zu\n", result->cfg_node_of_init);
         log(LOG_DEBUG, "result->block_pos_of_init: %zu\n", result->block_pos_of_init);
         log(LOG_DEBUG, "block_pos: %zu\n", block_pos);
@@ -431,8 +417,8 @@ static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size
     }}
     vec_append(&a_print /* TODO */, already_covered, is_backedge);
 
-    log(LOG_DEBUG, "%zu\n", is_backedge);
-    log(LOG_DEBUG, "%zu\n", cfg.info.count);
+    //log(LOG_DEBUG, "%zu\n", is_backedge);
+    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
     vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {//{
         if (!pred_is_dead_end(already_covered, cfg, pred)) {
             return false;
@@ -515,6 +501,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
                 block_pos = block_idx;
+                log(LOG_DEBUG, FMT"\n", ir_print(vec_at(block->children, block_idx)));
                 check_unit_ir_from_block(vec_at(block->children, block_idx));
 
                 if (

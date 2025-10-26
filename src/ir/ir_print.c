@@ -170,6 +170,7 @@ Strv ir_block_print_internal(const Ir_block* block, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "block\n", indent);
+    indent += INDENT_WIDTH;
 
     vec_foreach(idx, Cfg_node, curr, block->cfg) {
         string_extend_strv(&a_print, &buf, cfg_node_print_internal(curr, idx, indent + INDENT_WIDTH));
@@ -389,11 +390,11 @@ Strv ir_struct_lit_def_print_internal(const Ir_struct_lit_def* def, int indent) 
 }
 
 Strv ir_label_print_internal(const Ir_label* label, int indent) {
-    (void) indent;
     String buf = {0};
 
+    string_extend_cstr_indent(&a_print, &buf, "LABEL[", indent);
     extend_ir_name(NAME_LOG, &buf, label->name);
-    string_extend_cstr(&a_print, &buf, ":\n");
+    string_extend_cstr(&a_print, &buf, "]:\n");
 
     return string_to_strv(buf);
 }

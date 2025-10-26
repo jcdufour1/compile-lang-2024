@@ -161,5 +161,15 @@ bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name);
 
 bool ir_name_to_name_add(Ir_name_to_name_table_node node);
 
+bool name_to_ir_name_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+);
+
+bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name);
+
+bool name_to_ir_name_add(Name_to_ir_name_table_node node);
+
 #endif // SYMBOL_TABLE_H
 

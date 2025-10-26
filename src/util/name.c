@@ -10,7 +10,7 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
 }
 
 Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return (Ir_name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id, attrs));
 }
 
 // this function will convert `io.i32` to `i32`, etc.
@@ -48,7 +48,7 @@ Uname name_to_uname(Name name) {
 
 Name ir_name_to_name(Ir_name name) {
     Ir_name_to_name_table_node* result = NULL;
-    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
+    //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_EMIT_C, name));
     unwrap(
         ir_name_to_name_lookup(&result, name) &&
         "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"
@@ -57,10 +57,20 @@ Name ir_name_to_name(Ir_name name) {
 }
 
 Ir_name name_to_ir_name(Name name) {
+    Name_to_ir_name_table_node* result = NULL;
+    if (name_to_ir_name_lookup(&result, name)) {
+        if (strv_is_equal(name.base, sv("num"))) {
+            log(LOG_VERBOSE, FMT"\n", ir_name_print(NAME_LOG, result->ir_name));
+            log(LOG_VERBOSE, "name.scope_id: %zu\n", name.scope_id);
+        }
+        return result->ir_name;
+    }
+
     if (name.scope_id == SCOPE_TOP_LEVEL) {
         Ir_name ir_name = *(Ir_name*)&name;
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
-        ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
+        unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
+        unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
         return ir_name;
     }
 
@@ -76,7 +86,13 @@ Ir_name name_to_ir_name(Name name) {
     Ir_name ir_name = *(Ir_name*)&ir_name_;
     static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
-    ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name});
+    if (strv_is_equal(name.base, sv("num"))) {
+        log(LOG_VERBOSE, FMT"\n", ir_name_print(NAME_EMIT_C, ir_name));
+        log(LOG_VERBOSE, "name.scope_id: %zu\n", name.scope_id);
+        log(LOG_VERBOSE, "prev: %zu\n", prev);
+    }
+    unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
+    unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
     return ir_name;
 }
 
@@ -189,6 +205,7 @@ Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
 
 Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name) {
     if (serialize) {
+        todo();
         static_assert(sizeof(Name) == sizeof(Ir_name), "this type punning below will no longer work");
         return serialize_name(*(Name*)&name);
     }
@@ -292,7 +309,23 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
 
 void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    extend_name(mode, buf, *(Name*)&name);
+    switch (mode) {
+        case NAME_MSG:
+            extend_name(mode, buf, ir_name_to_name(name));
+            return;
+        case NAME_LOG:
+            extend_name(mode, buf, *(Name*)&name);
+            string_extend_cstr(&a_print, buf, "(");
+            extend_name(mode, buf, ir_name_to_name(name));
+            string_extend_cstr(&a_print, buf, ")");
+            return;
+        case NAME_EMIT_C:
+            // fallthrough
+        case NAME_EMIT_IR:
+            extend_name(mode, buf, *(Name*)&name);
+            return;
+    }
+    unreachable("");
 }
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {

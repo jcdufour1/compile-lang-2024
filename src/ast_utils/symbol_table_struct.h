@@ -98,6 +98,29 @@ typedef struct {
 
 
 typedef struct {
+    Name name_self;
+    Ir_name ir_name;
+} Name_to_ir_name_table_node;
+
+typedef struct {
+    Name_to_ir_name_table_node* tast;
+    Strv key;
+    SYM_TBL_STATUS status;
+} Name_to_ir_name_table_tast;
+
+typedef struct {
+    Name_to_ir_name_table_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Name_to_ir_name_table;
+
+typedef struct {
+    Vec_base info;
+    Name_to_ir_name_table* buf;
+} Name_to_ir_name_table_vec;
+
+
+typedef struct {
     Uast_function_decl* tast;
     Strv key;
     SYM_TBL_STATUS status;
