@@ -1320,32 +1320,10 @@ static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Ir* alloca = NULL;
-    if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
-        log(LOG_INFO, "load_ptr_symbol thing: "FMT"\n", tast_symbol_print(old_sym));
-        log(LOG_INFO, "%zu\n", new_block->scope_id);
-        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, var_def->name_corr_param));
-    }
     if (!ir_lookup(&alloca, var_def->name_corr_param)) {
-        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
-            log(LOG_INFO, "yes\n");
-        }
         load_variable_def(new_block, tast_variable_def_unwrap(var_def_));
-        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, var_def->name_corr_param));
         unwrap(ir_lookup(&alloca, var_def->name_corr_param));
-        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
-            //log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, ir_tast_get_name(alloca)));
-        }
-    } else {
-        if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
-            log(LOG_INFO, "no\n");
-            log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, ir_tast_get_name(alloca)));
-        }
     }
-
-    if (strv_is_equal(old_sym->base.name.base, sv("num"))) {
-        log(LOG_INFO, "\n\n");
-    }
-
     unwrap(var_def);
     if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
         unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(ir_tast_get_name(alloca))) > 0);
@@ -1375,9 +1353,16 @@ static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
     Ir_name ptr = load_ptr_symbol(new_block, old_sym);
+    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
+        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
+    }
 
     Ir_name load_name = util_literal_ir_name_new(); 
     load_name.attrs |= ptr.attrs;
+    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
+        assert(load_name.attrs & ATTR_ALLOW_UNINIT);
+        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
+    }
 
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
@@ -1586,6 +1571,11 @@ static Ir_name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
 
 static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
+    if (tast_expr_get_lang_type(old_access->callee).type == LANG_TYPE_RAW_UNION) {
+        log(LOG_DEBUG, FMT"\n", tast_member_access_print(old_access));
+        log(LOG_DEBUG, FMT"\n", ir_print(ir_from_get_name(new_callee)));
+        //assert(new_callee.attrs & ATTR_ALLOW_UNINIT);
+    }
     unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
@@ -2069,7 +2059,13 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
         old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
     }
 
+    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
+        assert(old_var_def->name.attrs & ATTR_ALLOW_UNINIT);
+    }
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
+    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
+        assert(new_var_def->name_corr_param.attrs & ATTR_ALLOW_UNINIT);
+    }
 
     Ir* alloca = NULL;
     if (!ir_lookup(&alloca, new_var_def->name_self)) {

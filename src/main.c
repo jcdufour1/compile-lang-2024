@@ -20,12 +20,14 @@
 #include <lang_type_from_ulang_type.h>
 #include <lang_type.h>
 #include <time_utils.h>
+#include <ir_utils.h>
 
 static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
         lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN, pointer_depth
+            POS_BUILTIN,
+            pointer_depth
         )))
     );
     unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
@@ -36,7 +38,7 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_opaque(0);
+    //add_opaque(0);
     add_void();
 
     vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
@@ -119,12 +121,15 @@ void compile_file_to_ir(void) {
     do_pass_status(parse, usymbol_log_level);
     do_pass_status(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
+    //Ir* result = NULL;
+    //unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/union"), sv("union"), (Ulang_type_vec) {0}, 2, (Attrs) {0})));
+    //log(LOG_DEBUG, FMT"\n", ir_print(result));
+    //log(LOG_DEBUG, "%d\n", ir_tast_get_name(result).attrs);
 
     // ir passes
     do_pass(construct_cfgs, ir_log_level);
     do_pass(remove_void_assigns, ir_log_level);
     do_pass(check_uninitialized, ir_log_level);
-    todo();
 }
 
 void do_passes(void) {

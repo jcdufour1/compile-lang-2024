@@ -61,7 +61,11 @@ Name ir_name_to_name(Ir_name name) {
     return result->name_regular;
 }
 
+// TODO: Attrs should be stored in hash tables instead if in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
+    if (strv_is_equal(name.base, sv("union"))) {
+        log(LOG_TRACE, "\n");
+    }
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         return *(Ir_name*)&name;
@@ -69,11 +73,7 @@ Ir_name name_to_ir_name(Name name) {
 
     Name_to_ir_name_table_node* result = NULL;
     if (name_to_ir_name_lookup(&result, name)) {
-        if (strv_is_equal(name.base, sv("num"))) {
-            log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, result->ir_name));
-            log(LOG_INFO, "name.scope_id: %zu\n", name.scope_id);
-            //todo();
-        }
+        result->ir_name.attrs |= name.attrs;
         return result->ir_name;
     }
 
@@ -85,6 +85,7 @@ Ir_name name_to_ir_name(Name name) {
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
         unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
+        ir_name.attrs |= name.attrs;
         return ir_name;
     }
 
@@ -100,16 +101,12 @@ Ir_name name_to_ir_name(Name name) {
     Ir_name ir_name = *(Ir_name*)&ir_name_;
     static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
-    if (strv_is_equal(name.base, sv("num"))) {
-        log(LOG_INFO, FMT"\n", ir_name_print(NAME_EMIT_C, ir_name));
-        log(LOG_INFO, "name.scope_id: %zu\n", name.scope_id);
-        log(LOG_INFO, "prev: %zu\n", prev);
-        //todo();
-    }
+    ir_name.attrs |= name.attrs;
     assert(ir_name.scope_id != SCOPE_TOP_LEVEL);
     assert(name.scope_id != SCOPE_TOP_LEVEL);
     unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
     unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
+    ir_name.attrs |= name.attrs;
     return ir_name;
 }
 

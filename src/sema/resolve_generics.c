@@ -329,10 +329,13 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     if (!name_from_uname(&name_base, lang_type.atom.str, lang_type.pos)) {
         return false;
     }
+    assert(name_base.scope_id != SCOPE_NOT);
 
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
+        log(LOG_DEBUG, FMT"\n", strv_print(serialize_name_symbol_table(name_base)));
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_base));
         return false;
     }
 

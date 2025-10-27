@@ -243,7 +243,6 @@ static bool check_unit_is_struct(Ir_name name) {
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     if (name.attrs & ATTR_ALLOW_UNINIT) {
-        todo();
         return;
     }
 
@@ -263,8 +262,8 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         (Attrs) {0}
     ));
     if (strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
-        init_log_internal(LOG_INFO, __FILE__, __LINE__, 0, &curr_cfg_node_area->init_tables);
-        log(LOG_INFO, FMT"\n", ir_name_print(NAME_LOG, thing));
+        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &curr_cfg_node_area->init_tables);
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, thing));
     }
 
     Init_table_node* result = NULL;
@@ -366,7 +365,6 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_ARRAY_ACCESS:
             // fallthrough
         case IR_ALLOCA:
-            // TODO: check_unit_src_internal_name is probably unnessessary for IR_ALLOCA
             check_unit_src_internal_name(ir_tast_get_name(ir), pos, loc);
             return;
         case IR_IMPORT_PATH:
@@ -608,9 +606,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
     // TODO: make function to log entire cfg_node_areas
     vec_foreach(idx, Frame, frame, cfg_node_areas) {/*{*/
-        log(LOG_INFO, "frame %zu:\n", idx);
-        init_log_internal(LOG_INFO, __FILE__, __LINE__, 0, &frame.init_tables);
-        log(LOG_INFO, "\n");
+        log(LOG_DEBUG, "frame %zu:\n", idx);
+        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
+        log(LOG_DEBUG, "\n");
         //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
             //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
             //Init_table_node curr_in_tbl = {0};
@@ -628,7 +626,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         //}}
 
     }}
-    log(LOG_INFO, "\n\n");
+    log(LOG_DEBUG, "\n\n");
 
     cfg_node_areas = (Frame_vec) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));

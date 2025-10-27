@@ -62,7 +62,7 @@ static Ir* rm_void_expr(Ir_expr* expr) {
     unreachable("");
 }
 
-// TODO: do not call variables/parameters "alloca" because it could conflict with library alloca
+// TODO: do not call variables/parameters "alloca" because it could conflict with library function alloca?
 static Ir* rm_void_alloca(Ir_alloca* alloca) {
     rm_void_internal(alloca, ir_alloca_wrap);
 }

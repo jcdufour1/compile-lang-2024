@@ -1,4 +1,5 @@
 #include <lang_type_after.h>
+#include <lang_type_print.h>
 
 Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
@@ -42,6 +43,17 @@ Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type
             return atom;
         }
         case LANG_TYPE_OPAQUE: {
+            log(
+                LOG_DEBUG,
+                FMT"\n",
+                lang_type_atom_print(
+                    LANG_TYPE_MODE_LOG,
+                    lang_type_atom_new(
+                        name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
+                        lang_type_opaque_const_unwrap(lang_type).pointer_depth
+                    )
+                )
+            );
             return lang_type_atom_new(
                 name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
                 lang_type_opaque_const_unwrap(lang_type).pointer_depth

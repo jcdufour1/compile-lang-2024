@@ -60,6 +60,7 @@ fn wrong5() i32 {
     return token.num
 }
 
+// num var in wrong6 must have the same name as num member in Token struct to test that they do not collide
 fn wrong6() i32 {
     {
         let num i32 = 0
