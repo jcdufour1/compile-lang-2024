@@ -47,6 +47,7 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     }
 
     Generic_symbol_table_tast tast = {.tast = item, .status = SYM_TBL_OCCUPIED, .key = key};
+    assert(sym_tbl_tasts[curr_table_idx].status != SYM_TBL_OCCUPIED);
     sym_tbl_tasts[curr_table_idx] = tast;
     return true;
 }
@@ -117,16 +118,51 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 
 // returns false if symbol has already been added to the table
 bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
+    bool status = true;
+
+    size_t count_before = 0;
+    for (size_t idx = 0; idx < sym_table->capacity; idx++) {
+        if (((Generic_symbol_table_tast*)(sym_table->table_tasts))[idx].status == SYM_TBL_OCCUPIED) {
+            count_before++;
+        }
+    }
     generic_tbl_expand_if_nessessary(sym_table);
+    size_t count_after_1 = 0;
+    for (size_t idx = 0; idx < sym_table->capacity; idx++) {
+        if (((Generic_symbol_table_tast*)(sym_table->table_tasts))[idx].status == SYM_TBL_OCCUPIED) {
+            count_after_1++;
+        }
+    }
+    assert(count_before == count_after_1);
     unwrap(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
-        return false;
+        status = false;
+        goto error;
     }
+
+    size_t count_after_2 = 0;
+    for (size_t idx = 0; idx < sym_table->capacity; idx++) {
+        if (((Generic_symbol_table_tast*)(sym_table->table_tasts))[idx].status == SYM_TBL_OCCUPIED) {
+            count_after_2++;
+        }
+    }
+
     Ir* dummy;
     (void) dummy;
     unwrap(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
-    return true;
+    size_t count_after_3 = 0;
+    for (size_t idx = 0; idx < sym_table->capacity; idx++) {
+        if (((Generic_symbol_table_tast*)(sym_table->table_tasts))[idx].status == SYM_TBL_OCCUPIED) {
+            count_after_3++;
+        }
+    }
+    log(LOG_DEBUG, "%zu %zu %zu\n", count_before, count_after_2, count_after_3);
+    assert(count_before == count_after_1);
+    assert(count_before + 1 == count_after_2);
+    assert(count_before + 1 == count_after_3);
+error:
+    return status;
 }
 
 bool generic_symbol_add(
@@ -503,8 +539,25 @@ bool init_symbol_add_internal(
     if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
         return false;
     }
-    void* curr_tast = vec_at_ref(init_tables, scope_id);
-    unwrap(generic_tbl_add(curr_tast, key, item));
+    Init_table* curr_tast = vec_at_ref(init_tables, scope_id);
+    size_t count_before = 0;
+    for (size_t idx = 0; idx < curr_tast->capacity; idx++) {
+        if (curr_tast->table_tasts[idx].status == SYM_TBL_OCCUPIED) {
+            count_before++;
+        }
+    }
+    unwrap(generic_tbl_add((Generic_symbol_table*)curr_tast, key, item));
+    size_t count_after_1 = 0;
+    for (size_t idx = 0; idx < curr_tast->capacity; idx++) {
+        if (curr_tast->table_tasts[idx].status == SYM_TBL_OCCUPIED) {
+            count_after_1++;
+        }
+    }
+
+    static uint64_t count = 0;
+    count++;
+    log(LOG_DEBUG, "%zu\n", count);
+    assert(count_before + 1 == count_after_1);
     return true;
 }
 
