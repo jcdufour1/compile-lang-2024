@@ -133,15 +133,15 @@ void serialize_strv(String* buf, Strv strv) {
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
-Strv serialize_name_symbol_table(Name name) {
+Strv serialize_name_symbol_table(Arena* arena, Name name) {
     String buf = {0};
 
     String new_mod_path = {0};
     for (size_t idx = 0; idx < name.mod_path.count; idx++) {
         if (strv_at(name.mod_path, idx) == '.') {
-            vec_append(&a_main, &new_mod_path, '_');
+            vec_append(arena, &new_mod_path, '_');
         } else {
-            vec_append(&a_main, &new_mod_path, strv_at(name.mod_path, idx));
+            vec_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
         }
     }
     name.mod_path = string_to_strv(new_mod_path);
@@ -157,9 +157,9 @@ Strv serialize_name_symbol_table(Name name) {
             }
         }
 
-        string_extend_cstr(&a_main, &buf, "_");
-        string_extend_size_t(&a_main, &buf, path_count);
-        string_extend_cstr(&a_main, &buf, "_");
+        string_extend_cstr(arena, &buf, "_");
+        string_extend_size_t(arena, &buf, path_count);
+        string_extend_cstr(arena, &buf, "_");
 
         {
             Strv mod_path = name.mod_path;
@@ -172,25 +172,25 @@ Strv serialize_name_symbol_table(Name name) {
         }
     }
 
-    string_extend_strv(&a_main, &buf, name.base);
+    string_extend_strv(arena, &buf, name.base);
 
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&a_main, &buf, "____");
-        string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
-        string_extend_cstr(&a_main, &buf, "_");
+        string_extend_cstr(arena, &buf, "____");
+        string_extend_size_t(arena, &buf, name.gen_args.info.count);
+        string_extend_cstr(arena, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
+            string_extend_strv(arena, &buf, serialize_name_symbol_table(&a_main, serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
         }
     }
 
     return string_to_strv(buf);
 }
 
-Strv serialize_ir_name_symbol_table(Ir_name name) {
+Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    return serialize_name_symbol_table(*(Name*)&name);;
+    return serialize_name_symbol_table(arena, *(Name*)&name);
 }
 
 Strv serialize_name(Name name) {
@@ -202,7 +202,7 @@ Strv serialize_name(Name name) {
         string_extend_cstr(&a_main, &buf, "_");
     }
 
-    string_extend_strv(&a_main, &buf, serialize_name_symbol_table(name));
+    string_extend_strv(&a_main, &buf, serialize_name_symbol_table(&a_main, name));
 
     return string_to_strv(buf);
 }

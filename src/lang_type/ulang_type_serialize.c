@@ -9,7 +9,7 @@ Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos
     if (include_scope) {
         serialized = serialize_name(temp);
     } else {
-        serialized = serialize_name_symbol_table(temp);
+        serialized = serialize_name_symbol_table(&a_main, temp);
     }
 
     String name = {0};

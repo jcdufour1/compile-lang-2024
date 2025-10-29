@@ -11,7 +11,7 @@ static void check_unit_ir_builtin(const Ir* ir);
 
 static Bool_vec bool_vec_clone(Bool_vec vec) {
     Bool_vec new_vec = {0};
-    vec_extend(&a_main /* TODO */, &new_vec, &vec);
+    vec_extend(&a_main/* TODO */, &new_vec, &vec);
     return new_vec;
 }
 
@@ -70,6 +70,7 @@ static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
 }
 
 static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec subset) {
+    log(LOG_DEBUG, "init_table_vec_is_subset: %zu %zu\n", superset.info.count, subset.info.count);
     if (superset.info.count < subset.info.count) {
         todo();
         return false;
@@ -109,10 +110,30 @@ static bool frame_vec_is_subset(Frame_vec superset, Frame_vec subset) {
         if (idx >= subset.info.count) {
             break;
         }
+        log(LOG_DEBUG, "frame_vec_is_subset idx: %zu\n", idx);
         if (!frame_is_subset(frame, vec_at(subset, idx))) {
             todo();
             return false;
         }
+    }}
+    return true;
+}
+
+static bool assert_frame_vec_is_reasonable(Frame_vec superset, Frame_vec subset) {
+    unwrap(superset.info.count == subset.info.count);
+    unwrap(subset.info.count > 1000000);
+    unwrap(superset.info.count > 1000000);
+
+    vec_foreach(idx, Frame, frame, superset) {//{
+        if (idx >= subset.info.count) {
+            break;
+        }
+        log(LOG_DEBUG, "frame_vec_is_subset idx: %zu\n", idx);
+        todo();
+        //if (!frame_is_reasonable(frame, vec_at(subset, idx))) {
+        //    todo();
+        //    return false;
+        //}
     }}
     return true;
 }
@@ -326,9 +347,16 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
 
+    //unwrap(init_symbol_add(&vec_at_ref(&cached_cfg_node_areas, 68)->init_tables, (Init_table_node) {
+    //    .name = ir_name_new(sv("tests/inputs/optional"), sv("number3"), (Ulang_type_vec) {0}, 267, (Attrs) {0}),
+    //    .cfg_node_of_init = 68,
+    //    .block_pos_of_init = 0
+    //}));
+
     assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
     cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
     assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+    arena_reset(&a_print);
 
     log(LOG_DEBUG, FMT"\n", loc_print(loc));
     log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
@@ -594,9 +622,17 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
 
         vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
-            //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-            //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-            //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+            if (1 || iter_idx < 30) {
+                log(LOG_DEBUG, "%zu %zu\n", cfg_node_areas.info.count, cached_cfg_node_areas.info.count);
+                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
+                assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
+                cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
+                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
+                arena_reset(&a_print);
+            }
 
             frame_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
@@ -607,9 +643,12 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             at_end_of_cfg_node = false;
 
             for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
-                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                if (1 || iter_idx < 2) {
+                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    //arena_reset(&a_print);
+                }
 
                 block_pos = block_idx;
                 log(LOG_DEBUG, FMT"\n", ir_print(vec_at(block->children, block_idx)));
@@ -629,9 +668,12 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
-                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                if (iter_idx < 30) {
+                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    //arena_reset(&a_print);
+                }
 
                 while (curr_cfg_node_area->init_tables.info.count < block->scope_id + 2) {
                     vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
@@ -647,9 +689,12 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 Init_table_node curr_in_tbl = {0};
                 bool is_init_in_pred = true;
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    if (iter_idx < 2) {
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                        //arena_reset(&a_print);
+                    }
 
                     Init_table_node* node = NULL;
                     if (init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, block->scope_id), &node, curr_in_tbl.name)) {
@@ -666,6 +711,8 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
                         //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
                         //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                        //arena_reset(&a_print);
+
 
                         if (iter_idx < 10 && cfg_node_is_backedge(block->cfg, frame_idx, pred)) {
                             continue;
@@ -681,15 +728,20 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         }
                     }}
 
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    if (iter_idx < 2) {
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    }
                     if (is_init_in_pred) {
                         unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
                     }
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    if (iter_idx < 2) {
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
+                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    }
+
 
                 }
             }

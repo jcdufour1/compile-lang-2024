@@ -62,9 +62,9 @@ void extend_name_ir(String* buf, Name name);
 
 void serialize_strv(String* buf, Strv strv);
 
-Strv serialize_name_symbol_table(Name name);
+Strv serialize_name_symbol_table(Arena* arena, Name name);
 
-Strv serialize_ir_name_symbol_table(Ir_name name);
+Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name);
 
 Strv serialize_name(Name name);
 
