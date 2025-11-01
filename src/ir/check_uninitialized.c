@@ -7,6 +7,8 @@
 #include <bool_vec.h>
 #include <symbol_log.h>
 
+// TODO: in generic function, check uninitalized variables for only one of the variants to save time?
+
 static void check_unit_ir_builtin(const Ir* ir);
 
 static Bool_vec bool_vec_clone(Bool_vec vec) {
@@ -511,7 +513,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }
 
     // TODO: keep running this for loop until there are no changes
-    for (size_t iter_idx = 0; iter_idx < 10; iter_idx++) {
+    for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
         vec_foreach(idx, Cfg_node, curr, block->cfg) {
             frame_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);

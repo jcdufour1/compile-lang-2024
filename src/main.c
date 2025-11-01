@@ -76,6 +76,7 @@ static void add_builtin_defs(void) {
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
+        arena_reset(&a_pass);\
     } while (0)
 
 #define do_pass_status(pass_fn, sym_log_fn) \
@@ -96,6 +97,7 @@ static void add_builtin_defs(void) {
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
+        arena_reset(&a_pass);\
     } while (0)
 
 void compile_file_to_ir(void) {

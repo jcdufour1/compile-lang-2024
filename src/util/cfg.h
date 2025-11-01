@@ -46,7 +46,7 @@ static inline Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent
         if (idx < node.pred_backedge_start) {
             continue;
         }
-        if (idx > 0) {
+        if (idx - node.pred_backedge_start > 0) {
             string_extend_cstr(&a_print, &buf, ", ");
         }
         string_extend_size_t(&a_print, &buf, pred_back);

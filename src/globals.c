@@ -6,7 +6,8 @@
 Parameters params = {0};
 
 Arena a_main = {0};
-Arena a_print = {0};
+Arena a_pass = {0};
+Arena a_print = {0}; // TODO: rename to a_temp
 
 Tast* root_of_tree = NULL;
 

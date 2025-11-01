@@ -1,13 +1,23 @@
 #include <do_passes.h>
 #include <symbol_iter.h>
 #include <ulang_type_get_pos.h>
+#include <bool_vec.h>
+#include <arena.h>
 
 // TODO: figure out why blocks are encountered directly when iterating over scope builtin
 //   (blocks should only be in functions, etc.)
 
+typedef struct {
+    Vec_base info;
+    Bool_vec* buf;
+} Bool_vec_vec;
+
 static Cfg_node_vec* curr_cfg;
 static size_t curr_pos;
 static size_t curr_cfg_idx_for_cond_goto;
+static Bool_vec_vec cfg_dominators; // eg. cfg_dominators[1] are the dominators for cfg node 1
+                                    // cfg_dominators[n] is in ascending order
+                                    // true means is dominator, false means not
 
 static void construct_cfg_ir_from_block(Ir* ir);
 static void construct_cfg_ir_from_scope_builtin(Ir* ir);
@@ -119,6 +129,12 @@ static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size
 
 // TODO: move this function
 static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
+    static uint64_t count = 0;
+    if (control == 2 && is_backedge == 6) {
+        log(LOG_INFO, "%"PRIu64"\n", count);
+        count++;
+    }
+
     // control == 2, is_backedge == 6
     vec_foreach(idx, size_t, covered, *already_covered) {
         if (control == covered) {
@@ -126,11 +142,6 @@ static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_
         }
     }
     vec_append(&a_print /* TODO */, already_covered, control);
-    if (control == 2 && is_backedge == 0) {
-    }
-    if (control == 2 && is_backedge > 0) {
-        //log(LOG_DEBUG, "thing\n");
-    }
 
     if (control == is_backedge) {
         return true;
@@ -192,6 +203,113 @@ static void construct_cfg_block(Ir_block* block) {
             construct_cfg_ir_from_block(curr);
         }
     }
+
+    //if 1 dominates 2, then every path from start to 2 must go through 1
+    {
+        vec_foreach_ref(node_idx, Cfg_node, dummy1, *curr_cfg) {
+            (void) dummy1;
+            Bool_vec dominators = {0};
+            vec_foreach_ref(idx, Cfg_node, dummy2, *curr_cfg) {
+                (void) dummy2;
+                if (idx == 0 || node_idx != 0) {
+                    vec_append(&a_pass, &dominators, true);
+                } else {
+                    vec_append(&a_pass, &dominators, false);
+                }
+            }
+            vec_append(&a_pass, &cfg_dominators, dominators);
+        }
+    }
+
+    {
+        String buf = {0};
+        string_extend_cstr(&a_print, &buf, "\n");
+        vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+            string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+            string_extend_size_t(&a_print, &buf, idx_size_t);
+            string_extend_cstr(&a_print, &buf, "]: [");
+            vec_foreach(idx, size_t, curr, size_t_vec) {
+                if (idx > 0) {
+                    string_extend_cstr(&a_print, &buf, ", ");
+                }
+                string_extend_size_t(&a_print, &buf, curr);
+            }
+            string_extend_cstr(&a_print, &buf, "]\n");
+        }
+        log(LOG_DEBUG, FMT"\n", string_print(buf));
+    }
+
+
+    bool changes_occured = false;
+    do {
+        changes_occured = false;
+
+        vec_foreach(node_idx, Cfg_node, node, *curr_cfg) {
+            Bool_vec* new_doms = vec_at_ref(&cfg_dominators, node_idx);
+            vec_foreach_ref(pred_idx, size_t, pred, node.preds) {
+                (void) pred;
+                vec_foreach_ref(dom_idx, bool, dom, *new_doms) {
+                    if (dom_idx == node_idx) {
+                        continue;
+                    }
+                    bool prev_dom = *dom;
+                    *dom &= vec_at(vec_at(cfg_dominators, *pred), dom_idx);
+                    if (prev_dom != *dom) {
+                        changes_occured = true;
+                    }
+                }
+            }
+        }
+
+        {
+            String buf = {0};
+            string_extend_cstr(&a_print, &buf, "\n");
+            vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+                string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+                string_extend_size_t(&a_print, &buf, idx_size_t);
+                string_extend_cstr(&a_print, &buf, "]: [");
+                vec_foreach(idx, size_t, curr, size_t_vec) {
+                    if (idx > 0) {
+                        string_extend_cstr(&a_print, &buf, ", ");
+                    }
+                    string_extend_size_t(&a_print, &buf, curr);
+                }
+                string_extend_cstr(&a_print, &buf, "]\n");
+            }
+            log(LOG_DEBUG, FMT"\n", string_print(buf));
+        }
+
+        log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+        //todo();
+        //vec_foreach(idx_size_t, Size_t_vec, doms, cfg_dominators) {
+        //    vec_foreach(idx_dom, size_t, dom, doms) {
+        //        vec_foreach(pred_idx, size_t, dom, doms) {
+        //    }
+        //    todo();
+        //}
+
+    } while (changes_occured);
+
+    {
+        String buf = {0};
+        string_extend_cstr(&a_print, &buf, "\n");
+        vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+            string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+            string_extend_size_t(&a_print, &buf, idx_size_t);
+            string_extend_cstr(&a_print, &buf, "]: [");
+            vec_foreach(idx, size_t, curr, size_t_vec) {
+                if (idx > 0) {
+                    string_extend_cstr(&a_print, &buf, ", ");
+                }
+                string_extend_size_t(&a_print, &buf, curr);
+            }
+            string_extend_cstr(&a_print, &buf, "]\n");
+        }
+        log(LOG_DEBUG, FMT"\n", string_print(buf));
+    }
+
+    log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+    todo();
 
     {
         vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
