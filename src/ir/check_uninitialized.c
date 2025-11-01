@@ -292,17 +292,13 @@ static bool check_unit_is_struct(Ir_name name) {
 }
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
-    if (name.attrs & ATTR_ALLOW_UNINIT) {
-        return;
-    }
-
     if (!print_errors_for_unit) {
         return;
     }
 
-    //if (strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
-        //log(LOG_TRACE, "\n");
-    //}
+    if (name.attrs & ATTR_ALLOW_UNINIT) {
+        return;
+    }
 
     Ir_name thing = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
@@ -351,36 +347,36 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     arena_reset(&a_print);
 
-    log(LOG_DEBUG, FMT"\n", loc_print(loc));
-    log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
-    log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", frame_idx);
-    log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
-    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
-    name.attrs |= ATTR_ALLOW_UNINIT;
-    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
+#   ifndef NDEBUG
+        log(LOG_DEBUG, FMT"\n", loc_print(loc));
+        log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
+        log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", frame_idx);
+        log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
+        name.attrs |= ATTR_ALLOW_UNINIT;
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
+        log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
+        vec_foreach(frame_idx, Frame, n_frame, cfg_node_areas) {
+            log(LOG_DEBUG, "frame %zu:\n", frame_idx);
+            String buf = {0};
+            string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
+            log(LOG_DEBUG, FMT"\n", string_print(buf));
+            init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &n_frame.init_tables);
 
-    log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
-    vec_foreach(frame_idx, Frame, n_frame, cfg_node_areas) {
-        log(LOG_DEBUG, "frame %zu:\n", frame_idx);
-        String buf = {0};
-        string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
-        log(LOG_DEBUG, FMT"\n", string_print(buf));
-        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &n_frame.init_tables);
+            log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
+            for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
+                log(LOG_DEBUG, FMT, strv_print(ir_print_internal(vec_at(curr_block_children, block_idx), INDENT_WIDTH)));
 
-        log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
-        for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
-            log(LOG_DEBUG, FMT, strv_print(ir_print_internal(vec_at(curr_block_children, block_idx), INDENT_WIDTH)));
-
-            if (
-                block_idx + 1 < curr_block_children.info.count &&
-                ir_is_label(vec_at(curr_block_children, block_idx + 1))
-            ) {
-                break;
+                if (
+                    block_idx + 1 < curr_block_children.info.count &&
+                    ir_is_label(vec_at(curr_block_children, block_idx + 1))
+                ) {
+                    break;
+                }
             }
         }
-    }
-    todo();
+#   endif //NDEBUG
 
     // TODO: make function to log entire cfg_node_areas
     vec_foreach(idx, Frame, frame, cfg_node_areas) {
@@ -496,70 +492,6 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
     unreachable("label should have been found");
 }
 
-static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t is_backedge) {
-    vec_foreach(idx, size_t, covered, *already_covered) {
-        if (is_backedge == covered) {
-            return false;
-        }
-    }
-    vec_append(&a_print /* TODO */, already_covered, is_backedge);
-
-    //log(LOG_DEBUG, "%zu\n", is_backedge);
-    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {
-        if (!pred_is_dead_end(already_covered, cfg, pred)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// TODO: move this function
-static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
-    // control == 2, is_backedge == 6
-    vec_foreach(idx, size_t, covered, *already_covered) {
-        if (control == covered) {
-            return false;
-        }
-    }
-    vec_append(&a_print /* TODO */, already_covered, control);
-    if (control == 2 && is_backedge == 0) {
-    }
-    if (control == 2 && is_backedge > 0) {
-        //log(LOG_DEBUG, "thing\n");
-    }
-
-    if (control == is_backedge) {
-        return true;
-    }
-
-    //log(LOG_DEBUG, "%zu\n", control);
-    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {
-        //log(LOG_DEBUG, "%zu\n", succ);
-        if (cfg_node_is_backedge_internal(already_covered, cfg, succ, is_backedge)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// TODO: move this function
-static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_backedge) {
-    assert(control != is_backedge);
-
-    Size_t_vec already_covered = {0};
-    bool status = pred_is_dead_end(&already_covered, cfg, is_backedge);
-    already_covered = (Size_t_vec) {0};
-    if (!status) {
-        status = cfg_node_is_backedge_internal(&already_covered, cfg, control, is_backedge);
-    }
-
-    arena_reset(&a_print /* TODO */);
-    return status;
-}
-
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
     (void) is_main;
     print_errors_for_unit = false;
@@ -647,8 +579,25 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         log(LOG_DEBUG, "frame_idx %zu:\n", frame_idx);
                     }
                     vec_foreach(pred_idx, size_t, pred, curr.preds) {
-                        if (iter_idx < 10 && cfg_node_is_backedge(block->cfg, frame_idx, pred)) {
-                            continue;
+                        while (vec_at_ref(&cfg_node_areas, pred)->init_tables.info.count < block->scope_id + 2) {
+                            vec_append(&a_main /* TODO */, &vec_at_ref(&cfg_node_areas, pred)->init_tables, (Init_table) {0});
+                        }
+
+                        if (frame_idx == 24 && pred == 12) {
+                            log(LOG_TRACE, "\n");
+                        }
+
+                        if (iter_idx < 10) {
+                            bool is_backedge = false;
+                            vec_foreach(pred_back_idx, size_t, backedge, curr.pred_backedges) {
+                                if (pred == backedge) {
+                                    is_backedge = true;
+                                    break;
+                                }
+                            }
+                            if (is_backedge) {
+                                continue;
+                            }
                         }
                         if (iter_idx < 10) {
                             log(LOG_DEBUG, "  %zu\n", pred);

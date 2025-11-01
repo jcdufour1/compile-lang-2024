@@ -7,8 +7,11 @@
 
 #define CFG_NODE_START_OF_BLOCK 0
 
+// TODO: space could be saved in this struct by changing pred_backedges to size_t to store index that preds starts being backedges
+//   (preds could have backedges stored after non-backedges)
 typedef struct {
     Size_t_vec preds;
+    Size_t_vec pred_backedges;
     Size_t_vec succs;
     Ir_name label_name; // should be {0} if pos_in_block is at start of block
     size_t pos_in_block;
@@ -34,6 +37,15 @@ static inline Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent
             string_extend_cstr(&a_print, &buf, ", ");
         }
         string_extend_size_t(&a_print, &buf, pred);
+    }
+    string_extend_cstr(&a_print, &buf, "]\n");
+
+    string_extend_cstr_indent(&a_print, &buf, "pred_backedges: [", indent);
+    vec_foreach(idx, size_t, pred_back, node.pred_backedges) {
+        if (idx > 0) {
+            string_extend_cstr(&a_print, &buf, ", ");
+        }
+        string_extend_size_t(&a_print, &buf, pred_back);
     }
     string_extend_cstr(&a_print, &buf, "]\n");
 

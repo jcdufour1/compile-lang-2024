@@ -27,7 +27,7 @@ static void construct_cfg_label(Ir_label* label, bool prev_is_cond_goto) {
             }
         }
 #   endif // NDEBUG
-          //
+
     Cfg_node new_node = (Cfg_node) {.label_name = label->name, .pos_in_block = curr_pos};
     if (!prev_is_cond_goto && curr_cfg->info.count > 0) {
         vec_append(&a_main, &new_node.preds, curr_cfg->info.count - 1);
@@ -99,6 +99,70 @@ static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
     unreachable("");
 }
 
+static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t is_backedge) {
+    vec_foreach(idx, size_t, covered, *already_covered) {
+        if (is_backedge == covered) {
+            return false;
+        }
+    }
+    vec_append(&a_print /* TODO */, already_covered, is_backedge);
+
+    //log(LOG_DEBUG, "%zu\n", is_backedge);
+    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
+    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {
+        if (!pred_is_dead_end(already_covered, cfg, pred)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// TODO: move this function
+static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
+    // control == 2, is_backedge == 6
+    vec_foreach(idx, size_t, covered, *already_covered) {
+        if (control == covered) {
+            return false;
+        }
+    }
+    vec_append(&a_print /* TODO */, already_covered, control);
+    if (control == 2 && is_backedge == 0) {
+    }
+    if (control == 2 && is_backedge > 0) {
+        //log(LOG_DEBUG, "thing\n");
+    }
+
+    if (control == is_backedge) {
+        return true;
+    }
+
+    //log(LOG_DEBUG, "%zu\n", control);
+    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
+    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {
+        //log(LOG_DEBUG, "%zu\n", succ);
+        if (cfg_node_is_backedge_internal(already_covered, cfg, succ, is_backedge)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// TODO: move this function
+static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_backedge) {
+    assert(control != is_backedge);
+
+    Size_t_vec already_covered = {0};
+    bool status = pred_is_dead_end(&already_covered, cfg, is_backedge);
+    already_covered = (Size_t_vec) {0};
+    if (!status) {
+        status = cfg_node_is_backedge_internal(&already_covered, cfg, control, is_backedge);
+    }
+
+    arena_reset(&a_print /* TODO */);
+    return status;
+}
+
 static void construct_cfg_block(Ir_block* block) {
     unwrap(!curr_cfg);
     unwrap(curr_cfg_idx_for_cond_goto == 0);
@@ -126,6 +190,16 @@ static void construct_cfg_block(Ir_block* block) {
                 curr_cfg_idx_for_cond_goto++;
             }
             construct_cfg_ir_from_block(curr);
+        }
+    }
+
+    {
+        vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
+            vec_foreach(pred_idx, size_t, pred, node->preds) {
+                if (cfg_node_is_backedge(block->cfg, node_idx, pred)) {
+                    vec_append(&a_main, &node->pred_backedges, pred);
+                }
+            }
         }
     }
 
