@@ -692,7 +692,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 ir_printf(stmt);
                 todo();
         }
-    }}
+    }
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;

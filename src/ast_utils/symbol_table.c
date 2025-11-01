@@ -35,6 +35,9 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     unwrap(key.count > 0 && "invalid item");
 
     unwrap(capacity > 0);
+    if (strv_is_equal(key, sv("_1__7_builtin_str5287"))) {
+        log(LOG_TRACE, "\n");
+    }
     size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
@@ -136,6 +139,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     assert(count_before == count_after_1);
     unwrap(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
+        log(LOG_DEBUG, "generic_tbl_add error 2\n");
         status = false;
         goto error;
     }
@@ -157,7 +161,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
             count_after_3++;
         }
     }
-    log(LOG_DEBUG, "%zu %zu %zu\n", count_before, count_after_2, count_after_3);
+    //log(LOG_DEBUG, "%zu %zu %zu\n", count_before, count_after_2, count_after_3);
     assert(count_before == count_after_1);
     assert(count_before + 1 == count_after_2);
     assert(count_before + 1 == count_after_3);
@@ -501,6 +505,10 @@ bool ir_lookup(Ir** result, Ir_name key) {
 //
 
 static bool init_symbol_lookup_internal(Init_table_vec* init_tables, void** result, Strv key, Scope_id scope_id) {
+    if (strv_is_equal(key, sv("_1__7_builtin_str5287"))) {
+        log(LOG_TRACE, "\n");
+    }
+
     if (scope_id == SCOPE_NOT) {
         return false;
     }
@@ -535,44 +543,51 @@ bool init_symbol_add_internal(
         vec_append(&a_main, init_tables, (Init_table) {0});
     }
 
-    void* dummy;
-    if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
-        return false;
-    }
-    Init_table* curr_tast = vec_at_ref(init_tables, scope_id);
-    size_t count_before = 0;
-    for (size_t idx = 0; idx < curr_tast->capacity; idx++) {
-        if (curr_tast->table_tasts[idx].status == SYM_TBL_OCCUPIED) {
-            count_before++;
-        }
-    }
-    unwrap(generic_tbl_add((Generic_symbol_table*)curr_tast, key, item));
-    size_t count_after_1 = 0;
-    for (size_t idx = 0; idx < curr_tast->capacity; idx++) {
-        if (curr_tast->table_tasts[idx].status == SYM_TBL_OCCUPIED) {
-            count_after_1++;
-        }
-    }
-
     static uint64_t count = 0;
     count++;
     log(LOG_DEBUG, "%zu\n", count);
-    assert(count_before + 1 == count_after_1);
+
+    void* dummy;
+    log(LOG_DEBUG, FMT"\n", strv_print(key));
+    log(LOG_DEBUG, "%zu\n", scope_id);
+
+    if (count > 2) {
+        log(LOG_DEBUG, "%zu\n", scope_id);
+    }
+
+    log(LOG_DEBUG, "capacity: %zu\n", vec_at(*init_tables, scope_id).capacity);
+    Init_table* curr_tast = vec_at_ref(init_tables, scope_id);
+    if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
+        unwrap(init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id));
+        return false;
+    }
+    unwrap(!init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id));
+    if (!generic_tbl_add((Generic_symbol_table*)curr_tast, key, item)) {
+        log(LOG_DEBUG, "capacity: %zu\n", vec_at(*init_tables, scope_id).capacity);
+        unwrap(init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id));
+        todo();
+    }
+
     return true;
 }
 
 bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_print, name));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table_init(name));
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
+    Strv key = serialize_ir_name_symbol_table(&a_main, node.name);
+    if (strv_is_equal(key, sv("_1__7_builtin_str5287"))) {
+        log(LOG_TRACE, "\n");
+    }
+
     while (init_tables->info.count < node.name.scope_id + 2) {
         vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));
     }
     Init_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
     *buf = node;
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_add_internal(init_tables, serialize_ir_name_symbol_table(&a_main, node.name), buf, node.name.scope_id);
+    return init_symbol_add_internal(init_tables, key, buf, node.name.scope_id);
 }
 
 //

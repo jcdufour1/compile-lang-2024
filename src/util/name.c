@@ -188,9 +188,75 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
     return string_to_strv(buf);
 }
 
+Strv serialize_name_symbol_table_init(Name name) {
+    log(LOG_DEBUG, "start of serialize_name_symbol_table_init\n"); \
+        
+    static char buf_[1000000] = {0};
+    memset(buf_, 0, sizeof(buf_));
+    String buf = {.buf = buf_, .info = {.capacity = array_count(buf_)}};
+
+    Arena* arena = &a_main; // dummy arena
+
+    static char new_mod_path_[1000000] = {0};
+    memset(buf_, 0, sizeof(new_mod_path_));
+    String new_mod_path = {.buf = new_mod_path_, .info = {.capacity = array_count(new_mod_path_)}};
+    for (size_t idx = 0; idx < name.mod_path.count; idx++) {
+        if (strv_at(name.mod_path, idx) == '.') {
+            vec_append(arena, &new_mod_path, '_');
+        } else {
+            vec_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
+        }
+    }
+    name.mod_path = string_to_strv(new_mod_path);
+
+    if (name.mod_path.count > 0) {
+        size_t path_count = 1;
+        {
+            Strv mod_path = name.mod_path;
+            Strv dummy = {0};
+            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
+                path_count++;
+            }
+        }
+
+        string_extend_cstr(arena, &buf, "_");
+        string_extend_size_t(arena, &buf, path_count);
+        string_extend_cstr(arena, &buf, "_");
+
+        {
+            Strv mod_path = name.mod_path;
+            Strv dir_name = {0};
+            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
+                serialize_strv(&buf, dir_name);
+            }
+            serialize_strv(&buf, mod_path);
+        }
+    }
+
+    string_extend_strv(arena, &buf, name.base);
+
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(arena, &buf, "____");
+        string_extend_size_t(arena, &buf, name.gen_args.info.count);
+        string_extend_cstr(arena, &buf, "_");
+        for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+            todo();
+        }
+    }
+
+    return string_to_strv(buf);
+}
+
 Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
     return serialize_name_symbol_table(arena, *(Name*)&name);
+}
+
+Strv serialize_ir_name_symbol_table_init(Ir_name name) {
+    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
+    return serialize_name_symbol_table_init(*(Name*)&name);
 }
 
 Strv serialize_name(Name name) {

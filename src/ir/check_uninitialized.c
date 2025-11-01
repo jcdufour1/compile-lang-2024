@@ -7,6 +7,8 @@
 #include <bool_vec.h>
 #include <symbol_log.h>
 
+static Init_table_node* dummy_thing = NULL;
+
 static void check_unit_ir_builtin(const Ir* ir);
 
 static Bool_vec bool_vec_clone(Bool_vec vec) {
@@ -106,7 +108,7 @@ static bool frame_vec_is_subset(Frame_vec superset, Frame_vec subset) {
         todo();
     }
 
-    vec_foreach(idx, Frame, frame, superset) {//{
+    vec_foreach(idx, Frame, frame, superset) {
         if (idx >= subset.info.count) {
             break;
         }
@@ -115,7 +117,7 @@ static bool frame_vec_is_subset(Frame_vec superset, Frame_vec subset) {
             todo();
             return false;
         }
-    }}
+    }
     return true;
 }
 
@@ -124,7 +126,8 @@ static bool assert_frame_vec_is_reasonable(Frame_vec superset, Frame_vec subset)
     unwrap(subset.info.count > 1000000);
     unwrap(superset.info.count > 1000000);
 
-    vec_foreach(idx, Frame, frame, superset) {//{
+    vec_foreach(idx, Frame, frame, superset) {
+        (void) frame;
         if (idx >= subset.info.count) {
             break;
         }
@@ -134,7 +137,7 @@ static bool assert_frame_vec_is_reasonable(Frame_vec superset, Frame_vec subset)
         //    todo();
         //    return false;
         //}
-    }}
+    }
     return true;
 }
 
@@ -291,6 +294,37 @@ static bool check_unit_is_struct(Ir_name name) {
     return ir_alloca_const_unwrap(def_)->lang_type.type == IR_LANG_TYPE_STRUCT;
 }
 
+typedef enum {
+    NOT_FOUND,
+    PREDS_ONLY,
+    FOUND,
+} NUMBER3;
+
+static NUMBER3 number3_was_found = false;
+
+#define DO_CHECKS 1
+
+#define do_check() \
+    do { \
+        Name name_ = name_new(MOD_PATH_BUILTIN, sv("str689"), (Ulang_type_vec) {0}, 267, (Attrs) {0}); \
+        Ir_name name = *(Ir_name*)&name_; \
+        unwrap(number3_was_found != FOUND || init_symbol_lookup( \
+            vec_at_ref(&vec_at_ref(&cfg_node_areas, 54)->init_tables, 267), \
+            &dummy_thing, \
+            name \
+        )); \
+        unwrap(number3_was_found == NOT_FOUND || init_symbol_lookup( \
+            vec_at_ref(&vec_at_ref(&cfg_node_areas, 44)->init_tables, 267), \
+            &dummy_thing, \
+            name \
+        )); \
+        unwrap(number3_was_found == NOT_FOUND || init_symbol_lookup( \
+            vec_at_ref(&vec_at_ref(&cfg_node_areas, 53)->init_tables, 267), \
+            &dummy_thing, \
+            name \
+        )); \
+    } while(0)
+
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     if (name.attrs & ATTR_ALLOW_UNINIT) {
         return;
@@ -298,6 +332,10 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     if (!print_errors_for_unit) {
         return;
+    }
+
+    if (DO_CHECKS) {
+        do_check();
     }
 
     //if (strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
@@ -347,6 +385,8 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
 
+    assert(number3_was_found == FOUND);
+
     //unwrap(init_symbol_add(&vec_at_ref(&cached_cfg_node_areas, 68)->init_tables, (Init_table_node) {
     //    .name = ir_name_new(sv("tests/inputs/optional"), sv("number3"), (Ulang_type_vec) {0}, 267, (Attrs) {0}),
     //    .cfg_node_of_init = 68,
@@ -368,12 +408,12 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
 
     log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
-    vec_foreach(frame_idx, Frame, frame, cfg_node_areas) {/*{*/
+    vec_foreach(frame_idx, Frame, n_frame, cfg_node_areas) {
         log(LOG_DEBUG, "frame %zu:\n", frame_idx);
         String buf = {0};
         string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
         log(LOG_DEBUG, FMT"\n", string_print(buf));
-        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
+        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &n_frame.init_tables);
 
         log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
         for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
@@ -386,13 +426,13 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
                 break;
             }
         }
-    }}
-    vec_foreach(frame_idx, Frame, frame, cached_cfg_node_areas) {/*{*/
+    }
+    vec_foreach(frame_idx, Frame, c_frame, cached_cfg_node_areas) {
         log(LOG_DEBUG, "frame %zu:\n", frame_idx);
         String buf = {0};
         string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
         log(LOG_DEBUG, FMT"\n", string_print(buf));
-        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
+        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &c_frame.init_tables);
 
         log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
         for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
@@ -405,11 +445,11 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
                 break;
             }
         }
-    }}
+    }
     todo();
 
     // TODO: make function to log entire cfg_node_areas
-    vec_foreach(idx, Frame, frame, cfg_node_areas) {/*{*/
+    vec_foreach(idx, Frame, frame, cfg_node_areas) {
         log(LOG_DEBUG, "frame %zu:\n", idx);
         init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
         //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
@@ -426,9 +466,9 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
             //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
             //    }
             //}
-        //}}
+        //}
 
-    }}
+    }
 
     for (size_t idx = 0; idx < cfg_node_areas.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
@@ -523,31 +563,31 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
 }
 
 static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t is_backedge) {
-    vec_foreach(idx, size_t, covered, *already_covered) {//{
+    vec_foreach(idx, size_t, covered, *already_covered) {
         if (is_backedge == covered) {
             return false;
         }
-    }}
+    }
     vec_append(&a_print /* TODO */, already_covered, is_backedge);
 
     //log(LOG_DEBUG, "%zu\n", is_backedge);
     //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {//{
+    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {
         if (!pred_is_dead_end(already_covered, cfg, pred)) {
             return false;
         }
-    }}
+    }
     return true;
 }
 
 // TODO: move this function
 static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
     // control == 2, is_backedge == 6
-    vec_foreach(idx, size_t, covered, *already_covered) {//{
+    vec_foreach(idx, size_t, covered, *already_covered) {
         if (control == covered) {
             return false;
         }
-    }}
+    }
     vec_append(&a_print /* TODO */, already_covered, control);
     if (control == 2 && is_backedge == 0) {
     }
@@ -561,12 +601,12 @@ static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_
 
     //log(LOG_DEBUG, "%zu\n", control);
     //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {//{
+    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {
         //log(LOG_DEBUG, "%zu\n", succ);
         if (cfg_node_is_backedge_internal(already_covered, cfg, succ, is_backedge)) {
             return true;
         }
-    }}
+    }
 
     return false;
 }
@@ -595,43 +635,32 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
     assert(cached_cfg_node_areas.info.count == 0);
     assert(cached_cfg_node_areas.info.capacity == 0);
-
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-    cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+    assert(number3_was_found == NOT_FOUND);
 
     unwrap(cfg_node_areas.info.count == 0);
     unwrap(curr_cfg_node_area);
-    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
-        (void) curr;
+    vec_foreach(idx, Cfg_node, curr1, block->cfg) {
+        (void) curr1;
         if (idx == 0) {
             vec_append(&a_main /* TODO */, &cfg_node_areas, *curr_cfg_node_area);
             continue;
         }
         vec_append(&a_main /* TODO */, &cfg_node_areas, ((Frame) {0}));
-    }}
+    }
 
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-    cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+    if (DO_CHECKS) {
+        do_check();
+    }
 
     // TODO: keep running this for loop until there are no changes
     for (size_t iter_idx = 0; iter_idx < 30; iter_idx++) {
-        assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-        cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-        assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+        if (DO_CHECKS) {
+            do_check();
+        }
 
-        vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
-            if (1 || iter_idx < 30) {
-                log(LOG_DEBUG, "%zu %zu\n", cfg_node_areas.info.count, cached_cfg_node_areas.info.count);
-                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
-                assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
-                cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
-                //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                //assert(frame_vec_is_reasonable(cfg_node_areas, cached_cfg_node_areas));
-                arena_reset(&a_print);
+        vec_foreach(idx, Cfg_node, curr, block->cfg) {
+            if (DO_CHECKS) {
+                do_check();
             }
 
             frame_idx = idx;
@@ -687,13 +716,59 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 Init_table curr_table = vec_at(vec_at_ref(&cfg_node_areas, pred_0)->init_tables, block->scope_id);
                 Init_table_iter iter = init_tbl_iter_new_table(curr_table);
                 Init_table_node curr_in_tbl = {0};
-                bool is_init_in_pred = true;
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-                    if (iter_idx < 2) {
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //arena_reset(&a_print);
+                    bool is_init_in_pred = true;
+                    static uint64_t count = 0;
+                    count++;
+
+                    if (DO_CHECKS) {
+                        do_check();
+                    }
+
+                    if (DO_CHECKS && number3_was_found == NOT_FOUND && frame_idx == 54 && block->scope_id == 267) {
+                        if (strv_is_equal(curr_in_tbl.name.base, sv("str689"))) {
+                            log(LOG_DEBUG, FMT"\n", ir_print(ir_from_get_name(curr_in_tbl.name)));
+                            log(LOG_DEBUG, "preds[0]: %zu\n", pred_0);
+                            log(LOG_DEBUG, "preds[1]: %zu\n", vec_at(curr.preds, 1));
+                            log(LOG_DEBUG, "curr: %zu\n", frame_idx);
+                            assert(curr.preds.info.count == 2);
+
+                            init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &vec_at_ref(&cfg_node_areas, pred_0)->init_tables);
+                            init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &vec_at_ref(&cfg_node_areas, vec_at(curr.preds, 1))->init_tables);
+                            init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &vec_at_ref(&cfg_node_areas, frame_idx)->init_tables);
+
+                            Ir* result = NULL;
+                            unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/optional"), sv("number3"), (Ulang_type_vec) {0}, 267, (Attrs) {0})));
+                            Init_table_node* result2 = NULL;
+                            if (DO_CHECKS) {
+                                do_check();
+                            }
+                            number3_was_found = PREDS_ONLY;
+                            if (DO_CHECKS) {
+                                do_check();
+                            }
+
+                            unwrap(!number3_was_found || init_symbol_lookup(
+                                vec_at_ref(&vec_at_ref(&cfg_node_areas, vec_at(curr.preds, 1))->init_tables, 267),
+                                &result2,
+                                ir_name_new(sv("tests/inputs/optional"), sv("number3"), (Ulang_type_vec) {0}, 267, (Attrs) {0})
+                            ));
+                        }
+
+
+                        //unwrap(!init_symbol_lookup(
+                        //    vec_at_ref(&vec_at_ref(&cfg_node_areas, frame_idx)->init_tables, 267),
+                        //    &result2,
+                        //    ir_name_new(sv("tests/inputs/optional"), sv("number3"), (Ulang_type_vec) {0}, 267, (Attrs) {0})
+                        //));
+                        //
+                        log(LOG_DEBUG, "yes\n");
+                    } else {
+                        log(LOG_DEBUG, "no\n");
+                    }
+
+                    if (1 || DO_CHECKS) {
+                        do_check();
                     }
 
                     Init_table_node* node = NULL;
@@ -702,76 +777,132 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                             node->cfg_node_of_init = curr_in_tbl.cfg_node_of_init;
                             node->block_pos_of_init = curr_in_tbl.block_pos_of_init;
                         }
+                        if (number3_was_found == PREDS_ONLY) {
+                            unreachable("");
+                        }
                         continue;
                     }
                     if (iter_idx < 10) {
                         log(LOG_DEBUG, "frame_idx %zu:\n", frame_idx);
                     }
-                    vec_foreach(pred_idx, size_t, pred, curr.preds) {/*{*/
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //arena_reset(&a_print);
-
+                    vec_foreach(pred_idx, size_t, pred, curr.preds) {
+                        if (DO_CHECKS) {
+                            do_check();
+                        }
 
                         if (iter_idx < 10 && cfg_node_is_backedge(block->cfg, frame_idx, pred)) {
+                            if (DO_CHECKS) {
+                                do_check();
+                            }
+                            if (number3_was_found == PREDS_ONLY) {
+                                unreachable("");
+                            }
                             continue;
+                        }
+                        if (DO_CHECKS) {
+                            do_check();
                         }
                         if (iter_idx < 10) {
                             log(LOG_DEBUG, "  %zu\n", pred);
                         }
                         Frame* pred_frame = vec_at_ref(&cfg_node_areas, pred);
                         Init_table_node* dummy = NULL;
+                        if (DO_CHECKS) {
+                            do_check();
+                        }
                         if (!init_symbol_lookup(vec_at_ref(&pred_frame->init_tables, block->scope_id), &dummy, curr_in_tbl.name)) {
+                            if (number3_was_found == PREDS_ONLY) {
+                                unreachable("");
+                            }
+                            if (DO_CHECKS) {
+                                do_check();
+                            }
                             is_init_in_pred = false;
                             break;
                         }
-                    }}
+                    }
+                    if (number3_was_found == PREDS_ONLY) {
+                        assert(is_init_in_pred);
+                        log(LOG_INFO, "\n");
+                    }
 
-                    if (iter_idx < 2) {
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    if (DO_CHECKS) {
+                        do_check();
                     }
                     if (is_init_in_pred) {
+                        if (DO_CHECKS) {
+                            do_check();
+                        }
+                        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, curr_in_tbl.name));
                         unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
+                        if (DO_CHECKS) {
+                            do_check();
+                        }
+                        if (number3_was_found == PREDS_ONLY) {
+                            log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, curr_in_tbl.name));
+                            log(LOG_DEBUG, "THING THING: %zu\n", count);
+                            number3_was_found = FOUND;
+                        }
                     }
-                    if (iter_idx < 2) {
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                        //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                        //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+                    log(LOG_DEBUG, "%zu\n", count);
+                    if (DO_CHECKS) {
+                        do_check();
                     }
-
 
                 }
+                if (DO_CHECKS) {
+                    do_check();
+                }
             }
-
-        }}
-
+            if (DO_CHECKS) {
+                do_check();
+            }
+        }
+        if (DO_CHECKS) {
+            do_check();
+        }
     }
 
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-    cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-    assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
+    if (DO_CHECKS) {
+        do_check();
+    }
 
     print_errors_for_unit = true;
-    vec_foreach(idx, Cfg_node, curr, block->cfg) {//{
+    vec_foreach(idx, Cfg_node, curr2, block->cfg) {
         frame_idx = idx;
         curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+
+        if (DO_CHECKS) {
+            do_check();
+        }
 
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
         //   global variable will not be needed for several ir passes
         //   (this could be done by making special foreach macros/functions?)
         at_end_of_cfg_node = false;
 
-        for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+        if (DO_CHECKS) {
+            do_check();
+        }
+
+        for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
             block_pos = block_idx;
+            if (DO_CHECKS) {
+                do_check();
+            }
             check_unit_ir_from_block(vec_at(block->children, block_idx));
+
+            if (DO_CHECKS) {
+                do_check();
+            }
 
             if (
                 block_idx + 1 < block->children.info.count &&
                 ir_is_label(vec_at(block->children, block_idx + 1))
             ) {
+                if (DO_CHECKS) {
+                    do_check();
+                }
                 at_end_of_cfg_node = true;
             }
 
@@ -779,10 +910,14 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 at_end_of_cfg_node = true;
             }
         }
-    }}
+    }
+
+    if (DO_CHECKS) {
+        do_check();
+    }
 
     // TODO: make function to log entire cfg_node_areas
-    vec_foreach(idx, Frame, frame, cfg_node_areas) {/*{*/
+    vec_foreach(idx, Frame, frame, cfg_node_areas) {
         log(LOG_DEBUG, "frame %zu:\n", idx);
         init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
         log(LOG_DEBUG, "\n");
@@ -800,18 +935,20 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
             //    }
             //}
-        //}}
+        //}
 
-    }}
+    }
     log(LOG_DEBUG, "\n\n");
 
     cfg_node_areas = (Frame_vec) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
     cached_cfg_node_areas = (Frame_vec) {0};
+    number3_was_found = NOT_FOUND;
     assert(!curr_cfg_node_area->init_tables.buf);
     assert(curr_cfg_node_area->init_tables.info.count == 0);
     assert(curr_cfg_node_area->init_tables.info.capacity == 0);
     assert(cached_cfg_node_areas.info.count == 0);
+    assert(number3_was_found == NOT_FOUND);
 }
 
 //static void check_unit_block(const Ir_block* block) {
