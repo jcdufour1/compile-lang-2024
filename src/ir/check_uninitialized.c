@@ -511,7 +511,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }
 
     // TODO: keep running this for loop until there are no changes
-    for (size_t iter_idx = 0; iter_idx < 30; iter_idx++) {
+    for (size_t iter_idx = 0; iter_idx < 10; iter_idx++) {
         vec_foreach(idx, Cfg_node, curr, block->cfg) {
             frame_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
@@ -588,14 +588,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         }
 
                         if (iter_idx < 10) {
-                            bool is_backedge = false;
-                            vec_foreach(pred_back_idx, size_t, backedge, curr.pred_backedges) {
-                                if (pred == backedge) {
-                                    is_backedge = true;
-                                    break;
-                                }
-                            }
-                            if (is_backedge) {
+                            if (pred_idx >= curr.pred_backedge_start) {
                                 continue;
                             }
                         }

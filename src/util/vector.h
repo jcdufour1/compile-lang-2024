@@ -81,4 +81,11 @@ typedef struct {
     Item_type* item_name = NULL; \
     for (size_t idx_name = 0; item_name = (idx_name < (vector).info.count) ? vec_at_ref(&vector, idx_name) : NULL, idx_name < (vector).info.count; idx_name++) 
 
+#define vec_swap(vector, Item_type, idx_lhs, idx_rhs) \
+    do { \
+        Item_type temp = vec_at(*(vector), idx_lhs); \
+        *vec_at_ref(vector, idx_lhs) = vec_at(*(vector), idx_rhs); \
+        *vec_at_ref(vector, idx_rhs) = temp; \
+    } while(0)
+
 #endif // VECTOR_H

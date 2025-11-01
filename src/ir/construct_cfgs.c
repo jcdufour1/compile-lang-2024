@@ -195,9 +195,15 @@ static void construct_cfg_block(Ir_block* block) {
 
     {
         vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
-            vec_foreach(pred_idx, size_t, pred, node->preds) {
-                if (cfg_node_is_backedge(block->cfg, node_idx, pred)) {
-                    vec_append(&a_main, &node->pred_backedges, pred);
+            size_t pred_idx = 0;
+            while (pred_idx < node->preds.info.count - node->pred_backedge_start) {
+                if (cfg_node_is_backedge(*curr_cfg, node_idx, vec_at(node->preds, pred_idx))) {
+                    if (pred_idx + 1 < node->preds.info.count - node->pred_backedge_start) {
+                        vec_swap(&node->preds, size_t, pred_idx, pred_idx + 1);
+                    }
+                    node->pred_backedge_start++;
+                } else {
+                    pred_idx++;
                 }
             }
         }
