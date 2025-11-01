@@ -525,9 +525,6 @@ bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_nam
 
 bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
     Strv key = serialize_ir_name_symbol_table(&a_main, node.name);
-    if (strv_is_equal(key, sv("_1__7_builtin_str5287"))) {
-        log(LOG_TRACE, "\n");
-    }
 
     while (init_tables->info.count < node.name.scope_id + 2) {
         vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));

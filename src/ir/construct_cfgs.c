@@ -110,7 +110,6 @@ static void construct_cfg_block(Ir_block* block) {
             curr_pos = idx;
 
             if (curr->type == IR_DEF && ir_def_unwrap(curr)->type == IR_LABEL) {
-                log(LOG_DEBUG, FMT"\n", ir_print(curr));
                 construct_cfg_label(ir_label_unwrap(ir_def_unwrap(curr)), prev_is_cond_goto);
             } else if (idx == 0) {
                 unreachable("the first ir of the block must be a label");
@@ -121,43 +120,14 @@ static void construct_cfg_block(Ir_block* block) {
     }
 
     {
-        vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
-            log(LOG_DEBUG, FMT"\n", cfg_node_print(curr, idx));
-        }
-    }
-    {
-        vec_foreach(idx, Ir*, curr, block->children) {
-            log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
-        }
-    }
-    log(LOG_DEBUG, "%zu\n", block->children.info.count);
-
-    {
         vec_foreach(idx, Ir*, curr, block->children) {
             curr_pos = idx;
             if (curr_cfg_idx_for_cond_goto + 1 < curr_cfg->info.count && vec_at(*curr_cfg, curr_cfg_idx_for_cond_goto + 1).pos_in_block <= idx) {
                 curr_cfg_idx_for_cond_goto++;
             }
-            log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
             construct_cfg_ir_from_block(curr);
         }
     }
-
-    {
-        vec_foreach(idx, Cfg_node, curr, *curr_cfg) {
-            log(LOG_DEBUG, "%zu: "FMT"\n", idx, cfg_node_print(curr, idx));
-        }
-    }
-    {
-        vec_foreach(idx, Ir*, curr, block->children) {
-            log(LOG_DEBUG, "%zu: "FMT"\n", idx, ir_print(curr));
-        }
-    }
-    static int count = 0;
-    if (count > 0) {
-        //todo();
-    }
-    count++;
 
     curr_cfg = NULL;
     curr_cfg_idx_for_cond_goto = 0;
