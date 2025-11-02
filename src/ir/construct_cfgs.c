@@ -15,9 +15,6 @@ typedef struct {
 static Cfg_node_vec* curr_cfg;
 static size_t curr_pos;
 static size_t curr_cfg_idx_for_cond_goto;
-static Bool_vec_vec cfg_dominators; // eg. cfg_dominators[1] are the dominators for cfg node 1
-                                    // cfg_dominators[n] is in ascending order
-                                    // true means is dominator, false means not
 
 static void construct_cfg_ir_from_block(Ir* ir);
 static void construct_cfg_ir_from_scope_builtin(Ir* ir);
@@ -204,6 +201,11 @@ static void construct_cfg_block(Ir_block* block) {
         }
     }
 
+    Bool_vec_vec cfg_dominators = {0}; // eg. cfg_dominators[1] are the dominators for cfg node 1
+                                       // cfg_dominators[n] is in ascending order
+                                       // true means is dominator, false means not
+    log(LOG_VERBOSE, "count cfg nodes: %zu\n", block->cfg.info.count);
+
     //if 1 dominates 2, then every path from start to 2 must go through 1
     {
         vec_foreach_ref(node_idx, Cfg_node, dummy1, *curr_cfg) {
@@ -238,7 +240,6 @@ static void construct_cfg_block(Ir_block* block) {
         }
         log(LOG_DEBUG, FMT"\n", string_print(buf));
     }
-
 
     bool changes_occured = false;
     do {
@@ -309,13 +310,13 @@ static void construct_cfg_block(Ir_block* block) {
     }
 
     log(LOG_DEBUG, FMT"\n", ir_block_print(block));
-    todo();
 
     {
         vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
             size_t pred_idx = 0;
             while (pred_idx < node->preds.info.count - node->pred_backedge_start) {
-                if (cfg_node_is_backedge(*curr_cfg, node_idx, vec_at(node->preds, pred_idx))) {
+                size_t pred = vec_at(node->preds, pred_idx);
+                if (vec_at(vec_at(cfg_dominators, node_idx), pred)) {
                     if (pred_idx + 1 < node->preds.info.count - node->pred_backedge_start) {
                         vec_swap(&node->preds, size_t, pred_idx, pred_idx + 1);
                     }
