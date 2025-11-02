@@ -255,6 +255,10 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         (Attrs) {0}
     ));
 
+    if (print_errors_for_unit && strv_is_equal(ir_name_to_name(name).base, sv("num"))) {
+        //todo();
+    }
+
     Init_table_node* result = NULL;
     if (!init_symbol_lookup(&curr_cfg_node_area->init_tables, &result, thing)) {
         //todo();
@@ -382,6 +386,9 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_ARRAY_ACCESS:
             // fallthrough
         case IR_ALLOCA:
+            if (print_errors_for_unit && strv_is_equal(ir_name_to_name(ir_tast_get_name(ir)).base, sv("num"))) {
+                //todo();
+            }
             check_unit_src_internal_name(ir_tast_get_name(ir), pos, loc);
             return;
         case IR_IMPORT_PATH:
@@ -395,6 +402,9 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
 }
 
 static void check_unit_src(const Ir_name src, Pos pos, Loc loc) {
+    if (print_errors_for_unit && strv_is_equal(ir_name_to_name(src).base, sv("num"))) {
+        //todo();
+    }
     Ir* sym_def = NULL;
     unwrap(ir_lookup(&sym_def, src));
     check_unit_src_internal_ir(sym_def, pos, loc);
@@ -435,7 +445,15 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
     unreachable("label should have been found");
 }
 
+#define COUNT 2
+
 static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
+    static uint64_t count = 0;
+    count++;
+    if (count == COUNT) {
+        log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+    }
+
     (void) is_main;
     print_errors_for_unit = false;
 
@@ -454,7 +472,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }
 
     // TODO: keep running this for loop until there are no changes
-    for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
+    for (size_t iter_idx = 0; iter_idx < 10; iter_idx++) {
         vec_foreach(idx, Cfg_node, curr, block->cfg) {
             frame_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
@@ -530,6 +548,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
         for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
             block_pos = block_idx;
+            if (vec_at(block->children, block_idx)->type != IR_REMOVED && strv_is_equal(ir_tast_get_name(vec_at(block->children, block_idx)).base, sv("num"))) {
+                todo();
+            }
             check_unit_ir_from_block(vec_at(block->children, block_idx));
 
             if (
@@ -543,6 +564,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                 at_end_of_cfg_node = true;
             }
         }
+    }
+    if (count == COUNT) {
+        //todo();
     }
 
     // TODO: make function to log entire cfg_node_areas

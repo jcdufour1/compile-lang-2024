@@ -520,6 +520,9 @@ bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_nam
 }
 
 bool init_symbol_add(Init_table* init_table, Init_table_node node) {
+    if (strv_is_equal(node.name.base, sv("num"))){
+        todo();
+    }
     if (node.name.scope_id == SCOPE_NOT || node.name.scope_id == SCOPE_TOP_LEVEL) {
         // not adding top level symbols to the hash table 
         //   makes the check_uninitialized pass significantly faster

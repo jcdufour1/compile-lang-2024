@@ -180,6 +180,8 @@ Strv ir_block_print_internal(const Ir_block* block, int indent) {
     alloca_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        string_extend_size_t(&a_print, &buf, idx);
+        string_extend_cstr(&a_print, &buf, ": ");
         Strv arg_text = ir_print_internal(vec_at(block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_print, &buf, arg_text);
     }

@@ -139,6 +139,8 @@ static void construct_cfg_block(Ir_block* block) {
     Bool_vec_vec cfg_dominators = {0}; // eg. cfg_dominators[1] are the dominators for cfg node 1
                                        // cfg_dominators[n] is in ascending order
                                        // true means is dominator, false means not
+                                       //   (eg. if cfg_dominators[1][0] is false, 
+                                       //   then node 0 is not a dominator of node 1)
     //log(LOG_VERBOSE, "count cfg nodes: %zu\n", block->cfg.info.count);
 
     //if 1 dominates 2, then every path from start to 2 must go through 1
@@ -175,14 +177,14 @@ static void construct_cfg_block(Ir_block* block) {
     //    }
     //    log(LOG_DEBUG, FMT"\n", string_print(buf));
     //}
-
+    
     bool changes_occured = false;
     do {
         changes_occured = false;
 
-        vec_foreach(node_idx, Cfg_node, node, *curr_cfg) {
+        vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
             Bool_vec* new_doms = vec_at_ref(&cfg_dominators, node_idx);
-            vec_foreach_ref(pred_idx, size_t, pred, node.preds) {
+            vec_foreach_ref(pred_idx, size_t, pred, node->preds) {
                 (void) pred;
                 vec_foreach_ref(dom_idx, bool, dom, *new_doms) {
                     if (dom_idx == node_idx) {
@@ -196,55 +198,7 @@ static void construct_cfg_block(Ir_block* block) {
                 }
             }
         }
-
-        //{
-        //    String buf = {0};
-        //    string_extend_cstr(&a_print, &buf, "\n");
-        //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-        //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-        //        string_extend_size_t(&a_print, &buf, idx_size_t);
-        //        string_extend_cstr(&a_print, &buf, "]: [");
-        //        vec_foreach(idx, size_t, curr, size_t_vec) {
-        //            if (idx > 0) {
-        //                string_extend_cstr(&a_print, &buf, ", ");
-        //            }
-        //            string_extend_size_t(&a_print, &buf, curr);
-        //        }
-        //        string_extend_cstr(&a_print, &buf, "]\n");
-        //    }
-        //    log(LOG_DEBUG, FMT"\n", string_print(buf));
-        //}
-
-        //log(LOG_DEBUG, FMT"\n", ir_block_print(block));
-        //todo();
-        //vec_foreach(idx_size_t, Size_t_vec, doms, cfg_dominators) {
-        //    vec_foreach(idx_dom, size_t, dom, doms) {
-        //        vec_foreach(pred_idx, size_t, dom, doms) {
-        //    }
-        //    todo();
-        //}
-
     } while (changes_occured);
-
-    //{
-    //    String buf = {0};
-    //    string_extend_cstr(&a_print, &buf, "\n");
-    //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-    //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-    //        string_extend_size_t(&a_print, &buf, idx_size_t);
-    //        string_extend_cstr(&a_print, &buf, "]: [");
-    //        vec_foreach(idx, size_t, curr, size_t_vec) {
-    //            if (idx > 0) {
-    //                string_extend_cstr(&a_print, &buf, ", ");
-    //            }
-    //            string_extend_size_t(&a_print, &buf, curr);
-    //        }
-    //        string_extend_cstr(&a_print, &buf, "]\n");
-    //    }
-    //    log(LOG_DEBUG, FMT"\n", string_print(buf));
-    //}
-
-    //log(LOG_DEBUG, FMT"\n", ir_block_print(block));
 
     {
         vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {
@@ -253,9 +207,10 @@ static void construct_cfg_block(Ir_block* block) {
                 size_t pred = vec_at(node->preds, pred_idx);
                 if (vec_at(vec_at(cfg_dominators, node_idx), pred)) {
                     if (pred_idx + 1 < node->preds.info.count - node->pred_backedge_start) {
-                        vec_swap(&node->preds, size_t, pred_idx, pred_idx + 1);
+                        vec_swap(&node->preds, size_t, node->pred_backedge_start, pred_idx);
                     }
                     node->pred_backedge_start++;
+                    pred_idx++;
                 } else {
                     pred_idx++;
                 }

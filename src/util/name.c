@@ -385,7 +385,6 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
         case NAME_LOG:
             extend_name(mode, buf, *(Name*)&name);
             string_extend_cstr(&a_print, buf, "(");
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *(Name*)&name));
             extend_name(mode, buf, ir_name_to_name(name));
             string_extend_cstr(&a_print, buf, ")");
             return;

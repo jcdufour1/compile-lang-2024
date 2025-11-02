@@ -74,6 +74,16 @@ fn wrong6() i32 {
     return 0
 }
 
+fn wrong7() i32 {
+    let num i32
+
+    for 1 {
+        let num2 i32 = num
+    }
+
+    return 0
+}
+
 fn main() i32 {
     wrong1()
     wrong2()
@@ -81,6 +91,7 @@ fn main() i32 {
     wrong4()
     wrong5()
     wrong6()
+    wrong7()
     right1()
     let status i32
     return status

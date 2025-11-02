@@ -123,6 +123,11 @@ for generics:
     -- make size_t as 48 bit var?
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
+- msg should not print immediately; instead, it should append to global vec.
+    -- at end of program execution, all errors in vec should be sorted by pos, etc., then printed
+       (this way, tests will break less often and errors will print in a particular order)
+    -- there should be a flag to print immediately instead of appending to vec
+    -- there should be max error count (eg. 50 by default)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
