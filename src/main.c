@@ -72,7 +72,9 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        if (params_log_level <= LOG_DEBUG) { \
+            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
@@ -93,7 +95,9 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        if (params_log_level <= LOG_DEBUG) { \
+            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\

@@ -249,11 +249,6 @@ Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     return serialize_name_symbol_table(arena, *(Name*)&name);
 }
 
-Strv serialize_ir_name_symbol_table_init(Ir_name name) {
-    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    return serialize_name_symbol_table_init(*(Name*)&name);
-}
-
 Strv serialize_name(Name name) {
     String buf = {0};
 

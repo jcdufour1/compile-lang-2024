@@ -516,7 +516,7 @@ bool init_symbol_add_internal(
 }
 
 bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table_init(name));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_print, name));
 }
 
 bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {

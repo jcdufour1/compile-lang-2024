@@ -518,13 +518,6 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             at_end_of_cfg_node = false;
 
             for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
-                if (1 || iter_idx < 2) {
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //arena_reset(&a_print);
-                }
-
                 block_pos = block_idx;
                 check_unit_ir_from_block(vec_at(block->children, block_idx));
 
@@ -542,13 +535,6 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
 
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
-                if (iter_idx < 30) {
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //cached_cfg_node_areas = frame_vec_clone(cfg_node_areas);
-                    //assert(frame_vec_is_subset(cfg_node_areas, cached_cfg_node_areas));
-                    //arena_reset(&a_print);
-                }
-
                 while (curr_cfg_node_area->init_tables.info.count < block->scope_id + 2) {
                     vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
                 }
