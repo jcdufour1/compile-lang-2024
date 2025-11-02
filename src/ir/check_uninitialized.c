@@ -17,121 +17,14 @@ static Bool_vec bool_vec_clone(Bool_vec vec) {
     return new_vec;
 }
 
-static bool init_table_is_equal(Init_table a, Init_table b) {
-    if (a.count != b.count) {
-        //log(LOG_INFO, "thing 325: no 2.1: %zu %zu\n", a.count, b.count);
-        return false;
-    }
-    if (a.capacity != b.capacity) {
-        //log(LOG_INFO, "thing 325: no 2.2\n");
-        return false;
-    }
-
-    for (size_t idx = 0; idx < a.capacity; idx++) {
-        if (a.table_tasts[idx].status != b.table_tasts[idx].status) {
-            //log(LOG_INFO, "thing 325: no 2.3\n");
-            return false;
-        }
-        if (a.table_tasts[idx].status == SYM_TBL_OCCUPIED && !strv_is_equal(a.table_tasts[idx].key, b.table_tasts[idx].key)) {
-            //log(LOG_INFO, "thing 325: no 2.4\n");
-            return false;
-        }
-    }
-
-    //log(LOG_INFO, "thing 325: yes 2\n");
-    return true;
-}
-
-static bool init_table_is_subset(Init_table superset, Init_table subset) {
-    for (size_t idx = 0; idx < subset.capacity; idx++) {
-        void* dummy = NULL;
-        if (subset.table_tasts[idx].status == SYM_TBL_OCCUPIED && !generic_tbl_lookup(&dummy, (Generic_symbol_table*)&superset, subset.table_tasts[idx].key)) {
-            todo();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
-    if (a.info.count != b.info.count) {
-        //log(LOG_INFO, "thing 324: no 1\n");
-        return false;
-    }
-
-    for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!init_table_is_equal(vec_at(a, idx), vec_at(b, idx))) {
-            //log(LOG_INFO, "thing 324: no 2\n");
-            return false;
-        }
-    }
-
-    //log(LOG_INFO, "thing 324: yes\n");
-    return true;
-}
-
-static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec subset) {
-    if (superset.info.count < subset.info.count) {
-        todo();
-        return false;
-    }
-
-    for (size_t idx = 0; idx < subset.info.count; idx++) {
-        if (!init_table_is_subset(vec_at(superset, idx), vec_at(subset, idx))) {
-            todo();
-            //log(LOG_INFO, "thing 324: no 2\n");
-            return false;
-        }
-    }
-
-    //log(LOG_INFO, "thing 324: yes\n");
-    return true;
-}
-
-// TODO: remove frame struct
-typedef struct {
-    Init_table init_tables;
-} Frame;
-
-typedef struct {
-    Vec_base info;
-    Frame* buf;
-} Frame_vec;
-
-static Frame frame_new(Init_table init_tables) {
-    return (Frame) {.init_tables = init_tables};
-}
-
-static Init_table init_table_clone(Init_table table) {
-    Init_table new_table = {
-        .table_tasts = arena_alloc(&a_main /* TODO */, sizeof(new_table.table_tasts[0])*table.capacity), 
-        .count = table.count,
-        .capacity = table.capacity
-    };
-    for (size_t idx = 0; idx < table.capacity; idx++) {
-        Init_table_tast curr = table.table_tasts[idx];
-        new_table.table_tasts[idx] = (Init_table_tast) {.tast = curr.tast, .key = curr.key, .status = curr.status};
-    }
-    return new_table;
-}
-
-static Init_table_vec init_table_vec_clone(Init_table_vec vec) {
-    Init_table_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main /* TODO */, &new_vec, init_table_clone(vec_at(vec, idx)));
-    }
-    return new_vec;
-}
-
 static bool at_end_of_cfg_node = false;
 //static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
 static size_t block_pos = {0};
 static size_t frame_idx = 0;
-static Frame* curr_cfg_node_area = NULL;
-static Frame_vec cfg_node_areas = {0};
+static Init_table* curr_cfg_node_area = NULL;
+static Init_table_vec cfg_node_areas = {0};
 static Cfg_node_vec curr_block_cfg = {0};
 static Ir_vec curr_block_children = {0};
 static bool print_errors_for_unit;
@@ -260,13 +153,13 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     }
 
     Init_table_node* result = NULL;
-    if (!init_symbol_lookup(&curr_cfg_node_area->init_tables, &result, thing)) {
+    if (!init_symbol_lookup(curr_cfg_node_area, &result, thing)) {
         //todo();
         // this frame is unreachable, so printing uninitalized error would not make sense
         return;
     }
 
-    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &result, name)) {
+    if (init_symbol_lookup(curr_cfg_node_area, &result, name)) {
         if (result->cfg_node_of_init != frame_idx || result->block_pos_of_init < block_pos) {
             // symbol was initialized before this use
             return;
@@ -304,12 +197,12 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
-        vec_foreach(frame_idx, Frame, n_frame, cfg_node_areas) {
+        vec_foreach(frame_idx, Init_table, n_frame, cfg_node_areas) {
             log(LOG_DEBUG, "frame %zu:\n", frame_idx);
             String buf = {0};
             string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
-            init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame.init_tables, INDENT_WIDTH);
+            init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame, INDENT_WIDTH);
 
             log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
             for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
@@ -326,9 +219,9 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 #   endif //NDEBUG
 
     // TODO: make function to log entire cfg_node_areas
-    vec_foreach(idx, Frame, frame, cfg_node_areas) {
+    vec_foreach(idx, Init_table, frame, cfg_node_areas) {
         log(LOG_DEBUG, "frame %zu:\n", idx);
-        init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame.init_tables, INDENT_WIDTH);
+        init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame, INDENT_WIDTH);
         //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
             //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
             //Init_table_node curr_in_tbl = {0};
@@ -349,7 +242,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     for (size_t idx = 0; idx < cfg_node_areas.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
-        init_symbol_add(&vec_at_ref(&cfg_node_areas, idx)->init_tables, (Init_table_node) {
+        init_symbol_add(vec_at_ref(&cfg_node_areas, idx), (Init_table_node) {
             .name = name,
             .cfg_node_of_init = idx,
             .block_pos_of_init = 0,
@@ -411,7 +304,7 @@ static void check_unit_src(const Ir_name src, Pos pos, Loc loc) {
 }
 
 static void check_unit_dest(const Ir_name dest) {
-    if (!init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    if (!init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = dest,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -468,7 +361,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             vec_append(&a_main /* TODO */, &cfg_node_areas, *curr_cfg_node_area);
             continue;
         }
-        vec_append(&a_main /* TODO */, &cfg_node_areas, ((Frame) {0}));
+        vec_append(&a_main /* TODO */, &cfg_node_areas, ((Init_table) {0}));
     }
 
     // TODO: keep running this for loop until there are no changes
@@ -501,12 +394,12 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             // TODO: make function to iterate over Init_table_vec automatically
             if (curr.preds.info.count > 0) {
                 size_t pred_0 = vec_at(curr.preds, 0);
-                Init_table_iter iter = init_tbl_iter_new_table(vec_at_ref(&cfg_node_areas, pred_0)->init_tables);
+                Init_table_iter iter = init_tbl_iter_new_table(vec_at(cfg_node_areas, pred_0));
                 Init_table_node curr_in_tbl = {0};
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
                     bool is_init_in_pred = true;
                     Init_table_node* node = NULL;
-                    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &node, curr_in_tbl.name)) {
+                    if (init_symbol_lookup(curr_cfg_node_area, &node, curr_in_tbl.name)) {
                         if (node->cfg_node_of_init != curr_in_tbl.cfg_node_of_init) {
                             node->cfg_node_of_init = curr_in_tbl.cfg_node_of_init;
                             node->block_pos_of_init = curr_in_tbl.block_pos_of_init;
@@ -520,16 +413,16 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                             }
                         }
 
-                        Frame* pred_frame = vec_at_ref(&cfg_node_areas, pred);
+                        Init_table* pred_frame = vec_at_ref(&cfg_node_areas, pred);
                         Init_table_node* dummy = NULL;
-                        if (!init_symbol_lookup(&pred_frame->init_tables, &dummy, curr_in_tbl.name)) {
+                        if (!init_symbol_lookup(pred_frame, &dummy, curr_in_tbl.name)) {
                             is_init_in_pred = false;
                             break;
                         }
                     }
 
                     if (is_init_in_pred) {
-                        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
+                        unwrap(init_symbol_add(curr_cfg_node_area, curr_in_tbl));
                     }
 
                 }
@@ -593,10 +486,10 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     //}
     //log(LOG_DEBUG, "\n\n");
 
-    cfg_node_areas = (Frame_vec) {0};
+    cfg_node_areas = (Init_table_vec) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
-    assert(curr_cfg_node_area->init_tables.count == 0);
-    assert(curr_cfg_node_area->init_tables.capacity == 0);
+    assert(curr_cfg_node_area->count == 0);
+    assert(curr_cfg_node_area->capacity == 0);
 }
 
 //static void check_unit_block(const Ir_block* block) {
@@ -718,7 +611,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos, store->loc);
     check_unit_dest(store->ir_dest);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = store->name,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -729,7 +622,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -738,7 +631,7 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name_self,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -748,7 +641,7 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->index, access->pos, access->loc);
     check_unit_src(access->callee, access->pos, access->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = access->name_self,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
