@@ -520,6 +520,12 @@ bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_nam
 }
 
 bool init_symbol_add(Init_table* init_table, Init_table_node node) {
+    if (node.name.scope_id == SCOPE_NOT || node.name.scope_id == SCOPE_TOP_LEVEL) {
+        // not adding top level symbols to the hash table 
+        //   makes the check_uninitialized pass significantly faster
+        return true;
+    }
+
     Strv key = serialize_ir_name_symbol_table(&a_main, node.name);
     Init_table_node* buf = arena_dup(&a_main /* TODO */, &node);
     return generic_tbl_add((Generic_symbol_table*)init_table, key, buf);
