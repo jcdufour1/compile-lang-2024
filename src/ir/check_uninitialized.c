@@ -6,6 +6,7 @@
 #include <ulang_type_get_pos.h>
 #include <bool_vec.h>
 #include <symbol_log.h>
+#include <cfg_foreach.h>
 
 // TODO: in generic function, check uninitalized variables for only one of the variants to save time?
 
@@ -22,7 +23,7 @@ static bool at_end_of_cfg_node = false;
 static bool check_unit_src_internal_name_failed = false;
 
 static size_t block_pos = {0};
-static size_t frame_idx = 0;
+static size_t cfg_node_idx = 0;
 static Init_table* curr_cfg_node_area = NULL;
 static Init_table_vec cfg_node_areas = {0};
 static Cfg_node_vec curr_block_cfg = {0};
@@ -160,7 +161,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     }
 
     if (init_symbol_lookup(curr_cfg_node_area, &result, name)) {
-        if (result->cfg_node_of_init != frame_idx || result->block_pos_of_init < block_pos) {
+        if (result->cfg_node_of_init != cfg_node_idx || result->block_pos_of_init < block_pos) {
             // symbol was initialized before this use
             return;
         }
@@ -190,22 +191,22 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 #   ifndef NDEBUG
         log(LOG_DEBUG, FMT"\n", loc_print(loc));
         log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
-        log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", frame_idx);
+        log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", cfg_node_idx);
         log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
         name.attrs |= ATTR_ALLOW_UNINIT;
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
-        vec_foreach(frame_idx, Init_table, n_frame, cfg_node_areas) {
-            log(LOG_DEBUG, "frame %zu:\n", frame_idx);
+        vec_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
+            log(LOG_DEBUG, "frame %zu:\n", cfg_node_idx);
             String buf = {0};
-            string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, frame_idx), frame_idx, INDENT_WIDTH));
+            string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
             init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame, INDENT_WIDTH);
 
             log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
-            for (size_t block_idx = vec_at(curr_block_cfg, frame_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
+            for (size_t block_idx = vec_at(curr_block_cfg, cfg_node_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
                 log(LOG_DEBUG, FMT, strv_print(ir_print_internal(vec_at(curr_block_children, block_idx), INDENT_WIDTH)));
 
                 if (
@@ -306,7 +307,7 @@ static void check_unit_src(const Ir_name src, Pos pos, Loc loc) {
 static void check_unit_dest(const Ir_name dest) {
     if (!init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = dest,
-        .cfg_node_of_init = frame_idx,
+        .cfg_node_of_init = cfg_node_idx,
         .block_pos_of_init = block_pos
     })) {
 
@@ -356,9 +357,9 @@ static void check_unit_block(const Ir_block* block) {
     }
 
     // TODO: keep running this for loop until there are no changes
-    for (size_t iter_idx = 0; iter_idx < 10; iter_idx++) {
+    for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
         vec_foreach(idx, Cfg_node, curr, block->cfg) {
-            frame_idx = idx;
+            cfg_node_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
 
             // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
@@ -422,9 +423,33 @@ static void check_unit_block(const Ir_block* block) {
     }
 
     print_errors_for_unit = true;
-    vec_foreach(idx, Cfg_node, curr2, block->cfg) {
-        frame_idx = idx;
-        curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+    //vec_foreach(idx, Cfg_node, curr2, block->cfg) {
+    //    cfg_node_idx = idx;
+    //    curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+    //    // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
+    //    //   global variable will not be needed for several ir passes
+    //    //   (this could be done by making special foreach macros/functions?)
+    //    at_end_of_cfg_node = false;
+
+    //    for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+    //        block_pos = block_idx;
+    //        check_unit_ir_from_block(vec_at(block->children, block_idx));
+
+    //        if (
+    //            block_idx + 1 < block->children.info.count &&
+    //            ir_is_label(vec_at(block->children, block_idx + 1))
+    //        ) {
+    //            at_end_of_cfg_node = true;
+    //        }
+
+    //        if (block_idx + 1 >= block->children.info.count) {
+    //            at_end_of_cfg_node = true;
+    //        }
+    //    }
+    //}
+
+    cfg_foreach(&cfg_node_idx, curr2, block->cfg) {
+        curr_cfg_node_area = vec_at_ref(&cfg_node_areas, cfg_node_idx);
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
         //   global variable will not be needed for several ir passes
         //   (this could be done by making special foreach macros/functions?)
@@ -432,9 +457,6 @@ static void check_unit_block(const Ir_block* block) {
 
         for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
             block_pos = block_idx;
-            if (vec_at(block->children, block_idx)->type != IR_REMOVED && strv_is_equal(ir_tast_get_name(vec_at(block->children, block_idx)).base, sv("num"))) {
-                todo();
-            }
             check_unit_ir_from_block(vec_at(block->children, block_idx));
 
             if (
@@ -449,6 +471,7 @@ static void check_unit_block(const Ir_block* block) {
             }
         }
     }
+    
 
     // TODO: make function to log entire cfg_node_areas
     //vec_foreach(idx, Frame, frame, cfg_node_areas) {
@@ -507,7 +530,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     check_unit_dest(store->ir_dest);
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = store->name,
-        .cfg_node_of_init = frame_idx,
+        .cfg_node_of_init = cfg_node_idx,
         .block_pos_of_init = block_pos
     });
 }
@@ -518,7 +541,7 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name,
-        .cfg_node_of_init = frame_idx,
+        .cfg_node_of_init = cfg_node_idx,
         .block_pos_of_init = block_pos
     });
 }
@@ -527,7 +550,7 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name_self,
-        .cfg_node_of_init = frame_idx,
+        .cfg_node_of_init = cfg_node_idx,
         .block_pos_of_init = block_pos
     });
 }
@@ -537,7 +560,7 @@ static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->callee, access->pos, access->loc);
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = access->name_self,
-        .cfg_node_of_init = frame_idx,
+        .cfg_node_of_init = cfg_node_idx,
         .block_pos_of_init = block_pos
     });
 }
