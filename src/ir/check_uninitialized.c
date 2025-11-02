@@ -338,16 +338,7 @@ static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
     unreachable("label should have been found");
 }
 
-#define COUNT 2
-
-static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove */) {
-    static uint64_t count = 0;
-    count++;
-    if (count == COUNT) {
-        log(LOG_DEBUG, FMT"\n", ir_block_print(block));
-    }
-
-    (void) is_main;
+static void check_unit_block(const Ir_block* block) {
     print_errors_for_unit = false;
 
     curr_block_cfg = block->cfg;
@@ -458,9 +449,6 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
             }
         }
     }
-    if (count == COUNT) {
-        //todo();
-    }
 
     // TODO: make function to log entire cfg_node_areas
     //vec_foreach(idx, Frame, frame, cfg_node_areas) {
@@ -492,102 +480,8 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     assert(curr_cfg_node_area->capacity == 0);
 }
 
-//static void check_unit_block(const Ir_block* block) {
-//    unwrap(cfg_node_areas.info.count == 0);
-//    unwrap(block_idx == 0);
-//    unwrap(goto_or_cond_goto == false);
-//    vec_append(&a_main /* TODO: use arena that is reset or freed after this pass */, &cfg_node_areas, frame_new(curr_cfg_node_area.init_tables, (Ir_name) {0}, (Bool_vec) {0}));
-//
-//    while (cfg_node_areas.info.count > 0) {
-//        bool frame_not_needed = false;
-//        curr_cfg_node_area = vec_pop(&cfg_node_areas);
-//        for (size_t idx = 0; idx < already_run_frames.info.count; idx++) {
-//            Frame curr_already = vec_at(&already_run_frames, idx);
-//            // TODO: init_table_vec_is_equal: look at subset/superset instead of just is_equal
-//            //   init_table_vec_is_subset
-//            if (
-//                name_is_equal(curr_already.label_to_cont, curr_cfg_node_area.label_to_cont) &&
-//                init_table_vec_is_subset(curr_cfg_node_area.init_tables, curr_already.init_tables)
-//            ) {
-//                frame_not_needed = true;
-//                break;
-//            }
-//        }
-//
-//        if (frame_not_needed) {
-//            continue;
-//        }
-//        vec_append(&a_main /* TODO */, &already_run_frames, curr_cfg_node_area);
-//
-//        curr_cfg_node_area.init_tables = curr_cfg_node_area.init_tables;
-//        if (curr_cfg_node_area.label_to_cont.base.count < 1) {
-//            unwrap(block_idx == 0);
-//        } else {
-//            // TODO: label_name_to_block_idx adds 1 to result, but 1 is added again at the end of 
-//            //   this for loop. this may cause bugs?
-//            block_idx = label_name_to_block_idx(block->children, curr_cfg_node_area.label_to_cont);
-//            log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, curr_cfg_node_area.label_to_cont));
-//        }
-//
-//
-//        // TODO: if imports are allowed locally (in functions, etc.), consider how to check those properly
-//        while (block_idx < block->children.info.count) {
-//            check_unit_ir_from_block(vec_at(&block->children, block_idx));
-//            if (check_unit_src_internal_name_failed) {
-//                size_t temp_block_idx = 0;
-//                size_t bool_idx = 0;
-//
-//                uint32_t prev_line = 0;
-//                while (temp_block_idx < block->children.info.count) {
-//                    const Ir* curr = vec_at(&block->children, temp_block_idx);
-//                    if (curr->type == IR_COND_GOTO) {
-//                        const Ir_cond_goto* cond_goto = ir_cond_goto_const_unwrap(curr);
-//                        if (cond_goto->pos.line != prev_line) {
-//                            msg(
-//                                DIAG_NOTE,
-//                                cond_goto->pos,
-//                                "tracing path of uninitialized variable use\n"
-//                            );
-//                            prev_line = cond_goto->pos.line;
-//                        }
-//
-//                        Ir_name next_label = vec_at(&curr_cfg_node_area.prev_desisions, bool_idx) ?
-//                            cond_goto->if_true : cond_goto->if_false;
-//                        temp_block_idx = label_name_to_block_idx(block->children, next_label);
-//                        bool_idx++;
-//
-//                        if (bool_idx >= curr_cfg_node_area.prev_desisions.info.count) {
-//                            break;
-//                        }
-//                    } else if (curr->type == IR_GOTO) {
-//                        const Ir_goto* lang_goto = ir_goto_const_unwrap(curr);
-//                        temp_block_idx = label_name_to_block_idx(block->children, lang_goto->label);
-//                    } else {
-//                        temp_block_idx++;
-//                    }
-//                }
-//
-//                unwrap(bool_idx == curr_cfg_node_area.prev_desisions.info.count);
-//            }
-//
-//            if (goto_or_cond_goto) {
-//                goto_or_cond_goto = false;
-//                break;
-//            }
-//
-//            block_idx++;
-//            goto_or_cond_goto = false;
-//            check_unit_src_internal_name_failed = false;
-//        }
-//        block_idx = 0;
-//    }
-//
-//    memset(&curr_cfg_node_area.init_tables, 0, sizeof(curr_cfg_node_area.init_tables));
-//    unwrap(cfg_node_areas.info.count == 0);
-//}
-
 static void check_unit_import_path(const Ir_import_path* import) {
-    check_unit_block(import->block, false);
+    check_unit_block(import->block);
 }
 
 static void check_unit_function_params(const Ir_function_params* params) {
@@ -604,7 +498,7 @@ static void check_unit_function_def(const Ir_function_def* def) {
     unwrap(curr_cfg_node_area);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
-    check_unit_block(def->body, strv_is_equal(def->decl->name.base, sv("main")));
+    check_unit_block(def->body);
 }
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
