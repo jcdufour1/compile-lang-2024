@@ -453,23 +453,26 @@ static void check_unit_block(const Ir_block* block) {
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
         //   global variable will not be needed for several ir passes
         //   (this could be done by making special foreach macros/functions?)
-        at_end_of_cfg_node = false;
+        //at_end_of_cfg_node = false;
 
-        for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+        ir_in_cfg_node_foreach(block_idx, ir, curr2, block->children) {
             block_pos = block_idx;
-            check_unit_ir_from_block(vec_at(block->children, block_idx));
-
-            if (
-                block_idx + 1 < block->children.info.count &&
-                ir_is_label(vec_at(block->children, block_idx + 1))
-            ) {
-                at_end_of_cfg_node = true;
-            }
-
-            if (block_idx + 1 >= block->children.info.count) {
-                at_end_of_cfg_node = true;
-            }
+            check_unit_ir_from_block(ir);
         }
+
+        //for (size_t block_idx = curr2.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+
+        //    if (
+        //        block_idx + 1 < block->children.info.count &&
+        //        ir_is_label(vec_at(block->children, block_idx + 1))
+        //    ) {
+        //        at_end_of_cfg_node = true;
+        //    }
+
+        //    if (block_idx + 1 >= block->children.info.count) {
+        //        at_end_of_cfg_node = true;
+        //    }
+        //}
     }
     
 
@@ -567,12 +570,12 @@ static void check_unit_array_access(const Ir_array_access* access) {
 
 static void check_unit_goto(const Ir_goto* lang_goto) {
     (void) lang_goto;
-    at_end_of_cfg_node = true;
+    //at_end_of_cfg_node = true;
 }
 
 static void check_unit_cond_goto(const Ir_cond_goto* cond_goto) {
     (void) cond_goto;
-    at_end_of_cfg_node = true;
+    //at_end_of_cfg_node = true;
 }
 
 static void check_unit_def(const Ir_def* def) {
