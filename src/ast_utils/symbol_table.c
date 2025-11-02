@@ -35,9 +35,6 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     unwrap(key.count > 0 && "invalid item");
 
     unwrap(capacity > 0);
-    if (strv_is_equal(key, sv("_1__7_builtin_str5287"))) {
-        log(LOG_TRACE, "\n");
-    }
     size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
@@ -126,7 +123,6 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     generic_tbl_expand_if_nessessary(sym_table);
     unwrap(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
-        log(LOG_DEBUG, "generic_tbl_add error 2\n");
         status = false;
         goto error;
     }
@@ -801,7 +797,6 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
@@ -823,7 +818,6 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
@@ -833,7 +827,6 @@ void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int rec
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            //log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_strv(&a_print, buf, ir_print_internal(sym_tast->tast, recursion_depth));
         }
     }

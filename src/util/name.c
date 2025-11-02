@@ -63,9 +63,6 @@ Name ir_name_to_name(Ir_name name) {
 
 // TODO: Attrs should be stored in hash tables instead if in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
-    if (strv_is_equal(name.base, sv("union"))) {
-        log(LOG_TRACE, "\n");
-    }
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         return *(Ir_name*)&name;
@@ -189,8 +186,6 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
 }
 
 Strv serialize_name_symbol_table_init(Name name) {
-    log(LOG_DEBUG, "start of serialize_name_symbol_table_init\n"); \
-        
     static char buf_[1000000] = {0};
     memset(buf_, 0, sizeof(buf_));
     String buf = {.buf = buf_, .info = {.capacity = array_count(buf_)}};
@@ -342,7 +337,6 @@ void extend_name_msg(String* buf, Name name) {
 }
 
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
-    log(LOG_DEBUG, FMT"\n", strv_print(name.mod_alias.mod_path));
     if (
         mode != UNAME_MSG || !(
             strv_is_equal(name.mod_alias.mod_path, MOD_PATH_BUILTIN /* TODO */) ||
@@ -451,7 +445,5 @@ bool uname_is_equal(Uname a, Uname b) {
         todo();
         return false;
     }
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_a));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_b));
     return name_is_equal(new_a, new_b);
 }

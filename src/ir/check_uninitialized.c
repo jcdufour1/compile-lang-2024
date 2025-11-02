@@ -72,7 +72,6 @@ static bool init_table_vec_is_equal(Init_table_vec a, Init_table_vec b) {
 }
 
 static bool init_table_vec_is_subset(Init_table_vec superset, Init_table_vec subset) {
-    log(LOG_DEBUG, "init_table_vec_is_subset: %zu %zu\n", superset.info.count, subset.info.count);
     if (superset.info.count < subset.info.count) {
         todo();
         return false;
@@ -112,7 +111,6 @@ static bool frame_vec_is_subset(Frame_vec superset, Frame_vec subset) {
         if (idx >= subset.info.count) {
             break;
         }
-        log(LOG_DEBUG, "frame_vec_is_subset idx: %zu\n", idx);
         if (!frame_is_subset(frame, vec_at(subset, idx))) {
             todo();
             return false;
@@ -318,10 +316,6 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     }
 
     if (init_symbol_lookup(vec_at_ref(&curr_cfg_node_area->init_tables, name.scope_id), &result, name)) {
-        //log(LOG_DEBUG, FMT"\n", );
-        log(LOG_DEBUG, "result->cfg_node_of_init: %zu\n", result->cfg_node_of_init);
-        log(LOG_DEBUG, "result->block_pos_of_init: %zu\n", result->block_pos_of_init);
-        log(LOG_DEBUG, "block_pos: %zu\n", block_pos);
         if (result->cfg_node_of_init != frame_idx || result->block_pos_of_init < block_pos) {
             // symbol was initialized before this use
             return;
@@ -577,16 +571,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                         }
                         continue;
                     }
-                    if (iter_idx < 10) {
-                        log(LOG_DEBUG, "frame_idx %zu:\n", frame_idx);
-                    }
                     vec_foreach(pred_idx, size_t, pred, curr.preds) {
                         while (vec_at_ref(&cfg_node_areas, pred)->init_tables.info.count < block->scope_id + 2) {
                             vec_append(&a_main /* TODO */, &vec_at_ref(&cfg_node_areas, pred)->init_tables, (Init_table) {0});
-                        }
-
-                        if (frame_idx == 24 && pred == 12) {
-                            log(LOG_TRACE, "\n");
                         }
 
                         if (iter_idx < 10) {
@@ -594,9 +581,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                                 continue;
                             }
                         }
-                        if (iter_idx < 10) {
-                            log(LOG_DEBUG, "  %zu\n", pred);
-                        }
+
                         Frame* pred_frame = vec_at_ref(&cfg_node_areas, pred);
                         Init_table_node* dummy = NULL;
                         if (!init_symbol_lookup(vec_at_ref(&pred_frame->init_tables, block->scope_id), &dummy, curr_in_tbl.name)) {
@@ -642,28 +627,28 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     }
 
     // TODO: make function to log entire cfg_node_areas
-    vec_foreach(idx, Frame, frame, cfg_node_areas) {
-        log(LOG_DEBUG, "frame %zu:\n", idx);
-        init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
-        log(LOG_DEBUG, "\n");
-        //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
-            //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-            //Init_table_node curr_in_tbl = {0};
-            //bool is_init_in_pred = true;
-            //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-            //    Init_table_node* dummy = NULL;
-            //    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &dummy, curr_in_tbl.name)) {
-            //        continue;
-            //    }
+    //vec_foreach(idx, Frame, frame, cfg_node_areas) {
+    //    log(LOG_DEBUG, "frame %zu:\n", idx);
+    //    init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
+    //    log(LOG_DEBUG, "\n");
+    //    //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
+    //        //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
+    //        //Init_table_node curr_in_tbl = {0};
+    //        //bool is_init_in_pred = true;
+    //        //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+    //        //    Init_table_node* dummy = NULL;
+    //        //    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &dummy, curr_in_tbl.name)) {
+    //        //        continue;
+    //        //    }
 
-            //    if (is_init_in_pred) {
-            //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
-            //    }
-            //}
-        //}
+    //        //    if (is_init_in_pred) {
+    //        //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
+    //        //    }
+    //        //}
+    //    //}
 
-    }
-    log(LOG_DEBUG, "\n\n");
+    //}
+    //log(LOG_DEBUG, "\n\n");
 
     cfg_node_areas = (Frame_vec) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));

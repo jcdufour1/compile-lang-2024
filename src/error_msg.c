@@ -94,7 +94,6 @@ void msg_internal(
         while (exp_from) {
             assert(!pos_is_equal(*exp_from, POS_BUILTIN));
             assert(!pos_is_equal(*exp_from, (Pos) {0}));
-            //fprintf(stderr, "%s:", get_log_level_str(LOG_NOTE));
             if (1 || exp_from->line > 0) {
                 fprintf(stderr, FMT":%d:%d:%s:", strv_print(exp_from->file_path), exp_from->line, exp_from->column, get_log_level_str(LOG_NOTE));
                 fprintf(stderr, "in expansion of def\n");

@@ -102,6 +102,7 @@ Strv serialize_lang_type(Lang_type lang_type) {
     unreachable("");
 }
 
+// TODO: remove this function?
 Lang_type deserialize_lang_type(Strv* serialized) {
     log(LOG_DEBUG, FMT"\n", strv_print(*serialized));
     todo();

@@ -2162,7 +2162,6 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
             msg_expected_expr(*tokens, "");
             return PARSE_ERROR;
     }
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(is_true_cond));
 
     Token eq_token = {0};
     if (!consume_expect(&eq_token, tokens, "", TOKEN_SINGLE_EQUAL)) {
@@ -2398,7 +2397,6 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     }
     *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
 
-    log_tokens(LOG_DEBUG, *tokens);
     if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_CURLY_BRACE)) {
         status = PARSE_ERROR;
         // TODO: expeced failure case no close brace

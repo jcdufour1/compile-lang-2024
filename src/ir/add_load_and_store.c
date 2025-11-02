@@ -325,12 +325,6 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
-    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    unwrap(break_expr->name.base.count > 0);
-    log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, break_expr->lang_type));
-    log(LOG_DEBUG, FMT, tast_symbol_print(tast_symbol_new(pos, (Sym_typed_base) {
-        .lang_type = break_expr->lang_type, .name = break_expr->name
-    })));
     assert(break_expr->name.base.count > 0);
 
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
@@ -450,8 +444,7 @@ static void load_block_stmts(
     unwrap(!symbol_lookup(&dummy, break_expr->name));
 
     if (lang_type.type == LANG_TYPE_VOID) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
-        unwrap(break_expr->name.base.count > 0);
+        assert(break_expr->name.base.count > 0);
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
@@ -459,8 +452,6 @@ static void load_block_stmts(
             unwrap(new_block->children.info.count > 0);
             load_variable_def(new_block, local_rtn_def);
         }
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, break_expr->name));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, local_rtn_def->name));
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
@@ -477,7 +468,6 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        log(LOG_VERBOSE, "load_stmt: "FMT"\n", tast_stmt_print(vec_at(children, idx)));
         load_stmt(new_block, vec_at(children, idx), false);
     }
 
@@ -1571,11 +1561,6 @@ static Ir_name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
 
 static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
-    if (tast_expr_get_lang_type(old_access->callee).type == LANG_TYPE_RAW_UNION) {
-        log(LOG_DEBUG, FMT"\n", tast_member_access_print(old_access));
-        log(LOG_DEBUG, FMT"\n", ir_print(ir_from_get_name(new_callee)));
-        //assert(new_callee.attrs & ATTR_ALLOW_UNINIT);
-    }
     unwrap(ir_lang_type_get_pointer_depth(lang_type_from_get_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
@@ -1922,7 +1907,6 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             new_fun_def->body->scope_id
         , (Attrs) {0})
     );
-    log(LOG_DEBUG, "thing 56: %zu\n", new_fun_def->body->scope_id);
     unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
     load_variable_def(new_fun_def->body, var_def_thing);
     load_assignment(new_fun_def->body, tast_assignment_new(
@@ -2069,16 +2053,9 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
 
     Ir* alloca = NULL;
     if (!ir_lookup(&alloca, new_var_def->name_self)) {
-        //if (strv_is_equal(old_var_def->name.base, sv("num"))) {
-            log(LOG_VERBOSE, "adding thing: "FMT"\n", tast_variable_def_print(old_var_def));
-        //}
         alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
         vec_insert(&a_main, &new_block->children, 1, alloca);
-    } else {
-        //if (strv_is_equal(old_var_def->name.base, sv("num"))) {
-            log(LOG_VERBOSE, "not adding thing: "FMT"\n", tast_variable_def_print(old_var_def));
-        //}
     }
 
     vec_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));

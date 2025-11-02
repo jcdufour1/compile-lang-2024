@@ -71,15 +71,15 @@ bool infer_generic_type(
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    log(LOG_DEBUG, FMT"\n", uast_variable_def_print(param_corres_to_arg));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
+    //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
+    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(param_corres_to_arg));
+    //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg->lang_type.type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg->lang_type);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                log(LOG_DEBUG, FMT"\n", strv_print(reg.atom.str.base));
+                //log(LOG_DEBUG, FMT"\n", strv_print(reg.atom.str.base));
                 if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
                     // TODO
                     return false;
@@ -96,7 +96,6 @@ bool infer_generic_type(
             }
 
             for (size_t idx = 0; idx < min(reg.atom.str.gen_args.info.count, lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args.info.count); idx++) {
-                log(LOG_DEBUG, "thing 287:\n");
                 if (infer_generic_type(
                     infered,
                     lang_type_from_ulang_type(vec_at(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),

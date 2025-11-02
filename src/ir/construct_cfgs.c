@@ -106,71 +106,6 @@ static void construct_cfg_def_from_scope_builtin(Ir_def* def) {
     unreachable("");
 }
 
-static bool pred_is_dead_end(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t is_backedge) {
-    vec_foreach(idx, size_t, covered, *already_covered) {
-        if (is_backedge == covered) {
-            return false;
-        }
-    }
-    vec_append(&a_print /* TODO */, already_covered, is_backedge);
-
-    //log(LOG_DEBUG, "%zu\n", is_backedge);
-    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, pred, vec_at_ref(&cfg, is_backedge)->preds) {
-        if (!pred_is_dead_end(already_covered, cfg, pred)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// TODO: move this function
-static bool cfg_node_is_backedge_internal(Size_t_vec* already_covered, Cfg_node_vec cfg, size_t control, size_t is_backedge) {
-    static uint64_t count = 0;
-    if (control == 2 && is_backedge == 6) {
-        log(LOG_INFO, "%"PRIu64"\n", count);
-        count++;
-    }
-
-    // control == 2, is_backedge == 6
-    vec_foreach(idx, size_t, covered, *already_covered) {
-        if (control == covered) {
-            return false;
-        }
-    }
-    vec_append(&a_print /* TODO */, already_covered, control);
-
-    if (control == is_backedge) {
-        return true;
-    }
-
-    //log(LOG_DEBUG, "%zu\n", control);
-    //log(LOG_DEBUG, "%zu\n", cfg.info.count);
-    vec_foreach(succ_idx, size_t, succ, vec_at_ref(&cfg, control)->succs) {
-        //log(LOG_DEBUG, "%zu\n", succ);
-        if (cfg_node_is_backedge_internal(already_covered, cfg, succ, is_backedge)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// TODO: move this function
-static bool cfg_node_is_backedge(Cfg_node_vec cfg, size_t control, size_t is_backedge) {
-    assert(control != is_backedge);
-
-    Size_t_vec already_covered = {0};
-    bool status = pred_is_dead_end(&already_covered, cfg, is_backedge);
-    already_covered = (Size_t_vec) {0};
-    if (!status) {
-        status = cfg_node_is_backedge_internal(&already_covered, cfg, control, is_backedge);
-    }
-
-    arena_reset(&a_print /* TODO */);
-    return status;
-}
-
 static void construct_cfg_block(Ir_block* block) {
     unwrap(!curr_cfg);
     unwrap(curr_cfg_idx_for_cond_goto == 0);
@@ -204,7 +139,7 @@ static void construct_cfg_block(Ir_block* block) {
     Bool_vec_vec cfg_dominators = {0}; // eg. cfg_dominators[1] are the dominators for cfg node 1
                                        // cfg_dominators[n] is in ascending order
                                        // true means is dominator, false means not
-    log(LOG_VERBOSE, "count cfg nodes: %zu\n", block->cfg.info.count);
+    //log(LOG_VERBOSE, "count cfg nodes: %zu\n", block->cfg.info.count);
 
     //if 1 dominates 2, then every path from start to 2 must go through 1
     {
@@ -223,23 +158,23 @@ static void construct_cfg_block(Ir_block* block) {
         }
     }
 
-    {
-        String buf = {0};
-        string_extend_cstr(&a_print, &buf, "\n");
-        vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-            string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-            string_extend_size_t(&a_print, &buf, idx_size_t);
-            string_extend_cstr(&a_print, &buf, "]: [");
-            vec_foreach(idx, size_t, curr, size_t_vec) {
-                if (idx > 0) {
-                    string_extend_cstr(&a_print, &buf, ", ");
-                }
-                string_extend_size_t(&a_print, &buf, curr);
-            }
-            string_extend_cstr(&a_print, &buf, "]\n");
-        }
-        log(LOG_DEBUG, FMT"\n", string_print(buf));
-    }
+    //{
+    //    String buf = {0};
+    //    string_extend_cstr(&a_print, &buf, "\n");
+    //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+    //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+    //        string_extend_size_t(&a_print, &buf, idx_size_t);
+    //        string_extend_cstr(&a_print, &buf, "]: [");
+    //        vec_foreach(idx, size_t, curr, size_t_vec) {
+    //            if (idx > 0) {
+    //                string_extend_cstr(&a_print, &buf, ", ");
+    //            }
+    //            string_extend_size_t(&a_print, &buf, curr);
+    //        }
+    //        string_extend_cstr(&a_print, &buf, "]\n");
+    //    }
+    //    log(LOG_DEBUG, FMT"\n", string_print(buf));
+    //}
 
     bool changes_occured = false;
     do {
@@ -262,25 +197,25 @@ static void construct_cfg_block(Ir_block* block) {
             }
         }
 
-        {
-            String buf = {0};
-            string_extend_cstr(&a_print, &buf, "\n");
-            vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-                string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-                string_extend_size_t(&a_print, &buf, idx_size_t);
-                string_extend_cstr(&a_print, &buf, "]: [");
-                vec_foreach(idx, size_t, curr, size_t_vec) {
-                    if (idx > 0) {
-                        string_extend_cstr(&a_print, &buf, ", ");
-                    }
-                    string_extend_size_t(&a_print, &buf, curr);
-                }
-                string_extend_cstr(&a_print, &buf, "]\n");
-            }
-            log(LOG_DEBUG, FMT"\n", string_print(buf));
-        }
+        //{
+        //    String buf = {0};
+        //    string_extend_cstr(&a_print, &buf, "\n");
+        //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+        //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+        //        string_extend_size_t(&a_print, &buf, idx_size_t);
+        //        string_extend_cstr(&a_print, &buf, "]: [");
+        //        vec_foreach(idx, size_t, curr, size_t_vec) {
+        //            if (idx > 0) {
+        //                string_extend_cstr(&a_print, &buf, ", ");
+        //            }
+        //            string_extend_size_t(&a_print, &buf, curr);
+        //        }
+        //        string_extend_cstr(&a_print, &buf, "]\n");
+        //    }
+        //    log(LOG_DEBUG, FMT"\n", string_print(buf));
+        //}
 
-        log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+        //log(LOG_DEBUG, FMT"\n", ir_block_print(block));
         //todo();
         //vec_foreach(idx_size_t, Size_t_vec, doms, cfg_dominators) {
         //    vec_foreach(idx_dom, size_t, dom, doms) {
@@ -291,25 +226,25 @@ static void construct_cfg_block(Ir_block* block) {
 
     } while (changes_occured);
 
-    {
-        String buf = {0};
-        string_extend_cstr(&a_print, &buf, "\n");
-        vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-            string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-            string_extend_size_t(&a_print, &buf, idx_size_t);
-            string_extend_cstr(&a_print, &buf, "]: [");
-            vec_foreach(idx, size_t, curr, size_t_vec) {
-                if (idx > 0) {
-                    string_extend_cstr(&a_print, &buf, ", ");
-                }
-                string_extend_size_t(&a_print, &buf, curr);
-            }
-            string_extend_cstr(&a_print, &buf, "]\n");
-        }
-        log(LOG_DEBUG, FMT"\n", string_print(buf));
-    }
+    //{
+    //    String buf = {0};
+    //    string_extend_cstr(&a_print, &buf, "\n");
+    //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
+    //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
+    //        string_extend_size_t(&a_print, &buf, idx_size_t);
+    //        string_extend_cstr(&a_print, &buf, "]: [");
+    //        vec_foreach(idx, size_t, curr, size_t_vec) {
+    //            if (idx > 0) {
+    //                string_extend_cstr(&a_print, &buf, ", ");
+    //            }
+    //            string_extend_size_t(&a_print, &buf, curr);
+    //        }
+    //        string_extend_cstr(&a_print, &buf, "]\n");
+    //    }
+    //    log(LOG_DEBUG, FMT"\n", string_print(buf));
+    //}
 
-    log(LOG_DEBUG, FMT"\n", ir_block_print(block));
+    //log(LOG_DEBUG, FMT"\n", ir_block_print(block));
 
     {
         vec_foreach_ref(node_idx, Cfg_node, node, *curr_cfg) {

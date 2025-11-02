@@ -19,14 +19,12 @@ static void expand_using_using(Uast_using* using) {
         return;
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
         Name lang_type_name = {0};
         name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
         vec_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_name));
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
         // TODO: expected failure case for using `using` on enum, etc.
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
