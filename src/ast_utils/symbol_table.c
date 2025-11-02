@@ -519,16 +519,10 @@ bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_nam
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_print, name));
 }
 
-bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node) {
+bool init_symbol_add(Init_table* init_table, Init_table_node node) {
     Strv key = serialize_ir_name_symbol_table(&a_main, node.name);
-
-    while (init_tables->info.count < node.name.scope_id + 2) {
-        vec_append(&a_main /* TODO */, init_tables, ((Init_table) {0}));
-    }
-    Init_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
-    *buf = node;
-    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
-    return init_symbol_add_internal(init_tables, key, buf, node.name.scope_id);
+    Init_table_node* buf = arena_dup(&a_main /* TODO */, &node);
+    return generic_tbl_add((Generic_symbol_table*)init_table, key, buf);
 }
 
 //

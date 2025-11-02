@@ -105,6 +105,8 @@ __attribute__((format (printf, 5, 6)));
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+#define local_abs(num) ((num) < 0 ? -(num) : (num))
+
 #define INLINE static inline __attribute__((always_inline))
 
 #define get_next_multiple(num, divisor) (num + (divisor - num%divisor)%divisor)

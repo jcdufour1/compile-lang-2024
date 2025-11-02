@@ -398,7 +398,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     for (size_t idx = 0; idx < cfg_node_areas.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
-        init_symbol_add(&vec_at_ref(&cfg_node_areas, idx)->init_tables, (Init_table_node) {
+        init_symbol_add(vec_at_ref(&vec_at_ref(&cfg_node_areas, idx)->init_tables, name.scope_id), (Init_table_node) {
             .name = name,
             .cfg_node_of_init = idx,
             .block_pos_of_init = 0,
@@ -454,7 +454,7 @@ static void check_unit_src(const Ir_name src, Pos pos, Loc loc) {
 }
 
 static void check_unit_dest(const Ir_name dest) {
-    if (!init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    if (!init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, dest.scope_id), (Init_table_node) {
         .name = dest,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -511,6 +511,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
         vec_foreach(idx, Cfg_node, curr, block->cfg) {
             frame_idx = idx;
             curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+            while (curr_cfg_node_area->init_tables.info.count < block->scope_id + 20) {
+                vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
+            }
 
             // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
             //   global variable will not be needed for several ir passes
@@ -577,7 +580,7 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
                     }
 
                     if (is_init_in_pred) {
-                        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
+                        unwrap(init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, block->scope_id), curr_in_tbl));
                     }
 
                 }
@@ -589,6 +592,9 @@ static void check_unit_block(const Ir_block* block, bool is_main /* TODO: remove
     vec_foreach(idx, Cfg_node, curr2, block->cfg) {
         frame_idx = idx;
         curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+        while (curr_cfg_node_area->init_tables.info.count < block->scope_id + 2) {
+            vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
+        }
 
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
         //   global variable will not be needed for several ir passes
@@ -743,6 +749,9 @@ static void check_unit_import_path(const Ir_import_path* import) {
 
 static void check_unit_function_params(const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        while (curr_cfg_node_area->init_tables.info.count < vec_at(params->params, idx)->name_self.scope_id + 20) {
+            vec_append(&a_main /* TODO */, &curr_cfg_node_area->init_tables, (Init_table) {0});
+        }
         check_unit_dest(vec_at(params->params, idx)->name_self);
     }
 }
@@ -762,7 +771,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
     check_unit_src(store->ir_src, store->pos, store->loc);
     check_unit_dest(store->ir_dest);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, store->name.scope_id), (Init_table_node) {
         .name = store->name,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -773,7 +782,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, load->name.scope_id), (Init_table_node) {
         .name = load->name,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -782,7 +791,7 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
     check_unit_src(load->ir_src, load->pos, load->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, load->name_self.scope_id), (Init_table_node) {
         .name = load->name_self,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos
@@ -792,7 +801,7 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 static void check_unit_array_access(const Ir_array_access* access) {
     check_unit_src(access->index, access->pos, access->loc);
     check_unit_src(access->callee, access->pos, access->loc);
-    init_symbol_add(&curr_cfg_node_area->init_tables, (Init_table_node) {
+    init_symbol_add(vec_at_ref(&curr_cfg_node_area->init_tables, access->name_self.scope_id), (Init_table_node) {
         .name = access->name_self,
         .cfg_node_of_init = frame_idx,
         .block_pos_of_init = block_pos

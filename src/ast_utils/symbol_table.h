@@ -98,7 +98,7 @@ void ir_update(Ir* tast_of_symbol);
 
 bool init_symbol_lookup(Init_table* init_tables, Init_table_node** result, Ir_name name);
 
-bool init_symbol_add(Init_table_vec* init_tables, Init_table_node node);
+bool init_symbol_add(Init_table* init_table, Init_table_node node);
 
 Symbol_table* symbol_get_block(void);
 

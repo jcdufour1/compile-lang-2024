@@ -2593,7 +2593,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             );
             load_assignment(new_block, is_brk_assign_aux);
 
-            // TODO: this will not always work for custom scopes
+            // TODO: this will not always work for custom scopes?
             if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
                 unwrap(is_yielding);
                 Tast_assignment* new_assign = tast_assignment_new(
@@ -2804,7 +2804,8 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     unwrap(pairs.info.count > 0 && "not implemented");
 
     // is_rtn_check
-    // TODO: maybe this check should only be done at top level of function
+    // TODO: maybe this check should only be done at top level of function to allow for less cfg nodes
+    //   (and thus faster compile times)
     //   (and is yield check should be used for child scopes)
     //   (this may not be nessessary because optimization passes could remove unnessessary assignments)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
@@ -2816,6 +2817,7 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_yield_check));
     add_label(new_block, name_to_ir_name(after_yield_check), new_block->pos);
 
+    // TODO: consider only doing is_yield_check when there is continue in child scope?
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_cont2_check));
@@ -2881,7 +2883,7 @@ static Ir_block* load_block(
 }
 
 void add_load_and_store(void) {
-    unwrap(defered_collections.coll_stack.info.count == 0);
+    assert(defered_collections.coll_stack.info.count == 0);
 
     Symbol_iter iter = sym_tbl_iter_new(SCOPE_TOP_LEVEL);
     Tast_def* curr = NULL;
@@ -2889,7 +2891,7 @@ void add_load_and_store(void) {
         load_def_sometimes(curr);
     }
 
-    unwrap(defered_collections.coll_stack.info.count == 0);
+    assert(defered_collections.coll_stack.info.count == 0);
 }
 
 
