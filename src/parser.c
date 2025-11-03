@@ -1347,6 +1347,10 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
     Token lang_def_tk = {0};
     unwrap(try_consume(&lang_def_tk, tokens, TOKEN_DEF));
 
+    if (strv_is_equal(curr_mod_path, MOD_PATH_RUNTIME)) {
+        msg(DIAG_LANG_DEF_IN_RUNTIME, lang_def_tk.pos, "`def` cannot be used in "FMT"\n", strv_print(MOD_PATH_RUNTIME));
+    }
+
     Token dummy = {0};
     if (!consume_expect(&dummy, tokens, "after `def`", TOKEN_SINGLE_EQUAL)) {
         return PARSE_ERROR;

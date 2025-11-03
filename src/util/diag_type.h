@@ -92,6 +92,7 @@ typedef enum {
     DIAG_INVALID_O_CMD_OPT,
     DIAG_CMD_OPT_INVALID_SYNTAX,
     DIAG_CMD_OPT_INVALID_OPTION,
+    DIAG_LANG_DEF_IN_RUNTIME,
 
     // count of cases for static asserts
     DIAG_COUNT,
