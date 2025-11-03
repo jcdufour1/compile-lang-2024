@@ -784,7 +784,7 @@ void emit_c_from_tree(void) {
 
 #       ifdef NDEBUG
             vec_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
-#       endif // DNDEBUG
+#       endif // NDEBUG
 
         static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
         switch (params.opt_level) {

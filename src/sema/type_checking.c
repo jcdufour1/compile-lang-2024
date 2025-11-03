@@ -1358,7 +1358,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
             msg(
-                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
                 lit->pos,
                 "the type of array literal could not be infered; "
                 "consider casting the struct literal to the desired type"
@@ -1384,11 +1384,11 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             }
 
             msg(
-                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
                 lit->pos,
                 "the type of struct literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting array literal not yet implemented\n)"
+                "(note: casting struct literal not yet implemented\n)"
             );
             return false;
         }

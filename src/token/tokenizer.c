@@ -10,9 +10,7 @@
 #include <pos_vec.h>
 #include <msg.h>
 #include <msg_todo.h>
-
-// TODO: this is temporary forward decl; try_strv_to_char should eventually be moved elsewhere (eg. to "string_int_utils.h")
-bool try_strv_to_char(char* result, const Pos pos, Strv strv);
+#include <str_and_num_utils.h>
 
 static Arena a_token = {0};
 
@@ -301,16 +299,15 @@ static bool get_next_token(
             return true;
         }
     } else if (strv_col_front(*file_text_rem) == '|') {
-        // TODO: rename equals
-        Strv_col equals = strv_col_consume_while(pos, file_text_rem, is_or);
-        if (equals.base.count == 1) {
+        Strv_col bars = strv_col_consume_while(pos, file_text_rem, is_or);
+        if (bars.base.count == 1) {
             token->type = TOKEN_BITWISE_OR;
             return true;
-        } else if (equals.base.count == 2) {
+        } else if (bars.base.count == 2) {
             token->type = TOKEN_LOGICAL_OR;
             return true;
         } else {
-            msg_tokenizer_invalid_token(equals, *pos);
+            msg_tokenizer_invalid_token(bars, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
