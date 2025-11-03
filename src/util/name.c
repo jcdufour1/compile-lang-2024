@@ -234,37 +234,37 @@ Strv uname_print_internal(UNAME_MODE mode, Uname name) {
 
 void extend_name_log_internal(bool is_msg, String* buf, Name name) {
     if (!is_msg) {
-        string_extend_cstr(&a_print, buf, "s");
-        string_extend_size_t(&a_print, buf, name.scope_id);
-        string_extend_cstr(&a_print, buf, "_");
+        string_extend_cstr(&a_temp, buf, "s");
+        string_extend_size_t(&a_temp, buf, name.scope_id);
+        string_extend_cstr(&a_temp, buf, "_");
     }
 
     if (!is_msg) {
         // TODO: even when is_msg is true, show prefix sometimes to avoid confusion?
         //   (maybe only show prefix when mod_path of name is different than mod_path of file that 
         //   name appears in)
-        string_extend_strv(&a_print, buf, name.mod_path);
+        string_extend_strv(&a_temp, buf, name.mod_path);
         if (name.mod_path.count > 0) {
-            string_extend_cstr(&a_print, buf, "::");
+            string_extend_cstr(&a_temp, buf, "::");
         }
     }
-    string_extend_strv(&a_print, buf, name.base);
+    string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&a_print, buf, "(<");
+        string_extend_cstr(&a_temp, buf, "(<");
     }
     for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
         if (idx > 0) {
-            string_extend_cstr(&a_print, buf, ", ");
+            string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&a_print, buf, ">)");
+        string_extend_cstr(&a_temp, buf, ">)");
     }
     if (name.attrs > 0) {
-        string_extend_cstr(&a_print, buf, "(*attrs:0x");
-        string_extend_hex_8_digits(&a_print, buf, name.attrs);
-        string_extend_cstr(&a_print, buf, "*)");
+        string_extend_cstr(&a_temp, buf, "(*attrs:0x");
+        string_extend_hex_8_digits(&a_temp, buf, name.attrs);
+        string_extend_cstr(&a_temp, buf, "*)");
     }
 }
 
@@ -282,20 +282,20 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         )
     ) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
-        string_extend_cstr(&a_print, buf, ".");
+        string_extend_cstr(&a_temp, buf, ".");
     }
-    string_extend_strv(&a_print, buf, name.base);
+    string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&a_print, buf, "(<");
+        string_extend_cstr(&a_temp, buf, "(<");
     }
     for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
         if (idx > 0) {
-            string_extend_cstr(&a_print, buf, ", ");
+            string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&a_print, buf, ">)");
+        string_extend_cstr(&a_temp, buf, ">)");
     }
 }
 
@@ -325,9 +325,9 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
             return;
         case NAME_LOG:
             extend_name(mode, buf, *(Name*)&name);
-            string_extend_cstr(&a_print, buf, "(");
+            string_extend_cstr(&a_temp, buf, "(");
             extend_name(mode, buf, ir_name_to_name(name));
-            string_extend_cstr(&a_print, buf, ")");
+            string_extend_cstr(&a_temp, buf, ")");
             return;
         case NAME_EMIT_C:
             // fallthrough

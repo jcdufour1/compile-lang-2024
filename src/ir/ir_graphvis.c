@@ -21,18 +21,18 @@ static void ir_variable_def_graphvis_internal(String* buf, const Ir_variable_def
 static bool ir_graphvis_do_next_arrow(const Ir* ir);
 
 static void extend_source_loc_internal(const char* file, int line, String* buf) {
-    string_extend_cstr(&a_print, buf, "// ");
-    string_extend_cstr(&a_print, buf, file);
-    string_extend_cstr(&a_print, buf, ":");
-    string_extend_int64_t(&a_print, buf, line);
-    string_extend_cstr(&a_print, buf, "\n");
+    string_extend_cstr(&a_temp, buf, "// ");
+    string_extend_cstr(&a_temp, buf, file);
+    string_extend_cstr(&a_temp, buf, ":");
+    string_extend_int64_t(&a_temp, buf, line);
+    string_extend_cstr(&a_temp, buf, "\n");
 }
 
 static void extend_name_graphvis(String* buf, Ir_name name) {
     (void) buf;
     (void) name;
     todo();
-    //string_extend_strv(&a_print, buf, serialize_name(name));
+    //string_extend_strv(&a_temp, buf, serialize_name(name));
 }
 
 #define arrow_names(buf, parent, child) arrow_names_internal(__FILE__, __LINE__, buf, parent, child)
@@ -41,9 +41,9 @@ static void arrow_names_internal(const char* file, int line, String* buf, Ir_nam
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, parent);
-    string_extend_cstr(&a_print, buf, " -> ");
+    string_extend_cstr(&a_temp, buf, " -> ");
     extend_name_graphvis(buf, child);
-    string_extend_cstr(&a_print, buf, ";\n");
+    string_extend_cstr(&a_temp, buf, ";\n");
 }
 
 #define arrow_names_label(buf, parent, child, label) \
@@ -60,11 +60,11 @@ static void arrow_names_label_internal(
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, parent);
-    string_extend_cstr(&a_print, buf, " -> ");
+    string_extend_cstr(&a_temp, buf, " -> ");
     extend_name_graphvis(buf, child);
-    string_extend_cstr(&a_print, buf, " [label = \"");
-    string_extend_strv(&a_print, buf, label);
-    string_extend_cstr(&a_print, buf, "\"];\n");
+    string_extend_cstr(&a_temp, buf, " [label = \"");
+    string_extend_strv(&a_temp, buf, label);
+    string_extend_cstr(&a_temp, buf, "\"];\n");
 }
 
 #define label(buf, name, label) label_internal(__FILE__, __LINE__, buf, name, label)
@@ -73,15 +73,15 @@ static void label_internal(const char* file, int line, String* buf, Ir_name name
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
-    string_extend_cstr(&a_print, buf, " [label = \"");
-    string_extend_strv(&a_print, buf, label);
+    string_extend_cstr(&a_temp, buf, " [label = \"");
+    string_extend_strv(&a_temp, buf, label);
     // TODO: make parameter to enable/disable below block
     {
-        //string_extend_cstr(&a_print, buf, " ");
-        //string_extend_strv(&a_print, buf, serialize_name(name));
+        //string_extend_cstr(&a_temp, buf, " ");
+        //string_extend_strv(&a_temp, buf, serialize_name(name));
 
     }
-    string_extend_cstr(&a_print, buf, "\"];\n");
+    string_extend_cstr(&a_temp, buf, "\"];\n");
 }
 
 #define label_ex(buf, name, label, actual_name) label_ex_internal(__FILE__, __LINE__, buf, name, label, actual_name)
@@ -90,16 +90,16 @@ static void label_ex_internal(const char* file, int line, String* buf, Ir_name n
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
-    string_extend_cstr(&a_print, buf, " [label = \"");
-    string_extend_strv(&a_print, buf, label);
+    string_extend_cstr(&a_temp, buf, " [label = \"");
+    string_extend_strv(&a_temp, buf, label);
     // TODO: make parameter to enable/disable below block
     {
-        //string_extend_cstr(&a_print, buf, " ");
-        //string_extend_strv(&a_print, buf, serialize_name(name));
+        //string_extend_cstr(&a_temp, buf, " ");
+        //string_extend_strv(&a_temp, buf, serialize_name(name));
     }
-    string_extend_cstr(&a_print, buf, " ");
+    string_extend_cstr(&a_temp, buf, " ");
     extend_name_graphvis(buf, actual_name);
-    string_extend_cstr(&a_print, buf, "\"];\n");
+    string_extend_cstr(&a_temp, buf, "\"];\n");
 }
 
 static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
@@ -107,9 +107,9 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
 
     // TODO: make size_t_print_macro?
     String scope_buf = {0};
-    string_extend_strv(&a_print, &scope_buf, sv("block (scope "));
-    string_extend_size_t(&a_print, &scope_buf, block->scope_id);
-    string_extend_strv(&a_print, &scope_buf, sv(")"));
+    string_extend_strv(&a_temp, &scope_buf, sv("block (scope "));
+    string_extend_size_t(&a_temp, &scope_buf, block->scope_id);
+    string_extend_strv(&a_temp, &scope_buf, sv(")"));
 
     label(buf, block->name, string_to_strv(scope_buf));
 
@@ -123,7 +123,7 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         }
 
         String idx_buf = {0};
-        string_extend_size_t(&a_print, &idx_buf, idx);
+        string_extend_size_t(&a_temp, &idx_buf, idx);
         if (ir_tbl_add_ex(&already_visited, curr)) {
             Ir_name old_parent_block_next = ir_graphvis_parent_block_next;
             ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_tast_get_name(next);
@@ -164,7 +164,7 @@ static void ir_function_params_graphvis_internal(String* buf, const Ir_function_
 
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         String idx_buf = {0};
-        string_extend_size_t(&a_print, &idx_buf, idx);
+        string_extend_size_t(&a_temp, &idx_buf, idx);
         arrow_names_label(buf, params->name, vec_at(params->params, idx)->name_self, string_to_strv(idx_buf));
     }
 }
@@ -183,7 +183,7 @@ static void ir_function_decl_graphvis_internal(String* buf, const Ir_function_de
 
     ir_function_params_graphvis_internal(buf, decl->params);
     // TODO
-    //string_extend_strv(&a_print, buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
+    //string_extend_strv(&a_temp, buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
 }
 
 static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def* def) {
@@ -233,8 +233,8 @@ static void ir_def_graphvis_internal(String* buf, const Ir_def* def) {
 
 static void ir_load_element_ptr_graphvis_internal(String* buf, const Ir_load_element_ptr* load) {
     String idx_buf = {0};
-    string_extend_strv(&a_print, &idx_buf, sv("load element ptr "));
-    string_extend_size_t(&a_print, &idx_buf, load->memb_idx);
+    string_extend_strv(&a_temp, &idx_buf, sv("load element ptr "));
+    string_extend_size_t(&a_temp, &idx_buf, load->memb_idx);
     label(buf, load->name_self, string_to_strv(idx_buf));
 
     arrow_names_label(buf, load->name_self, load->ir_src, sv("src"));
@@ -249,26 +249,26 @@ static void ir_array_access_graphvis_internal(String* buf, const Ir_array_access
 static void ir_int_graphvis_internal(String* buf, const Ir_int* lit) {
     String num_buf = {0};
 
-    string_extend_int64_t(&a_print, &num_buf, lit->data);
-    string_extend_cstr(&a_print, &num_buf, " ");
-    string_extend_strv(&a_print, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_int64_t(&a_temp, &num_buf, lit->data);
+    string_extend_cstr(&a_temp, &num_buf, " ");
+    string_extend_strv(&a_temp, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
 static void ir_float_graphvis_internal(String* buf, const Ir_float* lit) {
     String num_buf = {0};
 
-    string_extend_double(&a_print, &num_buf, lit->data);
-    string_extend_cstr(&a_print, &num_buf, " ");
-    string_extend_strv(&a_print, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_double(&a_temp, &num_buf, lit->data);
+    string_extend_cstr(&a_temp, &num_buf, " ");
+    string_extend_strv(&a_temp, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
 static void ir_string_graphvis_internal(String* buf, const Ir_string* lit) {
     String str_buf = {0};
 
-    string_extend_cstr(&a_print, &str_buf, "string_lit ");
-    string_extend_strv(&a_print, &str_buf, lit->data);
+    string_extend_cstr(&a_temp, &str_buf, "string_lit ");
+    string_extend_strv(&a_temp, &str_buf, lit->data);
     label(buf, lit->name, string_to_strv(str_buf));
 }
 
@@ -310,7 +310,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         String idx_buf = {0};
-        string_extend_size_t(&a_print, &idx_buf, idx);
+        string_extend_size_t(&a_temp, &idx_buf, idx);
         arrow_names_label(buf, args_name, vec_at(call->args, idx), string_to_strv(idx_buf));
     }
 
@@ -319,10 +319,10 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
 
 static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     String type_buf = {0};
-    string_extend_cstr(&a_print, &type_buf, "binary ");
-    string_extend_strv(&a_print, &type_buf, ir_binary_type_to_strv(bin->token_type));
-    string_extend_cstr(&a_print, &type_buf, " ");
-    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
+    string_extend_cstr(&a_temp, &type_buf, "binary ");
+    string_extend_strv(&a_temp, &type_buf, ir_binary_type_to_strv(bin->token_type));
+    string_extend_cstr(&a_temp, &type_buf, " ");
+    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, bin->name, bin->lhs, sv("lhs"));
@@ -331,10 +331,10 @@ static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
 
 static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     String type_buf = {0};
-    string_extend_cstr(&a_print, &type_buf, "unary ");
-    string_extend_strv(&a_print, &type_buf, ir_unary_type_to_strv(unary->token_type));
-    string_extend_cstr(&a_print, &type_buf, " ");
-    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
+    string_extend_cstr(&a_temp, &type_buf, "unary ");
+    string_extend_strv(&a_temp, &type_buf, ir_unary_type_to_strv(unary->token_type));
+    string_extend_cstr(&a_temp, &type_buf, " ");
+    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, unary->name, unary->child, sv("child"));
@@ -402,8 +402,8 @@ static void ir_store_another_ir_graphvis_internal(String* buf, const Ir_store_an
 
 static void ir_load_another_ir_graphvis_internal(String* buf, const Ir_load_another_ir* load) {
     String type_buf = {0};
-    string_extend_cstr(&a_print, &type_buf, "load ");
-    string_extend_strv(&a_print, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
+    string_extend_cstr(&a_temp, &type_buf, "load ");
+    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
     label(buf, load->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, load->name, load->ir_src, sv("src"));
@@ -497,10 +497,10 @@ Strv ir_graphvis(const Ir_block* block) {
     String buf = {0};
     extend_source_loc(&buf);
 
-    string_extend_cstr(&a_print, &buf, "digraph G {\n");
-    string_extend_cstr(&a_print, &buf, "bgcolor=\"black\"\n");
-    string_extend_cstr(&a_print, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
-    string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
+    string_extend_cstr(&a_temp, &buf, "digraph G {\n");
+    string_extend_cstr(&a_temp, &buf, "bgcolor=\"black\"\n");
+    string_extend_cstr(&a_temp, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
+    string_extend_cstr(&a_temp, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
@@ -511,7 +511,7 @@ Strv ir_graphvis(const Ir_block* block) {
         }
     }
 
-    string_extend_cstr(&a_print, &buf, "}\n");
+    string_extend_cstr(&a_temp, &buf, "}\n");
 
     return string_to_strv(buf);
 }

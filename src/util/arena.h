@@ -18,7 +18,7 @@ typedef struct {
 
 extern Arena a_main;
 extern Arena a_pass;
-extern Arena a_print;
+extern Arena a_temp;
 
 // allocate a zero-initialized memory region in arena, return pointer (similer to malloc, but never return null)
 void* arena_alloc(Arena* arena, size_t capacity);

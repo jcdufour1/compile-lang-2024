@@ -163,18 +163,18 @@ static void construct_cfg_block(Ir_block* block) {
     // TODO: move below to separate function?
     //{
     //    String buf = {0};
-    //    string_extend_cstr(&a_print, &buf, "\n");
+    //    string_extend_cstr(&a_temp, &buf, "\n");
     //    vec_foreach(idx_size_t, Bool_vec, size_t_vec, cfg_dominators) {
-    //        string_extend_cstr(&a_print, &buf, "cfg_dominators[");
-    //        string_extend_size_t(&a_print, &buf, idx_size_t);
-    //        string_extend_cstr(&a_print, &buf, "]: [");
+    //        string_extend_cstr(&a_temp, &buf, "cfg_dominators[");
+    //        string_extend_size_t(&a_temp, &buf, idx_size_t);
+    //        string_extend_cstr(&a_temp, &buf, "]: [");
     //        vec_foreach(idx, size_t, curr, size_t_vec) {
     //            if (idx > 0) {
-    //                string_extend_cstr(&a_print, &buf, ", ");
+    //                string_extend_cstr(&a_temp, &buf, ", ");
     //            }
-    //            string_extend_size_t(&a_print, &buf, curr);
+    //            string_extend_size_t(&a_temp, &buf, curr);
     //        }
-    //        string_extend_cstr(&a_print, &buf, "]\n");
+    //        string_extend_cstr(&a_temp, &buf, "]\n");
     //    }
     //    log(LOG_DEBUG, FMT"\n", string_print(buf));
     //}

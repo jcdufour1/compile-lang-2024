@@ -49,15 +49,15 @@ static void msg_invalid_count_generic_args_internal(
     }
 
     String message = {0};
-    string_extend_size_t(&a_print, &message, gen_args.info.count);
-    string_extend_cstr(&a_print, &message, " generic arguments are passed");
+    string_extend_size_t(&a_temp, &message, gen_args.info.count);
+    string_extend_cstr(&a_temp, &message, " generic arguments are passed");
     // TODO: print base type (eg. `Token`)
-    string_extend_cstr(&a_print, &message, ", but ");
-    string_extend_size_t(&a_print, &message, min_args);
+    string_extend_cstr(&a_temp, &message, ", but ");
+    string_extend_size_t(&a_temp, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&a_print, &message, " or more");
+        string_extend_cstr(&a_temp, &message, " or more");
     }
-    string_extend_cstr(&a_print, &message, " generic arguments expected\n");
+    string_extend_cstr(&a_temp, &message, " generic arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
         FMT, strv_print(string_to_strv(message))

@@ -7,7 +7,7 @@
 #include "strv.h"
 #include "newstring.h"
 
-#define token_print(mode, token) strv_print(token_print_internal(&a_print, mode, token))
+#define token_print(mode, token) strv_print(token_print_internal(&a_temp, mode, token))
 
 typedef enum {
     // nontype

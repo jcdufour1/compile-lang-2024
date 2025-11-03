@@ -77,7 +77,7 @@ static void add_builtin_defs(void) {
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
-        arena_reset(&a_print);\
+        arena_reset(&a_temp);\
         arena_reset(&a_pass);\
     } while (0)
 
@@ -100,7 +100,7 @@ static void add_builtin_defs(void) {
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
-        arena_reset(&a_print);\
+        arena_reset(&a_temp);\
         arena_reset(&a_pass);\
     } while (0)
 
@@ -153,7 +153,7 @@ void do_passes(void) {
             unwrap(params.compile_own && "this should have been caught in parse_args");
             todo();
             //String graphvis = {0};
-            //string_extend_strv(&a_print, &graphvis, ir_graphvis(ir));
+            //string_extend_strv(&a_temp, &graphvis, ir_graphvis(ir));
             //write_file("dump.dot", string_to_strv(graphvis));
         } else {
             String contents = {0};
@@ -161,11 +161,11 @@ void do_passes(void) {
             Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
-                string_extend_strv(&a_print, &contents, ir_print_internal(curr, INDENT_WIDTH));
+                string_extend_strv(&a_temp, &contents, ir_print_internal(curr, INDENT_WIDTH));
             }
-            string_extend_strv(&a_print, &contents, sv("\n\n"));
+            string_extend_strv(&a_temp, &contents, sv("\n\n"));
 
-            write_file(strv_dup(&a_print, params.output_file_path), string_to_strv(contents));
+            write_file(strv_dup(&a_temp, params.output_file_path), string_to_strv(contents));
             return;
         }
     }
@@ -187,6 +187,8 @@ void do_passes(void) {
                 unreachable("");
         }
     }
+    arena_reset(&a_temp);
+    arena_reset(&a_pass);
 
     static_assert(
         PARAMETERS_COUNT == 24,
@@ -197,10 +199,10 @@ void do_passes(void) {
     if (params.stop_after == STOP_AFTER_RUN) {
         Strv_vec cmd = {0};
         String output_path = {0};
-        string_extend_cstr(&a_main, &output_path, "./");
-        string_extend_strv(&a_main, &output_path, params.output_file_path);
-        vec_append(&a_main, &cmd, string_to_strv(output_path));
-        // TODO: free arenas before calling subprocess?
+        string_extend_cstr(&a_temp, &output_path, "./");
+        string_extend_strv(&a_temp, &output_path, params.output_file_path);
+        vec_append(&a_temp, &cmd, string_to_strv(output_path));
+        arena_free(&a_main);
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);

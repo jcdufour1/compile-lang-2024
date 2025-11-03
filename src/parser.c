@@ -217,8 +217,8 @@ static Pos get_curr_pos(Tk_view tokens) {
 
 static void msg_expected_expr_internal(const char* file, int line, Tk_view tokens, const char* msg_suffix) {
     String message = {0};
-    string_extend_cstr(&a_print, &message, "expected expression ");
-    string_extend_cstr(&a_print, &message, msg_suffix);
+    string_extend_cstr(&a_temp, &message, "expected expression ");
+    string_extend_cstr(&a_temp, &message, msg_suffix);
 
     msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), FMT"\n", string_print(message)); \
 }
@@ -228,25 +228,25 @@ static void msg_expected_expr_internal(const char* file, int line, Tk_view token
 
 static void msg_parser_expected_internal(const char* file, int line, Token got, const char* msg_suffix, int count_expected, TOKEN_TYPE args[]) {
     String message = {0};
-    string_extend_cstr(&a_print, &message, "got token `");
-    string_extend_strv(&a_print, &message, token_print_internal(&a_print, TOKEN_MODE_MSG, got));
-    string_extend_cstr(&a_print, &message, "`, but expected ");
+    string_extend_cstr(&a_temp, &message, "got token `");
+    string_extend_strv(&a_temp, &message, token_print_internal(&a_temp, TOKEN_MODE_MSG, got));
+    string_extend_cstr(&a_temp, &message, "`, but expected ");
 
     for (int idx = 0; idx < count_expected; idx++) {
         if (idx > 0) {
             if (idx == count_expected - 1) {
-                string_extend_cstr(&a_print, &message, " or ");
+                string_extend_cstr(&a_temp, &message, " or ");
             } else {
-                string_extend_cstr(&a_print, &message, ", ");
+                string_extend_cstr(&a_temp, &message, ", ");
             }
         }
-        string_extend_cstr(&a_print, &message, "`");
+        string_extend_cstr(&a_temp, &message, "`");
         unwrap(idx < count_expected);
-        string_extend_strv(&a_print, &message, token_type_to_strv(TOKEN_MODE_MSG, args[idx]));
-        string_extend_cstr(&a_print, &message, "` ");
+        string_extend_strv(&a_temp, &message, token_type_to_strv(TOKEN_MODE_MSG, args[idx]));
+        string_extend_cstr(&a_temp, &message, "` ");
     }
 
-    string_extend_cstr(&a_print, &message, msg_suffix);
+    string_extend_cstr(&a_temp, &message, msg_suffix);
 
     DIAG_TYPE expect_fail_type = DIAG_PARSER_EXPECTED;
     if (got.type == TOKEN_NONTYPE) {
@@ -1554,7 +1554,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 return PARSE_ERROR;
             }
             if (is_using) {
-                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
+                vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
             msg_todo("using in this situation", var_def->pos);
@@ -3318,7 +3318,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (params.do_prelude) {
         vec_append(
-            &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+            &a_pass,
             &using_params,
             uast_using_new((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: do not hardcode path */} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );

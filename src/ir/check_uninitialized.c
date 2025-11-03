@@ -12,12 +12,6 @@
 
 static void check_unit_ir_builtin(const Ir* ir);
 
-static Bool_vec bool_vec_clone(Bool_vec vec) {
-    Bool_vec new_vec = {0};
-    vec_extend(&a_main/* TODO */, &new_vec, &vec);
-    return new_vec;
-}
-
 //static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
@@ -188,7 +182,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         vec_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
             log(LOG_DEBUG, "frame %zu:\n", cfg_node_idx);
             String buf = {0};
-            string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
+            string_extend_strv(&a_temp, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
             init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame, INDENT_WIDTH);
 
@@ -329,10 +323,10 @@ static void check_unit_block(const Ir_block* block) {
     vec_foreach(idx, Cfg_node, curr1, block->cfg) {
         (void) curr1;
         if (idx == 0) {
-            vec_append(&a_main /* TODO */, &cfg_node_areas, *curr_cfg_node_area);
+            vec_append(&a_pass, &cfg_node_areas, *curr_cfg_node_area);
             continue;
         }
-        vec_append(&a_main /* TODO */, &cfg_node_areas, ((Init_table) {0}));
+        vec_append(&a_pass, &cfg_node_areas, ((Init_table) {0}));
     }
 
     for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
