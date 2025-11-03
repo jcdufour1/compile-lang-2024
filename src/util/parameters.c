@@ -466,8 +466,7 @@ typedef void(*Long_option_action)(Strv curr_opt);
 
 typedef enum {
     ARG_NONE,
-    ARG_SIMPLE,
-    ARG_EQUAL,
+    ARG_REGULAR,
 
     // for static asserts
     ARG_COUNT,
@@ -695,18 +694,18 @@ static_assert(
 );
 Long_option_pair long_options[] = {
     {"help", "display usage", long_option_help, ARG_NONE},
-    {"l", "library name to link", long_option_l, ARG_SIMPLE},
-    {"backend", "c or llvm", long_option_backend, ARG_EQUAL},
+    {"l", "library name to link", long_option_l, ARG_REGULAR},
+    {"backend", "c or llvm", long_option_backend, ARG_REGULAR},
     {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, ARG_NONE},
     {"dump-ir", "stop compiling after IR file(s) have been generated", long_option_dump_ir, ARG_NONE},
     {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, ARG_NONE},
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, ARG_NONE},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, ARG_NONE},
     {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, ARG_NONE},
-    {"o", "output file path", long_option_lower_o, ARG_SIMPLE},
+    {"o", "output file path", long_option_lower_o, ARG_REGULAR},
     {"O0", "disable most optimizations", long_option_upper_o0, ARG_NONE},
     {"O2", "enable optimizations", long_option_upper_o2, ARG_NONE},
-    {"error", "TODO", long_option_error, ARG_EQUAL},
+    {"error", "TODO", long_option_error, ARG_REGULAR},
     {
         "print-immediately",
         "print errors immediately. This is intended for debugging. "
@@ -716,31 +715,31 @@ Long_option_pair long_options[] = {
     },
     {
         "target-triplet",
-        "=ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
+        " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
         long_option_target_triplet,
-        ARG_EQUAL
+        ARG_REGULAR
     },
     {
         "path-c-compiler",
         "specify the c compiler to use to compile program",
         long_option_path_c_compiler,
-        ARG_EQUAL
+        ARG_REGULAR
     },
     {"no-prelude", "disable the prelude (std::prelude)", long_option_no_prelude, ARG_NONE},
     {
         "set-log-level",
-        "=OPT where OPT is "
+        " OPT where OPT is "
           "\"FETAL\", \"ERROR\", \"WARNING\", \"NOTE\", \"INFO\", \"VERBOSE\", \"DEBUG\", or \"TRACE\" ("
           "eg. \"set-log-level=NOTE\" will suppress messages that are less important than \"NOTE\")",
         long_option_log_level,
-        ARG_EQUAL
+        ARG_REGULAR
     },
     {
         "max-errors",
-        "=COUNT where COUNT is the maximum number of errors that should be printed"
+        " COUNT where COUNT is the maximum number of errors that should be printed"
           "(eg. \"max-errors=20\" will print a maximum of 20 errors)",
         long_option_max_errors,
-        ARG_EQUAL
+        ARG_REGULAR
     },
 
     {"run", "n/a", long_option_run, ARG_NONE},
@@ -753,7 +752,7 @@ static void parse_long_option(int* argc, char*** argv) {
         Long_option_pair curr = array_at(long_options, idx);
         if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
-            static_assert(ARG_COUNT == 3, "exhausive handling of arg types");
+            static_assert(ARG_COUNT == 2, "exhausive handling of arg types");
             switch (curr.arg_type) {
                 case ARG_NONE:
                     if (curr_opt.count > 0) {
@@ -762,28 +761,13 @@ static void parse_long_option(int* argc, char*** argv) {
                     }
                     curr.action(curr_opt);
                     return;
-                case ARG_SIMPLE: {
+                case ARG_REGULAR: {
                     String buf = {0};
                     string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
                     string_extend_strv(&a_temp, &buf, sv(curr.text));
                     string_extend_strv(&a_temp, &buf, sv("`\n"));
                     if (curr_opt.count < 1) {
                         curr_opt = consume_arg(argc, argv, string_to_strv(buf));
-                    }
-                    curr.action(curr_opt);
-                    return;
-                }
-                case ARG_EQUAL: {
-                    String buf = {0};
-                    string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
-                    string_extend_strv(&a_temp, &buf, sv(curr.text));
-                    string_extend_strv(&a_temp, &buf, sv("`\n"));
-                    if (curr_opt.count < 1) {
-                        curr_opt = consume_arg(argc, argv, string_to_strv(buf));
-                    }
-                    if (!strv_try_consume(&curr_opt, '=')) {
-                        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected `=` after `%s`\n", curr.text);
-                        local_exit(EXIT_CODE_FAIL);
                     }
                     curr.action(curr_opt);
                     return;
