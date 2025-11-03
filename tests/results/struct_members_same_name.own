@@ -1,26 +1,26 @@
 compile::stdout 0
 
 compile::stderr 20
-tests/inputs/struct_members_same_name.own:5:5:[1;34mnote[0;39m:member `num` previously defined here
-     4 | type Thing struct {
-     5 |     num i32
-       |     ^
-     6 |     num i32
 tests/inputs/struct_members_same_name.own:6:5:[1;31merror[0;39m:redefinition of member `num`
      5 |     num i32
      6 |     num i32
        |     ^
      7 | }
-tests/inputs/struct_members_same_name.own:10:5:[1;34mnote[0;39m:member `num` previously defined here
-     9 | type Token enum {
-    10 |     num i32
+tests/inputs/struct_members_same_name.own:5:5:[1;34mnote[0;39m:member `num` previously defined here
+     4 | type Thing struct {
+     5 |     num i32
        |     ^
-    11 |     num i32
+     6 |     num i32
 tests/inputs/struct_members_same_name.own:11:5:[1;31merror[0;39m:redefinition of member `num`
     10 |     num i32
     11 |     num i32
        |     ^
     12 | }
+tests/inputs/struct_members_same_name.own:10:5:[1;34mnote[0;39m:member `num` previously defined here
+     9 | type Token enum {
+    10 |     num i32
+       |     ^
+    11 |     num i32
 
 compile::return_code 1
 

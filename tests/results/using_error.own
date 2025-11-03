@@ -7,6 +7,11 @@ std/prelude.own:11:6:[1;34mnote[0;39m:in expansion of def
     11 | type Str def = _builtin__coll.Str
        |      ^
     12 | type Dstr def = _builtin__coll.Darr(<u8>)
+tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`Str` originally defined here
+     4 | 
+     5 | type Str def = Local_str
+       |      ^
+     6 | 
 tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `puts`
      2 | type io import = std.io
      3 | using io
@@ -17,6 +22,11 @@ std/io.own:14:6:[1;34mnote[0;39m:in expansion of def
     14 | type puts def = c.puts
        |      ^
     15 | type fopen def = c.fopen
+tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`puts` originally defined here
+    11 | 
+    12 | fn puts() i32 {
+       |    ^
+    13 | }
 tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `Str`
      2 | type io import = std.io
      3 | using io
@@ -33,16 +43,6 @@ tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`Str` originally defined her
      5 | type Str def = Local_str
        |      ^
      6 | 
-tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`Str` originally defined here
-     4 | 
-     5 | type Str def = Local_str
-       |      ^
-     6 | 
-tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`puts` originally defined here
-    11 | 
-    12 | fn puts() i32 {
-       |    ^
-    13 | }
 
 compile::return_code 1
 
