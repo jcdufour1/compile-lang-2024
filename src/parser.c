@@ -1554,7 +1554,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 return PARSE_ERROR;
             }
             if (is_using) {
-                vec_append(&a_print /* TODO */, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
+                vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
             msg_todo("using in this situation", var_def->pos);
@@ -3318,7 +3318,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (params.do_prelude) {
         vec_append(
-            &a_print /* TODO: make arena called "a_pass" or similar to reset after each pass */,
+            &a_pass,
             &using_params,
             uast_using_new((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: do not hardcode path */} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );

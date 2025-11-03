@@ -602,7 +602,6 @@ bool name_to_ir_name_add(Name_to_ir_name_table_node node) {
     }
     Name_to_ir_name_table_node* buf = arena_alloc(&a_main, sizeof(*buf));
     *buf = node;
-    // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
     return name_to_ir_name_add_internal(serialize_name_symbol_table(&a_main, node.name_self), buf, node.name_self.scope_id);
 }
 
