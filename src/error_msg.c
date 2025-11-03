@@ -106,36 +106,40 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
     return QSORT_EQUAL;
 }
 
+void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_msg) {
+    fprintf(stderr, FMT, strv_print(actual_msg));
+    if (pos.line > 0) {
+        show_location_error(pos);
+    }
+
+    Pos* exp_from = pos.expanded_from;
+    while (exp_from) {
+        assert(!pos_is_equal(*exp_from, POS_BUILTIN));
+        assert(!pos_is_equal(*exp_from, (Pos) {0}));
+        fprintf(
+            stderr,
+            FMT":%d:%d:%s:",
+            strv_print(exp_from->file_path),
+            exp_from->line,
+            exp_from->column,
+            get_log_level_str(LOG_NOTE)
+        );
+        fprintf(stderr, "in expansion of def\n");
+        if (exp_from->line > 0) {
+            show_location_error(*exp_from);
+        }
+
+        exp_from = exp_from->expanded_from;
+    }
+
+    log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
+}
+
 void print_all_defered_msgs(void) {
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
     vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
-        fprintf(stderr, FMT, strv_print(curr.actual_msg));
-        if (curr.pos.line > 0) {
-            show_location_error(curr.pos);
-        }
-
-        Pos* exp_from = curr.pos.expanded_from;
-        while (exp_from) {
-            assert(!pos_is_equal(*exp_from, POS_BUILTIN));
-            assert(!pos_is_equal(*exp_from, (Pos) {0}));
-            fprintf(
-                stderr,
-                FMT":%d:%d:%s:",
-                strv_print(exp_from->file_path),
-                exp_from->line,
-                exp_from->column,
-                get_log_level_str(LOG_NOTE)
-            );
-            fprintf(stderr, "in expansion of def\n");
-            if (exp_from->line > 0) {
-                show_location_error(*exp_from);
-            }
-
-            exp_from = exp_from->expanded_from;
-        }
-
-        log_internal(LOG_DEBUG, curr.file, curr.line, 0, "location of error\n");
+        msg_internal_actual_print(curr.file, curr.line, curr.pos, curr.actual_msg);
     }
 }
 
@@ -179,7 +183,11 @@ void msg_internal(
             vsnprintf(buf, array_count(buf), format, args);
             string_extend_cstr(&a_leak, &actual_buf, buf);
         }
-        vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, string_to_strv(actual_buf)));
+        if (params.print_immediately) {
+            msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
+        } else {
+            vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, string_to_strv(actual_buf)));
+        }
     }
 
     if (fail_immediately) {

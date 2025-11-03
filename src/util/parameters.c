@@ -401,7 +401,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 24,
+        PARAMETERS_COUNT == 25,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -531,7 +531,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 24,
+        PARAMETERS_COUNT == 25,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -649,6 +649,11 @@ static void long_option_target_triplet(Strv curr_opt) {
     }
 }
 
+static void long_option_print_immediately(Strv curr_opt) {
+    (void) curr_opt;
+    params.print_immediately = true;
+}
+
 static void long_option_no_prelude(Strv curr_opt) {
     (void) curr_opt;
     params.do_prelude = false;
@@ -684,7 +689,7 @@ static void long_option_log_level(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 24,
+    PARAMETERS_COUNT == 25,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -701,6 +706,13 @@ Long_option_pair long_options[] = {
     {"O0", "disable most optimizations", long_option_upper_o0, false},
     {"O2", "enable optimizations", long_option_upper_o2, false},
     {"error", "TODO", long_option_error, true},
+    {
+        "print-immediately",
+        "print errors immediately. This is intended for debugging. "
+        "This option will cause the error order to be unstable and seemingly random",
+        long_option_print_immediately,
+        false
+    },
     {
         "target-triplet",
         "=ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
@@ -751,7 +763,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 24,
+    PARAMETERS_COUNT == 25,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -818,7 +830,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 24,
+        PARAMETERS_COUNT == 25,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
