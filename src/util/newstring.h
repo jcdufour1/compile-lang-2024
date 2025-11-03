@@ -143,4 +143,7 @@ static inline const char* string_to_cstr(Arena* arena, String string) {
     return strv_to_cstr(arena, string_to_strv(string));
 }
 
+__attribute__((format (printf, 3, 4)))
+void string_extend_f(Arena* arena, String* string, const char* format, ...);
+
 #endif // NEWSTRING_H

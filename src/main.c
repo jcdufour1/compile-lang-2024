@@ -136,7 +136,7 @@ void compile_file_to_ir(void) {
     do_pass(check_uninitialized, ir_log_level);
 }
 
-void do_passes(void) {
+NEVER_RETURN void do_passes(void) {
     if (params.compile_own) {
         compile_file_to_ir();
     }
@@ -164,7 +164,7 @@ void do_passes(void) {
             string_extend_strv(&a_temp, &contents, sv("\n\n"));
 
             write_file(strv_dup(&a_temp, params.output_file_path), string_to_strv(contents));
-            return;
+            local_exit(EXIT_CODE_SUCCESS);
         }
     }
 
@@ -220,5 +220,4 @@ void do_passes(void) {
 int main(int argc, char** argv) {
     parse_args(argc, argv);
     do_passes();
-    unreachable("do_passes should call local_exit");
 }
