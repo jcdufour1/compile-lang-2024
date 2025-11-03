@@ -18,7 +18,6 @@ static Bool_vec bool_vec_clone(Bool_vec vec) {
     return new_vec;
 }
 
-static bool at_end_of_cfg_node = false;
 //static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
@@ -365,22 +364,10 @@ static void check_unit_block(const Ir_block* block) {
             // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
             //   global variable will not be needed for several ir passes
             //   (this could be done by making special foreach macros/functions?)
-            at_end_of_cfg_node = false;
 
-            for (size_t block_idx = curr.pos_in_block; !at_end_of_cfg_node; block_idx++) {
+            ir_in_cfg_node_foreach(block_idx, curr_ir, curr, block->children) {
                 block_pos = block_idx;
                 check_unit_ir_from_block(vec_at(block->children, block_idx));
-
-                if (
-                    block_idx + 1 < block->children.info.count &&
-                    ir_is_label(vec_at(block->children, block_idx + 1))
-                ) {
-                    at_end_of_cfg_node = true;
-                }
-
-                if (block_idx + 1 >= block->children.info.count) {
-                    at_end_of_cfg_node = true;
-                }
             }
 
             // TODO: make function to iterate over Init_table_vec automatically
@@ -448,7 +435,8 @@ static void check_unit_block(const Ir_block* block) {
     //    }
     //}
 
-    cfg_foreach(&cfg_node_idx, curr2, block->cfg) {
+    cfg_foreach(cfg_node_idx_, curr2, block->cfg) {
+        cfg_node_idx = cfg_node_idx_;
         curr_cfg_node_area = vec_at_ref(&cfg_node_areas, cfg_node_idx);
         // TODO: make function, etc. to detect if we are at end of cfg node so that at_end_of_cfg_node 
         //   global variable will not be needed for several ir passes
