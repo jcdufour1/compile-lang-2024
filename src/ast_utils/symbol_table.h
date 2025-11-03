@@ -13,9 +13,8 @@
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
-
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth);
+
 void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, int recursion_depth, const char* file_path, int line);
 
 #define usymbol_log_table(log_level, sym_table) \

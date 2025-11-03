@@ -160,6 +160,7 @@ static void construct_cfg_block(Ir_block* block) {
         }
     }
 
+    // TODO: move below to separate function?
     //{
     //    String buf = {0};
     //    string_extend_cstr(&a_print, &buf, "\n");
@@ -178,6 +179,7 @@ static void construct_cfg_block(Ir_block* block) {
     //    log(LOG_DEBUG, FMT"\n", string_print(buf));
     //}
     
+    // TODO: use Lengauer–Tarjan to allow for faster times with larger cfgs?
     bool changes_occured = false;
     do {
         changes_occured = false;
@@ -210,10 +212,8 @@ static void construct_cfg_block(Ir_block* block) {
                         vec_swap(&node->preds, size_t, node->pred_backedge_start, pred_idx);
                     }
                     node->pred_backedge_start++;
-                    pred_idx++;
-                } else {
-                    pred_idx++;
                 }
+                pred_idx++;
             }
         }
     }

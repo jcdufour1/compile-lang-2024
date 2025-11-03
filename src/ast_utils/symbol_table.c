@@ -470,59 +470,11 @@ bool ir_lookup(Ir** result, Ir_name key) {
 // Initialized implementation
 //
 
-static bool init_symbol_lookup_internal(Init_table_vec* init_tables, void** result, Strv key, Scope_id scope_id) {
-    if (scope_id == SCOPE_NOT) {
-        return false;
-    }
-
-    while (true) {
-        while (scope_id + 1 /* TODO */ > init_tables->info.count) {
-            // TODO: use different arena then a_main, because this vector is only needed for one pass
-            vec_append(&a_main, init_tables, (Init_table) {0});
-        }
-
-        void* tbl = vec_at_ref(init_tables, scope_id);
-        if (generic_tbl_lookup(result, tbl, key)) {
-             return true;
-        }
-        if (scope_id == 0) {
-            break;
-        }
-        scope_id = scope_get_parent_tbl_lookup(scope_id);
-    }
-
-    return false;
-}
-
-bool init_symbol_add_internal(
-    Init_table_vec* init_tables,
-    Strv key,
-    void* item,
-    Scope_id scope_id
-) {
-    while (scope_id + 10 /* TODO */ > init_tables->info.count) {
-        // TODO: use different arena then a_main, because this vector is only needed for one pass
-        vec_append(&a_main, init_tables, (Init_table) {0});
-    }
-
-    void* dummy;
-    Init_table* curr_tast = vec_at_ref(init_tables, scope_id);
-    if (init_symbol_lookup_internal(init_tables, (void**)&dummy, key, scope_id)) {
-        return false;
-    }
-    unwrap(generic_tbl_add((Generic_symbol_table*)curr_tast, key, item));
-
-    return true;
-}
-
 bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_print, name));
 }
 
 bool init_symbol_add(Init_table* init_table, Init_table_node node) {
-    if (strv_is_equal(node.name.base, sv("num"))){
-        todo();
-    }
     if (node.name.scope_id == SCOPE_NOT || node.name.scope_id == SCOPE_TOP_LEVEL) {
         // not adding top level symbols to the hash table 
         //   makes the check_uninitialized pass significantly faster
@@ -544,7 +496,7 @@ static bool ir_name_to_name_lookup_internal(Ir_name_to_name_table_vec* ir_name_t
     }
 
     while (true) {
-        while (scope_id + 1 /* TODO */ > ir_name_tables->info.count) {
+        while (scope_id + 1 > ir_name_tables->info.count) {
             // TODO: use different arena then a_main, because this vector is only needed for one pass
             vec_append(&a_main, ir_name_tables, (Ir_name_to_name_table) {0});
         }
@@ -569,7 +521,7 @@ bool ir_name_to_name_add_internal(
     void* item,
     Scope_id scope_id
 ) {
-    while (scope_id + 10 /* TODO */ > ir_name_to_name_tbls.info.count) {
+    while (scope_id + 1 > ir_name_to_name_tbls.info.count) {
         // TODO: use different arena then a_main, because this vector is only needed for one pass
         vec_append(&a_main, &ir_name_to_name_tbls, (Ir_name_to_name_table) {0});
     }
@@ -633,8 +585,7 @@ bool name_to_ir_name_add_internal(
     void* item,
     Scope_id scope_id
 ) {
-    while (scope_id + 10 /* TODO */ > name_to_ir_name_tbls.info.count) {
-        // TODO: use different arena then a_main, because this vector is only needed for one pass
+    while (scope_id + 1 > name_to_ir_name_tbls.info.count) {
         vec_append(&a_main, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
     }
 
@@ -654,7 +605,7 @@ bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name) {
 
 bool name_to_ir_name_add(Name_to_ir_name_table_node node) {
     while (name_to_ir_name_tbls.info.count < node.name_self.scope_id + 2) {
-        vec_append(&a_main /* TODO */, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
+        vec_append(&a_main, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
     }
     Name_to_ir_name_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
     *buf = node;

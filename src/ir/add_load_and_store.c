@@ -2108,8 +2108,8 @@ static Ir_block* if_statement_to_branch(Tast_if* if_statement, Ir_name next_if, 
 
     Ir_name if_body = util_literal_ir_name_new_prefix(sv("if_body"));
 
-    //if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
     if (is_last_if) {
+        // TODO: assert that if_cond of last if is always true?
         Ir_goto* lang_goto = ir_goto_new_internal(
             if_statement->pos,
             loc_new(),
