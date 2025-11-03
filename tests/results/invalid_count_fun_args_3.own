@@ -1,16 +1,16 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/invalid_count_fun_args_3.own:6:5:[1;31merror[0;39m:2 arguments are passed to function `foo`, but 1 arguments expected
-     5 | fn main() i32 {
-     6 |     foo(8, 2)
-       |     ^
-     7 | 
 tests/inputs/invalid_count_fun_args_3.own:2:4:[1;34mnote[0;39m:function `foo` defined here
      1 | 
      2 | fn foo(num: i32) {
        |    ^
      3 | }
+tests/inputs/invalid_count_fun_args_3.own:6:5:[1;31merror[0;39m:2 arguments are passed to function `foo`, but 1 arguments expected
+     5 | fn main() i32 {
+     6 |     foo(8, 2)
+       |     ^
+     7 | 
 
 compile::return_code 1
 

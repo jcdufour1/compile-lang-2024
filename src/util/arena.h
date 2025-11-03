@@ -16,6 +16,7 @@ typedef struct {
     Arena_buf* next;
 } Arena;
 
+extern Arena a_leak;
 extern Arena a_main;
 extern Arena a_pass;
 extern Arena a_temp;

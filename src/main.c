@@ -1,5 +1,3 @@
-#include <stddef.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <newstring.h>
@@ -21,6 +19,17 @@
 #include <lang_type.h>
 #include <time_utils.h>
 #include <ir_utils.h>
+
+static void local_exit(int exit_code) {
+    print_all_defered_msgs();
+
+    arena_free(&a_temp);
+    arena_free(&a_pass);
+    arena_free(&a_main);
+    arena_free(&a_leak);
+
+    exit(exit_code);
+}
 
 static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -68,7 +77,7 @@ static void add_builtin_defs(void) {
         log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
-            exit(EXIT_CODE_FAIL); \
+            local_exit(EXIT_CODE_FAIL); \
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
@@ -91,7 +100,7 @@ static void add_builtin_defs(void) {
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
-            exit(EXIT_CODE_FAIL); \
+            local_exit(EXIT_CODE_FAIL); \
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
@@ -208,17 +217,18 @@ void do_passes(void) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
             msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             // exit with the child process return status
-            exit(status);
+            local_exit(status);
         }
     }
 
     if (env.error_count > 0) {
-        exit(EXIT_CODE_FAIL);
+        local_exit(EXIT_CODE_FAIL);
     }
+    local_exit(0);
 }
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
     do_passes();
-    return 0;
+    unreachable("do_passes should call local_exit");
 }

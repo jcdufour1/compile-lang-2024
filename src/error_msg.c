@@ -63,34 +63,59 @@ static void show_location_error(Pos pos) {
     }
 }
 
-__attribute__((format (printf, 5, 6)))
-void msg_internal(
-    const char* file, int line, DIAG_TYPE msg_expect_fail_type,
-    Pos pos, const char* format, ...
-) {
-    va_list args;
-    va_start(args, format);
-    bool fail_immediately = false;
-    LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
+static Defered_msg defered_msg_new(const char* file, int line, Pos pos, Strv actual_msg) {
+    return (Defered_msg) {.file = file, .line = line, .pos = pos, .actual_msg = actual_msg};
+}
 
-    if (log_level >= LOG_ERROR) {
-        fail_immediately = params.all_errors_fatal;
-        env.error_count++;
-    } else if (log_level == LOG_WARNING) {
-        env.warning_count++;
+#define QSORT_LESS_THAN (-1)
+#define QSORT_EQUAL 0
+#define QSORT_MORE_THAN 1
+
+static int defered_msg_compare(const void* lhs_, const void* rhs_) {
+    const Defered_msg* lhs = lhs_;
+    const Defered_msg* rhs = rhs_;
+
+    if (lhs->pos.file_path.count < rhs->pos.file_path.count) {
+        return QSORT_LESS_THAN;
+    } else if (lhs->pos.file_path.count > rhs->pos.file_path.count) {
+        return QSORT_MORE_THAN;
     }
 
-    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
-        if (pos.line < 1) {
-            fprintf(stderr, "%s:", get_log_level_str(log_level));
-            vfprintf(stderr, format, args);
-        } else {
-            fprintf(stderr, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
-            vfprintf(stderr, format, args);
-            show_location_error(pos);
+    // TODO: remove if condition (always run if body) when possible
+    if (rhs->pos.file_path.count != SIZE_MAX) {
+        int file_result = strncmp(lhs->pos.file_path.str, rhs->pos.file_path.str, rhs->pos.file_path.count);
+        if (file_result < 0) {
+            return QSORT_LESS_THAN;
+        } else if (file_result > 0) {
+            return QSORT_MORE_THAN;
+        }
+    }
+
+    if (lhs->pos.line < rhs->pos.line) {
+        return QSORT_LESS_THAN;
+    } else if (lhs->pos.line > rhs->pos.line) {
+        return QSORT_MORE_THAN;
+    }
+
+    if (lhs->pos.column < rhs->pos.column) {
+        return QSORT_LESS_THAN;
+    } else if (lhs->pos.column > rhs->pos.column) {
+        return QSORT_MORE_THAN;
+    }
+
+    return QSORT_EQUAL;
+}
+
+void print_all_defered_msgs(void) {
+    qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
+
+    vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
+        fprintf(stderr, FMT, strv_print(curr.actual_msg));
+        if (curr.pos.line > 0) {
+            show_location_error(curr.pos);
         }
 
-        Pos* exp_from = pos.expanded_from;
+        Pos* exp_from = curr.pos.expanded_from;
         while (exp_from) {
             assert(!pos_is_equal(*exp_from, POS_BUILTIN));
             assert(!pos_is_equal(*exp_from, (Pos) {0}));
@@ -107,7 +132,51 @@ void msg_internal(
             exp_from = exp_from->expanded_from;
         }
 
-        log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
+        log_internal(LOG_DEBUG, curr.file, curr.line, 0, "location of error\n");
+    }
+}
+
+__attribute__((format (printf, 5, 6)))
+void msg_internal(
+    const char* file, int line, DIAG_TYPE msg_expect_fail_type,
+    Pos pos, const char* format, ...
+) {
+    if (env.error_count > 50 /* TODO: put params.max_errors instead of 50 */) {
+        // TODO
+        msg_todo("error message for too many errors", pos);
+        return;
+    }
+
+    va_list args;
+    va_start(args, format);
+    bool fail_immediately = false;
+    LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
+
+    if (log_level >= LOG_ERROR) {
+        fail_immediately = params.all_errors_fatal;
+        env.error_count++;
+    } else if (log_level == LOG_WARNING) {
+        env.warning_count++;
+    }
+
+    static char buf[1000000] = {0}; // TODO: avoid using arbritrary length buffer
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        String actual_buf = {0};
+        if (pos.line < 1) {
+            snprintf(buf, array_count(buf), "%s:", get_log_level_str(log_level));
+            string_extend_cstr(&a_leak, &actual_buf, buf);
+
+            vsnprintf(buf, array_count(buf), format, args);
+            string_extend_cstr(&a_leak, &actual_buf, buf);
+        } else {
+            snprintf(buf, array_count(buf), FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            string_extend_cstr(&a_leak, &actual_buf, buf);
+            
+            vsnprintf(buf, array_count(buf), format, args);
+            string_extend_cstr(&a_leak, &actual_buf, buf);
+        }
+        vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, string_to_strv(actual_buf)));
     }
 
     if (fail_immediately) {

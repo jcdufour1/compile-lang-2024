@@ -1,25 +1,25 @@
 compile::stdout 0
 
 compile::stderr 25
-tests/inputs/static_array_errors.own:6:23:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
-     5 | fn main() i32 {
-     6 |     let nums i32[3] = [8, 76]
-       |                       ^
-     7 | 
 tests/inputs/static_array_errors.own:6:17:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
      5 | fn main() i32 {
      6 |     let nums i32[3] = [8, 76]
        |                 ^
      7 | 
-tests/inputs/static_array_errors.own:12:24:[1;31merror[0;39m:4 arguments are passed to array literal, but 3 arguments expected
-    11 | 
-    12 |     let nums2 i32[3] = [87, 23, 5, 1]
-       |                        ^
-    13 | 
+tests/inputs/static_array_errors.own:6:23:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
+     5 | fn main() i32 {
+     6 |     let nums i32[3] = [8, 76]
+       |                       ^
+     7 | 
 tests/inputs/static_array_errors.own:12:18:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
     11 | 
     12 |     let nums2 i32[3] = [87, 23, 5, 1]
        |                  ^
+    13 | 
+tests/inputs/static_array_errors.own:12:24:[1;31merror[0;39m:4 arguments are passed to array literal, but 3 arguments expected
+    11 | 
+    12 |     let nums2 i32[3] = [87, 23, 5, 1]
+       |                        ^
     13 | 
 tests/inputs/static_array_errors.own:14:32:[1;31merror[0;39m:`count_things` is not a member of `nums`
     13 | 
