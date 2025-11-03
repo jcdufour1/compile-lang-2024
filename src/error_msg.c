@@ -64,8 +64,22 @@ static void show_location_error(Pos pos) {
     }
 }
 
-static Defered_msg defered_msg_new(const char* file, int line, Pos pos, Strv actual_msg) {
-    return (Defered_msg) {.file = file, .line = line, .pos = pos, .actual_msg = actual_msg};
+static Defered_msg defered_msg_new(
+    const char* file,
+    int line,
+    Pos pos_actual_msg,
+    Pos pos_for_sort,
+    Strv actual_msg,
+    size_t pos_in_defered_msgs
+) {
+    return (Defered_msg) {
+        .file = file,
+        .line = line,
+        .pos_actual_msg = pos_actual_msg,
+        .pos_for_sort = pos_for_sort,
+        .actual_msg = actual_msg,
+        .pos_in_defered_msgs = pos_in_defered_msgs
+    };
 }
 
 #define QSORT_LESS_THAN (-1)
@@ -76,15 +90,15 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
     const Defered_msg* lhs = lhs_;
     const Defered_msg* rhs = rhs_;
 
-    if (lhs->pos.file_path.count < rhs->pos.file_path.count) {
+    if (lhs->pos_for_sort.file_path.count < rhs->pos_for_sort.file_path.count) {
         return QSORT_LESS_THAN;
-    } else if (lhs->pos.file_path.count > rhs->pos.file_path.count) {
+    } else if (lhs->pos_for_sort.file_path.count > rhs->pos_for_sort.file_path.count) {
         return QSORT_MORE_THAN;
     }
 
     // TODO: remove if condition (always run if body) when possible
-    if (rhs->pos.file_path.count != SIZE_MAX) {
-        int file_result = strncmp(lhs->pos.file_path.str, rhs->pos.file_path.str, rhs->pos.file_path.count);
+    if (rhs->pos_for_sort.file_path.count != SIZE_MAX) {
+        int file_result = strncmp(lhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.count);
         if (file_result < 0) {
             return QSORT_LESS_THAN;
         } else if (file_result > 0) {
@@ -92,19 +106,25 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
         }
     }
 
-    if (lhs->pos.line < rhs->pos.line) {
+    if (lhs->pos_for_sort.line < rhs->pos_for_sort.line) {
         return QSORT_LESS_THAN;
-    } else if (lhs->pos.line > rhs->pos.line) {
+    } else if (lhs->pos_for_sort.line > rhs->pos_for_sort.line) {
         return QSORT_MORE_THAN;
     }
 
-    if (lhs->pos.column < rhs->pos.column) {
+    if (lhs->pos_for_sort.column < rhs->pos_for_sort.column) {
         return QSORT_LESS_THAN;
-    } else if (lhs->pos.column > rhs->pos.column) {
+    } else if (lhs->pos_for_sort.column > rhs->pos_for_sort.column) {
         return QSORT_MORE_THAN;
     }
 
-    return QSORT_EQUAL;
+    if (lhs->pos_in_defered_msgs < rhs->pos_in_defered_msgs) {
+        return QSORT_LESS_THAN;
+    } else if (lhs->pos_in_defered_msgs > rhs->pos_in_defered_msgs) {
+        return QSORT_MORE_THAN;
+    }
+
+    unreachable("lhs->pos_in_defered_msgs should not equal rhs->pos_in_defered_msgs");
 }
 
 void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_msg) {
@@ -140,7 +160,7 @@ void print_all_defered_msgs(void) {
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
     vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
-        msg_internal_actual_print(curr.file, curr.line, curr.pos, curr.actual_msg);
+        msg_internal_actual_print(curr.file, curr.line, curr.pos_actual_msg, curr.actual_msg);
     }
 
     vec_reset(&env.defered_msgs);
@@ -151,7 +171,9 @@ void msg_internal(
     const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
-    if (env.error_count >= params.max_errors) {
+    LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
+
+    if (log_level >= LOG_ERROR && env.error_count >= params.max_errors) {
         print_all_defered_msgs();
         fprintf(stderr, "%s:", get_log_level_str(LOG_FATAL));
         fprintf(stderr, "too many error messages have been printed; exiting now\n");
@@ -161,7 +183,11 @@ void msg_internal(
     va_list args;
     va_start(args, format);
     bool fail_immediately = false;
-    LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
+
+    Pos pos_for_sort = pos;
+    if (log_level == LOG_NOTE && env.defered_msgs.info.count > 0) {
+        pos_for_sort = vec_top(env.defered_msgs).pos_for_sort;
+    }
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fatal;
@@ -170,7 +196,7 @@ void msg_internal(
         env.warning_count++;
     }
 
-    static char buf[1000000] = {0}; // TODO: avoid using arbritrary length buffer
+    String buf = {0};
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
         String actual_buf = {0};
@@ -190,7 +216,8 @@ void msg_internal(
         if (params.print_immediately) {
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
         } else {
-            vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, string_to_strv(actual_buf)));
+            size_t pos_in_defered_msgs = env.defered_msgs.info.count;
+            vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, pos_for_sort, string_to_strv(actual_buf), pos_in_defered_msgs));
         }
     }
 

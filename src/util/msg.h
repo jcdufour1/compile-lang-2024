@@ -12,8 +12,10 @@
 typedef struct {
     const char* file;
     int line;
-    Pos pos;
+    Pos pos_actual_msg;
+    Pos pos_for_sort;
     Strv actual_msg;
+    size_t pos_in_defered_msgs;
 } Defered_msg;
 
 typedef struct {
