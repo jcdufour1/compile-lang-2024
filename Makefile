@@ -58,6 +58,7 @@ OBJS=\
 	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/util/ir_operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
+	 ${BUILD_DIR}/util/cfg.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
@@ -298,4 +299,7 @@ ${BUILD_DIR}/util/str_and_num_utils.o: ${DEP_COMMON} src/util/str_and_num_utils.
 
 ${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/params_log_level.o src/util/params_log_level.c
+
+${BUILD_DIR}/util/cfg.o: ${DEP_COMMON} src/util/cfg.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/cfg.o src/util/cfg.c
 

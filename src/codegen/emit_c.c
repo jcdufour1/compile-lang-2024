@@ -148,12 +148,11 @@ static void emit_c_function_decl(Emit_c_strs* strs, const Ir_function_decl* decl
 static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     emit_c_loc(&strs->output, ir_get_loc(def), def->pos);
     String buf = {0};
-    Arena a_temp = {0};
-    string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
+    string_extend_cstr(&a_pass, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
         Ir_struct_memb_def* curr = vec_at(def->base.members, idx);
-        string_extend_cstr(&a_temp, &buf, "    ");
+        string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
         if (llvm_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
             Ir_name ori_name = ir_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(def->base.members, idx)->lang_type);
@@ -179,23 +178,22 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
             ir_lang_type = curr->lang_type;
         }
         c_extend_type_call_str(&buf, ir_lang_type, true);
-        string_extend_cstr(&a_temp, &buf, " ");
+        string_extend_cstr(&a_pass, &buf, " ");
         emit_c_extend_name(&buf, curr->name_self);
         assert(curr->count > 0);
         if (curr->count > 1) {
-            string_extend_cstr(&a_temp, &buf, "[");
-            string_extend_size_t(&a_temp, &buf, curr->count);
-            string_extend_cstr(&a_temp, &buf, "]");
+            string_extend_cstr(&a_pass, &buf, "[");
+            string_extend_size_t(&a_pass, &buf, curr->count);
+            string_extend_cstr(&a_pass, &buf, "]");
         }
-        string_extend_cstr(&a_temp, &buf, ";\n");
+        string_extend_cstr(&a_pass, &buf, ";\n");
     }
 
-    string_extend_cstr(&a_temp, &buf, "} ");
+    string_extend_cstr(&a_pass, &buf, "} ");
     emit_c_extend_name(&buf, def->base.name);
-    string_extend_cstr(&a_temp, &buf, ";\n");
+    string_extend_cstr(&a_pass, &buf, ";\n");
 
     string_extend_strv(&a_pass, &strs->struct_defs, string_to_strv(buf));
-    arena_free(&a_temp);
 }
 
 static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
