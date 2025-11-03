@@ -8,9 +8,7 @@
 static inline void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&a_temp, buf, "((");
     string_extend_cstr(&a_temp, buf, ";file_path:");
-    if (pos.file_path.count != SIZE_MAX /* TODO: always run code in if body when possible */) {
-        string_extend_strv(&a_temp, buf, pos.file_path);
-    }
+    string_extend_strv(&a_temp, buf, pos.file_path);
     string_extend_cstr(&a_temp, buf, ";line:");
     string_extend_int64_t(&a_temp, buf, pos.line);
     string_extend_cstr(&a_temp, buf, ";column:");

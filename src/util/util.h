@@ -49,7 +49,7 @@ typedef struct Pos_ {
 } Pos;
 
 // TODO: do not set count to SIZE_MAX
-#define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
+#define POS_BUILTIN ((Pos) {.file_path = MOD_PATH_BUILTIN})
 
 // log* functions and macros print messages that are intended for debugging
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 

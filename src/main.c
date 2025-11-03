@@ -200,8 +200,7 @@ NEVER_RETURN void do_passes(void) {
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
         vec_append(&a_temp, &cmd, string_to_strv(output_path));
-        // TODO: uncomment below?
-        //arena_free(&a_main);
+        arena_free(&a_main);
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
