@@ -1,5 +1,3 @@
-#include <stddef.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <newstring.h>
@@ -68,7 +66,7 @@ static void add_builtin_defs(void) {
         log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
-            exit(EXIT_CODE_FAIL); \
+            local_exit(EXIT_CODE_FAIL); \
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
@@ -91,7 +89,7 @@ static void add_builtin_defs(void) {
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
-            exit(EXIT_CODE_FAIL); \
+            local_exit(EXIT_CODE_FAIL); \
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
@@ -144,7 +142,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 24,
+        PARAMETERS_COUNT == 26,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -191,7 +189,7 @@ void do_passes(void) {
     arena_reset(&a_pass);
 
     static_assert(
-        PARAMETERS_COUNT == 24,
+        PARAMETERS_COUNT == 26,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -202,23 +200,25 @@ void do_passes(void) {
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
         vec_append(&a_temp, &cmd, string_to_strv(output_path));
-        arena_free(&a_main);
+        // TODO: uncomment below?
+        //arena_free(&a_main);
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
             msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
             // exit with the child process return status
-            exit(status);
+            local_exit(status);
         }
     }
 
     if (env.error_count > 0) {
-        exit(EXIT_CODE_FAIL);
+        local_exit(EXIT_CODE_FAIL);
     }
+    local_exit(0);
 }
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
     do_passes();
-    return 0;
+    unreachable("do_passes should call local_exit");
 }

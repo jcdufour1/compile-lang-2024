@@ -114,6 +114,7 @@ static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
 }
 
+// TODO: remove strv_to_cstr (strv_dup does the same thing)
 static inline const char* strv_to_cstr(Arena* arena, Strv strv) {
     char* buf = arena_alloc(arena, strv.count + 1);
     memcpy(buf, strv.str, strv.count);

@@ -101,13 +101,18 @@ __attribute__((format (printf, 5, 6)));
 #define array_at_ref(array, index) \
     (unwrap((index) < array_count(array) && "out of bounds"), &(array)[index])
 
+// WARNING: do not use min macro if a or b expressions have side effects
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+// WARNING: do not use max macro if a or b expressions have side effects
+// TODO: remove max and min macros because of the side effect issues?
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define local_abs(num) ((num) < 0 ? -(num) : (num))
 
 #define INLINE static inline __attribute__((always_inline))
+
+#define NEVER_RETURN __attribute__((noreturn))
 
 #define get_next_multiple(num, divisor) (num + (divisor - num%divisor)%divisor)
 

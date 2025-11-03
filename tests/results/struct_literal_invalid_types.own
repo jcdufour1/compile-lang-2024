@@ -1,16 +1,16 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/struct_literal_invalid_types.own:28:86:[1;31merror[0;39m:type `Slice(<u8>)` cannot be implicitly converted to `Str_view`
-    27 | 
-    28 |     let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
-       |                                                                                      ^
-    29 | 
 tests/inputs/struct_literal_invalid_types.own:14:55:[1;31merror[0;39m:type `Slice(<u8>)` cannot be implicitly converted to `Str_view`
     13 | fn get_token() Token {
     14 |     return {.file = "file.txt", .line = 21, .str_data = "hello world"}
        |                                                       ^
     15 | }
+tests/inputs/struct_literal_invalid_types.own:28:86:[1;31merror[0;39m:type `Slice(<u8>)` cannot be implicitly converted to `Str_view`
+    27 | 
+    28 |     let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
+       |                                                                                      ^
+    29 | 
 
 compile::return_code 1
 
