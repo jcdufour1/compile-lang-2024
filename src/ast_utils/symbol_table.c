@@ -128,8 +128,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     }
 
     Ir* dummy;
-    // TODO: change below unwrap to assert:
-    unwrap(generic_tbl_lookup((void**)&dummy, sym_table, key));
+    assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
 error:
     return status;
@@ -555,7 +554,7 @@ static bool name_to_ir_name_lookup_internal(Name_to_ir_name_table_vec* ir_name_t
     }
 
     while (true) {
-        while (scope_id + 1 /* TODO */ > ir_name_tables->info.count) {
+        while (scope_id + 1 > ir_name_tables->info.count) {
             vec_append(&a_main, ir_name_tables, (Name_to_ir_name_table) {0});
         }
 
@@ -698,8 +697,8 @@ bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
 static Scope_id_vec scope_id_to_parent;
 
 // returns parent of key
-// TODO: assert that key is != SCOPE_BUILTIN?
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
+    assert(key != SCOPE_TOP_LEVEL);
     return vec_at(scope_id_to_parent, key);
 }
 

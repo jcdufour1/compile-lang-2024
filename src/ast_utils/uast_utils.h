@@ -16,8 +16,6 @@ Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
 
 Strv uast_print_internal(const Uast* uast, int recursion_depth);
 
-Ulang_type uast_get_ulang_type_def(const Uast_def* def);
-
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
@@ -28,32 +26,6 @@ static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_d
     do { \
         log(LOG_NOTE, FMT"\n", uast_print(uast)); \
     } while (0);
-
-static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
-    switch (stmt->type) {
-        case UAST_EXPR:
-            unreachable("");
-        case UAST_DEF:
-            return uast_get_ulang_type_def(uast_def_const_unwrap(stmt));
-        case UAST_RETURN:
-            unreachable("");
-        case UAST_FOR_WITH_COND:
-            unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_DEFER:
-            unreachable("");
-        case UAST_YIELD:
-            unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
-        case UAST_USING:
-            unreachable("");
-        case UAST_STMT_REMOVED:
-            unreachable("");
-    }
-    unreachable("");
-}
 
 bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics);
 
