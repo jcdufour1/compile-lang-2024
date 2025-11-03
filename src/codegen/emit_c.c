@@ -42,38 +42,38 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child);
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access);
 
 static void emit_c_loc(String* output, Loc loc, Pos pos) {
-    string_extend_cstr(&a_main, output, "/* loc: ");
-    string_extend_cstr(&a_main, output, loc.file);
-    string_extend_cstr(&a_main, output, ":");
-    string_extend_int64_t(&a_main, output, loc.line);
-    string_extend_cstr(&a_main, output, " */\n");
-    string_extend_cstr(&a_main, output, "/* pos: ");
-    string_extend_strv(&a_main, output, pos.file_path);
-    string_extend_cstr(&a_main, output, ":");
-    string_extend_int64_t(&a_main, output, pos.line);
-    string_extend_cstr(&a_main, output, " */\n");
+    string_extend_cstr(&a_pass, output, "/* loc: ");
+    string_extend_cstr(&a_pass, output, loc.file);
+    string_extend_cstr(&a_pass, output, ":");
+    string_extend_int64_t(&a_pass, output, loc.line);
+    string_extend_cstr(&a_pass, output, " */\n");
+    string_extend_cstr(&a_pass, output, "/* pos: ");
+    string_extend_strv(&a_pass, output, pos.file_path);
+    string_extend_cstr(&a_pass, output, ":");
+    string_extend_int64_t(&a_pass, output, pos.line);
+    string_extend_cstr(&a_pass, output, " */\n");
 }
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr) {
     if (opaque_ptr && ir_lang_type_get_pointer_depth(ir_lang_type) != 0) {
-        string_extend_cstr(&a_main, output, "void*");
+        string_extend_cstr(&a_pass, output, "void*");
         return;
     }
 
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
-            string_extend_cstr(&a_main, output, "(");
+            string_extend_cstr(&a_pass, output, "(");
             c_extend_type_call_str(output, *fn.return_type, opaque_ptr);
-            string_extend_cstr(&a_main, output, "(*)(");
+            string_extend_cstr(&a_pass, output, "(*)(");
             for (size_t idx = 0; idx < fn.params.ir_lang_types.info.count; idx++) {
                 if (idx > 0) {
-                    string_extend_cstr(&a_main, output, ", ");
+                    string_extend_cstr(&a_pass, output, ", ");
                 }
                 c_extend_type_call_str(output, vec_at(fn.params.ir_lang_types, idx), opaque_ptr);
             }
-            string_extend_cstr(&a_main, output, "))");
+            string_extend_cstr(&a_pass, output, "))");
             return;
         }
         case IR_LANG_TYPE_TUPLE:
@@ -81,12 +81,12 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
         case IR_LANG_TYPE_STRUCT:
             emit_c_extend_name(output, ir_lang_type_struct_const_unwrap(ir_lang_type).atom.str);
             for (size_t idx = 0; idx < (size_t)ir_lang_type_struct_const_unwrap(ir_lang_type).atom.pointer_depth; idx++) {
-                string_extend_cstr(&a_main, output, "*");
+                string_extend_cstr(&a_pass, output, "*");
             }
             return;
         case IR_LANG_TYPE_VOID:
             ir_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_lang_type_get_pos(ir_lang_type)));
-            string_extend_strv(&a_main, output, sv("void"));
+            string_extend_strv(&a_pass, output, sv("void"));
             return;
         case IR_LANG_TYPE_PRIMITIVE:
             extend_ir_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, ir_lang_type);
@@ -98,17 +98,17 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
 static void emit_c_function_params(String* output, const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
-            string_extend_cstr(&a_main, output, ", ");
+            string_extend_cstr(&a_pass, output, ", ");
         }
 
         if (vec_at(params->params, idx)->is_variadic) {
-            string_extend_cstr(&a_main, output, "... ");
+            string_extend_cstr(&a_pass, output, "... ");
             unwrap(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
             return;
         }
 
         c_extend_type_call_str(output, vec_at(params->params, idx)->lang_type, true);
-        string_extend_cstr(&a_main, output, " ");
+        string_extend_cstr(&a_pass, output, " ");
         emit_c_extend_name(output, vec_at(params->params, idx)->name_self);
     }
 }
@@ -116,33 +116,33 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
     emit_c_loc(output, decl->loc, decl->pos);
     c_extend_type_call_str(output, decl->return_type, true);
-    string_extend_cstr(&a_main, output, " ");
+    string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, decl->name);
 
-    vec_append(&a_main, output, '(');
+    vec_append(&a_pass, output, '(');
     if (decl->params->params.info.count < 1) {
-        string_extend_cstr(&a_main, output, "void");
+        string_extend_cstr(&a_pass, output, "void");
     } else {
         emit_c_function_params(output, decl->params);
     }
-    string_extend_cstr(&a_main, output, ")");
+    string_extend_cstr(&a_pass, output, ")");
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Ir_function_def* fun_def) {
     emit_c_loc(&strs->output, fun_def->loc, fun_def->pos);
     emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
-    string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
+    string_extend_cstr(&a_pass, &strs->forward_decls, ";\n");
 
     emit_c_function_decl_internal(&strs->output, fun_def->decl);
-    string_extend_cstr(&a_main, &strs->output, " {\n");
+    string_extend_cstr(&a_pass, &strs->output, " {\n");
     emit_c_block(strs, fun_def->body);
-    string_extend_cstr(&a_main, &strs->output, "}\n");
+    string_extend_cstr(&a_pass, &strs->output, "}\n");
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Ir_function_decl* decl) {
     emit_c_loc(&strs->output, decl->loc, decl->pos);
     emit_c_function_decl_internal(&strs->forward_decls, decl);
-    string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
+    string_extend_cstr(&a_pass, &strs->forward_decls, ";\n");
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
@@ -162,7 +162,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
                 Ir* child_def_  = NULL;
                 unwrap(ir_lookup(&child_def_, ori_name));
                 Ir_struct_def* child_def = ir_struct_def_unwrap(ir_def_unwrap(child_def_));
-                struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
+                struct_to_use = arena_alloc(&a_pass, sizeof(*struct_to_use));
                 *struct_to_use = util_literal_ir_name_new();
                 Ir_struct_def* new_def = ir_struct_def_new(def->pos, ((Ir_struct_def_base) {
                     .members = child_def->base.members,
@@ -194,7 +194,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     emit_c_extend_name(&buf, def->base.name);
     string_extend_cstr(&a_temp, &buf, ";\n");
 
-    string_extend_strv(&a_main, &strs->struct_defs, string_to_strv(buf));
+    string_extend_strv(&a_pass, &strs->struct_defs, string_to_strv(buf));
     arena_free(&a_temp);
 }
 
@@ -268,38 +268,38 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     //unwrap(fun_call->ir_id == 0);
 
     // start of actual function call
-    string_extend_cstr(&a_main, &strs->output, "    ");
+    string_extend_cstr(&a_pass, &strs->output, "    ");
     if (fun_call->lang_type.type != IR_LANG_TYPE_VOID) {
         c_extend_type_call_str(&strs->output, fun_call->lang_type, true);
-        string_extend_cstr(&a_main, &strs->output, " ");
+        string_extend_cstr(&a_pass, &strs->output, " ");
         emit_c_extend_name(&strs->output, fun_call->name_self);
-        string_extend_cstr(&a_main, &strs->output, " = ");
+        string_extend_cstr(&a_pass, &strs->output, " = ");
     } else {
         //unwrap(!strv_cstr_is_equal(ir_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Ir* callee = NULL;
     unwrap(ir_lookup(&callee, fun_call->callee));
-    string_extend_cstr(&a_main, &strs->output, "(");
+    string_extend_cstr(&a_pass, &strs->output, "(");
     if (callee->type != IR_EXPR) {
         c_extend_type_call_str(&strs->output, lang_type_from_get_name(fun_call->callee), false);
     }
-    string_extend_cstr(&a_main, &strs->output, "(");
+    string_extend_cstr(&a_pass, &strs->output, "(");
     emit_c_expr_piece(strs, fun_call->callee);
-    string_extend_cstr(&a_main, &strs->output, ")");
-    string_extend_cstr(&a_main, &strs->output, ")");
+    string_extend_cstr(&a_pass, &strs->output, ")");
+    string_extend_cstr(&a_pass, &strs->output, ")");
 
     // arguments
-    string_extend_cstr(&a_main, &strs->output, "(");
+    string_extend_cstr(&a_pass, &strs->output, "(");
     if (fun_call->args.info.count > 0) {
         for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
             if (idx > 0) {
-                string_extend_cstr(&a_main, &strs->output, ", ");
+                string_extend_cstr(&a_pass, &strs->output, ", ");
             }
             emit_c_expr_piece(strs, vec_at(fun_call->args, idx));
         }
     }
-    string_extend_cstr(&a_main, &strs->output, ");\n");
+    string_extend_cstr(&a_pass, &strs->output, ");\n");
 }
 
 static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, Ir_lang_type cast_to) {
@@ -307,9 +307,9 @@ static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, I
     // TODO: replace Ir_unary with Ir_cast_to to simplify codegen (this may not be doable if new ir unary operations are added)
     switch (unary_type) {
         case IR_UNARY_UNSAFE_CAST:
-            string_extend_cstr(&a_main, &strs->output, "(");
+            string_extend_cstr(&a_pass, &strs->output, "(");
             c_extend_type_call_str(&strs->output, cast_to, true);
-            string_extend_cstr(&a_main, &strs->output, ")");
+            string_extend_cstr(&a_pass, &strs->output, ")");
             return;
     }
     unreachable("");
@@ -319,52 +319,52 @@ static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
     (void) strs;
     switch (bin_type) {
         case IR_BINARY_SUB:
-            string_extend_cstr(&a_main, &strs->output, " - ");
+            string_extend_cstr(&a_pass, &strs->output, " - ");
             return;
         case IR_BINARY_ADD:
-            string_extend_cstr(&a_main, &strs->output, " + ");
+            string_extend_cstr(&a_pass, &strs->output, " + ");
             return;
         case IR_BINARY_MULTIPLY:
-            string_extend_cstr(&a_main, &strs->output, " * ");
+            string_extend_cstr(&a_pass, &strs->output, " * ");
             return;
         case IR_BINARY_DIVIDE:
-            string_extend_cstr(&a_main, &strs->output, " / ");
+            string_extend_cstr(&a_pass, &strs->output, " / ");
             return;
         case IR_BINARY_MODULO:
-            string_extend_cstr(&a_main, &strs->output, " % ");
+            string_extend_cstr(&a_pass, &strs->output, " % ");
             return;
         case IR_BINARY_LESS_THAN:
-            string_extend_cstr(&a_main, &strs->output, " < ");
+            string_extend_cstr(&a_pass, &strs->output, " < ");
             return;
         case IR_BINARY_LESS_OR_EQUAL:
-            string_extend_cstr(&a_main, &strs->output, " <= ");
+            string_extend_cstr(&a_pass, &strs->output, " <= ");
             return;
         case IR_BINARY_GREATER_OR_EQUAL:
-            string_extend_cstr(&a_main, &strs->output, " >= ");
+            string_extend_cstr(&a_pass, &strs->output, " >= ");
             return;
         case IR_BINARY_GREATER_THAN:
-            string_extend_cstr(&a_main, &strs->output, " > ");
+            string_extend_cstr(&a_pass, &strs->output, " > ");
             return;
         case IR_BINARY_DOUBLE_EQUAL:
-            string_extend_cstr(&a_main, &strs->output, " == ");
+            string_extend_cstr(&a_pass, &strs->output, " == ");
             return;
         case IR_BINARY_NOT_EQUAL:
-            string_extend_cstr(&a_main, &strs->output, " != ");
+            string_extend_cstr(&a_pass, &strs->output, " != ");
             return;
         case IR_BINARY_BITWISE_XOR:
-            string_extend_cstr(&a_main, &strs->output, " ^ ");
+            string_extend_cstr(&a_pass, &strs->output, " ^ ");
             return;
         case IR_BINARY_BITWISE_AND:
-            string_extend_cstr(&a_main, &strs->output, " & ");
+            string_extend_cstr(&a_pass, &strs->output, " & ");
             return;
         case IR_BINARY_BITWISE_OR:
-            string_extend_cstr(&a_main, &strs->output, " | ");
+            string_extend_cstr(&a_pass, &strs->output, " | ");
             return;
         case IR_BINARY_SHIFT_LEFT:
-            string_extend_cstr(&a_main, &strs->output, " << ");
+            string_extend_cstr(&a_pass, &strs->output, " << ");
             return;
         case IR_BINARY_SHIFT_RIGHT:
-            string_extend_cstr(&a_main, &strs->output, " >> ");
+            string_extend_cstr(&a_pass, &strs->output, " >> ");
             return;
         case IR_BINARY_COUNT:
             unreachable("");
@@ -373,11 +373,11 @@ static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
 }
 
 static void emit_c_operator(Emit_c_strs* strs, const Ir_operator* oper) {
-    string_extend_cstr(&a_main, &strs->output, "    ");
+    string_extend_cstr(&a_pass, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, ir_operator_get_lang_type(oper), true);
-    string_extend_cstr(&a_main, &strs->output, " ");
+    string_extend_cstr(&a_pass, &strs->output, " ");
     emit_c_extend_name(&strs->output, ir_operator_get_name(oper));
-    string_extend_cstr(&a_main, &strs->output, " = ");
+    string_extend_cstr(&a_pass, &strs->output, " = ");
 
     switch (oper->type) {
         case IR_UNARY: {
@@ -397,7 +397,7 @@ static void emit_c_operator(Emit_c_strs* strs, const Ir_operator* oper) {
             unreachable("");
     }
 
-    string_extend_cstr(&a_main, &strs->output, ";\n");
+    string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
 static void emit_c_expr(Emit_c_strs* strs, const Ir_expr* expr) {
@@ -419,15 +419,15 @@ static void emit_c_expr(Emit_c_strs* strs, const Ir_expr* expr) {
 static void extend_c_literal(Emit_c_strs* strs, const Ir_literal* lit) {
     switch (lit->type) {
         case IR_STRING:
-            string_extend_cstr(&a_main, &strs->output, "\"");
-            string_extend_strv(&a_main, &strs->output, ir_string_const_unwrap(lit)->data);
-            string_extend_cstr(&a_main, &strs->output, "\"");
+            string_extend_cstr(&a_pass, &strs->output, "\"");
+            string_extend_strv(&a_pass, &strs->output, ir_string_const_unwrap(lit)->data);
+            string_extend_cstr(&a_pass, &strs->output, "\"");
             return;
         case IR_INT:
-            string_extend_int64_t(&a_main, &strs->output, ir_int_const_unwrap(lit)->data);
+            string_extend_int64_t(&a_pass, &strs->output, ir_int_const_unwrap(lit)->data);
             return;
         case IR_FLOAT:
-            string_extend_double(&a_main, &strs->output, ir_float_const_unwrap(lit)->data);
+            string_extend_double(&a_pass, &strs->output, ir_float_const_unwrap(lit)->data);
             return;
         case IR_VOID:
             return;
@@ -503,35 +503,35 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child) {
 
 static void emit_c_return(Emit_c_strs* strs, const Ir_return* rtn) {
     emit_c_loc(&strs->output, rtn->loc, rtn->pos);
-    string_extend_cstr(&a_main, &strs->output, "    return ");
+    string_extend_cstr(&a_pass, &strs->output, "    return ");
     emit_c_expr_piece(strs, rtn->child);
-    string_extend_cstr(&a_main, &strs->output, ";\n");
+    string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
 static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
     emit_c_loc(output, alloca->loc, alloca->pos);
     Ir_name storage_loc = util_literal_ir_name_new();
 
-    string_extend_cstr(&a_main, output, "    ");
+    string_extend_cstr(&a_pass, output, "    ");
     c_extend_type_call_str(output, ir_lang_type_pointer_depth_dec(alloca->lang_type), true);
-    string_extend_cstr(&a_main, output, " ");
+    string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, storage_loc);
-    string_extend_cstr(&a_main, output, ";\n");
+    string_extend_cstr(&a_pass, output, ";\n");
 
-    string_extend_cstr(&a_main, output, "    ");
-    string_extend_cstr(&a_main, output, "void* ");
+    string_extend_cstr(&a_pass, output, "    ");
+    string_extend_cstr(&a_pass, output, "void* ");
     emit_c_extend_name(output, alloca->name);
-    string_extend_cstr(&a_main, output, " = (void*)&");
+    string_extend_cstr(&a_pass, output, " = (void*)&");
     emit_c_extend_name(output, storage_loc);
-    string_extend_cstr(&a_main, output, ";\n");
+    string_extend_cstr(&a_pass, output, ";\n");
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     emit_c_loc(&strs->output, def->loc, def->pos);
     emit_c_extend_name(&strs->output, def->name);
-    string_extend_cstr(&a_main, &strs->output, ":\n");
+    string_extend_cstr(&a_pass, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
-    string_extend_cstr(&a_main, &strs->output, "    dummy = 0;\n");
+    string_extend_cstr(&a_pass, &strs->output, "    dummy = 0;\n");
 }
 
 static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
@@ -567,30 +567,30 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
 
-    string_extend_cstr(&a_main, &strs->output, "    *((");
+    string_extend_cstr(&a_pass, &strs->output, "    *((");
     c_extend_type_call_str(&strs->output, store->lang_type, true);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, store->ir_dest);
-    string_extend_cstr(&a_main, &strs->output, ") = ");
+    string_extend_cstr(&a_pass, &strs->output, ") = ");
 
     emit_c_expr_piece(strs, store->ir_src);
-    string_extend_cstr(&a_main, &strs->output, ";\n");
+    string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
     emit_c_loc(&strs->output, load->loc, load->pos);
-    string_extend_cstr(&a_main, &strs->output, "    ");
+    string_extend_cstr(&a_pass, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
-    string_extend_cstr(&a_main, &strs->output, " ");
+    string_extend_cstr(&a_pass, &strs->output, " ");
     emit_c_extend_name(&strs->output, load->name);
-    string_extend_cstr(&a_main, &strs->output, " = ");
+    string_extend_cstr(&a_pass, &strs->output, " = ");
 
-    string_extend_cstr(&a_main, &strs->output, "*((");
+    string_extend_cstr(&a_pass, &strs->output, "*((");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, load->ir_src);
 
-    string_extend_cstr(&a_main, &strs->output, ");\n");
+    string_extend_cstr(&a_pass, &strs->output, ");\n");
 }
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
@@ -598,49 +598,49 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     Ir* struct_def_ = NULL;
     unwrap(ir_lookup(&struct_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
-    string_extend_cstr(&a_main, &strs->output, "    void* ");
+    string_extend_cstr(&a_pass, &strs->output, "    void* ");
     emit_c_extend_name(&strs->output, load->name_self);
-    string_extend_cstr(&a_main, &strs->output, " = ");
+    string_extend_cstr(&a_pass, &strs->output, " = ");
 
-    string_extend_cstr(&a_main, &strs->output, "&(((");
+    string_extend_cstr(&a_pass, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->ir_src), false);
-    string_extend_cstr(&a_main, &strs->output, ")");
+    string_extend_cstr(&a_pass, &strs->output, ")");
     emit_c_extend_name(&strs->output, load->ir_src);
-    string_extend_cstr(&a_main, &strs->output, ")->");
+    string_extend_cstr(&a_pass, &strs->output, ")->");
     emit_c_extend_name(&strs->output, vec_at(ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
-    string_extend_cstr(&a_main, &strs->output, ");\n");
+    string_extend_cstr(&a_pass, &strs->output, ");\n");
 }
 
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access) {
     emit_c_loc(&strs->output, access->loc, access->pos);
-    string_extend_cstr(&a_main, &strs->output, "    void* ");
+    string_extend_cstr(&a_pass, &strs->output, "    void* ");
     emit_c_extend_name(&strs->output, access->name_self);
-    string_extend_cstr(&a_main, &strs->output, " = ");
+    string_extend_cstr(&a_pass, &strs->output, " = ");
 
-    string_extend_cstr(&a_main, &strs->output, "&(((");
+    string_extend_cstr(&a_pass, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, access->lang_type, false);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, access->callee);
-    string_extend_cstr(&a_main, &strs->output, ")[");
+    string_extend_cstr(&a_pass, &strs->output, ")[");
     emit_c_expr_piece(strs, access->index);
-    string_extend_cstr(&a_main, &strs->output, "]);\n");
+    string_extend_cstr(&a_pass, &strs->output, "]);\n");
 }
 
 static void emit_c_goto_internal(Emit_c_strs* strs, Ir_name label) {
-    string_extend_cstr(&a_main, &strs->output, "    goto ");
+    string_extend_cstr(&a_pass, &strs->output, "    goto ");
     emit_c_extend_name(&strs->output, label);
-    string_extend_cstr(&a_main, &strs->output, ";\n");
+    string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
 static void emit_c_cond_goto(Emit_c_strs* strs, const Ir_cond_goto* cond_goto) {
     emit_c_loc(&strs->output, cond_goto->loc, cond_goto->pos);
-    string_extend_cstr(&a_main, &strs->output, "    if (");
+    string_extend_cstr(&a_pass, &strs->output, "    if (");
     emit_c_extend_name(&strs->output, cond_goto->condition);
-    string_extend_cstr(&a_main, &strs->output, ") {\n");
+    string_extend_cstr(&a_pass, &strs->output, ") {\n");
     emit_c_goto_internal(strs, cond_goto->if_true);
-    string_extend_cstr(&a_main, &strs->output, "    } else {\n");
+    string_extend_cstr(&a_pass, &strs->output, "    } else {\n");
     emit_c_goto_internal(strs, cond_goto->if_false);
-    string_extend_cstr(&a_main, &strs->output, "    }\n");
+    string_extend_cstr(&a_pass, &strs->output, "    }\n");
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
@@ -703,8 +703,8 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 
 void emit_c_from_tree(void) {
     String test_output_ = {0};
-    string_extend_strv(&a_main /* TODO */, &test_output_, params.output_file_path);
-    string_extend_cstr(&a_main /* TODO */, &test_output_, ".c");
+    string_extend_strv(&a_pass, &test_output_, params.output_file_path);
+    string_extend_cstr(&a_pass, &test_output_, ".c");
     Strv test_output = string_to_strv(test_output_);
     if (params.stop_after == STOP_AFTER_BACKEND_IR) {
         test_output = params.output_file_path;
@@ -714,12 +714,12 @@ void emit_c_from_tree(void) {
         String header = {0};
         Emit_c_strs strs = {0};
 
-        string_extend_cstr(&a_main, &header, "static int dummy = 0;\n");
-        string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
-        string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
+        string_extend_cstr(&a_pass, &header, "static int dummy = 0;\n");
+        string_extend_cstr(&a_pass, &header, "#include <stddef.h>\n");
+        string_extend_cstr(&a_pass, &header, "#include <stdint.h>\n");
+        string_extend_cstr(&a_pass, &header, "#include <stdbool.h>\n");
 #       ifndef NDEBUG
-            string_extend_cstr(&a_main, &header, "#include <assert.h>\n");
+            string_extend_cstr(&a_pass, &header, "#include <assert.h>\n");
 #       endif // NDEBUG
 
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
@@ -731,7 +731,7 @@ void emit_c_from_tree(void) {
             return;
         }
 
-        FILE* file = fopen(strv_to_cstr(&a_main, test_output), "w");
+        FILE* file = fopen(strv_to_cstr(&a_pass, test_output), "w");
         if (!file) {
             msg(
                 DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT" %s\n",
@@ -772,35 +772,35 @@ void emit_c_from_tree(void) {
         }
 
         Strv_vec cmd = {0};
-        vec_append(&a_main, &cmd, path_c_compiler);
-        vec_append(&a_main, &cmd, sv("-std=c99"));
+        vec_append(&a_pass, &cmd, path_c_compiler);
+        vec_append(&a_pass, &cmd, sv("-std=c99"));
 
         // supress clang warnings
-        vec_append(&a_main, &cmd, sv("-Wno-override-module"));
-        vec_append(&a_main, &cmd, sv("-Wno-incompatible-library-redeclaration"));
-        vec_append(&a_main, &cmd, sv("-Wno-builtin-requires-header"));
-        vec_append(&a_main, &cmd, sv("-Wno-unknown-warning-option"));
+        vec_append(&a_pass, &cmd, sv("-Wno-override-module"));
+        vec_append(&a_pass, &cmd, sv("-Wno-incompatible-library-redeclaration"));
+        vec_append(&a_pass, &cmd, sv("-Wno-builtin-requires-header"));
+        vec_append(&a_pass, &cmd, sv("-Wno-unknown-warning-option"));
 
         // supress gcc warnings
-        vec_append(&a_main, &cmd, sv("-Wno-builtin-declaration-mismatch"));
+        vec_append(&a_pass, &cmd, sv("-Wno-builtin-declaration-mismatch"));
 
 #       ifdef NDEBUG
-            vec_append(&a_main, &cmd, sv("-Wno-unused-command-line-argument"));
+            vec_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
 #       endif // DNDEBUG
 
         static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
         switch (params.opt_level) {
             case OPT_LEVEL_O0:
-                vec_append(&a_main, &cmd, sv("-O0"));
+                vec_append(&a_pass, &cmd, sv("-O0"));
                 break;
             case OPT_LEVEL_O2:
-                vec_append(&a_main, &cmd, sv("-O2"));
+                vec_append(&a_pass, &cmd, sv("-O2"));
                 break;
             default:
                 unreachable("");
         }
 
-        vec_append(&a_main, &cmd, sv("-g"));
+        vec_append(&a_pass, &cmd, sv("-g"));
 
         // output step
         static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states (not all are explicitly handled)");
@@ -810,41 +810,41 @@ void emit_c_from_tree(void) {
             case STOP_AFTER_BIN:
                 break;
             case STOP_AFTER_UPPER_S:
-                vec_append(&a_main, &cmd, sv("-S"));
+                vec_append(&a_pass, &cmd, sv("-S"));
                 break;
             case STOP_AFTER_OBJ:
-                vec_append(&a_main, &cmd, sv("-c"));
+                vec_append(&a_pass, &cmd, sv("-c"));
                 break;
             default:
                 unreachable("");
         }
 
         if (params.is_output_file_path) {
-            vec_append(&a_main, &cmd, sv("-o"));
-            vec_append(&a_main, &cmd, params.output_file_path);
+            vec_append(&a_pass, &cmd, sv("-o"));
+            vec_append(&a_pass, &cmd, params.output_file_path);
         }
 
         // .own file, compiled to .c
         if (params.compile_own) {
-            vec_append(&a_main, &cmd, test_output);
+            vec_append(&a_pass, &cmd, test_output);
         }
 
         // non-.own files to build
-        vec_extend(&a_main, &cmd, &params.static_libs);
-        vec_extend(&a_main, &cmd, &params.c_input_files);
-        vec_extend(&a_main, &cmd, &params.object_files);
-        vec_extend(&a_main, &cmd, &params.lower_s_files);
-        vec_extend(&a_main, &cmd, &params.upper_s_files);
-        vec_extend(&a_main, &cmd, &params.dynamic_libs);
+        vec_extend(&a_pass, &cmd, &params.static_libs);
+        vec_extend(&a_pass, &cmd, &params.c_input_files);
+        vec_extend(&a_pass, &cmd, &params.object_files);
+        vec_extend(&a_pass, &cmd, &params.lower_s_files);
+        vec_extend(&a_pass, &cmd, &params.upper_s_files);
+        vec_extend(&a_pass, &cmd, &params.dynamic_libs);
         for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
-            vec_append(&a_main, &cmd, sv("-l"));
-            vec_append(&a_main, &cmd, vec_at(params.l_flags, idx));
+            vec_append(&a_pass, &cmd, sv("-l"));
+            vec_append(&a_pass, &cmd, vec_at(params.l_flags, idx));
         }
 
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));
             exit(EXIT_CODE_FAIL);
         }
     }
