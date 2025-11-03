@@ -59,6 +59,7 @@ OBJS=\
 	 ${BUILD_DIR}/util/ir_operator_type.o \
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/util/cfg.o \
+	 ${BUILD_DIR}/util/newstring.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
@@ -302,4 +303,7 @@ ${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c
 
 ${BUILD_DIR}/util/cfg.o: ${DEP_COMMON} src/util/cfg.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/cfg.o src/util/cfg.c
+
+${BUILD_DIR}/util/newstring.o: ${DEP_COMMON} src/util/newstring.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/newstring.o src/util/newstring.c
 
