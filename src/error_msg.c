@@ -196,22 +196,50 @@ void msg_internal(
         env.warning_count++;
     }
 
-    String buf = {0};
+    va_list args_copy;
+    va_copy(args_copy, args);
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        size_t buf_cap_needed = 0;
+
+        if (1) {
+            if (pos.line < 1) {
+                buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
+                size_t second_count = vsnprintf(NULL, 0, format, args_copy);
+                buf_cap_needed += max(buf_cap_needed, second_count);
+            } else {
+                buf_cap_needed = max(buf_cap_needed, (size_t)snprintf(
+                    NULL,
+                    0,
+                    FMT":%d:%d:%s:",
+                    strv_print(pos.file_path),
+                    pos.line,
+                    pos.column,
+                    get_log_level_str(log_level)
+                ));
+                buf_cap_needed = max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
+            }
+        }
+        buf_cap_needed += 1;
+
+        static String temp_buf = {0};
+        temp_buf.info.count = 0;
+        vec_reserve(&a_leak, &temp_buf, buf_cap_needed);
+        temp_buf.info.count = buf_cap_needed;
+
         String actual_buf = {0};
         if (pos.line < 1) {
-            snprintf(buf, array_count(buf), "%s:", get_log_level_str(log_level));
-            string_extend_cstr(&a_leak, &actual_buf, buf);
+            snprintf(temp_buf.buf, temp_buf.info.count, "%s:", get_log_level_str(log_level));
+            string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
 
-            vsnprintf(buf, array_count(buf), format, args);
-            string_extend_cstr(&a_leak, &actual_buf, buf);
+            vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
+            string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         } else {
-            snprintf(buf, array_count(buf), FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
-            string_extend_cstr(&a_leak, &actual_buf, buf);
+            snprintf(temp_buf.buf, temp_buf.info.count, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
             
-            vsnprintf(buf, array_count(buf), format, args);
-            string_extend_cstr(&a_leak, &actual_buf, buf);
+            vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
+            string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         }
         if (params.print_immediately) {
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
@@ -227,4 +255,5 @@ void msg_internal(
     }
 
     va_end(args);
+    va_end(args_copy);
 }
