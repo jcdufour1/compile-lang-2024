@@ -2321,16 +2321,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
-    // TODO: consider if new_gens_set can be removed
     Ulang_type_vec new_gens = {0};
-    Bool_vec new_gens_set = {0};
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
     while (new_gens.info.count < fun_decl_temp->generics.info.count) {
         vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(POS_BUILTIN)));
-    }
-    vec_reserve(&a_main, &new_gens_set, fun_decl_temp->generics.info.count);
-    while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &new_gens_set, false);
     }
 
     // TODO: deduplicate this with below for loop?
@@ -2426,7 +2420,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         status = false;
                         goto error;
                     }
-                    *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
                     break;
                 }
@@ -2516,7 +2509,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
-                                *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
                             }
                         } else {
