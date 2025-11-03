@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <parameters.h>
 #include <pos_util.h>
+#include <file.h>
 
 static void show_location_error(Pos pos) {
     Strv* file_con_ = NULL;
@@ -141,6 +142,8 @@ void print_all_defered_msgs(void) {
     vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
         msg_internal_actual_print(curr.file, curr.line, curr.pos, curr.actual_msg);
     }
+
+    vec_reset(&env.defered_msgs);
 }
 
 __attribute__((format (printf, 5, 6)))
@@ -148,10 +151,11 @@ void msg_internal(
     const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
-    if (env.error_count > 50 /* TODO: put params.max_errors instead of 50 */) {
-        // TODO
-        msg_todo("error message for too many errors", pos);
-        return;
+    if (env.error_count >= params.max_errors) {
+        print_all_defered_msgs();
+        fprintf(stderr, "%s:", get_log_level_str(LOG_FATAL));
+        fprintf(stderr, "too many error messages have been printed; exiting now\n");
+        local_exit(EXIT_CODE_FAIL);
     }
 
     va_list args;

@@ -142,7 +142,7 @@ void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 25,
+        PARAMETERS_COUNT == 26,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -189,7 +189,7 @@ void do_passes(void) {
     arena_reset(&a_pass);
 
     static_assert(
-        PARAMETERS_COUNT == 25,
+        PARAMETERS_COUNT == 26,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
