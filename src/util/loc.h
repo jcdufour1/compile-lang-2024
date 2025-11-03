@@ -14,11 +14,11 @@ typedef struct {
 static inline Strv loc_print_internal(Loc loc) {
     String buf = {0};
 
-    string_extend_cstr(&a_print, &buf, "loc(");
-    string_extend_cstr(&a_print, &buf, loc.file);
-    string_extend_cstr(&a_print, &buf, ":");
-    string_extend_size_t(&a_print, &buf, loc.line);
-    string_extend_cstr(&a_print, &buf, ")");
+    string_extend_cstr(&a_temp, &buf, "loc(");
+    string_extend_cstr(&a_temp, &buf, loc.file);
+    string_extend_cstr(&a_temp, &buf, ":");
+    string_extend_size_t(&a_temp, &buf, loc.line);
+    string_extend_cstr(&a_temp, &buf, ")");
 
     return string_to_strv(buf);
 }

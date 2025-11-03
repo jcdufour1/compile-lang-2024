@@ -170,15 +170,15 @@ static void msg_invalid_count_function_args_internal(
     size_t max_args
 ) {
     String message = {0};
-    string_extend_size_t(&a_print, &message, fun_call->args.info.count);
-    string_extend_cstr(&a_print, &message, " arguments are passed to function `");
+    string_extend_size_t(&a_temp, &message, fun_call->args.info.count);
+    string_extend_cstr(&a_temp, &message, " arguments are passed to function `");
     extend_name(NAME_MSG, &message, fun_decl_name);
-    string_extend_cstr(&a_print, &message, "`, but ");
-    string_extend_size_t(&a_print, &message, min_args);
+    string_extend_cstr(&a_temp, &message, "`, but ");
+    string_extend_size_t(&a_temp, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&a_print, &message, " or more");
+        string_extend_cstr(&a_temp, &message, " or more");
     }
-    string_extend_cstr(&a_print, &message, " arguments expected\n");
+    string_extend_cstr(&a_temp, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
         FMT, strv_print(string_to_strv(message))
@@ -206,19 +206,19 @@ static void msg_invalid_count_struct_literal_args_internal(
     bool is_array
 ) {
     String message = {0};
-    string_extend_size_t(&a_print, &message, membs.info.count);
-    string_extend_cstr(&a_print, &message, " arguments are passed to ");
+    string_extend_size_t(&a_temp, &message, membs.info.count);
+    string_extend_cstr(&a_temp, &message, " arguments are passed to ");
     if (is_array) {
-        string_extend_cstr(&a_print, &message, "array");
+        string_extend_cstr(&a_temp, &message, "array");
     } else {
-        string_extend_cstr(&a_print, &message, "struct");
+        string_extend_cstr(&a_temp, &message, "struct");
     }
-    string_extend_cstr(&a_print, &message, " literal, but ");
-    string_extend_size_t(&a_print, &message, min_args);
+    string_extend_cstr(&a_temp, &message, " literal, but ");
+    string_extend_size_t(&a_temp, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&a_print, &message, " or more");
+        string_extend_cstr(&a_temp, &message, " or more");
     }
-    string_extend_cstr(&a_print, &message, " arguments expected\n");
+    string_extend_cstr(&a_temp, &message, " arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
         FMT, strv_print(string_to_strv(message))
@@ -1395,8 +1395,8 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
         case UAST_EXPR_REMOVED: {
             Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
             String buf = {0};
-            string_extend_cstr(&a_print, &buf, "expected expression ");
-            string_extend_strv(&a_print, &buf, removed->msg_suffix);
+            string_extend_cstr(&a_temp, &buf, "expected expression ");
+            string_extend_strv(&a_temp, &buf, removed->msg_suffix);
             msg(DIAG_EXPECTED_EXPRESSION, removed->pos, FMT"\n", string_print(buf));
             return false;
         }
@@ -3715,10 +3715,10 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     unwrap(enum_def.members.info.count > 0);
     exhaustive_data.max_data = enum_def.members.info.count - 1;
 
-    vec_reserve(&a_print, &exhaustive_data.covered, exhaustive_data.max_data + 1);
-    vec_reserve(&a_print, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
+    vec_reserve(&a_temp, &exhaustive_data.covered, exhaustive_data.max_data + 1);
+    vec_reserve(&a_temp, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
     for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
-        vec_append(&a_print, &exhaustive_data.covered, false);
+        vec_append(&a_temp, &exhaustive_data.covered, false);
     }
     unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
@@ -3767,7 +3767,7 @@ static bool check_for_exhaustiveness_inner(
                 return false;
             }
             *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
-            vec_append(&a_print, &exhaustive_data->covered_pos, curr_lit->pos);
+            vec_append(&a_temp, &exhaustive_data->covered_pos, curr_lit->pos);
             check_env.switch_prev_idx = (size_t)curr_lit->data;
             return true;
         }

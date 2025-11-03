@@ -6,16 +6,16 @@
 #include <strv.h>
 
 static inline void extend_pos(String* buf, Pos pos) {
-    string_extend_cstr(&a_print, buf, "((");
-    string_extend_cstr(&a_print, buf, ";file_path:");
+    string_extend_cstr(&a_temp, buf, "((");
+    string_extend_cstr(&a_temp, buf, ";file_path:");
     if (pos.file_path.count != SIZE_MAX /* TODO: always run code in if body when possible */) {
-        string_extend_strv(&a_print, buf, pos.file_path);
+        string_extend_strv(&a_temp, buf, pos.file_path);
     }
-    string_extend_cstr(&a_print, buf, ";line:");
-    string_extend_int64_t(&a_print, buf, pos.line);
-    string_extend_cstr(&a_print, buf, ";column:");
-    string_extend_int64_t(&a_print, buf, pos.column);
-    string_extend_cstr(&a_print, buf, " ))");
+    string_extend_cstr(&a_temp, buf, ";line:");
+    string_extend_int64_t(&a_temp, buf, pos.line);
+    string_extend_cstr(&a_temp, buf, ";column:");
+    string_extend_int64_t(&a_temp, buf, pos.column);
+    string_extend_cstr(&a_temp, buf, " ))");
 }
 
 static inline Strv pos_print_internal(Pos pos) {
@@ -31,7 +31,7 @@ static inline Strv pos_deep_print_internal(Pos* pos, int indent) {
 
     String buf = {0};
     extend_pos(&buf, *pos);
-    string_extend_strv(&a_print, &buf, pos_deep_print_internal(pos->expanded_from, indent + INDENT_WIDTH));
+    string_extend_strv(&a_temp, &buf, pos_deep_print_internal(pos->expanded_from, indent + INDENT_WIDTH));
     return string_to_strv(buf);
 }
 

@@ -163,11 +163,11 @@ bool target_triplet_is_equal(Target_triplet a, Target_triplet b) {
 Strv target_triplet_print_internal(Target_triplet triplet) {
     String buf = {0};
 
-    string_extend_strv(&a_print, &buf, strv_from_target_arch(triplet.arch));
-    string_extend_cstr(&a_print, &buf, "-");
-    string_extend_strv(&a_print, &buf, strv_from_target_os(triplet.os));
-    string_extend_cstr(&a_print, &buf, "-");
-    string_extend_strv(&a_print, &buf, strv_from_target_abi(triplet.abi));
+    string_extend_strv(&a_temp, &buf, strv_from_target_arch(triplet.arch));
+    string_extend_cstr(&a_temp, &buf, "-");
+    string_extend_strv(&a_temp, &buf, strv_from_target_os(triplet.os));
+    string_extend_cstr(&a_temp, &buf, "-");
+    string_extend_strv(&a_temp, &buf, strv_from_target_abi(triplet.abi));
 
     return string_to_strv(buf);
 }
@@ -735,9 +735,9 @@ static void parse_long_option(int* argc, char*** argv) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
             if (curr.arg_expected && curr_opt.count < 1) {
                 String buf = {0};
-                string_extend_strv(&a_print, &buf, sv("argument expected after `"));
-                string_extend_strv(&a_print, &buf, sv(curr.text));
-                string_extend_strv(&a_print, &buf, sv("`"));
+                string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
+                string_extend_strv(&a_temp, &buf, sv(curr.text));
+                string_extend_strv(&a_temp, &buf, sv("`"));
                 curr.action(consume_arg(argc, argv, string_to_strv(buf)));
             } else {
                 curr.action(curr_opt);
@@ -771,15 +771,15 @@ static void print_usage(void) {
     msg(DIAG_INFO, POS_BUILTIN, "\n");
 
     String buf = {0};
-    string_extend_cstr(&a_print, &buf, "options:\n");
+    string_extend_cstr(&a_temp, &buf, "options:\n");
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
         if (!strv_is_equal(sv(curr.text), sv("run"))) {
-            string_extend_cstr(&a_print, &buf, "    -");
-            string_extend_cstr(&a_print, &buf, curr.text);
-            string_extend_cstr(&a_print, &buf, "\n        ");
-            string_extend_cstr(&a_print, &buf, curr.description);
-            string_extend_cstr(&a_print, &buf, "\n\n");
+            string_extend_cstr(&a_temp, &buf, "    -");
+            string_extend_cstr(&a_temp, &buf, curr.text);
+            string_extend_cstr(&a_temp, &buf, "\n        ");
+            string_extend_cstr(&a_temp, &buf, curr.description);
+            string_extend_cstr(&a_temp, &buf, "\n\n");
         }
     }
     msg(DIAG_INFO, POS_BUILTIN, FMT, string_print(buf));

@@ -11,12 +11,12 @@ INLINE uint64_t get_time_milliseconds(void) {
 static Strv milliseconds_print_internal(uint64_t mills) {
     String buf = {0};
 
-    string_extend_int64_t(&a_print, &buf, mills/1000000);
-    string_extend_cstr(&a_print, &buf, ".");
+    string_extend_int64_t(&a_temp, &buf, mills/1000000);
+    string_extend_cstr(&a_temp, &buf, ".");
     char num_str[32];
     sprintf(num_str, "%0.06"PRIu64, mills%1000000);
-    string_extend_cstr(&a_print, &buf, num_str);
-    string_extend_cstr(&a_print, &buf, "sec");
+    string_extend_cstr(&a_temp, &buf, num_str);
+    string_extend_cstr(&a_temp, &buf, "sec");
 
     return string_to_strv(buf);
 }

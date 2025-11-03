@@ -182,7 +182,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         vec_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
             log(LOG_DEBUG, "frame %zu:\n", cfg_node_idx);
             String buf = {0};
-            string_extend_strv(&a_print, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
+            string_extend_strv(&a_temp, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
             init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame, INDENT_WIDTH);
 

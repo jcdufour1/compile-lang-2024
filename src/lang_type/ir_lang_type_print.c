@@ -6,19 +6,19 @@
 void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     switch (type) {
         case IR_LANG_TYPE_PRIMITIVE:
-            string_extend_cstr(&a_print, buf, "primitive");
+            string_extend_cstr(&a_temp, buf, "primitive");
             return;
         case IR_LANG_TYPE_STRUCT:
-            string_extend_cstr(&a_print, buf, "struct");
+            string_extend_cstr(&a_temp, buf, "struct");
             return;
         case IR_LANG_TYPE_TUPLE:
-            string_extend_cstr(&a_print, buf, "tuple");
+            string_extend_cstr(&a_temp, buf, "tuple");
             return;
         case IR_LANG_TYPE_VOID:
-            string_extend_cstr(&a_print, buf, "void");
+            string_extend_cstr(&a_temp, buf, "void");
             return;
         case IR_LANG_TYPE_FN:
-            string_extend_cstr(&a_print, buf, "fn");
+            string_extend_cstr(&a_temp, buf, "fn");
             return;
     }
     unreachable("");
@@ -60,13 +60,13 @@ void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_
                 unreachable("");
         }
     } else {
-        string_extend_cstr(&a_print, string, "void");
+        string_extend_cstr(&a_temp, string, "void");
     }
     if (atom.pointer_depth < 0) {
         todo();
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_print, string, '*');
+        vec_append(&a_temp, string, '*');
     }
 
     if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
@@ -87,7 +87,7 @@ Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type)
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
-            string_extend_cstr(&a_print, &buf, "\n");
+            string_extend_cstr(&a_temp, &buf, "\n");
             break;
         default:
             unreachable("");
@@ -103,7 +103,7 @@ Strv ir_lang_type_atom_print_internal(Ir_lang_type_atom atom, LANG_TYPE_MODE mod
 
 void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_print, string, '<');
+        vec_append(&a_temp, string, '<');
     }
 
     switch (mode) {
@@ -157,7 +157,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
 
 end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_print, string, '>');
+        vec_append(&a_temp, string, '>');
     }
 }
 

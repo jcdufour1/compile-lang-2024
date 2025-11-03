@@ -6,28 +6,28 @@
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_PRIMITIVE:
-            string_extend_cstr(&a_print, buf, "primitive");
+            string_extend_cstr(&a_temp, buf, "primitive");
             return;
         case LANG_TYPE_STRUCT:
-            string_extend_cstr(&a_print, buf, "struct");
+            string_extend_cstr(&a_temp, buf, "struct");
             return;
         case LANG_TYPE_RAW_UNION:
-            string_extend_cstr(&a_print, buf, "raw_union");
+            string_extend_cstr(&a_temp, buf, "raw_union");
             return;
         case LANG_TYPE_ENUM:
-            string_extend_cstr(&a_print, buf, "enum");
+            string_extend_cstr(&a_temp, buf, "enum");
             return;
         case LANG_TYPE_TUPLE:
-            string_extend_cstr(&a_print, buf, "tuple");
+            string_extend_cstr(&a_temp, buf, "tuple");
             return;
         case LANG_TYPE_VOID:
-            string_extend_cstr(&a_print, buf, "void");
+            string_extend_cstr(&a_temp, buf, "void");
             return;
         case LANG_TYPE_FN:
-            string_extend_cstr(&a_print, buf, "fn");
+            string_extend_cstr(&a_temp, buf, "fn");
             return;
         case LANG_TYPE_ARRAY:
-            string_extend_cstr(&a_print, buf, "array");
+            string_extend_cstr(&a_temp, buf, "array");
             return;
     }
     unreachable("");
@@ -75,7 +75,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
         todo();
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_print, string, '*');
+        vec_append(&a_temp, string, '*');
     }
 
     if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
@@ -96,7 +96,7 @@ Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
-            string_extend_cstr(&a_print, &buf, "\n");
+            string_extend_cstr(&a_temp, &buf, "\n");
             break;
         default:
             unreachable("");
@@ -112,7 +112,7 @@ Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
 
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_print, string, '<');
+        vec_append(&a_temp, string, '<');
     }
 
     switch (mode) {
@@ -160,11 +160,11 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             extend_lang_type_to_string(string, mode, *array.item_type);
-            string_extend_cstr(&a_print, string, "[");
-            string_extend_size_t(&a_print, string, array.count);
-            string_extend_cstr(&a_print, string, "]");
+            string_extend_cstr(&a_temp, string, "[");
+            string_extend_size_t(&a_temp, string, array.count);
+            string_extend_cstr(&a_temp, string, "]");
             for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
-                vec_append(&a_print, string, '*');
+                vec_append(&a_temp, string, '*');
             }
             goto end;
         }
@@ -191,7 +191,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
 end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_print, string, '>');
+        vec_append(&a_temp, string, '>');
     }
 }
 

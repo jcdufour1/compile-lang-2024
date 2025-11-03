@@ -42,8 +42,8 @@ typedef struct {
 // TODO: move this function?
 static inline Strv defer_pair_print_internal(Defer_pair pair) {
     String buf = {0};
-    string_extend_strv(&a_print, &buf, tast_defer_print_internal(pair.defer, 0));
-    string_extend_strv(&a_print, &buf, tast_label_print_internal(pair.label, 0));
+    string_extend_strv(&a_temp, &buf, tast_defer_print_internal(pair.defer, 0));
+    string_extend_strv(&a_temp, &buf, tast_label_print_internal(pair.label, 0));
     return string_to_strv(buf);
 }
 

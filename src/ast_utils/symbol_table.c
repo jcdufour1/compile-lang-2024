@@ -259,7 +259,7 @@ void symbol_update(Tast_def* item) {
 }
 
 bool symbol_lookup(Tast_def** result, Name key) {
-    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(&a_print, key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
+    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(&a_temp, key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
 }
 
 //
@@ -301,7 +301,7 @@ bool sym_tbl_lookup(Tast_def** result, Name key) {
     return generic_tbl_lookup(
         (void**)result,
         (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->symbol_table,
-        serialize_name_symbol_table(&a_print, key)
+        serialize_name_symbol_table(&a_temp, key)
     );
 }
 
@@ -324,7 +324,7 @@ void usym_tbl_update(Uast_def* item) {
 }
 
 bool usym_tbl_lookup(Uast_def** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_print, key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_temp, key));
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
@@ -379,7 +379,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 
     return generic_symbol_lookup(
         (void**)result,
-        serialize_name_symbol_table(&a_print, key),
+        serialize_name_symbol_table(&a_temp, key),
         (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
         key.scope_id
     );
@@ -454,13 +454,13 @@ void ir_update(Ir* item) {
 }
 
 bool ir_tbl_lookup(Ir** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_print, key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_temp, key));
 }
 
 bool ir_lookup(Ir** result, Ir_name key) {
     return generic_symbol_lookup(
         (void**)result,
-        serialize_ir_name_symbol_table(&a_print, key),
+        serialize_ir_name_symbol_table(&a_temp, key),
         (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
         key.scope_id
     );
@@ -471,7 +471,7 @@ bool ir_lookup(Ir** result, Ir_name key) {
 //
 
 bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_print, name));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_temp, name));
 }
 
 bool init_symbol_add(Init_table* init_table, Init_table_node node) {
@@ -534,7 +534,7 @@ bool ir_name_to_name_add_internal(
 }
 
 bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name) {
-    return ir_name_to_name_lookup_internal(&ir_name_to_name_tbls, (void**)result, serialize_ir_name_symbol_table(&a_print, name), name.scope_id);
+    return ir_name_to_name_lookup_internal(&ir_name_to_name_tbls, (void**)result, serialize_ir_name_symbol_table(&a_temp, name), name.scope_id);
 }
 
 bool ir_name_to_name_add(Ir_name_to_name_table_node node) {
@@ -593,7 +593,7 @@ bool name_to_ir_name_add_internal(
 }
 
 bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name) {
-    return name_to_ir_name_lookup_internal(&name_to_ir_name_tbls, (void**)result, serialize_name_symbol_table(&a_print, name), name.scope_id);
+    return name_to_ir_name_lookup_internal(&name_to_ir_name_tbls, (void**)result, serialize_name_symbol_table(&a_temp, name), name.scope_id);
 }
 
 bool name_to_ir_name_add(Name_to_ir_name_table_node node) {
@@ -628,7 +628,7 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
 static C_forward_struct_tbl c_forward_struct_tbl;
 
 bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_ir_name_symbol_table(&a_print, key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_ir_name_symbol_table(&a_temp, key));
 }
 
 // returns false if value has already been added to the table
@@ -645,7 +645,7 @@ bool function_decl_tbl_add(Uast_function_decl* decl) {
 }
 
 bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
-    return generic_tbl_lookup((void**)decl, (Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(&a_print, key));
+    return generic_tbl_lookup((void**)decl, (Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(&a_temp, key));
 }
 
 //
@@ -660,7 +660,7 @@ bool struct_like_tbl_add(Uast_def* def) {
 }
 
 bool struct_like_tbl_lookup(Uast_def** def, Name key) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_like_tbl, serialize_name_symbol_table(&a_print, key));
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_like_tbl, serialize_name_symbol_table(&a_temp, key));
 }
 
 //
@@ -674,7 +674,7 @@ bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name) {
 }
 
 bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(&a_print, enum_name));
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(&a_temp, enum_name));
 }
 
 //
@@ -688,7 +688,7 @@ bool struct_to_struct_add(Tast_struct_def* def, Name enum_name) {
 }
 
 bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(&a_print, enum_name));
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(&a_temp, enum_name));
 }
 
 //
@@ -743,7 +743,7 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
@@ -753,9 +753,9 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_cstr_indent(&a_print, buf, "", recursion_depth*INDENT_WIDTH);
+            string_extend_cstr_indent(&a_temp, buf, "", recursion_depth*INDENT_WIDTH);
             extend_ir_name(NAME_LOG, buf, sym_tast->tast->name);
-            string_extend_cstr(&a_print, buf, "\n");
+            string_extend_cstr(&a_temp, buf, "\n");
         }
     }
 }
@@ -764,7 +764,7 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
@@ -773,7 +773,7 @@ void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int rec
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_print, buf, ir_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
