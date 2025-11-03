@@ -3,6 +3,12 @@
 
 #include <ir.h>
 
+#ifdef NDEBUG
+#   define ir_get_loc(node) ((Loc) {.file = "", .line = 0})
+#else
+#   define ir_get_loc(node) ((node)->loc)
+#endif // NDEBUG
+
 Strv lang_type_vec_print_internal(Ir_lang_type_vec types);
 
 #define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))

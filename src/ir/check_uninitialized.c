@@ -47,7 +47,7 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
 }
 
 static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos, Loc loc) {
-    check_unit_src(call->callee, pos, call->loc);
+    check_unit_src(call->callee, pos, ir_get_loc(call));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         Ir_name curr = vec_at(call->args, idx);
         check_unit_src(curr, pos, loc);
@@ -91,7 +91,7 @@ static void check_unit_src_internal_expr(const Ir_expr* expr, Pos pos, Loc loc) 
 }
 
 static void check_unit_src_internal_variable_def(const Ir_variable_def* def) {
-    check_unit_src_internal_name(def->name_self, def->pos, def->loc);
+    check_unit_src_internal_name(def->name_self, def->pos, ir_get_loc(def));
 }
 
 static void check_unit_src_internal_def(const Ir_def* def) {
@@ -126,6 +126,7 @@ static bool check_unit_is_struct(Ir_name name) {
 }
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
+    (void) loc;
     if (!print_errors_for_unit) {
         return;
     }
@@ -444,7 +445,7 @@ static void check_unit_function_def(const Ir_function_def* def) {
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
     // NOTE: src must be checked before dest
-    check_unit_src(store->ir_src, store->pos, store->loc);
+    check_unit_src(store->ir_src, store->pos, ir_get_loc(store));
     check_unit_dest(store->ir_dest);
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = store->name,
@@ -456,7 +457,7 @@ static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
 // TODO: should Ir_load_another_ir and store_another_ir actually have name member 
 //   instead of just loading/storing to another name?
 static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
-    check_unit_src(load->ir_src, load->pos, load->loc);
+    check_unit_src(load->ir_src, load->pos, ir_get_loc(load));
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name,
         .cfg_node_of_init = cfg_node_idx,
@@ -465,7 +466,7 @@ static void check_unit_load_another_ir(const Ir_load_another_ir* load) {
 }
 
 static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
-    check_unit_src(load->ir_src, load->pos, load->loc);
+    check_unit_src(load->ir_src, load->pos, ir_get_loc(load));
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = load->name_self,
         .cfg_node_of_init = cfg_node_idx,
@@ -474,8 +475,8 @@ static void check_unit_load_element_ptr(const Ir_load_element_ptr* load) {
 }
 
 static void check_unit_array_access(const Ir_array_access* access) {
-    check_unit_src(access->index, access->pos, access->loc);
-    check_unit_src(access->callee, access->pos, access->loc);
+    check_unit_src(access->index, access->pos, ir_get_loc(access));
+    check_unit_src(access->callee, access->pos, ir_get_loc(access));
     init_symbol_add(curr_cfg_node_area, (Init_table_node) {
         .name = access->name_self,
         .cfg_node_of_init = cfg_node_idx,
@@ -506,20 +507,20 @@ static void check_unit_def(const Ir_def* def) {
 }
 
 static void check_unit_function_call(const Ir_function_call* call) {
-    check_unit_src(call->callee, call->pos, call->loc);
+    check_unit_src(call->callee, call->pos, ir_get_loc(call));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         Ir_name curr = vec_at(call->args, idx);
-        check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, call->loc);
+        check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, ir_get_loc(call));
     }
 }
 
 static void check_unit_binary(const Ir_binary* bin) {
-    check_unit_src(bin->lhs, bin->pos, bin->loc);
-    check_unit_src(bin->rhs, bin->pos, bin->loc);
+    check_unit_src(bin->lhs, bin->pos, ir_get_loc(bin));
+    check_unit_src(bin->rhs, bin->pos, ir_get_loc(bin));
 }
 
 static void check_unit_unary(const Ir_unary* unary) {
-    check_unit_src(unary->child, unary->pos, unary->loc);
+    check_unit_src(unary->child, unary->pos, ir_get_loc(unary));
 }
 
 static void check_unit_operator(const Ir_operator* oper) {

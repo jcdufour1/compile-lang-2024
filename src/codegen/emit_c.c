@@ -114,7 +114,7 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
 }
 
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
-    emit_c_loc(output, decl->loc, decl->pos);
+    emit_c_loc(output, ir_get_loc(decl), decl->pos);
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, decl->name);
@@ -129,7 +129,7 @@ static void emit_c_function_decl_internal(String* output, const Ir_function_decl
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Ir_function_def* fun_def) {
-    emit_c_loc(&strs->output, fun_def->loc, fun_def->pos);
+    emit_c_loc(&strs->output, ir_get_loc(fun_def), fun_def->pos);
     emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_pass, &strs->forward_decls, ";\n");
 
@@ -140,13 +140,13 @@ static void emit_c_function_def(Emit_c_strs* strs, const Ir_function_def* fun_de
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Ir_function_decl* decl) {
-    emit_c_loc(&strs->output, decl->loc, decl->pos);
+    emit_c_loc(&strs->output, ir_get_loc(decl), decl->pos);
     emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_pass, &strs->forward_decls, ";\n");
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
-    emit_c_loc(&strs->output, def->loc, def->pos);
+    emit_c_loc(&strs->output, ir_get_loc(def), def->pos);
     String buf = {0};
     Arena a_temp = {0};
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
@@ -264,7 +264,7 @@ static void emit_c_out_of_line(Emit_c_strs* strs, const Ir* ir) {
 }
 
 static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_call) {
-    emit_c_loc(&strs->output, fun_call->loc, fun_call->pos);
+    emit_c_loc(&strs->output, ir_get_loc(fun_call), fun_call->pos);
     //unwrap(fun_call->ir_id == 0);
 
     // start of actual function call
@@ -502,14 +502,14 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child) {
 }
 
 static void emit_c_return(Emit_c_strs* strs, const Ir_return* rtn) {
-    emit_c_loc(&strs->output, rtn->loc, rtn->pos);
+    emit_c_loc(&strs->output, ir_get_loc(rtn), rtn->pos);
     string_extend_cstr(&a_pass, &strs->output, "    return ");
     emit_c_expr_piece(strs, rtn->child);
     string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
 static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
-    emit_c_loc(output, alloca->loc, alloca->pos);
+    emit_c_loc(output, ir_get_loc(alloca), alloca->pos);
     Ir_name storage_loc = util_literal_ir_name_new();
 
     string_extend_cstr(&a_pass, output, "    ");
@@ -527,7 +527,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* alloca) {
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
-    emit_c_loc(&strs->output, def->loc, def->pos);
+    emit_c_loc(&strs->output, ir_get_loc(def), def->pos);
     emit_c_extend_name(&strs->output, def->name);
     string_extend_cstr(&a_pass, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
@@ -563,7 +563,7 @@ static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
 }
 
 static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir* store) {
-    emit_c_loc(&strs->output, store->loc, store->pos);
+    emit_c_loc(&strs->output, ir_get_loc(store), store->pos);
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));
 
@@ -578,7 +578,7 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
 }
 
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
-    emit_c_loc(&strs->output, load->loc, load->pos);
+    emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     string_extend_cstr(&a_pass, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_pass, &strs->output, " ");
@@ -594,7 +594,7 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 }
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
-    emit_c_loc(&strs->output, load->loc, load->pos);
+    emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     Ir* struct_def_ = NULL;
     unwrap(ir_lookup(&struct_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->ir_src))));
 
@@ -612,7 +612,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
 }
 
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access) {
-    emit_c_loc(&strs->output, access->loc, access->pos);
+    emit_c_loc(&strs->output, ir_get_loc(access), access->pos);
     string_extend_cstr(&a_pass, &strs->output, "    void* ");
     emit_c_extend_name(&strs->output, access->name_self);
     string_extend_cstr(&a_pass, &strs->output, " = ");
@@ -633,7 +633,7 @@ static void emit_c_goto_internal(Emit_c_strs* strs, Ir_name label) {
 }
 
 static void emit_c_cond_goto(Emit_c_strs* strs, const Ir_cond_goto* cond_goto) {
-    emit_c_loc(&strs->output, cond_goto->loc, cond_goto->pos);
+    emit_c_loc(&strs->output, ir_get_loc(cond_goto), cond_goto->pos);
     string_extend_cstr(&a_pass, &strs->output, "    if (");
     emit_c_extend_name(&strs->output, cond_goto->condition);
     string_extend_cstr(&a_pass, &strs->output, ") {\n");
@@ -644,12 +644,12 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Ir_cond_goto* cond_goto) {
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
-    emit_c_loc(&strs->output, lang_goto->loc, lang_goto->pos);
+    emit_c_loc(&strs->output, ir_get_loc(lang_goto), lang_goto->pos);
     emit_c_goto_internal(strs, lang_goto->label);
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
-    emit_c_loc(&strs->output, block->loc, block->pos);
+    emit_c_loc(&strs->output, ir_get_loc(block), block->pos);
     vec_foreach(idx, Ir*, stmt, block->children) {
         switch (stmt->type) {
             case IR_EXPR:
