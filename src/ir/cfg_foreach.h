@@ -32,16 +32,16 @@ static inline bool is_at_end_cfg_node(size_t ir_idx_name, Ir_vec block_children)
 
 // TODO: rename at_end_of_cfg_node variable to avoid conflicts?
 #define ir_in_cfg_node_foreach(ir_idx_name, ir_name, cfg_node, block_children) \
-    bool at_end_of_cfg_node = false; \
-    bool at_end_of_cfg_node_ = at_end_of_cfg_node; \
+    bool at_end_of_cfg_node_474389725 = false; \
+    bool at_end_of_cfg_node_474389725_ = at_end_of_cfg_node_474389725; \
     size_t ir_idx_name = (cfg_node).pos_in_block; \
     Ir* ir_name = NULL; \
     for ( \
         ; \
             ir_name = (ir_idx_name) < (block_children).info.count ? vec_at(block_children, ir_idx_name) : NULL, \
-            at_end_of_cfg_node = at_end_of_cfg_node_, \
-            at_end_of_cfg_node_ = is_at_end_cfg_node(ir_idx_name, block_children), \
-            !at_end_of_cfg_node \
+            at_end_of_cfg_node_474389725 = at_end_of_cfg_node_474389725_, \
+            at_end_of_cfg_node_474389725_ = is_at_end_cfg_node(ir_idx_name, block_children), \
+            !at_end_of_cfg_node_474389725 \
         ; \
         (ir_idx_name)++ \
     ) 

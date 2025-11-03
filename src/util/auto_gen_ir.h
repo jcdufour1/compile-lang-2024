@@ -273,7 +273,7 @@ static Ir_type ir_gen_variable_def(void) {
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from alloca
+    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from lang_alloca
 
     return def;
 }

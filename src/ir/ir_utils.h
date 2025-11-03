@@ -56,13 +56,13 @@ Ir_name ir_def_get_name(const Ir_def* def);
 
 Ir_name ir_ir_expr_get_name(const Ir_expr* expr);
 
-Ir_name ir_tast_get_name(const Ir* ir);
+Ir_name ir_get_name(const Ir* ir);
 
 Ir_lang_type* ir_literal_ref_get_lang_type(Ir_literal* lit);
 
-Ir_lang_type lang_type_from_get_name(Ir_name name);
+Ir_lang_type lang_type_from_ir_name(Ir_name name);
 
-Ir* ir_from_get_name(Ir_name name);
+Ir* ir_from_ir_name(Ir_name name);
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* base, Ir_name memb_name);
 

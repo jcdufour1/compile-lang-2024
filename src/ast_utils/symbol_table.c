@@ -390,13 +390,13 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
-    Ir_name name = ir_tast_get_name(item);
+    Ir_name name = ir_get_name(item);
     return generic_tbl_add((Generic_symbol_table*)tbl, serialize_ir_name_symbol_table(&a_main, name), item);
 }
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* item) {
-    Ir_name name = ir_tast_get_name(item);
+    Ir_name name = ir_get_name(item);
     return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
 }
 
@@ -405,7 +405,7 @@ void* ir_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool ir_add(Ir* item) {
-    Ir_name name = ir_tast_get_name(item);
+    Ir_name name = ir_get_name(item);
     return generic_symbol_add(
         serialize_ir_name_symbol_table(&a_main, name),
         item,
@@ -415,7 +415,7 @@ bool ir_add(Ir* item) {
 }
 
 void ir_tbl_update(Ir* item) {
-    Ir_name name = ir_tast_get_name(item);
+    Ir_name name = ir_get_name(item);
     generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(&a_main, ir_name_to_name(name)), item);
 }
 
@@ -449,7 +449,7 @@ void usymbol_update(Uast_def* item) {
 void ir_update(Ir* item) {
     (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(ir_tast_get_name(item)), item, (Get_tbl_from_collection_fn)ir_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(ir_get_name(item)), item, (Get_tbl_from_collection_fn)ir_get_tbl_from_collection);
 }
 
 bool ir_tbl_lookup(Ir** result, Name key) {

@@ -128,7 +128,7 @@ void compile_file_to_ir(void) {
     //Ir* result = NULL;
     //unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/union"), sv("union"), (Ulang_type_vec) {0}, 2, (Attrs) {0})));
     //log(LOG_DEBUG, FMT"\n", ir_print(result));
-    //log(LOG_DEBUG, "%d\n", ir_tast_get_name(result).attrs);
+    //log(LOG_DEBUG, "%d\n", ir_get_name(result).attrs);
 
     // ir passes
     do_pass(construct_cfgs, ir_log_level);
