@@ -12,12 +12,6 @@
 
 static void check_unit_ir_builtin(const Ir* ir);
 
-static Bool_vec bool_vec_clone(Bool_vec vec) {
-    Bool_vec new_vec = {0};
-    vec_extend(&a_main/* TODO */, &new_vec, &vec);
-    return new_vec;
-}
-
 //static Frame_vec already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
@@ -329,10 +323,10 @@ static void check_unit_block(const Ir_block* block) {
     vec_foreach(idx, Cfg_node, curr1, block->cfg) {
         (void) curr1;
         if (idx == 0) {
-            vec_append(&a_main /* TODO */, &cfg_node_areas, *curr_cfg_node_area);
+            vec_append(&a_pass, &cfg_node_areas, *curr_cfg_node_area);
             continue;
         }
-        vec_append(&a_main /* TODO */, &cfg_node_areas, ((Init_table) {0}));
+        vec_append(&a_pass, &cfg_node_areas, ((Init_table) {0}));
     }
 
     for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {

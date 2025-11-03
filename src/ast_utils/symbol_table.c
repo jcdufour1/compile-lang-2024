@@ -600,7 +600,7 @@ bool name_to_ir_name_add(Name_to_ir_name_table_node node) {
     while (name_to_ir_name_tbls.info.count < node.name_self.scope_id + 2) {
         vec_append(&a_main, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
     }
-    Name_to_ir_name_table_node* buf = arena_alloc(&a_main /* TODO */, sizeof(*buf));
+    Name_to_ir_name_table_node* buf = arena_alloc(&a_main, sizeof(*buf));
     *buf = node;
     // TODO: serialize_name_symbol_table should internally allocate in temporary arena here, not a_main
     return name_to_ir_name_add_internal(serialize_name_symbol_table(&a_main, node.name_self), buf, node.name_self.scope_id);
