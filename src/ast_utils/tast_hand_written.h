@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
     Ir_struct_memb_def_vec members;
-    Name name;
+    Ir_name name;
 } Ir_struct_def_base;
 
 typedef struct {
@@ -26,7 +26,7 @@ typedef struct {
 
 typedef struct {
     Ir_lang_type lang_type;
-    Name name;
+    Ir_name name;
 } Llvm_sym_typed_base;
 
 struct Tast_expr_;

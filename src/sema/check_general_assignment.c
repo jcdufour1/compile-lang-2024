@@ -116,7 +116,8 @@ bool do_implicit_convertions(
         MOD_PATH_RUNTIME,
         sv("Slice"),
         ulang_type_gen_args_char_new(),
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
     ))) {
         goto next;
     }

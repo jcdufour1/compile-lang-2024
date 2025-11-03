@@ -25,7 +25,7 @@ typedef struct Ir_lang_type_type_ {
 } Ir_lang_type_type;
 
 static void extend_ir_lang_type_name_upper(String* output, Ir_lang_type_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         extend_strv_upper(output, name.parent);
@@ -39,7 +39,7 @@ static void extend_ir_lang_type_name_upper(String* output, Ir_lang_type_name nam
 }
 
 static void extend_ir_lang_type_name_lower(String* output, Ir_lang_type_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         extend_strv_lower(output, name.parent);
@@ -53,7 +53,7 @@ static void extend_ir_lang_type_name_lower(String* output, Ir_lang_type_name nam
 }
 
 static void extend_ir_lang_type_name_first_upper(String* output, Ir_lang_type_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         extend_strv_first_upper(output, name.parent);
@@ -68,7 +68,7 @@ static void extend_ir_lang_type_name_first_upper(String* output, Ir_lang_type_na
 
 static void extend_parent_ir_lang_type_name_upper(String* output, Ir_lang_type_name name) {
     todo();
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         unreachable("");
@@ -82,14 +82,14 @@ static void extend_parent_ir_lang_type_name_upper(String* output, Ir_lang_type_n
 }
 
 static void extend_parent_ir_lang_type_name_lower(String* output, Ir_lang_type_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         string_extend_cstr(&gen_a, output, "ir_lang_type");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "ir_lang_type");
     string_extend_cstr(&gen_a, output, "_");
@@ -97,14 +97,14 @@ static void extend_parent_ir_lang_type_name_lower(String* output, Ir_lang_type_n
 }
 
 static void extend_parent_ir_lang_type_name_first_upper(String* output, Ir_lang_type_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
         string_extend_cstr(&gen_a, output, "Ir_lang_type");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "Ir_lang_type");
     string_extend_cstr(&gen_a, output, "_");

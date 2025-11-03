@@ -10,7 +10,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Ir_lang_t
 
 void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom);
 
-static inline Name ir_lang_type_get_str(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
+static inline Ir_name ir_lang_type_get_str(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     return ir_lang_type_get_atom(mode, ir_lang_type).str;
 }
 

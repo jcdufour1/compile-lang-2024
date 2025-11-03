@@ -18,11 +18,17 @@ Name util_literal_name_new_prefix_scope_internal(
 #define util_literal_name_new_prefix(debug_prefix) \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_TOP_LEVEL)
 
+#define util_literal_ir_name_new_prefix(debug_prefix) \
+    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_TOP_LEVEL)
+
 #define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
 
 #define util_literal_name_new() \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
+
+#define util_literal_ir_name_new(ir_name_tables) \
+    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
 bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 
@@ -59,5 +65,6 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
 
+Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
 
 #endif // STR_AND_NUM_UTILS_H

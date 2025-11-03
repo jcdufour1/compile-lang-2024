@@ -68,6 +68,27 @@ for generics:
 - make .own directory (or similar) for build artifacts and put .gitignore file in .own directory
 - ** operator (pow)
 - figure out how to handle redefinition of extern c functions
+- make ir output more readable:
+    -- label should be indented
+    -- literal should be printed as literal instead of as just name
+    -- have proper delimeters (eg. space)
+- for below, figure out why order is wrong:
+    tests/inputs/uninitialized.own:47:19:note:tracing path of uninitialized variable use
+        46 |     switch way {
+        47 |         case .way1: break
+           |                   ^
+        48 |         case .way2: status = 4
+    tests/inputs/uninitialized.own:46:5:note:tracing path of uninitialized variable use
+        45 |     let status i32
+        46 |     switch way {
+           |     ^
+        47 |         case .way1: break
+- do_test.py: command line arg to avoid using red/green background on diff
+- consider making system to print messages in particular order to minimize the frequency of breaking tests?
+- scope issue:
+    -- in ir, there should possibly only be one actual scope per function (roughly). a lookup table could map Name.scope_id to ir_scope_id?
+    -- or make a vec of scopes that are accociated with a block, and store in Ir_block
+    -- after doing one of above, optimize src/ir/check_uninitialized.c to not iterate over every scope
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
@@ -78,8 +99,35 @@ for generics:
     let rhs f32 = 8.4
     lhs == rhs
 - assert statement to catch mod_path (other than MOD_PATH_BUILTIN) used for primitive types
-- top level of file should actually have SCOPE_TOP_LEVEL
+- top level of file should actually have SCOPE_TOP_LEVEL?
     (for this to work, scope_iter function needs to consider mod path in addition to scope_id)
+- "_1__7_builtin_str____2658" could be printed as "7builtin_str2658", 
+    because variable names cannot start with digit anyway, and there is no need to encode pointer depth
+- fix this parser bug:
+    if curr < '0' || curr > '9' => break
+    *str = slice_range(*str, 1, str.count - 1)
+- fix bug (def not being eliminated when defining Slice of strs this way):
+    Slice(<Str>)
+- ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
+    lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
+- TODO: size_t may not be the correct type
+     for lang_type_array.count, because
+     lang_type_array.count is not
+     nessessarily based on memory size
+     of computer that compilation happens
+- check for return statement on all code paths
+- rename a_print to a_temp; use a_temp for temporary allocations, a_pass for objects that last the entire pass, and a_main for longer term ones
+- optimizations to save memory:
+    -- use bitsets
+    -- save Pos as 48 or 64 bit var
+    -- make size_t as 48 bit var?
+    -- make Name be stored as pointer or offset in structs instead of by value?
+    -- better arena management
+- msg should not print immediately; instead, it should append to global vec.
+    -- at end of program execution, all errors in vec should be sorted by pos, etc., then printed
+       (this way, tests will break less often and errors will print in a particular order)
+    -- there should be a flag to print immediately instead of appending to vec
+    -- there should be max error count (eg. 50 by default)
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -123,22 +171,6 @@ continue(<thing>)
 - figure out if I should de-duplilcate string literals, etc.
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
-- check for return statement on all code paths
-- examples directory should be run through test suite as well?
-- "_1__7_builtin_str____2658" could be printed as "7builtin_str2658", 
-    because variable names cannot start with digit anyway, and there is no need to encode pointer depth
-- fix this parser bug:
-    if curr < '0' || curr > '9' => break
-    *str = slice_range(*str, 1, str.count - 1)
-- fix bug (def not being eliminated when defining Slice of strs this way):
-    Slice(<Str>)
-- ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
-    lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
-- TODO: size_t may not be the correct type
-     for lang_type_array.count, because
-     lang_type_array.count is not
-     nessessarily based on memory size
-     of computer that compilation happens
 
 
 

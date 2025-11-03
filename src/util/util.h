@@ -105,6 +105,8 @@ __attribute__((format (printf, 5, 6)));
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+#define local_abs(num) ((num) < 0 ? -(num) : (num))
+
 #define INLINE static inline __attribute__((always_inline))
 
 #define get_next_multiple(num, divisor) (num + (divisor - num%divisor)%divisor)
@@ -141,12 +143,12 @@ typedef size_t Scope_id;
 #define MOD_PATH_OF_MOD_PATHS (sv("std/does_not_exist/mod_paths"))
 #define MOD_PATH_ARRAYS (sv("std/does_not_exist/arrays"))
 #define MOD_PATH_AUX_ALIASES (sv("std/does_not_exist/aux_aliases"))
+
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
-#define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))
-#define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))
-#define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))
-
+#define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
+#define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
+#define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
 
 #define EXTERN_C_OWN_PREFIX "own"
 

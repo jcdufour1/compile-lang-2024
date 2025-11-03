@@ -177,7 +177,7 @@ static bool resolve_generics_serialize_struct_def_base(
         generic_sub_struct_def_base(new_base, gen_def, vec_at(gen_args, idx_gen));
     }
 
-    assert(old_base.members.info.count == new_base->members.info.count);
+    unwrap(old_base.members.info.count == new_base->members.info.count);
 
     new_base->name = new_name;
     return true;
@@ -193,7 +193,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Pos pos_def,
     Obj_new obj_new
 ) {
-    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
+    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */, (Attrs) {0});
     if (!struct_like_tbl_lookup(after_res, new_name)) {
         if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
@@ -329,6 +329,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     if (!name_from_uname(&name_base, lang_type.atom.str, lang_type.pos)) {
         return false;
     }
+    assert(name_base.scope_id != SCOPE_NOT);
 
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
@@ -475,7 +476,7 @@ static bool resolve_generics_serialize_function_decl(
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        name_new(old_decl->name.mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id))
+        name_new(old_decl->name.mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id), (Attrs) {0})
     );
 
     return true;
@@ -488,8 +489,13 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
-    Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
+    // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
+    if (!expand_def_function_def(def)) {
+        return false;
+    }
+
+    Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id, (Attrs) {0});
+    Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id, (Attrs) {0});
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
@@ -565,10 +571,10 @@ bool resolve_generics_function_def_call(
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
-    Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
+    Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id, (Attrs) {0});
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
-    assert(
+    unwrap(
         !symbol_lookup(&dummy_2, name) &&
         "same function has been passed to resolve_generics_function_def_implementation "
         "more than once, and it should not have been"

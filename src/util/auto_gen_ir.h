@@ -26,7 +26,7 @@ typedef struct Ir_type_ {
 } Ir_type;
 
 static void extend_ir_name_upper(String* output, Ir_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_upper(output, name.parent);
@@ -40,7 +40,7 @@ static void extend_ir_name_upper(String* output, Ir_name name) {
 }
 
 static void extend_ir_name_lower(String* output, Ir_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_lower(output, name.parent);
@@ -54,7 +54,7 @@ static void extend_ir_name_lower(String* output, Ir_name name) {
 }
 
 static void extend_ir_name_first_upper(String* output, Ir_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         extend_strv_first_upper(output, name.parent);
@@ -69,7 +69,7 @@ static void extend_ir_name_first_upper(String* output, Ir_name name) {
 
 static void extend_parent_ir_name_upper(String* output, Ir_name name) {
     todo();
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         unreachable("");
@@ -83,14 +83,14 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
 }
 
 static void extend_parent_ir_name_lower(String* output, Ir_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         string_extend_cstr(&gen_a, output, "ir");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "ir");
     string_extend_cstr(&gen_a, output, "_");
@@ -98,14 +98,14 @@ static void extend_parent_ir_name_lower(String* output, Ir_name name) {
 }
 
 static void extend_parent_ir_name_first_upper(String* output, Ir_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
         string_extend_cstr(&gen_a, output, "Ir");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "Ir");
     string_extend_cstr(&gen_a, output, "_");
@@ -119,10 +119,11 @@ static Ir_name ir_name_new(const char* parent, const char* base, bool is_topmost
 static Ir_type ir_gen_block(void) {
     Ir_type block = {.name = ir_name_new("ir", "block", false)};
 
-    append_member(&block.members, "Name", "name");
+    append_member(&block.members, "Ir_name", "name");
     append_member(&block.members, "Ir_vec", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
+    append_member(&block.members, "Cfg_node_vec", "cfg");
 
     return block;
 }
@@ -130,10 +131,10 @@ static Ir_type ir_gen_block(void) {
 static Ir_type ir_gen_unary(void) {
     Ir_type unary = {.name = ir_name_new("operator", "unary", false)};
 
-    append_member(&unary.members, "Name", "child");
+    append_member(&unary.members, "Ir_name", "child");
     append_member(&unary.members, "IR_UNARY_TYPE", "token_type");
     append_member(&unary.members, "Ir_lang_type", "lang_type");
-    append_member(&unary.members, "Name", "name");
+    append_member(&unary.members, "Ir_name", "name");
 
     return unary;
 }
@@ -141,11 +142,11 @@ static Ir_type ir_gen_unary(void) {
 static Ir_type ir_gen_binary(void) {
     Ir_type binary = {.name = ir_name_new("operator", "binary", false)};
 
-    append_member(&binary.members, "Name", "lhs");
-    append_member(&binary.members, "Name", "rhs");
+    append_member(&binary.members, "Ir_name", "lhs");
+    append_member(&binary.members, "Ir_name", "rhs");
     append_member(&binary.members, "IR_BINARY_TYPE", "token_type");
     append_member(&binary.members, "Ir_lang_type", "lang_type");
-    append_member(&binary.members, "Name", "name");
+    append_member(&binary.members, "Ir_name", "name");
 
     return binary;
 }
@@ -164,7 +165,7 @@ static Ir_type ir_gen_int(void) {
 
     append_member(&number.members, "int64_t", "data");
     append_member(&number.members, "Ir_lang_type", "lang_type");
-    append_member(&number.members, "Name", "name");
+    append_member(&number.members, "Ir_name", "name");
 
     return number;
 }
@@ -174,7 +175,7 @@ static Ir_type ir_gen_float(void) {
 
     append_member(&number.members, "double", "data");
     append_member(&number.members, "Ir_lang_type", "lang_type");
-    append_member(&number.members, "Name", "name");
+    append_member(&number.members, "Ir_name", "name");
 
     return number;
 }
@@ -183,7 +184,7 @@ static Ir_type ir_gen_string(void) {
     Ir_type string = {.name = ir_name_new("literal", "string", false)};
 
     append_member(&string.members, "Strv", "data");
-    append_member(&string.members, "Name", "name");
+    append_member(&string.members, "Ir_name", "name");
 
     return string;
 }
@@ -191,8 +192,8 @@ static Ir_type ir_gen_string(void) {
 static Ir_type ir_gen_function_name(void) {
     Ir_type lang_char = {.name = ir_name_new("literal", "function_name", false)};
 
-    append_member(&lang_char.members, "Name", "fun_name");
-    append_member(&lang_char.members, "Name", "name_self");
+    append_member(&lang_char.members, "Ir_name", "fun_name");
+    append_member(&lang_char.members, "Ir_name", "name_self");
 
     return lang_char;
 }
@@ -200,7 +201,7 @@ static Ir_type ir_gen_function_name(void) {
 static Ir_type ir_gen_void(void) {
     Ir_type lang_void = {.name = ir_name_new("literal", "void", false)};
 
-    append_member(&lang_void.members, "Name", "name");
+    append_member(&lang_void.members, "Ir_name", "name");
 
     return lang_void;
 }
@@ -220,9 +221,9 @@ static Ir_type ir_gen_literal(void) {
 static Ir_type ir_gen_function_call(void) {
     Ir_type call = {.name = ir_name_new("expr", "function_call", false)};
 
-    append_member(&call.members, "Name_vec", "args");
-    append_member(&call.members, "Name", "name_self");
-    append_member(&call.members, "Name", "callee");
+    append_member(&call.members, "Ir_name_vec", "args");
+    append_member(&call.members, "Ir_name", "name_self");
+    append_member(&call.members, "Ir_name", "callee");
     append_member(&call.members, "Ir_lang_type", "lang_type");
 
     return call;
@@ -251,7 +252,7 @@ static Ir_type ir_gen_function_decl(void) {
 
     append_member(&def.members, "Ir_function_params*", "params");
     append_member(&def.members, "Ir_lang_type", "return_type");
-    append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Ir_name", "name");
 
     return def;
 }
@@ -259,7 +260,7 @@ static Ir_type ir_gen_function_decl(void) {
 static Ir_type ir_gen_function_def(void) {
     Ir_type def = {.name = ir_name_new("def", "function_def", false)};
 
-    append_member(&def.members, "Name", "name_self");
+    append_member(&def.members, "Ir_name", "name_self");
     append_member(&def.members, "Ir_function_decl*", "decl");
     append_member(&def.members, "Ir_block*", "body");
 
@@ -271,8 +272,8 @@ static Ir_type ir_gen_variable_def(void) {
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
-    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "Name", "name_corr_param"); // for loading from alloca
+    append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from alloca
 
     return def;
 }
@@ -288,7 +289,7 @@ static Ir_type ir_gen_primitive_def(void) {
 static Ir_type ir_gen_label(void) {
     Ir_type def = {.name = ir_name_new("def", "label", false)};
 
-    append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Ir_name", "name");
 
     return def;
 }
@@ -296,7 +297,7 @@ static Ir_type ir_gen_label(void) {
 static Ir_type ir_gen_string_def(void) {
     Ir_type def = {.name = ir_name_new("literal_def", "string_def", false)};
 
-    append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Ir_name", "name");
     append_member(&def.members, "Strv", "data");
 
     return def;
@@ -306,7 +307,7 @@ static Ir_type ir_gen_struct_lit_def(void) {
     Ir_type def = {.name = ir_name_new("literal_def", "struct_lit_def", false)};
 
     append_member(&def.members, "Ir_expr_vec", "members");
-    append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Ir_name", "name");
     append_member(&def.members, "Ir_lang_type", "lang_type");
 
     return def;
@@ -340,8 +341,8 @@ static Ir_type ir_gen_load_element_ptr(void) {
 
     append_member(&load.members, "Ir_lang_type", "lang_type");
     append_member(&load.members, "size_t", "memb_idx");
-    append_member(&load.members, "Name", "ir_src");
-    append_member(&load.members, "Name", "name_self");
+    append_member(&load.members, "Ir_name", "ir_src");
+    append_member(&load.members, "Ir_name", "name_self");
 
     return load;
 }
@@ -350,9 +351,9 @@ static Ir_type ir_gen_array_access(void) {
     Ir_type load = {.name = ir_name_new("ir", "array_access", false)};
 
     append_member(&load.members, "Ir_lang_type", "lang_type");
-    append_member(&load.members, "Name", "index");
-    append_member(&load.members, "Name", "callee");
-    append_member(&load.members, "Name", "name_self");
+    append_member(&load.members, "Ir_name", "index");
+    append_member(&load.members, "Ir_name", "callee");
+    append_member(&load.members, "Ir_name", "name_self");
 
     return load;
 }
@@ -360,7 +361,7 @@ static Ir_type ir_gen_array_access(void) {
 static Ir_type ir_gen_function_params(void) {
     Ir_type params = {.name = ir_name_new("ir", "function_params", false)};
 
-    append_member(&params.members, "Name", "name");
+    append_member(&params.members, "Ir_name", "name");
     append_member(&params.members, "Ir_variable_def_vec", "params");
 
     return params;
@@ -369,8 +370,8 @@ static Ir_type ir_gen_function_params(void) {
 static Ir_type ir_gen_return(void) {
     Ir_type rtn = {.name = ir_name_new("ir", "return", false)};
 
-    append_member(&rtn.members, "Name", "name_self");
-    append_member(&rtn.members, "Name", "child");
+    append_member(&rtn.members, "Ir_name", "name_self");
+    append_member(&rtn.members, "Ir_name", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
@@ -379,8 +380,8 @@ static Ir_type ir_gen_return(void) {
 static Ir_type ir_gen_goto(void) {
     Ir_type lang_goto = {.name = ir_name_new("ir", "goto", false)};
 
-    append_member(&lang_goto.members, "Name", "name_self");
-    append_member(&lang_goto.members, "Name", "label");
+    append_member(&lang_goto.members, "Ir_name", "name_self");
+    append_member(&lang_goto.members, "Ir_name", "label");
 
     return lang_goto;
 }
@@ -388,10 +389,10 @@ static Ir_type ir_gen_goto(void) {
 static Ir_type ir_gen_cond_goto(void) {
     Ir_type cond_goto = {.name = ir_name_new("ir", "cond_goto", false)};
 
-    append_member(&cond_goto.members, "Name", "name_self");
-    append_member(&cond_goto.members, "Name", "condition");
-    append_member(&cond_goto.members, "Name", "if_true");
-    append_member(&cond_goto.members, "Name", "if_false");
+    append_member(&cond_goto.members, "Ir_name", "name_self");
+    append_member(&cond_goto.members, "Ir_name", "condition");
+    append_member(&cond_goto.members, "Ir_name", "if_true");
+    append_member(&cond_goto.members, "Ir_name", "if_false");
 
     return cond_goto;
 }
@@ -400,7 +401,7 @@ static Ir_type ir_gen_alloca(void) {
     Ir_type lang_alloca = {.name = ir_name_new("ir", "alloca", false)};
 
     append_member(&lang_alloca.members, "Ir_lang_type", "lang_type");
-    append_member(&lang_alloca.members, "Name", "name");
+    append_member(&lang_alloca.members, "Ir_name", "name");
 
     return lang_alloca;
 }
@@ -408,9 +409,9 @@ static Ir_type ir_gen_alloca(void) {
 static Ir_type ir_gen_load_another_ir(void) {
     Ir_type load = {.name = ir_name_new("ir", "load_another_ir", false)};
 
-    append_member(&load.members, "Name", "ir_src");
+    append_member(&load.members, "Ir_name", "ir_src");
     append_member(&load.members, "Ir_lang_type", "lang_type");
-    append_member(&load.members, "Name", "name");
+    append_member(&load.members, "Ir_name", "name");
 
     return load;
 }
@@ -418,10 +419,10 @@ static Ir_type ir_gen_load_another_ir(void) {
 static Ir_type ir_gen_store_another_ir(void) {
     Ir_type store = {.name = ir_name_new("ir", "store_another_ir", false)};
 
-    append_member(&store.members, "Name", "ir_src");
-    append_member(&store.members, "Name", "ir_dest");
+    append_member(&store.members, "Ir_name", "ir_src");
+    append_member(&store.members, "Ir_name", "ir_dest");
     append_member(&store.members, "Ir_lang_type", "lang_type");
-    append_member(&store.members, "Name", "name");
+    append_member(&store.members, "Ir_name", "name");
 
     return store;
 }
@@ -445,7 +446,7 @@ static Ir_type ir_gen_struct_memb_def(void) {
     Ir_type def = {.name = ir_name_new("ir", "struct_memb_def", false)};
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
-    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
     append_member(&def.members, "size_t", "count");
 
 
@@ -951,6 +952,7 @@ static void gen_all_irs(const char* file_path, bool implementation) {
         gen_gen("#include <symbol_table.h>\n");
         gen_gen("#include <token.h>\n");
         gen_gen("#include <vecs.h>\n");
+        gen_gen("#include <cfg.h>\n");
     } else {
         gen_gen("#ifndef IR_FORWARD_DECL_H\n");
         gen_gen("#define IR_FORWARD_DECL_H\n");

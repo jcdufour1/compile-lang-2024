@@ -22,7 +22,7 @@ static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
-    return name_is_equal(a.str, b.str);
+    return ir_name_is_equal(a.str, b.str);
 }
 
 static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {
@@ -165,7 +165,7 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
             lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
                 0
             )
         ));
@@ -173,7 +173,7 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,
-        lang_type_atom_new(name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL), 0)
+        lang_type_atom_new(name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}), 0)
     ));
 }
 
@@ -366,7 +366,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
     }
@@ -421,7 +421,6 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
 
 static inline Tast_def* tast_def_from_name(Name name) {
     Tast_def* def = NULL;
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
     // TODO: assert that name.base.count > 0
     unwrap(symbol_lookup(&def, name));
     return def;

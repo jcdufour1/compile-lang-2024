@@ -11,7 +11,10 @@
 #include <ir_forward_decl.h>
 #include <env.h>
 
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
+
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth);
+
 void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, int recursion_depth, const char* file_path, int line);
 
 #define usymbol_log_table(log_level, sym_table) \
@@ -86,11 +89,15 @@ bool ir_tbl_add(Ir* tast_of_symbol);
 
 void ir_tbl_update(Ir* tast_of_symbol);
 
-bool ir_lookup(Ir** result, Name key);
+bool ir_lookup(Ir** result, Ir_name key);
 
 bool ir_add(Ir* tast_of_symbol);
 
 void ir_update(Ir* tast_of_symbol);
+
+bool init_symbol_lookup(Init_table* init_tables, Init_table_node** result, Ir_name name);
+
+bool init_symbol_add(Init_table* init_table, Init_table_node node);
 
 Symbol_table* symbol_get_block(void);
 
@@ -98,10 +105,10 @@ void log_symbol_table_if_block(const char* file_path, int line);
 
 const char* sym_tbl_status_print(SYM_TBL_STATUS status);
 
-bool c_forward_struct_tbl_lookup(Name** result, Name key);
+bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key);
 
 // returns false if value has already been added to the table
-bool c_forward_struct_tbl_add(Name* value, Name key);
+bool c_forward_struct_tbl_add(Ir_name* value, Ir_name key);
 
 bool file_path_to_text_tbl_lookup(Strv** result, Strv key);
 
@@ -140,6 +147,28 @@ void scope_to_name_tbl_add(Scope_id key, Name scope_name);
 void scope_to_name_tbl_update(Scope_id key, Name scope_name);
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
+
+void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth);
+
+bool ir_name_to_name_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+);
+
+bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name);
+
+bool ir_name_to_name_add(Ir_name_to_name_table_node node);
+
+bool name_to_ir_name_add_internal(
+    Strv key,
+    void* item,
+    Scope_id scope_id
+);
+
+bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name);
+
+bool name_to_ir_name_add(Name_to_ir_name_table_node node);
 
 #endif // SYMBOL_TABLE_H
 

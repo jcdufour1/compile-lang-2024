@@ -35,28 +35,30 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 
 // TODO: move this function
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
-    assert(name.mod_alias.base.count > 0);
+    unwrap(name.mod_alias.base.count > 0);
 
     Uast_def* alias_ = NULL;
-    Name temp_name = name_new(
+    Name alias_name = name_new(
         name.mod_alias.mod_path,
         name.mod_alias.base,
         (Ulang_type_vec) {0},
-        name.mod_alias.scope_id
+        name.mod_alias.scope_id,
+        (Attrs) {0}
     );
-    if (!usymbol_lookup(&alias_, temp_name)) {
+
+    if (!usymbol_lookup(&alias_, alias_name)) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, temp_name)
+            name_print(NAME_MSG, alias_name)
         );
-        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, temp_name))));
+        unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, alias_name))));
         return false;
     }
 
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope, (Attrs) {0});
             return true;
         }
         case UAST_POISON_DEF:

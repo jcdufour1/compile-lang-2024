@@ -19,12 +19,15 @@
 #include <str_and_num_utils.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type.h>
- 
+#include <time_utils.h>
+#include <ir_utils.h>
+
 static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
         lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN, pointer_depth
+            POS_BUILTIN,
+            pointer_depth
         )))
     );
     unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
@@ -35,7 +38,7 @@ static void add_void(void) {
 }
 
 static void add_primitives(void) {
-    add_opaque(0);
+    //add_opaque(0);
     add_void();
 
     vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
@@ -46,7 +49,8 @@ static void add_builtin_def(Strv name) {
         MOD_PATH_RUNTIME,
         name,
         (Ulang_type_vec) {0},
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
     )))));
 }
 
@@ -58,22 +62,32 @@ static void add_builtin_defs(void) {
 
 #define do_pass(pass_fn, sym_log_fn) \
     do { \
+        uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
+        uint64_t after = get_time_milliseconds(); \
+        log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             exit(EXIT_CODE_FAIL); \
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        if (params_log_level <= LOG_DEBUG) { \
+            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
+        arena_reset(&a_pass);\
     } while (0)
 
 #define do_pass_status(pass_fn, sym_log_fn) \
     do { \
+        uint64_t before = get_time_milliseconds(); \
         bool status = pass_fn(); \
+        (void) status; \
+        uint64_t after = get_time_milliseconds(); \
+        log(LOG_VERBOSE, "pass `" #pass_fn "` took "FMT"\n", milliseconds_print(after - before));\
         if (env.error_count > 0) { \
             log(LOG_DEBUG, #pass_fn " failed\n"); \
             assert((!status || params.error_opts_changed) && #pass_fn " is not returning false when it should\n"); \
@@ -81,10 +95,13 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        if (params_log_level <= LOG_DEBUG) { \
+            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_print);\
+        arena_reset(&a_pass);\
     } while (0)
 
 void compile_file_to_ir(void) {
@@ -110,9 +127,15 @@ void compile_file_to_ir(void) {
     do_pass_status(parse, usymbol_log_level);
     do_pass_status(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
+    //Ir* result = NULL;
+    //unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/union"), sv("union"), (Ulang_type_vec) {0}, 2, (Attrs) {0})));
+    //log(LOG_DEBUG, FMT"\n", ir_print(result));
+    //log(LOG_DEBUG, "%d\n", ir_tast_get_name(result).attrs);
 
     // ir passes
+    do_pass(construct_cfgs, ir_log_level);
     do_pass(remove_void_assigns, ir_log_level);
+    do_pass(check_uninitialized, ir_log_level);
 }
 
 void do_passes(void) {
@@ -177,6 +200,7 @@ void do_passes(void) {
         string_extend_cstr(&a_main, &output_path, "./");
         string_extend_strv(&a_main, &output_path, params.output_file_path);
         vec_append(&a_main, &cmd, string_to_strv(output_path));
+        // TODO: free arenas before calling subprocess?
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);

@@ -36,6 +36,12 @@ typedef struct {
     Name* buf;
 } Name_vec;
 
+// TODO: move this struct
+typedef struct {
+    Vec_base info;
+    Ir_name* buf;
+} Ir_name_vec;
+
 
 struct Ulang_type_tuple_;
 typedef struct Ulang_type_tuple_ Ulang_type_tuple;

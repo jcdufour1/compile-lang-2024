@@ -9,7 +9,7 @@ Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos
     if (include_scope) {
         serialized = serialize_name(temp);
     } else {
-        serialized = serialize_name_symbol_table(temp);
+        serialized = serialize_name_symbol_table(&a_main, temp);
     }
 
     String name = {0};
@@ -26,7 +26,7 @@ Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool inclu
     String name = {0};
     extend_name(NAME_LOG, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type, include_scope)));
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
 Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope) {
@@ -37,7 +37,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
         include_scope
     )));
     string_extend_size_t(&a_main, &name, ulang_type.count);
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
@@ -46,15 +46,15 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
         Ulang_type curr = vec_at(ulang_type.ulang_types, idx);
         string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, curr, include_scope)));
     }
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0);
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0, (Attrs) {0});
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
-    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {
-    return name_new(mod_path, sv("gen_param"), (Ulang_type_vec) {0}, 0);
+    return name_new(mod_path, sv("gen_param"), (Ulang_type_vec) {0}, 0, (Attrs) {0});
 }
 
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {

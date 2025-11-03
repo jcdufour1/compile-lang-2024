@@ -30,7 +30,7 @@ ifeq ($(DEBUG), 1)
 else
     C_FLAGS = ${C_FLAGS_RELEASE}
 	BUILD_DIR=${BUILD_DIR_RELEASE}
-	LOG_LEVEL ?= "LOG_INFO"
+	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
 OBJS=\
@@ -45,6 +45,8 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/ir_lang_type_after.o \
 	 ${BUILD_DIR}/ir/ir_print.o \
 	 ${BUILD_DIR}/ir/remove_void_assigns.o \
+	 ${BUILD_DIR}/ir/check_uninitialized.o \
+	 ${BUILD_DIR}/ir/construct_cfgs.o \
 	 ${BUILD_DIR}/lang_type/lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ir_lang_type_print.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_print.o \
@@ -92,12 +94,24 @@ DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= compile-run ${FILE_TO_TEST}
+ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level=VERBOSE
 
 all: build
 
 run: build
-	time ${BUILD_DIR}/main ${ARGS_PROGRAM}
+	time ${BUILD_DIR}/main ${ARGS_PROGRAM} -lm
+
+# NOTE: for gprof, add "-pg" to release build options, and do not set BUILD to 0
+gprof: run
+	gprof ${BUILD_DIR}/main gmon.out > report.txt
+
+# NOTE: for gprof2dot, add "-pg" to release build options, and do not set BUILD to 0
+gprof2dot: gprof
+	gprof2dot report.txt > report_graphvis.txt
+
+# NOTE: for gprof_to_graphvis, add "-pg" to release build options, and do not set BUILD to 0
+gprof_to_graphvis: gprof2dot
+	dot report_graphvis.txt -T svg > report.svg
 
 gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
@@ -158,6 +172,12 @@ ${BUILD_DIR}/ir/ir_print.o: ${DEP_COMMON} src/ir/ir_print.c
 
 ${BUILD_DIR}/ir/remove_void_assigns.o: ${DEP_COMMON} src/ir/remove_void_assigns.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/remove_void_assigns.o src/ir/remove_void_assigns.c
+
+${BUILD_DIR}/ir/check_uninitialized.o: ${DEP_COMMON} src/ir/check_uninitialized.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/check_uninitialized.o src/ir/check_uninitialized.c
+
+${BUILD_DIR}/ir/construct_cfgs.o: ${DEP_COMMON} src/ir/construct_cfgs.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/construct_cfgs.o src/ir/construct_cfgs.c
 
 ${BUILD_DIR}/lang_type/lang_type_print.o: ${DEP_COMMON} src/lang_type/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_print.o src/lang_type/lang_type_print.c

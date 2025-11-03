@@ -5,11 +5,15 @@ type Union raw_union {
     cstr u8*
 }
 
+fn fun1(union Union) {
+    io.printf("%d\n", union.num)
+}
+
 fn main() i32 {
     let union Union
 
     union.num = 45
-    io.printf("%d\n", union.num)
+    fun1(union)
 
     union.cstr = "hello\n"
     io.printf("%s", union.cstr)

@@ -24,7 +24,7 @@ bool is_extern_c(const Ir* ir) {
     unreachable("");
 }
 
-void ir_extend_name(String* output, Name name) {
+void ir_extend_name(String* output, Ir_name name) {
     Ir* result = NULL;
     if (ir_lookup(&result, name) && is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
@@ -37,6 +37,6 @@ void ir_extend_name(String* output, Name name) {
         name.base = sv(EXTERN_C_OWN_PREFIX"_actual_main");
     }
 
-    extend_name(NAME_EMIT_IR, output, name);
+    extend_ir_name(NAME_EMIT_IR, output, name);
 }
 

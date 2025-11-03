@@ -9,7 +9,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -22,7 +22,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
             string_extend_cstr(&a_main, &string, "f");
             string_extend_int64_t(&a_main, &string, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -35,7 +35,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
             Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
             );
             assert(!strv_is_equal(atom.str.base, sv("void")));
@@ -44,7 +44,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive 
         }
         case IR_LANG_TYPE_OPAQUE: {
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                name_to_ir_name(name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})),
                 ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -67,7 +67,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_la
                 msg_todo("bit widths other than 32, 64, or 128 (for floating point numbers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
             }
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -95,7 +95,7 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_la
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
             );
         }
@@ -122,13 +122,13 @@ Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_la
                 string_extend_cstr(&a_main, &string, "_t");
             }
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
             );
         }
         case IR_LANG_TYPE_OPAQUE:
             return ir_lang_type_atom_new(
-                name_new(MOD_PATH_EXTERN_C, sv("void"), (Ulang_type_vec) {0}, 0),
+                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, sv("void"), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
                 ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
             );
     }

@@ -53,7 +53,7 @@ static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYP
     if (result) {
         *result = token;
     }
-    assert(result);
+    unwrap(result);
     return true;
 }
 

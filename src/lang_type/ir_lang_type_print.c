@@ -40,21 +40,21 @@ Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
 }
 
 void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_atom atom) {
-    Name temp = atom.str;
+    Ir_name temp = atom.str;
 
     if (atom.str.base.count > 1) {
         switch (mode) {
             case LANG_TYPE_MODE_LOG:
-                extend_name(NAME_LOG, string, atom.str);
+                extend_ir_name(NAME_LOG, string, atom.str);
                 break;
             case LANG_TYPE_MODE_MSG:
-                extend_name(NAME_MSG, string, atom.str);
+                extend_ir_name(NAME_MSG, string, atom.str);
                 break;
             case LANG_TYPE_MODE_EMIT_C:
-                extend_name(NAME_EMIT_C, string, atom.str);
+                extend_ir_name(NAME_EMIT_C, string, atom.str);
                 break;
             case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_name(NAME_EMIT_IR, string, atom.str);
+                extend_ir_name(NAME_EMIT_IR, string, atom.str);
                 break;
             default:
                 unreachable("");
@@ -146,7 +146,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
         }
         case IR_LANG_TYPE_STRUCT:
             // fallthrough
-            assert(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
+            unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
         case IR_LANG_TYPE_VOID:
             // fallthrough
         case IR_LANG_TYPE_PRIMITIVE:

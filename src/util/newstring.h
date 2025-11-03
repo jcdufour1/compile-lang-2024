@@ -24,6 +24,12 @@ static inline void string_extend_cstr(Arena* arena, String* str, const char* cst
     }
 }
 
+static inline void string_extend_hex_8_digits(Arena* arena, String* str, uint32_t num) {
+    char num_str[9] = {0};
+    sprintf(num_str, "%08x", num);
+    string_extend_cstr(arena, str, num_str);
+}
+
 static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t num) {
     char num_str[3];
     sprintf(num_str, "%02x", num);

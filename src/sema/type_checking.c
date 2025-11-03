@@ -102,7 +102,7 @@ static Tast_expr* tast_auto_deref_to_n(Tast_expr* expr, int16_t n) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > n) {
         unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
-        assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
+        unwrap(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
     return expr;
@@ -738,7 +738,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
     }
 
-    assert(*new_tast);
+    unwrap(*new_tast);
     return true;
 }
 
@@ -748,7 +748,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     if (!try_set_expr_types(&new_lhs, operator->lhs)) {
         return false;
     }
-    assert(new_lhs);
+    unwrap(new_lhs);
 
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
@@ -1271,7 +1271,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             }
-            assert(*new_tast);
+            unwrap(*new_tast);
             return true;
         case UAST_UNKNOWN:
             if (check_env.lhs_lang_type.type != LANG_TYPE_ENUM) {
@@ -1308,7 +1308,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             if (!try_set_operator_types(new_tast, uast_operator_unwrap(uast))) {
                 return false;
             }
-            assert(*new_tast);
+            unwrap(*new_tast);
             return true;
         case UAST_FUNCTION_CALL:
             return try_set_function_call_types(new_tast, uast_function_call_unwrap(uast));
@@ -1537,7 +1537,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     sym->name.base,
                     (Ulang_type_vec) {0} /* TODO */,
                     sym->name.scope_id
-                )
+                , (Attrs) {0})
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
                 // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -1689,7 +1689,7 @@ bool try_set_function_call_builtin_types(
             membs,
             util_literal_name_new(),
             lang_type_struct_const_wrap(lang_type_struct_new(array.pos, lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL),
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL, (Attrs) {0}),
                 0
             )))
         ));
@@ -2064,18 +2064,18 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     }
 
     if (is_variadic) {
-        assert(params->params.info.count > 0);
+        unwrap(params->params.info.count > 0);
         for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
             // TODO: do type checking here if this function is not an extern "c" function
             if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(fun_call->args, idx))) {
                 status = false;
                 continue;
             }
-            assert(!vec_at(new_args_set, idx));
+            unwrap(!vec_at(new_args_set, idx));
             *vec_at_ref(&new_args_set, idx) = true;
         }
     } else {
-        assert(new_args_set.info.count == new_args.info.count);
+        unwrap(new_args_set.info.count == new_args.info.count);
         for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
             if (!vec_at(new_args_set, idx)) {
                 // TODO: move error for function parameter unspecified to here?
@@ -2825,7 +2825,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             status = false;
             goto error;
         }
-        assert(new_arg);
+        unwrap(new_arg);
         *vec_at_ref(&new_args, curr_arg_count) = new_arg;
         assert(vec_at(new_args, curr_arg_count));
         *vec_at_ref(&new_args_set, curr_arg_count) = true;
@@ -2836,7 +2836,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (is_variadic) {
-        assert(params->params.info.count > 0);
+        unwrap(params->params.info.count > 0);
         for (size_t idx = params->params.info.count - 1; idx < fun_call->args.info.count; idx++) {
             // TODO: do type checking here if this function is not an extern "c" function
             if (!try_set_expr_types(vec_at_ref(&new_args, idx), vec_at(fun_call->args, idx))) {
@@ -2847,7 +2847,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             *vec_at_ref(&new_args_set, idx) = true;
         }
     } else {
-        assert(new_args_set.info.count == new_args.info.count);
+        unwrap(new_args_set.info.count == new_args.info.count);
         size_t gen_arg_count = 0;
         for (size_t idx = 0; idx < params->params.info.count; idx++) {
             if (vec_at(params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
@@ -3218,7 +3218,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.base,
                 access->member_name->name.gen_args,
                 access->member_name->name.scope_id
-            ));
+            , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
             if (!try_set_symbol_types(&new_expr, sym)) {
                 return false;
@@ -3278,7 +3278,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_TOP_LEVEL,
+                (Attrs) {0}
             ))),
             false
         );
@@ -3316,7 +3317,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("static_array_slice"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_TOP_LEVEL,
+                (Attrs) {0}
             ))),
             false
         );
@@ -3331,7 +3333,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_TOP_LEVEL,
+                (Attrs) {0}
             ))),
             false
         );
@@ -3558,7 +3561,6 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     *new_tast = tast_yield_new(yield->pos, yield->do_yield_expr, new_child, yield->break_out_of);
-    //assert(tast_label_unwrap(tast_def_from_name(yield->break_out_of))->block_scope != SCOPE_NOT);
 
     check_env.break_in_case = true;
 error:
@@ -3593,7 +3595,6 @@ bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
     }
 
     *new_tast = tast_continue_new(cont->pos, cont->break_out_of);
-    //assert(tast_label_unwrap(tast_def_from_name(cont->break_out_of))->block_scope != SCOPE_NOT);
 
     check_env.break_in_case = true;
 error:
@@ -4117,44 +4118,44 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 // TODO: consider how to do this
 static void do_test_bit_width(void) {
-    assert(0 == log2_int64_t(1));
-    assert(1 == log2_int64_t(2));
-    assert(2 == log2_int64_t(3));
-    assert(2 == log2_int64_t(4));
-    assert(3 == log2_int64_t(5));
-    assert(3 == log2_int64_t(6));
-    assert(3 == log2_int64_t(7));
-    assert(3 == log2_int64_t(8));
+    unwrap(0 == log2_int64_t(1));
+    unwrap(1 == log2_int64_t(2));
+    unwrap(2 == log2_int64_t(3));
+    unwrap(2 == log2_int64_t(4));
+    unwrap(3 == log2_int64_t(5));
+    unwrap(3 == log2_int64_t(6));
+    unwrap(3 == log2_int64_t(7));
+    unwrap(3 == log2_int64_t(8));
 
-    assert(1 == bit_width_needed_signed(-1));
-    assert(2 == bit_width_needed_signed(-2));
-    assert(3 == bit_width_needed_signed(-3));
-    assert(3 == bit_width_needed_signed(-4));
-    assert(4 == bit_width_needed_signed(-5));
-    assert(4 == bit_width_needed_signed(-6));
-    assert(4 == bit_width_needed_signed(-7));
-    assert(4 == bit_width_needed_signed(-8));
-    assert(5 == bit_width_needed_signed(-9));
+    unwrap(1 == bit_width_needed_signed(-1));
+    unwrap(2 == bit_width_needed_signed(-2));
+    unwrap(3 == bit_width_needed_signed(-3));
+    unwrap(3 == bit_width_needed_signed(-4));
+    unwrap(4 == bit_width_needed_signed(-5));
+    unwrap(4 == bit_width_needed_signed(-6));
+    unwrap(4 == bit_width_needed_signed(-7));
+    unwrap(4 == bit_width_needed_signed(-8));
+    unwrap(5 == bit_width_needed_signed(-9));
 
-    assert(1 == bit_width_needed_signed(0));
-    assert(2 == bit_width_needed_signed(1));
-    assert(3 == bit_width_needed_signed(2));
-    assert(3 == bit_width_needed_signed(3));
-    assert(4 == bit_width_needed_signed(4));
-    assert(4 == bit_width_needed_signed(5));
-    assert(4 == bit_width_needed_signed(6));
-    assert(4 == bit_width_needed_signed(7));
-    assert(5 == bit_width_needed_signed(8));
+    unwrap(1 == bit_width_needed_signed(0));
+    unwrap(2 == bit_width_needed_signed(1));
+    unwrap(3 == bit_width_needed_signed(2));
+    unwrap(3 == bit_width_needed_signed(3));
+    unwrap(4 == bit_width_needed_signed(4));
+    unwrap(4 == bit_width_needed_signed(5));
+    unwrap(4 == bit_width_needed_signed(6));
+    unwrap(4 == bit_width_needed_signed(7));
+    unwrap(5 == bit_width_needed_signed(8));
 
-    assert(1 == bit_width_needed_unsigned(0));
-    assert(1 == bit_width_needed_unsigned(1));
-    assert(2 == bit_width_needed_unsigned(2));
-    assert(2 == bit_width_needed_unsigned(3));
-    assert(3 == bit_width_needed_unsigned(4));
-    assert(3 == bit_width_needed_unsigned(5));
-    assert(3 == bit_width_needed_unsigned(6));
-    assert(3 == bit_width_needed_unsigned(7));
-    assert(4 == bit_width_needed_unsigned(8));
+    unwrap(1 == bit_width_needed_unsigned(0));
+    unwrap(1 == bit_width_needed_unsigned(1));
+    unwrap(2 == bit_width_needed_unsigned(2));
+    unwrap(2 == bit_width_needed_unsigned(3));
+    unwrap(3 == bit_width_needed_unsigned(4));
+    unwrap(3 == bit_width_needed_unsigned(5));
+    unwrap(3 == bit_width_needed_unsigned(6));
+    unwrap(3 == bit_width_needed_unsigned(7));
+    unwrap(4 == bit_width_needed_unsigned(8));
 }
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool is_top_level) {
@@ -4191,7 +4192,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Tast_stmt* new_stmt = NULL;
         switch (try_set_stmt_types(&new_stmt, curr_tast, is_top_level)) {
             case STMT_OK:
-                assert(curr_tast);
+                unwrap(curr_tast);
                 vec_append(&a_main, &new_tasts, new_stmt);
                 break;
             case STMT_NO_STMT:
@@ -4227,8 +4228,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             default:
                 todo();
         }
-        assert(rtn_statement);
-        assert(new_rtn_statement);
+        unwrap(rtn_statement);
+        unwrap(new_rtn_statement);
         vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
@@ -4245,7 +4246,7 @@ error:
     //}
     *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
     if (status) {
-        assert(*new_tast);
+        unwrap(*new_tast);
     } else {
         assert(env.error_count > 0);
     }
@@ -4410,7 +4411,7 @@ bool try_set_types(void) {
     }
 
     Uast_def* main_fn_ = NULL;
-    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             msg_todo(
                 "actual error message for symbol that is named `main` but is not a function",

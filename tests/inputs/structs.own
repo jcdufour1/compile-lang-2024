@@ -1,4 +1,5 @@
 type io import = std.io
+type util import = std.util
 
 
 type Token struct {
@@ -27,7 +28,7 @@ fn get_div(div Div) Div {
 }
 
 fn main() i32 {
-    let div Div
+    let div Div = {.numerator = 0, .denominator = 0}
     div = {.numerator = 9, .denominator = 2}
     io.printf("%d/%d\n", div.numerator, div.denominator)
     div.numerator = 11
@@ -41,7 +42,7 @@ fn main() i32 {
     io.printf("%d/%d\n", div.numerator, div.denominator)
     io.printf("%d/%d\n", result, div.denominator)
 
-    let token Token
+    let token Token = {.num = 0, .string_data = util.null(u8), .div5 = {.numerator = 0, .denominator = 0}}
     token.num = 923;
     token.string_data = "hello";
     token.div5 = new_div3;
@@ -53,7 +54,7 @@ fn main() i32 {
     token.div5 = div;
     io.printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
 
-    let token2 Token
+    let token2 Token = {.num = 0, .string_data = util.null(u8), .div5 = {.numerator = 0, .denominator = 0}}
     token2.num = 82
     token2.string_data = "bye"
     let div19 Div = {56, 84}

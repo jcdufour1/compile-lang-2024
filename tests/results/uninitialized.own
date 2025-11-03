@@ -1,0 +1,46 @@
+compile::stdout 0
+
+compile::stderr 40
+tests/inputs/uninitialized.own:97:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    96 |     let status i32
+    97 |     return status
+       |            ^
+    98 | }
+tests/inputs/uninitialized.own:19:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    18 |     let status i32
+    19 |     return status
+       |            ^
+    20 | }
+tests/inputs/uninitialized.own:55:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    54 |     }
+    55 |     return status
+       |            ^
+    56 | }
+tests/inputs/uninitialized.own:24:14:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    23 |     let status i32
+    24 |     aux_1arg(status)
+       |              ^
+    25 |     status = 8
+tests/inputs/uninitialized.own:81:24:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+    80 |     for 1 {
+    81 |         let num2 i32 = num
+       |                        ^
+    82 |     }
+tests/inputs/uninitialized.own:60:17:[1;31merror[0;39m:symbol `token` is used uninitialized on some or all code paths; note that struct must be initialized with a struct literal or function call (individual member accesses do not satisfy initialization requirements)
+    59 |     let token Token
+    60 |     return token.num
+       |                 ^
+    61 | }
+tests/inputs/uninitialized.own:45:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    44 |     }
+    45 |     return status
+       |            ^
+    46 | }
+tests/inputs/uninitialized.own:71:24:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+    70 |         let num i32
+    71 |         let num2 i32 = num
+       |                        ^
+    72 |     }
+
+compile::return_code 1
+

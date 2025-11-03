@@ -4,14 +4,8 @@
 #include <util.h>
 #include <ir.h>
 
-static inline const Ir_expr* ir_expr_lookup_from_name(Name name) {
-    Ir* child = NULL;
-    unwrap(ir_lookup(&child, name));
-    return ir_expr_const_unwrap(child);
-}
-
 bool is_extern_c(const Ir* ir);
 
-void ir_extend_name(String* output, Name name);
+void ir_extend_name(String* output, Ir_name name);
 
 #endif // COMMON_H

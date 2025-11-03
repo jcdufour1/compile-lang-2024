@@ -24,7 +24,7 @@ typedef struct {
             } \
             needs_resizing = true; \
         } \
-        if (original_capacity == 0) { \
+        if (needs_resizing && original_capacity == 0) { \
             (vector)->buf = arena_alloc(arena, sizeof((vector)->buf[0])*(vector)->info.capacity); \
         } else if (needs_resizing) { \
             (vector)->buf = arena_realloc(arena, (vector)->buf, sizeof((vector)->buf[0])*original_capacity, sizeof((vector)->buf[0])*(vector)->info.capacity); \
@@ -50,6 +50,7 @@ typedef struct {
 
 #define vec_insert(arena, vector, index, item_to_insert) \
     do { \
+        (unwrap((vector)->info.count >= (index) && "out of bounds"), &(vector)->buf[(index)]); \
         vec_reserve(arena, vector, 1); \
         memmove((vector)->buf + index + 1, (vector)->buf + index, sizeof((vector)->buf[0])*((vector)->info.count - (index))); \
         (vector)->buf[(index)] = item_to_insert; \
@@ -71,5 +72,20 @@ typedef struct {
 
 #define vec_pop(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), (vector)->info.count--, (vector)->buf[((vector)->info.count)])
+
+#define vec_foreach(idx_name, Item_type, item_name, vector) \
+    Item_type item_name = {0}; \
+    for (size_t idx_name = 0; item_name = (idx_name < (vector).info.count) ? vec_at(vector, idx_name) : ((Item_type) {0}), idx_name < (vector).info.count; idx_name++) 
+
+#define vec_foreach_ref(idx_name, Item_type, item_name, vector) \
+    Item_type* item_name = NULL; \
+    for (size_t idx_name = 0; item_name = (idx_name < (vector).info.count) ? vec_at_ref(&vector, idx_name) : NULL, idx_name < (vector).info.count; idx_name++) 
+
+#define vec_swap(vector, Item_type, idx_lhs, idx_rhs) \
+    do { \
+        Item_type temp = vec_at(*(vector), idx_lhs); \
+        *vec_at_ref(vector, idx_lhs) = vec_at(*(vector), idx_rhs); \
+        *vec_at_ref(vector, idx_rhs) = temp; \
+    } while(0)
 
 #endif // VECTOR_H

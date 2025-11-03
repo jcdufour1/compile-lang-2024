@@ -25,7 +25,7 @@ typedef struct Uast_type_ {
 } Uast_type;
 
 static void extend_uast_name_upper(String* output, Uast_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         extend_strv_upper(output, name.parent);
@@ -39,7 +39,7 @@ static void extend_uast_name_upper(String* output, Uast_name name) {
 }
 
 static void extend_uast_name_lower(String* output, Uast_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         extend_strv_lower(output, name.parent);
@@ -53,7 +53,7 @@ static void extend_uast_name_lower(String* output, Uast_name name) {
 }
 
 static void extend_uast_name_first_upper(String* output, Uast_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         extend_strv_first_upper(output, name.parent);
@@ -68,7 +68,7 @@ static void extend_uast_name_first_upper(String* output, Uast_name name) {
 
 static void extend_parent_uast_name_upper(String* output, Uast_name name) {
     todo();
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         unreachable("");
@@ -82,14 +82,14 @@ static void extend_parent_uast_name_upper(String* output, Uast_name name) {
 }
 
 static void extend_parent_uast_name_lower(String* output, Uast_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         string_extend_cstr(&gen_a, output, "uast");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "uast");
     string_extend_cstr(&gen_a, output, "_");
@@ -97,14 +97,14 @@ static void extend_parent_uast_name_lower(String* output, Uast_name name) {
 }
 
 static void extend_parent_uast_name_first_upper(String* output, Uast_name name) {
-    assert(name.parent.count > 0);
+    unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("uast"))) {
         string_extend_cstr(&gen_a, output, "Uast");
         return;
     }
 
-    assert(name.base.count > 0);
+    unwrap(name.base.count > 0);
 
     string_extend_cstr(&gen_a, output, "Uast");
     string_extend_cstr(&gen_a, output, "_");

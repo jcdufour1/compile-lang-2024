@@ -41,7 +41,7 @@ static void* safe_malloc(size_t capacity) {
         exit(EXIT_CODE_FAIL);
     }
     memset(new_ptr, 0, capacity);
-    assert((uint64_t)new_ptr%ALIGN_SIZE == 0 && "new_ptr is not aligned");
+    unwrap((uint64_t)new_ptr%ALIGN_SIZE == 0 && "new_ptr is not aligned");
     return new_ptr;
 }
 
@@ -84,7 +84,8 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
 
     void* buf_to_return = (char*)(*curr_buf) + (*curr_buf)->count;
     (*curr_buf)->count += capacity_needed;
-    assert((uint64_t)buf_to_return%ALIGN_SIZE == 0 && "buf_to_return is not actually aligned");
+    // TODO: cast to intptr_t, etc instead of uint64_t?
+    unwrap((uint64_t)buf_to_return%ALIGN_SIZE == 0 && "buf_to_return is not actually aligned");
     return buf_to_return;
 }
 

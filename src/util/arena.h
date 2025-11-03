@@ -17,6 +17,7 @@ typedef struct {
 } Arena;
 
 extern Arena a_main;
+extern Arena a_pass;
 extern Arena a_print;
 
 // allocate a zero-initialized memory region in arena, return pointer (similer to malloc, but never return null)
@@ -60,7 +61,7 @@ static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t c
     }
     char* new_cstr = arena_alloc(arena, count + 1);
     memcpy(new_cstr, cstr, count);
-    assert(new_cstr[count] == 0);
+    unwrap(new_cstr[count] == 0);
     return new_cstr;
 }
 
