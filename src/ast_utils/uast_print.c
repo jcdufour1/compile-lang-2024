@@ -423,7 +423,7 @@ Strv uast_case_print_internal(const Uast_case* lang_case, int indent) {
     } else {
         string_extend_strv(&a_temp, &buf, uast_expr_print_internal(lang_case->expr, indent + INDENT_WIDTH));
     }
-    string_extend_strv(&a_temp, &buf, uast_stmt_print_internal(lang_case->if_true, indent + INDENT_WIDTH));
+    string_extend_strv(&a_temp, &buf, uast_block_print_internal(lang_case->if_true, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }

@@ -439,7 +439,9 @@ static bool starts_with_continue(Tk_view tokens) {
 }
 
 static bool starts_with_block(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE || tk_view_front(tokens).type == TOKEN_ONE_LINE_BLOCK_START;
+    return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE ||
+        tk_view_front(tokens).type == TOKEN_ONE_LINE_BLOCK_START ||
+        tk_view_front(tokens).type == TOKEN_COLON;
 }
 
 static bool starts_with_function_call(Tk_view tokens) {
@@ -2191,7 +2193,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Uast_expr* is_false_cond = NULL;
-    Uast_stmt* if_false = uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))));
+    Uast_block* if_false = NULL;
     if (try_consume(NULL, tokens, TOKEN_ELSE)) {
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
             msg(DIAG_IF_ELSE_IN_IF_LET, if_token.pos, "`else if` causes of `if let` statements are not supported\n");
@@ -2206,6 +2208,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
                     "after `else` in if let statement",
                     TOKEN_OPEN_PAR,
                     TOKEN_ONE_LINE_BLOCK_START,
+                    TOKEN_COLON,
                     TOKEN_OPEN_CURLY_BRACE
                 );
                 return false;
@@ -2239,10 +2242,16 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if (PARSE_OK != parse_block(&if_false_block, tokens, false, if_false_scope, (Uast_stmt_vec) {0})) {
             return PARSE_ERROR;
         }
-        if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
+        if_false = if_false_block;
 
         if_else_chain_consume_newline(tokens);
     }
+
+    if (!if_false) {
+        // TODO: make function for making empty block, and call it here?
+        if_false = uast_block_new(if_token.pos, (Uast_stmt_vec) {0}, if_token.pos, if_false_scope);
+    }
+
 
     Uast_case_vec cases = {0};
 
@@ -2250,7 +2259,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if_token.pos,
         false,
         is_true_cond,
-        uast_expr_wrap(uast_block_wrap(if_true)),
+        if_true,
         if_true_scope
     );
     vec_append(&a_main, &cases, if_true_case);
@@ -2341,7 +2350,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     while (1) {
         Scope_id case_scope = symbol_collection_new(parent, util_literal_name_new());
-        Uast_stmt* case_if_true = NULL;
+        Uast_block* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
         if (try_consume(NULL, tokens, TOKEN_CASE)) {
@@ -2365,24 +2374,17 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
             break;
         }
         
-        Token case_start_token = {0};
-        // TODO: expected failure case no colon
-        unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
-        switch (parse_stmt(&case_if_true, tokens, case_scope)) {
-            case PARSE_EXPR_OK:
+        switch (parse_block(&case_if_true, tokens, false, case_scope, (Uast_stmt_vec) {0})) {
+            case PARSE_OK:
                 break;
-            case PARSE_EXPR_ERROR:
-                status = PARSE_ERROR;
-                goto error;
-            case PARSE_EXPR_NONE:
-                msg_expected_expr(*tokens, "");
+            case PARSE_ERROR:
                 status = PARSE_ERROR;
                 goto error;
             default:
                 unreachable("");
         }
         Uast_case* curr_case = uast_case_new(
-            case_start_token.pos,
+            case_if_true->pos,
             case_is_default,
             case_operand,
             case_if_true,
@@ -2392,7 +2394,12 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     }
 
     Uast_stmt_vec chain_ = {0};
-    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
+    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(
+        start_token.pos,
+        true,
+        uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)),
+        default_brk_label
+    )));
 
     if (cases.info.count < 1) {
         msg(DIAG_SWITCH_NO_CASES, start_token.pos, "switch statement must have at least one case statement\n");
@@ -2580,14 +2587,15 @@ static PARSE_STATUS parse_block(
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START)) {
+        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START) || try_consume(&open_brace_token, tokens, TOKEN_COLON)) {
             is_one_line = true;
         } else {
             msg_parser_expected(
                 tk_view_front(*tokens),
                 "at start of block",
                 TOKEN_OPEN_CURLY_BRACE,
-                TOKEN_ONE_LINE_BLOCK_START
+                TOKEN_ONE_LINE_BLOCK_START,
+                TOKEN_COLON
             );
             status = PARSE_ERROR;
         }

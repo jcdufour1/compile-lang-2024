@@ -3917,7 +3917,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
 
         Scope_id inner_scope = symbol_collection_new(outer_scope_id, scope_to_name_tbl_lookup(old_case->scope_id));
         // TODO: try to remove stmt_clone below (for performance)
-        vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_stmt_clone(
+        vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_block_clone(
             old_case->if_true,
             true,
             inner_scope,

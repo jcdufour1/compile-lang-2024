@@ -617,13 +617,10 @@ static void check_unit_ir_builtin(const Ir* ir) {
             //unreachable("");
             return;
         case IR_EXPR:
-            // TODO
             return;
         case IR_LOAD_ELEMENT_PTR:
-            // TODO
             return;
         case IR_ARRAY_ACCESS:
-            // TODO
             return;
         case IR_FUNCTION_PARAMS:
             todo();
@@ -637,13 +634,10 @@ static void check_unit_ir_builtin(const Ir* ir) {
         case IR_COND_GOTO:
             todo();
         case IR_ALLOCA:
-            // TODO
             return;
         case IR_LOAD_ANOTHER_IR:
-            // TODO
             return;
         case IR_STORE_ANOTHER_IR:
-            // TODO
             return;
         case IR_IMPORT_PATH:
             check_unit_import_path(ir_import_path_const_unwrap(ir));

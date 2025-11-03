@@ -1176,9 +1176,7 @@ static Ir_name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
     return enum_tag_lit->name;
 }
 
-// TODO: rename to load_int
-// TODO: maybe this function should append to new_block, similar to most other load_* functions
-static Ir_name load_number(Tast_int* old_lit) {
+static Ir_name load_int(Tast_int* old_lit) {
     Ir_int* number = ir_int_new(
         old_lit->pos,
         old_lit->data,
@@ -1189,7 +1187,6 @@ static Ir_name load_number(Tast_int* old_lit) {
     return number->name;
 }
 
-// TODO: maybe this function should append to new_block, similar to most other load_* functions
 static Ir_name load_float(Tast_float* old_lit) {
     Ir_float* number = ir_float_new(
         old_lit->pos,
@@ -1288,7 +1285,7 @@ static Ir_name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
         case TAST_ENUM_TAG_LIT:
             return load_enum_tag_lit(tast_enum_tag_lit_unwrap(old_lit));
         case TAST_INT:
-            return load_number(tast_int_unwrap(old_lit));
+            return load_int(tast_int_unwrap(old_lit));
         case TAST_FLOAT:
             return load_float(tast_float_unwrap(old_lit));
         case TAST_FUNCTION_LIT:
@@ -1503,7 +1500,7 @@ static Ir_name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             uint32_t size = sizeof_ir_lang_type(rm_tuple_lang_type(
                 tast_expr_get_lang_type(old_unary->child), old_unary->pos
             ));
-            return load_number(tast_int_new(old_unary->pos, size, lang_type_new_usize()));
+            return load_int(tast_int_new(old_unary->pos, size, lang_type_new_usize()));
         }
         case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {
