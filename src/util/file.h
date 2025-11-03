@@ -31,4 +31,7 @@ Strv file_strip_extension(Strv file_path);
 
 Strv file_basename(Strv file_path);
 
+// TODO: move this function and declaration?
+NEVER_RETURN void local_exit(int exit_code);
+
 #endif // FILE_H

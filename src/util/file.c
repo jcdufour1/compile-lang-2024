@@ -55,7 +55,7 @@ void write_file(const char* file_path, Strv text_to_write) {
             DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file %s: %s\n",
             file_path, strerror(errno)
         );
-        exit(EXIT_CODE_FAIL);
+        local_exit(EXIT_CODE_FAIL);
     }
 
     file_extend_strv(file, text_to_write);
@@ -94,7 +94,7 @@ FILE_TYPE get_file_type(Strv file_path) {
     if (!get_file_extension(&ext, file_path)) {
         // TODO: print what user command line option caused this, etc.
         msg_todo("executable file passed on the command line", POS_BUILTIN);
-        exit(EXIT_CODE_FAIL);
+        local_exit(EXIT_CODE_FAIL);
     }
 
     for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
@@ -108,7 +108,7 @@ FILE_TYPE get_file_type(Strv file_path) {
     string_extend_strv(&a_main, &buf, sv("file with extension ."));
     string_extend_strv(&a_main, &buf, ext);
     msg_todo_strv(string_to_strv(buf), POS_BUILTIN);
-    exit(EXIT_CODE_FAIL);
+    local_exit(EXIT_CODE_FAIL);
 }
 
 void file_extend_strv(FILE* file, Strv strv) {
@@ -135,5 +135,17 @@ Strv file_basename(Strv file_path) {
         new_path = strv_slice(new_path, 0, new_path.count - 1);
     }
     return strv_slice(file_path, new_path.count, file_path.count - new_path.count);
+}
+
+// TODO: move this function?
+NEVER_RETURN void local_exit(int exit_code) {
+    print_all_defered_msgs();
+
+    arena_free(&a_temp);
+    arena_free(&a_pass);
+    arena_free(&a_main);
+    arena_free(&a_leak);
+
+    exit(exit_code);
 }
 

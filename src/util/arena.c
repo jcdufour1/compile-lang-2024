@@ -37,7 +37,7 @@ static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_i
 static void* safe_malloc(size_t capacity) {
     void* new_ptr = malloc(capacity);
     if (!new_ptr) {
-        fprintf(stderr, "malloc failed\n");
+        fprintf(stderr, "malloc failed (note that compiler diagnostics may not be printed)\n");
         exit(EXIT_CODE_FAIL);
     }
     memset(new_ptr, 0, capacity);

@@ -737,7 +737,7 @@ void emit_c_from_tree(void) {
                 DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT" %s\n",
                 strv_print(params.input_file_path), strerror(errno)
             );
-            exit(EXIT_CODE_FAIL);
+            local_exit(EXIT_CODE_FAIL);
         }
         
         file_extend_strv(file, string_to_strv(header));
@@ -845,7 +845,7 @@ void emit_c_from_tree(void) {
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
             msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));
-            exit(EXIT_CODE_FAIL);
+            local_exit(EXIT_CODE_FAIL);
         }
     }
 }

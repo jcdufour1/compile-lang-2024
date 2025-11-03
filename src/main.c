@@ -20,17 +20,6 @@
 #include <time_utils.h>
 #include <ir_utils.h>
 
-static void local_exit(int exit_code) {
-    print_all_defered_msgs();
-
-    arena_free(&a_temp);
-    arena_free(&a_pass);
-    arena_free(&a_main);
-    arena_free(&a_leak);
-
-    exit(exit_code);
-}
-
 static void add_opaque(int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN,
