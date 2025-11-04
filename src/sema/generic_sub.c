@@ -119,6 +119,8 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
+        case ULANG_TYPE_EXPR:
+            todo();
     }
     unreachable("");
 }

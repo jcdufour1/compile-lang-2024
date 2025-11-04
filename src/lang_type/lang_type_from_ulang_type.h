@@ -208,6 +208,8 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
             return lang_type_from_ulang_type_fn(ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_GEN_PARAM:
             unreachable("");
+        case ULANG_TYPE_EXPR:
+            todo();
     }
     unreachable("");
 }

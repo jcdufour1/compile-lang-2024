@@ -77,6 +77,8 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type_gen_param(mod_path);
         case ULANG_TYPE_ARRAY:
             return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
+        case ULANG_TYPE_EXPR:
+            todo();
     }
     unreachable("");
 }

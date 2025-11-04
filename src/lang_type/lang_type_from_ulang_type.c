@@ -3,6 +3,7 @@
 #include <symbol_log.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
+#include <uast_expr_to_ulang_type.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
     switch (lang_type.type) {
@@ -29,6 +30,13 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return false;
         case ULANG_TYPE_ARRAY:
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
+        case ULANG_TYPE_EXPR: {
+            Ulang_type inner = {0};
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(lang_type).expr)) {
+                return false;
+            }
+            return try_lang_type_from_ulang_type(new_lang_type, inner);
+        }
     }
     unreachable("");
 }

@@ -988,6 +988,7 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
         return PARSE_OK;
     } else {
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        todo();
         return PARSE_ERROR;
     }
 }
@@ -1197,11 +1198,18 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
     memset(args, 0, sizeof(*args));
 
     do {
-        Ulang_type arg = {0};
-        if (PARSE_ERROR == parse_lang_type_struct_require(&arg, tokens, scope_id)) {
-            return PARSE_ERROR;
+        Uast_expr* arg = {0};
+        switch (parse_expr(&arg, tokens, scope_id)) {
+            case PARSE_EXPR_OK:
+                 break;
+            case PARSE_EXPR_NONE:
+                todo();
+            case PARSE_EXPR_ERROR:
+                todo();
+            default:
+                unreachable("");
         }
-        vec_append(&a_main, args, arg);
+        vec_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(arg, uast_expr_get_pos(arg))));
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
@@ -1572,6 +1580,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
     } else {
+        log(LOG_DEBUG, FMT"\n", strv_print(name_token.text));
         if (require_type) {
             if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
                 return PARSE_ERROR;
@@ -1594,10 +1603,12 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
                 return PARSE_ERROR;
             }
+            // TODO: should the "is_using" if statement also be ran for other two cases (Type and '')?
             if (is_using) {
                 vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
+            // TODO: should this msg_todo also be ran for other two cases (Type and '')?
             msg_todo("using in this situation", var_def->pos);
             return PARSE_ERROR;
         }
