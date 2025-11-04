@@ -17,6 +17,8 @@ static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
             unreachable("");
         case ULANG_TYPE_EXPR:
             todo();
+        case ULANG_TYPE_INT:
+            todo();
     }
 }
 

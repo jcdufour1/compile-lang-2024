@@ -60,9 +60,16 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
         case UAST_INDEX:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return false;
-        case UAST_LITERAL:
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return false;
+        case UAST_LITERAL: {
+            const Uast_literal* lit = uast_literal_const_unwrap(expr);
+            if (lit->type != UAST_INT) {
+                msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+                return false;
+            }
+            const Uast_int* lang_int = uast_int_const_unwrap(lit);
+            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->data, lang_int->pos));
+            return true;
+        }
         case UAST_FUNCTION_CALL:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return false;

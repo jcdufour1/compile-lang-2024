@@ -124,6 +124,8 @@ bool infer_generic_type(
             return false;
         case ULANG_TYPE_EXPR:
             todo();
+        case ULANG_TYPE_INT:
+            todo();
     }
     unreachable("");
 }

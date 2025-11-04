@@ -176,6 +176,8 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
         }
         case ULANG_TYPE_EXPR:
             todo();
+        case ULANG_TYPE_INT:
+            todo();
     }
     unreachable("");
 }

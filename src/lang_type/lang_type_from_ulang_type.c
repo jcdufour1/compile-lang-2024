@@ -37,6 +37,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             }
             return try_lang_type_from_ulang_type(new_lang_type, inner);
         }
+        case ULANG_TYPE_INT:
+            todo();
     }
     unreachable("");
 }

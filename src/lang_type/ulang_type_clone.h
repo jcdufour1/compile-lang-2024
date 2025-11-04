@@ -61,6 +61,8 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
             ));
         case ULANG_TYPE_EXPR:
             todo();
+        case ULANG_TYPE_INT:
+            todo();
     }
 }
 

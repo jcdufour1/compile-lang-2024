@@ -210,6 +210,8 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
             unreachable("");
         case ULANG_TYPE_EXPR:
             todo();
+        case ULANG_TYPE_INT:
+            todo();
     }
     unreachable("");
 }
