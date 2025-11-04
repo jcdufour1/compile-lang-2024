@@ -2467,6 +2467,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         goto error;
     }
 
+    // TODO: make helper function for this?
+    {
+        vec_foreach_ref(idx, Ulang_type, gen_arg, sym_name->gen_args) {
+            if (gen_arg->type == ULANG_TYPE_EXPR) {
+                todo();
+                Ulang_type inner = {0};
+                if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
+                    todo();
+                }
+                *gen_arg = inner;
+            }
+        }
+    }
+
     size_t idx_gen_param = 0;
     bool incre_param_next = false;
     for (size_t idx = 0; status && idx < params->params.info.count; idx++) {
@@ -2505,7 +2519,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
                                 arg_to_infer_from->type == TAST_LITERAL,
-                                vec_at(params->params, param_idx)->base,
+                                vec_at(params->params, param_idx)->base->lang_type,
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {

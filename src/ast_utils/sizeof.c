@@ -80,6 +80,8 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
             todo();
+        case LANG_TYPE_INT:
+            todo();
         case LANG_TYPE_REMOVED:
             unreachable("");
     }
@@ -116,6 +118,8 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
+            todo();
+        case LANG_TYPE_INT:
             todo();
         case LANG_TYPE_REMOVED:
             unreachable("");

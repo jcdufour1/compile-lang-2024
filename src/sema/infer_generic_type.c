@@ -3,6 +3,7 @@
 #include <lang_type_print.h>
 #include <lang_type_from_ulang_type.h>
 #include <str_and_num_utils.h>
+#include <uast_expr_to_ulang_type.h>
 
 bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
     if (old_width <= 32) {
@@ -24,7 +25,7 @@ bool infer_generic_type(
     Ulang_type* infered,
     Lang_type arg_to_infer_from,
     bool arg_to_infer_is_lit,
-    Uast_variable_def* param_corres_to_arg,
+    Ulang_type param_corres_to_arg,
     Name name_to_infer,
     Pos pos_arg
 ) {
@@ -72,12 +73,12 @@ bool infer_generic_type(
     }
 
     //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(param_corres_to_arg));
+    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
     //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
 
-    switch (param_corres_to_arg->lang_type.type) {
+    switch (param_corres_to_arg.type) {
         case ULANG_TYPE_REGULAR: {
-            Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg->lang_type);
+            Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
                 //log(LOG_DEBUG, FMT"\n", strv_print(reg.atom.str.base));
                 if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
@@ -100,7 +101,7 @@ bool infer_generic_type(
                     infered,
                     lang_type_from_ulang_type(vec_at(lang_type_get_str(LANG_TYPE_MODE_LOG, arg_to_infer_from).gen_args, idx)),
                     false,
-                    uast_variable_def_new(pos_arg /* TODO */, vec_at(reg.atom.str.gen_args, idx), util_literal_name_new()),
+                    vec_at(reg.atom.str.gen_args, idx),
                     name_to_infer,
                     pos_arg
                 )) {
@@ -122,8 +123,23 @@ bool infer_generic_type(
         case ULANG_TYPE_ARRAY:
             // TODO
             return false;
-        case ULANG_TYPE_EXPR:
-            todo();
+        case ULANG_TYPE_EXPR: {
+            // TODO: this may be inefficient, because infer_generic_type could be called
+            //   multiple times with the same param_corres_to_arg for the same function call
+
+            Ulang_type inner = {0};
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(param_corres_to_arg).expr)) {
+                todo();
+            }
+            return infer_generic_type(
+                infered,
+                arg_to_infer_from,
+                arg_to_infer_is_lit,
+                inner,
+                name_to_infer,
+                pos_arg
+            );
+        }
         case ULANG_TYPE_INT:
             todo();
     }

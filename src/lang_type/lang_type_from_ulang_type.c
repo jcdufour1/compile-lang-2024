@@ -5,6 +5,19 @@
 #include <expand_lang_def.h>
 #include <uast_expr_to_ulang_type.h>
 
+static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, Ulang_type_expr lang_type) {
+    Ulang_type inner = {0};
+    if (!uast_expr_to_ulang_type(&inner, lang_type.expr)) {
+        return false;
+    }
+    return try_lang_type_from_ulang_type(new_lang_type, inner);
+}
+
+static inline bool try_lang_type_from_ulang_type_int(Lang_type_int* new_lang_type, Ulang_type_int lang_type) {
+    *new_lang_type = lang_type_int_new(lang_type.pos, lang_type.data);
+    return true;
+}
+
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -30,15 +43,16 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return false;
         case ULANG_TYPE_ARRAY:
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
-        case ULANG_TYPE_EXPR: {
-            Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(lang_type).expr)) {
+        case ULANG_TYPE_EXPR:
+            return try_lang_type_from_ulang_type_expr(new_lang_type, ulang_type_expr_const_unwrap(lang_type));
+        case ULANG_TYPE_INT: {
+            Lang_type_int new_int = {0};
+            if (!try_lang_type_from_ulang_type_int(&new_int, ulang_type_int_const_unwrap(lang_type))) {
                 return false;
             }
-            return try_lang_type_from_ulang_type(new_lang_type, inner);
+            *new_lang_type = lang_type_int_const_wrap(new_int);
+            return true;
         }
-        case ULANG_TYPE_INT:
-            todo();
     }
     unreachable("");
 }
@@ -147,6 +161,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 array.pos
             ));
         }
+        case LANG_TYPE_INT:
+            todo();
         case LANG_TYPE_REMOVED:
             todo();
     }

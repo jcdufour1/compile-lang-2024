@@ -70,6 +70,16 @@ void generic_sub_lang_type_gen_param(
     *new_lang_type = ulang_type_gen_param_const_wrap(lang_type);
 }
 
+void generic_sub_lang_type_expr(
+    Ulang_type* new_lang_type,
+    Ulang_type_expr lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    generic_sub_expr(lang_type.expr, gen_param, gen_arg);
+    *new_lang_type = ulang_type_expr_const_wrap(lang_type);
+}
+
 void generic_sub_lang_type_tuple(Ulang_type_tuple* lang_type, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lang_type->ulang_types.info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(lang_type->ulang_types, idx), gen_param, gen_arg);
@@ -120,7 +130,13 @@ void generic_sub_lang_type(
             );
             return;
         case ULANG_TYPE_EXPR:
-            todo();
+            generic_sub_lang_type_expr(
+                new_lang_type,
+                ulang_type_expr_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            return;
         case ULANG_TYPE_INT:
             todo();
     }

@@ -136,6 +136,14 @@ static bool expand_def_ulang_type_tuple(
     return status;
 }
 
+static bool expand_def_ulang_type_expr(
+    Ulang_type_expr* new_lang_type,
+    Ulang_type_expr lang_type
+) {
+    *new_lang_type = lang_type;
+    return expand_def_expr(&lang_type.expr, lang_type.expr);
+}
+
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
@@ -174,8 +182,14 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
             // TODO: actually implement this if needed
             return true;
         }
-        case ULANG_TYPE_EXPR:
-            todo();
+        case ULANG_TYPE_EXPR: {
+            Ulang_type_expr new_lang_type = {0};
+            if (!expand_def_ulang_type_expr(&new_lang_type, ulang_type_expr_const_unwrap(*lang_type))) {
+                return false;
+            }
+            *lang_type = ulang_type_expr_const_wrap(new_lang_type);
+            return true;
+        }
         case ULANG_TYPE_INT:
             todo();
     }

@@ -1,6 +1,7 @@
 #include <ulang_type_serialize.h>
 #include <ulang_type.h>
 #include <name.h>
+#include <uast_expr_to_ulang_type.h>
 
 Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
     Name temp = {0};
@@ -77,8 +78,14 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type_gen_param(mod_path);
         case ULANG_TYPE_ARRAY:
             return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
-        case ULANG_TYPE_EXPR:
-            todo();
+        case ULANG_TYPE_EXPR: {
+            // TODO: consider if all Ulang_type_exprs should be removed before doing actual type checking?
+            Ulang_type inner = {0};
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
+                todo();
+            }
+            return serialize_ulang_type(mod_path, inner, include_scope);
+        }
         case ULANG_TYPE_INT:
             todo();
     }

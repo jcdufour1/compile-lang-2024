@@ -11,6 +11,7 @@
 #include <msg_todo.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
+#include <uast_expr_to_ulang_type.h>
 
 static bool is_in_struct_base_def;
 
@@ -335,6 +336,16 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     if (!usymbol_lookup(&before_res, name_base)) {
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
+    }
+
+    vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+        if (gen_arg->type == ULANG_TYPE_EXPR) {
+            Ulang_type inner = {0};
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
+                todo();
+            }
+            *gen_arg = inner;
+        }
     }
 
     return resolve_generics_ulang_type_internal(

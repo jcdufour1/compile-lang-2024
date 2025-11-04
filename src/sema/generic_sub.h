@@ -33,6 +33,13 @@ void generic_sub_lang_type_fn(
     Ulang_type gen_arg
 );
 
+void generic_sub_lang_type_expr(
+    Ulang_type* new_lang_type,
+    Ulang_type_expr lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
+
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg);

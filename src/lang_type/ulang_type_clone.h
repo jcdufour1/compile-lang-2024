@@ -1,6 +1,8 @@
 #ifndef ULANG_TYPE_CLONE_H
 #define ULANG_TYPE_CLONE_H
 
+#include <uast_clone.h>
+
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_scope, Scope_id new_scope);
 
 static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_new_scope, Scope_id new_scope) {
@@ -13,6 +15,10 @@ static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_n
 
 static inline Ulang_type_gen_param ulang_type_gen_param_clone(Ulang_type_gen_param lang_type) {
     return ulang_type_gen_param_new(lang_type.pos);
+}
+
+static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
+    return ulang_type_expr_new(uast_expr_clone(lang_type.expr, false, 0, uast_expr_get_pos(lang_type.expr)), lang_type.pos);
 }
 
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
@@ -60,7 +66,9 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
                 ulang_type_gen_param_const_unwrap(lang_type)
             ));
         case ULANG_TYPE_EXPR:
-            todo();
+            return ulang_type_expr_const_wrap(ulang_type_expr_clone(
+                ulang_type_expr_const_unwrap(lang_type)
+            ));
         case ULANG_TYPE_INT:
             todo();
     }
