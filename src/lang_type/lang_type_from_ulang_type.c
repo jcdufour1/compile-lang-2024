@@ -137,6 +137,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 array.pos
             ));
         }
+        case LANG_TYPE_REMOVED:
+            todo();
     }
     unreachable("");
 }

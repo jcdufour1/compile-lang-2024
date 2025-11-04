@@ -187,6 +187,13 @@ static Lang_type_type lang_type_gen_array(const char* prefix) {
     return sym;
 }
 
+static Lang_type_type lang_type_gen_removed(const char* prefix) {
+    const char* base_name = "removed";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    return sym;
+}
+
 static Lang_type_type lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -242,6 +249,7 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_array(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_removed(base_name));
 
     return lang_type;
 }

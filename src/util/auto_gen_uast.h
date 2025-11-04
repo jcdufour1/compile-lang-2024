@@ -596,7 +596,7 @@ static Uast_type uast_gen_case(const char* prefix) {
 
     append_member(&lang_case.members, "bool", "is_default");
     append_member(&lang_case.members, "Uast_expr*", "expr");
-    append_member(&lang_case.members, "Uast_stmt*", "if_true");
+    append_member(&lang_case.members, "Uast_block*", "if_true");
     append_member(&lang_case.members, "Scope_id", "scope_id");
 
     return lang_case;

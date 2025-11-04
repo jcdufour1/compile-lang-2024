@@ -401,7 +401,7 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, bool use_new_scope, Scope
         lang_case->pos,
         lang_case->is_default,
         new_expr,
-        uast_stmt_clone(lang_case->if_true, use_new_scope, new_scope, dest_pos),
+        uast_block_clone(lang_case->if_true, use_new_scope, new_scope, dest_pos),
         new_scope
     );
 }

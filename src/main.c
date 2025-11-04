@@ -128,7 +128,7 @@ void compile_file_to_ir(void) {
     //Ir* result = NULL;
     //unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/union"), sv("union"), (Ulang_type_vec) {0}, 2, (Attrs) {0})));
     //log(LOG_DEBUG, FMT"\n", ir_print(result));
-    //log(LOG_DEBUG, "%d\n", ir_tast_get_name(result).attrs);
+    //log(LOG_DEBUG, "%d\n", ir_get_name(result).attrs);
 
     // ir passes
     do_pass(construct_cfgs, ir_log_level);
@@ -136,7 +136,7 @@ void compile_file_to_ir(void) {
     do_pass(check_uninitialized, ir_log_level);
 }
 
-void do_passes(void) {
+NEVER_RETURN void do_passes(void) {
     if (params.compile_own) {
         compile_file_to_ir();
     }
@@ -164,7 +164,7 @@ void do_passes(void) {
             string_extend_strv(&a_temp, &contents, sv("\n\n"));
 
             write_file(strv_dup(&a_temp, params.output_file_path), string_to_strv(contents));
-            return;
+            local_exit(EXIT_CODE_SUCCESS);
         }
     }
 
@@ -200,8 +200,8 @@ void do_passes(void) {
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
         vec_append(&a_temp, &cmd, string_to_strv(output_path));
-        // TODO: uncomment below?
-        //arena_free(&a_main);
+        print_all_defered_msgs();
+        arena_free_a_main();
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
@@ -220,5 +220,4 @@ void do_passes(void) {
 int main(int argc, char** argv) {
     parse_args(argc, argv);
     do_passes();
-    unreachable("do_passes should call local_exit");
 }

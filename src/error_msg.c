@@ -157,6 +157,11 @@ void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_
 }
 
 void print_all_defered_msgs(void) {
+    if (env.defered_msgs.info.count < 1) {
+        return;
+    }
+    unwrap(!env.a_main_was_freed && "defered_msgs must be printed before freeing a_main");
+
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
     vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
@@ -171,6 +176,10 @@ void msg_internal(
     const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
+    if (env.supress_type_inference_failures && expect_fail_type_is_type_inference_error(msg_expect_fail_type)) {
+        return;
+    }
+
     LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
 
     if (log_level >= LOG_ERROR && env.error_count >= params.max_errors) {
@@ -202,6 +211,7 @@ void msg_internal(
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
         size_t buf_cap_needed = 0;
 
+        // TODO: do this in string_extend_f, etc. (maybe not, because vsnprintf would be a pain to implement)
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
@@ -242,7 +252,7 @@ void msg_internal(
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         }
-        if (params.print_immediately) {
+        if (env.a_main_was_freed || params.print_immediately) {
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
         } else {
             size_t pos_in_defered_msgs = env.defered_msgs.info.count;

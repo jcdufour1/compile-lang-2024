@@ -273,7 +273,7 @@ static Ir_type ir_gen_variable_def(void) {
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from alloca
+    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from lang_alloca
 
     return def;
 }
@@ -584,9 +584,12 @@ static void ir_gen_ir_struct(Ir_type ir) {
         extend_struct_member(&output, (Member) {
             .type = sv("Pos"), .name = sv("pos")
         });
+
+        string_extend_cstr(&gen_a, &output, "#ifndef NDEBUG\n");
         extend_struct_member(&output, (Member) {
             .type = sv("Loc"), .name = sv("loc")
         });
+        string_extend_cstr(&gen_a, &output, "#endif // NDEBUG\n");
     }
 
     string_extend_cstr(&gen_a, &output, "}");
@@ -815,9 +818,12 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
             extend_strv_lower(&function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_ir)->pos = pos;\n");
 
+            string_extend_cstr(&gen_a, &function, "    (void) loc;\n");
+            string_extend_cstr(&gen_a, &function, "#ifndef NDEBUG\n");
             string_extend_cstr(&gen_a, &function, "    ir_");
             extend_strv_lower(&function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_ir)->loc = loc;\n");
+            string_extend_cstr(&gen_a, &function, "#endif // NDEBUG\n");
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {

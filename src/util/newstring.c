@@ -1,27 +1,24 @@
 #include <newstring.h>
-#include <env.h>
 
+__attribute__((format (printf, 3, 4)))
 void string_extend_f(Arena* arena, String* string, const char* format, ...) {
-    // TODO: this function does not work
-    todo();
-
     va_list args1;
     va_start(args1, format);
     va_list args2;
     va_copy(args2, args1);
 
-    size_t count_needed = vsnprintf(env.sprintf_buf.buf, env.sprintf_buf.info.count, format, args1);
-    if (count_needed > env.sprintf_buf.info.count) {
-        while (env.sprintf_buf.info.count < count_needed) {
-            vec_append(&a_main, &env.sprintf_buf, '\0');
-        }
-        vsnprintf(env.sprintf_buf.buf, env.sprintf_buf.info.count, format, args2);
-    }
+    static String temp_buf = {0};
 
-    log(LOG_DEBUG, FMT"\n", string_print(env.sprintf_buf));
-    log(LOG_DEBUG, "%zu\n", count_needed);
-    log(LOG_DEBUG, FMT"\n", strv_print(((Strv) {env.sprintf_buf.buf, count_needed - 1})));
-    string_extend_strv(arena, string, (Strv) {env.sprintf_buf.buf, count_needed - 1});
+    size_t count_needed = vsnprintf(NULL, 0, format, args1);
+    count_needed++;
+    if (count_needed > temp_buf.info.count) {
+        while (temp_buf.info.count < count_needed) {
+            vec_append(&a_leak, &temp_buf, '\0');
+        }
+    }
+    vsnprintf(temp_buf.buf, count_needed, format, args2);
+
+    string_extend_strv(arena, string, (Strv) {temp_buf.buf, count_needed - 1});
 
     va_end(args1);
     va_end(args1);

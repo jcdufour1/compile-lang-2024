@@ -119,14 +119,14 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         Ir* next = is_last ? NULL : vec_at(block->children, idx + 1);
 
         if (idx < 1) {
-            arrow_names_label(buf, block->name, ir_tast_get_name(curr), sv("next"));
+            arrow_names_label(buf, block->name, ir_get_name(curr), sv("next"));
         }
 
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
         if (ir_tbl_add_ex(&already_visited, curr)) {
             Ir_name old_parent_block_next = ir_graphvis_parent_block_next;
-            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_tast_get_name(next);
+            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_get_name(next);
             ir_graphvis_internal(buf, curr);
             ir_graphvis_parent_block_next = old_parent_block_next;
         }
@@ -137,13 +137,13 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
                 if (ir_graphvis_parent_block_next.base.count > 0) {
                     arrow_names_label(
                         buf,
-                        ir_tast_get_name(curr),
+                        ir_get_name(curr),
                         ir_graphvis_parent_block_next,
                         sv("next")
                     );
                 }
             } else {
-                arrow_names_label(buf, ir_tast_get_name(curr), ir_tast_get_name(next), sv("next"));
+                arrow_names_label(buf, ir_get_name(curr), ir_get_name(next), sv("next"));
             }
         }
     }
@@ -153,7 +153,7 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
     while (ir_tbl_iter_next(&curr, &iter)) {
         if (ir_tbl_add_ex(&already_visited, curr)) {
             todo();
-            arrow_names(buf, block->name, ir_tast_get_name(curr));
+            arrow_names(buf, block->name, ir_get_name(curr));
             ir_graphvis_internal(buf, curr);
         }
     }
@@ -373,8 +373,8 @@ static void ir_return_graphvis_internal(String* buf, const Ir_return* rtn) {
     arrow_names_label(buf, rtn->name_self, rtn->child, sv("src"));
 }
 
-static void ir_alloca_graphvis_internal(String* buf, const Ir_alloca* alloca) {
-    label_ex(buf, alloca->name, sv("alloca"), alloca->name);
+static void ir_alloca_graphvis_internal(String* buf, const Ir_alloca* lang_alloca) {
+    label_ex(buf, lang_alloca->name, sv("lang_alloca"), lang_alloca->name);
 
     // TODO
 }

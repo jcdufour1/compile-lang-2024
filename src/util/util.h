@@ -38,7 +38,7 @@ typedef struct Env_ Env;
 struct Uast_def_;
 typedef struct Uast_def_ Uast_def;
 
-// TODO: try to eventually store only uint64_t directly in Pos to improve compile times?
+// TODO: try to eventually store only uint64_t directly in Pos to improve memory usage?
 typedef struct Pos_ {
     Strv file_path;
     uint32_t line;
@@ -48,8 +48,7 @@ typedef struct Pos_ {
     struct Pos_* expanded_from;
 } Pos;
 
-// TODO: do not set count to SIZE_MAX
-#define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
+#define POS_BUILTIN ((Pos) {.file_path = MOD_PATH_BUILTIN})
 
 // log* functions and macros print messages that are intended for debugging
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 

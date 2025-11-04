@@ -33,6 +33,8 @@ Strv serialize_lang_type_get_prefix(Lang_type lang_type) {
             return sv("FN");
         case LANG_TYPE_ARRAY:
             return sv("ARRAY");
+        case LANG_TYPE_REMOVED:
+            return sv("REMOVED");
     }
     unreachable("");
 }
@@ -98,6 +100,8 @@ Strv serialize_lang_type(Lang_type lang_type) {
         }
         case LANG_TYPE_ARRAY:
             return serialize_lang_type_array(lang_type_array_const_unwrap(lang_type));
+        case LANG_TYPE_REMOVED:
+            unreachable("lang_type_removed should not be serialized");
     }
     unreachable("");
 }

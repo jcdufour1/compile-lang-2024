@@ -240,13 +240,13 @@ Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, int indent) {
     return string_to_strv(buf);
 }
 
-Strv ir_alloca_temp_internal(const Ir_alloca* alloca, int indent) {
+Strv ir_alloca_temp_internal(const Ir_alloca* lang_alloca, int indent) {
     String buf = {0};
 
-    extend_lhs_and_eq(&buf, alloca->name, indent);
+    extend_lhs_and_eq(&buf, lang_alloca->name, indent);
 
-    string_extend_cstr(&a_temp, &buf, "alloca");
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, alloca->lang_type);
+    string_extend_cstr(&a_temp, &buf, "lang_alloca");
+    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lang_alloca->lang_type);
     string_extend_cstr(&a_temp, &buf, "\n");
 
     return string_to_strv(buf);

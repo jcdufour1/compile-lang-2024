@@ -138,9 +138,11 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
 
     if output_name == "test.c":
-        compile_cmd.append("--backend=c")
+        compile_cmd.append("--backend")
+        compile_cmd.append("c")
     elif output_name == "test.ll":
-        compile_cmd.append("--backend=llvm")
+        compile_cmd.append("--backend")
+        compile_cmd.append("llvm")
     else:
         assert(False and "not implemented")
 
@@ -152,7 +154,8 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         raise NotImplementedError
     compile_cmd.append("-lm")
     if do_debug:
-        compile_cmd.append("--set-log-level=INFO")
+        compile_cmd.append("--set-log-level")
+        compile_cmd.append("INFO")
     if isinstance(file, FileNormal):
         compile_cmd.append("-o")
         compile_cmd.append(os.path.basename(remove_extension(file.path_base)))
@@ -162,9 +165,11 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd.append(os.path.basename(remove_extension(file.path_base)) + ".o")
     else:
         raise NotImplementedError
-    compile_cmd.append("--error=no-main-function")
+    compile_cmd.append("--error")
+    compile_cmd.append("no-main-function")
     if path_c_compiler is not None:
-        compile_cmd.append("--path-c-compiler=" + path_c_compiler)
+        compile_cmd.append("--path-c-compiler")
+        compile_cmd.append(path_c_compiler)
     if isinstance(file, FileNormal):
         compile_cmd.append("--run")
     elif isinstance(file, FileExample):

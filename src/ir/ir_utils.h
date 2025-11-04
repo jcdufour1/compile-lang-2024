@@ -3,6 +3,12 @@
 
 #include <ir.h>
 
+#ifdef NDEBUG
+#   define ir_get_loc(node) ((Loc) {.file = "", .line = 0})
+#else
+#   define ir_get_loc(node) ((node)->loc)
+#endif // NDEBUG
+
 Strv lang_type_vec_print_internal(Ir_lang_type_vec types);
 
 #define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))
@@ -50,17 +56,13 @@ Ir_name ir_def_get_name(const Ir_def* def);
 
 Ir_name ir_ir_expr_get_name(const Ir_expr* expr);
 
-Ir_name ir_tast_get_name(const Ir* ir);
-
-const Ir* get_ir_src_const(const Ir* ir);
-
-const Ir* get_ir_dest_const(const Ir* ir);
+Ir_name ir_get_name(const Ir* ir);
 
 Ir_lang_type* ir_literal_ref_get_lang_type(Ir_literal* lit);
 
-Ir_lang_type lang_type_from_get_name(Ir_name name);
+Ir_lang_type lang_type_from_ir_name(Ir_name name);
 
-Ir* ir_from_get_name(Ir_name name);
+Ir* ir_from_ir_name(Ir_name name);
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* base, Ir_name memb_name);
 

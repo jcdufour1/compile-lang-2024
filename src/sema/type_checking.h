@@ -33,7 +33,7 @@ typedef struct {
     
     bool break_in_case;
     
-    Uast_stmt_vec switch_case_defer_add_if_true;
+    Uast_block_vec switch_case_defer_add_if_true;
     Uast_stmt_vec switch_case_defer_add_enum_case_part;
     
     Lang_type lhs_lang_type;

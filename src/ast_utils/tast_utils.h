@@ -129,6 +129,8 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             return lang_type_fn_is_equal(lang_type_fn_const_unwrap(a), lang_type_fn_const_unwrap(b));
         case LANG_TYPE_ARRAY:
             return lang_type_array_is_equal(lang_type_array_const_unwrap(a), lang_type_array_const_unwrap(b));
+        case LANG_TYPE_REMOVED:
+            return true;
     }
     unreachable("");
 }

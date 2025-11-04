@@ -439,7 +439,9 @@ static bool starts_with_continue(Tk_view tokens) {
 }
 
 static bool starts_with_block(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE || tk_view_front(tokens).type == TOKEN_ONE_LINE_BLOCK_START;
+    return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE ||
+        tk_view_front(tokens).type == TOKEN_ONE_LINE_BLOCK_START ||
+        tk_view_front(tokens).type == TOKEN_COLON;
 }
 
 static bool starts_with_function_call(Tk_view tokens) {
@@ -1198,8 +1200,7 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
     return PARSE_OK;
 }
 
-// TODO: rename to parse_struct_def_base
-static PARSE_STATUS parse_struct_base_def(
+static PARSE_STATUS parse_struct_def_base(
     Ustruct_def_base* base,
     Name name,
     Tk_view* tokens,
@@ -1290,7 +1291,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1307,7 +1308,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1325,7 +1326,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     unwrap(try_consume(&enum_tk, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(
+    if (PARSE_OK != parse_struct_def_base(
         &base,
         name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
         tokens,
@@ -1346,6 +1347,10 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
 static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token name, Scope_id scope_id) {
     Token lang_def_tk = {0};
     unwrap(try_consume(&lang_def_tk, tokens, TOKEN_DEF));
+
+    if (strv_is_equal(curr_mod_path, MOD_PATH_RUNTIME)) {
+        msg(DIAG_LANG_DEF_IN_RUNTIME, lang_def_tk.pos, "`def` cannot be used in "FMT"\n", strv_print(MOD_PATH_RUNTIME));
+    }
 
     Token dummy = {0};
     if (!consume_expect(&dummy, tokens, "after `def`", TOKEN_SINGLE_EQUAL)) {
@@ -1637,21 +1642,6 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
 
-    // this is a way to compensate for increment occuring on the first iteration
-    // TODO: this will not work properly for unsigned if the initial value is 0
-    //Uast_assignment* init_decre = uast_assignment_new(
-    //    uast_expr_get_pos(upper_bound),
-    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-    //        var_def->pos,
-    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-    //        BINARY_SUB
-    //    )))
-    //);
-    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_decre));
-
-
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
         uast_condition_new(
@@ -1737,7 +1727,7 @@ for_range_error:
 static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_id scope_id) {
     Token break_token = consume(tokens);
 
-    if (default_brk_label.base.count < 1/* TODO: consider switch statement, etc.*/) {
+    if (default_brk_label.base.count < 1) {
         msg(
             DIAG_BREAK_INVALID_LOCATION, break_token.pos,
             "break statement outside of a for loop\n"
@@ -1857,7 +1847,6 @@ static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id sc
 }
 
 static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
-    // TODO: expected failure case for return in defer block
     Token defer_tk = {0};
     unwrap(try_consume(&defer_tk, tokens, TOKEN_DEFER));
     Uast_stmt* child = NULL;
@@ -2187,7 +2176,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Uast_expr* is_false_cond = NULL;
-    Uast_stmt* if_false = uast_expr_wrap(uast_literal_wrap(uast_void_wrap(uast_void_new(if_token.pos))));
+    Uast_block* if_false = NULL;
     if (try_consume(NULL, tokens, TOKEN_ELSE)) {
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
             msg(DIAG_IF_ELSE_IN_IF_LET, if_token.pos, "`else if` causes of `if let` statements are not supported\n");
@@ -2202,6 +2191,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
                     "after `else` in if let statement",
                     TOKEN_OPEN_PAR,
                     TOKEN_ONE_LINE_BLOCK_START,
+                    TOKEN_COLON,
                     TOKEN_OPEN_CURLY_BRACE
                 );
                 return false;
@@ -2235,10 +2225,16 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if (PARSE_OK != parse_block(&if_false_block, tokens, false, if_false_scope, (Uast_stmt_vec) {0})) {
             return PARSE_ERROR;
         }
-        if_false = uast_expr_wrap(uast_block_wrap(if_false_block));
+        if_false = if_false_block;
 
         if_else_chain_consume_newline(tokens);
     }
+
+    if (!if_false) {
+        // TODO: make function for making empty block, and call it here?
+        if_false = uast_block_new(if_token.pos, (Uast_stmt_vec) {0}, if_token.pos, if_false_scope);
+    }
+
 
     Uast_case_vec cases = {0};
 
@@ -2246,7 +2242,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if_token.pos,
         false,
         is_true_cond,
-        uast_expr_wrap(uast_block_wrap(if_true)),
+        if_true,
         if_true_scope
     );
     vec_append(&a_main, &cases, if_true_case);
@@ -2337,7 +2333,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     while (1) {
         Scope_id case_scope = symbol_collection_new(parent, util_literal_name_new());
-        Uast_stmt* case_if_true = NULL;
+        Uast_block* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
         if (try_consume(NULL, tokens, TOKEN_CASE)) {
@@ -2361,24 +2357,17 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
             break;
         }
         
-        Token case_start_token = {0};
-        // TODO: expected failure case no colon
-        unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
-        switch (parse_stmt(&case_if_true, tokens, case_scope)) {
-            case PARSE_EXPR_OK:
+        switch (parse_block(&case_if_true, tokens, false, case_scope, (Uast_stmt_vec) {0})) {
+            case PARSE_OK:
                 break;
-            case PARSE_EXPR_ERROR:
-                status = PARSE_ERROR;
-                goto error;
-            case PARSE_EXPR_NONE:
-                msg_expected_expr(*tokens, "");
+            case PARSE_ERROR:
                 status = PARSE_ERROR;
                 goto error;
             default:
                 unreachable("");
         }
         Uast_case* curr_case = uast_case_new(
-            case_start_token.pos,
+            case_if_true->pos,
             case_is_default,
             case_operand,
             case_if_true,
@@ -2388,7 +2377,12 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     }
 
     Uast_stmt_vec chain_ = {0};
-    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(start_token.pos, true, uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)), default_brk_label)));
+    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(
+        start_token.pos,
+        true,
+        uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)),
+        default_brk_label
+    )));
 
     if (cases.info.count < 1) {
         msg(DIAG_SWITCH_NO_CASES, start_token.pos, "switch statement must have at least one case statement\n");
@@ -2576,14 +2570,15 @@ static PARSE_STATUS parse_block(
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START)) {
+        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START) || try_consume(&open_brace_token, tokens, TOKEN_COLON)) {
             is_one_line = true;
         } else {
             msg_parser_expected(
                 tk_view_front(*tokens),
                 "at start of block",
                 TOKEN_OPEN_CURLY_BRACE,
-                TOKEN_ONE_LINE_BLOCK_START
+                TOKEN_ONE_LINE_BLOCK_START,
+                TOKEN_COLON
             );
             status = PARSE_ERROR;
         }
@@ -2763,11 +2758,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
     Tk_view* tokens,
     Scope_id scope_id
 ) {
-    // TODO: remove this if statement
-    if (tokens->count < 1) {
-        return PARSE_EXPR_NONE;
-    }
-
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
         switch (parse_expr(result, tokens, scope_id)) {
@@ -3109,8 +3099,8 @@ static PARSE_STATUS parse_expr_generic(
             sym = uast_member_access_unwrap(lhs)->member_name;
             break;
         default:
-            // TODO
-            todo();
+            msg_todo("", uast_expr_get_pos(lhs));
+            return PARSE_ERROR;
     }
 
     if (PARSE_OK != parse_generics_args(&sym->name.gen_args, tokens, scope_id)) {
@@ -3262,19 +3252,19 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     bool status = true;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
-        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path with basename `builtin.own` is not permitted\n");
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN, "file path with basename `builtin.own` is not permitted\n");
         status = false;
         goto error;
     }
 
     if (file_basename(file_path).count < 1) {
-        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path with basename length of zero is not permitted\n");
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN, "file path with basename length of zero is not permitted\n");
         status = false;
         goto error;
     }
 
     if (strv_at(file_basename(file_path), 0) == '.') {
-        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN /* TODO */, "file path that starts with `.` is not permitted\n");
+        msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN, "file path that starts with `.` is not permitted\n");
         status = false;
         goto error;
     }
@@ -3296,11 +3286,10 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
 
     Scope_id new_scope = symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
-    // TODO: DNDEBUG should be spelled NDEBUG
-#ifndef DNDEBUG
+#ifndef NDEBUG
     // TODO: reenable
     //parser_do_tests();
-#endif // DNDEBUG
+#endif // NDEBUG
 
     Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {

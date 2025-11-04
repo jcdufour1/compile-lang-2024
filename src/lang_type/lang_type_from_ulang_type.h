@@ -21,7 +21,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 // TODO: remove Pos parameter
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type);
 
-// TODO: remove these tow forward decls and replace with better system
+// TODO: remove these two forward decls and replace with better system
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 bool lang_type_atom_is_float(Lang_type_atom atom);

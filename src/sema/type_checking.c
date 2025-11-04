@@ -1274,6 +1274,15 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             unwrap(*new_tast);
             return true;
         case UAST_UNKNOWN:
+            if (check_env.lhs_lang_type.type == LANG_TYPE_REMOVED) {
+                msg(
+                    DIAG_TYPE_COULD_NOT_BE_INFERED,
+                    uast_expr_get_pos(uast),
+                    "enum callee type could not be infered\n"
+                );
+                return false;
+            }
+
             if (check_env.lhs_lang_type.type != LANG_TYPE_ENUM) {
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
@@ -1358,7 +1367,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
             msg(
-                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
                 lit->pos,
                 "the type of array literal could not be infered; "
                 "consider casting the struct literal to the desired type"
@@ -1384,11 +1393,11 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             }
 
             msg(
-                DIAG_ASSIGNMENT_MISMATCHED_TYPES /* TODO */,
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
                 lit->pos,
                 "the type of struct literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting array literal not yet implemented\n)"
+                "(note: casting struct literal not yet implemented\n)"
             );
             return false;
         }
@@ -2321,16 +2330,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
-    // TODO: consider if new_gens_set can be removed
     Ulang_type_vec new_gens = {0};
-    Bool_vec new_gens_set = {0};
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
     while (new_gens.info.count < fun_decl_temp->generics.info.count) {
         vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(POS_BUILTIN)));
-    }
-    vec_reserve(&a_main, &new_gens_set, fun_decl_temp->generics.info.count);
-    while (new_gens_set.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &new_gens_set, false);
     }
 
     // TODO: deduplicate this with below for loop?
@@ -2426,7 +2429,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         status = false;
                         goto error;
                     }
-                    *vec_at_ref(&new_gens_set, idx_gen) = true;
                     found_gen = true;
                     break;
                 }
@@ -2495,18 +2497,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
-                        // prevent printing errors to the user for failed inference
-                        LOG_LEVEL old_log_level = params_log_level;
-                        size_t old_error_count = env.error_count;
-                        size_t old_warn_count = env.warning_count;
-
-                        // TODO: this can hide some actual errors from the user
-                        params_log_level = LOG_FATAL;
+                        bool old_supress_type_infer = env.supress_type_inference_failures;
+                        env.supress_type_inference_failures = true;
+                        uint32_t old_error_count = env.error_count;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
-                            params_log_level = old_log_level;
-                            env.error_count = old_error_count;
-                            env.warning_count = old_warn_count;
-
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
@@ -2516,14 +2510,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
-                                *vec_at_ref(&new_gens_set, idx_gen_param) = true;
                                 infer_success = true;
                             }
-                        } else {
-                            params_log_level = old_log_level;
-                            env.error_count = old_error_count;
-                            env.warning_count = old_warn_count;
                         }
+                        env.supress_type_inference_failures = old_supress_type_infer;
+                        status = old_error_count == env.error_count && status;
 
                         if (infer_success) {
                             break;
@@ -2532,6 +2523,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     if (infer_success) {
                         continue;
                     }
+                }
+
+                if (!status) {
+                    goto error;
                 }
 
                 msg(
@@ -3917,7 +3912,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
 
         Scope_id inner_scope = symbol_collection_new(outer_scope_id, scope_to_name_tbl_lookup(old_case->scope_id));
         // TODO: try to remove stmt_clone below (for performance)
-        vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_stmt_clone(
+        vec_append(&a_main, &check_env.switch_case_defer_add_if_true, uast_block_clone(
             old_case->if_true,
             true,
             inner_scope,
@@ -4357,6 +4352,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(void) {
+    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
+
     {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
@@ -4379,7 +4376,7 @@ bool try_set_types(void) {
         return false;
     }
 
-    check_env.lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;

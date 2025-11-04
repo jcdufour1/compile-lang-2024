@@ -254,7 +254,7 @@
 //                break;
 //            case IR_ALLOCA:
 //                string_extend_cstr(&a_main, output, "ptr %");
-//                ir_extend_name(output, ir_tast_get_name(argument));
+//                ir_extend_name(output, ir_get_name(argument));
 //                break;
 //            default:
 //                unreachable(FMT"\n", ir_print(argument));
@@ -301,11 +301,11 @@
 //    string_extend_cstr(&a_main, output, "\n");
 //}
 //
-//static void emit_alloca(String* output, const Ir_alloca* alloca) {
+//static void emit_alloca(String* output, const Ir_alloca* lang_alloca) {
 //    string_extend_cstr(&a_main, output, "    %");
-//    ir_extend_name(output, alloca->name);
-//    string_extend_cstr(&a_main, output, " = alloca ");
-//    extend_type_call_str(output, alloca->lang_type);
+//    ir_extend_name(output, lang_alloca->name);
+//    string_extend_cstr(&a_main, output, " = lang_alloca ");
+//    extend_type_call_str(output, lang_alloca->lang_type);
 //    string_extend_cstr(&a_main, output, ", align 8");
 //    string_extend_cstr(&a_main, output, "\n");
 //}
@@ -313,31 +313,31 @@
 //static void emit_unary_type(String* output, const Ir_unary* unary) {
 //    switch (unary->token_type) {
 //        case UNARY_UNSAFE_CAST:
-//            if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_get_name(unary->child))) {
+//            if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_ir_name(unary->child))) {
 //                string_extend_cstr(&a_main, output, "inttoptr ");
-//                extend_type_call_str(output, lang_type_from_get_name(unary->child));
+//                extend_type_call_str(output, lang_type_from_ir_name(unary->child));
 //                string_extend_cstr(&a_main, output, " ");
-//            } else if (lang_type_is_number(unary->lang_type) && lang_type_get_pointer_depth(lang_type_from_get_name(unary->child)) > 0) {
+//            } else if (lang_type_is_number(unary->lang_type) && lang_type_get_pointer_depth(lang_type_from_ir_name(unary->child)) > 0) {
 //                string_extend_cstr(&a_main, output, "ptrtoint ");
-//                extend_type_call_str(output, lang_type_from_get_name(unary->child));
+//                extend_type_call_str(output, lang_type_from_ir_name(unary->child));
 //                string_extend_cstr(&a_main, output, " ");
-//            } else if (lang_type_is_unsigned(lang_type_from_get_name(unary->child)) && lang_type_is_number(lang_type_from_get_name(unary->child))) {
+//            } else if (lang_type_is_unsigned(lang_type_from_ir_name(unary->child)) && lang_type_is_number(lang_type_from_ir_name(unary->child))) {
 //                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, unary->lang_type)) > i_lang_type_atom_to_bit_width(
-//                    lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_get_name(unary->child))
+//                    lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_ir_name(unary->child))
 //                )) {
 //                    string_extend_cstr(&a_main, output, "zext ");
 //                } else {
 //                    string_extend_cstr(&a_main, output, "trunc ");
 //                }
-//                extend_type_call_str(output, lang_type_from_get_name(unary->child));
+//                extend_type_call_str(output, lang_type_from_ir_name(unary->child));
 //                string_extend_cstr(&a_main, output, " ");
-//            } else if (lang_type_is_signed(lang_type_from_get_name(unary->child)) && lang_type_is_number(lang_type_from_get_name(unary->child))) {
-//                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_get_name(unary->child)))) {
+//            } else if (lang_type_is_signed(lang_type_from_ir_name(unary->child)) && lang_type_is_number(lang_type_from_ir_name(unary->child))) {
+//                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_ir_name(unary->child)))) {
 //                    string_extend_cstr(&a_main, output, "sext ");
 //                } else {
 //                    string_extend_cstr(&a_main, output, "trunc ");
 //                }
-//                extend_type_call_str(output, lang_type_from_get_name(unary->child));
+//                extend_type_call_str(output, lang_type_from_ir_name(unary->child));
 //                string_extend_cstr(&a_main, output, " ");
 //            } else {
 //                log(LOG_DEBUG, FMT, ir_unary_print(unary));
@@ -470,13 +470,13 @@
 //}
 //
 //static void emit_binary_type(String* output, const Ir_binary* binary) {
-//    if (lang_type_is_signed(lang_type_from_get_name(binary->lhs))) {
+//    if (lang_type_is_signed(lang_type_from_ir_name(binary->lhs))) {
 //        emit_binary_type_signed(output, binary);
 //    } else {
 //        emit_binary_type_unsigned(output, binary);
 //    }
 //
-//    extend_type_call_str(output, lang_type_from_get_name(binary->lhs));
+//    extend_type_call_str(output, lang_type_from_ir_name(binary->lhs));
 //    string_extend_cstr(&a_main, output, " ");
 //}
 //
@@ -527,7 +527,7 @@
 //            break;
 //        case IR_LOAD_ANOTHER_IR:
 //            string_extend_cstr(&a_main, output, "%");
-//            ir_extend_name(output, ir_tast_get_name(operand));
+//            ir_extend_name(output, ir_get_name(operand));
 //            break;
 //        default:
 //            unreachable(FMT, ir_print(operand));
@@ -640,7 +640,7 @@
 //            const Ir_variable_def* src_var_def = ir_variable_def_const_unwrap(src_def);
 //            (void) src_var_def;
 //            string_extend_cstr(&a_main, output, " %");
-//            ir_extend_name(output, ir_tast_get_name(src));
+//            ir_extend_name(output, ir_get_name(src));
 //            break;
 //        }
 //        case IR_EXPR:
@@ -648,17 +648,17 @@
 //            break;
 //        case IR_LOAD_ANOTHER_IR:
 //            string_extend_cstr(&a_main, output, "%");
-//            ir_extend_name(output, ir_tast_get_name(src));
+//            ir_extend_name(output, ir_get_name(src));
 //            break;
 //        case IR_ALLOCA:
 //            string_extend_cstr(&a_main, output, " %");
-//            ir_extend_name(output, ir_tast_get_name(src));
+//            ir_extend_name(output, ir_get_name(src));
 //            break;
 //        default:
 //            unreachable(FMT"\n", ir_print(src));
 //    }
 //    //string_extend_cstr(&a_main, output, " %");
-//    //ir_extend_name(output, ir_tast_get_name(store->ir_src.ir));
+//    //ir_extend_name(output, ir_get_name(store->ir_src.ir));
 //
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, store->ir_dest);
@@ -672,7 +672,7 @@
 //    extend_type_call_str(output, fun_def->decl->return_type);
 //
 //    string_extend_cstr(&a_main, output, " @");
-//    ir_extend_name(output, ir_tast_get_name(ir_def_const_wrap(ir_function_def_const_wrap(fun_def))));
+//    ir_extend_name(output, ir_get_name(ir_def_const_wrap(ir_function_def_const_wrap(fun_def))));
 //
 //    vec_append(&a_main, output, '(');
 //    emit_function_params(output, fun_def->decl->params);
@@ -800,7 +800,7 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name(load->ir_src);
+//    Lang_type lang_type = lang_type_from_ir_name(load->ir_src);
 //    lang_type_set_pointer_depth(&lang_type, 0);
 //    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
@@ -816,20 +816,20 @@
 //
 //    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 //
-//    Lang_type lang_type = lang_type_from_get_name(load->callee);
+//    Lang_type lang_type = lang_type_from_ir_name(load->callee);
 //    lang_type_set_pointer_depth(&lang_type, 0);
 //    extend_type_call_str(output, lang_type);
 //    string_extend_cstr(&a_main, output, ", ptr %");
 //    ir_extend_name(output, load->callee);
 //    string_extend_cstr(&a_main, output, ", ");
-//    extend_type_call_str(output, lang_type_from_get_name(load->index));
+//    extend_type_call_str(output, lang_type_from_ir_name(load->index));
 //    string_extend_cstr(&a_main, output, " ");
 //
 //    Ir* struct_index = NULL;
 //    unwrap(ir_lookup(&struct_index,  load->index));
 //    if (struct_index->type == IR_LOAD_ANOTHER_IR) {
 //        string_extend_cstr(&a_main, output, "%");
-//        ir_extend_name(output, ir_tast_get_name(struct_index));
+//        ir_extend_name(output, ir_get_name(struct_index));
 //    } else {
 //        emit_operator_operand(output, load->index);
 //    }

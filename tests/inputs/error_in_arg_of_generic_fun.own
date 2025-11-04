@@ -1,0 +1,10 @@
+
+fn copy(num NumT, NumT Type) NumT {
+    return num
+}
+
+
+fn main() i32 {
+    let num i32 = 0
+    return copy(nudsfjasdf)
+}

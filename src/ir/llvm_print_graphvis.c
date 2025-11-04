@@ -238,7 +238,7 @@ static Strv ir_function_call_graphvis_internal(const Ir_function_call* call) {
     arrow_names(&buf, call->name_self, args_name);
 
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        child_with_arrow2(&buf, args_name, ir_from_get_name(vec_at(call->args, idx)), ir_graphvis_internal);
+        child_with_arrow2(&buf, args_name, ir_from_ir_name(vec_at(call->args, idx)), ir_graphvis_internal);
     }
 
     return string_to_strv(buf);
@@ -287,7 +287,7 @@ static Strv ir_return_graphvis_internal(Name rtn_name, const Ir_return* rtn) {
     return string_to_strv(buf);
 }
 
-static Strv ir_alloca_graphvis_internal(Name all_name, const Ir_alloca* alloca) {
+static Strv ir_alloca_graphvis_internal(Name all_name, const Ir_alloca* lang_alloca) {
     String buf = {0};
 
     label(&buf, all_name, sv("return"));
