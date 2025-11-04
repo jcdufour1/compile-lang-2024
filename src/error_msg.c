@@ -176,6 +176,11 @@ void msg_internal(
     const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
+    if (env.supress_type_inference_failures && expect_fail_type_is_type_inference_error(msg_expect_fail_type)) {
+        todo();
+        return;
+    }
+
     LOG_LEVEL log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
 
     if (log_level >= LOG_ERROR && env.error_count >= params.max_errors) {

@@ -43,6 +43,7 @@ typedef struct Env_ {
     Defered_msg_vec defered_msgs;
 
     bool a_main_was_freed;
+    bool supress_type_inference_failures;
 } Env;
 
 // TODO: move this function?

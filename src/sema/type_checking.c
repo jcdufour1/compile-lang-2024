@@ -1281,6 +1281,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
                     "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, check_env.lhs_lang_type)
                 );
+            todo();
                 return false;
             }
 
@@ -2488,18 +2489,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
-                        // prevent printing errors to the user for failed inference
-                        LOG_LEVEL old_log_level = params_log_level;
-                        size_t old_error_count = env.error_count;
-                        size_t old_warn_count = env.warning_count;
-
-                        // TODO: this can hide some actual errors from the user
-                        params_log_level = LOG_FATAL;
+                        //env.supress_type_inference_failures = true;
+                        uint32_t old_error_count = env.error_count;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
-                            params_log_level = old_log_level;
-                            env.error_count = old_error_count;
-                            env.warning_count = old_warn_count;
-
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
                                 tast_expr_get_lang_type(arg_to_infer_from),
@@ -2511,11 +2503,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 infer_success = true;
                             }
-                        } else {
-                            params_log_level = old_log_level;
-                            env.error_count = old_error_count;
-                            env.warning_count = old_warn_count;
                         }
+                        env.supress_type_inference_failures = false;
+                        status = old_error_count == env.error_count && status;
 
                         if (infer_success) {
                             break;
@@ -2524,6 +2514,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     if (infer_success) {
                         continue;
                     }
+                }
+
+                if (!status) {
+                    goto error;
                 }
 
                 msg(

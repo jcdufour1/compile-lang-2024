@@ -118,6 +118,8 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type);
 
 Strv expect_fail_type_print_internal(DIAG_TYPE type);
 
+bool expect_fail_type_is_type_inference_error(DIAG_TYPE type);
+
 #define expect_fail_type_print(type) strv_print(expect_fail_type_print_internal(type))
 
 extern Parameters params;
