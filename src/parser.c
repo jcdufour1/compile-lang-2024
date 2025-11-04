@@ -1163,10 +1163,23 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
         if (!consume_expect(&symbol, tokens, "", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
+
+        Token ticks = {0};
+        bool is_expr = false;
+        Ulang_type expr_lang_type = {0};
+        if (try_consume(&ticks, tokens, TOKEN_DOUBLE_TICK)) {
+            if (!parse_lang_type_struct(&expr_lang_type, tokens, block_scope)) {
+                return PARSE_ERROR;
+            }
+        }
+
         Uast_generic_param* param = uast_generic_param_new(
             symbol.pos,
-            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope, (Attrs) {0})
+            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope, (Attrs) {0}),
+            is_expr,
+            expr_lang_type
         );
+
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
@@ -1524,7 +1537,30 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
         Uast_generic_param* var_def = uast_generic_param_new(
             name_token.pos,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0})
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
+            false,
+            (Ulang_type) {0}
+        );
+
+        *result = uast_generic_param_wrap(var_def);
+
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_generic_param_wrap(var_def))) {
+                msg_redefinition_of_symbol(uast_generic_param_wrap(var_def));
+                return PARSE_ERROR;
+            }
+        }
+    } else if (try_consume(&type_tk, tokens, TOKEN_DOUBLE_TICK)) {
+        Ulang_type lang_type_expr = {0};
+        if (!parse_lang_type_struct(&lang_type_expr, tokens, scope_id)) {
+            return PARSE_ERROR;
+        }
+
+        Uast_generic_param* var_def = uast_generic_param_new(
+            name_token.pos,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
+            true,
+            lang_type_expr
         );
 
         *result = uast_generic_param_wrap(var_def);
