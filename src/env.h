@@ -41,6 +41,15 @@ typedef struct Env_ {
     Ulang_type_vec gen_args_char;
 
     Defered_msg_vec defered_msgs;
+
+    bool a_main_was_freed;
 } Env;
+
+// TODO: move this function?
+static inline void arena_free_a_main(void) {
+    env.a_main_was_freed = true;
+    arena_free(&a_main);
+}
+
 
 #endif // ENV_H

@@ -79,7 +79,7 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     }
 
     if (should_move_elements) {
-        new_table_tasts = arena_alloc(&a_main /* TODO */, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
+        new_table_tasts = arena_alloc(&a_leak /* TODO */, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
         generic_tbl_cpy(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count);
         ((Generic_symbol_table*)sym_table)->table_tasts = new_table_tasts;
     }

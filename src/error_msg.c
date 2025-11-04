@@ -157,6 +157,11 @@ void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_
 }
 
 void print_all_defered_msgs(void) {
+    if (env.defered_msgs.info.count < 1) {
+        return;
+    }
+    unwrap(!env.a_main_was_freed && "defered_msgs must be printed before freeing a_main");
+
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
     vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
@@ -243,7 +248,7 @@ void msg_internal(
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         }
-        if (params.print_immediately) {
+        if (env.a_main_was_freed || params.print_immediately) {
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
         } else {
             size_t pos_in_defered_msgs = env.defered_msgs.info.count;

@@ -8,6 +8,7 @@
 #include <file.h>
 #include <newstring.h>
 #include <msg_todo.h>
+#include <env.h>
 
 bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
@@ -143,7 +144,7 @@ NEVER_RETURN void local_exit(int exit_code) {
 
     arena_free(&a_temp);
     arena_free(&a_pass);
-    arena_free(&a_main);
+    arena_free_a_main();
     arena_free(&a_leak);
 
     exit(exit_code);
