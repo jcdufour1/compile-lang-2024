@@ -1274,6 +1274,15 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             unwrap(*new_tast);
             return true;
         case UAST_UNKNOWN:
+            if (check_env.lhs_lang_type.type == LANG_TYPE_REMOVED) {
+                msg(
+                    DIAG_TYPE_COULD_NOT_BE_INFERED,
+                    uast_expr_get_pos(uast),
+                    "enum callee type could not be infered\n"
+                );
+                return false;
+            }
+
             if (check_env.lhs_lang_type.type != LANG_TYPE_ENUM) {
                 msg(
                     DIAG_UNKNOWN_ON_NON_ENUM_TYPE,
@@ -1281,7 +1290,6 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
                     "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, check_env.lhs_lang_type)
                 );
-            todo();
                 return false;
             }
 
@@ -2489,7 +2497,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
-                        //env.supress_type_inference_failures = true;
+                        env.supress_type_inference_failures = true;
                         uint32_t old_error_count = env.error_count;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
                             if (infer_generic_type(
@@ -4343,6 +4351,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 }
 
 bool try_set_types(void) {
+    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
+
     {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
@@ -4365,7 +4375,7 @@ bool try_set_types(void) {
         return false;
     }
 
-    check_env.lhs_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
     bool status = true;

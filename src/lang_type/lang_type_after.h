@@ -130,6 +130,8 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
             return true;
         case LANG_TYPE_FN:
             return false;
+        case LANG_TYPE_REMOVED:
+            return false;
     }
     unreachable("");
 }

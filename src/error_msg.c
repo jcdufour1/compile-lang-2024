@@ -177,7 +177,6 @@ void msg_internal(
     Pos pos, const char* format, ...
 ) {
     if (env.supress_type_inference_failures && expect_fail_type_is_type_inference_error(msg_expect_fail_type)) {
-        todo();
         return;
     }
 
