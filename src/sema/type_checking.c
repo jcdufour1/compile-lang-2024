@@ -2497,6 +2497,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
+                        bool old_supress_type_infer = env.supress_type_inference_failures;
                         env.supress_type_inference_failures = true;
                         uint32_t old_error_count = env.error_count;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
@@ -2512,7 +2513,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 infer_success = true;
                             }
                         }
-                        env.supress_type_inference_failures = false;
+                        env.supress_type_inference_failures = old_supress_type_infer;
                         status = old_error_count == env.error_count && status;
 
                         if (infer_success) {

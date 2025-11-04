@@ -34,6 +34,7 @@ void arena_free_internal(Arena* arena);
 
 #define arena_free(arena) \
     do { \
+        unwrap((arena) != &a_main && "arena_free_a_main should be used to free a_main"); \
         arena_free_internal(arena); \
         (arena)->next = NULL; \
     } while (0);

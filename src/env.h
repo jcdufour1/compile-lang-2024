@@ -49,7 +49,8 @@ typedef struct Env_ {
 // TODO: move this function?
 static inline void arena_free_a_main(void) {
     env.a_main_was_freed = true;
-    arena_free(&a_main);
+    arena_free_internal(&a_main);
+    a_main.next = NULL;
 }
 
 

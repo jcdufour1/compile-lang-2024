@@ -152,6 +152,8 @@ next:
             return true;
         case LANG_TYPE_ARRAY:
             return false; // TODO
+        case LANG_TYPE_REMOVED:
+            return true; // TODO
     }
     unreachable("");
 }

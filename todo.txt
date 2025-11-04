@@ -69,7 +69,6 @@ for generics:
         46 |     switch way {
            |     ^
         47 |         case .way1: break
-- do_test.py: command line arg to avoid using red/green background on diff
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
@@ -87,8 +86,6 @@ for generics:
 - fix this parser bug:
     if curr < '0' || curr > '9' => break
     *str = slice_range(*str, 1, str.count - 1)
-- fix bug (def not being eliminated when defining Slice of strs this way):
-    Slice(<Str>)
 - ptr depth should be implemented using lang_type_ptr instead of storing ptr depth in atom?
     lang_type_ptr could have depth variable to reduce number of lang_type_ptrs needed
 - TODO: size_t may not be the correct type
