@@ -188,6 +188,40 @@ static inline bool uast_try_get_member_def(
     return false;
 }
 
+static inline bool uast_try_get_member_expr(
+    Uast_expr** new_expr,
+    const Ustruct_def_base* struct_def,
+    Strv member_name
+) {
+    (void) new_expr;
+    (void) struct_def;
+    (void) member_name;
+    todo();
+    //vec_foreach(idx, Ulang_type, gen_arg, struct_def->name.gen_args) {
+    //    switch (gen_arg.type) {
+    //        case ULANG_TYPE_TUPLE:
+    //            todo();
+    //        case ULANG_TYPE_REGULAR:
+    //            todo();
+    //        case ULANG_TYPE_INT: {
+    //            Ulang_type_int lang_int = ulang_type_int_const_unwrap(gen_arg);
+    //            if (
+    //        }
+    //            if (
+    //        case ULANG_TYPE_FN:
+    //            todo();
+    //        case ULANG_TYPE_ARRAY:
+    //            todo();
+    //        case ULANG_TYPE_EXPR:
+    //            todo();
+    //        case ULANG_TYPE_GEN_PARAM:
+    //            todo();
+    //    }
+    //    unreachable("");
+    //}
+    return false;
+}
+
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Uast_variable_def* curr_member = vec_at(struct_def->members, idx);

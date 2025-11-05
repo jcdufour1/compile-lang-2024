@@ -70,7 +70,7 @@ static void msg_invalid_count_generic_args_internal(
     );
 }
 
-static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
+static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
     is_in_struct_base_def = true;
     bool status = true;
     Tast_variable_def_vec new_members = {0};
@@ -127,7 +127,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
 static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_struct_def_wrap(after_res),
         before_res,
@@ -138,7 +138,7 @@ static bool try_set_struct_def_types(Uast_struct_def* after_res) {
 
 static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_raw_union_def_wrap(after_res),
         before_res,
@@ -149,7 +149,7 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
 
 static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_enum_def_wrap(after_res),
         before_res,

@@ -3068,8 +3068,16 @@ bool try_set_member_access_types_finish_enum_def(
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
+                Uast_expr* memb_expr = {0};
+                log(LOG_DEBUG, FMT"\n", uast_enum_def_print(enum_def));
+                log(LOG_DEBUG, "%zu\n", enum_def->base.generics.info.count);
+                log(LOG_DEBUG, "%zu\n", enum_def->base.name.gen_args.info.count);
+                todo();
+                if (!uast_try_get_member_expr(&memb_expr, &enum_def->base, access->member_name->name.base)) {
+                    msg_invalid_member(enum_def->base.name, access);
+                    return false;
+                }
+                todo();
             }
             
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(

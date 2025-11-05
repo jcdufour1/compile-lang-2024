@@ -1234,6 +1234,9 @@ static PARSE_STATUS parse_struct_def_base(
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&base->generics, tokens, name.scope_id);
     }
+    if (strv_is_equal(name.base, sv("Token"))) {
+        assert(base->generics.info.count > 0);
+    }
 
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
