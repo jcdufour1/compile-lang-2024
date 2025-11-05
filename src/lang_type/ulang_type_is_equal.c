@@ -43,7 +43,7 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
             return ulang_type_is_equal(a_inner, b_inner);
         }
         case ULANG_TYPE_INT:
-            todo();
+            return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
     }
     todo();
 }

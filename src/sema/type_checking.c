@@ -2808,13 +2808,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    if (tast_expr_get_lang_type(new_arg).type == LANG_TYPE_ENUM && strv_is_equal(lang_type_enum_const_unwrap(tast_expr_get_lang_type(new_arg)).atom.str.base, sv("Token"))) {
-                        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(lang_type_enum_const_unwrap(tast_expr_get_lang_type(new_arg)).atom.str.gen_args, 0)));
-                        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param->base->lang_type));
-                        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(lang_type_enum_const_unwrap(lang_type_from_ulang_type(param->base->lang_type)).atom.str.gen_args, 0)));
-                        todo();
-                    }
-                    log(LOG_DEBUG, FMT"\n", tast_expr_print(new_arg));
                     msg_invalid_function_arg(new_arg, param->base, is_fun_callback);
                     status = false;
                     goto error;
