@@ -2520,7 +2520,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
-                                tast_expr_get_lang_type(arg_to_infer_from),
+                                lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
                                 arg_to_infer_from->type == TAST_LITERAL,
                                 vec_at(params->params, param_idx)->base->lang_type,
                                 param_name,

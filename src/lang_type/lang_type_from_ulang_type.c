@@ -46,6 +46,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         case ULANG_TYPE_EXPR:
             return try_lang_type_from_ulang_type_expr(new_lang_type, ulang_type_expr_const_unwrap(lang_type));
         case ULANG_TYPE_INT: {
+            // TODO
+            return false;
             Lang_type_int new_int = {0};
             if (!try_lang_type_from_ulang_type_int(&new_int, ulang_type_int_const_unwrap(lang_type))) {
                 return false;
