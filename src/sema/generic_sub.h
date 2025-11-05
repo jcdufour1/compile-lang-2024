@@ -4,6 +4,12 @@
 #include <uast.h>
 #include <ulang_type.h>
 
+typedef enum {
+    GEN_SUB_NAME_NORMAL,
+    GEN_SUB_NAME_NEW_INT,
+    GEN_SUB_NAME_ERROR,
+} GEN_SUB_NAME_STATUS;
+
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg);
@@ -72,7 +78,7 @@ void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang
 
 void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg);
+GEN_SUB_NAME_STATUS generic_sub_name(Uast_int** new_expr, Name* name, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg);
 

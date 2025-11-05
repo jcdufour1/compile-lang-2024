@@ -12,6 +12,7 @@ void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_continue(Uast_continue* cont, Name gen_param, Ulang_type gen_arg) {
+    // TODO: should cont->break_out_of be substituted?
     (void) cont;
     (void) gen_param;
     (void) gen_arg;
@@ -22,7 +23,17 @@ void generic_sub_defer(Uast_defer* defer, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_using(Uast_using* using, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_name(&using->sym_name, gen_param, gen_arg);
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &using->sym_name, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", using->pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    unreachable("");
 }
 
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg) {
@@ -144,23 +155,67 @@ void generic_sub_lang_type(
 }
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_name(&def->name, gen_param, gen_arg);
     generic_sub_lang_type(&def->lang_type, def->lang_type, gen_param, gen_arg);
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &def->name, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", def->pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    unreachable("");
 }
 
 void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_name(&def->name, gen_param, gen_arg);
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &def->name, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", def->pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    unreachable("");
 }
 
 void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_name(&label->name, gen_param, gen_arg);
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &label->name, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", label->pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    unreachable("");
 }
 
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_name(&base->name, gen_param, gen_arg);
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         generic_sub_lang_type(&vec_at(base->members, idx)->lang_type, vec_at(base->members, idx)->lang_type, gen_param, gen_arg);
     }
+    Pos pos = POS_BUILTIN;
+    if (base->members.info.count > 0) {
+        pos = vec_at(base->members, 0)->pos;
+    }
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &base->name, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    unreachable("");
 }
 
 void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
@@ -270,7 +325,16 @@ void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen
 void generic_sub_for_with_cond(Uast_for_with_cond* lang_for, Name gen_param, Ulang_type gen_arg) {
     generic_sub_condition(lang_for->condition, gen_param, gen_arg);
     generic_sub_block(lang_for->body, gen_param, gen_arg);
-    generic_sub_name(&lang_for->continue_label, gen_param, gen_arg);
+    Uast_int* dummy = NULL;
+    switch (generic_sub_name(&dummy, &lang_for->continue_label, gen_param, gen_arg)) {
+        case GEN_SUB_NAME_NORMAL:
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", lang_for->pos);
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
 }
 
 void generic_sub_condition(Uast_condition* cond, Name gen_param, Ulang_type gen_arg) {
@@ -380,6 +444,7 @@ void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
+    todo();
     generic_sub_name(&sym->name, gen_param, gen_arg);
 }
 
@@ -411,7 +476,7 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
     generic_sub_lang_type(&unary->lang_type, unary->lang_type, gen_param, gen_arg);
 }
 
-void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
+GEN_SUB_NAME_STATUS generic_sub_name(Uast_int** new_expr, Name* name, Name gen_param, Ulang_type gen_arg) {
     if (name_is_equal(*name, gen_param)) {
         if (name->gen_args.info.count > 0) {
             // TODO
@@ -424,7 +489,16 @@ void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
             }
         } else if (gen_arg.type == ULANG_TYPE_GEN_PARAM) {
             unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
+        } else if (gen_arg.type == ULANG_TYPE_INT) {
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *name));
+            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
+            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
+            
+            todo();
         } else {
+            msg_todo("", ulang_type_get_pos(gen_arg));
+            return;
+            // TODO
             // TODO
 
             //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
