@@ -41,6 +41,15 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
+Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool include_scope) {
+    (void) mod_path;
+    (void) include_scope;
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_int64_t(&a_main, &name, ulang_type.data);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
@@ -87,7 +96,7 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type(mod_path, inner, include_scope);
         }
         case ULANG_TYPE_INT:
-            todo();
+            return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }

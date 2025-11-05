@@ -104,7 +104,7 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
                 return false;
             }
             const Uast_int* lang_int = uast_int_const_unwrap(lit);
-            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->data, lang_int->pos));
+            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->data, 0, lang_int->pos));
             return true;
         }
         case UAST_FUNCTION_CALL:

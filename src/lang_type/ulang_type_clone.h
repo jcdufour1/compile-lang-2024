@@ -25,6 +25,10 @@ static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
     );
 }
 
+static inline Ulang_type_int ulang_type_int_clone(Ulang_type_int lang_type) {
+    return ulang_type_int_new(lang_type.data, lang_type.pointer_depth, lang_type.pos);
+}
+
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
     return ulang_type_tuple_new(ulang_type_vec_clone(lang_type.ulang_types, use_new_scope, new_scope), lang_type.pos);
 }
@@ -74,7 +78,9 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
                 ulang_type_expr_const_unwrap(lang_type)
             ));
         case ULANG_TYPE_INT:
-            todo();
+            return ulang_type_int_const_wrap(ulang_type_int_clone(
+                ulang_type_int_const_unwrap(lang_type)
+            ));
     }
 }
 

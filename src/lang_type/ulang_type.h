@@ -96,6 +96,7 @@ typedef struct Ulang_type_expr_ {
 
 typedef struct Ulang_type_int_ {
     int64_t data;
+    int16_t pointer_depth;
     Pos pos;
 }Ulang_type_int;
 
@@ -244,8 +245,8 @@ static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, size_
 static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, int16_t pointer_depth, Pos pos){
     return (Ulang_type_expr) { .expr = expr, .pointer_depth = pointer_depth, .pos = pos};
 }
-static inline Ulang_type_int ulang_type_int_new(int64_t data, Pos pos){
-    return (Ulang_type_int) { .data = data, .pos = pos};
+static inline Ulang_type_int ulang_type_int_new(int64_t data, int16_t pointer_depth, Pos pos){
+    return (Ulang_type_int) { .data = data, .pointer_depth = pointer_depth, .pos = pos};
 }
 
 static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
