@@ -14,7 +14,7 @@ void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg);
+void generic_sub_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg);
 
@@ -46,9 +46,9 @@ void generic_sub_lang_type_expr(
     Ulang_type gen_arg
 );
 
-void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg);
+GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg);
+void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_operator(Uast_operator* operator, Name gen_param, Ulang_type gen_arg);
 
