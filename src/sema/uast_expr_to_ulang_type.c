@@ -1,6 +1,32 @@
 #include <uast_expr_to_ulang_type.h>
 #include <lang_type_from_ulang_type.h>
 
+bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) {
+    switch (oper->type) {
+        case UAST_BINARY: {
+            const Uast_binary* bin = uast_binary_const_unwrap(oper);
+            if (bin->token_type != BINARY_MULTIPLY) {
+                msg_todo("interpreting this expression as a type", bin->pos);
+                return false;
+            }
+            if (bin->rhs->type != UAST_EXPR_REMOVED) {
+                msg_todo("interpreting this expression as a type", bin->pos);
+                return false;
+            }
+
+            if (!uast_expr_to_ulang_type(result, bin->lhs)) {
+                return false;
+            }
+            ulang_type_add_pointer_depth(result, 1);
+            return true;
+        }
+        case UAST_UNARY:
+            msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
+            return false;
+    }
+    unreachable("");
+}
+
 bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
@@ -16,8 +42,7 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return false;
         case UAST_OPERATOR:
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return false;
+            return uast_operator_to_ulang_type(result, uast_operator_const_unwrap(expr));
         case UAST_SYMBOL: {
             Name sym_name = uast_symbol_const_unwrap(expr)->name;
             *result = ulang_type_regular_const_wrap(ulang_type_regular_new(

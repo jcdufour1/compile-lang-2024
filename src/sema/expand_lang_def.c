@@ -10,6 +10,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
 #include <pos_util.h>
+#include <ulang_type_is_equal.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 
@@ -140,8 +141,11 @@ static bool expand_def_ulang_type_expr(
     Ulang_type_expr* new_lang_type,
     Ulang_type_expr lang_type
 ) {
+    if (!expand_def_expr(&lang_type.expr, lang_type.expr)) {
+        return false;
+    }
     *new_lang_type = lang_type;
-    return expand_def_expr(&lang_type.expr, lang_type.expr);
+    return true;
 }
 
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
@@ -196,7 +200,18 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     unreachable("");
 }
 
-static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* new_name, Name name, Pos dest_pos, bool always_new_expr, bool is_expanded_from, Pos* expanded_from) {
+static EXPAND_NAME_STATUS expand_def_name_internal(
+    Uast_expr** new_expr,
+    Name* new_name,
+    Name name,
+    Pos dest_pos,
+    bool always_new_expr,
+    bool is_expanded_from,
+    Pos* expanded_from
+) {
+    if (strv_is_equal(name.base, sv("Str"))) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+    }
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
@@ -358,6 +373,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, 
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
             return EXPAND_NAME_NEW_EXPR;
+            // TODO: below unwraps and return are unreachable
             unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             return EXPAND_NAME_NEW_EXPR;

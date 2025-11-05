@@ -3211,8 +3211,19 @@ static PARSE_EXPR_STATUS parse_generic_binary_internal(
 
     Uast_expr* rhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1, depth + 1);
-    if (status != PARSE_EXPR_OK) {
-        return status;
+    switch (status) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            rhs = uast_expr_removed_wrap(uast_expr_removed_new(
+                tk_view_front(*tokens).pos,
+                sv("after binary operator")
+            ));
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+        default:
+            unreachable("");
     }
 
     *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(oper.type))));

@@ -17,8 +17,6 @@ typedef struct Ulang_type_atom_ {
                            // for function argument: 2 means to reference the variable twice
 } Ulang_type_atom;
 
-static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b);
-
 static inline Ulang_type_atom ulang_type_atom_new(Uname str, int16_t pointer_depth) {
     return (Ulang_type_atom) {.str = str, .pointer_depth = pointer_depth};
 }
@@ -311,39 +309,6 @@ static inline void ulang_type_add_pointer_depth(Ulang_type* lang_type, int16_t p
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type);
-
-static inline bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
-    return uname_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;
-}
-
-static inline bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
-    return ulang_type_atom_is_equal(a.atom, b.atom);
-}
-
-static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
-    if (a.type != b.type) {
-        return false;
-    }
-
-    switch (a.type) {
-        case ULANG_TYPE_REGULAR:
-            return ulang_type_regular_is_equal(ulang_type_regular_const_unwrap(a), ulang_type_regular_const_unwrap(b));
-        case ULANG_TYPE_ARRAY:
-            // TODO
-            todo();
-        case ULANG_TYPE_TUPLE:
-            todo();
-        case ULANG_TYPE_FN:
-            todo();
-        case ULANG_TYPE_GEN_PARAM:
-            todo();
-        case ULANG_TYPE_EXPR:
-            todo();
-        case ULANG_TYPE_INT:
-            todo();
-    }
-    todo();
-}
 
 #endif // ULANG_TYPE_H
 

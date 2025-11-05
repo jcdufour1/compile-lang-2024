@@ -4,6 +4,7 @@
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
 #include <uast.h>
+#include <ulang_type_is_equal.h>
 
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};

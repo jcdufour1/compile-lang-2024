@@ -31,6 +31,7 @@
 #include <check_general_assignment.h>
 #include <expand_using.h>
 #include <lang_type_new_convenience.h>
+#include <ulang_type_is_equal.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
