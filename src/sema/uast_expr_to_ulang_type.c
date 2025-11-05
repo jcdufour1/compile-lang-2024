@@ -82,9 +82,21 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
             //));
 
             //return true;
-        case UAST_INDEX:
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return false;
+        case UAST_INDEX: {
+            const Uast_index* index = uast_index_const_unwrap(expr);
+            if (index->index->type != UAST_EXPR_REMOVED) {
+                msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+                return false;
+            }
+
+            Ulang_type item_type = {0};
+            if (!uast_expr_to_ulang_type(&item_type, index->callee)) {
+                return false;
+            }
+
+            *result = ulang_type_new_slice(index->pos, item_type, 0 /* TODO */);
+            return true;
+        }
         case UAST_LITERAL: {
             const Uast_literal* lit = uast_literal_const_unwrap(expr);
             if (lit->type != UAST_INT) {

@@ -324,11 +324,14 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, &sym->pos);
         }
         case UAST_OPERATOR:
+            // fallthrough
+        case UAST_INDEX: {
+            Pos temp_pos = uast_expr_get_pos(expr);
+            *uast_expr_get_pos_ref(expr) = dest_pos;
+            pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
             *new_expr = expr;
             return EXPAND_NAME_NEW_EXPR;
-        case UAST_INDEX:
-            *new_expr = expr;
-            return EXPAND_NAME_NEW_EXPR;
+        }
         case UAST_BLOCK:
             // fallthrough
         case UAST_IF_ELSE_CHAIN:

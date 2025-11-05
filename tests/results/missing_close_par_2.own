@@ -1,10 +1,11 @@
 compile::stdout 0
 
-compile::stderr 4
-tests/inputs/missing_close_par_2.own:5:1:[1;31merror[0;39m:expected expression 
+compile::stderr 5
+tests/inputs/missing_close_par_2.own:4:13:[1;31merror[0;39m:opening `(` is unmatched
+     3 |     let num: i32
      4 |     num = 8*(9 +
+       |             ^
      5 | }
-       | ^
 
 compile::return_code 1
 
