@@ -425,10 +425,11 @@ void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
         } else if (gen_arg.type == ULANG_TYPE_GEN_PARAM) {
             unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
         } else {
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
             // TODO
-            todo();
+
+            //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
+            //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
+            //todo();
         }
         return;
     }

@@ -92,6 +92,7 @@ typedef struct Uast_expr_ Uast_expr;
 
 typedef struct Ulang_type_expr_ {
     Uast_expr* expr;
+    int16_t pointer_depth;
     Pos pos;
 }Ulang_type_expr;
 
@@ -242,8 +243,8 @@ static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Po
 static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, size_t count, Pos pos){
     return (Ulang_type_array) { .item_type = item_type, .count = count, .pos = pos};
 }
-static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, Pos pos){
-    return (Ulang_type_expr) { .expr = expr, .pos = pos};
+static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, int16_t pointer_depth, Pos pos){
+    return (Ulang_type_expr) { .expr = expr, .pointer_depth = pointer_depth, .pos = pos};
 }
 static inline Ulang_type_int ulang_type_int_new(int64_t data, Pos pos){
     return (Ulang_type_int) { .data = data, .pos = pos};
@@ -283,6 +284,7 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
             unwrap(pointer_depth == 0);
             return;
         case ULANG_TYPE_FN:
+            // TODO
             todo();
         case ULANG_TYPE_REGULAR:
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
@@ -290,11 +292,18 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
         case ULANG_TYPE_ARRAY:
             todo();
         case ULANG_TYPE_EXPR:
-            unreachable("");
+            ulang_type_expr_unwrap(lang_type)->pointer_depth = pointer_depth;
+            return;
         case ULANG_TYPE_INT:
-            unreachable("");
+            // TODO
+            //ulang_type_int_unwrap(lang_type)->pointer_depth = pointer_depth;
+            return;
     }
     unreachable("");
+}
+
+static inline void ulang_type_add_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
+    ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + pointer_depth);
 }
 
 #define ulang_type_print(mode, lang_type) strv_print(ulang_type_print_internal((mode), (lang_type)))

@@ -131,6 +131,7 @@ bool infer_generic_type(
             if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(param_corres_to_arg).expr)) {
                 todo();
             }
+            ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(param_corres_to_arg).pointer_depth);
             return infer_generic_type(
                 infered,
                 arg_to_infer_from,

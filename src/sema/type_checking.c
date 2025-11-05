@@ -2476,6 +2476,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
                     todo();
                 }
+                ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(*gen_arg).pointer_depth);
                 *gen_arg = inner;
             }
         }

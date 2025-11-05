@@ -18,7 +18,11 @@ static inline Ulang_type_gen_param ulang_type_gen_param_clone(Ulang_type_gen_par
 }
 
 static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
-    return ulang_type_expr_new(uast_expr_clone(lang_type.expr, false, 0, uast_expr_get_pos(lang_type.expr)), lang_type.pos);
+    return ulang_type_expr_new(
+        uast_expr_clone(lang_type.expr, false, 0, uast_expr_get_pos(lang_type.expr)),
+        lang_type.pointer_depth,
+        lang_type.pos
+    );
 }
 
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {

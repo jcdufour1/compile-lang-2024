@@ -988,7 +988,6 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
         return PARSE_OK;
     } else {
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
-        todo();
         return PARSE_ERROR;
     }
 }
@@ -1201,15 +1200,16 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
         Uast_expr* arg = {0};
         switch (parse_expr(&arg, tokens, scope_id)) {
             case PARSE_EXPR_OK:
-                 break;
+                break;
             case PARSE_EXPR_NONE:
-                todo();
+                msg(DIAG_EXPECTED_TYPE, tk_view_front(*tokens).pos, "expected type or expression\n");
+                return PARSE_ERROR;
             case PARSE_EXPR_ERROR:
-                todo();
+                return PARSE_ERROR;
             default:
                 unreachable("");
         }
-        vec_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(arg, uast_expr_get_pos(arg))));
+        vec_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(arg, 0, uast_expr_get_pos(arg))));
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {

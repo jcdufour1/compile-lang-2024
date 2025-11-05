@@ -94,6 +94,7 @@ typedef enum {
     DIAG_CMD_OPT_INVALID_OPTION,
     DIAG_LANG_DEF_IN_RUNTIME,
     DIAG_TYPE_COULD_NOT_BE_INFERED,
+    DIAG_EXPECTED_TYPE,
 
     // count of cases for static asserts
     DIAG_COUNT,
