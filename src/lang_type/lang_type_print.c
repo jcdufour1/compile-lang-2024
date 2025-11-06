@@ -179,7 +179,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_RAW_UNION:
             // fallthrough
         case LANG_TYPE_STRUCT:
-            unwrap(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
+            assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
         case LANG_TYPE_VOID:
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
             goto end;

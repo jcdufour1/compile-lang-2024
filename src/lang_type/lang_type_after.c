@@ -171,7 +171,7 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
             return atom;
         }
         case LANG_TYPE_INT:
-            todo();
+            unreachable("");
     }
     unreachable("");
 }
@@ -248,7 +248,7 @@ bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE mode, Lang_ty
             *result = lang_type_atom_new_from_cstr("void", 0, SCOPE_TOP_LEVEL);
             return true;
         case LANG_TYPE_INT:
-            todo();
+            return false;
     }
     unreachable("");
 }
@@ -274,11 +274,11 @@ void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
         case LANG_TYPE_FN:
             unreachable("");
         case LANG_TYPE_VOID:
-            todo();
+            unreachable("");
         case LANG_TYPE_REMOVED:
             unreachable("");
         case LANG_TYPE_INT:
-            todo();
+            unreachable("");
     }
     unreachable("");
 }

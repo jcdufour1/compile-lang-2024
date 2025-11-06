@@ -3,6 +3,7 @@
 
 #include <ulang_type.h>
 
+// TODO: remove this file and function
 static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -16,9 +17,9 @@ static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
         case ULANG_TYPE_GEN_PARAM:
             unreachable("");
         case ULANG_TYPE_EXPR:
-            todo();
+            unreachable("");
         case ULANG_TYPE_INT:
-            todo();
+            unreachable("");
     }
 }
 

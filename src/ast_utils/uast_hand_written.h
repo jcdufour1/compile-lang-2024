@@ -10,7 +10,7 @@
     lang_type_print((reg_sym).lang_type), tast_print((reg_sym).tast)
 
 typedef struct {
-    Uast_generic_param_vec generics; // TODO: remove generics (or document purpose)?
+    Uast_generic_param_vec generics;
     Uast_variable_def_vec members;
     Name name;
 } Ustruct_def_base;
