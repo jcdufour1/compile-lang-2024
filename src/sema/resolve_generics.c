@@ -158,7 +158,7 @@ static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     return success;
 }
 
-static bool resolve_generics_serialize_struct_def_base(
+static void resolve_generics_serialize_struct_def_base(
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
@@ -166,7 +166,7 @@ static bool resolve_generics_serialize_struct_def_base(
 ) {
     if (gen_args.info.count < 1) {
         *new_base = old_base;
-        return true;
+        return;
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
@@ -181,7 +181,8 @@ static bool resolve_generics_serialize_struct_def_base(
     unwrap(old_base.members.info.count == new_base->members.info.count);
 
     new_base->name = new_name;
-    return true;
+    new_base->generics = old_base.generics;
+    return;
 }
 
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
@@ -212,13 +213,9 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             *after_res = new_def_;
         } else {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-                todo();
-                return false;
-            }
+            resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
             *after_res = (void*)obj_new(pos_def, new_base);
         }
-
     }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(

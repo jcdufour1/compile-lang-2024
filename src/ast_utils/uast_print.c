@@ -504,6 +504,12 @@ Strv uast_generic_param_print_internal(const Uast_generic_param* param, int inde
 
     string_extend_cstr_indent(&a_temp, &buf, "generic_params\n", indent);
     string_extend_strv_indent(&a_temp, &buf, sv(""), indent + INDENT_WIDTH);
+    if (param->is_expr) {
+        string_extend_cstr(&a_temp, &buf, "expr: ");
+        string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, param->expr_lang_type));
+        string_extend_cstr(&a_temp, &buf, "\n");
+        string_extend_strv_indent(&a_temp, &buf, sv(""), indent + INDENT_WIDTH);
+    }
     extend_name(NAME_LOG, &buf, param->name);
     string_extend_cstr(&a_temp, &buf, "\n");
 

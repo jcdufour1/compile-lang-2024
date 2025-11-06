@@ -363,6 +363,7 @@ static bool get_mod_alias_from_path_token(
 finish:
     curr_mod_path = old_mod_path;
     curr_mod_alias = old_mod_alias;
+
     return status;
 }
 
@@ -1171,6 +1172,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
             if (!parse_lang_type_struct(&expr_lang_type, tokens, block_scope)) {
                 return PARSE_ERROR;
             }
+            is_expr = true;
         }
 
         Uast_generic_param* param = uast_generic_param_new(
@@ -1234,6 +1236,14 @@ static PARSE_STATUS parse_struct_def_base(
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&base->generics, tokens, name.scope_id);
     }
+
+    {
+        Uast_def* result = NULL;
+        if (usymbol_lookup(&result, name_new(sv("test"), sv("Token"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
+            unwrap(uast_enum_def_unwrap(result)->base.generics.info.count == 2);
+        }
+    }
+
     if (strv_is_equal(name.base, sv("Token"))) {
         assert(base->generics.info.count > 0);
     }

@@ -3069,15 +3069,17 @@ bool try_set_member_access_types_finish_enum_def(
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
                 Uast_expr* memb_expr = {0};
-                log(LOG_DEBUG, FMT"\n", uast_enum_def_print(enum_def));
-                log(LOG_DEBUG, "%zu\n", enum_def->base.generics.info.count);
-                log(LOG_DEBUG, "%zu\n", enum_def->base.name.gen_args.info.count);
-                todo();
-                if (!uast_try_get_member_expr(&memb_expr, &enum_def->base, access->member_name->name.base)) {
-                    msg_invalid_member(enum_def->base.name, access);
-                    return false;
+                if (uast_try_get_member_expr(&memb_expr, &enum_def->base, access->member_name->name.base, access->pos)) {
+                    Tast_expr* new_expr = NULL;
+                    if (!try_set_expr_types(&new_expr, memb_expr)) {
+                        return false;
+                    }
+                    *new_tast = tast_expr_wrap(new_expr);
+                    return true;
                 }
-                todo();
+
+                msg_invalid_member(enum_def->base.name, access);
+                return false;
             }
             
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
@@ -3201,6 +3203,12 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
                 todo();
             }
+            if (lang_type_def->type == UAST_ENUM_DEF) {
+                log(LOG_DEBUG, FMT"\n", uast_enum_def_print(uast_enum_def_unwrap(lang_type_def)));
+                log(LOG_DEBUG, "%zu\n", uast_enum_def_unwrap(lang_type_def)->base.generics.info.count);
+                log(LOG_DEBUG, "%zu\n", uast_enum_def_unwrap(lang_type_def)->base.name.gen_args.info.count);
+            }
+            log(LOG_DEBUG, FMT"\n", uast_def_print(lang_type_def));
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 

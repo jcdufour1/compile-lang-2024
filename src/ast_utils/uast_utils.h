@@ -191,34 +191,21 @@ static inline bool uast_try_get_member_def(
 static inline bool uast_try_get_member_expr(
     Uast_expr** new_expr,
     const Ustruct_def_base* struct_def,
-    Strv member_name
+    Strv member_name,
+    Pos dest_pos
 ) {
     (void) new_expr;
     (void) struct_def;
     (void) member_name;
+    vec_foreach(idx, Uast_generic_param*, gen_param, struct_def->generics) {
+        log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
+        if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
+            Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(struct_def->name.gen_args, idx));
+            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+            return true;
+        }
+    }
     todo();
-    //vec_foreach(idx, Ulang_type, gen_arg, struct_def->name.gen_args) {
-    //    switch (gen_arg.type) {
-    //        case ULANG_TYPE_TUPLE:
-    //            todo();
-    //        case ULANG_TYPE_REGULAR:
-    //            todo();
-    //        case ULANG_TYPE_INT: {
-    //            Ulang_type_int lang_int = ulang_type_int_const_unwrap(gen_arg);
-    //            if (
-    //        }
-    //            if (
-    //        case ULANG_TYPE_FN:
-    //            todo();
-    //        case ULANG_TYPE_ARRAY:
-    //            todo();
-    //        case ULANG_TYPE_EXPR:
-    //            todo();
-    //        case ULANG_TYPE_GEN_PARAM:
-    //            todo();
-    //    }
-    //    unreachable("");
-    //}
     return false;
 }
 
