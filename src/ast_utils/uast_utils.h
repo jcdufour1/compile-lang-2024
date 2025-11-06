@@ -205,7 +205,6 @@ static inline bool uast_try_get_member_expr(
             return true;
         }
     }
-    todo();
     return false;
 }
 

@@ -365,10 +365,11 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
     generic_sub_expr(&assign->rhs, assign->rhs, gen_param, gen_arg);
 }
 
-void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member (consider if Strv can be used for gen_param)*/, Ulang_type gen_arg) {
+void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
+        assert(gen_arg.type != ULANG_TYPE_EXPR);
         generic_sub_def(curr, gen_param, gen_arg);
     }
 
@@ -535,31 +536,34 @@ GEN_SUB_NAME_STATUS generic_sub_name(
             // TODO
             todo();
         }
-        if (gen_arg.type == ULANG_TYPE_REGULAR) {
-            if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str, ulang_type_regular_const_unwrap(gen_arg).pos)) {
-                // TODO
-                todo();
-            }
-        } else if (gen_arg.type == ULANG_TYPE_GEN_PARAM) {
-            unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
-        } else if (gen_arg.type == ULANG_TYPE_INT) {
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *name));
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
-            
-            *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
-            return GEN_SUB_NAME_NEW_INT;
-        } else {
-            msg_todo("", ulang_type_get_pos(gen_arg));
-            todo();
-            // TODO
-            // TODO
 
-            //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
-            //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
-            //todo();
+        switch (gen_arg.type) {
+            case ULANG_TYPE_REGULAR:
+                if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str, ulang_type_regular_const_unwrap(gen_arg).pos)) {
+                    // TODO
+                    todo();
+                }
+                return GEN_SUB_NAME_NORMAL;
+            case ULANG_TYPE_GEN_PARAM:
+                unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
+            case ULANG_TYPE_INT:
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *name));
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
+                log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
+                
+                *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
+                return GEN_SUB_NAME_NEW_INT;
+
+            case ULANG_TYPE_TUPLE:
+                todo();
+            case ULANG_TYPE_FN:
+                todo();
+            case ULANG_TYPE_ARRAY:
+                todo();
+            case ULANG_TYPE_EXPR:
+                unreachable("gen_arg should not still be ulang_type_expr");
         }
-        return GEN_SUB_NAME_NORMAL;
+        unreachable("");
     }
 
     for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {

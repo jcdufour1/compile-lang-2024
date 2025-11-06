@@ -69,6 +69,7 @@ OBJS=\
 	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
+	 ${BUILD_DIR}/sema/check_gen_constraints.o \
 	 ${BUILD_DIR}/sema/type_checking.o \
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
 	 ${BUILD_DIR}/sema/expand_using.o \
@@ -157,6 +158,9 @@ ${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c
 
 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o: ${DEP_COMMON} src/sema/uast_expr_to_ulang_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o src/sema/uast_expr_to_ulang_type.c
+
+${BUILD_DIR}/sema/check_gen_constraints.o: ${DEP_COMMON} src/sema/check_gen_constraints.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/check_gen_constraints.o src/sema/check_gen_constraints.c
 
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c

@@ -1,5 +1,6 @@
 #include <uast_expr_to_ulang_type.h>
 #include <lang_type_from_ulang_type.h>
+#include <ast_msg.h>
 
 bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) {
     switch (oper->type) {
@@ -27,6 +28,57 @@ bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) 
     unreachable("");
 }
 
+bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
+    Uast_def* sym_def = NULL;
+    if (usymbol_lookup(&sym_def, sym->name)) {
+        switch (sym_def->type) {
+            case UAST_LABEL:
+                msg(DIAG_INVALID_TYPE, sym->pos, "label name is not allowed here\n");
+                return false;
+            case UAST_VOID_DEF:
+                todo();
+            case UAST_POISON_DEF:
+                return false;
+            case UAST_IMPORT_PATH:
+                unreachable("");
+            case UAST_MOD_ALIAS:
+                unreachable("");
+            case UAST_GENERIC_PARAM:
+                break;
+            case UAST_FUNCTION_DEF:
+                todo();
+            case UAST_VARIABLE_DEF:
+                msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
+                return false;
+            case UAST_STRUCT_DEF:
+                break;
+            case UAST_RAW_UNION_DEF:
+                break;
+            case UAST_ENUM_DEF:
+                break;
+            case UAST_LANG_DEF:
+                unreachable("");
+            case UAST_PRIMITIVE_DEF:
+                break;
+            case UAST_FUNCTION_DECL:
+                todo();
+            case UAST_BUILTIN_DEF:
+                todo();
+        }
+    }
+
+
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_atom_new(
+            name_to_uname(sym->name),
+            0
+        ),
+        sym->pos
+    ));
+
+    return true;
+}
+
 bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
@@ -44,17 +96,8 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
         case UAST_OPERATOR:
             return uast_operator_to_ulang_type(result, uast_operator_const_unwrap(expr));
         case UAST_SYMBOL: {
-            Name sym_name = uast_symbol_const_unwrap(expr)->name;
-            *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new(
-                    name_to_uname(sym_name),
-                    0
-                ),
-                //name_to_uname(uast_symbol_const_unwrap(expr)->name),
-                uast_symbol_const_unwrap(expr)->pos
-            ));
+            return uast_symbol_to_ulang_type(result, uast_symbol_const_unwrap(expr));
 
-            return true;
         }
         case UAST_MEMBER_ACCESS: {
             // TODO: make a helper function to convert member access to uname?

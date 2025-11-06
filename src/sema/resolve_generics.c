@@ -12,6 +12,8 @@
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
 #include <uast_expr_to_ulang_type.h>
+#include <check_gen_constraints.h>
+#include <ulang_type_remove_expr.h>
 
 static bool is_in_struct_base_def;
 
@@ -173,6 +175,10 @@ static void resolve_generics_serialize_struct_def_base(
         vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(old_base.members, idx_memb), false, 0));
     }
 
+    vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+        *gen_arg = ulang_type_remove_expr(*gen_arg);
+    }
+
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Name gen_def = vec_at(old_base.generics, idx_gen)->name;
         generic_sub_struct_def_base(new_base, gen_def, vec_at(gen_args, idx_gen));
@@ -195,7 +201,13 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Pos pos_def,
     Obj_new obj_new
 ) {
-    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */, (Attrs) {0});
+    Name new_name = name_new(
+        old_base.name.mod_path,
+        old_base.name.base,
+        ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args,
+        SCOPE_TOP_LEVEL /* TODO */,
+        (Attrs) {0}
+    );
     if (!struct_like_tbl_lookup(after_res, new_name)) {
         if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
@@ -205,6 +217,10 @@ static bool resolve_generics_ulang_type_internal_struct_like(
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
+            return false;
+        }
+
+        if (!check_gen_constraints(old_base.generics, new_name.gen_args)) {
             return false;
         }
 
@@ -440,6 +456,10 @@ static bool resolve_generics_serialize_function_decl(
 ) {
     memset(new_decl, 0, sizeof(*new_decl));
 
+    if (!check_gen_constraints(old_decl->generics, gen_args)) {
+        return false;
+    }
+
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_clone(vec_at(old_decl->params->params, idx), true, new_block->scope_id));
@@ -460,10 +480,18 @@ static bool resolve_generics_serialize_function_decl(
             return false;
         }
 
+        vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+            *gen_arg = ulang_type_remove_expr(*gen_arg);
+        }
+
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
             // TODO: same params are being replaced both here and in generic_sub_block?
-            generic_sub_param(vec_at(params, idx_fun_param), curr_arg, vec_at(gen_args, idx_arg));
+            generic_sub_param(
+                vec_at(params, idx_fun_param),
+                curr_arg,
+                vec_at(gen_args, idx_arg)
+            );
         }
         Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));

@@ -11,9 +11,11 @@ fn print_max(token Token(<max>), max ''i32) {
 
 fn main() i32 {
     let eight i32 = 8
-    let token Token(<eight>) = .num(7)
-    print_max(token, 8)
-    //print_max(token, eight)
+    let token1 Token(<eight>) = .num(7)
+
+    let token2 Token(<8>) = .num(7)
+    print_max(token2, 9)
+    print_max(token2, eight)
 
     return 0
 }

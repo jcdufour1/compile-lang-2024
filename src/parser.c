@@ -1244,10 +1244,6 @@ static PARSE_STATUS parse_struct_def_base(
         }
     }
 
-    if (strv_is_equal(name.base, sv("Token"))) {
-        assert(base->generics.info.count > 0);
-    }
-
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }

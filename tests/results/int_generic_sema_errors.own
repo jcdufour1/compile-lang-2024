@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 20
+tests/inputs/int_generic_sema_errors.own:14:23:[1;31merror[0;39m:symbol of variable is not allowed here
+    13 |     let eight i32 = 8
+    14 |     let token1 Token(<eight>) = .num(7)
+       |                       ^
+    15 | 
+tests/inputs/int_generic_sema_errors.own:17:15:[1;31merror[0;39m:argument is of type `Token(<int 8>)`, but the corresponding parameter `token` is of type `Token(<int 9>)`
+    16 |     let token2 Token(<8>) = .num(7)
+    17 |     print_max(token2, 9)
+       |               ^
+    18 |     print_max(token2, eight)
+tests/inputs/int_generic_sema_errors.own:8:14:[1;34mnote[0;39m:corresponding parameter `token` defined here
+     7 | 
+     8 | fn print_max(token Token(<max>), max ''i32) {
+       |              ^
+     9 |     io.print_int(max)
+tests/inputs/int_generic_sema_errors.own:18:23:[1;31merror[0;39m:symbol of variable is not allowed here
+    17 |     print_max(token2, 9)
+    18 |     print_max(token2, eight)
+       |                       ^
+    19 | 
+
+compile::return_code 1
+
