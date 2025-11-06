@@ -3006,9 +3006,24 @@ bool try_set_member_access_types_finish_generic_struct(
     Tast_expr* new_callee
 ) {
     Uast_variable_def* member_def = NULL;
-    if (!uast_try_get_member_def(&member_def, &def_base, access->member_name->name.base)) {
-        msg_invalid_member(def_base.name, access);
-        return false;
+    Uast_expr* new_expr_ = NULL;
+    static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+    switch (uast_try_get_member_def(&new_expr_, &member_def, &def_base, access->member_name->name.base, access->pos)) {
+        case UAST_GET_MEMB_DEF_NORMAL:
+            break;
+        case UAST_GET_MEMB_DEF_EXPR: {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_expr_types(&new_expr, new_expr_)) {
+                return false;
+            }
+            *new_tast = tast_expr_wrap(new_expr);
+            return true;
+        }
+        case UAST_GET_MEMB_DEF_NONE:
+            msg_invalid_member(def_base.name, access);
+            return false;
+        default:
+            unreachable("");
     }
 
     if (access->member_name->name.gen_args.info.count > 0) {
@@ -3039,9 +3054,24 @@ bool try_set_member_access_types_finish_enum_def(
     switch (check_env.parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
+            Uast_expr* new_expr_ = NULL;
+            static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+            switch (uast_try_get_member_def(&new_expr_, &member_def, &enum_def->base, access->member_name->name.base, access->pos)) {
+                case UAST_GET_MEMB_DEF_NORMAL:
+                    break;
+                case UAST_GET_MEMB_DEF_EXPR: {
+                    Tast_expr* new_expr = NULL;
+                    if (!try_set_expr_types(&new_expr, new_expr_)) {
+                        return false;
+                    }
+                    *new_tast = tast_expr_wrap(new_expr);
+                    return true;
+                }
+                case UAST_GET_MEMB_DEF_NONE:
+                    msg_invalid_member(enum_def->base.name, access);
+                    return false;
+                default:
+                    unreachable("");
             }
 
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
@@ -3067,21 +3097,26 @@ bool try_set_member_access_types_finish_enum_def(
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                Uast_expr* memb_expr = {0};
-                if (uast_try_get_member_expr(&memb_expr, &enum_def->base, access->member_name->name.base, access->pos)) {
+            Uast_expr* new_expr_ = NULL;
+            static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+            switch (uast_try_get_member_def(&new_expr_, &member_def, &enum_def->base, access->member_name->name.base, access->pos)) {
+                case UAST_GET_MEMB_DEF_NORMAL:
+                    break;
+                case UAST_GET_MEMB_DEF_EXPR: {
                     Tast_expr* new_expr = NULL;
-                    if (!try_set_expr_types(&new_expr, memb_expr)) {
+                    if (!try_set_expr_types(&new_expr, new_expr_)) {
                         return false;
                     }
                     *new_tast = tast_expr_wrap(new_expr);
                     return true;
                 }
-
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
+                case UAST_GET_MEMB_DEF_NONE:
+                    msg_invalid_member(enum_def->base.name, access);
+                    return false;
+                default:
+                    unreachable("");
             }
-            
+
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),

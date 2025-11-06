@@ -173,39 +173,40 @@ Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_ty
 // will print error on failure
 bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
-static inline bool uast_try_get_member_def(
-    Uast_variable_def** member_def,
-    const Ustruct_def_base* struct_def,
-    Strv member_name
-) {
-    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
-        if (strv_is_equal(curr_member->name.base, member_name)) {
-            *member_def = curr_member;
-            return true;
-        }
-    }
-    return false;
-}
+typedef enum {
+    UAST_GET_MEMB_DEF_NONE,
+    UAST_GET_MEMB_DEF_NORMAL,
+    UAST_GET_MEMB_DEF_EXPR,
 
-static inline bool uast_try_get_member_expr(
+    // for static asserts
+    UAST_GET_MEMB_DEF_COUNT,
+} UAST_GET_MEMB_DEF;
+
+static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     Uast_expr** new_expr,
-    const Ustruct_def_base* struct_def,
+    Uast_variable_def** member_def,
+    const Ustruct_def_base* base,
     Strv member_name,
     Pos dest_pos
 ) {
-    (void) new_expr;
-    (void) struct_def;
-    (void) member_name;
-    vec_foreach(idx, Uast_generic_param*, gen_param, struct_def->generics) {
-        log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
-        if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(struct_def->name.gen_args, idx));
-            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
-            return true;
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        Uast_variable_def* curr = vec_at(base->members, idx);
+        if (strv_is_equal(curr->name.base, member_name)) {
+            *member_def = curr;
+            return UAST_GET_MEMB_DEF_NORMAL;
         }
     }
-    return false;
+
+    vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
+        log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
+        if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
+            Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
+            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+            return UAST_GET_MEMB_DEF_EXPR;
+        }
+    }
+
+    return UAST_GET_MEMB_DEF_NONE;
 }
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
