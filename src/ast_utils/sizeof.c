@@ -81,8 +81,6 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_FN:
             return params.sizeof_ptr_non_fn; // TODO: make separate params member "sizeof_ptr_fn",
                                              //   and use it here
-        case LANG_TYPE_INT:
-            unreachable("");
         case LANG_TYPE_REMOVED:
             unreachable("");
     }
@@ -121,8 +119,6 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_FN:
             // TODO
             todo();
-        case LANG_TYPE_INT:
-            unreachable("");
         case LANG_TYPE_REMOVED:
             unreachable("");
     }

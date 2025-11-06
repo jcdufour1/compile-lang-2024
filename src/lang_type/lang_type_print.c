@@ -29,9 +29,6 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_ARRAY:
             string_extend_cstr(&a_temp, buf, "array");
             return;
-        case LANG_TYPE_INT:
-            string_extend_cstr(&a_temp, buf, "int");
-            return;
         case LANG_TYPE_REMOVED:
             string_extend_cstr(&a_temp, buf, "removed");
             return;
@@ -193,9 +190,6 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             goto end;
         }
         case LANG_TYPE_REMOVED:
-            goto end;
-        case LANG_TYPE_INT:
-            string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
             goto end;
     }
     unreachable("");

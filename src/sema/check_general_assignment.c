@@ -154,8 +154,6 @@ next:
             return false; // TODO
         case LANG_TYPE_REMOVED:
             return true; // TODO
-        case LANG_TYPE_INT:
-            todo();
     }
     unreachable("");
 }

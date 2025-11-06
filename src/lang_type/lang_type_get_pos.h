@@ -35,8 +35,6 @@ static inline Pos lang_type_get_pos(Lang_type lang_type) {
             return lang_type_fn_const_unwrap(lang_type).pos;
         case LANG_TYPE_ARRAY:
             return lang_type_array_const_unwrap(lang_type).pos;
-        case LANG_TYPE_INT:
-            return lang_type_int_const_unwrap(lang_type).pos;
         case LANG_TYPE_REMOVED:
             return lang_type_removed_const_unwrap(lang_type).pos;
     }

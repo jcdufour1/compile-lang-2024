@@ -132,8 +132,6 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
             return false;
         case LANG_TYPE_REMOVED:
             return false;
-        case LANG_TYPE_INT:
-            return false;
     }
     unreachable("");
 }
