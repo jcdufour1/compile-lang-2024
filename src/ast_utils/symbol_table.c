@@ -374,6 +374,17 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
+    } else if (strv_is_equal(prim_key.base, sv("void"))) {
+        if (usym_tbl_lookup(result, prim_key)) {
+            return true;
+        }
+        Uast_primitive_def* def = uast_primitive_def_new(
+            POS_BUILTIN,
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+        );
+        usym_tbl_add(uast_primitive_def_wrap(def));
+        *result = uast_primitive_def_wrap(def);
+        return true;
     }
 
     return generic_symbol_lookup(

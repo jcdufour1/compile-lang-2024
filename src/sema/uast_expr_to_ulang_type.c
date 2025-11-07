@@ -37,7 +37,8 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
                 msg(DIAG_INVALID_TYPE, sym->pos, "label name is not allowed here\n");
                 return false;
             case UAST_VOID_DEF:
-                todo();
+                *result = ulang_type_new_void(uast_def_get_pos(sym_def));
+                return true;
             case UAST_POISON_DEF:
                 todo();
                 return false;

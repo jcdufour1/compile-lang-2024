@@ -37,4 +37,8 @@ static inline Ulang_type ulang_type_new_slice(Pos pos, Ulang_type item_type, int
     return lang_type_to_ulang_type(lang_type_new_slice(pos, item_type, pointer_depth));
 }
 
+static inline Ulang_type ulang_type_new_void(Pos pos) {
+    return lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(pos)));
+}
+
 #endif // ULANG_TYPE_NEW_CONVENIENCE_H
