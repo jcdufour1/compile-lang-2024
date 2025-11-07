@@ -16,6 +16,7 @@ bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) 
             }
 
             if (!uast_expr_to_ulang_type(result, bin->lhs)) {
+                todo();
                 return false;
             }
             ulang_type_add_pointer_depth(result, 1);
@@ -38,6 +39,7 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
             case UAST_VOID_DEF:
                 todo();
             case UAST_POISON_DEF:
+                todo();
                 return false;
             case UAST_IMPORT_PATH:
                 unreachable("");
@@ -57,7 +59,10 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
             case UAST_ENUM_DEF:
                 break;
             case UAST_LANG_DEF:
-                unreachable("");
+                if (!env.silent_generic_resol_errors) {
+                    msg_todo("", sym->pos);
+                }
+                return false;
             case UAST_PRIMITIVE_DEF:
                 break;
             case UAST_FUNCTION_DECL:

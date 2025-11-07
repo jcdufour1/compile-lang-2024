@@ -144,6 +144,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     //log(LOG_DEBUG, FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
     Name temp_name = {0};
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos)) {
+        todo();
         return false;
     }
 

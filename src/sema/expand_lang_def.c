@@ -320,6 +320,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
 
             return expand_def_name_internal(new_expr, new_name, *new_name, dest_pos, true, true, &sym->pos);
         }
+        case UAST_LITERAL:
+            // fallthrough
         case UAST_OPERATOR:
             // fallthrough
         case UAST_INDEX: {
@@ -330,30 +332,40 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_BLOCK:
+            todo();
             // fallthrough
         case UAST_IF_ELSE_CHAIN:
+            todo();
             // fallthrough
         case UAST_SWITCH:
+            todo();
             // fallthrough
         case UAST_UNKNOWN:
-            // fallthrough
-        case UAST_LITERAL:
+            todo();
             // fallthrough
         case UAST_FUNCTION_CALL:
+            todo();
             // fallthrough
         case UAST_STRUCT_LITERAL:
+            todo();
             // fallthrough
         case UAST_ARRAY_LITERAL:
+            todo();
             // fallthrough
         case UAST_TUPLE:
+            todo();
             // fallthrough
         case UAST_MACRO:
+            todo();
             // fallthrough
         case UAST_ENUM_ACCESS:
+            todo();
             // fallthrough
         case UAST_EXPR_REMOVED:
+            todo();
             // fallthrough
         case UAST_ENUM_GET_TAG:
+            todo();
             msg_todo("", uast_expr_get_pos(expr));
             return EXPAND_NAME_ERROR;
     }
@@ -391,6 +403,7 @@ EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_po
             *name = new_name;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_ERROR:
             return EXPAND_NAME_ERROR;
