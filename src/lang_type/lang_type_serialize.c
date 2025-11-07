@@ -102,6 +102,8 @@ Strv serialize_lang_type(Lang_type lang_type) {
         }
         case LANG_TYPE_ARRAY:
             return serialize_lang_type_array(lang_type_array_const_unwrap(lang_type));
+        case LANG_TYPE_INT:
+            unreachable("lang_type_int should not be serialized");
         case LANG_TYPE_REMOVED:
             unreachable("lang_type_removed should not be serialized");
     }

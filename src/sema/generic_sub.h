@@ -74,7 +74,12 @@ void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen
 
 void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg);
+void generic_sub_member_access(
+    Uast_expr** new_expr,
+    Uast_member_access* access,
+    Name gen_param,
+    Ulang_type gen_arg
+);
 
 void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 

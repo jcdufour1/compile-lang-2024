@@ -122,6 +122,8 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_FN:
             // TODO
             todo();
+        case LANG_TYPE_INT:
+            todo();
         case LANG_TYPE_REMOVED:
             unreachable("");
     }

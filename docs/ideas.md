@@ -157,6 +157,28 @@ fn at(darr Darr('T, 'S)*, index S) S {
     return darr.items[darr.count]
 }
 
+# generics idea function 2.4
+fn print_sizeof_item(darr Darr) {
+    io.print("%d\n", sizeof darr.ItemT)
+}
+
+fn at(darr Darr('T, 'S)*, index S) S {
+    assert(index < darr.count && "out of bounds")
+    return darr.items[darr.count]
+}
+
+# generics idea function 2.5
+fn append(<>)(darr Darr*, item T) {
+    reserve(darr, 1)
+    darr.items[darr.count] = item
+    darr.count += 1
+}
+
+fn at(darr Darr('T, 'S)*, index S) S {
+    assert(index < darr.count && "out of bounds")
+    return darr.items[darr.count]
+}
+
 allocate thing (error)
 ```c
 fn void main() {

@@ -393,8 +393,7 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             generic_sub_symbol(new_expr, uast_symbol_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_MEMBER_ACCESS:
-            *new_expr = expr;
-            generic_sub_member_access(uast_member_access_unwrap(expr), gen_param, gen_arg);
+            generic_sub_member_access(new_expr, uast_member_access_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_INDEX:
             *new_expr = expr;
@@ -460,14 +459,13 @@ void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_
     }
 }
 
-void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {
+void generic_sub_member_access(Uast_expr** new_expr, Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(&access->callee, access->callee, gen_param, gen_arg);
-    Uast_expr* dummy = NULL;
-    switch (generic_sub_symbol(&dummy, access->member_name, gen_param, gen_arg)) {
+    switch (generic_sub_symbol(new_expr, access->member_name, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
+            *new_expr = uast_member_access_wrap(access);
             return;
         case GEN_SUB_NAME_NEW_INT:
-            msg_todo("", access->member_name->pos);
             return;
         case GEN_SUB_NAME_ERROR:
             return;
