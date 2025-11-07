@@ -351,16 +351,8 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    // TODO: make separate function for this foreach loop
     vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
-        if (gen_arg->type == ULANG_TYPE_EXPR) {
-            Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
-                return false;
-            }
-            ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(*gen_arg).pointer_depth);
-            *gen_arg = inner;
-        }
+        *gen_arg = ulang_type_remove_expr(*gen_arg);
     }
 
     return resolve_generics_ulang_type_internal(

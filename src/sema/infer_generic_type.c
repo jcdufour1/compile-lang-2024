@@ -79,7 +79,7 @@ bool infer_generic_type(
     }
 
     //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
+    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
     //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg.type) {
@@ -140,22 +140,18 @@ bool infer_generic_type(
             // TODO: this may be inefficient, because infer_generic_type could be called
             //   multiple times with the same param_corres_to_arg for the same function call
 
-            Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(param_corres_to_arg).expr)) {
-                todo();
-            }
-            ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(param_corres_to_arg).pointer_depth);
             return infer_generic_type(
                 infered,
                 arg_to_infer_from,
                 arg_to_infer_is_lit,
-                inner,
+                ulang_type_remove_expr(param_corres_to_arg),
                 name_to_infer,
                 pos_arg
             );
         }
         case ULANG_TYPE_INT:
-            todo();
+            // TODO
+            return false;
     }
     unreachable("");
 }

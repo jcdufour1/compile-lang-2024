@@ -263,11 +263,11 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_ARRAY:
             // TODO: add pointer_depth to Ulang_type_array?
             msg_todo("", ulang_type_array_const_unwrap(lang_type).pos);
-            todo();
+            return 0;
         case ULANG_TYPE_EXPR:
-            return 0;
+            return ulang_type_expr_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_INT:
-            return 0;
+            return ulang_type_int_const_unwrap(lang_type).pointer_depth;
     }
     unreachable("");
 }
@@ -284,18 +284,20 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
             return;
         case ULANG_TYPE_FN:
             // TODO
-            todo();
+            msg_todo("", ulang_type_fn_const_unwrap(*lang_type).pos);
+            return;
         case ULANG_TYPE_REGULAR:
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_ARRAY:
-            todo();
+            // TODO
+            msg_todo("", ulang_type_array_const_unwrap(*lang_type).pos);
+            return;
         case ULANG_TYPE_EXPR:
             ulang_type_expr_unwrap(lang_type)->pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_INT:
-            // TODO
-            //ulang_type_int_unwrap(lang_type)->pointer_depth = pointer_depth;
+            ulang_type_int_unwrap(lang_type)->pointer_depth = pointer_depth;
             return;
     }
     unreachable("");

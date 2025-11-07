@@ -161,7 +161,6 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
         case GEN_SUB_NAME_NORMAL:
             return;
         case GEN_SUB_NAME_NEW_INT:
-            //msg_todo("", def->pos);
             return;
         case GEN_SUB_NAME_ERROR:
             return;
@@ -175,7 +174,6 @@ void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_ty
         case GEN_SUB_NAME_NORMAL:
             return;
         case GEN_SUB_NAME_NEW_INT:
-            //msg_todo("", def->pos);
             return;
         case GEN_SUB_NAME_ERROR:
             return;
@@ -534,32 +532,34 @@ GEN_SUB_NAME_STATUS generic_sub_name(
     if (name_is_equal(*name, gen_param)) {
         if (name->gen_args.info.count > 0) {
             // TODO
-            todo();
+            msg_todo("", name_pos);
+            return GEN_SUB_NAME_ERROR;
         }
 
         switch (gen_arg.type) {
             case ULANG_TYPE_REGULAR:
-                if (!name_from_uname(name, ulang_type_regular_const_unwrap(gen_arg).atom.str, ulang_type_regular_const_unwrap(gen_arg).pos)) {
-                    // TODO
-                    todo();
+                if (name_from_uname(
+                    name,
+                    ulang_type_regular_const_unwrap(gen_arg).atom.str,
+                    ulang_type_regular_const_unwrap(gen_arg).pos
+               )) {
+                    return GEN_SUB_NAME_NORMAL;
                 }
-                return GEN_SUB_NAME_NORMAL;
+                return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_GEN_PARAM:
                 unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
             case ULANG_TYPE_INT:
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *name));
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
-                log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
-                
                 *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
                 return GEN_SUB_NAME_NEW_INT;
-
             case ULANG_TYPE_TUPLE:
-                todo();
+                msg_todo("", name_pos);
+                return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_FN:
-                todo();
+                msg_todo("", name_pos);
+                return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_ARRAY:
-                todo();
+                msg_todo("", name_pos);
+                return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_EXPR:
                 unreachable("gen_arg should not still be ulang_type_expr");
         }

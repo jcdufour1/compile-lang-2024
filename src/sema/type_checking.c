@@ -2464,23 +2464,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, params->params.info.count, params->params.info.count);
+        msg_invalid_count_function_args(
+            fun_call,
+            fun_decl_temp->name,
+            fun_decl_temp->pos,
+            params->params.info.count,
+            params->params.info.count
+        );
         status = false;
         goto error;
     }
 
-    // TODO: make helper function for this?
     {
         vec_foreach_ref(idx, Ulang_type, gen_arg, sym_name->gen_args) {
-            if (gen_arg->type == ULANG_TYPE_EXPR) {
-                todo();
-                Ulang_type inner = {0};
-                if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
-                    todo();
-                }
-                ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(*gen_arg).pointer_depth);
-                *gen_arg = inner;
-            }
+            *gen_arg = ulang_type_remove_expr(*gen_arg);
         }
     }
 

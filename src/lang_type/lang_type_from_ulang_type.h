@@ -11,6 +11,7 @@
 #include <tast_utils.h>
 #include <ulang_type_serialize.h>
 #include <uast_expr_to_ulang_type.h>
+#include <ulang_type_remove_expr.h>
 
 // TODO: remove this forward decl when possible
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
@@ -209,14 +210,8 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
             return lang_type_from_ulang_type_fn(ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_GEN_PARAM:
             unreachable("");
-        case ULANG_TYPE_EXPR: {
-            Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(lang_type).expr)) {
-                todo();
-            }
-            ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(lang_type).pointer_depth);
-            return lang_type_from_ulang_type(inner);
-        }
+        case ULANG_TYPE_EXPR:
+            return lang_type_from_ulang_type(ulang_type_remove_expr(lang_type));
         case ULANG_TYPE_INT:
             todo();
     }
