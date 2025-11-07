@@ -33,6 +33,8 @@ Strv serialize_lang_type_get_prefix(Lang_type lang_type) {
             return sv("FN");
         case LANG_TYPE_ARRAY:
             return sv("ARRAY");
+        case LANG_TYPE_INT:
+            return sv("INT");
         case LANG_TYPE_REMOVED:
             return sv("REMOVED");
     }

@@ -76,6 +76,9 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         }
         case LANG_TYPE_VOID:
             return 0;
+        case LANG_TYPE_INT:
+            // TODO
+            return 0;
         case LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
