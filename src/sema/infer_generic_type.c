@@ -103,23 +103,25 @@ bool infer_generic_type(
                 return true;
             }
 
-            for (
-                size_t idx = 0;
-                idx < min(
-                    reg.atom.str.gen_args.info.count,
-                    ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args.info.count
-                );
-                idx++
-            ) {
-                if (infer_generic_type(
-                    infered,
-                    vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args, idx),
-                    false,
-                    vec_at(reg.atom.str.gen_args, idx),
-                    name_to_infer,
-                    pos_arg
-                )) {
-                    return true;
+            if (arg_to_infer_from.type == ULANG_TYPE_REGULAR) {
+                for (
+                    size_t idx = 0;
+                    idx < min(
+                        reg.atom.str.gen_args.info.count,
+                        ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args.info.count
+                    );
+                    idx++
+                ) {
+                    if (infer_generic_type(
+                        infered,
+                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args, idx),
+                        false,
+                        vec_at(reg.atom.str.gen_args, idx),
+                        name_to_infer,
+                        pos_arg
+                    )) {
+                        return true;
+                    }
                 }
             }
 

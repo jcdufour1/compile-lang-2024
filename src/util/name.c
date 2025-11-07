@@ -43,7 +43,6 @@ Uname name_to_uname(Name name) {
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 #   ifndef NDEBUG
         Uast_def* dummy = NULL;
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, alias_name));
         unwrap(usymbol_lookup(&dummy, alias_name));
 #   endif // NDEBUG
 
