@@ -148,11 +148,6 @@ static bool expand_def_ulang_type_expr(
     return true;
 }
 
-static bool expand_def_ulang_type_int(Ulang_type_int* new_lang_type, Ulang_type_int lang_type) {
-    *new_lang_type = lang_type;
-    return true;
-}
-
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
@@ -199,14 +194,8 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
             *lang_type = ulang_type_expr_const_wrap(new_lang_type);
             return true;
         }
-        case ULANG_TYPE_INT: {
-            Ulang_type_int new_lang_type = {0};
-            if (!expand_def_ulang_type_int(&new_lang_type, ulang_type_int_const_unwrap(*lang_type))) {
-                return false;
-            }
-            *lang_type = ulang_type_int_const_wrap(new_lang_type);
-            return true;
-        }
+        case ULANG_TYPE_INT:
+            todo();
     }
     unreachable("");
 }

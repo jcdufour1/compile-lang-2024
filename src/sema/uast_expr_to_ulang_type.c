@@ -36,8 +36,7 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
                 msg(DIAG_INVALID_TYPE, sym->pos, "label name is not allowed here\n");
                 return false;
             case UAST_VOID_DEF:
-                msg_todo("", sym->pos);
-                return false;
+                todo();
             case UAST_POISON_DEF:
                 return false;
             case UAST_IMPORT_PATH:
@@ -47,8 +46,7 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
             case UAST_GENERIC_PARAM:
                 break;
             case UAST_FUNCTION_DEF:
-                msg_todo("", sym->pos);
-                return false;
+                todo();
             case UAST_VARIABLE_DEF:
                 msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
                 return false;
@@ -63,11 +61,9 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
             case UAST_PRIMITIVE_DEF:
                 break;
             case UAST_FUNCTION_DECL:
-                msg_todo("", sym->pos);
-                return false;
+                todo();
             case UAST_BUILTIN_DEF:
-                msg_todo("", sym->pos);
-                return false;
+                todo();
         }
     }
 

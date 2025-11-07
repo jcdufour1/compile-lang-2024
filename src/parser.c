@@ -1237,6 +1237,13 @@ static PARSE_STATUS parse_struct_def_base(
         parse_generics_params(&base->generics, tokens, name.scope_id);
     }
 
+    {
+        Uast_def* result = NULL;
+        if (usymbol_lookup(&result, name_new(sv("test"), sv("Token"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
+            unwrap(uast_enum_def_unwrap(result)->base.generics.info.count == 2);
+        }
+    }
+
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }

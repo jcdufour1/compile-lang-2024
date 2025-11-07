@@ -4,6 +4,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <str_and_num_utils.h>
 #include <uast_expr_to_ulang_type.h>
+#include <ulang_type_remove_expr.h>
 
 bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
     if (old_width <= 32) {
@@ -139,6 +140,7 @@ bool infer_generic_type(
         case ULANG_TYPE_EXPR: {
             // TODO: this may be inefficient, because infer_generic_type could be called
             //   multiple times with the same param_corres_to_arg for the same function call
+            //   (ulang_type_remove_expr could be called multiple times)
 
             return infer_generic_type(
                 infered,
