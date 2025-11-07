@@ -82,10 +82,12 @@ static inline bool try_lang_type_from_ulang_type_fn(
 ) {
     Lang_type_tuple new_params = {0};
     if (!try_lang_type_from_ulang_type_tuple(&new_params, lang_type.params)) {
+        assert(env.error_count > 0);
         return false;
     }
     Lang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
     if (!try_lang_type_from_ulang_type(new_rtn_type, *lang_type.return_type)) {
+        assert(env.error_count > 0);
         return false;
     }
     *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type);
@@ -134,17 +136,20 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     (void) new_lang_type;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};
-    //log(LOG_DEBUG, FMT"\n", ulang_type_regular_print(&lang_type));
     if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
         return false;
     }
-    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
-    //log(LOG_DEBUG, FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
-    //log(LOG_DEBUG, FMT"\n", strv_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
+
+    // report error if generic args are invalid
+    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+        Lang_type dummy = {0};
+        if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
+            return false;
+        }
+    }
+
     Name temp_name = {0};
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos)) {
-        todo();
         return false;
     }
 
@@ -199,6 +204,8 @@ static inline Lang_type lang_type_from_ulang_type_array(Ulang_type_array lang_ty
     return new_lang_type;
 }
 
+// TODO: remove this function, and use try_lang_type_from_ulang_type instead?
+//   (because this function causes crashes on user errors)
 static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:

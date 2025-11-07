@@ -48,10 +48,19 @@ bool uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
             case UAST_GENERIC_PARAM:
                 break;
             case UAST_FUNCTION_DEF:
-                todo();
-            case UAST_VARIABLE_DEF:
-                msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
+                msg(DIAG_INVALID_TYPE, sym->pos, "symbol of function definition is not allowed here\n");
                 return false;
+            case UAST_VARIABLE_DEF: {
+                static uint64_t count = 0;
+                if (count == 0) {
+                    //todo();
+                }
+                count++;
+                if (!env.silent_generic_resol_errors) {
+                    msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
+                }
+                return false;
+            }
             case UAST_STRUCT_DEF:
                 break;
             case UAST_RAW_UNION_DEF:

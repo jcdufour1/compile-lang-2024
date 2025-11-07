@@ -1,12 +1,16 @@
 
 type io import = std.io
 
-type Token enum(<max ''i32>){
+type Token enum(<max_cap ''i32>){
     num i32
 }
 
-fn print_max(token Token(<max>), max ''i32) {
-    io.print_int(max)
+fn print_max(token Token(<max_cap>), max_cap ''i32) {
+    io.print_int(max_cap)
+}
+
+fn print_max_incorrect(token Token(<max_cap>)) {
+    io.print_int(token.max_cap)
 }
 
 fn main() i32 {
@@ -16,6 +20,7 @@ fn main() i32 {
     let token2 Token(<8>) = .num(7)
     print_max(token2, 9)
     print_max(token2, eight)
+    print_max_incorrect(token2)
 
     // TODO: expected failure test for calling generic int parameter same name as regular parameter
 

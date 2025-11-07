@@ -465,19 +465,7 @@ static bool resolve_generics_serialize_function_decl(
 
     Ulang_type new_rtn_type = old_decl->return_type;
 
-    size_t idx_arg = 0;
-    for (; idx_arg < gen_args.info.count; idx_arg++) {
-        if (idx_arg >= old_decl->generics.info.count) {
-            msg_invalid_count_generic_args(
-                old_decl->pos,
-                pos_gen_args,
-                gen_args,
-                old_decl->generics.info.count,
-                old_decl->generics.info.count
-            );
-            return false;
-        }
-
+    {
         vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
             Ulang_type inner = {0};
             if (!ulang_type_remove_expr(&inner, *gen_arg)) {
@@ -485,22 +473,41 @@ static bool resolve_generics_serialize_function_decl(
             }
             *gen_arg = inner;
         }
-
-        for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-            Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
-            // TODO: same params are being replaced both here and in generic_sub_block?
-            generic_sub_param(
-                vec_at(params, idx_fun_param),
-                curr_arg,
-                vec_at(gen_args, idx_arg)
-            );
-        }
-        Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
-        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
-        generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
     }
 
-    if (idx_arg < old_decl->generics.info.count) {
+    size_t args_covered = 0;
+    {
+        vec_foreach(idx_arg, Ulang_type, gen_arg, gen_args) {
+            (void) gen_arg;
+            args_covered++;
+
+            if (idx_arg >= old_decl->generics.info.count) {
+                msg_invalid_count_generic_args(
+                    old_decl->pos,
+                    pos_gen_args,
+                    gen_args,
+                    old_decl->generics.info.count,
+                    old_decl->generics.info.count
+                );
+                return false;
+            }
+
+            for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
+                Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
+                // TODO: same params are being replaced both here and in generic_sub_block?
+                generic_sub_param(
+                    vec_at(params, idx_fun_param),
+                    curr_arg,
+                    vec_at(gen_args, idx_arg)
+                );
+            }
+            Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
+            generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
+            generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
+        }
+    }
+
+    if (args_covered < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
             old_decl->pos,
             pos_gen_args,
@@ -530,6 +537,7 @@ bool resolve_generics_function_def_call(
     Pos pos_gen_args
 ) {
     // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
+    //   this is done earlier anyway (unless there is a bug)
     if (!expand_def_function_def(def)) {
         return false;
     }

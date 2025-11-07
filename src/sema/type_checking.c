@@ -3491,7 +3491,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
+    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
@@ -3518,7 +3518,10 @@ bool try_set_function_decl_types(
         return false;
     }
 
-    Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
+    Lang_type fun_rtn_type = {0}; 
+    if (!try_lang_type_from_ulang_type(&fun_rtn_type, decl->return_type)) {
+        return false;
+    }
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
     // TODO: figure out how to handle redefinition of extern "c" functions?
     sym_tbl_add(tast_function_decl_wrap(*new_tast));

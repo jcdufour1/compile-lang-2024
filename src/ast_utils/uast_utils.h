@@ -199,6 +199,10 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
 
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
+            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_INT) {
+                msg_todo("non-integer expression here", dest_pos);
+                return UAST_GET_MEMB_DEF_NONE;
+            }
             Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
             *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
             return UAST_GET_MEMB_DEF_EXPR;

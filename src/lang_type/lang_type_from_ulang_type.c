@@ -18,7 +18,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         case ULANG_TYPE_REGULAR:
             return try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE: {
-            todo();
             Lang_type_tuple new_tuple = {0};
             if (!try_lang_type_from_ulang_type_tuple(&new_tuple, ulang_type_tuple_const_unwrap(lang_type))) {
                 return false;
@@ -27,9 +26,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_FN: {
-            todo();
             Lang_type_fn new_fn = {0};
             if (!try_lang_type_from_ulang_type_fn(&new_fn, ulang_type_fn_const_unwrap(lang_type))) {
+                todo();
                 return false;
             }
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
@@ -40,12 +39,14 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             // TODO
             return false;
         case ULANG_TYPE_ARRAY:
-            todo();
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
         case ULANG_TYPE_EXPR:
             return try_lang_type_from_ulang_type_expr(new_lang_type, ulang_type_expr_const_unwrap(lang_type));
         case ULANG_TYPE_INT:
-            return false;
+            *new_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(
+                ulang_type_int_const_unwrap(lang_type).pos
+            ));
+            return true;
     }
     unreachable("");
 }
