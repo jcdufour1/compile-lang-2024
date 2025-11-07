@@ -75,40 +75,90 @@ static void msg_invalid_count_generic_args_internal(
 static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
     is_in_struct_base_def = true;
     bool status = true;
-    Tast_variable_def_vec new_members = {0};
 
     if (base->members.info.count < 1) {
         todo();
     }
 
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(base->members, idx);
-
-        for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
-            if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
-                if (env.silent_generic_resol_errors) {
-                    return false;
+    {
+        vec_foreach(curr_idx, Uast_generic_param*, curr, base->generics) {
+            vec_foreach(prev_idx, Uast_generic_param*, prev, base->generics) {
+                if (prev_idx >= curr_idx) {
+                    continue;
                 }
 
-                msg(
-                    DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
-                    "redefinition of member `"FMT"`\n",
-                    name_print(NAME_MSG, curr->name)
-                );
-                msg(
-                    DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
-                    "member `"FMT"` previously defined here\n",
-                    name_print(NAME_MSG, curr->name)
-                );
-                status = false;
+                if (name_is_equal(curr->name, prev->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, prev->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, prev->name)
+                    );
+                    status = false;
+                }
             }
         }
+    }
 
-        Tast_variable_def* new_memb = NULL;
-        if (try_set_variable_def_types(&new_memb, curr, false, false)) {
-            vec_append(&a_main, &new_members, new_memb);
-        } else {
-            status = false;
+    Tast_variable_def_vec new_members = {0};
+    {
+        for (size_t idx = 0; idx < base->members.info.count; idx++) {
+            Uast_variable_def* curr = vec_at(base->members, idx);
+
+            for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
+                if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    status = false;
+                }
+            }
+
+            vec_foreach(gen_idx, Uast_generic_param*, gen_param, base->generics) {
+                if (name_is_equal(gen_param->name, curr->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, gen_param->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    status = false;
+                }
+            }
+
+            Tast_variable_def* new_memb = NULL;
+            if (try_set_variable_def_types(&new_memb, curr, false, false)) {
+                vec_append(&a_main, &new_members, new_memb);
+            } else {
+                status = false;
+            }
         }
     }
 

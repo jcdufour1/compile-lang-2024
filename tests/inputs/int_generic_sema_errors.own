@@ -22,7 +22,12 @@ fn main() i32 {
     print_max(token2, eight)
     print_max_incorrect(token2)
 
-    // TODO: expected failure test for calling generic int parameter same name as regular parameter
+    let token_incorrect Token_incorrect(<8>)
 
     return 0
 }
+
+type Token_incorrect enum(<num ''i32>){
+    num i32
+}
+
