@@ -142,11 +142,16 @@ bool infer_generic_type(
             //   multiple times with the same param_corres_to_arg for the same function call
             //   (ulang_type_remove_expr could be called multiple times)
 
+            Ulang_type inner = {0};
+            if (!ulang_type_remove_expr(&inner, param_corres_to_arg)) {
+                return false;
+            }
+
             return infer_generic_type(
                 infered,
                 arg_to_infer_from,
                 arg_to_infer_is_lit,
-                ulang_type_remove_expr(param_corres_to_arg),
+                inner,
                 name_to_infer,
                 pos_arg
             );

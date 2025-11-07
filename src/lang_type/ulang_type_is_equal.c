@@ -30,8 +30,14 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
         case ULANG_TYPE_GEN_PARAM:
             // TODO
             todo();
-        case ULANG_TYPE_EXPR:
-            return ulang_type_is_equal(ulang_type_remove_expr(a), ulang_type_remove_expr(b));
+        case ULANG_TYPE_EXPR: {
+            Ulang_type a_inner = {0};
+            Ulang_type b_inner = {0};
+            if (!ulang_type_remove_expr(&a_inner, a) || !ulang_type_remove_expr(&b_inner, b)) {
+                return false;
+            }
+            return ulang_type_is_equal(a_inner, b_inner);
+        }
         case ULANG_TYPE_INT:
             return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
     }

@@ -176,7 +176,9 @@ static void resolve_generics_serialize_struct_def_base(
     }
 
     vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
-        *gen_arg = ulang_type_remove_expr(*gen_arg);
+        Ulang_type inner = {0};
+        unwrap(ulang_type_remove_expr(&inner, *gen_arg));
+        *gen_arg = inner;
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
@@ -351,16 +353,12 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    // TODO: make separate function for this foreach loop
     vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
-        if (gen_arg->type == ULANG_TYPE_EXPR) {
-            Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(*gen_arg).expr)) {
-                return false;
-            }
-            ulang_type_add_pointer_depth(&inner, ulang_type_expr_const_unwrap(*gen_arg).pointer_depth);
-            *gen_arg = inner;
+        Ulang_type inner = {0};
+        if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+            return false;
         }
+        *gen_arg = inner;
     }
 
     return resolve_generics_ulang_type_internal(
@@ -481,7 +479,11 @@ static bool resolve_generics_serialize_function_decl(
         }
 
         vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
-            *gen_arg = ulang_type_remove_expr(*gen_arg);
+            Ulang_type inner = {0};
+            if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+                return false;
+            }
+            *gen_arg = inner;
         }
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {

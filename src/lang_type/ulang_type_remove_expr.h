@@ -3,19 +3,22 @@
 
 #include <ulang_type.h>
 
-static Ulang_type ulang_type_remove_expr(Ulang_type lang_type) {
+// will report error
+static bool ulang_type_remove_expr(Ulang_type* new_lang_type, Ulang_type lang_type) {
     if (lang_type.type != ULANG_TYPE_EXPR) {
-        return lang_type;
+        *new_lang_type = lang_type;
+        return true;
     }
     Ulang_type_expr expr = ulang_type_expr_const_unwrap(lang_type);
 
     Ulang_type inner = {0};
     if (!uast_expr_to_ulang_type(&inner, expr.expr)) {
-        return lang_type; // TODO
+        return false;
     }
     ulang_type_add_pointer_depth(&inner, expr.pointer_depth);
     assert(inner.type != ULANG_TYPE_EXPR);
-    return inner;
+    *new_lang_type = inner;
+    return true;
 }
 
 #endif // ULANG_TYPE_REMOVE_EXPR_H

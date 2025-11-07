@@ -2478,8 +2478,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     {
         vec_foreach_ref(idx, Ulang_type, gen_arg, sym_name->gen_args) {
-            *gen_arg = ulang_type_remove_expr(*gen_arg);
+            Ulang_type inner = {0};
+            if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+                status = false;
+            }
+            *gen_arg = inner;
         }
+    }
+    if (status == false) {
+        goto error;
     }
 
     size_t idx_gen_param = 0;
@@ -3233,8 +3240,9 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
 
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
+                msg_todo("", tast_expr_get_pos(new_callee));
                 log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
-                todo();
+                return false;
             }
             if (lang_type_def->type == UAST_ENUM_DEF) {
                 log(LOG_DEBUG, FMT"\n", uast_enum_def_print(uast_enum_def_unwrap(lang_type_def)));
