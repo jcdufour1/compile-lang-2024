@@ -121,7 +121,7 @@ fn arr_at(arr Arr(<ItemT, capacity>), index u64, ItemT Type, capacity ''u64, fil
     return rt.buf_at(arr.buf, index)
 }
 
-fn arr_at_ref(arr Arr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+fn arr_at_ref(arr Arr(<ItemT, capacity>), index u64, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return &rt.buf_at(arr.buf, index)
 }
@@ -221,9 +221,13 @@ fn darr_pop(darr Darr(<ItemT>)*, ItemT Type, file Str = #file, line i32 = #line,
     return darr_remove(darr, darr.count - 1, .file = file, .line = line, .column = column)
 }
 
-fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_at_ref(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
-    return rt.buf_at(darr.buf, index)
+    return &rt.buf_at(darr.buf, index)
+}
+
+fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+    return *darr_at_ref(darr, index, .file = file, .line = line, .column = column)
 }
 
 fn darr_first(darr Darr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
