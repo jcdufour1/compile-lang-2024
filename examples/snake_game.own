@@ -19,7 +19,7 @@ type Dir enum {
 }
 
 type Snake struct {
-    nodes coll.Arr(<Pos>)
+    nodes coll.Arr(<Pos, COUNT_APPLES>)
     dir Dir
 }
 
@@ -43,11 +43,11 @@ fn mod(a i32, b i32) i32 {
     return (a%b + b)%b;
 }
 
-    // TODO: test case for this
-    //io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
+// TODO: test case for this
+//io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
 fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
     let new_pos Pos = snake_first(*snake)
-    util.assert(snake.nodes.count > 0)
+    assert(snake.nodes.count > 0)
     let last_pos Pos = coll.arr_at(snake.nodes, snake.nodes.count - 1)
     switch snake.dir {
         case .down: new_pos.y += 1
@@ -68,7 +68,7 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
     let pos_at_1 Pos = coll.arr_at(snake.nodes, 1)
     for idx_ u64 in 1..(snake.nodes.count) {
         let idx u64 = snake.nodes.count - idx_
-        util.assert(idx < snake.nodes.count, "out of bounds")
+        assert(idx < snake.nodes.count, "out of bounds")
         *coll.arr_at_ref(snake.nodes, idx) = coll.arr_at(snake.nodes, idx - 1)
     }
     *coll.arr_at_ref(snake.nodes, 0) = new_pos
@@ -101,11 +101,12 @@ fn draw_items(canvas Pos, border_width i32, square_width i32, snake Snake, apple
     }
 }
 
+type COUNT_APPLES def = 3
+
 fn main() i32 {
     let BORDER_WIDTH i32 = 5
     let SQUARES Pos = {20, 10};
     let SQUARE_WIDTH i32 = 30;
-    let COUNT_APPLES u64 = 3;
 
     let CANVAS Pos = {SQUARES.x*SQUARE_WIDTH + 2*BORDER_WIDTH, SQUARES.y*SQUARE_WIDTH + 2*BORDER_WIDTH}
 
@@ -115,9 +116,9 @@ fn main() i32 {
     rand.srand()
 
     let snake Snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
-    util.assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
+    assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
-    let apples coll.Arr(<Pos>) = coll.arr_new(COUNT_APPLES, Pos)
+    let apples coll.Arr(<Pos, COUNT_APPLES>) = coll.arr_new(COUNT_APPLES, Pos)
     for idx u64 in 0..COUNT_APPLES {
         coll.arr_append(&apples, rand_pos(SQUARES))
     }

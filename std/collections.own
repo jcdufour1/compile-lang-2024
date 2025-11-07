@@ -54,10 +54,9 @@ fn slice_reverse_in_place(slice ItemT[], ItemT Type) {
 
 // TODO: count and max should be usize by default when usize is implemented
 // TODO: make max compile time when possible
-type Arr struct(<ItemT>) {
+type Arr struct(<ItemT, max ''i32>) {
     buf ItemT*
     count u64
-    max u64
 }
 
 fn arr_new(max_capacity u64, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {

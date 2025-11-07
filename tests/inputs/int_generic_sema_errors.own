@@ -17,5 +17,7 @@ fn main() i32 {
     print_max(token2, 9)
     print_max(token2, eight)
 
+    // TODO: expected failure test for calling generic int parameter same name as regular parameter
+
     return 0
 }
