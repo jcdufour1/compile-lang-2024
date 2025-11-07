@@ -209,9 +209,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     bool is_expanded_from,
     Pos* expanded_from
 ) {
-    if (strv_is_equal(name.base, sv("Str"))) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
-    }
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));

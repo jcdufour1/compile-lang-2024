@@ -3241,15 +3241,8 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
                 msg_todo("", tast_expr_get_pos(new_callee));
-                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
                 return false;
             }
-            if (lang_type_def->type == UAST_ENUM_DEF) {
-                log(LOG_DEBUG, FMT"\n", uast_enum_def_print(uast_enum_def_unwrap(lang_type_def)));
-                log(LOG_DEBUG, "%zu\n", uast_enum_def_unwrap(lang_type_def)->base.generics.info.count);
-                log(LOG_DEBUG, "%zu\n", uast_enum_def_unwrap(lang_type_def)->base.name.gen_args.info.count);
-            }
-            log(LOG_DEBUG, FMT"\n", uast_def_print(lang_type_def));
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 

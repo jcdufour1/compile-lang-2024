@@ -198,7 +198,6 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     }
 
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
-        log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
             Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
             *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));

@@ -1589,7 +1589,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
     } else {
-        log(LOG_DEBUG, FMT"\n", strv_print(name_token.text));
         if (require_type) {
             if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
                 return PARSE_ERROR;
