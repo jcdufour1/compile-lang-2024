@@ -1613,7 +1613,11 @@ bool try_set_function_call_builtin_types(
     Pos fun_decl_pos
 ) {
     Strv fun_base = fun_name.base;
-    if (strv_is_equal(fun_base, sv("static_array_access"))) {
+    static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
+    if (strv_is_equal(fun_base, sv("usize"))) {
+        msg(DIAG_INVALID_FUNCTION_CALLEE, fun_call->pos, "builtin `"FMT"` is not callable\n", strv_print(fun_base));
+        return false;
+    } else if (strv_is_equal(fun_base, sv("static_array_access"))) {
         if (fun_call->args.info.count != 2) {
             msg_invalid_count_function_args(fun_call, fun_name, fun_decl_pos, 2, 2);
             return false;
@@ -1751,9 +1755,6 @@ bool try_set_function_call_builtin_types(
 
         *new_call = tast_index_wrap(new_index);
         return true;
-    } else {
-        msg_todo("calling this builtin as a function", fun_call->pos);
-        return false;
     }
     unreachable("");
 }

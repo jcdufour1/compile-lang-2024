@@ -5,6 +5,7 @@ typedef enum {
     EXPAND_NAME_ERROR,
     EXPAND_NAME_NORMAL, // only changes name
     EXPAND_NAME_NEW_EXPR, // new_expr must be substituted where the name was
+    EXPAND_NAME_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
 } EXPAND_NAME_STATUS;
 
 bool expand_def_block(Uast_block* block);
@@ -13,7 +14,7 @@ bool expand_def_def(Uast_def* def);
 
 bool expand_def_block(Uast_block* block);
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
+EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
 bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
