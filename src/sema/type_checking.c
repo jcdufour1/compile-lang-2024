@@ -3638,8 +3638,13 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
         goto error;
     }
 
+    Lang_type rtn_lang_type = {0};
+    if (!try_lang_type_from_ulang_type(&rtn_lang_type, env.parent_fn_rtn_type)) {
+        return false;
+    }
+
     Tast_expr* new_child = NULL;
-    switch (check_general_assignment(&check_env, &new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
+    switch (check_general_assignment(&check_env, &new_child, rtn_lang_type, rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
