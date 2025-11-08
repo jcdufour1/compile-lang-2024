@@ -9,8 +9,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
         case UAST_VARIABLE_DEF:
             return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type);
         case UAST_FUNCTION_DECL:
-            *result = lang_type_from_ulang_type(uast_function_decl_const_unwrap(def)->return_type);
-            return true;
+            return try_lang_type_from_ulang_type(result, uast_function_decl_const_unwrap(def)->return_type);
         case UAST_PRIMITIVE_DEF:
             *result = uast_primitive_def_const_unwrap(def)->lang_type;
             return true;
@@ -23,8 +22,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             if (!ustruct_def_base_get_lang_type_(&ulang_type, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
                 return false;
             }
-            *result = lang_type_from_ulang_type(ulang_type);
-            return true;
+            return try_lang_type_from_ulang_type(result, ulang_type);
         }
         case UAST_GENERIC_PARAM:
             unreachable("");

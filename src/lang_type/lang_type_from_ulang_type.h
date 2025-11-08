@@ -16,8 +16,6 @@
 // TODO: remove this forward decl when possible
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
 
-static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type);
-
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 // TODO: remove Pos parameter
@@ -39,20 +37,6 @@ static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
     Ulang_type_fn lang_type
 );
-
-// TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_tuple(Ulang_type_tuple lang_type) {
-    Lang_type_tuple new_tuple = {0};
-    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type));
-    return lang_type_tuple_const_wrap(new_tuple);
-}
-
-// TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_fn(Ulang_type_fn lang_type) {
-    Lang_type_fn new_fn = {0};
-    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type));
-    return lang_type_fn_const_wrap(new_fn);
-}
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
@@ -153,7 +137,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         return false;
     }
 
-    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (type) {
         case LANG_TYPE_STRUCT:
@@ -190,43 +173,6 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
         0
     ));
     return true;
-}
-
-static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lang_type) {
-    Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type));
-    return new_lang_type;
-}
-
-static inline Lang_type lang_type_from_ulang_type_array(Ulang_type_array lang_type) {
-    Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_array(&new_lang_type, lang_type));
-    return new_lang_type;
-}
-
-// TODO: remove this function, and use try_lang_type_from_ulang_type instead?
-//   (because this function causes crashes on user errors)
-static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
-    switch (lang_type.type) {
-        case ULANG_TYPE_REGULAR:
-            return lang_type_from_ulang_type_regular(ulang_type_regular_const_unwrap(lang_type));
-        case ULANG_TYPE_ARRAY:
-            return lang_type_from_ulang_type_array(ulang_type_array_const_unwrap(lang_type));
-        case ULANG_TYPE_TUPLE:
-            return lang_type_from_ulang_type_tuple(ulang_type_tuple_const_unwrap(lang_type));
-        case ULANG_TYPE_FN:
-            return lang_type_from_ulang_type_fn(ulang_type_fn_const_unwrap(lang_type));
-        case ULANG_TYPE_GEN_PARAM:
-            unreachable("");
-        case ULANG_TYPE_EXPR: {
-            Ulang_type inner = {0};
-            unwrap(ulang_type_remove_expr(&inner, lang_type));
-            return lang_type_from_ulang_type(inner);
-        }
-        case ULANG_TYPE_INT:
-            todo();
-    }
-    unreachable("");
 }
 
 static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {

@@ -172,4 +172,3 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     }
     unreachable("");
 }
-
