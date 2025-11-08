@@ -39,20 +39,6 @@ static inline bool try_lang_type_from_ulang_type_fn(
 );
 
 // TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_tuple(Ulang_type_tuple lang_type) {
-    Lang_type_tuple new_tuple = {0};
-    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, lang_type));
-    return lang_type_tuple_const_wrap(new_tuple);
-}
-
-// TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_fn(Ulang_type_fn lang_type) {
-    Lang_type_fn new_fn = {0};
-    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, lang_type));
-    return lang_type_fn_const_wrap(new_fn);
-}
-
-// TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
     Ulang_type_tuple lang_type
@@ -151,7 +137,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         return false;
     }
 
-    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (type) {
         case LANG_TYPE_STRUCT:
@@ -190,16 +175,13 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
     return true;
 }
 
-static inline Lang_type lang_type_from_ulang_type_regular(Ulang_type_regular lang_type) {
-    Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, lang_type));
-    return new_lang_type;
-}
-
-static inline Lang_type lang_type_from_ulang_type_array(Ulang_type_array lang_type) {
-    Lang_type new_lang_type = {0};
-    unwrap(try_lang_type_from_ulang_type_array(&new_lang_type, lang_type));
-    return new_lang_type;
+static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
+    // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
+    Ulang_type_vec new_types = {0};
+    for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
+        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
+    }
+    return ulang_type_tuple_new(new_types, lang_type.pos);
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE
