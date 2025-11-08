@@ -16,8 +16,6 @@
 // TODO: remove this forward decl when possible
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
 
-static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type);
-
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 // TODO: remove Pos parameter
@@ -202,40 +200,6 @@ static inline Lang_type lang_type_from_ulang_type_array(Ulang_type_array lang_ty
     Lang_type new_lang_type = {0};
     unwrap(try_lang_type_from_ulang_type_array(&new_lang_type, lang_type));
     return new_lang_type;
-}
-
-// TODO: remove this function, and use try_lang_type_from_ulang_type instead?
-//   (because this function causes crashes on user errors)
-static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
-    switch (lang_type.type) {
-        case ULANG_TYPE_REGULAR:
-            return lang_type_from_ulang_type_regular(ulang_type_regular_const_unwrap(lang_type));
-        case ULANG_TYPE_ARRAY:
-            return lang_type_from_ulang_type_array(ulang_type_array_const_unwrap(lang_type));
-        case ULANG_TYPE_TUPLE:
-            return lang_type_from_ulang_type_tuple(ulang_type_tuple_const_unwrap(lang_type));
-        case ULANG_TYPE_FN:
-            return lang_type_from_ulang_type_fn(ulang_type_fn_const_unwrap(lang_type));
-        case ULANG_TYPE_GEN_PARAM:
-            unreachable("");
-        case ULANG_TYPE_EXPR: {
-            Ulang_type inner = {0};
-            unwrap(ulang_type_remove_expr(&inner, lang_type));
-            return lang_type_from_ulang_type(inner);
-        }
-        case ULANG_TYPE_INT:
-            todo();
-    }
-    unreachable("");
-}
-
-static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
-    // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
-    Ulang_type_vec new_types = {0};
-    for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
-    }
-    return ulang_type_tuple_new(new_types, lang_type.pos);
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE

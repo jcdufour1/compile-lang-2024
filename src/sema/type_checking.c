@@ -129,6 +129,8 @@ static void msg_invalid_function_arg_internal(
     const Uast_variable_def* corres_param,
     bool is_fun_callback
 ) {
+    Lang_type param_lang_type = {0};
+    unwrap(try_lang_type_from_ulang_type(&param_lang_type, corres_param->lang_type));
     if (is_fun_callback) {
         msg_internal(
             file, line,
@@ -136,7 +138,7 @@ static void msg_invalid_function_arg_internal(
             "argument is of type `"FMT"`, "
             "but the corresponding parameter is of type `"FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+            lang_type_print(LANG_TYPE_MODE_MSG, param_lang_type)
         );
         msg_internal(
             file, line,
@@ -151,7 +153,7 @@ static void msg_invalid_function_arg_internal(
             "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
             name_print(NAME_MSG, corres_param->name),
-            lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
+            lang_type_print(LANG_TYPE_MODE_MSG, param_lang_type)
         );
         msg_internal(
             file, line,
@@ -351,10 +353,14 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_FUNCTION_DECL: {
             function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
             Uast_function_decl* new_decl = uast_function_decl_unwrap(sym_def);
+            Lang_type decl_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(&decl_lang_type, ulang_type_from_uast_function_decl(new_decl))) {
+                return false;
+            }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 new_decl->name,
-                lang_type_from_ulang_type(ulang_type_from_uast_function_decl(new_decl))
+                decl_lang_type
             )));
             return true;
         }
@@ -1562,13 +1568,17 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                 return false;
             }
 
+            Lang_type def_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(&def_lang_type, new_def->lang_type)) {
+                return false;
+            }
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
                 uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
                 uast_enum_access_wrap(uast_enum_access_new(
                     new_def->pos,
                     enum_case->tag,
-                    lang_type_from_ulang_type(new_def->lang_type),
+                    def_lang_type,
                     uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
                 ))
             );
@@ -1797,11 +1807,19 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)));
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
+            Lang_type memb_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(
+                &memb_lang_type,
+                vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
+            )) {
+                return false;
+            }
+
             Tast_expr* new_item = NULL;
             switch (check_general_assignment(
                 &check_env,
                 &new_item,
-                lang_type_from_ulang_type(vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
+                memb_lang_type,
                 vec_at(fun_call->args, 0),
                 uast_expr_get_pos(vec_at(fun_call->args, 0))
             )) {
@@ -1812,9 +1830,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                         DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
                         "cannot assign expression of type `"FMT"` to '"FMT"`\n", 
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
-                        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
-                             vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
-                        ))
+                        lang_type_print(LANG_TYPE_MODE_MSG, memb_lang_type)
                     );
                     status = false;
                     break;
@@ -1907,7 +1923,11 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             unreachable(FMT, tast_expr_print(new_callee));
     }
 
-    Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
+    Lang_type fun_rtn_type = {0};
+    if (!try_lang_type_from_ulang_type(&fun_rtn_type, fun_decl->return_type)) {
+        status = false;
+        goto error;
+    }
     Uast_function_params* params = fun_decl->params;
 
     bool is_variadic = false;
@@ -2020,8 +2040,14 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
 
         Tast_expr* new_arg = NULL;
 
+        Lang_type param_lang_type = {0};
+        if (!try_lang_type_from_ulang_type(&param_lang_type, param->base->lang_type)) {
+            status = false;
+            goto error;
+        }
+
         if (lang_type_is_equal(
-            lang_type_from_ulang_type(param->base->lang_type),
+            param_lang_type,
             lang_type_primitive_const_wrap(
                 lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0))
             )
@@ -2034,7 +2060,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             switch (check_general_assignment(
                 &check_env,
                 &new_arg,
-                lang_type_from_ulang_type(param->base->lang_type),
+                param_lang_type,
                 corres_arg,
                 uast_expr_get_pos(corres_arg)
             )) {
@@ -2101,10 +2127,16 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     *vec_at_ref(&new_args_set, idx) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
+                    Lang_type param_lang_type = {0};
+                    if (!try_lang_type_from_ulang_type(&param_lang_type, vec_at(params->params, idx)->base->lang_type)) {
+                        status = false;
+                        goto error;
+                    }
+
                     switch (check_general_assignment(
                         &check_env,
                         vec_at_ref(&new_args, idx),
-                        lang_type_from_ulang_type(vec_at(params->params, idx)->base->lang_type),
+                        param_lang_type,
                         new_default_,
                         uast_expr_get_pos(new_default_)
                     )) {
@@ -2609,11 +2641,20 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)));
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
+            Lang_type memb_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(
+                &memb_lang_type,
+                vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
+            )) {
+                status = false;
+                goto error;
+            }
+
             Tast_expr* new_item = NULL;
             switch (check_general_assignment(
                 &check_env,
                 &new_item,
-                lang_type_from_ulang_type(vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
+                memb_lang_type,
                 vec_at(fun_call->args, 0),
                 uast_expr_get_pos(vec_at(fun_call->args, 0))
             )) {
@@ -2625,9 +2666,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         "cannot assign "FMT" of type `"FMT"` to '"FMT"`\n", 
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
-                        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
-                             vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
-                        ))
+                        lang_type_print(LANG_TYPE_MODE_MSG, memb_lang_type)
                    );
                    status = false;
                    break;
@@ -2719,7 +2758,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             unreachable(FMT, tast_expr_print(new_callee));
     }
 
-    Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
+    Lang_type fun_rtn_type = {0};
+    if (!try_lang_type_from_ulang_type(&fun_rtn_type, fun_decl->return_type)) {
+        status = false;
+        goto error;
+    }
 
     // TODO: word below comment better
     // amt_args_needed will usually contain the amount of arguments passed into the function (or expected to be in case of an error)
@@ -2801,8 +2844,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
         Tast_expr* new_arg = NULL;
 
+        Lang_type param_lang_type = {0};
+        if (!try_lang_type_from_ulang_type(&param_lang_type, param->base->lang_type)) {
+            status = false;
+            goto error;
+        }
+
         // TODO: remove "0 && " below?
-        if (0 && lang_type_is_equal(lang_type_from_ulang_type(param->base->lang_type), lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0))))) {
+        if (0 && lang_type_is_equal(param_lang_type, lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0))))) {
             // arguments for variadic parameter will be checked later
             // TODO: uncomment below?:
             // unreachable();
@@ -2811,7 +2860,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             switch (check_general_assignment(
                 &check_env,
                 &new_arg,
-                lang_type_from_ulang_type(param->base->lang_type),
+                param_lang_type,
                 corres_arg,
                 uast_expr_get_pos(corres_arg)
             )) {
@@ -2877,6 +2926,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 continue;
             }
 
+            Lang_type param_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(&param_lang_type, vec_at(params->params, idx)->base->lang_type)) {
+                status = false;
+                goto error;
+            }
+
             if (!vec_at(new_args_set, idx - gen_arg_count)) {
                 // TODO: move error for function parameter unspecified to here?
                 if (vec_at(params->params, idx)->is_optional) {
@@ -2887,7 +2942,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     switch (check_general_assignment(
                         &check_env,
                         vec_at_ref(&new_args, idx - gen_arg_count),
-                        lang_type_from_ulang_type(vec_at(params->params, idx)->base->lang_type),
+                        param_lang_type,
                         new_default_,
                         uast_expr_get_pos(new_default_)
                     )) {
@@ -3041,9 +3096,14 @@ bool try_set_member_access_types_finish_generic_struct(
         todo();
     }
 
+    Lang_type memb_lang_type = {0};
+    if (!try_lang_type_from_ulang_type(&memb_lang_type, member_def->lang_type)) {
+        return false;
+    }
+
     Tast_member_access* new_access = tast_member_access_new(
         access->pos,
-        lang_type_from_ulang_type(member_def->lang_type),
+        memb_lang_type,
         access->member_name->name.base,
         new_callee
     );
@@ -3084,10 +3144,15 @@ bool try_set_member_access_types_finish_enum_def(
                     unreachable("");
             }
 
+            Lang_type memb_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(&memb_lang_type, member_def->lang_type)) {
+                return false;
+            }
+
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
-                lang_type_from_ulang_type(member_def->lang_type)
+                memb_lang_type
             );
 
             *new_tast = tast_expr_wrap(tast_enum_case_wrap(tast_enum_case_new(
@@ -3127,10 +3192,15 @@ bool try_set_member_access_types_finish_enum_def(
                     unreachable("");
             }
 
+            Lang_type memb_lang_type = {0};
+            if (!try_lang_type_from_ulang_type(&memb_lang_type, member_def->lang_type)) {
+                return false;
+            }
+
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
-                lang_type_from_ulang_type(member_def->lang_type)
+                memb_lang_type
             );
 
             Tast_enum_callee* new_callee = tast_enum_callee_new(
