@@ -467,6 +467,8 @@ static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
     append_member(&param.members, "Name", "name");
+    append_member(&param.members, "bool", "is_expr");
+    append_member(&param.members, "Ulang_type", "expr_lang_type");
 
     return param;
 }

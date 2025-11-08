@@ -20,7 +20,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             // fallthrough
         case UAST_ENUM_DEF: {
             Ulang_type ulang_type = {0};
-            if (!ustruct_def_base_get_lang_type_(&ulang_type,  uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
+            if (!ustruct_def_base_get_lang_type_(&ulang_type, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
                 return false;
             }
             *result = lang_type_from_ulang_type(ulang_type);

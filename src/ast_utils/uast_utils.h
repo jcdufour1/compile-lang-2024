@@ -160,20 +160,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
 
 bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
-static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
-    if (a.info.count != b.info.count) {
-        return false;
-    }
-
-    for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
@@ -187,19 +173,43 @@ Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_ty
 // will print error on failure
 bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos);
 
-static inline bool uast_try_get_member_def(
+typedef enum {
+    UAST_GET_MEMB_DEF_NONE,
+    UAST_GET_MEMB_DEF_NORMAL,
+    UAST_GET_MEMB_DEF_EXPR,
+
+    // for static asserts
+    UAST_GET_MEMB_DEF_COUNT,
+} UAST_GET_MEMB_DEF;
+
+static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
+    Uast_expr** new_expr,
     Uast_variable_def** member_def,
-    const Ustruct_def_base* struct_def,
-    Strv member_name
+    const Ustruct_def_base* base,
+    Strv member_name,
+    Pos dest_pos
 ) {
-    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
-        if (strv_is_equal(curr_member->name.base, member_name)) {
-            *member_def = curr_member;
-            return true;
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        Uast_variable_def* curr = vec_at(base->members, idx);
+        if (strv_is_equal(curr->name.base, member_name)) {
+            *member_def = curr;
+            return UAST_GET_MEMB_DEF_NORMAL;
         }
     }
-    return false;
+
+    vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
+        if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
+            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_INT) {
+                msg_todo("non-integer expression here", dest_pos);
+                return UAST_GET_MEMB_DEF_NONE;
+            }
+            Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
+            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+            return UAST_GET_MEMB_DEF_EXPR;
+        }
+    }
+
+    return UAST_GET_MEMB_DEF_NONE;
 }
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {

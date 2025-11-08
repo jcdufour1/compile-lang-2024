@@ -11,6 +11,9 @@
 #include <msg_todo.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
+#include <uast_expr_to_ulang_type.h>
+#include <check_gen_constraints.h>
+#include <ulang_type_remove_expr.h>
 
 static bool is_in_struct_base_def;
 
@@ -69,43 +72,93 @@ static void msg_invalid_count_generic_args_internal(
     );
 }
 
-static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
+static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
     is_in_struct_base_def = true;
     bool status = true;
-    Tast_variable_def_vec new_members = {0};
 
     if (base->members.info.count < 1) {
         todo();
     }
 
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(base->members, idx);
-
-        for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
-            if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
-                if (env.silent_generic_resol_errors) {
-                    return false;
+    {
+        vec_foreach(curr_idx, Uast_generic_param*, curr, base->generics) {
+            vec_foreach(prev_idx, Uast_generic_param*, prev, base->generics) {
+                if (prev_idx >= curr_idx) {
+                    continue;
                 }
 
-                msg(
-                    DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
-                    "redefinition of member `"FMT"`\n",
-                    name_print(NAME_MSG, curr->name)
-                );
-                msg(
-                    DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
-                    "member `"FMT"` previously defined here\n",
-                    name_print(NAME_MSG, curr->name)
-                );
-                status = false;
+                if (name_is_equal(curr->name, prev->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, prev->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, prev->name)
+                    );
+                    status = false;
+                }
             }
         }
+    }
 
-        Tast_variable_def* new_memb = NULL;
-        if (try_set_variable_def_types(&new_memb, curr, false, false)) {
-            vec_append(&a_main, &new_members, new_memb);
-        } else {
-            status = false;
+    Tast_variable_def_vec new_members = {0};
+    {
+        for (size_t idx = 0; idx < base->members.info.count; idx++) {
+            Uast_variable_def* curr = vec_at(base->members, idx);
+
+            for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
+                if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    status = false;
+                }
+            }
+
+            vec_foreach(gen_idx, Uast_generic_param*, gen_param, base->generics) {
+                if (name_is_equal(gen_param->name, curr->name)) {
+                    if (env.silent_generic_resol_errors) {
+                        return false;
+                    }
+
+                    msg(
+                        DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
+                        "redefinition of member `"FMT"`\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    msg(
+                        DIAG_NOTE, gen_param->pos,
+                        "member `"FMT"` previously defined here\n",
+                        name_print(NAME_MSG, curr->name)
+                    );
+                    status = false;
+                }
+            }
+
+            Tast_variable_def* new_memb = NULL;
+            if (try_set_variable_def_types(&new_memb, curr, false, false)) {
+                vec_append(&a_main, &new_members, new_memb);
+            } else {
+                status = false;
+            }
         }
     }
 
@@ -126,7 +179,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
 static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_struct_def_wrap(after_res),
         before_res,
@@ -137,7 +190,7 @@ static bool try_set_struct_def_types(Uast_struct_def* after_res) {
 
 static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_raw_union_def_wrap(after_res),
         before_res,
@@ -148,7 +201,7 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
 
 static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(&new_base, &after_res->base);
+    bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_enum_def_wrap(after_res),
         before_res,
@@ -157,7 +210,7 @@ static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     return success;
 }
 
-static bool resolve_generics_serialize_struct_def_base(
+static void resolve_generics_serialize_struct_def_base(
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
@@ -165,11 +218,17 @@ static bool resolve_generics_serialize_struct_def_base(
 ) {
     if (gen_args.info.count < 1) {
         *new_base = old_base;
-        return true;
+        return;
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
         vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(old_base.members, idx_memb), false, 0));
+    }
+
+    vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+        Ulang_type inner = {0};
+        unwrap(ulang_type_remove_expr(&inner, *gen_arg));
+        *gen_arg = inner;
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
@@ -180,7 +239,8 @@ static bool resolve_generics_serialize_struct_def_base(
     unwrap(old_base.members.info.count == new_base->members.info.count);
 
     new_base->name = new_name;
-    return true;
+    new_base->generics = old_base.generics;
+    return;
 }
 
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
@@ -193,7 +253,13 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Pos pos_def,
     Obj_new obj_new
 ) {
-    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */, (Attrs) {0});
+    Name new_name = name_new(
+        old_base.name.mod_path,
+        old_base.name.base,
+        ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args,
+        SCOPE_TOP_LEVEL /* TODO */,
+        (Attrs) {0}
+    );
     if (!struct_like_tbl_lookup(after_res, new_name)) {
         if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
@@ -206,18 +272,18 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             return false;
         }
 
+        if (!check_gen_constraints(old_base.generics, new_name.gen_args)) {
+            return false;
+        }
+
         Uast_def* new_def_ = NULL;
         if (usymbol_lookup(&new_def_, new_name)) {
             *after_res = new_def_;
         } else {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-                todo();
-                return false;
-            }
+            resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
             *after_res = (void*)obj_new(pos_def, new_base);
         }
-
     }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
@@ -337,6 +403,14 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
+    vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+        Ulang_type inner = {0};
+        if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+            return false;
+        }
+        *gen_arg = inner;
+    }
+
     return resolve_generics_ulang_type_internal(
         type,
         result,
@@ -430,6 +504,10 @@ static bool resolve_generics_serialize_function_decl(
 ) {
     memset(new_decl, 0, sizeof(*new_decl));
 
+    if (!check_gen_constraints(old_decl->generics, gen_args)) {
+        return false;
+    }
+
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_clone(vec_at(old_decl->params->params, idx), true, new_block->scope_id));
@@ -437,30 +515,49 @@ static bool resolve_generics_serialize_function_decl(
 
     Ulang_type new_rtn_type = old_decl->return_type;
 
-    size_t idx_arg = 0;
-    for (; idx_arg < gen_args.info.count; idx_arg++) {
-        if (idx_arg >= old_decl->generics.info.count) {
-            msg_invalid_count_generic_args(
-                old_decl->pos,
-                pos_gen_args,
-                gen_args,
-                old_decl->generics.info.count,
-                old_decl->generics.info.count
-            );
-            return false;
+    {
+        vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+            Ulang_type inner = {0};
+            if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+                return false;
+            }
+            *gen_arg = inner;
         }
-
-        for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-            Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
-            // TODO: same params are being replaced both here and in generic_sub_block?
-            generic_sub_param(vec_at(params, idx_fun_param), curr_arg, vec_at(gen_args, idx_arg));
-        }
-        Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
-        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
-        generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
     }
 
-    if (idx_arg < old_decl->generics.info.count) {
+    size_t args_covered = 0;
+    {
+        vec_foreach(idx_arg, Ulang_type, gen_arg, gen_args) {
+            (void) gen_arg;
+            args_covered++;
+
+            if (idx_arg >= old_decl->generics.info.count) {
+                msg_invalid_count_generic_args(
+                    old_decl->pos,
+                    pos_gen_args,
+                    gen_args,
+                    old_decl->generics.info.count,
+                    old_decl->generics.info.count
+                );
+                return false;
+            }
+
+            for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
+                Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
+                // TODO: same params are being replaced both here and in generic_sub_block?
+                generic_sub_param(
+                    vec_at(params, idx_fun_param),
+                    curr_arg,
+                    vec_at(gen_args, idx_arg)
+                );
+            }
+            Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
+            generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
+            generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
+        }
+    }
+
+    if (args_covered < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
             old_decl->pos,
             pos_gen_args,
@@ -490,6 +587,7 @@ bool resolve_generics_function_def_call(
     Pos pos_gen_args
 ) {
     // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
+    //   this is done earlier anyway (unless there is a bug)
     if (!expand_def_function_def(def)) {
         return false;
     }

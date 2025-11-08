@@ -1,0 +1,41 @@
+compile::stdout 0
+
+compile::stderr 35
+tests/inputs/int_generic_sema_errors.own:12:37:[1;31merror[0;39m:type `max_cap` is not defined
+    11 | 
+    12 | fn print_max_incorrect(token Token(<max_cap>)) {
+       |                                     ^
+    13 |     io.print_int(token.max_cap)
+tests/inputs/int_generic_sema_errors.own:18:23:[1;31merror[0;39m:symbol of variable is not allowed here
+    17 |     let eight i32 = 8
+    18 |     let token1 Token(<eight>) = .num(7)
+       |                       ^
+    19 | 
+tests/inputs/int_generic_sema_errors.own:21:15:[1;31merror[0;39m:argument is of type `Token(<8>)`, but the corresponding parameter `token` is of type `Token(<9>)`
+    20 |     let token2 Token(<8>) = .num(7)
+    21 |     print_max(token2, 9)
+       |               ^
+    22 |     print_max(token2, eight)
+tests/inputs/int_generic_sema_errors.own:8:14:[1;34mnote[0;39m:corresponding parameter `token` defined here
+     7 | 
+     8 | fn print_max(token Token(<max_cap>), max_cap ''i32) {
+       |              ^
+     9 |     io.print_int(max_cap)
+tests/inputs/int_generic_sema_errors.own:22:23:[1;31merror[0;39m:symbol of variable is not allowed here
+    21 |     print_max(token2, 9)
+    22 |     print_max(token2, eight)
+       |                       ^
+    23 |     print_max_incorrect(token2)
+tests/inputs/int_generic_sema_errors.own:31:5:[1;31merror[0;39m:redefinition of member `num`
+    30 | type Token_incorrect enum(<num ''i32>){
+    31 |     num i32
+       |     ^
+    32 | }
+tests/inputs/int_generic_sema_errors.own:30:28:[1;34mnote[0;39m:member `num` previously defined here
+    29 | 
+    30 | type Token_incorrect enum(<num ''i32>){
+       |                            ^
+    31 |     num i32
+
+compile::return_code 1
+

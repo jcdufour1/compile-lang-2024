@@ -363,6 +363,7 @@ static bool get_mod_alias_from_path_token(
 finish:
     curr_mod_path = old_mod_path;
     curr_mod_alias = old_mod_alias;
+
     return status;
 }
 
@@ -1163,10 +1164,24 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
         if (!consume_expect(&symbol, tokens, "", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
+
+        Token ticks = {0};
+        bool is_expr = false;
+        Ulang_type expr_lang_type = {0};
+        if (try_consume(&ticks, tokens, TOKEN_DOUBLE_TICK)) {
+            if (!parse_lang_type_struct(&expr_lang_type, tokens, block_scope)) {
+                return PARSE_ERROR;
+            }
+            is_expr = true;
+        }
+
         Uast_generic_param* param = uast_generic_param_new(
             symbol.pos,
-            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope, (Attrs) {0})
+            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope, (Attrs) {0}),
+            is_expr,
+            expr_lang_type
         );
+
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
@@ -1184,11 +1199,19 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
     memset(args, 0, sizeof(*args));
 
     do {
-        Ulang_type arg = {0};
-        if (PARSE_ERROR == parse_lang_type_struct_require(&arg, tokens, scope_id)) {
-            return PARSE_ERROR;
+        Uast_expr* arg = {0};
+        switch (parse_expr(&arg, tokens, scope_id)) {
+            case PARSE_EXPR_OK:
+                break;
+            case PARSE_EXPR_NONE:
+                msg(DIAG_EXPECTED_TYPE, tk_view_front(*tokens).pos, "expected type or expression\n");
+                return PARSE_ERROR;
+            case PARSE_EXPR_ERROR:
+                return PARSE_ERROR;
+            default:
+                unreachable("");
         }
-        vec_append(&a_main, args, arg);
+        vec_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(arg, 0, uast_expr_get_pos(arg))));
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
@@ -1212,6 +1235,13 @@ static PARSE_STATUS parse_struct_def_base(
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&base->generics, tokens, name.scope_id);
+    }
+
+    {
+        Uast_def* result = NULL;
+        if (usymbol_lookup(&result, name_new(sv("test"), sv("Token"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
+            unwrap(uast_enum_def_unwrap(result)->base.generics.info.count == 2);
+        }
     }
 
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
@@ -1524,7 +1554,30 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
         Uast_generic_param* var_def = uast_generic_param_new(
             name_token.pos,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0})
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
+            false,
+            (Ulang_type) {0}
+        );
+
+        *result = uast_generic_param_wrap(var_def);
+
+        if (add_to_sym_table) {
+            if (!usymbol_add(uast_generic_param_wrap(var_def))) {
+                msg_redefinition_of_symbol(uast_generic_param_wrap(var_def));
+                return PARSE_ERROR;
+            }
+        }
+    } else if (try_consume(&type_tk, tokens, TOKEN_DOUBLE_TICK)) {
+        Ulang_type lang_type_expr = {0};
+        if (!parse_lang_type_struct(&lang_type_expr, tokens, scope_id)) {
+            return PARSE_ERROR;
+        }
+
+        Uast_generic_param* var_def = uast_generic_param_new(
+            name_token.pos,
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
+            true,
+            lang_type_expr
         );
 
         *result = uast_generic_param_wrap(var_def);
@@ -1558,10 +1611,12 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
                 msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
                 return PARSE_ERROR;
             }
+            // TODO: should the "is_using" if statement also be ran for other two cases (Type and '')?
             if (is_using) {
                 vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
+            // TODO: should this msg_todo also be ran for other two cases (Type and '')?
             msg_todo("using in this situation", var_def->pos);
             return PARSE_ERROR;
         }
@@ -3164,8 +3219,19 @@ static PARSE_EXPR_STATUS parse_generic_binary_internal(
 
     Uast_expr* rhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1, depth + 1);
-    if (status != PARSE_EXPR_OK) {
-        return status;
+    switch (status) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            rhs = uast_expr_removed_wrap(uast_expr_removed_new(
+                tk_view_front(*tokens).pos,
+                sv("after binary operator")
+            ));
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+        default:
+            unreachable("");
     }
 
     *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(oper.type))));

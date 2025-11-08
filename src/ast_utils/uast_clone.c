@@ -193,7 +193,14 @@ Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, bool use_new_s
 }
 
 Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param, bool use_new_scope, Scope_id new_scope) {
-    return uast_generic_param_new(param->pos, name_clone(param->name, use_new_scope, new_scope));
+    Ulang_type new_inner_expr = param->is_expr ? 
+        ulang_type_clone(param->expr_lang_type, use_new_scope, new_scope) : (Ulang_type) {0};
+    return uast_generic_param_new(
+        param->pos,
+        name_clone(param->name, use_new_scope, new_scope),
+        param->is_expr,
+        new_inner_expr
+    );
 }
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

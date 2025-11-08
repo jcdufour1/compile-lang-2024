@@ -1,6 +1,7 @@
 #include <ulang_type_serialize.h>
 #include <ulang_type.h>
 #include <name.h>
+#include <uast_expr_to_ulang_type.h>
 
 Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
     Name temp = {0};
@@ -37,6 +38,15 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
         include_scope
     )));
     string_extend_size_t(&a_main, &name, ulang_type.count);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
+Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool include_scope) {
+    (void) mod_path;
+    (void) include_scope;
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_int64_t(&a_main, &name, ulang_type.data);
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
@@ -77,6 +87,16 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type_gen_param(mod_path);
         case ULANG_TYPE_ARRAY:
             return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
+        case ULANG_TYPE_EXPR: {
+            // TODO: consider if all Ulang_type_exprs should be removed before doing actual type checking?
+            Ulang_type inner = {0};
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
+                return util_literal_name_new();
+            }
+            return serialize_ulang_type(mod_path, inner, include_scope);
+        }
+        case ULANG_TYPE_INT:
+            return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }

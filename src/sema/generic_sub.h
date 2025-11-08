@@ -4,11 +4,17 @@
 #include <uast.h>
 #include <ulang_type.h>
 
+typedef enum {
+    GEN_SUB_NAME_NORMAL,
+    GEN_SUB_NAME_NEW_INT,
+    GEN_SUB_NAME_ERROR,
+} GEN_SUB_NAME_STATUS;
+
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg);
+void generic_sub_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg);
 
@@ -33,9 +39,16 @@ void generic_sub_lang_type_fn(
     Ulang_type gen_arg
 );
 
-void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg);
+void generic_sub_lang_type_expr(
+    Ulang_type* new_lang_type,
+    Ulang_type_expr lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
 
-void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg);
+GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Name gen_param, Ulang_type gen_arg);
+
+void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_operator(Uast_operator* operator, Name gen_param, Ulang_type gen_arg);
 
@@ -61,11 +74,22 @@ void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen
 
 void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg);
+void generic_sub_member_access(
+    Uast_expr** new_expr,
+    Uast_member_access* access,
+    Name gen_param,
+    Ulang_type gen_arg
+);
 
 void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg);
+GEN_SUB_NAME_STATUS generic_sub_name(
+    Uast_int** new_expr,
+    Name* name,
+    Pos name_pos,
+    Name gen_param,
+    Ulang_type gen_arg
+);
 
 void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg);
 

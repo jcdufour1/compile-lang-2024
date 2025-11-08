@@ -31,6 +31,8 @@
 #include <check_general_assignment.h>
 #include <expand_using.h>
 #include <lang_type_new_convenience.h>
+#include <ulang_type_is_equal.h>
+#include <ulang_type_remove_expr.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -405,6 +407,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             // TODO
             todo();
         case UAST_GENERIC_PARAM:
+            msg_todo("", sym_untyped->pos);
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
             return false;
@@ -1065,9 +1068,14 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
             rhs = memb;
         }
 
+        Lang_type new_memb_lang_type = {0};
+        if (!try_lang_type_from_ulang_type(&new_memb_lang_type, memb_def->lang_type)) {
+            return false;
+        }
+
         Tast_expr* new_rhs = NULL;
         switch (check_general_assignment(
-             &check_env, &new_rhs, lang_type_from_ulang_type(memb_def->lang_type), rhs, uast_expr_get_pos(memb)
+             &check_env, &new_rhs, new_memb_lang_type, rhs, uast_expr_get_pos(memb)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -2462,8 +2470,27 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, params->params.info.count, params->params.info.count);
+        msg_invalid_count_function_args(
+            fun_call,
+            fun_decl_temp->name,
+            fun_decl_temp->pos,
+            params->params.info.count,
+            params->params.info.count
+        );
         status = false;
+        goto error;
+    }
+
+    {
+        vec_foreach_ref(idx, Ulang_type, gen_arg, sym_name->gen_args) {
+            Ulang_type inner = {0};
+            if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+                status = false;
+            }
+            *gen_arg = inner;
+        }
+    }
+    if (status == false) {
         goto error;
     }
 
@@ -2503,9 +2530,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
                             if (infer_generic_type(
                                 vec_at_ref(&sym_name->gen_args, idx_gen_param),
-                                tast_expr_get_lang_type(arg_to_infer_from),
+                                lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
                                 arg_to_infer_from->type == TAST_LITERAL,
-                                vec_at(params->params, param_idx)->base,
+                                vec_at(params->params, param_idx)->base->lang_type,
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
@@ -2989,9 +3016,24 @@ bool try_set_member_access_types_finish_generic_struct(
     Tast_expr* new_callee
 ) {
     Uast_variable_def* member_def = NULL;
-    if (!uast_try_get_member_def(&member_def, &def_base, access->member_name->name.base)) {
-        msg_invalid_member(def_base.name, access);
-        return false;
+    Uast_expr* new_expr_ = NULL;
+    static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+    switch (uast_try_get_member_def(&new_expr_, &member_def, &def_base, access->member_name->name.base, access->pos)) {
+        case UAST_GET_MEMB_DEF_NORMAL:
+            break;
+        case UAST_GET_MEMB_DEF_EXPR: {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_expr_types(&new_expr, new_expr_)) {
+                return false;
+            }
+            *new_tast = tast_expr_wrap(new_expr);
+            return true;
+        }
+        case UAST_GET_MEMB_DEF_NONE:
+            msg_invalid_member(def_base.name, access);
+            return false;
+        default:
+            unreachable("");
     }
 
     if (access->member_name->name.gen_args.info.count > 0) {
@@ -3022,9 +3064,24 @@ bool try_set_member_access_types_finish_enum_def(
     switch (check_env.parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
+            Uast_expr* new_expr_ = NULL;
+            static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+            switch (uast_try_get_member_def(&new_expr_, &member_def, &enum_def->base, access->member_name->name.base, access->pos)) {
+                case UAST_GET_MEMB_DEF_NORMAL:
+                    break;
+                case UAST_GET_MEMB_DEF_EXPR: {
+                    Tast_expr* new_expr = NULL;
+                    if (!try_set_expr_types(&new_expr, new_expr_)) {
+                        return false;
+                    }
+                    *new_tast = tast_expr_wrap(new_expr);
+                    return true;
+                }
+                case UAST_GET_MEMB_DEF_NONE:
+                    msg_invalid_member(enum_def->base.name, access);
+                    return false;
+                default:
+                    unreachable("");
             }
 
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
@@ -3050,11 +3107,26 @@ bool try_set_member_access_types_finish_enum_def(
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
+            Uast_expr* new_expr_ = NULL;
+            static_assert(UAST_GET_MEMB_DEF_COUNT == 3, "exhausive handling");
+            switch (uast_try_get_member_def(&new_expr_, &member_def, &enum_def->base, access->member_name->name.base, access->pos)) {
+                case UAST_GET_MEMB_DEF_NORMAL:
+                    break;
+                case UAST_GET_MEMB_DEF_EXPR: {
+                    Tast_expr* new_expr = NULL;
+                    if (!try_set_expr_types(&new_expr, new_expr_)) {
+                        return false;
+                    }
+                    *new_tast = tast_expr_wrap(new_expr);
+                    return true;
+                }
+                case UAST_GET_MEMB_DEF_NONE:
+                    msg_invalid_member(enum_def->base.name, access);
+                    return false;
+                default:
+                    unreachable("");
             }
-            
+
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name->name.base),
@@ -3173,8 +3245,8 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
 
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
-                log(LOG_DEBUG, FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
-                todo();
+                msg_todo("", tast_expr_get_pos(new_callee));
+                return false;
             }
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
@@ -3414,10 +3486,12 @@ bool try_set_variable_def_types(
 ) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
-        unwrap(env.error_count > 0);
+        log(LOG_DEBUG, FMT"\n", uast_def_print(result));
+        assert(env.error_count > 0);
         return false;
     }
 
+    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
@@ -3444,7 +3518,10 @@ bool try_set_function_decl_types(
         return false;
     }
 
-    Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
+    Lang_type fun_rtn_type = {0}; 
+    if (!try_lang_type_from_ulang_type(&fun_rtn_type, decl->return_type)) {
+        return false;
+    }
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
     // TODO: figure out how to handle redefinition of extern "c" functions?
     sym_tbl_add(tast_function_decl_wrap(*new_tast));

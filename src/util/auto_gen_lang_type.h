@@ -237,6 +237,16 @@ static Lang_type_type lang_type_gen_void(const char* prefix) {
     return sym;
 }
 
+static Lang_type_type lang_type_gen_int(const char* prefix) {
+    const char* base_name = "int";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "int64_t", "data");
+    append_member(&sym.members, "int16_t", "pointer_depth");
+
+    return sym;
+}
+
 static Lang_type_type lang_type_gen_lang_type(void) {
     const char* base_name = "lang_type";
     Lang_type_type lang_type = {.name = lang_type_name_new(base_name, "", true)};
@@ -249,6 +259,8 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_array(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int(base_name)); // TODO: rename lang_type_int to lang_type_gen_int
+                                                                            //   and ulang_type_int to ulang_type_gen_int?
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_removed(base_name));
 
     return lang_type;
