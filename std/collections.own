@@ -8,7 +8,7 @@ type Str def = u8[]
 
 // TODO: make alloc function instead of using malloc directly
 
-fn slice_range(slice ItemT[], start u64, count u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
+fn slice_range(slice ItemT[], start usize, count usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     if count < 1 {
         return {util.null(ItemT), 0}
     }
@@ -47,7 +47,7 @@ fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file,
 }
 
 fn slice_reverse_in_place(slice ItemT[], ItemT Type) {
-    for idx u64 in 0..slice.count/2 {
+    for idx usize in 0..slice.count/2 {
         util.swap(&slice[idx], &slice[slice.count - 1 - idx])
     }
 }
@@ -56,7 +56,7 @@ fn slice_reverse_in_place(slice ItemT[], ItemT Type) {
 // TODO: make max compile time when possible
 type Arr struct(<ItemT, capacity ''u64>) {
     buf ItemT*
-    count u64
+    count usize
 }
 
 fn arr_new(max_capacity ''u64, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT, max_capacity>) {
@@ -147,8 +147,8 @@ fn darr_new(ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #l
     return darr
 }
 
-fn darr_slice(darr Darr(<ItemT>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
-    let actual_count u64 = darr.count - start
+fn darr_slice(darr Darr(<ItemT>), start usize = 0, count util.Optional(<usize>) = .none, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
+    let actual_count usize = darr.count - start
     if let .some(num) = count {
         actual_count = num
     }

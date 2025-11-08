@@ -3,7 +3,7 @@
 
 type Slice struct(<ItemT>) {
     buf ItemT*
-    count u64
+    count usize
 }
 
 fn slice_at_ref(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {

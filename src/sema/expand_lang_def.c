@@ -464,6 +464,7 @@ EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_po
             log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_NEW_ULANG_TYPE:
+            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, result));
             return EXPAND_NAME_NEW_ULANG_TYPE;
         case EXPAND_NAME_ERROR:
             return EXPAND_NAME_ERROR;
@@ -651,11 +652,14 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
                     return true;
                 case EXPAND_NAME_NEW_EXPR:
                     return true;
+                case EXPAND_NAME_NEW_ULANG_TYPE:
+                    //log(LOG_DEBUG, 
+                    msg_todo("", uast_expr_get_pos(*new_expr));
+                    return false;
                 case EXPAND_NAME_ERROR:
                     return false;
-                default:
-                    unreachable("");
             }
+            unreachable("");
         }
         case UAST_MEMBER_ACCESS:
             return expand_def_member_access(new_expr, uast_member_access_unwrap(expr));
