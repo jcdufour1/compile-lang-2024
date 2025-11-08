@@ -156,6 +156,9 @@ typedef size_t Scope_id;
 
 #define EXTERN_C_OWN_PREFIX "own"
 
+// TODO: move this?
+#define BUILTIN_DEFS_COUNT 4
+
 #define FMT "%.*s"
 
 #endif // UTIL_H

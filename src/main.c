@@ -52,10 +52,12 @@ static void add_builtin_def(Strv name) {
     )))));
 }
 
+static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
 static void add_builtin_defs(void) {
     add_builtin_def(sv("static_array_access"));
     add_builtin_def(sv("static_array_slice"));
     add_builtin_def(sv("buf_at"));
+    add_builtin_def(sv("usize"));
 }
 
 #define do_pass(pass_fn, sym_log_fn) \

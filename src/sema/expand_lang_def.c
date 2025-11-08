@@ -279,8 +279,27 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return EXPAND_NAME_NORMAL;
         case UAST_LABEL:
             todo();
-        case UAST_BUILTIN_DEF:
-            return EXPAND_NAME_NORMAL;
+        case UAST_BUILTIN_DEF: {
+            static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
+            if (strv_is_equal(name.base, sv("usize"))) {
+                todo();
+                return EXPAND_NAME_NORMAL;
+            } else if (strv_is_equal(name.base, sv("buf_at"))) {
+                return EXPAND_NAME_NORMAL;
+            } else if (strv_is_equal(name.base, sv("static_array_access"))) {
+                return EXPAND_NAME_NORMAL;
+            } else if (strv_is_equal(name.base, sv("static_array_slice"))) {
+                return EXPAND_NAME_NORMAL;
+            } else {
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                unreachable("");
+            }
+            //add_builtin_def(sv("static_array_access"));
+            //add_builtin_def(sv("static_array_slice"));
+            //add_builtin_def(sv("buf_at"));
+            //add_builtin_def(sv("usize"));
+            //return EXPAND_NAME_NORMAL;
+        }
     }
 
     // TODO: this clone is expensive I think
