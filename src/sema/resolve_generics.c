@@ -591,9 +591,7 @@ bool resolve_generics_function_def_call(
 ) {
     // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
     //   this is done earlier anyway (unless there is a bug)
-    if (!expand_def_function_def(def)) {
-        return false;
-    }
+    expand_def_function_def(def);
 
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id, (Attrs) {0});
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id, (Attrs) {0});

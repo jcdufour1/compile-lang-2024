@@ -14,11 +14,9 @@ typedef enum {
     EXPAND_EXPR_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
 } EXPAND_EXPR_STATUS;
 
-bool expand_def_block(Uast_block* block);
+void expand_def_def(Uast_def* def);
 
-bool expand_def_def(Uast_def* def);
-
-bool expand_def_block(Uast_block* block);
+void expand_def_block(Uast_block* block);
 
 EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
@@ -42,17 +40,17 @@ bool expand_def_ulang_type_regular(
     Pos dest_pos
 );
 
-bool expand_def_function_def(Uast_function_def* def);
+void expand_def_function_def(Uast_function_def* def);
 
-bool expand_def_switch(Uast_switch* lang_switch);
+void expand_def_switch(Uast_switch* lang_switch);
 
-bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
+Uast_stmt* expand_def_stmt(Uast_stmt* stmt);
 
-bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
+void expand_def_if_else_chain(Uast_if_else_chain* if_else);
 
 bool expand_def_operator(Uast_operator* oper);
 
-bool expand_def_defer(Uast_defer* lang_defer);
+void expand_def_defer(Uast_defer* lang_defer);
 
 EXPAND_NAME_STATUS expand_def_name(
     Ulang_type* new_lang_type,
