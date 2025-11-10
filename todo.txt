@@ -107,7 +107,6 @@ for generics:
             arr_append(dest, src[idx], .file = file, .line = line, .column = column)
         }
     }
-- make print functions for gdb?
 
 
 # roadmap to try to get bootstrap compiler done:

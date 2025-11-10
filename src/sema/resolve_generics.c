@@ -179,7 +179,6 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
 
 static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
-    msg(DIAG_NOTE, after_res->pos, "\n");
     bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_struct_def_wrap(after_res),
@@ -355,10 +354,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             if (env.silent_generic_resol_errors) {
                 return false;
             }
-            msg(DIAG_NOTE, uast_def_get_pos(before_res), "sdafj\n");
             log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
             log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
-            log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
             msg_todo("", ulang_type_get_pos(lang_type));

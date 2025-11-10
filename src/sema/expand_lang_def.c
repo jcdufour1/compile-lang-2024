@@ -34,9 +34,6 @@ bool expand_def_ulang_type_regular(
                 msg_todo("", ulang_type_get_pos(result));
                 return false;
             }
-            if (strv_is_equal(lang_type.atom.str.base, sv("usize"))) {
-                //todo();
-            }
             return expand_def_ulang_type_regular(
                 new_lang_type,
                 ulang_type_regular_const_unwrap(result),
@@ -485,13 +482,7 @@ EXPAND_NAME_STATUS expand_def_name(
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
-    if (!expand_def_ulang_type(&def->lang_type, def->pos /* TODO */)) {
-        return false;
-    }
-    if (def->lang_type.type == ULANG_TYPE_REGULAR && strv_is_equal(ulang_type_regular_const_unwrap(def->lang_type).atom.str.base, sv("usize"))) {
-        unreachable("");
-    }
-    return true;
+    return expand_def_ulang_type(&def->lang_type, def->pos /* TODO */);
 }
 
 static bool expand_def_case(Uast_case* lang_case) {
@@ -634,7 +625,6 @@ static bool expand_def_struct_def_base(Ustruct_def_base* base, Pos dest_pos) {
 }
 
 static bool expand_def_struct_def(Uast_struct_def* def) {
-    log(LOG_DEBUG, FMT"\n", uast_struct_def_print(def));
     return expand_def_struct_def_base(&def->base, def->pos);
 }
 
@@ -866,9 +856,6 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
         status = expand_def_variable_def(vec_at(*defs, idx)) && status;
-        if (vec_at(*defs, idx)->lang_type.type == ULANG_TYPE_REGULAR && strv_is_equal(ulang_type_regular_const_unwrap(vec_at(*defs, idx)->lang_type).atom.str.base, sv("usize"))) {
-            unreachable("");
-        }
     }
     return status;
 }
@@ -1007,15 +994,10 @@ bool expand_def_block(Uast_block* block) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (strv_is_equal(uast_def_get_name(curr).base, sv("Slice"))) {
-            todo();
-        }
         status = expand_def_def(curr) && status;
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Uast_stmt* curr = vec_at(block->children, idx);
-        log(LOG_DEBUG, FMT"\n", uast_stmt_print(curr));
         status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(block->children, idx)) && status;
     }
 
