@@ -101,12 +101,13 @@ for generics:
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
 - test case for i32** being used as generic arg
-- test case for:
-    -- io.own
-    def print = libc.printf
-    -- main.own
-    fn main() i32 {
+- test case for below (when Arr.capacity is of type u32):
+    fn arr_extend(dest Arr(<ItemT, capacity>)*, src ItemT[], ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) {
+        for idx usize in 0..src.count {
+            arr_append(dest, src[idx], .file = file, .line = line, .column = column)
+        }
     }
+
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

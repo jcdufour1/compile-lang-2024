@@ -7,16 +7,16 @@ type Token struct {
 }
 
 fn read(slice u8[]) {
-    for idx u64 in 0..slice.count {
+    for idx usize in 0..slice.count {
         io.printf("%c", slice[idx])
     }
     io.printf("\n")
 
-    for idx u64 in 0..slice.count {
+    for idx usize in 0..slice.count {
         slice[idx] = 'a' + unsafe_cast<u8>idx
     }
 
-    for idx u64 in 0..slice.count {
+    for idx usize in 0..slice.count {
         io.printf("%c", slice[idx])
     }
     io.printf("\n")
