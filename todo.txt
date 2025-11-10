@@ -101,6 +101,12 @@ for generics:
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
 - test case for i32** being used as generic arg
+- test case for:
+    -- io.own
+    def print = libc.printf
+    -- main.own
+    fn main() i32 {
+    }
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
