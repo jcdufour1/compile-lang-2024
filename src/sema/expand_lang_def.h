@@ -24,7 +24,7 @@ bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 
 bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
 
-EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym);
+EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
 
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
 
@@ -46,6 +46,11 @@ bool expand_def_operator(Uast_operator* oper);
 
 bool expand_def_defer(Uast_defer* lang_defer);
 
-EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos);
+EXPAND_NAME_STATUS expand_def_name(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Name* name,
+    Pos dest_pos
+);
 
 #endif // EXPAND_LANG_DEF

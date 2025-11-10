@@ -453,10 +453,14 @@ EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_e
 }
 
 // TODO: expected failure case for having generic parameters in def definition
-EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos) {
+EXPAND_NAME_STATUS expand_def_name(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Name* name,
+    Pos dest_pos
+) {
     Name new_name = {0};
-    Ulang_type result = {0};
-    switch (expand_def_name_internal(&result, new_expr, &new_name, *name, dest_pos, false, false, NULL)) {
+    switch (expand_def_name_internal(new_lang_type, new_expr, &new_name, *name, dest_pos, false, false, NULL)) {
         case EXPAND_NAME_NORMAL:
             *name = new_name;
             return EXPAND_NAME_NORMAL;
@@ -464,7 +468,7 @@ EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_po
             log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_NEW_ULANG_TYPE:
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, result));
+            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
             return EXPAND_NAME_NEW_ULANG_TYPE;
         case EXPAND_NAME_ERROR:
             return EXPAND_NAME_ERROR;
@@ -548,7 +552,12 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             msg_todo("error message for this situation", access->pos);
             return false;
         }
-        return expand_def_symbol(new_expr, uast_symbol_new(access->pos, name));
+        Ulang_type dummy = {0};
+        EXPAND_NAME_STATUS status = expand_def_symbol(&dummy, new_expr, uast_symbol_new(access->pos, name));
+        if (status != EXPAND_NAME_NORMAL) {
+            msg_todo("", access->pos);
+            return false;
+        }
     }
 
     *new_expr = uast_member_access_wrap(access);
@@ -579,7 +588,8 @@ static bool expand_def_struct_def_base(Ustruct_def_base* base, Pos dest_pos) {
         return false;
     }
     Uast_expr* new_expr = NULL;
-    switch (expand_def_name(&new_expr, &base->name, dest_pos)) {
+    Ulang_type new_lang_type = {0};
+    switch (expand_def_name(&new_lang_type, &new_expr, &base->name, dest_pos)) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
@@ -624,8 +634,8 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym) {
-    return expand_def_name(new_expr, &sym->name, sym->pos);
+EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
+    return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 }
 
 bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
@@ -646,7 +656,8 @@ bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr) {
             *new_expr = expr;
             return expand_def_operator(uast_operator_unwrap(expr));
         case UAST_SYMBOL: {
-            switch (expand_def_symbol(new_expr, uast_symbol_unwrap(expr))) {
+            Ulang_type dummy = {0};
+            switch (expand_def_symbol(&dummy, new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:
                     *new_expr = expr;
                     return true;
@@ -702,8 +713,9 @@ bool expand_def_defer(Uast_defer* lang_defer) {
 }
 
 bool expand_def_using(Uast_using* using) {
-    Uast_expr* dummy = NULL;
-    switch (expand_def_name(&dummy, &using->sym_name, using->pos)) {
+    Uast_expr* dummy_expr = NULL;
+    Ulang_type dummy_lang_type = {0};
+    switch (expand_def_name(&dummy_lang_type, &dummy_expr, &using->sym_name, using->pos)) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
@@ -858,7 +870,8 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
     }
 
     Uast_expr* new_expr = NULL;
-    switch (expand_def_name(&new_expr, &def->name, def->pos)) {
+    Ulang_type dummy_lang_type = {0};
+    switch (expand_def_name(&dummy_lang_type, &new_expr, &def->name, def->pos)) {
         case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
