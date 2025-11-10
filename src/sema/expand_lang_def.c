@@ -527,9 +527,13 @@ static bool expand_def_if(Uast_if* lang_if) {
     return status;
 }
 
-static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* access) {
+static EXPAND_EXPR_STATUS expand_def_member_access(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_member_access* access
+) {
     if (!expand_def_expr_not_ulang_type(&access->callee, access->callee)) {
-        return false;
+        return EXPAND_EXPR_ERROR;
     }
 
     Uast_def* callee_def = NULL;
@@ -541,14 +545,14 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             if (!usymbol_lookup(&callee_def, sym->name)) {
                 sym->name.gen_args = old_gen_args;
                 *new_expr = uast_member_access_wrap(access);
-                return true;
+                return EXPAND_EXPR_NEW_EXPR;
             }
             sym->name.gen_args = old_gen_args;
             break;
         }
         default:
             *new_expr = uast_member_access_wrap(access);
-            return true;
+            return EXPAND_EXPR_NEW_EXPR;
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
@@ -559,17 +563,16 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             msg_todo("error message for this situation", access->pos);
             return false;
         }
-        Ulang_type dummy = {0};
-        EXPAND_NAME_STATUS status = expand_def_symbol(&dummy, new_expr, uast_symbol_new(access->pos, name));
+        EXPAND_NAME_STATUS status = expand_def_symbol(new_lang_type, new_expr, uast_symbol_new(access->pos, name));
         switch (status) {
             case EXPAND_NAME_NORMAL:
                 break;
             case EXPAND_NAME_NEW_EXPR:
-                return true;
+                return EXPAND_EXPR_NEW_EXPR;
             case EXPAND_NAME_NEW_ULANG_TYPE:
-                todo();
+                return EXPAND_EXPR_NEW_ULANG_TYPE;
             case EXPAND_NAME_ERROR:
-                return false;
+                return EXPAND_EXPR_ERROR;
         }
     }
 
@@ -658,9 +661,15 @@ bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
             return false;
         case EXPAND_EXPR_NEW_EXPR:
             return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
+        case EXPAND_EXPR_NEW_ULANG_TYPE: {
             msg(DIAG_INVALID_TYPE /* TODO */, uast_expr_get_pos(expr), "expected expression, but got type\n");
+            static uint64_t count = 0;
+            count++;
+            if (count == 2) {
+                todo();
+            }
             return false;
+        }
     }
     unreachable("");
 }
@@ -699,7 +708,7 @@ EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_ex
             unreachable("");
         }
         case UAST_MEMBER_ACCESS:
-            return a(expand_def_member_access(new_expr, uast_member_access_unwrap(expr)));
+            return expand_def_member_access(new_lang_type, new_expr, uast_member_access_unwrap(expr));
         case UAST_INDEX:
             *new_expr = expr;
             return a(expand_def_index(uast_index_unwrap(expr)));
@@ -929,6 +938,7 @@ static bool expand_def_mod_alias(Uast_mod_alias* alias) {
 }
 
 static bool expand_def_import_path(Uast_import_path* path) {
+    log(LOG_DEBUG, "expand_def_import_path: "FMT"\n", strv_print(path->mod_path));
     return expand_def_block(path->block);
 }
 

@@ -1,6 +1,8 @@
-type rt import = std.runtime
+//type rt import = std.runtime
 
 fn main() i32 {
-    let num i32 = rt.usize()
+    let num i32= 0
+    //let num i32 = rt.usize()
+    //let fn_ptr fn(i32)i32 = rt.static_array_access
     return 0
 }
