@@ -16,7 +16,7 @@ typedef struct {
     unsigned int sizeof_ptr_non_fn;
 } Arch_row;
 static Arch_row arch_table[] = {
-    {ARCH_X86_64, "x86_64", 64/* TODO*/, 64},
+    {ARCH_X86_64, "x86_64", 64, 64},
 };
 
 static struct {

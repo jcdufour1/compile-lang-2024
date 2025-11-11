@@ -527,9 +527,9 @@ static bool expand_def_if(Uast_if* lang_if) {
     return status;
 }
 
-static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* access) {
+static EXPAND_EXPR_STATUS expand_def_member_access(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_member_access* access) {
     if (!expand_def_expr_not_ulang_type(&access->callee, access->callee)) {
-        return false;
+        return EXPAND_EXPR_ERROR;
     }
 
     Uast_def* callee_def = NULL;
@@ -541,14 +541,14 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             if (!usymbol_lookup(&callee_def, sym->name)) {
                 sym->name.gen_args = old_gen_args;
                 *new_expr = uast_member_access_wrap(access);
-                return true;
+                return EXPAND_EXPR_NEW_EXPR;
             }
             sym->name.gen_args = old_gen_args;
             break;
         }
         default:
             *new_expr = uast_member_access_wrap(access);
-            return true;
+            return EXPAND_EXPR_NEW_EXPR;
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
@@ -557,25 +557,25 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
         Name name = {0};
         if (!name_from_uname(&name, uname, access->pos)) {
             msg_todo("error message for this situation", access->pos);
-            return false;
+            return EXPAND_EXPR_ERROR;
         }
-        Ulang_type dummy = {0};
-        EXPAND_NAME_STATUS status = expand_def_symbol(&dummy, new_expr, uast_symbol_new(access->pos, name));
+        EXPAND_NAME_STATUS status = expand_def_symbol(new_lang_type, new_expr, uast_symbol_new(access->pos, name));
         switch (status) {
             case EXPAND_NAME_NORMAL:
-                break;
+                *new_expr = uast_member_access_wrap(access);
+                return EXPAND_EXPR_NEW_EXPR;
             case EXPAND_NAME_NEW_EXPR:
-                return true;
+                return EXPAND_EXPR_NEW_EXPR;
             case EXPAND_NAME_NEW_ULANG_TYPE:
-                msg_todo("", access->pos);
-                return false;
+                return EXPAND_EXPR_NEW_ULANG_TYPE;
             case EXPAND_NAME_ERROR:
-                todo();
+                return EXPAND_EXPR_ERROR;
         }
+        unreachable("");
     }
 
     *new_expr = uast_member_access_wrap(access);
-    return true;
+    return EXPAND_EXPR_NEW_EXPR;
 }
 
 static bool expand_def_index(Uast_index* index) {
@@ -700,7 +700,7 @@ EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_ex
             unreachable("");
         }
         case UAST_MEMBER_ACCESS:
-            return a(expand_def_member_access(new_expr, uast_member_access_unwrap(expr)));
+            return expand_def_member_access(new_lang_type, new_expr, uast_member_access_unwrap(expr));
         case UAST_INDEX:
             *new_expr = expr;
             return a(expand_def_index(uast_index_unwrap(expr)));
