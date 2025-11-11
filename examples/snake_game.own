@@ -58,15 +58,15 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
     new_pos.y = mod(new_pos.y, squares.y)
 
     // detect snake collisions with itself
-    for idx u64 in 0..snake.nodes.count {
+    for idx usize in 0..snake.nodes.count {
         if pos_is_equal(coll.darr_at(snake.nodes, idx), new_pos) {
             return 0
         }
     }
     
     let pos_at_1 Pos = coll.darr_at(snake.nodes, 1)
-    for idx_ u64 in 1..(snake.nodes.count) {
-        let idx u64 = snake.nodes.count - idx_
+    for idx_ usize in 1..(snake.nodes.count) {
+        let idx usize = snake.nodes.count - idx_
         assert(idx < snake.nodes.count, "out of bounds")
         *coll.darr_at_ref(snake.nodes, idx) = coll.darr_at(snake.nodes, idx - 1)
     }
@@ -90,11 +90,11 @@ fn rand_pos(squares Pos) Pos {
 fn draw_items(canvas Pos, border_width i32, square_width i32, snake Snake, apples coll.Darr(<Pos>)) {
     rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>canvas.x, unsafe_cast<f32>canvas.y}, unsafe_cast<f32>border_width, rl.WHITE())
 
-    for idx u64 in 0..snake.nodes.count {
+    for idx usize in 0..snake.nodes.count {
         let curr Pos = coll.darr_at(snake.nodes, idx)
         rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.YELLOW())
     }
-    for idx u64 in 0..apples.count {
+    for idx usize in 0..apples.count {
         let curr Pos = coll.darr_at(apples, idx)
         rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.RED())
     }
@@ -176,9 +176,9 @@ fn main() i32 {
                 }
 
                 // check for apple collision
-                for snake_ u64 in 0..snake.nodes.count {
+                for snake_ usize in 0..snake.nodes.count {
                     let curr Pos = coll.darr_at(snake.nodes, snake_)
-                    for apple u64 in 0..apples.count {
+                    for apple usize in 0..apples.count {
                         if pos_is_equal(curr, coll.darr_at(apples, apple)) {
                             do_grow_snake = 1
                             *coll.darr_at_ref(apples, apple) = rand_pos(SQUARES)
