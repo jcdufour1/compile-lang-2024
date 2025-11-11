@@ -565,11 +565,13 @@ static bool expand_def_member_access(Uast_expr** new_expr, Uast_member_access* a
             case EXPAND_NAME_NORMAL:
                 break;
             case EXPAND_NAME_NEW_EXPR:
-                return true;
+                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
+                todo();
             case EXPAND_NAME_NEW_ULANG_TYPE:
                 todo();
             case EXPAND_NAME_ERROR:
-                return false;
+                todo();
         }
     }
 

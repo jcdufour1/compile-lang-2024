@@ -65,8 +65,8 @@ fn arr_new(max_capacity ''u64, ItemT Type, init_elems ItemT[] = [], file Str = #
     return arr
 }
 
-fn arr_slice(arr Arr(<ItemT, max_capacity>), start usize = 0, count util.Optional(<usize>) = .none, ItemT Type, max_capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
-    let actual_count usize = arr.count - start
+fn arr_slice(arr Arr(<ItemT, max_capacity>), start u64 = 0, count util.Optional(<u64>) = .none, ItemT Type, max_capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
+    let actual_count u64 = arr.count - start
     if let .some(num) = count {
         actual_count = num
     }
@@ -100,8 +100,8 @@ fn arr_append(arr Arr(<ItemT, capacity>)*, item ItemT, ItemT Type, capacity ''u6
     arr.count += 1
 }
 
-fn arr_extend(dest Arr(<ItemT, capacity>)*, src ItemT[], ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) {
-    for idx usize in 0..src.count {
+fn arr_extend(dest Arr(<ItemT, capacity>)*, src ItemT[], ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) {
+    for idx u64 in 0..src.count {
         arr_append(dest, src[idx], .file = file, .line = line, .column = column)
     }
 }
@@ -137,8 +137,8 @@ fn arr_last(arr Arr(<ItemT>), ItemT Type, file Str = #file, line i32 = #line, co
 
 type Darr struct(<ItemT>) {
     buf ItemT*
-    count usize
-    capacity usize
+    count u64
+    capacity u64
 }
 
 fn darr_new(ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
@@ -201,7 +201,7 @@ fn darr_append(darr Darr(<ItemT>)*, item ItemT, ItemT Type, file Str = #file, li
 }
 
 fn darr_extend(dest Darr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
-    for idx usize in 0..src.count {
+    for idx u64 in 0..src.count {
         darr_append(dest, src[idx], .file = file, .line = line, .column = column)
     }
 }

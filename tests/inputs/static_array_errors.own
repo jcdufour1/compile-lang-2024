@@ -5,7 +5,7 @@ type io import = std.io
 fn main() i32 {
     let nums i32[3] = [8, 76]
 
-    for idx usize in 0..nums.count {
+    for idx u64 in 0..nums.count {
         io.print_int(nums[idx], "\n", i32)
     }
 
