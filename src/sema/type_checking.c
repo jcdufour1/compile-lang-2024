@@ -406,14 +406,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_BUILTIN_DEF: {
-            // TODO: expected failure case
-            msg(
-                DIAG_DEREF_NON_POINTER /* TODO */,
-                sym_untyped->pos,
-                "builtin def `"FMT"` must be called directly; "
-                "builtin def cannot be passed around as a pointer\n",
-                strv_print(sym_untyped->name.base)
-            );
+            msg_todo("", uast_def_get_pos(sym_def));
             return false;
         }
         case UAST_LABEL:
@@ -4518,10 +4511,7 @@ bool try_set_types(void) {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
-            // TODO: uncomment if condition
-            //if (curr->type == UAST_IMPORT_PATH) {
-                expand_using_def(curr);
-            //}
+            expand_using_def(curr);
         }
     }
     if (env.error_count > 0) {
@@ -4532,9 +4522,7 @@ bool try_set_types(void) {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
-            if (curr->type == UAST_IMPORT_PATH) {
-                expand_def_def(curr);
-            }
+            expand_def_def(curr);
         }
     }
     if (env.error_count > 0) {
@@ -4602,7 +4590,6 @@ after_main:
 
     while (env.struct_like_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.struct_like_waiting_to_resolve);
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, curr_name));
         if (!resolve_generics_struct_like_def_implementation(curr_name)) {
             status = false;
         }

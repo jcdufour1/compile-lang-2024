@@ -16,7 +16,7 @@ fn slice_range(slice ItemT[], start usize, count usize, ItemT Type, file Str = #
     return {&rt.buf_at(slice.buf, start), count}
 }
 
-fn slice_at(slice ItemT[], index usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn slice_at(slice ItemT[], index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return *slice_at_ref(slice, index, ItemT, file, line, column)
 }
 
@@ -40,7 +40,7 @@ fn slice_try_get(slice ItemT[]*, should_get fn (ItemT) u1, ItemT Type, file Str 
 
 fn slice_starts_with(slice ItemT[], start ItemT[], ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) u1 {
     if slice.count < start.count => return 0
-    for idx usize in 0..start.count {
+    for idx u64 in 0..start.count {
         if slice[idx] != start[idx] => return 0
     }
     return 1
@@ -54,12 +54,12 @@ fn slice_reverse_in_place(slice ItemT[], ItemT Type) {
 
 // TODO: count and max should be usize by default when usize is implemented
 // TODO: make max compile time when possible
-type Arr struct(<ItemT, capacity ''usize>) {
+type Arr struct(<ItemT, capacity ''u64>) {
     buf ItemT*
     count usize
 }
 
-fn arr_new(max_capacity ''usize, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT, max_capacity>) {
+fn arr_new(max_capacity ''u64, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT, max_capacity>) {
     let arr Arr(<ItemT, max_capacity>) = {util.alloc(max_capacity, ItemT), 0}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
@@ -76,14 +76,14 @@ fn arr_slice(arr Arr(<ItemT, max_capacity>), start usize = 0, count util.Optiona
     //return slice_range({arr.buf, arr.count}, start, actual_count)
 }
 
-fn arr_free(arr Arr(<ItemT, max_capacity>)*, ItemT Type, max_capacity ''usize) {
+fn arr_free(arr Arr(<ItemT, max_capacity>)*, ItemT Type, max_capacity ''u64) {
     // TODO: remove ItemT explicit parameter below when possible
     util.free(arr.buf, ItemT);
     arr.buf = util.null(ItemT) 
     arr.count = 0
 }
 
-fn arr_insert(arr Arr(<ItemT, capacity>)*, item ItemT, index usize, ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) {
+fn arr_insert(arr Arr(<ItemT, capacity>)*, item ItemT, index u64, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) {
     assert(arr.count < arr.capacity, "Arr overflow", .file = file, .line = line, .column = column);
     assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (arr.count - index > 0) {
@@ -94,7 +94,7 @@ fn arr_insert(arr Arr(<ItemT, capacity>)*, item ItemT, index usize, ItemT Type, 
     arr.count += 1
 }
 
-fn arr_append(arr Arr(<ItemT, capacity>)*, item ItemT, ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) {
+fn arr_append(arr Arr(<ItemT, capacity>)*, item ItemT, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) {
     assert(arr.count < arr.capacity, "Arr overflow", .file = file, .line = line, .column = column);
     rt.buf_at(arr.buf, arr.count) = item
     arr.count += 1
@@ -106,7 +106,7 @@ fn arr_extend(dest Arr(<ItemT, capacity>)*, src ItemT[], ItemT Type, capacity ''
     }
 }
 
-fn arr_remove(arr Arr(<ItemT, capacity>)*, index usize, ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) {
+fn arr_remove(arr Arr(<ItemT, capacity>)*, index u64, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) {
     assert(arr.count > 0, "attempt to remove element from empty array", .file = file, .line = line, .column = column);
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     arr.count -= 1
@@ -116,17 +116,17 @@ fn arr_remove(arr Arr(<ItemT, capacity>)*, index usize, ItemT Type, capacity ''u
     }
 }
 
-fn arr_at(arr Arr(<ItemT, capacity>), index usize, ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn arr_at(arr Arr(<ItemT, capacity>), index u64, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return rt.buf_at(arr.buf, index)
 }
 
-fn arr_at_ref(arr Arr(<ItemT, capacity>), index usize, ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+fn arr_at_ref(arr Arr(<ItemT, capacity>), index u64, ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     util.assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return &rt.buf_at(arr.buf, index)
 }
 
-fn arr_first(arr Arr(<ItemT, capacity>), ItemT Type, capacity ''usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn arr_first(arr Arr(<ItemT, capacity>), ItemT Type, capacity ''u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return arr_at(arr, 0, .file = file, .line = line, .column = column)
 }
 
@@ -166,7 +166,7 @@ fn darr_free(using darr Darr(<ItemT>)*, ItemT Type) {
 }
 
 // TODO: pass line, etc. in here or return optional instead of failing for out of memory
-fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add usize, ItemT Type) {
+fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add u64, ItemT Type) {
     if darr.count + count_items_to_add > darr.capacity {
         if darr.capacity < 1 {
             darr.capacity = 1 // TODO: initial capacity should probably be higher than 1?
@@ -183,7 +183,7 @@ fn darr_reserve(darr Darr(<ItemT>)*, count_items_to_add usize, ItemT Type) {
     }
 }
 
-fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
+fn darr_insert(darr Darr(<ItemT>)*, item ItemT, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) {
     darr_reserve(darr, 1);
     assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (darr.count - index > 0) {
@@ -206,7 +206,7 @@ fn darr_extend(dest Darr(<ItemT>)*, src ItemT[], ItemT Type, file Str = #file, l
     }
 }
 
-fn darr_remove(darr Darr(<ItemT>)*, index usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_remove(darr Darr(<ItemT>)*, index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(darr.count > 0, "attempt to remove element from empty dynamic array", .file = file, .line = line, .column = column);
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     darr.count -= 1
@@ -221,12 +221,12 @@ fn darr_pop(darr Darr(<ItemT>)*, ItemT Type, file Str = #file, line i32 = #line,
     return darr_remove(darr, darr.count - 1, .file = file, .line = line, .column = column)
 }
 
-fn darr_at_ref(darr Darr(<ItemT>), index usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+fn darr_at_ref(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < darr.count, "out of bounds", .file = file, .line = line, .column = column);
     return &rt.buf_at(darr.buf, index)
 }
 
-fn darr_at(darr Darr(<ItemT>), index usize, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
+fn darr_at(darr Darr(<ItemT>), index u64, ItemT Type, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     return *darr_at_ref(darr, index, .file = file, .line = line, .column = column)
 }
 
@@ -250,7 +250,7 @@ fn str_to_int(str Str, NumT Type, file Str = #file, line i32 = #line, column i32
     }
 
     let result NumT = 0
-    for idx usize in 0..str.count {
+    for idx u64 in 0..str.count {
         result *= 10
 
         let curr u8 = slice_at(str, idx, .file = file, .line = line, .column = column)
