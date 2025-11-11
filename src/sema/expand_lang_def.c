@@ -485,11 +485,12 @@ static bool expand_def_variable_def(Uast_variable_def* def) {
     return expand_def_ulang_type(&def->lang_type, def->pos /* TODO */);
 }
 
-static void expand_def_case(Uast_case* lang_case) {
-    expand_def_block(lang_case->if_true);
+static bool expand_def_case(Uast_case* lang_case) {
+    bool status = expand_def_block(lang_case->if_true);
     if (!lang_case->is_default) {
-        expand_def_expr_not_ulang_type(&lang_case->expr, lang_case->expr);
+        status = expand_def_expr_not_ulang_type(&lang_case->expr, lang_case->expr) && status;
     }
+    return status;
 }
 
 static bool expand_def_function_call(Uast_function_call* call) {
@@ -520,9 +521,10 @@ static bool expand_def_condition(Uast_condition* cond) {
     return expand_def_operator(cond->child);
 }
 
-static void expand_def_if(Uast_if* lang_if) {
-    expand_def_condition(lang_if->condition);
-    expand_def_block(lang_if->body);
+static bool expand_def_if(Uast_if* lang_if) {
+    bool status = expand_def_condition(lang_if->condition);
+    status = expand_def_block(lang_if->body) && status;
+    return status;
 }
 
 static EXPAND_EXPR_STATUS expand_def_member_access(
@@ -678,23 +680,19 @@ EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_ex
     switch (expr->type) {
         case UAST_BLOCK:
             *new_expr = expr;
-            expand_def_block(uast_block_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_block(uast_block_unwrap(expr)));
         case UAST_IF_ELSE_CHAIN:
             *new_expr = expr;
-            expand_def_if_else_chain(uast_if_else_chain_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_if_else_chain(uast_if_else_chain_unwrap(expr)));
         case UAST_SWITCH:
             *new_expr = expr;
-            expand_def_switch(uast_switch_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_switch(uast_switch_unwrap(expr)));
         case UAST_UNKNOWN:
             *new_expr = expr;
             return a(true);
         case UAST_OPERATOR:
             *new_expr = expr;
-            expand_def_operator(uast_operator_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_operator(uast_operator_unwrap(expr)));
         case UAST_SYMBOL: {
             switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:
@@ -713,24 +711,19 @@ EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_ex
             return expand_def_member_access(new_lang_type, new_expr, uast_member_access_unwrap(expr));
         case UAST_INDEX:
             *new_expr = expr;
-            expand_def_index(uast_index_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_index(uast_index_unwrap(expr)));
         case UAST_LITERAL:
             *new_expr = expr;
-            expand_def_literal(uast_literal_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_literal(uast_literal_unwrap(expr)));
         case UAST_FUNCTION_CALL:
             *new_expr = expr;
-            expand_def_function_call(uast_function_call_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_function_call(uast_function_call_unwrap(expr)));
         case UAST_STRUCT_LITERAL:
             *new_expr = expr;
-            expand_def_struct_literal(uast_struct_literal_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_struct_literal(uast_struct_literal_unwrap(expr)));
         case UAST_ARRAY_LITERAL:
             *new_expr = expr;
-            expand_def_array_literal(uast_array_literal_unwrap(expr));
-            return EXPAND_EXPR_NEW_EXPR;
+            return a(expand_def_array_literal(uast_array_literal_unwrap(expr)));
         case UAST_TUPLE:
             todo();
         case UAST_MACRO:
@@ -753,8 +746,8 @@ static bool expand_def_return(Uast_return* rtn) {
     return expand_def_expr_not_ulang_type(&rtn->child, rtn->child);
 }
 
-void expand_def_defer(Uast_defer* lang_defer) {
-    lang_defer->child = expand_def_stmt(lang_defer->child);
+bool expand_def_defer(Uast_defer* lang_defer) {
+    return expand_def_stmt(&lang_defer->child, lang_defer->child);
 }
 
 bool expand_def_using(Uast_using* using) {
@@ -790,49 +783,42 @@ static bool expand_def_continue(Uast_continue* cont) {
     return true;
 }
 
-static void expand_def_for_with_cond(Uast_for_with_cond* lang_for) {
-    expand_def_condition(lang_for->condition);
-    expand_def_block(lang_for->body);
+static bool expand_def_for_with_cond(Uast_for_with_cond* lang_for) {
+    bool status = expand_def_condition(lang_for->condition);
+    return expand_def_block(lang_for->body) && status;
 }
 
-Uast_stmt* expand_def_stmt(Uast_stmt* stmt) {
+bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR: {
             Uast_expr* new_expr = NULL;
             if (!expand_def_expr_not_ulang_type(&new_expr, uast_expr_unwrap(stmt))) {
                 return false;
             }
-            return uast_expr_wrap(new_expr);
+            *new_stmt = uast_expr_wrap(new_expr);
+            return true;
         }
         case UAST_DEF:
-            expand_def_def(uast_def_unwrap(stmt));
-            return stmt;
+            return expand_def_def(uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND:
-            expand_def_for_with_cond(uast_for_with_cond_unwrap(stmt));
-            return stmt;
+            return expand_def_for_with_cond(uast_for_with_cond_unwrap(stmt));
         case UAST_CONTINUE:
-            expand_def_continue(uast_continue_unwrap(stmt));
-            return stmt;
+            return expand_def_continue(uast_continue_unwrap(stmt));
         case UAST_YIELD:
-            expand_def_yield(uast_yield_unwrap(stmt));
-            return stmt;
+            return expand_def_yield(uast_yield_unwrap(stmt));
         case UAST_ASSIGNMENT:
-            expand_def_assignment(uast_assignment_unwrap(stmt));
-            return stmt;
+            return expand_def_assignment(uast_assignment_unwrap(stmt));
         case UAST_RETURN:
-            expand_def_return(uast_return_unwrap(stmt));
-            return stmt;
+            return expand_def_return(uast_return_unwrap(stmt));
         case UAST_DEFER:
-            expand_def_defer(uast_defer_unwrap(stmt));
-            return stmt;
+            return expand_def_defer(uast_defer_unwrap(stmt));
         case UAST_STMT_REMOVED:
-            return stmt;
+            return true;
         case UAST_USING:
             unreachable("using should have been removed in expand_using");
     }
     unreachable("");
 }
-
 
 static bool expand_def_lang_def(Uast_lang_def* def) {
     (void) def;
@@ -882,16 +868,24 @@ bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     return status;
 }
 
-void expand_def_case_vec(Uast_case_vec* cases) {
+bool expand_def_case_vec(Uast_case_vec* cases) {
+    bool status = true;
     for (size_t idx = 0; idx < cases->info.count; idx++) {
-        expand_def_case(vec_at(*cases, idx));
+        if (!expand_def_case(vec_at(*cases, idx))) {
+            status = false;
+        }
     }
+    return status;
 }
 
-void expand_def_if_vec(Uast_if_vec* ifs) {
+bool expand_def_if_vec(Uast_if_vec* ifs) {
+    bool status = true;
     for (size_t idx = 0; idx < ifs->info.count; idx++) {
-        expand_def_if(vec_at(*ifs, idx));
+        if (!expand_def_if(vec_at(*ifs, idx))) {
+            status = false;
+        }
     }
+    return status;
 }
 
 static bool expand_def_function_params(Uast_function_params* params) {
@@ -929,9 +923,10 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
     unreachable("");
 }
 
-void expand_def_function_def(Uast_function_def* def) {
-    expand_def_function_decl(def->decl);
-    expand_def_block(def->body);
+bool expand_def_function_def(Uast_function_def* def) {
+    bool status = expand_def_function_decl(def->decl);
+    status = expand_def_block(def->body) && status;
+    return status;
 }
 
 static bool expand_def_mod_alias(Uast_mod_alias* alias) {
@@ -942,76 +937,70 @@ static bool expand_def_mod_alias(Uast_mod_alias* alias) {
     return true;
 }
 
-static void expand_def_import_path(Uast_import_path* path) {
+static bool expand_def_import_path(Uast_import_path* path) {
     log(LOG_DEBUG, "expand_def_import_path: "FMT"\n", strv_print(path->mod_path));
-    expand_def_block(path->block);
+    return expand_def_block(path->block);
 }
 
-void expand_def_def(Uast_def* def) {
+bool expand_def_def(Uast_def* def) {
     switch (def->type) {
         case UAST_MOD_ALIAS:
-            expand_def_mod_alias(uast_mod_alias_unwrap(def));
-            return;
+            return expand_def_mod_alias(uast_mod_alias_unwrap(def));
         case UAST_IMPORT_PATH:
-            expand_def_import_path(uast_import_path_unwrap(def));
-            return;
+            return expand_def_import_path(uast_import_path_unwrap(def));
         case UAST_POISON_DEF:
-            return;
+            return false;
         case UAST_GENERIC_PARAM:
-            expand_def_generic_param(uast_generic_param_unwrap(def));
-            return;
+            return expand_def_generic_param(uast_generic_param_unwrap(def));
         case UAST_FUNCTION_DEF:
-            expand_def_function_def(uast_function_def_unwrap(def));
-            return;
+            return expand_def_function_def(uast_function_def_unwrap(def));
         case UAST_VARIABLE_DEF:
-            expand_def_variable_def(uast_variable_def_unwrap(def));
-            return;
+            return expand_def_variable_def(uast_variable_def_unwrap(def));
         case UAST_STRUCT_DEF:
-            expand_def_struct_def(uast_struct_def_unwrap(def));
-            return;
+            return expand_def_struct_def(uast_struct_def_unwrap(def));
         case UAST_RAW_UNION_DEF:
-            expand_def_raw_union_def(uast_raw_union_def_unwrap(def));
-            return;
+            return expand_def_raw_union_def(uast_raw_union_def_unwrap(def));
         case UAST_ENUM_DEF:
-            expand_def_enum_def(uast_enum_def_unwrap(def));
-            return;
+            return expand_def_enum_def(uast_enum_def_unwrap(def));
         case UAST_PRIMITIVE_DEF:
             // TODO
-            return;
+            return true;
         case UAST_FUNCTION_DECL:
-            expand_def_function_decl(uast_function_decl_unwrap(def));
-            return;
+            return expand_def_function_decl(uast_function_decl_unwrap(def));
         case UAST_LANG_DEF:
-            expand_def_lang_def(uast_lang_def_unwrap(def));
-            return;
+            return expand_def_lang_def(uast_lang_def_unwrap(def));
         case UAST_VOID_DEF:
-            return;
+            return true;
         case UAST_LABEL:
-            return;
+            return true;
         case UAST_BUILTIN_DEF:
-            return;
+            return true;
     }
     unreachable("");
 }
 
-void expand_def_switch(Uast_switch* lang_switch) {
-    expand_def_expr_not_ulang_type(&lang_switch->operand, lang_switch->operand);
-    expand_def_case_vec(&lang_switch->cases);
+bool expand_def_switch(Uast_switch* lang_switch) {
+    bool status = expand_def_expr_not_ulang_type(&lang_switch->operand, lang_switch->operand);
+    return expand_def_case_vec(&lang_switch->cases) && status;
 }
 
-void expand_def_if_else_chain(Uast_if_else_chain* if_else) {
-    expand_def_if_vec(&if_else->uasts);
+bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
+    return expand_def_if_vec(&if_else->uasts);
 }
 
-void expand_def_block(Uast_block* block) {
+bool expand_def_block(Uast_block* block) {
+    bool status = true;
+
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        expand_def_def(curr);
+        status = expand_def_def(curr) && status;
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        *vec_at_ref(&block->children, idx) = expand_def_stmt(vec_at(block->children, idx));
+        status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(block->children, idx)) && status;
     }
+
+    return status;
 }
 
