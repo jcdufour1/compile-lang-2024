@@ -841,7 +841,6 @@ Uast_stmt* expand_def_stmt(Uast_stmt* stmt) {
 static bool expand_def_lang_def(Uast_lang_def* def) {
     (void) def;
     // TODO: expand def->expr here to reduce the amount of duplicate work that is done?
-    //   (it may not be worth it because this pass may be fast enough without this optimization)
     return true;
 }
 
@@ -865,7 +864,7 @@ void expand_def_generic_param_vec(Uast_generic_param_vec* params) {
 
 void expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     for (size_t idx = 0; idx < defs->info.count; idx++) {
-        expand_def_variable_def(vec_at(*defs, idx));
+        //expand_def_variable_def(vec_at(*defs, idx));
     }
 }
 
@@ -929,9 +928,6 @@ static bool expand_def_mod_alias(Uast_mod_alias* alias) {
 
 static void expand_def_import_path(Uast_import_path* path) {
     log(LOG_DEBUG, "expand_def_import_path: "FMT"\n", strv_print(path->mod_path));
-    if (strv_is_equal(path->mod_path, sv("main"))) {
-        __asm__("int3");
-    }
     expand_def_block(path->block);
 }
 
@@ -1000,7 +996,6 @@ void expand_def_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", uast_stmt_print(vec_at(block->children, idx)));
         *vec_at_ref(&block->children, idx) = expand_def_stmt(vec_at(block->children, idx));
     }
 }
