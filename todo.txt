@@ -107,8 +107,6 @@ for generics:
             arr_append(dest, src[idx], .file = file, .line = line, .column = column)
         }
     }
-- mod_path_builtin should be in std directory? (e.g. "std/bt")
-  -- builtins should be in e.g. "std/builtins" instead of "std/runtime"
 
 
 # roadmap to try to get bootstrap compiler done:
