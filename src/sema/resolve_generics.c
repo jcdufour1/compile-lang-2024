@@ -179,6 +179,7 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
 
 static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
+    log(LOG_DEBUG, FMT"\n", uast_struct_def_print(after_res));
     bool success = try_set_struct_def_base_types(&new_base, &after_res->base);
     try_set_def_types_internal(
         uast_struct_def_wrap(after_res),
@@ -383,6 +384,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             msg_todo("", ulang_type_get_pos(lang_type));
             return false;
         case UAST_BUILTIN_DEF:
+            log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
+            log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             unreachable(
                 "this should have been removed in expand_lang_def "
                 "(or error should have been printed in expand_lang_def)"
