@@ -3557,12 +3557,10 @@ bool try_set_variable_def_types(
 ) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
-        log(LOG_DEBUG, FMT"\n", uast_def_print(result));
         assert(env.error_count > 0);
         return false;
     }
 
-    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);

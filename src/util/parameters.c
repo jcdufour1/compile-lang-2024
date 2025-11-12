@@ -870,7 +870,6 @@ void parse_args(int argc, char** argv) {
         params.lower_s_files.info.count == 0 &&
         params.upper_s_files.info.count == 0
     ) {
-        log(LOG_DEBUG, "%d\n", params_log_level);
         print_usage();
         msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
         local_exit(EXIT_CODE_FAIL);

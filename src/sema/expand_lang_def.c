@@ -294,7 +294,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             }
             return EXPAND_NAME_NORMAL;
         case UAST_LABEL:
-            todo();
+            msg_todo("", dest_pos);
+            return EXPAND_NAME_ERROR;
         case UAST_BUILTIN_DEF: {
             static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
             if (strv_is_equal(name.base, sv("usize"))) {
@@ -363,7 +364,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             if (new_name->gen_args.info.count > 0) {
                 if (name.gen_args.info.count > 0) {
                     // TODO: expected failure case?
-                    todo();
+                    msg_todo("", dest_pos);
                 }
             } else {
                 new_name->gen_args = name.gen_args;
@@ -392,40 +393,28 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_BLOCK:
-            todo();
             // fallthrough
         case UAST_IF_ELSE_CHAIN:
-            todo();
             // fallthrough
         case UAST_SWITCH:
-            todo();
             // fallthrough
         case UAST_UNKNOWN:
-            todo();
             // fallthrough
         case UAST_FUNCTION_CALL:
-            todo();
             // fallthrough
         case UAST_STRUCT_LITERAL:
-            todo();
             // fallthrough
         case UAST_ARRAY_LITERAL:
-            todo();
             // fallthrough
         case UAST_TUPLE:
-            todo();
             // fallthrough
         case UAST_MACRO:
-            todo();
             // fallthrough
         case UAST_ENUM_ACCESS:
-            todo();
             // fallthrough
         case UAST_EXPR_REMOVED:
-            todo();
             // fallthrough
         case UAST_ENUM_GET_TAG:
-            todo();
             msg_todo("", uast_expr_get_pos(expr));
             return EXPAND_NAME_ERROR;
     }
@@ -470,10 +459,8 @@ EXPAND_NAME_STATUS expand_def_name(
             *name = new_name;
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_NEW_ULANG_TYPE:
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
             return EXPAND_NAME_NEW_ULANG_TYPE;
         case EXPAND_NAME_ERROR:
             return EXPAND_NAME_ERROR;
@@ -717,14 +704,17 @@ EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_ex
             *new_expr = expr;
             return a(expand_def_array_literal(uast_array_literal_unwrap(expr)));
         case UAST_TUPLE:
-            todo();
+            msg_todo("def expansion in this situation", uast_expr_get_pos(expr));
+            return EXPAND_EXPR_ERROR;
         case UAST_MACRO:
             *new_expr = expr;
             return EXPAND_EXPR_NEW_EXPR;
         case UAST_ENUM_ACCESS:
-            todo();
+            msg_todo("def expansion in this situation", uast_expr_get_pos(expr));
+            return EXPAND_EXPR_ERROR;
         case UAST_ENUM_GET_TAG:
-            todo();
+            msg_todo("def expansion in this situation", uast_expr_get_pos(expr));
+            return EXPAND_EXPR_ERROR;
         case UAST_EXPR_REMOVED:
             *new_expr = expr;
             return EXPAND_EXPR_NEW_EXPR;
@@ -891,28 +881,10 @@ static bool expand_def_function_params(Uast_function_params* params) {
 }
 
 static bool expand_def_function_decl(Uast_function_decl* def) {
-    if (
-        !expand_def_generic_param_vec(&def->generics) ||
-        !expand_def_function_params(def->params) ||
-        !expand_def_ulang_type(&def->return_type, def->pos)
-    ) {
-        return false;
-    }
-
-    Uast_expr* new_expr = NULL;
-    Ulang_type dummy_lang_type = {0};
-    switch (expand_def_name(&dummy_lang_type, &new_expr, &def->name, def->pos)) {
-        case EXPAND_NAME_NORMAL:
-            return true;
-        case EXPAND_NAME_NEW_EXPR:
-            todo();
-        case EXPAND_NAME_NEW_ULANG_TYPE:
-            msg_todo("", def->pos);
-            return false;
-        case EXPAND_NAME_ERROR:
-            todo();
-    }
-    unreachable("");
+    bool status = expand_def_generic_param_vec(&def->generics);
+    status = expand_def_function_params(def->params) && status;
+    status = expand_def_ulang_type(&def->return_type, def->pos) && status;
+    return status;
 }
 
 bool expand_def_function_def(Uast_function_def* def) {
