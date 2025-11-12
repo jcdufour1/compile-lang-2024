@@ -155,9 +155,6 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
             // symbol was initialized before this use
             return;
         }
-        log(LOG_DEBUG, "thing thing\n");
-    } else {
-        log(LOG_DEBUG, "not thing thing\n");
     }
 
     if (check_unit_is_struct(name)) {
@@ -199,7 +196,6 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
                 }
             }
         }
-#   endif //NDEBUG
 
     // TODO: make function to log entire cfg_node_areas
     vec_foreach(idx, Init_table, frame, cfg_node_areas) {
@@ -223,6 +219,8 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     }
 
+#   endif //NDEBUG
+          
     for (size_t idx = 0; idx < cfg_node_areas.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
         init_symbol_add(vec_at_ref(&cfg_node_areas, idx), (Init_table_node) {

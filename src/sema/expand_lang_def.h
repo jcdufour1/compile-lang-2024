@@ -5,7 +5,14 @@ typedef enum {
     EXPAND_NAME_ERROR,
     EXPAND_NAME_NORMAL, // only changes name
     EXPAND_NAME_NEW_EXPR, // new_expr must be substituted where the name was
+    EXPAND_NAME_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
 } EXPAND_NAME_STATUS;
+
+typedef enum {
+    EXPAND_EXPR_ERROR,
+    EXPAND_EXPR_NEW_EXPR, // new_expr must be substituted where the name was
+    EXPAND_EXPR_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
+} EXPAND_EXPR_STATUS;
 
 bool expand_def_block(Uast_block* block);
 
@@ -13,17 +20,19 @@ bool expand_def_def(Uast_def* def);
 
 bool expand_def_block(Uast_block* block);
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
+EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
 bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
-bool expand_def_expr(Uast_expr** new_expr, Uast_expr* expr);
+bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr);
+
+EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr);
 
 bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 
 bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
 
-EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym);
+EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
 
 bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
 
@@ -45,6 +54,11 @@ bool expand_def_operator(Uast_operator* oper);
 
 bool expand_def_defer(Uast_defer* lang_defer);
 
-EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name, Pos dest_pos);
+EXPAND_NAME_STATUS expand_def_name(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Name* name,
+    Pos dest_pos
+);
 
 #endif // EXPAND_LANG_DEF

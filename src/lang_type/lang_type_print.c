@@ -185,10 +185,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             goto end;
         case LANG_TYPE_PRIMITIVE: {
             Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
-            //unwrap(base.count >= 4 && strv_slice(base, base.count - 4, 4));
-            //log(LOG_DEBUG, FMT"\n", string_print(*string));
             extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
-            //log(LOG_DEBUG, FMT"\n", string_print(*string));
             unwrap(base.count >= 1);
             goto end;
         }

@@ -251,9 +251,6 @@ CHECK_ASSIGN_STATUS check_general_assignment(
         check_env->parent_of = PARENT_OF_ASSIGN_RHS;
         check_env->lhs_lang_type = dest_lang_type;
         if (check_env->parent_of == PARENT_OF_ASSIGN_RHS) {
-            if (check_env->lhs_lang_type.type == LANG_TYPE_PRIMITIVE && strv_is_equal(lang_type_get_str(LANG_TYPE_MODE_LOG, check_env->lhs_lang_type).base, sv("u8"))) {
-                //todo();
-            }
             check_env->break_type = check_env->lhs_lang_type;
         } else {
             check_env->break_type = lang_type_void_const_wrap(lang_type_void_new(pos));

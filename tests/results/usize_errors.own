@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/usize_errors.own:4:21:[1;31merror[0;39m:expected expression, but got type
+     3 | fn main() i32 {
+     4 |     let num i32 = rt.usize()
+       |                     ^
+     5 |     return 0
+tests/inputs/usize_errors.own:4:21:[1;31merror[0;39m:expected expression, but got type
+     3 | fn main() i32 {
+     4 |     let num i32 = rt.usize()
+       |                     ^
+     5 |     return 0
+
+compile::return_code 1
+

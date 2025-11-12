@@ -87,7 +87,6 @@ bool infer_generic_type(
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                //log(LOG_DEBUG, FMT"\n", strv_print(reg.atom.str.base));
                 if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
                     // TODO
                     return false;

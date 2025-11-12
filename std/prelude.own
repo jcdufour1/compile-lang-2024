@@ -14,5 +14,7 @@ type Darr def = _builtin__coll.Darr
 
 type assert def = _builtin__util.assert
 
+type usize def = _builtin__util.usize
+
 type min def = _builtin__math.min
 type max def = _builtin__math.max

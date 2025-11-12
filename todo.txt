@@ -94,12 +94,13 @@ for generics:
      nessessarily based on memory size
      of computer that compilation happens
 - check for return statement on all code paths
-- optimizations to save memory:
+- possible optimizations to save memory:
     -- use bitsets
     -- save Pos as 48 or 64 bit var
     -- make size_t as 48 bit var?
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
+    -- use views instead of vecs in ast and ir nodes?
 - test case for i32** being used as generic arg
 
 # roadmap to try to get bootstrap compiler done:

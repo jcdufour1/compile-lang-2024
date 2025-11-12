@@ -52,10 +52,12 @@ static void add_builtin_def(Strv name) {
     )))));
 }
 
+static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
 static void add_builtin_defs(void) {
     add_builtin_def(sv("static_array_access"));
     add_builtin_def(sv("static_array_slice"));
     add_builtin_def(sv("buf_at"));
+    add_builtin_def(sv("usize"));
 }
 
 #define do_pass(pass_fn, sym_log_fn) \
@@ -125,10 +127,6 @@ void compile_file_to_ir(void) {
     do_pass_status(parse, usymbol_log_level);
     do_pass_status(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
-    //Ir* result = NULL;
-    //unwrap(ir_lookup(&result, ir_name_new(sv("tests/inputs/union"), sv("union"), (Ulang_type_vec) {0}, 2, (Attrs) {0})));
-    //log(LOG_DEBUG, FMT"\n", ir_print(result));
-    //log(LOG_DEBUG, "%d\n", ir_get_name(result).attrs);
 
     // ir passes
     do_pass(construct_cfgs, ir_log_level);

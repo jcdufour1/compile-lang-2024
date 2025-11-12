@@ -1623,7 +1623,11 @@ bool try_set_function_call_builtin_types(
     Pos fun_decl_pos
 ) {
     Strv fun_base = fun_name.base;
-    if (strv_is_equal(fun_base, sv("static_array_access"))) {
+    static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
+    if (strv_is_equal(fun_base, sv("usize"))) {
+        msg(DIAG_INVALID_FUNCTION_CALLEE, fun_call->pos, "builtin `"FMT"` is not callable\n", strv_print(fun_base));
+        return false;
+    } else if (strv_is_equal(fun_base, sv("static_array_access"))) {
         if (fun_call->args.info.count != 2) {
             msg_invalid_count_function_args(fun_call, fun_name, fun_decl_pos, 2, 2);
             return false;
@@ -1761,9 +1765,6 @@ bool try_set_function_call_builtin_types(
 
         *new_call = tast_index_wrap(new_index);
         return true;
-    } else {
-        msg_todo("calling this builtin as a function", fun_call->pos);
-        return false;
     }
     unreachable("");
 }
@@ -3556,12 +3557,10 @@ bool try_set_variable_def_types(
 ) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
-        log(LOG_DEBUG, FMT"\n", uast_def_print(result));
         assert(env.error_count > 0);
         return false;
     }
 
-    //log(LOG_DEBUG, FMT"\n", uast_variable_def_print(uast));
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type)) {
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);

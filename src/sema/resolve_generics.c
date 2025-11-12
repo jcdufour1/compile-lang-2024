@@ -383,7 +383,10 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             msg_todo("", ulang_type_get_pos(lang_type));
             return false;
         case UAST_BUILTIN_DEF:
-            msg_todo("", ulang_type_get_pos(lang_type));
+            unreachable(
+                "this should have been removed in expand_lang_def "
+                "(or error should have been printed in expand_lang_def)"
+            );
             return false;
     }
     unreachable("");
