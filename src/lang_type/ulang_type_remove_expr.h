@@ -3,6 +3,9 @@
 
 #include <ulang_type.h>
 
+// TODO: remove this forward decl?
+bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr);
+
 // will report error
 static bool ulang_type_remove_expr(Ulang_type* new_lang_type, Ulang_type lang_type) {
     if (lang_type.type != ULANG_TYPE_EXPR) {
@@ -12,7 +15,7 @@ static bool ulang_type_remove_expr(Ulang_type* new_lang_type, Ulang_type lang_ty
     Ulang_type_expr expr = ulang_type_expr_const_unwrap(lang_type);
 
     Ulang_type inner = {0};
-    if (!uast_expr_to_ulang_type(&inner, expr.expr)) {
+    if (!uast_expr_to_ulang_type_concise(&inner, expr.expr)) {
         return false;
     }
     ulang_type_add_pointer_depth(&inner, expr.pointer_depth);

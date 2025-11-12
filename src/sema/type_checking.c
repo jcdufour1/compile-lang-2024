@@ -2466,7 +2466,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     vec_at(fun_decl_temp->generics, idx_gen)->name.base,
                     param->base->name.base
                 )) {
-                    if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
+                    if (!uast_expr_to_ulang_type_concise(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
                         status = false;
                         goto error;
                     }

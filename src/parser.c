@@ -3038,7 +3038,10 @@ static PARSE_EXPR_STATUS parse_unary(
         case PARSE_EXPR_ERROR:
             return PARSE_EXPR_ERROR;
         case PARSE_EXPR_NONE:
-            child = uast_expr_removed_wrap(uast_expr_removed_new(oper.pos, sv("after unary operator")));
+            child = uast_expr_removed_wrap(uast_expr_removed_new(
+                tk_view_front(*tokens).pos,
+                sv("after unary operator")
+            ));
             break;
         default:
             unreachable("");

@@ -5,6 +5,19 @@
 #include <ulang_type.h>
 #include <uast.h>
 
-bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr);
+// TODO: move to .c file
+typedef enum {
+    EXPR_TO_ULANG_TYPE_NORMAL,
+    EXPR_TO_ULANG_TYPE_PTR_DEPTH,
+    EXPR_TO_ULANG_TYPE_ERROR,
+
+    // for static asserts
+    EXPR_TO_ULANG_TYPE_COUNT,
+} EXPR_TO_ULANG_TYPE;
+
+bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr);
+
+// TODO: remove from header file and make static in .c file
+EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr);
 
 #endif // UAST_EXPR_TO_ULANG_TYPE_H

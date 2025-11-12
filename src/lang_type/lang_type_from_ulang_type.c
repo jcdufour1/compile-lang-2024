@@ -7,7 +7,7 @@
 
 static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, Ulang_type_expr lang_type) {
     Ulang_type inner = {0};
-    if (!uast_expr_to_ulang_type(&inner, lang_type.expr)) {
+    if (!uast_expr_to_ulang_type_concise(&inner, lang_type.expr)) {
         return false;
     }
     return try_lang_type_from_ulang_type(new_lang_type, inner);
