@@ -336,7 +336,6 @@ static bool get_mod_alias_from_path_token(
         mod_path
     ))));
 
-
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
@@ -2979,6 +2978,7 @@ static PARSE_EXPR_STATUS parse_unary(
     Token oper = consume_unary(tokens);
 
     Uast_expr* child = NULL;
+    // this is a placeholder type
     Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
         ulang_type_atom_new(
             uname_new(
@@ -2990,7 +2990,7 @@ static PARSE_EXPR_STATUS parse_unary(
             0
         ),
         oper.pos
-    )); // this is a placeholder type
+    ));
 
     static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
@@ -3038,8 +3038,8 @@ static PARSE_EXPR_STATUS parse_unary(
         case PARSE_EXPR_ERROR:
             return PARSE_EXPR_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(*tokens, "after unary operator");
-            return PARSE_EXPR_ERROR;
+            child = uast_expr_removed_wrap(uast_expr_removed_new(oper.pos, sv("after unary operator")));
+            break;
         default:
             unreachable("");
     }

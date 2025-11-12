@@ -11,6 +11,12 @@ bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) 
                 return false;
             }
             if (bin->rhs->type != UAST_EXPR_REMOVED) {
+                Ulang_type rhs_lang_type = {0};
+                if (!uast_expr_to_ulang_type(&rhs_lang_type, bin->rhs)) {
+                    return false;
+                }
+                todo();
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(bin->rhs));
                 msg_todo("interpreting this expression as a type", bin->pos);
                 return false;
             }
@@ -23,6 +29,7 @@ bool uast_operator_to_ulang_type(Ulang_type* result, const Uast_operator* oper) 
             return true;
         }
         case UAST_UNARY:
+            log(LOG_DEBUG, FMT"\n", uast_operator_print(oper));
             msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
             return false;
     }

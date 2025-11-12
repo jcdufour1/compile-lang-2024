@@ -102,11 +102,11 @@ for generics:
     -- better arena management
     -- use views instead of vecs in ast and ir nodes?
 - test case for i32** being used as generic arg
+- test case for int value being used as lang_type generic arg and vice versa
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
 - constraints in generics
-- slices
 - orelse, !!, ??, etc.
 - extern("c") defintions
 - non-hard coded size_t, etc.
