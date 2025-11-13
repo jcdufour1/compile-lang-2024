@@ -67,6 +67,10 @@ Name serialize_ulang_type_gen_param(Strv mod_path) {
     return name_new(mod_path, sv("gen_param"), (Ulang_type_vec) {0}, 0, (Attrs) {0});
 }
 
+Name serialize_ulang_type_removed(Strv mod_path) {
+    return name_new(mod_path, sv("removed"), (Ulang_type_vec) {0}, 0, (Attrs) {0});
+}
+
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
@@ -85,6 +89,8 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type_tuple(mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_GEN_PARAM:
             return serialize_ulang_type_gen_param(mod_path);
+        case ULANG_TYPE_REMOVED:
+            return serialize_ulang_type_removed(mod_path);
         case ULANG_TYPE_ARRAY:
             return serialize_ulang_type_array(mod_path, ulang_type_array_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_EXPR: {

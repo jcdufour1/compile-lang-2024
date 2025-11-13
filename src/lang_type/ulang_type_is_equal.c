@@ -40,6 +40,9 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
         }
         case ULANG_TYPE_INT:
             return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
+        case ULANG_TYPE_REMOVED:
+            // TODO
+            todo();
     }
     unreachable("");
 }

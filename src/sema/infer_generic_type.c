@@ -138,6 +138,9 @@ bool infer_generic_type(
         case ULANG_TYPE_ARRAY:
             // TODO
             return false;
+        case ULANG_TYPE_REMOVED:
+            // TODO
+            return false;
         case ULANG_TYPE_EXPR: {
             // TODO: this may be inefficient, because infer_generic_type could be called
             //   multiple times with the same param_corres_to_arg for the same function call

@@ -34,6 +34,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
             return true;
         }
+        case ULANG_TYPE_REMOVED:
+            msg_todo("could not infer type of this expression", ulang_type_get_pos(lang_type));
+            return false;
         case ULANG_TYPE_GEN_PARAM:
             todo();
             // TODO

@@ -157,6 +157,9 @@ void generic_sub_lang_type(
         case ULANG_TYPE_INT:
             msg_todo("", ulang_type_get_pos(lang_type));
             return;
+        case ULANG_TYPE_REMOVED:
+            todo();
+            return;
     }
     unreachable("");
 }
@@ -584,6 +587,9 @@ GEN_SUB_NAME_STATUS generic_sub_name(
                 msg_todo("", name_pos);
                 return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_ARRAY:
+                msg_todo("", name_pos);
+                return GEN_SUB_NAME_ERROR;
+            case ULANG_TYPE_REMOVED:
                 msg_todo("", name_pos);
                 return GEN_SUB_NAME_ERROR;
             case ULANG_TYPE_EXPR:

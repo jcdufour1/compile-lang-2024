@@ -987,6 +987,7 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     if (parse_lang_type_struct(lang_type, tokens, scope_id)) {
         return PARSE_OK;
     } else {
+        todo();
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
@@ -1589,8 +1590,8 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         }
     } else {
         if (require_type) {
-            if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
-                return PARSE_ERROR;
+            if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
+                lang_type = ulang_type_removed_const_wrap(ulang_type_removed_new(0, name_token.pos));
             }
         } else {
             if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {

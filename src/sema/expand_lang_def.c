@@ -209,6 +209,8 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
             // TODO: actually implement this if needed
             return true;
         }
+        case ULANG_TYPE_REMOVED:
+            return true;
         case ULANG_TYPE_EXPR: {
             Ulang_type new_lang_type = {0};
             if (!expand_def_ulang_type_expr(&new_lang_type, ulang_type_expr_const_unwrap(*lang_type))) {
