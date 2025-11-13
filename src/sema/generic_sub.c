@@ -127,7 +127,8 @@ void generic_sub_lang_type(
             );
             return;
         case ULANG_TYPE_ARRAY:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return;
         case ULANG_TYPE_FN: {
             Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
             generic_sub_lang_type_fn(
@@ -139,7 +140,8 @@ void generic_sub_lang_type(
             return;
         }
         case ULANG_TYPE_TUPLE:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return;
         case ULANG_TYPE_GEN_PARAM:
             generic_sub_lang_type_gen_param(
                 new_lang_type,
@@ -157,7 +159,8 @@ void generic_sub_lang_type(
             );
             return;
         case ULANG_TYPE_INT:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return;
     }
     unreachable("");
 }
@@ -516,9 +519,25 @@ GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Na
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&new_int, &ptr_depth_offset, &sym->name, sym->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
-            if (ptr_depth_offset > 0) {
-                todo();
+            if (ptr_depth_offset <= 0) {
+                return GEN_SUB_NAME_NORMAL;
             }
+
+            Uast_binary* bin = uast_binary_new(
+                sym->pos,
+                uast_symbol_wrap(sym),
+                uast_expr_removed_wrap(uast_expr_removed_new(
+                    sym->pos,
+                    sv("after binary operator")
+                )),
+                BINARY_MULTIPLY
+            );
+            for (int16_t idx = 1; idx < ptr_depth_offset; idx++) {
+                bin->rhs = uast_operator_wrap(uast_unary_wrap(
+                    uast_unary_new(sym->pos, bin->rhs, UNARY_DEREF, (Ulang_type) {0})
+                ));
+            }
+            *new_sym = uast_operator_wrap(uast_binary_wrap(bin));
             return GEN_SUB_NAME_NORMAL;
         case GEN_SUB_NAME_NEW_INT:
             *new_sym = uast_literal_wrap(uast_int_wrap(new_int));
@@ -566,9 +585,11 @@ GEN_SUB_NAME_STATUS generic_sub_name(
     Name gen_param,
     Ulang_type gen_arg
 ) {
-    *pointer_depth_to_add = ulang_type_get_pointer_depth(gen_arg);
+    *pointer_depth_to_add = 0;
 
     if (name_is_equal(*name, gen_param)) {
+        *pointer_depth_to_add = ulang_type_get_pointer_depth(gen_arg);
+        
         if (name->gen_args.info.count > 0) {
             // TODO
             msg_todo("", name_pos);

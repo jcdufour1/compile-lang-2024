@@ -105,6 +105,7 @@ for generics:
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
+- member_name of member access should not be substituted in generic substitution
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

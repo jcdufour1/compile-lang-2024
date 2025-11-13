@@ -1,3 +1,5 @@
+type coll import = std.collections
+type util import = std.util
 type Token struct {
     num i32
 }
@@ -7,16 +9,17 @@ type Arr struct(<ItemT>) {
     count u64
 }
 
-fn arr_new(ItemT Type, init_elem ItemT) {
-    let arr Arr(<ItemT>) = {unsafe_cast<Token***>0, 0}
+fn arr_new(max_capacity ''usize, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
+    let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0}
+    return arr
 }
 
 fn main() i32 {
-    //let num i32 = 3
-    //let ptr i32* = &num
-    //let ptr_ptr i32** = &ptr
+    let num i32 = 3
+    let ptr i32* = &num
+    let ptr_ptr i32** = &ptr
 
-    /*let arr coll.Arr(<i32, 1>) = */arr_new(Token**, {9})
+    let arr Arr(<Token*>) = arr_new(1, Token*, [{9}])
 
     return 0
 }
