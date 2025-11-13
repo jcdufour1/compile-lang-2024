@@ -534,7 +534,7 @@ GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Na
             );
             for (int16_t idx = 1; idx < ptr_depth_offset; idx++) {
                 bin->rhs = uast_operator_wrap(uast_unary_wrap(
-                    uast_unary_new(sym->pos, bin->rhs, UNARY_DEREF, (Ulang_type) {0})
+                    uast_unary_new(sym->pos, bin->rhs, UNARY_DEREF, ulang_type_new_void(sym->pos))
                 ));
             }
             *new_sym = uast_operator_wrap(uast_binary_wrap(bin));
