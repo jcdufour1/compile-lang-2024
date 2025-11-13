@@ -71,6 +71,7 @@ typedef struct Ulang_type_fn_ {
     Ulang_type_tuple params;
     Ulang_type* return_type;
     Pos pos;
+    int16_t pointer_depth;
 }Ulang_type_fn;
 
 // TODO: refactor so that Ulang_type_atom struct in inlined into Ulang_type_regular?
@@ -146,6 +147,10 @@ static inline Ulang_type_regular ulang_type_regular_const_unwrap(const Ulang_typ
 static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_REGULAR);
     return &ulang_type->as.ulang_type_regular;
+}
+static inline Ulang_type_fn* ulang_type_fn_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_FN);
+    return &ulang_type->as.ulang_type_fn;
 }
 static inline Ulang_type_array ulang_type_array_const_unwrap(const Ulang_type ulang_type) {
     unwrap(ulang_type.type == ULANG_TYPE_ARRAY);
@@ -257,8 +262,7 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_TUPLE:
             return 0;
         case ULANG_TYPE_FN:
-            // TODO
-            return 0;
+            return ulang_type_fn_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
         case ULANG_TYPE_ARRAY:
@@ -284,8 +288,7 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
             unwrap(pointer_depth == 0);
             return;
         case ULANG_TYPE_FN:
-            // TODO
-            msg_todo("", ulang_type_fn_const_unwrap(*lang_type).pos);
+            ulang_type_fn_unwrap(lang_type)->pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_REGULAR:
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
