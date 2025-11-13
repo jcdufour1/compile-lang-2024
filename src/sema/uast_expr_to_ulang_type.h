@@ -17,7 +17,4 @@ typedef enum {
 
 bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr);
 
-// TODO: remove from header file and make static in .c file
-EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr);
-
 #endif // UAST_EXPR_TO_ULANG_TYPE_H

@@ -2,7 +2,9 @@
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
 
-EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* pointer_depth, const Uast_operator* oper) {
+static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr);
+
+static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_operator* oper) {
     (void) result;
     (void) pointer_depth;
     switch (oper->type) {
@@ -16,7 +18,7 @@ EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* poin
             int16_t rhs_ptr_depth = 0;
             Ulang_type rhs_lang_type = {0};
             static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
-            switch (uast_expr_to_ulang_type(&rhs_lang_type, &rhs_ptr_depth, bin->rhs)) {
+            switch (uast_expr_to_ulang_type_internal(&rhs_lang_type, &rhs_ptr_depth, bin->rhs)) {
                 case EXPR_TO_ULANG_TYPE_NORMAL:
                     msg_todo("interpreting this expression as a type", bin->pos);
                     return EXPR_TO_ULANG_TYPE_ERROR;
@@ -44,7 +46,7 @@ EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* poin
 
             Ulang_type child_lang_type = {0};
             static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
-            switch (uast_expr_to_ulang_type(&child_lang_type, pointer_depth, unary->child)) {
+            switch (uast_expr_to_ulang_type_internal(&child_lang_type, pointer_depth, unary->child)) {
                 case EXPR_TO_ULANG_TYPE_NORMAL:
                     msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
                     return EXPR_TO_ULANG_TYPE_ERROR;
@@ -62,7 +64,7 @@ EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* poin
     unreachable("");
 }
 
-EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symbol* sym) {
+EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result, const Uast_symbol* sym) {
     Uast_def* sym_def = NULL;
     if (usymbol_lookup(&sym_def, sym->name)) {
         switch (sym_def->type) {
@@ -131,7 +133,7 @@ EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symb
 bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr) {
     int16_t pointer_depth = 0;
     static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
-    switch (uast_expr_to_ulang_type(result, &pointer_depth, expr)) {
+    switch (uast_expr_to_ulang_type_internal(result, &pointer_depth, expr)) {
         case EXPR_TO_ULANG_TYPE_NORMAL:
             return true;
         case EXPR_TO_ULANG_TYPE_PTR_DEPTH:
@@ -145,8 +147,7 @@ bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr) 
     unreachable("");
 }
 
-// TODO: rename to uast_expr_to_ulang_type_internal
-EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
+static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
@@ -161,11 +162,9 @@ EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_OPERATOR:
-            return uast_operator_to_ulang_type(result, pointer_depth, uast_operator_const_unwrap(expr));
-        case UAST_SYMBOL: {
-            return uast_symbol_to_ulang_type(result, uast_symbol_const_unwrap(expr));
-
-        }
+            return uast_operator_to_ulang_type_internal(result, pointer_depth, uast_operator_const_unwrap(expr));
+        case UAST_SYMBOL:
+            return uast_symbol_to_ulang_type_internal(result, uast_symbol_const_unwrap(expr));
         case UAST_MEMBER_ACCESS: {
             // TODO: make a helper function to convert member access to uname?
             const Uast_member_access* access = uast_member_access_const_unwrap(expr);
@@ -201,7 +200,7 @@ EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_
 
             Ulang_type item_type = {0};
             int16_t dummy = 0;
-            EXPR_TO_ULANG_TYPE status = uast_expr_to_ulang_type(&item_type, &dummy, index->callee);
+            EXPR_TO_ULANG_TYPE status = uast_expr_to_ulang_type_internal(&item_type, &dummy, index->callee);
             if (status != EXPR_TO_ULANG_TYPE_NORMAL) {
                 return status;
             }
