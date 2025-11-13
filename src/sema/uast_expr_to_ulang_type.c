@@ -2,11 +2,18 @@
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
 
+typedef enum {
+    EXPR_TO_ULANG_TYPE_NORMAL,
+    EXPR_TO_ULANG_TYPE_PTR_DEPTH,
+    EXPR_TO_ULANG_TYPE_ERROR,
+
+    // for static asserts
+    EXPR_TO_ULANG_TYPE_COUNT,
+} EXPR_TO_ULANG_TYPE;
+
 static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr);
 
 static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_operator* oper) {
-    (void) result;
-    (void) pointer_depth;
     switch (oper->type) {
         case UAST_BINARY: {
             const Uast_binary* bin = uast_binary_const_unwrap(oper);
@@ -30,7 +37,7 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* resul
                     unreachable("");
             }
 
-            if (!uast_expr_to_ulang_type_concise(result, bin->lhs)) {
+            if (!uast_expr_to_ulang_type(result, bin->lhs)) {
                 return EXPR_TO_ULANG_TYPE_ERROR;
             }
 
@@ -64,7 +71,7 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* resul
     unreachable("");
 }
 
-EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result, const Uast_symbol* sym) {
+static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result, const Uast_symbol* sym) {
     Uast_def* sym_def = NULL;
     if (usymbol_lookup(&sym_def, sym->name)) {
         switch (sym_def->type) {
@@ -127,24 +134,6 @@ EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result, const 
     ));
 
     return EXPR_TO_ULANG_TYPE_NORMAL;
-}
-
-// TODO: rename to uast_expr_to_ulang_type
-bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr) {
-    int16_t pointer_depth = 0;
-    static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
-    switch (uast_expr_to_ulang_type_internal(result, &pointer_depth, expr)) {
-        case EXPR_TO_ULANG_TYPE_NORMAL:
-            return true;
-        case EXPR_TO_ULANG_TYPE_PTR_DEPTH:
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return false;
-        case EXPR_TO_ULANG_TYPE_ERROR:
-            return false;
-        default:
-            unreachable("");
-    }
-    unreachable("");
 }
 
 static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
@@ -244,3 +233,21 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
     }
     unreachable("");
 }
+
+bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
+    int16_t pointer_depth = 0;
+    static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
+    switch (uast_expr_to_ulang_type_internal(result, &pointer_depth, expr)) {
+        case EXPR_TO_ULANG_TYPE_NORMAL:
+            return true;
+        case EXPR_TO_ULANG_TYPE_PTR_DEPTH:
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            return false;
+        case EXPR_TO_ULANG_TYPE_ERROR:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+

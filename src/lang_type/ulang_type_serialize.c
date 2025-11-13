@@ -90,7 +90,7 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
         case ULANG_TYPE_EXPR: {
             // TODO: consider if all Ulang_type_exprs should be removed before doing actual type checking?
             Ulang_type inner = {0};
-            if (!uast_expr_to_ulang_type_concise(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
+            if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
                 return util_literal_name_new();
             }
             return serialize_ulang_type(mod_path, inner, include_scope);
