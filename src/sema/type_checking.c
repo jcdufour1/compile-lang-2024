@@ -751,7 +751,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
     return true;
 }
 
-bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
+static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
     assert(oper->token_type == BINARY_SINGLE_EQUAL);
 
     Tast_expr* new_rhs;
@@ -764,8 +764,38 @@ bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
         return false;
     }
 
+    Uast_symbol* lhs = uast_symbol_unwrap(oper->lhs);
+    Uast_def* lhs_def_ = NULL;
+    unwrap(usymbol_lookup(&lhs_def_, lhs->name));
+    if (lhs_def_->type != UAST_VARIABLE_DEF) {
+        msg_todo("", uast_expr_get_pos(oper->lhs));
+        return false;
+    }
+    Uast_variable_def* lhs_def = uast_variable_def_unwrap(lhs_def_);
+    lhs_def->lang_type = lang_type_to_ulang_type(tast_expr_get_lang_type(new_rhs));
 
-    todo();
+    Tast_expr* new_lhs;
+    if (!try_set_expr_types(&new_lhs, oper->lhs)) {
+        return false;
+    }
+
+    switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_rhs), oper->rhs, oper->pos)) {
+        case CHECK_ASSIGN_OK:
+            *new_tast = tast_assignment_wrap(tast_assignment_new(oper->pos, new_lhs, new_rhs));
+            return true;
+        case CHECK_ASSIGN_INVALID:
+            msg(
+                DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
+                oper->pos,
+                "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
+            );
+            return false;
+        case CHECK_ASSIGN_ERROR:
+            return false;
+    }
+    unreachable("");
 }
 
 // returns false if unsuccessful
