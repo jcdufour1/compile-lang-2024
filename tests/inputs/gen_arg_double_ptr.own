@@ -1,11 +1,22 @@
-type coll import = std.collections
+type Token struct {
+    num i32
+}
+
+type Arr struct(<ItemT>) {
+    buf ItemT*
+    count u64
+}
+
+fn arr_new(ItemT Type, init_elem ItemT) {
+    let arr Arr(<ItemT>) = {unsafe_cast<Token***>0, 0}
+}
 
 fn main() i32 {
-    let num i32 = 3
-    let ptr i32* = &num
-    let ptr_ptr i32** = &ptr
+    //let num i32 = 3
+    //let ptr i32* = &num
+    //let ptr_ptr i32** = &ptr
 
-    let arr coll.Arr(<i32**, 1>)
+    /*let arr coll.Arr(<i32, 1>) = */arr_new(Token**, {9})
 
     return 0
 }

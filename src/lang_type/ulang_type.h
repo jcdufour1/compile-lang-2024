@@ -304,7 +304,8 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
 }
 
 static inline void ulang_type_add_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
-    ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + pointer_depth);
+    int16_t prev = ulang_type_get_pointer_depth(*lang_type);
+    ulang_type_set_pointer_depth(lang_type, prev + pointer_depth);
 }
 
 #define ulang_type_print(mode, lang_type) strv_print(ulang_type_print_internal((mode), (lang_type)))
