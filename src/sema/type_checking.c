@@ -392,6 +392,11 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
                 return false;
             }
+            Tast_def* def_typed = NULL;
+            if (sym_def->type == UAST_VARIABLE_DEF && !symbol_lookup(&def_typed, sym_untyped->name)) {
+                Tast_variable_def* dummy = NULL;
+                try_set_variable_def_types(&dummy, uast_variable_def_unwrap(sym_def), true, false);
+            }
             Sym_typed_base new_base = {.lang_type = lang_type, sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
