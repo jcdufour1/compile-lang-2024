@@ -125,7 +125,7 @@ void compile_file_to_ir(void) {
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level);
-    do_pass_status(try_set_types, symbol_log_level);
+    do_pass(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
 
     // ir passes

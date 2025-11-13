@@ -171,7 +171,7 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&dummy, &ptr_depth_offset, &def->name, def->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
-            ulang_type_set_pointer_depth(&def->lang_type, ptr_depth_offset);
+            ulang_type_add_pointer_depth(&def->lang_type, ptr_depth_offset);
             return;
         case GEN_SUB_NAME_NEW_INT:
             return;

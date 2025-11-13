@@ -257,7 +257,8 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_TUPLE:
             return 0;
         case ULANG_TYPE_FN:
-            todo();
+            // TODO
+            return 0;
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
         case ULANG_TYPE_ARRAY:
