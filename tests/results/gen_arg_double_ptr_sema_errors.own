@@ -1,36 +1,36 @@
 compile::stdout 0
 
 compile::stderr 30
-tests/inputs/gen_arg_double_ptr_sema_errors.own:25:39:[1;31merror[0;39m:type `Arr(<Token, 1>)` cannot be implicitly converted to `Arr(<Token*, 1>)`
-    24 |     {
-    25 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token)
+tests/inputs/gen_arg_double_ptr_sema_errors.own:15:39:[1;31merror[0;39m:type `Arr(<Token, 1>)` cannot be implicitly converted to `Arr(<Token*, 1>)`
+    14 |     {
+    15 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token)
        |                                       ^
-    26 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
-tests/inputs/gen_arg_double_ptr_sema_errors.own:26:41:[1;31merror[0;39m:type `Arr(<Token***, 1>)` cannot be implicitly converted to `Arr(<Token**, 1>)`
-    25 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token)
-    26 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
+    16 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
+tests/inputs/gen_arg_double_ptr_sema_errors.own:16:41:[1;31merror[0;39m:type `Arr(<Token***, 1>)` cannot be implicitly converted to `Arr(<Token**, 1>)`
+    15 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token)
+    16 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
        |                                         ^
-    27 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****)
-tests/inputs/gen_arg_double_ptr_sema_errors.own:27:42:[1;31merror[0;39m:type `Arr(<Token****, 1>)` cannot be implicitly converted to `Arr(<Token***, 1>)`
-    26 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
-    27 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****)
+    17 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****)
+tests/inputs/gen_arg_double_ptr_sema_errors.own:17:42:[1;31merror[0;39m:type `Arr(<Token****, 1>)` cannot be implicitly converted to `Arr(<Token***, 1>)`
+    16 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
+    17 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****)
        |                                          ^
-    28 |     }
-tests/inputs/gen_arg_double_ptr_sema_errors.own:31:69:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token`
-    30 |     {
-    31 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token, [util.null(Token)])
+    18 |     }
+tests/inputs/gen_arg_double_ptr_sema_errors.own:21:69:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token`
+    20 |     {
+    21 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token, [util.null(Token)])
        |                                                                     ^
-    32 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
-tests/inputs/gen_arg_double_ptr_sema_errors.own:32:74:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token***`
-    31 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token, [util.null(Token)])
-    32 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
+    22 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
+tests/inputs/gen_arg_double_ptr_sema_errors.own:22:74:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token***`
+    21 |         let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token, [util.null(Token)])
+    22 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
        |                                                                          ^
-    33 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****, [util.null(Token)])
-tests/inputs/gen_arg_double_ptr_sema_errors.own:33:76:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token****`
-    32 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
-    33 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****, [util.null(Token)])
+    23 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****, [util.null(Token)])
+tests/inputs/gen_arg_double_ptr_sema_errors.own:23:76:[1;31merror[0;39m:type `Token*` cannot be implicitly converted to `Token****`
+    22 |         let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
+    23 |         let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****, [util.null(Token)])
        |                                                                            ^
-    34 |     }
+    24 |     }
 
 compile::return_code 1
 

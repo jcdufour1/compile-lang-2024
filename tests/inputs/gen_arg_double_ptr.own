@@ -6,16 +6,6 @@ type Token struct {
     num i32
 }
 
-type Arr struct(<ItemT>) {
-    buf ItemT*
-    count u64
-}
-
-fn arr_new(max_capacity ''usize, ItemT Type, init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT>) {
-    let arr Arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0}
-    return arr
-}
-
 fn main() i32 {
     let num i32 = 3
     let ptr i32* = &num
