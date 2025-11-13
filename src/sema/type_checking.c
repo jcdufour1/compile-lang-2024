@@ -771,7 +771,10 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
 
     Uast_symbol* lhs = uast_symbol_unwrap(oper->lhs);
     Uast_def* lhs_def_ = NULL;
-    unwrap(usymbol_lookup(&lhs_def_, lhs->name));
+    unwrap(
+        usymbol_lookup(&lhs_def_, lhs->name) &&
+        "try_set_binary_types_infer_lhs should not have been called if lhs_def_ is undefined"
+    );
     if (lhs_def_->type != UAST_VARIABLE_DEF) {
         msg_todo("", uast_expr_get_pos(oper->lhs));
         return false;
@@ -806,6 +809,7 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
 // returns false if unsuccessful
 bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     bool old_supress_type_infer = env.supress_type_inference_failures;
+    uint32_t old_error_count = env.error_count;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
         env.supress_type_inference_failures = true;
     }
@@ -813,6 +817,10 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     Tast_expr* new_lhs;
     if (!try_set_expr_types(&new_lhs, operator->lhs)) {
         env.supress_type_inference_failures = old_supress_type_infer;
+
+        if (env.error_count > old_error_count) {
+            return false;
+        }
         return try_set_binary_types_infer_lhs(new_tast, operator);
     }
     env.supress_type_inference_failures = old_supress_type_infer;

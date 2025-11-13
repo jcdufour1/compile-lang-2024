@@ -39,7 +39,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             msg(
                 DIAG_TYPE_COULD_NOT_BE_INFERED,
                 ulang_type_get_pos(lang_type),
-                "could not infer type of this variable definition\n"
+                "could not infer the type of this variable definition\n"
             );
             return false;
         case ULANG_TYPE_GEN_PARAM:
