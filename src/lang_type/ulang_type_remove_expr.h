@@ -3,6 +3,9 @@
 
 #include <ulang_type.h>
 
+// TODO: remove this forward decl?
+bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr);
+
 // will report error
 static bool ulang_type_remove_expr(Ulang_type* new_lang_type, Ulang_type lang_type) {
     if (lang_type.type != ULANG_TYPE_EXPR) {

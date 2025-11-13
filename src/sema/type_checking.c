@@ -885,10 +885,6 @@ bool try_set_unary_types_finish(
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, cast_to));
-                log(LOG_DEBUG, FMT, tast_expr_print(new_child));
                 msg_todo("error message for using unsafe_cast in this situation", unary_pos);
                 return false;
             }
@@ -1187,7 +1183,11 @@ bool try_set_array_literal_types(
         Uast_expr* rhs = vec_at(lit->members, idx);
         Tast_expr* new_rhs = NULL;
         switch (check_general_assignment(
-             &check_env, &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
+             &check_env,
+             &new_rhs,
+             gen_arg,
+             rhs,
+             uast_expr_get_pos(rhs)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -1196,7 +1196,7 @@ bool try_set_array_literal_types(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg),
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
                 return false;
@@ -1230,10 +1230,6 @@ bool try_set_array_literal_types(
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
-    Ulang_type dummy = {0};
-    if (!lang_type_is_slice(&dummy, dest_lang_type)) {
-        //todo();
-    }
 
     Lang_type unary_lang_type = gen_arg;
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
@@ -4502,7 +4498,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     unreachable("");
 }
 
-bool try_set_types(void) {
+void try_set_types(void) {
     check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
 
     {
@@ -4513,7 +4509,7 @@ bool try_set_types(void) {
         }
     }
     if (env.error_count > 0) {
-        return false;
+        return;
     }
 
     {
@@ -4524,13 +4520,11 @@ bool try_set_types(void) {
         }
     }
     if (env.error_count > 0) {
-        return false;
+        return;
     }
 
     check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
-
-    bool status = true;
 
     // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     {
@@ -4548,7 +4542,6 @@ bool try_set_types(void) {
                 case STMT_NO_STMT:
                     break;
                 case STMT_ERROR:
-                    status = false;
                     break;
                 case STMT_OK:
                     break;
@@ -4565,14 +4558,11 @@ bool try_set_types(void) {
                 "actual error message for symbol that is named `main` but is not a function",
                 uast_def_get_pos(main_fn_)
             );
-            status = false;
             goto after_main;
         }
         Lang_type_fn new_lang_type = {0};
         Name new_name = {0};
-        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN)) {
-            status = false;
-        }
+        resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN);
     } else {
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
         // TODO: use warn for warnings instead of msg to reduce mistakes?
@@ -4581,25 +4571,19 @@ after_main:
 
     while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.fun_implementations_waiting_to_resolve);
-        if (!resolve_generics_function_def_implementation(curr_name)) {
-            status = false;
-        }
+        resolve_generics_function_def_implementation(curr_name);
     }
 
     while (env.struct_like_waiting_to_resolve.info.count > 0) {
         Name curr_name = vec_pop(&env.struct_like_waiting_to_resolve);
-        if (!resolve_generics_struct_like_def_implementation(curr_name)) {
-            status = false;
-        }
+        resolve_generics_struct_like_def_implementation(curr_name);
     }
 
     Usymbol_iter rec_iter = usym_tbl_iter_new_table(env.struct_like_tbl);
     Uast_def* curr_def = NULL;
     while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
-        if (!check_struct_for_rec(curr_def)) {
-            status = false;
-        }
+        check_struct_for_rec(curr_def);
     }
 
-    return status;
+    return;
 }

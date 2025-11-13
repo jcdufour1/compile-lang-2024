@@ -1,8 +1,8 @@
 type io import = std.io
 
 fn main() i32 {
-    &
-    let num i32
+    io.print_int(&)
+
     return 0
 }
 
