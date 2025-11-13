@@ -751,12 +751,37 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
     return true;
 }
 
-// returns false if unsuccessful
-bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
-    Tast_expr* new_lhs;
-    if (!try_set_expr_types(&new_lhs, operator->lhs)) {
+bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
+    assert(oper->token_type == BINARY_SINGLE_EQUAL);
+
+    Tast_expr* new_rhs;
+    if (!try_set_expr_types(&new_rhs, oper->rhs)) {
         return false;
     }
+
+    if (oper->lhs->type != UAST_SYMBOL) {
+        msg_todo("type inference with non variable def in this situation", uast_expr_get_pos(oper->lhs));
+        return false;
+    }
+
+
+    todo();
+}
+
+// returns false if unsuccessful
+bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
+    bool old_supress_type_infer = env.supress_type_inference_failures;
+    if (operator->token_type == BINARY_SINGLE_EQUAL) {
+        env.supress_type_inference_failures = true;
+    }
+
+    Tast_expr* new_lhs;
+    if (!try_set_expr_types(&new_lhs, operator->lhs)) {
+        env.supress_type_inference_failures = old_supress_type_infer;
+        return try_set_binary_types_infer_lhs(new_tast, operator);
+    }
+    env.supress_type_inference_failures = old_supress_type_infer;
+
     unwrap(new_lhs);
 
     Tast_expr* new_rhs = NULL;
@@ -4310,8 +4335,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
-            // TODO: eventually, we should do also function defs, etc. in this for loop
+        if (curr->type != UAST_IMPORT_PATH && curr->type != UAST_LABEL) {
+            // TODO: eventually, we should do also function defs, etc. in this for loop?
             // (change parser to not put function defs, etc. in block)
             continue;
         }

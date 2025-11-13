@@ -35,7 +35,12 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_REMOVED:
-            msg_todo("could not infer type of this expression", ulang_type_get_pos(lang_type));
+            log(LOG_DEBUG, "%d\n", env.supress_type_inference_failures);
+            msg(
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
+                ulang_type_get_pos(lang_type),
+                "could not infer type of this variable definition\n"
+            );
             return false;
         case ULANG_TYPE_GEN_PARAM:
             todo();
