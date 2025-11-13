@@ -885,10 +885,6 @@ bool try_set_unary_types_finish(
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, cast_to));
-                log(LOG_DEBUG, FMT, tast_expr_print(new_child));
                 msg_todo("error message for using unsafe_cast in this situation", unary_pos);
                 return false;
             }

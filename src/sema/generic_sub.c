@@ -42,7 +42,6 @@ void generic_sub_using(Uast_using* using, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg) {
     generic_sub_variable_def(def->base, gen_param, gen_arg);
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, def->base->lang_type));
     if (def->is_optional) {
         generic_sub_expr(&def->optional_default, def->optional_default, gen_param, gen_arg);
     }
@@ -70,10 +69,7 @@ void generic_sub_lang_type_regular(
     lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(*gen_args, idx)));
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(*gen_args, idx), gen_param, gen_arg);
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(*gen_args, idx)));
     }
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
@@ -181,33 +177,6 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
     unreachable("");
 }
 
-void generic_sub_generic_param(Uast_generic_param* def, Name gen_param, Ulang_type gen_arg) {
-    return;
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, def->name));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, gen_param));
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
-    msg(DIAG_NOTE, def->pos, "\n");
-    //ulang_type_add_pointer_depth(&def->lang_type, ulang_type_get_pointer_depth(gen_arg));
-    int16_t pointer_depth = ulang_type_get_pointer_depth(gen_arg);
-    (void) pointer_depth;
-
-    Uast_int* dummy = NULL;
-    int16_t ptr_depth_offset = 0;
-    switch (generic_sub_name(&dummy, &ptr_depth_offset, &def->name, def->pos, gen_param, gen_arg)) {
-        case GEN_SUB_NAME_NORMAL:
-            if (ptr_depth_offset > 0) {
-                todo();
-            }
-            return;
-        case GEN_SUB_NAME_NEW_INT:
-            todo();
-            return;
-        case GEN_SUB_NAME_ERROR:
-            return;
-    }
-    unreachable("");
-}
-
 void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
     Uast_int* dummy = NULL;
     int16_t ptr_depth_offset = 0;
@@ -257,7 +226,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_POISON_DEF:
             todo();
         case UAST_GENERIC_PARAM:
-            generic_sub_generic_param(uast_generic_param_unwrap(def), gen_param, gen_arg);
             return;
         case UAST_FUNCTION_DEF:
             todo();

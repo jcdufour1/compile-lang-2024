@@ -31,16 +31,11 @@ EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* poin
             if (!uast_expr_to_ulang_type_concise(result, bin->lhs)) {
                 return EXPR_TO_ULANG_TYPE_ERROR;
             }
-            log(LOG_DEBUG, "thing 1:"FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *result));
 
-            ulang_type_add_pointer_depth(result, 1);
-            log(LOG_DEBUG, "thing 2:"FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *result));
-            ulang_type_add_pointer_depth(result, rhs_ptr_depth);
-            log(LOG_DEBUG, "thing 3:"FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *result));
+            ulang_type_add_pointer_depth(result, 1 + rhs_ptr_depth);
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
-        case UAST_UNARY:
-            log(LOG_DEBUG, FMT"\n", uast_operator_print(oper));
+        case UAST_UNARY: {
             const Uast_unary* unary = uast_unary_const_unwrap(oper);
             if (unary->token_type != UNARY_DEREF) {
                 msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
@@ -62,6 +57,7 @@ EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type(Ulang_type* result, int16_t* poin
                     unreachable("");
             }
             unreachable("");
+        }
     }
     unreachable("");
 }
@@ -131,16 +127,16 @@ EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type(Ulang_type* result, const Uast_symb
     return EXPR_TO_ULANG_TYPE_NORMAL;
 }
 
+// TODO: rename to uast_expr_to_ulang_type
 bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr) {
     int16_t pointer_depth = 0;
     static_assert(EXPR_TO_ULANG_TYPE_COUNT == 3, "exhausive handling of EXPR_TO_ULANG_TYPE");
     switch (uast_expr_to_ulang_type(result, &pointer_depth, expr)) {
         case EXPR_TO_ULANG_TYPE_NORMAL:
-            log(LOG_DEBUG, "thing 4:"FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *result));
-            log(LOG_DEBUG, "thing 4:%d\n", ulang_type_get_pointer_depth(*result));
             return true;
         case EXPR_TO_ULANG_TYPE_PTR_DEPTH:
-            todo();
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            return false;
         case EXPR_TO_ULANG_TYPE_ERROR:
             return false;
         default:
@@ -149,6 +145,7 @@ bool uast_expr_to_ulang_type_concise(Ulang_type* result, const Uast_expr* expr) 
     unreachable("");
 }
 
+// TODO: rename to uast_expr_to_ulang_type_internal
 EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
