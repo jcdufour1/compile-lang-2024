@@ -3,7 +3,6 @@ type coll import = std.collections
 
 
 fn main() i32 {
-    // can give one or two errors (for now)
     let slice coll.Slice(<Thing>) = [98, 43]
     return 0
 }

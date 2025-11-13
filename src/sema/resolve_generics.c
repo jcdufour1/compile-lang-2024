@@ -32,6 +32,15 @@ static void msg_undefined_type_internal(
             file, line, DIAG_UNDEFINED_TYPE, pos,
             "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
         );
+
+        Name name = {0};
+        if (lang_type.type == ULANG_TYPE_REGULAR && name_from_uname(
+            &name,
+            ulang_type_regular_const_unwrap(lang_type).atom.str,
+            pos
+        )) {
+            unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name))));
+        }
     }
 }
 
@@ -358,7 +367,6 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
-            msg_todo("", ulang_type_get_pos(lang_type));
             return false;
         case UAST_IMPORT_PATH:
             msg_todo("", ulang_type_get_pos(lang_type));
