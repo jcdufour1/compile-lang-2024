@@ -55,6 +55,7 @@ static PARSE_STATUS parse_variable_def(
     bool require_let,
     bool add_to_sym_table,
     bool require_type,
+    bool actually_require_type,
     Ulang_type lang_type_if_not_required,
     Scope_id scope_id
 );
@@ -65,6 +66,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     bool require_let,
     bool add_to_sym_table,
     bool require_type,
+    bool actually_require_type,
     Ulang_type lang_type_if_not_required,
     Scope_id scope_id
 );
@@ -987,7 +989,6 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     if (parse_lang_type_struct(lang_type, tokens, scope_id)) {
         return PARSE_OK;
     } else {
-        todo();
         msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
@@ -1002,7 +1003,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_def_or_generic_param(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
+    if (PARSE_OK != parse_variable_def_or_generic_param(&base, tokens, false, add_to_sym_table, true, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     switch (base->type) {
@@ -1237,13 +1238,6 @@ static PARSE_STATUS parse_struct_def_base(
         parse_generics_params(&base->generics, tokens, name.scope_id);
     }
 
-    {
-        Uast_def* result = NULL;
-        if (usymbol_lookup(&result, name_new(sv("test"), sv("Token"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
-            unwrap(uast_enum_def_unwrap(result)->base.generics.info.count == 2);
-        }
-    }
-
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
         return PARSE_ERROR;
     }
@@ -1251,7 +1245,7 @@ static PARSE_STATUS parse_struct_def_base(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member = NULL;
-        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, SCOPE_NOT)) {
+        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, require_sub_types, default_lang_type, SCOPE_NOT)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
@@ -1327,7 +1321,6 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
 
     *struct_def = uast_struct_def_new(name.pos, base);
     if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
-        todo();
         msg_redefinition_of_symbol(uast_struct_def_wrap(*struct_def));
         return PARSE_ERROR;
     }
@@ -1344,7 +1337,6 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
     if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
-        todo();
         msg_redefinition_of_symbol(uast_raw_union_def_wrap(*raw_union_def));
         return PARSE_ERROR;
     }
@@ -1497,6 +1489,7 @@ static PARSE_STATUS parse_variable_def(
     bool require_let,
     bool add_to_sym_table,
     bool require_type,
+    bool actually_require_type,
     Ulang_type default_lang_type,
     Scope_id scope_id
 ) {
@@ -1507,6 +1500,7 @@ static PARSE_STATUS parse_variable_def(
         require_let,
         add_to_sym_table,
         require_type,
+        actually_require_type,
         default_lang_type,
         scope_id
     );
@@ -1527,7 +1521,8 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     Tk_view* tokens,
     bool require_let,
     bool add_to_sym_table,
-    bool require_type,
+    bool require_type, // TODO: rename this variable
+    bool actually_require_type,
     Ulang_type default_lang_type,
     Scope_id scope_id
 ) {
@@ -1589,7 +1584,11 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
     } else {
-        if (require_type) {
+        if (actually_require_type) {
+            if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
+                return PARSE_ERROR;
+            }
+        } else if (require_type) {
             if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
                 lang_type = ulang_type_removed_const_wrap(ulang_type_removed_new(0, name_token.pos));
             }
@@ -1751,7 +1750,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, true /* TODO: change to false? */, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
@@ -2553,7 +2552,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_expr_wrap(uast_block_wrap(block_def));
     } else if (starts_with_variable_def(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
