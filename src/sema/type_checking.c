@@ -1187,7 +1187,11 @@ bool try_set_array_literal_types(
         Uast_expr* rhs = vec_at(lit->members, idx);
         Tast_expr* new_rhs = NULL;
         switch (check_general_assignment(
-             &check_env, &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
+             &check_env,
+             &new_rhs,
+             gen_arg,
+             rhs,
+             uast_expr_get_pos(rhs)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -1196,7 +1200,7 @@ bool try_set_array_literal_types(
                     DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg),
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
                 );
                 return false;
@@ -1230,10 +1234,6 @@ bool try_set_array_literal_types(
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
-    Ulang_type dummy = {0};
-    if (!lang_type_is_slice(&dummy, dest_lang_type)) {
-        //todo();
-    }
 
     Lang_type unary_lang_type = gen_arg;
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
