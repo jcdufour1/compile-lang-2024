@@ -9,5 +9,9 @@ fn main() i32 {
     let num = 8
     print(num)
 
+    for idx in 0..9 {
+        print(idx)
+    }
+
     return 0
 }

@@ -390,6 +390,18 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
+                log(LOG_DEBUG, "%d\n", env.supress_type_inference_failures);
+                if (!env.supress_type_inference_failures) {
+                    log(LOG_DEBUG, "adding poison def\n");
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, uast_def_get_name(sym_def)));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, sym_untyped->name));
+                    usymbol_update(uast_poison_def_wrap(uast_poison_def_new(
+                        uast_def_get_pos(sym_def),
+                        uast_def_get_name(sym_def)
+                    )));
+                } else {
+                    log(LOG_DEBUG, "not adding poison def\n");
+                }
                 return false;
             }
             Tast_def* def_typed = NULL;
@@ -822,7 +834,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
     if (!try_set_expr_types(&new_lhs, operator->lhs)) {
         env.supress_type_inference_failures = old_supress_type_infer;
 
-        if (env.error_count > old_error_count) {
+        if (env.error_count > old_error_count || operator->token_type != BINARY_SINGLE_EQUAL) {
             return false;
         }
         return try_set_binary_types_infer_lhs(new_tast, operator);

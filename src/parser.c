@@ -454,17 +454,6 @@ static bool starts_with_variable_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_LET;
 }
 
-static bool starts_with_variable_type_decl(Tk_view tokens, bool require_let) {
-    if (!try_consume(NULL, &tokens, TOKEN_LET) && require_let) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
-    try_consume(NULL, &tokens, TOKEN_COLON);
-    return try_consume(NULL, &tokens, TOKEN_SYMBOL);
-}
-
 static bool starts_with_struct_literal(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE);
 }
@@ -874,10 +863,8 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     unwrap(try_consume(&tk_start, tokens, TOKEN_OPEN_PAR));
 
     while (is_comma) {
-        // a return type is only one token, at least for now
         Pos atom_pos = {0};
         if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens, scope_id)) {
-            todo();
             break;
         }
         Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
@@ -1734,6 +1721,23 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
     return parse_block(&(*for_new)->body, tokens, false, block_scope, (Uast_stmt_vec) {0});
 }
 
+static bool is_for_range(Tk_view tokens, Scope_id block_scope) {
+    Uast_variable_def* var_def = NULL;
+
+    LOG_LEVEL old_params_log_level = params_log_level;
+    params_log_level = LOG_FATAL;
+    uint32_t old_error_count = env.error_count;
+    if (PARSE_OK != parse_variable_def(&var_def, &tokens, false, false, true, false, (Ulang_type) {0}, block_scope)) {
+        params_log_level = old_params_log_level;
+        env.error_count = old_error_count;
+        return false;
+    }
+    params_log_level = old_params_log_level;
+    env.error_count = old_error_count;
+
+    return tk_view_front(tokens).type == TOKEN_IN;
+}
+
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
     unwrap(new_scope_name.base.count > 0);
     Name old_default_brk_label = default_brk_label;
@@ -1746,11 +1750,11 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
 
     Scope_id block_scope = symbol_collection_new(scope_id, util_literal_name_new());
     
-    if (starts_with_variable_type_decl(*tokens, false)) {
+    if (is_for_range(*tokens, block_scope)) {
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, true /* TODO: change to false? */, (Ulang_type) {0}, block_scope)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, false, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
