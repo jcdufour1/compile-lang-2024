@@ -37,9 +37,19 @@ static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t
 }
 
 static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
-    char num_str[1000] = {0};
+    char num_str[32] = {0};
     sprintf(num_str, "%zu", num);
     string_extend_cstr(arena, str, num_str);
+}
+
+static inline void string_extend_uint64_t(Arena* arena, String* str, uint64_t num) {
+    char num_str[32] = {0};
+    sprintf(num_str, "%zu", num);
+    string_extend_cstr(arena, str, num_str);
+}
+
+static inline void string_extend_int(Arena* arena, String* str, int num) {
+    string_extend_uint64_t(arena, str, (uint64_t)num);
 }
 
 static inline void string_extend_pointer(Arena* arena, String* str, const void* pointer) {
@@ -70,10 +80,6 @@ static inline void string_extend_double(Arena* arena, String* str, double num) {
     string_extend_cstr(arena, str, num_str);
 }
 
-static inline void string_append_character(Arena* arena, String* str, uint8_t num) {
-    vec_append(arena, str, num);
-}
-
 static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     String string = {0};
     for (size_t idx = 0; cstr[idx]; idx++) {
@@ -96,18 +102,18 @@ static inline void string_extend_strv(Arena* arena, String* string, Strv strv) {
     }
 }
 
-static inline void string_extend_strv_indent(Arena* arena, String* string, Strv strv, size_t indent) {
+static inline void string_extend_strv_indent(Arena* arena, String* string, Strv strv, Indent indent) {
     for (size_t idx = 0; idx < indent; idx++) {
         vec_append(arena, string, '-');
     }
     string_extend_strv(arena, string, strv);
 }
 
-static inline void string_extend_cstr_indent(Arena* arena, String* string, const char* cstr, size_t indent) {
+static inline void string_extend_cstr_indent(Arena* arena, String* string, const char* cstr, Indent indent) {
     string_extend_strv_indent(arena, string, sv(cstr), indent);
 }
 
-static inline void string_add_int(Arena* arena, String* string, int num) {
+static inline void string_add_line(Arena* arena, String* string, uint32_t num) {
     const char* fmt_str =  " (line %d)";
     static char num_str[200];
     sprintf(num_str, fmt_str, num);

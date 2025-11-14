@@ -17,7 +17,7 @@ bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE mode, Lang_ty
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type);
 
-static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
+static inline uint32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
@@ -31,7 +31,7 @@ static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang
     unreachable("");
 }
 
-static inline int32_t lang_type_get_bit_width(Lang_type lang_type) {
+static inline uint32_t lang_type_get_bit_width(Lang_type lang_type) {
     return lang_type_primitive_get_bit_width(lang_type_primitive_const_unwrap(lang_type));
 }
 

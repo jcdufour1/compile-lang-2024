@@ -1,6 +1,6 @@
 #include <cfg.h>
 
-Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent)  {
+Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent)  {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "cfg_node:", indent);

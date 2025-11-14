@@ -215,7 +215,7 @@ void msg_internal(
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
-                size_t second_count = vsnprintf(NULL, 0, format, args_copy);
+                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
                 buf_cap_needed += max(buf_cap_needed, second_count);
             } else {
                 buf_cap_needed = max(buf_cap_needed, (size_t)snprintf(
@@ -227,7 +227,7 @@ void msg_internal(
                     pos.column,
                     get_log_level_str(log_level)
                 ));
-                size_t second_count = vsnprintf(NULL, 0, format, args_copy);
+                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
                 buf_cap_needed = max(buf_cap_needed, second_count);
             }
         }

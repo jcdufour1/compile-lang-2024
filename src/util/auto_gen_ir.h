@@ -706,7 +706,7 @@ static void ir_gen_print_forward_decl(Ir_type type) {
         string_extend_cstr(&gen_a, &function, "ir_print_internal(ir, 0))\n");
 
         string_extend_cstr(&gen_a, &function, "Strv ");
-        string_extend_cstr(&gen_a, &function, "ir_print_internal(const Ir* ir, int recursion_depth);\n");
+        string_extend_cstr(&gen_a, &function, "ir_print_internal(const Ir* ir, Indent recursion_depth);\n");
     } else {
         string_extend_cstr(&gen_a, &function, "#define ");
         extend_ir_name_lower(&function, type.name);
@@ -718,7 +718,7 @@ static void ir_gen_print_forward_decl(Ir_type type) {
         extend_ir_name_lower(&function, type.name);
         string_extend_cstr(&gen_a, &function, "_print_internal(const ");
         extend_ir_name_first_upper(&function, type.name);
-        string_extend_cstr(&gen_a, &function, "* ir, int recursion_depth);");
+        string_extend_cstr(&gen_a, &function, "* ir, Indent indent);");
     }
 
     gen_gen(FMT"\n", string_print(function));

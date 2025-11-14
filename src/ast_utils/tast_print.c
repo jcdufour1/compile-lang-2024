@@ -7,7 +7,7 @@
 
 #include <symbol_table.h>
 
-static void extend_scope(String* buf, Scope_id scope_id, int indent) {
+static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
     string_extend_size_t(&a_temp, buf, scope_id);
     string_extend_cstr(&a_temp, buf, "\n");

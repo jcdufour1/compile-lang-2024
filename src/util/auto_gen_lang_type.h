@@ -181,8 +181,8 @@ static Lang_type_type lang_type_gen_array(const char* prefix) {
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Lang_type*", "item_type");
-    append_member(&sym.members, "size_t", "count");
-    append_member(&sym.members, "uint16_t", "pointer_depth");
+    append_member(&sym.members, "uint64_t", "count");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

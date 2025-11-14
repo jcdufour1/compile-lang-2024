@@ -9,7 +9,7 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...) {
 
     static String temp_buf = {0};
 
-    size_t count_needed = vsnprintf(NULL, 0, format, args1);
+    size_t count_needed = (size_t)vsnprintf(NULL, 0, format, args1);
     count_needed++;
     if (count_needed > temp_buf.info.count) {
         while (temp_buf.info.count < count_needed) {

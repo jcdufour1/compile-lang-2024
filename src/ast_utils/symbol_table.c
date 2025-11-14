@@ -1,7 +1,9 @@
 #define STB_DS_IMPLEMENTATION
 
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include <stb_ds.h>
+#pragma GCC diagnostic warning "-Wsign-conversion"
 #pragma GCC diagnostic warning "-Wimplicit-fallthrough"
 
 #include "symbol_table.h"
@@ -753,7 +755,7 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 // not generic
 //
 
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
@@ -762,7 +764,7 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     }
 }
 
-void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth) {
+void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent) {
     (void) recursion_depth;
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
@@ -774,7 +776,7 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, int rec
     }
 }
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
+void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {

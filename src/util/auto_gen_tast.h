@@ -913,7 +913,7 @@ static void tast_gen_print_forward_decl(Tast_type type) {
     extend_tast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_tast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* tast, int recursion_depth);");
+    string_extend_cstr(&gen_a, &function, "* tast, Indent indent);");
 
     gen_gen(FMT"\n", string_print(function));
 }

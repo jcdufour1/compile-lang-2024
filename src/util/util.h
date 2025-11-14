@@ -32,6 +32,8 @@ typedef enum {
     EXIT_CODE_EXPECTED_FAIL,
 } EXIT_CODE;
 
+typedef uint32_t Indent;
+
 struct Env_;
 typedef struct Env_ Env;
 
