@@ -92,6 +92,7 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
                 ulang_type_int_const_unwrap(lang_type)
             ));
     }
+    unreachable("");
 }
 
 #endif // ULANG_TYPE_CLONE_H

@@ -145,10 +145,10 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         }
         case IR_LANG_TYPE_STRUCT:
-            // fallthrough
             unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
+            fallthrough;
         case IR_LANG_TYPE_VOID:
-            // fallthrough
+            fallthrough;
         case IR_LANG_TYPE_PRIMITIVE:
             extend_ir_lang_type_atom(string, mode, ir_lang_type_get_atom(mode, ir_lang_type));
             goto end;

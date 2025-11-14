@@ -3070,11 +3070,11 @@ static PARSE_EXPR_STATUS parse_unary(
             ));
         } break;
         case TOKEN_LOGICAL_NOT:
-            // fallthrough
+            fallthrough;
         case TOKEN_ASTERISK:
-            // fallthrough
+            fallthrough;
         case TOKEN_BITWISE_AND:
-            // fallthrough
+            fallthrough;
         case TOKEN_UNSAFE_CAST:
             *result = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
                 oper.pos,
@@ -3095,7 +3095,7 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         }
         case TOKEN_COUNTOF:
-            // fallthrough
+            fallthrough;
         case TOKEN_SIZEOF:
             *result = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
                 oper.pos,

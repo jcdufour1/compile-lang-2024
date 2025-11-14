@@ -229,27 +229,27 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
 
     switch (esc_char) {
         case 'a':
-            // fallthrough
+            fallthrough;
         case 'b':
-            // fallthrough
+            fallthrough;
         case 'f':
-            // fallthrough
+            fallthrough;
         case 'n':
-            // fallthrough
+            fallthrough;
         case 'r':
-            // fallthrough
+            fallthrough;
         case 't':
-            // fallthrough
+            fallthrough;
         case 'v':
-            // fallthrough
+            fallthrough;
         case '\\':
-            // fallthrough
+            fallthrough;
         case '\'':
-            // fallthrough
+            fallthrough;
         case '"':
-            // fallthrough
+            fallthrough;
         case '?':
-            // fallthrough
+            fallthrough;
         case '0':
             if (strv.count != 0) {
                 msg(

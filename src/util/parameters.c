@@ -902,7 +902,7 @@ void parse_args(int argc, char** argv) {
                 params.output_file_path = sv("test.o");
                 break;
             case STOP_AFTER_BIN:
-                // fallthrough
+                fallthrough;
             case STOP_AFTER_RUN:
                 params.output_file_path = sv("a.out");
                 break;

@@ -345,85 +345,85 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');
             break;
-        case TOKEN_OPEN_PAR: // fallthrough
-        case TOKEN_NONTYPE: // fallthrough
-        case TOKEN_CLOSE_PAR: // fallthrough
-        case TOKEN_OPEN_CURLY_BRACE: // fallthrough
-        case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
-        case TOKEN_DOUBLE_QUOTE: // fallthrough
-        case TOKEN_SEMICOLON: // fallthrough
-        case TOKEN_COMMA: // fallthrough
-        case TOKEN_SINGLE_MINUS: // fallthrough
-        case TOKEN_COLON: // fallthrough
-        case TOKEN_ASTERISK: // fallthrough
-        case TOKEN_SLASH: // fallthrough
-        case TOKEN_SINGLE_EQUAL: // fallthrough
-        case TOKEN_DOUBLE_EQUAL: // fallthrough
-        case TOKEN_SINGLE_DOT: // fallthrough
-        case TOKEN_DOUBLE_DOT: // fallthrough
-        case TOKEN_TRIPLE_DOT: // fallthrough
-        case TOKEN_SINGLE_PLUS: // fallthrough
-        case TOKEN_LESS_THAN: // fallthrough
-        case TOKEN_GREATER_THAN: // fallthrough
-        case TOKEN_LOGICAL_NOT_EQUAL: // fallthrough
-        case TOKEN_LOGICAL_NOT: // fallthrough
-        case TOKEN_ENUM: // fallthrough
-        case TOKEN_BITWISE_XOR: // fallthrough
-        case TOKEN_VOID: // fallthrough
-        case TOKEN_UNSAFE_CAST: // fallthrough
-        case TOKEN_FN: // fallthrough
-        case TOKEN_FOR: // fallthrough
-        case TOKEN_IF: // fallthrough
-        case TOKEN_SWITCH: // fallthrough
-        case TOKEN_CASE: // fallthrough
-        case TOKEN_DEFAULT: // fallthrough
-        case TOKEN_ELSE: // fallthrough
-        case TOKEN_RETURN: // fallthrough
-        case TOKEN_EXTERN: // fallthrough
-        case TOKEN_STRUCT: // fallthrough
-        case TOKEN_RAW_UNION: // fallthrough
-        case TOKEN_LET: // fallthrough
-        case TOKEN_IN: // fallthrough
-        case TOKEN_NEW_LINE: // fallthrough
-        case TOKEN_BREAK: // fallthrough
-        case TOKEN_CONTINUE: // fallthrough
-        case TOKEN_OPEN_SQ_BRACKET: // fallthrough
-        case TOKEN_CLOSE_SQ_BRACKET: // fallthrough
-        case TOKEN_LESS_OR_EQUAL: // fallthrough
-        case TOKEN_GREATER_OR_EQUAL: // fallthrough
-        case TOKEN_MODULO: // fallthrough
-        case TOKEN_BITWISE_AND: // fallthrough
-        case TOKEN_BITWISE_NOT: // fallthrough
-        case TOKEN_BITWISE_OR: // fallthrough
-        case TOKEN_LOGICAL_AND: // fallthrough
-        case TOKEN_LOGICAL_OR: // fallthrough
-        case TOKEN_SHIFT_LEFT: // fallthrough
-        case TOKEN_SHIFT_RIGHT: // fallthrough
-        case TOKEN_OPEN_GENERIC: // fallthrough
-        case TOKEN_CLOSE_GENERIC: // fallthrough
-        case TOKEN_IMPORT: // fallthrough
-        case TOKEN_DEF: // fallthrough
-        case TOKEN_EOF: // fallthrough
-        case TOKEN_TYPE_DEF: // fallthrough
-        case TOKEN_DEFER: // fallthrough
-        case TOKEN_SIZEOF: // fallthrough
-        case TOKEN_YIELD: // fallthrough
-        case TOKEN_COUNTOF: // fallthrough
-        case TOKEN_DOUBLE_TICK: // fallthrough
-        case TOKEN_ASSIGN_BY_BIN:  // fallthrough
-        case TOKEN_GENERIC_TYPE: // fallthrough
-        case TOKEN_ONE_LINE_BLOCK_START: // fallthrough
+        case TOKEN_OPEN_PAR: fallthrough;
+        case TOKEN_NONTYPE: fallthrough;
+        case TOKEN_CLOSE_PAR: fallthrough;
+        case TOKEN_OPEN_CURLY_BRACE: fallthrough;
+        case TOKEN_CLOSE_CURLY_BRACE: fallthrough;
+        case TOKEN_DOUBLE_QUOTE: fallthrough;
+        case TOKEN_SEMICOLON: fallthrough;
+        case TOKEN_COMMA: fallthrough;
+        case TOKEN_SINGLE_MINUS: fallthrough;
+        case TOKEN_COLON: fallthrough;
+        case TOKEN_ASTERISK: fallthrough;
+        case TOKEN_SLASH: fallthrough;
+        case TOKEN_SINGLE_EQUAL: fallthrough;
+        case TOKEN_DOUBLE_EQUAL: fallthrough;
+        case TOKEN_SINGLE_DOT: fallthrough;
+        case TOKEN_DOUBLE_DOT: fallthrough;
+        case TOKEN_TRIPLE_DOT: fallthrough;
+        case TOKEN_SINGLE_PLUS: fallthrough;
+        case TOKEN_LESS_THAN: fallthrough;
+        case TOKEN_GREATER_THAN: fallthrough;
+        case TOKEN_LOGICAL_NOT_EQUAL: fallthrough;
+        case TOKEN_LOGICAL_NOT: fallthrough;
+        case TOKEN_ENUM: fallthrough;
+        case TOKEN_BITWISE_XOR: fallthrough;
+        case TOKEN_VOID: fallthrough;
+        case TOKEN_UNSAFE_CAST: fallthrough;
+        case TOKEN_FN: fallthrough;
+        case TOKEN_FOR: fallthrough;
+        case TOKEN_IF: fallthrough;
+        case TOKEN_SWITCH: fallthrough;
+        case TOKEN_CASE: fallthrough;
+        case TOKEN_DEFAULT: fallthrough;
+        case TOKEN_ELSE: fallthrough;
+        case TOKEN_RETURN: fallthrough;
+        case TOKEN_EXTERN: fallthrough;
+        case TOKEN_STRUCT: fallthrough;
+        case TOKEN_RAW_UNION: fallthrough;
+        case TOKEN_LET: fallthrough;
+        case TOKEN_IN: fallthrough;
+        case TOKEN_NEW_LINE: fallthrough;
+        case TOKEN_BREAK: fallthrough;
+        case TOKEN_CONTINUE: fallthrough;
+        case TOKEN_OPEN_SQ_BRACKET: fallthrough;
+        case TOKEN_CLOSE_SQ_BRACKET: fallthrough;
+        case TOKEN_LESS_OR_EQUAL: fallthrough;
+        case TOKEN_GREATER_OR_EQUAL: fallthrough;
+        case TOKEN_MODULO: fallthrough;
+        case TOKEN_BITWISE_AND: fallthrough;
+        case TOKEN_BITWISE_NOT: fallthrough;
+        case TOKEN_BITWISE_OR: fallthrough;
+        case TOKEN_LOGICAL_AND: fallthrough;
+        case TOKEN_LOGICAL_OR: fallthrough;
+        case TOKEN_SHIFT_LEFT: fallthrough;
+        case TOKEN_SHIFT_RIGHT: fallthrough;
+        case TOKEN_OPEN_GENERIC: fallthrough;
+        case TOKEN_CLOSE_GENERIC: fallthrough;
+        case TOKEN_IMPORT: fallthrough;
+        case TOKEN_DEF: fallthrough;
+        case TOKEN_EOF: fallthrough;
+        case TOKEN_TYPE_DEF: fallthrough;
+        case TOKEN_DEFER: fallthrough;
+        case TOKEN_SIZEOF: fallthrough;
+        case TOKEN_YIELD: fallthrough;
+        case TOKEN_COUNTOF: fallthrough;
+        case TOKEN_DOUBLE_TICK: fallthrough;
+        case TOKEN_ASSIGN_BY_BIN:  fallthrough;
+        case TOKEN_GENERIC_TYPE: fallthrough;
+        case TOKEN_ONE_LINE_BLOCK_START: fallthrough;
         case TOKEN_USING:
             break;
         case TOKEN_MACRO: 
             string_extend_strv(arena, &buf, token.text);
             break;
         case TOKEN_COMMENT: 
-            // fallthrough
+            fallthrough;
         case TOKEN_STRING_LITERAL: 
-            // fallthrough
+            fallthrough;
         case TOKEN_CHAR_LITERAL: 
-            // fallthrough
+            fallthrough;
         case TOKEN_INT_LITERAL:
             vec_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);

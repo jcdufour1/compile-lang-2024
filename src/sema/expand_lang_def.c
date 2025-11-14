@@ -269,23 +269,23 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return EXPAND_NAME_NORMAL;
         case UAST_MOD_ALIAS:
             // TODO
-            // fallthrough
+            fallthrough;
         case UAST_GENERIC_PARAM:
-            // fallthrough
+            fallthrough;
         case UAST_FUNCTION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_VARIABLE_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_STRUCT_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_RAW_UNION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_PRIMITIVE_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_FUNCTION_DECL:
-            // fallthrough
+            fallthrough;
         case UAST_VOID_DEF:
             if (always_new_expr) {
                 if (is_expanded_from) {
@@ -384,9 +384,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             );
         }
         case UAST_LITERAL:
-            // fallthrough
+            fallthrough;
         case UAST_OPERATOR:
-            // fallthrough
+            fallthrough;
         case UAST_INDEX: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
@@ -395,27 +395,27 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             return EXPAND_NAME_NEW_EXPR;
         }
         case UAST_BLOCK:
-            // fallthrough
+            fallthrough;
         case UAST_IF_ELSE_CHAIN:
-            // fallthrough
+            fallthrough;
         case UAST_SWITCH:
-            // fallthrough
+            fallthrough;
         case UAST_UNKNOWN:
-            // fallthrough
+            fallthrough;
         case UAST_FUNCTION_CALL:
-            // fallthrough
+            fallthrough;
         case UAST_STRUCT_LITERAL:
-            // fallthrough
+            fallthrough;
         case UAST_ARRAY_LITERAL:
-            // fallthrough
+            fallthrough;
         case UAST_TUPLE:
-            // fallthrough
+            fallthrough;
         case UAST_MACRO:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_ACCESS:
-            // fallthrough
+            fallthrough;
         case UAST_EXPR_REMOVED:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_GET_TAG:
             msg_todo("", uast_expr_get_pos(expr));
             return EXPAND_NAME_ERROR;

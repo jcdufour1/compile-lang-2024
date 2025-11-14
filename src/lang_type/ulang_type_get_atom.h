@@ -23,6 +23,7 @@ static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
         case ULANG_TYPE_REMOVED:
             unreachable("");
     }
+    unreachable("");
 }
 
 #endif // ULANG_TYPE_GET_ATOM_H

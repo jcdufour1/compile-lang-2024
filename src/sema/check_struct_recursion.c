@@ -78,9 +78,9 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
         case UAST_VARIABLE_DEF:
             todo();
         case UAST_STRUCT_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_RAW_UNION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_DEF:
             return check_struct_rec_internal_def(def, lang_type, name, rec_stack);
         case UAST_LANG_DEF:

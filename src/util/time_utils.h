@@ -14,7 +14,7 @@ static Strv milliseconds_print_internal(uint64_t mills) {
     string_extend_int64_t(&a_temp, &buf, mills/1000000);
     string_extend_cstr(&a_temp, &buf, ".");
     char num_str[32];
-    sprintf(num_str, "%0.06"PRIu64, mills%1000000);
+    sprintf(num_str, "%.06"PRIu64, mills%1000000);
     string_extend_cstr(&a_temp, &buf, num_str);
     string_extend_cstr(&a_temp, &buf, "sec");
 

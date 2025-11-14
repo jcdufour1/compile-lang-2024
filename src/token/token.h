@@ -315,9 +315,9 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_STRING_LITERAL:
             return false;
         case TOKEN_CLOSE_PAR:
-            // fallthrough
+            fallthrough;
         case TOKEN_DOUBLE_QUOTE:
-            // fallthrough
+            fallthrough;
         case TOKEN_CLOSE_CURLY_BRACE:
             return false;
         case TOKEN_SYMBOL:

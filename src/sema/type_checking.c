@@ -378,15 +378,15 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_STRUCT_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_RAW_UNION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_PRIMITIVE_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_VOID_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
@@ -511,23 +511,23 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
             *result = lhs_val >= rhs_val ? 1 : 0;
             return true;
         case BINARY_MODULO:
-            // fallthrough
+            fallthrough;
         case BINARY_NOT_EQUAL:
-            // fallthrough
+            fallthrough;
         case BINARY_DOUBLE_EQUAL:
-            // fallthrough
+            fallthrough;
         case BINARY_BITWISE_XOR:
-            // fallthrough
+            fallthrough;
         case BINARY_BITWISE_AND:
-            // fallthrough
+            fallthrough;
         case BINARY_BITWISE_OR:
-            // fallthrough
+            fallthrough;
         case BINARY_LOGICAL_AND:
-            // fallthrough
+            fallthrough;
         case BINARY_LOGICAL_OR:
-            // fallthrough
+            fallthrough;
         case BINARY_SHIFT_LEFT:
-            // fallthrough
+            fallthrough;
         case BINARY_SHIFT_RIGHT:
             msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation `"FMT"` is not supported\n", binary_type_print(token_type));
             return false;
@@ -672,23 +672,23 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
         switch (oper_token_type) {
             case BINARY_SHIFT_LEFT:
-                // fallthrough
+                fallthrough;
             case BINARY_SHIFT_RIGHT:
-                // fallthrough
+                fallthrough;
             case BINARY_BITWISE_XOR:
-                // fallthrough
+                fallthrough;
             case BINARY_BITWISE_AND:
-                // fallthrough
+                fallthrough;
             case BINARY_BITWISE_OR:
-                // fallthrough
+                fallthrough;
             case BINARY_MODULO:
-                // fallthrough
+                fallthrough;
             case BINARY_DIVIDE:
-                // fallthrough
+                fallthrough;
             case BINARY_MULTIPLY:
-                // fallthrough
+                fallthrough;
             case BINARY_SUB:
-                // fallthrough
+                fallthrough;
             case BINARY_ADD:
                 *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                     oper_pos,
@@ -699,15 +699,15 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 )));
                 break;
             case BINARY_LESS_THAN:
-                // fallthrough
+                fallthrough;
             case BINARY_LESS_OR_EQUAL:
-                // fallthrough
+                fallthrough;
             case BINARY_GREATER_OR_EQUAL:
-                // fallthrough
+                fallthrough;
             case BINARY_GREATER_THAN:
-                // fallthrough
+                fallthrough;
             case BINARY_NOT_EQUAL:
-                // fallthrough
+                fallthrough;
             case BINARY_DOUBLE_EQUAL:
                 *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                     oper_pos,
@@ -718,7 +718,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 )));
                 break;
             case BINARY_LOGICAL_OR:
-                // fallthrough
+                fallthrough;
             case BINARY_LOGICAL_AND: {
                 Tast_literal* new_lit_lhs = tast_int_wrap(tast_int_new(
                     tast_expr_get_pos(new_lhs),
@@ -2614,7 +2614,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
-                                vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 infer_success = true;
                             }
                         }
@@ -3213,9 +3212,9 @@ bool try_set_member_access_types_finish_enum_def(
             todo();
         case PARENT_OF_BREAK:
             todo();
-            // fallthrough
+            fallthrough;
         case PARENT_OF_NONE:
-            // fallthrough
+            fallthrough;
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             Uast_expr* new_expr_ = NULL;

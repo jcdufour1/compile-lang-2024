@@ -897,6 +897,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    }\n");
         }
 
+        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
         string_extend_cstr(&gen_a, &function, "}\n");
 
     } else {

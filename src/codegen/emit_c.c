@@ -443,7 +443,7 @@ static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Ir_expr* expr) {
             return;
         }
         case IR_OPERATOR:
-            // fallthrough
+            fallthrough;
         case IR_FUNCTION_CALL:
             emit_c_extend_name(&strs->output, ir_expr_get_name(expr));
             return;

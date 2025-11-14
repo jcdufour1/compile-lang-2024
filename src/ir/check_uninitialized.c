@@ -252,13 +252,13 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_COND_GOTO:
             todo();
         case IR_LOAD_ANOTHER_IR:
-            // fallthrough
+            fallthrough;
         case IR_STORE_ANOTHER_IR:
-            // fallthrough
+            fallthrough;
         case IR_LOAD_ELEMENT_PTR:
-            // fallthrough
+            fallthrough;
         case IR_ARRAY_ACCESS:
-            // fallthrough
+            fallthrough;
         case IR_ALLOCA:
             check_unit_src_internal_name(ir_get_name(ir), pos, loc);
             return;
