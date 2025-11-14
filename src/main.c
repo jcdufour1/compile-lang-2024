@@ -170,6 +170,7 @@ NEVER_RETURN void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
+    // TODO: place emit_c_from_tree, etc. into do_pass macro?
     if (params.stop_after > STOP_AFTER_IR) {
         switch (params.backend_info.backend) {
             case BACKEND_NONE:
@@ -182,6 +183,9 @@ NEVER_RETURN void do_passes(void) {
             default:
                 unreachable("");
         }
+    }
+    if (env.error_count > 0) {
+        local_exit(EXIT_CODE_FAIL);
     }
     arena_reset(&a_temp);
     arena_reset(&a_pass);

@@ -154,4 +154,7 @@ static inline int16_t lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE mode,
     return lang_type_primitive_get_atom(mode, lang_type).pointer_depth;
 }
 
+// convert literal i2 to i32, etc. to avoid making variable definitions small integers by default
+Lang_type lang_type_standardize(Lang_type lang_type, bool lang_type_is_lit, Pos pos);
+
 #endif // LANG_TYPE_AFTER_H

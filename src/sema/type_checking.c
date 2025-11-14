@@ -780,7 +780,11 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
         return false;
     }
     Uast_variable_def* lhs_def = uast_variable_def_unwrap(lhs_def_);
-    lhs_def->lang_type = lang_type_to_ulang_type(tast_expr_get_lang_type(new_rhs));
+    lhs_def->lang_type = lang_type_to_ulang_type(lang_type_standardize(
+        tast_expr_get_lang_type(new_rhs),
+        oper->rhs->type == UAST_LITERAL,
+        uast_expr_get_pos(oper->lhs)
+    ));
 
     Tast_expr* new_lhs;
     if (!try_set_expr_types(&new_lhs, oper->lhs)) {
