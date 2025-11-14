@@ -1,6 +1,6 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= clang
+CC_COMPILER ?= cc
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 C_FLAGS_DEBUG=  -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \

@@ -337,7 +337,7 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
             string_extend_cstr(&a_temp, buf, ")");
             return;
         case NAME_EMIT_C:
-            // fallthrough
+            fallthrough;
         case NAME_EMIT_IR:
             extend_name(mode, buf, *(Name*)&name);
             return;

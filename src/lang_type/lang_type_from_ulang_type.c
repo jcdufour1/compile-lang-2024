@@ -93,29 +93,29 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
         case UAST_POISON_DEF:
             return false;
         case UAST_IMPORT_PATH:
-            // fallthrough
+            fallthrough;
         case UAST_STRUCT_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_RAW_UNION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_PRIMITIVE_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_FUNCTION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_FUNCTION_DECL:
-            // fallthrough
+            fallthrough;
         case UAST_VARIABLE_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_GENERIC_PARAM:
-            // fallthrough
+            fallthrough;
         case UAST_LANG_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_VOID_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_LABEL:
-            // fallthrough
+            fallthrough;
         case UAST_BUILTIN_DEF:
             msg_todo("error message for this situation", uast_def_get_pos(alias_));
             return false;
@@ -133,13 +133,12 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 POS_BUILTIN
             ));
         case LANG_TYPE_PRIMITIVE:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_STRUCT:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_RAW_UNION:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_ENUM:
-            // fallthrough
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 ulang_type_atom_new(
                     name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)),

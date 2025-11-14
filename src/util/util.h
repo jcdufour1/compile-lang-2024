@@ -84,7 +84,10 @@ __attribute__((format (printf, 5, 6)));
         abort(); \
     } while (0)
 
-#define fallthrough __attribute__((fallthrough))
+#  define fallthrough \
+    do { \
+    } while(0); \
+    __attribute__((fallthrough));
 
 // TODO
 //static inline Strv bool_print(bool condition) {

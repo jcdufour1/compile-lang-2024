@@ -54,9 +54,9 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     
     switch (a.type) {
         case IR_LANG_TYPE_PRIMITIVE:
-            // fallthrough
+            fallthrough;
         case IR_LANG_TYPE_STRUCT:
-            // fallthrough
+            fallthrough;
         case IR_LANG_TYPE_VOID:
             return ir_lang_type_atom_is_equal(ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
         case IR_LANG_TYPE_TUPLE:
@@ -114,13 +114,13 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     
     switch (a.type) {
         case LANG_TYPE_PRIMITIVE:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_STRUCT:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_RAW_UNION:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_ENUM:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_VOID:
             return lang_type_atom_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, a), lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
         case LANG_TYPE_TUPLE:

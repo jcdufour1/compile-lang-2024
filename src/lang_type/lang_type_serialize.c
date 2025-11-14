@@ -88,11 +88,11 @@ Strv serialize_lang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             return serialize_lang_type_tuple(lang_type_tuple_const_unwrap(lang_type));
         case LANG_TYPE_PRIMITIVE:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_STRUCT:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_ENUM:
-            // fallthrough
+            fallthrough;
         case LANG_TYPE_RAW_UNION:
             return serialize_lang_type_struct_thing(lang_type);
         case LANG_TYPE_VOID: {

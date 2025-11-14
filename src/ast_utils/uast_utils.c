@@ -14,9 +14,9 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             *result = uast_primitive_def_const_unwrap(def)->lang_type;
             return true;
         case UAST_STRUCT_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_RAW_UNION_DEF:
-            // fallthrough
+            fallthrough;
         case UAST_ENUM_DEF: {
             Ulang_type ulang_type = {0};
             if (!ustruct_def_base_get_lang_type_(&ulang_type, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {

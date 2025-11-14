@@ -401,7 +401,7 @@
 //        case BINARY_SHIFT_RIGHT:
 //            unreachable("");
 //        case BINARY_LOGICAL_AND:
-//            // fallthrough
+//            fallthrough;
 //        case BINARY_LOGICAL_OR:
 //            unreachable("logical operators should not make it this far");
 //    }
@@ -462,7 +462,7 @@
 //            string_extend_cstr(&a_main, output, "lshr ");
 //            return;
 //        case BINARY_LOGICAL_AND:
-//            // fallthrough
+//            fallthrough;
 //        case BINARY_LOGICAL_OR:
 //            unreachable("logical operators should not make it this far");
 //    }
@@ -616,7 +616,7 @@
 //            return;
 //        }
 //        case IR_FUNCTION_CALL:
-//            // fallthrough
+//            fallthrough;
 //        case IR_OPERATOR:
 //            string_extend_cstr(&a_main, output, " %");
 //            ir_extend_name(output, ir_expr_get_name(expr));
