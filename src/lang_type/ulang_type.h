@@ -59,6 +59,9 @@ typedef struct Ulang_type_expr_ Ulang_type_expr;
 struct Ulang_type_int_;
 typedef struct Ulang_type_int_ Ulang_type_int;
 
+struct Ulang_type_removed_;
+typedef struct Ulang_type_removed_ Ulang_type_removed;
+
 struct Ulang_type_;
 typedef struct Ulang_type_ Ulang_type;
 
@@ -105,6 +108,11 @@ typedef struct Ulang_type_gen_param_ {
     Pos pos;
 }Ulang_type_gen_param;
 
+typedef struct Ulang_type_removed_ {
+    Pos pos;
+    int16_t pointer_depth;
+}Ulang_type_removed;
+
 typedef union Ulang_type_as_ {
     Ulang_type_tuple ulang_type_tuple;
     Ulang_type_fn ulang_type_fn;
@@ -113,6 +121,7 @@ typedef union Ulang_type_as_ {
     Ulang_type_expr ulang_type_expr;
     Ulang_type_int ulang_type_int;
     Ulang_type_gen_param ulang_type_gen_param;
+    Ulang_type_removed ulang_type_removed;
 }Ulang_type_as;
 typedef enum ULANG_TYPE_TYPE_ {
     ULANG_TYPE_TUPLE,
@@ -122,6 +131,7 @@ typedef enum ULANG_TYPE_TYPE_ {
     ULANG_TYPE_EXPR,
     ULANG_TYPE_INT,
     ULANG_TYPE_GEN_PARAM,
+    ULANG_TYPE_REMOVED,
 }ULANG_TYPE_TYPE;
 typedef struct Ulang_type_ {
     Ulang_type_as as;
@@ -144,6 +154,10 @@ static inline Ulang_type_regular ulang_type_regular_const_unwrap(const Ulang_typ
     unwrap(ulang_type.type == ULANG_TYPE_REGULAR);
     return ulang_type.as.ulang_type_regular;
 }
+static inline Ulang_type_removed ulang_type_removed_const_unwrap(const Ulang_type ulang_type) {
+    unwrap(ulang_type.type == ULANG_TYPE_REMOVED);
+    return ulang_type.as.ulang_type_removed;
+}
 static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_REGULAR);
     return &ulang_type->as.ulang_type_regular;
@@ -151,6 +165,10 @@ static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_ty
 static inline Ulang_type_fn* ulang_type_fn_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_FN);
     return &ulang_type->as.ulang_type_fn;
+}
+static inline Ulang_type_removed* ulang_type_removed_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_REMOVED);
+    return &ulang_type->as.ulang_type_removed;
 }
 static inline Ulang_type_array ulang_type_array_const_unwrap(const Ulang_type ulang_type) {
     unwrap(ulang_type.type == ULANG_TYPE_ARRAY);
@@ -218,6 +236,12 @@ static inline Ulang_type ulang_type_int_const_wrap(Ulang_type_int ulang_type) {
     new_ulang_type.as.ulang_type_int = ulang_type;
     return new_ulang_type;
 }
+static inline Ulang_type ulang_type_removed_const_wrap(Ulang_type_removed ulang_type) {
+    Ulang_type new_ulang_type = {0};
+    new_ulang_type.type = ULANG_TYPE_REMOVED;
+    new_ulang_type.as.ulang_type_removed = ulang_type;
+    return new_ulang_type;
+}
 #define ulang_type_gen_param_print(ulang_type) strv_print(ulang_type_gen_param_print_internal(ulang_type, 0))
 Strv ulang_type_gen_param_print_internal(const Ulang_type_gen_param* ulang_type, int recursion_depth);
 #define ulang_type_tuple_print(ulang_type) strv_print(ulang_type_tuple_print_internal(ulang_type, 0))
@@ -232,6 +256,8 @@ Strv ulang_type_array_print_internal(const Ulang_type_array* ulang_type, int rec
 Strv ulang_type_expr_print_internal(const Ulang_type_expr* ulang_type, int recursion_depth);
 #define ulang_type_int_print(ulang_type) strv_print(ulang_type_int_print_internal(ulang_type, 0))
 Strv ulang_type_int_print_internal(const Ulang_type_int* ulang_type, int recursion_depth);
+#define ulang_type_removed_print(ulang_type) strv_print(ulang_type_removed_print_internal(ulang_type, 0))
+Strv ulang_type_removed_print_internal(const Ulang_type_removed* ulang_type, int recursion_depth);
 static inline Ulang_type_gen_param ulang_type_gen_param_new(Pos pos){
     return (Ulang_type_gen_param) { .pos = pos};
 }
@@ -253,13 +279,19 @@ static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, int16_t point
 static inline Ulang_type_int ulang_type_int_new(int64_t data, int16_t pointer_depth, Pos pos){
     return (Ulang_type_int) { .data = data, .pointer_depth = pointer_depth, .pos = pos};
 }
+static inline Ulang_type_removed ulang_type_removed_new(int16_t pointer_depth, Pos pos){
+    return (Ulang_type_removed) { .pointer_depth = pointer_depth, .pos = pos};
+}
 
 static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
     switch (lang_type.type) {
+        case ULANG_TYPE_REMOVED:
+            return ulang_type_removed_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_GEN_PARAM:
             // TODO
             return 0;
         case ULANG_TYPE_TUPLE:
+            // TODO
             return 0;
         case ULANG_TYPE_FN:
             return ulang_type_fn_const_unwrap(lang_type).pointer_depth;
@@ -280,6 +312,9 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
 // TODO: remove this function?
 static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
     switch (lang_type->type) {
+        case ULANG_TYPE_REMOVED:
+            ulang_type_removed_unwrap(lang_type)->pointer_depth = pointer_depth;
+            return;
         case ULANG_TYPE_GEN_PARAM:
             // TODO
             //unwrap(pointer_depth == 0);

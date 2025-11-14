@@ -52,7 +52,7 @@ typedef struct {
     size_t switch_prev_idx;
 } Type_checking_env;
 
-bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment);
+bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign);
 
 // returns false if unsuccessful
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr);

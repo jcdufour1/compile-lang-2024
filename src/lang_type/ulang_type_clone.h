@@ -51,8 +51,18 @@ static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, bool us
     return ulang_type_fn_new(ulang_type_tuple_clone(lang_type.params, use_new_scope, new_scope), rtn_type, lang_type.pos);
 }
 
+static inline Ulang_type_removed ulang_type_removed_clone(Ulang_type_removed lang_type, bool use_new_scope, Scope_id new_scope) {
+    (void) use_new_scope;
+    (void) new_scope;
+    return ulang_type_removed_new(lang_type.pointer_depth, lang_type.pos);
+}
+
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_scope, Scope_id new_scope) {
     switch (lang_type.type) {
+        case ULANG_TYPE_REMOVED:
+            return ulang_type_removed_const_wrap(ulang_type_removed_clone(
+                ulang_type_removed_const_unwrap(lang_type), use_new_scope, new_scope
+            ));
         case ULANG_TYPE_TUPLE:
             return ulang_type_tuple_const_wrap(ulang_type_tuple_clone(
                 ulang_type_tuple_const_unwrap(lang_type), use_new_scope, new_scope

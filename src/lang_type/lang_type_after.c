@@ -287,3 +287,69 @@ Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primi
     unreachable("");
 }
 
+static bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
+    if (old_width <= 32) {
+        *new_width = 32;
+        return true;
+    }
+
+    if (old_width <= 64) {
+        *new_width = 64;
+        return true;
+    }
+
+    // TODO
+    msg(DIAG_GEN_INFER_MORE_THAN_64_WIDE, pos_arg, "bit widths larger than 64 for type inference in generics is not yet implemented\n");
+    return false;
+}
+
+// convert literal i2 to i32, etc. to avoid making variable definitions small integers by default
+Lang_type lang_type_standardize(Lang_type lang_type, bool lang_type_is_lit, Pos pos) {
+    if (!lang_type_is_lit) {
+        return lang_type;
+    }
+
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return lang_type;
+    }
+
+    Lang_type_primitive primitive = lang_type_primitive_const_unwrap(lang_type);
+    switch (primitive.type) {
+        case LANG_TYPE_SIGNED_INT: {
+            Lang_type_signed_int sign = lang_type_signed_int_const_unwrap(primitive);
+            if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos)) {
+                return lang_type;
+            }
+            return lang_type_primitive_const_wrap(
+                lang_type_signed_int_const_wrap(sign)
+            );
+        } break;
+        case LANG_TYPE_UNSIGNED_INT: {
+            Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
+            Lang_type_signed_int sign = lang_type_signed_int_new(
+                pos,
+                unsign.bit_width,
+                unsign.pointer_depth
+            );
+            if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos)) {
+                return lang_type;
+            }
+            return lang_type_primitive_const_wrap(
+                lang_type_signed_int_const_wrap(sign)
+            );
+        } break;
+        case LANG_TYPE_FLOAT: {
+            Lang_type_float lang_float = lang_type_float_const_unwrap(primitive);
+            if (!bit_width_calculation(&lang_float.bit_width, lang_float.bit_width, pos)) {
+                return lang_type;
+            }
+            return lang_type_primitive_const_wrap(
+                lang_type_float_const_wrap(lang_float)
+            );
+        } break;
+        case LANG_TYPE_OPAQUE:
+            break;
+    }
+    unreachable("");
+}
+

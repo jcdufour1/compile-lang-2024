@@ -6,22 +6,6 @@
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
 
-bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
-    if (old_width <= 32) {
-        *new_width = 32;
-        return true;
-    }
-
-    if (old_width <= 64) {
-        *new_width = 64;
-        return true;
-    }
-
-    // TODO
-    msg(DIAG_GEN_INFER_MORE_THAN_64_WIDE, pos_arg, "bit widths larger than 64 for type inference in generics is not yet implemented\n");
-    return false;
-}
-
 bool infer_generic_type(
     Ulang_type* infered,
     Ulang_type arg_to_infer_from,
@@ -34,49 +18,7 @@ bool infer_generic_type(
 
     Lang_type temp_arg = {0};
     if (try_lang_type_from_ulang_type(&temp_arg, arg_to_infer_from)) {
-        if (arg_to_infer_is_lit && temp_arg.type == LANG_TYPE_PRIMITIVE) {
-            Lang_type_primitive primitive = lang_type_primitive_const_unwrap(temp_arg);
-            switch (primitive.type) {
-                case LANG_TYPE_SIGNED_INT: {
-                    Lang_type_signed_int sign = lang_type_signed_int_const_unwrap(primitive);
-                    if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos_arg)) {
-                        return false;
-                    }
-                    temp_arg = lang_type_primitive_const_wrap(
-                        lang_type_signed_int_const_wrap(sign)
-                    );
-                } break;
-                case LANG_TYPE_UNSIGNED_INT: {
-                    Lang_type_unsigned_int unsign = lang_type_unsigned_int_const_unwrap(primitive);
-                    Lang_type_signed_int sign = lang_type_signed_int_new(
-                        pos_arg,
-                        unsign.bit_width,
-                        unsign.pointer_depth
-                    );
-                    if (!bit_width_calculation(&sign.bit_width, sign.bit_width, pos_arg)) {
-                        return false;
-                    }
-                    temp_arg = lang_type_primitive_const_wrap(
-                        lang_type_signed_int_const_wrap(sign)
-                    );
-                } break;
-                case LANG_TYPE_FLOAT: {
-                    Lang_type_float lang_float = lang_type_float_const_unwrap(primitive);
-                    if (!bit_width_calculation(&lang_float.bit_width, lang_float.bit_width, pos_arg)) {
-                        return false;
-                    }
-                    temp_arg = lang_type_primitive_const_wrap(
-                        lang_type_float_const_wrap(lang_float)
-                    );
-                } break;
-                case LANG_TYPE_OPAQUE:
-                    break;
-                default:
-                    unreachable("");
-            }
-        }
-
-        arg_to_infer_from = lang_type_to_ulang_type(temp_arg);
+        arg_to_infer_from = lang_type_to_ulang_type(lang_type_standardize(temp_arg, arg_to_infer_is_lit, pos_arg));
     }
 
     //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
@@ -136,6 +78,9 @@ bool infer_generic_type(
             // TODO
             return false;
         case ULANG_TYPE_ARRAY:
+            // TODO
+            return false;
+        case ULANG_TYPE_REMOVED:
             // TODO
             return false;
         case ULANG_TYPE_EXPR: {

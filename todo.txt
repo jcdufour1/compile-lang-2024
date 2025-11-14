@@ -106,6 +106,7 @@ for generics:
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
 - member_name of member access should not be substituted in generic substitution
+- do_test.py should have confirmation before update
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

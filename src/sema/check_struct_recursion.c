@@ -66,7 +66,7 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
         case UAST_VOID_DEF:
             return true;
         case UAST_POISON_DEF:
-            todo();
+            return false;
         case UAST_IMPORT_PATH:
             return true;
         case UAST_MOD_ALIAS:

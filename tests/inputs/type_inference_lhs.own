@@ -1,0 +1,17 @@
+type io import = std.io
+
+fn print(foo i32) {
+    let num2 = foo
+    io.print_int(num2)
+}
+
+fn main() i32 {
+    let num = 8
+    print(num)
+
+    for idx in 0..9 {
+        print(idx)
+    }
+
+    return 0
+}
