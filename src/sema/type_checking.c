@@ -1586,43 +1586,14 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
     unreachable("");
 }
 
-bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment) {
-    Tast_expr* new_lhs = NULL;
-    if (!try_set_expr_types(&new_lhs, assignment->lhs)) {
-        return false;
-    }
-    if (!tast_expr_is_lvalue(new_lhs)) {
-        msg_not_lvalue(tast_expr_get_pos(new_lhs));
-        return false;
-    }
-
-    Tast_expr* new_rhs = NULL;
-    switch (check_general_assignment(
-         &check_env,
-         &new_rhs,
-         tast_expr_get_lang_type(new_lhs),
-         assignment->rhs,
-         assignment->pos
-    )) {
-        case CHECK_ASSIGN_OK:
-            break;
-        case CHECK_ASSIGN_INVALID:
-            msg(
-                DIAG_ASSIGNMENT_MISMATCHED_TYPES,
-                assignment->pos,
-                "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
-            );
-            return false;
-        case CHECK_ASSIGN_ERROR:
-            return false;
-        default:
-            unreachable("");
-    }
-
-    *new_assign = tast_assignment_new(assignment->pos, new_lhs, new_rhs);
-    return true;
+// TODO: remove Uast_assignment?
+bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign) {
+    return try_set_binary_types(new_expr, uast_binary_new(
+        assign->pos,
+        assign->lhs,
+        assign->rhs,
+        BINARY_SINGLE_EQUAL
+    ));
 }
 
 bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_vec args, Tast_enum_case* enum_case) {
@@ -4079,7 +4050,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name)), 
         lang_switch->operand
     );
-    Tast_assignment* new_oper_assign = NULL;
+    Tast_expr* new_oper_assign = NULL;
     if (!try_set_assignment_types(&new_oper_assign, oper_assign)) {
         return false;
     }
@@ -4186,7 +4157,7 @@ error_inner:
 
     Tast_if_else_chain* new_if_else = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
     Tast_stmt_vec stmts = {0};
-    vec_append(&a_main, &stmts, tast_expr_wrap(tast_assignment_wrap(new_oper_assign)));
+    vec_append(&a_main, &stmts, tast_expr_wrap(new_oper_assign));
     vec_append(&a_main, &stmts, tast_expr_wrap(tast_if_else_chain_wrap(
         new_if_else
     )));
@@ -4535,11 +4506,11 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
             return STMT_OK;
         }
         case UAST_ASSIGNMENT: {
-            Tast_assignment* new_tast_ = NULL;
+            Tast_expr* new_tast_ = NULL;
             if (!try_set_assignment_types(&new_tast_, uast_assignment_unwrap(stmt))) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_expr_wrap(tast_assignment_wrap(new_tast_));
+            *new_tast = tast_expr_wrap(new_tast_);
             return STMT_OK;
         }
         case UAST_RETURN: {
