@@ -40,14 +40,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
                 ulang_type_get_pos(lang_type),
                 "could not infer the type of this variable definition\n"
             );
-            static uint64_t count = 0;
-            count++;
-            if (count == 3) {
-                //todo();
-            }
-            if (!env.supress_type_inference_failures) {
-            //    todo();
-            }
             return false;
         case ULANG_TYPE_GEN_PARAM:
             todo();

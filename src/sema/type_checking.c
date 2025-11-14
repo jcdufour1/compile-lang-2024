@@ -390,17 +390,11 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
-                log(LOG_DEBUG, "%d\n", env.supress_type_inference_failures);
                 if (!env.supress_type_inference_failures) {
-                    log(LOG_DEBUG, "adding poison def\n");
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, uast_def_get_name(sym_def)));
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, sym_untyped->name));
                     usymbol_update(uast_poison_def_wrap(uast_poison_def_new(
                         uast_def_get_pos(sym_def),
                         uast_def_get_name(sym_def)
                     )));
-                } else {
-                    log(LOG_DEBUG, "not adding poison def\n");
                 }
                 return false;
             }
