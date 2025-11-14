@@ -2473,6 +2473,7 @@ static Ir_name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_BLOCK:
             msg_todo("block used as expression (ptr)", tast_block_unwrap(old_expr)->pos);
+            return util_literal_ir_name_new();
         case TAST_SYMBOL:
             return load_ptr_symbol(new_block, tast_symbol_unwrap(old_expr));
         case TAST_MEMBER_ACCESS:

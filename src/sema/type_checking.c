@@ -2614,7 +2614,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                                 param_name,
                                 tast_expr_get_pos(arg_to_infer_from)
                             )) {
-                                vec_at_ref(&sym_name->gen_args, idx_gen_param);
                                 infer_success = true;
                             }
                         }

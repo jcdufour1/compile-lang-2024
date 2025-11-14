@@ -1,5 +1,9 @@
 #define STB_DS_IMPLEMENTATION
+
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #include <stb_ds.h>
+#pragma GCC diagnostic warning "-Wimplicit-fallthrough"
+
 #include "symbol_table.h"
 #include "symbol_table_struct.h"
 #include <uast_utils.h>

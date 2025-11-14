@@ -1,15 +1,40 @@
 .PHONY: all setup build gdb test_quick clean
 
-# TODO: use cc by default?
 CC_COMPILER ?= clang
 
-# TODO: consider if we could use -Wconversion instead of -Wfloat-conversion
-C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wfloat-conversion -Wbitfield-constant-conversion -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
-			  -D MIN_LOG_LEVEL=${LOG_LEVEL} \
-			  -fsanitize=address -fno-omit-frame-pointer 
-C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wfloat-conversion -Wbitfield-constant-conversion -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen -I src/lang_type/ -I src/ir -I src/ast_utils/ \
+# TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
+C_FLAGS_DEBUG=  -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \
+			    -Werror=incompatible-pointer-types \
+			    -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
+			    -std=c11 -pedantic -g \
+			        -I ./third_party/ \
+                    -I ${BUILD_DIR} \
+			      	-I src/ \
+			      	-I src/util/ \
+			      	-I src/token \
+			      	-I src/sema \
+			      	-I src/codegen \
+			      	-I src/lang_type/ \
+			      	-I src/ir \
+			      	-I src/ast_utils/ \
+			    -fno-strict-aliasing \
+			    -D MIN_LOG_LEVEL=${LOG_LEVEL} \
+			    -fsanitize=address -fno-omit-frame-pointer 
+C_FLAGS_RELEASE=-Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \
+				-Werror=incompatible-pointer-types \
+				-Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
+			    -std=c11 -pedantic -g \
+				-fno-strict-aliasing \
+				    -I ./third_party/ \
+                    -I ${BUILD_DIR} \
+					-I src/ \
+					-I src/util/ \
+					-I src/token \
+					-I src/sema \
+					-I src/codegen \
+					-I src/lang_type/ \
+					-I src/ir \
+					-I src/ast_utils/ \
 			    -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
