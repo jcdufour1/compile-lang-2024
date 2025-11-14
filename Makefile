@@ -3,41 +3,23 @@
 CC_COMPILER ?= cc
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
-C_FLAGS_DEBUG=  -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \
-			    -Werror=incompatible-pointer-types \
-			    -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
-			    -std=c11 -pedantic -g \
-			        -I ./third_party/ \
-                    -I ${BUILD_DIR} \
-			      	-I src/ \
-			      	-I src/util/ \
-			      	-I src/token \
-			      	-I src/sema \
-			      	-I src/codegen \
-			      	-I src/lang_type/ \
-			      	-I src/ir \
-			      	-I src/ast_utils/ \
-			    -fno-strict-aliasing \
-			    -D MIN_LOG_LEVEL=${LOG_LEVEL} \
-			    -fsanitize=address -fno-omit-frame-pointer 
-C_FLAGS_RELEASE=-Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \
-				-Werror=incompatible-pointer-types \
-				-Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
-			    -std=c11 -pedantic -g \
-				-fno-strict-aliasing \
-				    -I ./third_party/ \
-                    -I ${BUILD_DIR} \
-					-I src/ \
-					-I src/util/ \
-					-I src/token \
-					-I src/sema \
-					-I src/codegen \
-					-I src/lang_type/ \
-					-I src/ir \
-					-I src/ast_utils/ \
-			    -D MIN_LOG_LEVEL=${LOG_LEVEL} \
-			    -DNDEBUG \
-				-O2
+# TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
+C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
+			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wfloat-conversion \
+			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
+			     -std=c11 -pedantic -g \
+			         -I ./third_party/ \
+                     -I ${BUILD_DIR} \
+			       	 -I src/ \
+			       	 -I src/util/ \
+			       	 -I src/token \
+			       	 -I src/sema \
+			       	 -I src/codegen \
+			       	 -I src/lang_type/ \
+			       	 -I src/ir \
+			       	 -I src/ast_utils/ \
+			     -fno-strict-aliasing \
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
@@ -49,11 +31,13 @@ BUILD_DIR_RELEASE ?= ./build/release/
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
-    C_FLAGS = ${C_FLAGS_DEBUG}
+    C_FLAGS = ${C_FLAGS_COMMON}
+    C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
-    C_FLAGS = ${C_FLAGS_RELEASE}
+    C_FLAGS = ${C_FLAGS_COMMON}
+	C_FLAGS += -DNDEBUG -O2
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
