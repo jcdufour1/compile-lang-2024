@@ -474,7 +474,7 @@ static void ir_lang_type_gen_print_forward_decl(Ir_lang_type_type type) {
     extend_ir_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_ir_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* ir_lang_type, int recursion_depth);");
+    string_extend_cstr(&gen_a, &function, "* ir_lang_type, Indent indent);");
 
     gen_gen(FMT"\n", string_print(function));
 }

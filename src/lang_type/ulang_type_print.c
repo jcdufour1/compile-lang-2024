@@ -55,7 +55,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             Ulang_type_array array = ulang_type_array_const_unwrap(lang_type);
             extend_ulang_type_to_string(string, mode, *array.item_type);
             string_extend_cstr(&a_temp, string, "[");
-            string_extend_size_t(&a_temp, string, array.count);
+            string_extend_int64_t(&a_temp, string, array.count);
             string_extend_cstr(&a_temp, string, "]");
             return;
         }

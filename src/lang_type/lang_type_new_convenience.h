@@ -4,7 +4,7 @@
 #include <lang_type.h>
 #include <util.h>
 
-static inline Lang_type lang_type_new_ux(int32_t bit_width) {
+static inline Lang_type lang_type_new_ux(uint32_t bit_width) {
     // TODO: don't use POS_BUILTIN?
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)

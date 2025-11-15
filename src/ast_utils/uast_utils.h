@@ -11,10 +11,10 @@
 #include <ulang_type_get_pos.h>
 
 // TODO: figure out where to put these things
-Strv ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
+Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
 #define ustruct_def_base_print(base) strv_print(ustruct_def_base_print_internal(base, 0))
 
-Strv uast_print_internal(const Uast* uast, int recursion_depth);
+Strv uast_print_internal(const Uast* uast, Indent indent);
 
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     

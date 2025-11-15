@@ -900,7 +900,7 @@ static void uast_gen_print_forward_decl(Uast_type type) {
     extend_uast_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* uast, int recursion_depth);");
+    string_extend_cstr(&gen_a, &function, "* uast, Indent indent);");
 
     gen_gen(FMT"\n", string_print(function));
 }

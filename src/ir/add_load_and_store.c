@@ -711,7 +711,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 array.pos,
                 rm_tuple_lang_type(*array.item_type, lang_type_pos),
                 util_literal_ir_name_new(),
-                array.count
+                (size_t)array.count
             ));
 
             Ir_struct_def* array_def = ir_struct_def_new(
@@ -1039,7 +1039,7 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         Tast_assignment* index_assign = tast_assignment_new(
             index_var->pos,
             tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, index_var)),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(index_var->pos, idx, index_var->lang_type)))
+            tast_literal_wrap(tast_int_wrap(tast_int_new(index_var->pos, (int64_t)idx, index_var->lang_type)))
         );
         load_assignment(new_block, index_assign);
 
@@ -1560,7 +1560,7 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
     Tast_def* def = NULL;
     unwrap(symbol_lookup(&def, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)))));
 
-    int64_t struct_index = {0};
+    size_t struct_index = {0};
     switch (def->type) {
         case TAST_STRUCT_DEF: {
             Tast_struct_def* struct_def = tast_struct_def_unwrap(def);

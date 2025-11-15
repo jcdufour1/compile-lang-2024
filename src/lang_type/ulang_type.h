@@ -85,7 +85,7 @@ typedef struct Ulang_type_regular_ {
 
 typedef struct Ulang_type_array_ {
     Ulang_type* item_type;
-    size_t count; 
+    int64_t count; 
     Pos pos;
 }Ulang_type_array;
 
@@ -243,21 +243,21 @@ static inline Ulang_type ulang_type_removed_const_wrap(Ulang_type_removed ulang_
     return new_ulang_type;
 }
 #define ulang_type_gen_param_print(ulang_type) strv_print(ulang_type_gen_param_print_internal(ulang_type, 0))
-Strv ulang_type_gen_param_print_internal(const Ulang_type_gen_param* ulang_type, int recursion_depth);
+Strv ulang_type_gen_param_print_internal(const Ulang_type_gen_param* ulang_type, Indent indent);
 #define ulang_type_tuple_print(ulang_type) strv_print(ulang_type_tuple_print_internal(ulang_type, 0))
-Strv ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, int recursion_depth);
+Strv ulang_type_tuple_print_internal(const Ulang_type_tuple* ulang_type, Indent indent);
 #define ulang_type_fn_print(ulang_type) strv_print(ulang_type_fn_print_internal(ulang_type, 0))
-Strv ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, int recursion_depth);
+Strv ulang_type_fn_print_internal(const Ulang_type_fn* ulang_type, Indent indent);
 #define ulang_type_regular_print(ulang_type) strv_print(ulang_type_regular_print_internal(ulang_type, 0))
-Strv ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, int recursion_depth);
+Strv ulang_type_regular_print_internal(const Ulang_type_regular* ulang_type, Indent indent);
 #define ulang_type_array_print(ulang_type) strv_print(ulang_type_array_print_internal(ulang_type, 0))
-Strv ulang_type_array_print_internal(const Ulang_type_array* ulang_type, int recursion_depth);
+Strv ulang_type_array_print_internal(const Ulang_type_array* ulang_type, Indent indent);
 #define ulang_type_expr_print(ulang_type) strv_print(ulang_type_expr_print_internal(ulang_type, 0))
-Strv ulang_type_expr_print_internal(const Ulang_type_expr* ulang_type, int recursion_depth);
+Strv ulang_type_expr_print_internal(const Ulang_type_expr* ulang_type, Indent indent);
 #define ulang_type_int_print(ulang_type) strv_print(ulang_type_int_print_internal(ulang_type, 0))
-Strv ulang_type_int_print_internal(const Ulang_type_int* ulang_type, int recursion_depth);
+Strv ulang_type_int_print_internal(const Ulang_type_int* ulang_type, Indent indent);
 #define ulang_type_removed_print(ulang_type) strv_print(ulang_type_removed_print_internal(ulang_type, 0))
-Strv ulang_type_removed_print_internal(const Ulang_type_removed* ulang_type, int recursion_depth);
+Strv ulang_type_removed_print_internal(const Ulang_type_removed* ulang_type, Indent indent);
 static inline Ulang_type_gen_param ulang_type_gen_param_new(Pos pos){
     return (Ulang_type_gen_param) { .pos = pos};
 }
@@ -270,7 +270,7 @@ static inline Ulang_type_fn ulang_type_fn_new(Ulang_type_tuple params, Ulang_typ
 static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Pos pos){
     return (Ulang_type_regular) { .atom = atom, .pos = pos};
 }
-static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, size_t count, Pos pos){
+static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, int64_t count, Pos pos){
     return (Ulang_type_array) { .item_type = item_type, .count = count, .pos = pos};
 }
 static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, int16_t pointer_depth, Pos pos){

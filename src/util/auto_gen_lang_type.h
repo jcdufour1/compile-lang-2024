@@ -181,8 +181,8 @@ static Lang_type_type lang_type_gen_array(const char* prefix) {
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Lang_type*", "item_type");
-    append_member(&sym.members, "size_t", "count");
-    append_member(&sym.members, "uint16_t", "pointer_depth");
+    append_member(&sym.members, "int64_t", "count");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -526,7 +526,7 @@ static void lang_type_gen_print_forward_decl(Lang_type_type type) {
     extend_lang_type_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* lang_type, int recursion_depth);");
+    string_extend_cstr(&gen_a, &function, "* lang_type, Indent indent);");
 
     gen_gen(FMT"\n", string_print(function));
 }

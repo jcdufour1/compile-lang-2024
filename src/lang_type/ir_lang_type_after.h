@@ -22,7 +22,7 @@ static inline int16_t ir_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE mo
     return ir_lang_type_primitive_get_atom(mode, ir_lang_type).pointer_depth;
 }
 
-static inline int32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
+static inline uint32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_UNSIGNED_INT:
             return ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
@@ -36,7 +36,7 @@ static inline int32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitiv
     unreachable("");
 }
 
-static inline int32_t ir_lang_type_get_bit_width(Ir_lang_type ir_lang_type) {
+static inline uint32_t ir_lang_type_get_bit_width(Ir_lang_type ir_lang_type) {
     return ir_lang_type_primitive_get_bit_width(ir_lang_type_primitive_const_unwrap(ir_lang_type));
 }
 
@@ -46,7 +46,7 @@ static inline void ir_lang_type_set_pointer_depth(Ir_lang_type* ir_lang_type, in
     ir_lang_type_set_atom(ir_lang_type, atom);
 }
 
-static inline Ir_lang_type ir_lang_type_new_ux(int32_t bit_width) {
+static inline Ir_lang_type ir_lang_type_new_ux(uint32_t bit_width) {
     return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(
         ir_lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
     ));

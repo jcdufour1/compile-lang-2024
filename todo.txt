@@ -101,7 +101,6 @@ for generics:
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
     -- use views instead of vecs in ast and ir nodes?
-- test case for i32** being used as generic arg
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
@@ -113,7 +112,6 @@ for generics:
 - constraints in generics
 - orelse, !!, ??, etc.
 - extern("c") defintions
-- non-hard coded size_t, etc.
 - printing features
 - global constants
 - global variables

@@ -71,7 +71,7 @@ Strv serialize_lang_type_fn(Lang_type_fn lang_type) {
 Strv serialize_lang_type_array(Lang_type_array lang_type) {
     String name = {0};
     string_extend_strv(&a_main, &name, serialize_lang_type(*lang_type.item_type));
-    string_extend_size_t(&a_main, &name, lang_type.count);
+    string_extend_int64_t(&a_main, &name, lang_type.count);
     return string_to_strv(name);
 }
 

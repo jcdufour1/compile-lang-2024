@@ -145,7 +145,7 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
 
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
-Strv tast_print_internal(const Tast* tast, int recursion_depth);
+Strv tast_print_internal(const Tast* tast, Indent indent);
 
 #define tast_print(root) strv_print(tast_print_internal(root, 0))
 

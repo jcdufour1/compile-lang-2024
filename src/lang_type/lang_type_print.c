@@ -167,7 +167,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             extend_lang_type_to_string(string, mode, *array.item_type);
             string_extend_cstr(&a_temp, string, "[");
-            string_extend_size_t(&a_temp, string, array.count);
+            string_extend_int64_t(&a_temp, string, array.count);
             string_extend_cstr(&a_temp, string, "]");
             for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
                 vec_append(&a_temp, string, '*');

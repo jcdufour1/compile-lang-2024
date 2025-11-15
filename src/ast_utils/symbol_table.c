@@ -1,7 +1,9 @@
 #define STB_DS_IMPLEMENTATION
 
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include <stb_ds.h>
+#pragma GCC diagnostic warning "-Wsign-conversion"
 #pragma GCC diagnostic warning "-Wimplicit-fallthrough"
 
 #include "symbol_table.h"
@@ -338,7 +340,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
         );
@@ -349,7 +351,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
         );
@@ -360,7 +362,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        int32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
         );
@@ -753,41 +755,40 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 // not generic
 //
 
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, indent));
         }
     }
 }
 
-void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth) {
-    (void) recursion_depth;
+void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_cstr_indent(&a_temp, buf, "", recursion_depth*INDENT_WIDTH);
+            string_extend_cstr_indent(&a_temp, buf, "", indent*INDENT_WIDTH);
             extend_ir_name(NAME_LOG, buf, sym_tast->tast->name);
             string_extend_cstr(&a_temp, buf, "\n");
         }
     }
 }
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
+void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, indent));
         }
     }
 }
 
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int recursion_depth) {
+void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, indent));
         }
     }
 }

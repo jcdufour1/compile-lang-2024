@@ -9,8 +9,10 @@ extern LOG_LEVEL params_log_level;
 #define LOG_RED "\033[1;31m"
 #define LOG_NORMAL "\033[0;39m"
 
-static inline const char* get_log_level_str(int log_level) {
+static inline const char* get_log_level_str(LOG_LEVEL log_level) {
     switch (log_level) {
+        case LOG_NEVER:
+            return ""; // TODO
         case LOG_TRACE:
             return "trace";
         case LOG_DEBUG:
@@ -32,12 +34,12 @@ static inline const char* get_log_level_str(int log_level) {
     abort();
 }
 
-static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
+static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
-        for (int idx = 0; idx < indent; idx++) {
+        for (Indent idx = 0; idx < indent; idx++) {
             fprintf(stderr, " ");
         }
         fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));

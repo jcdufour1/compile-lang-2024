@@ -947,7 +947,7 @@ bool try_set_unary_types_finish(
             }
             *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
                 unary_pos,
-                base.members.info.count,
+                (int64_t)base.members.info.count,
                 lang_type_new_usize()
             )));
             return true;
@@ -1245,7 +1245,7 @@ bool try_set_array_literal_types(
     } else if (dest_lang_type.type == LANG_TYPE_ARRAY) {
         gen_arg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
         Lang_type_array array = lang_type_array_const_unwrap(dest_lang_type);
-        size_t count = array.count;
+        size_t count = (size_t)array.count;
         if (count != lit->members.info.count) {
             msg_invalid_count_struct_literal_args(lit->members, count, count, lit->pos, true);
             msg(DIAG_NOTE, array.pos, "statically sized array defined as containing %zu elements\n", count);
@@ -1328,7 +1328,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, ptr);
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
-        new_membs.info.count,
+        (int64_t)new_membs.info.count,
         lang_type_new_usize()
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
@@ -1755,7 +1755,11 @@ bool try_set_function_call_builtin_types(
             UNARY_REFER,
             lang_type_array_const_wrap(array_ptr)
         ))));
-        vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(new_arr_pos, array.count, lang_type_new_usize()))));
+        vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
+            new_arr_pos,
+            array.count,
+            lang_type_new_usize()
+        ))));
 
         Ulang_type_vec new_gen_args = {0};
         vec_append(&a_main, &new_gen_args, item_type);
@@ -3196,7 +3200,7 @@ bool try_set_member_access_types_finish_enum_def(
 
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
-                uast_get_member_index(&enum_def->base, access->member_name->name.base),
+                (int64_t)uast_get_member_index(&enum_def->base, access->member_name->name.base),
                 memb_lang_type
             );
 
@@ -3244,7 +3248,7 @@ bool try_set_member_access_types_finish_enum_def(
 
             Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
-                uast_get_member_index(&enum_def->base, access->member_name->name.base),
+                (int64_t)uast_get_member_index(&enum_def->base, access->member_name->name.base),
                 memb_lang_type
             );
 

@@ -365,7 +365,7 @@ bool try_strv_to_size_t(size_t* result, Strv strv) {
         }
 
         *result *= 10;
-        *result += curr_char - '0';
+        *result += (size_t)(curr_char - '0');
     }
 
     if (idx < 1) {

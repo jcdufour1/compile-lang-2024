@@ -19,7 +19,7 @@ typedef struct {
     Cfg_node* buf;
 } Cfg_node_vec;
 
-Strv cfg_node_print_internal(Cfg_node node, size_t idx, int indent);
+Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent);
 
 #define cfg_node_print(node, idx) \
     strv_print(cfg_node_print_internal(node, idx, 0))

@@ -7,7 +7,7 @@
 
 #include <symbol_table.h>
 
-static void extend_scope(String* buf, Scope_id scope_id, int indent) {
+static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
     string_extend_size_t(&a_temp, buf, scope_id);
     string_extend_cstr(&a_temp, buf, "\n");
@@ -15,7 +15,7 @@ static void extend_scope(String* buf, Scope_id scope_id, int indent) {
     extend_name(NAME_LOG, buf, scope_to_name_tbl_lookup(scope_id));
 }
 
-Strv tast_binary_print_internal(const Tast_binary* binary, int indent) {
+Strv tast_binary_print_internal(const Tast_binary* binary, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "binary", indent);
@@ -31,7 +31,7 @@ Strv tast_binary_print_internal(const Tast_binary* binary, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_unary_print_internal(const Tast_unary* unary, int indent) {
+Strv tast_unary_print_internal(const Tast_unary* unary, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "unary", indent);
@@ -52,7 +52,7 @@ void tast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&a_temp, string, "\n");
 }
 
-Strv tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
+Strv tast_symbol_print_internal(const Tast_symbol* sym, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "symbol", indent);
@@ -62,7 +62,7 @@ Strv tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_member_access_print_internal(const Tast_member_access* access, int indent) {
+Strv tast_member_access_print_internal(const Tast_member_access* access, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "member_access_typed", indent);
@@ -78,7 +78,7 @@ Strv tast_member_access_print_internal(const Tast_member_access* access, int ind
     return string_to_strv(buf);
 }
 
-Strv tast_index_print_internal(const Tast_index* index, int indent) {
+Strv tast_index_print_internal(const Tast_index* index, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "index_typed", indent);
@@ -90,7 +90,7 @@ Strv tast_index_print_internal(const Tast_index* index, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_literal_print_internal(const Tast_literal* lit, int indent) {
+Strv tast_literal_print_internal(const Tast_literal* lit, Indent indent) {
     switch (lit->type) {
         case TAST_INT:
             return tast_int_print_internal(tast_int_const_unwrap(lit), indent);
@@ -112,7 +112,7 @@ Strv tast_literal_print_internal(const Tast_literal* lit, int indent) {
     unreachable("");
 }
 
-Strv tast_function_call_print_internal(const Tast_function_call* fun_call, int indent) {
+Strv tast_function_call_print_internal(const Tast_function_call* fun_call, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "function_call", indent);
@@ -127,7 +127,7 @@ Strv tast_function_call_print_internal(const Tast_function_call* fun_call, int i
     return string_to_strv(buf);
 }
 
-Strv tast_struct_literal_print_internal(const Tast_struct_literal* lit, int indent) {
+Strv tast_struct_literal_print_internal(const Tast_struct_literal* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "struct_literal", indent);
@@ -143,7 +143,7 @@ Strv tast_struct_literal_print_internal(const Tast_struct_literal* lit, int inde
     return string_to_strv(buf);
 }
 
-Strv tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
+Strv tast_tuple_print_internal(const Tast_tuple* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "tuple", indent);
@@ -158,7 +158,7 @@ Strv tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_enum_callee_print_internal(const Tast_enum_callee* lit, int indent) {
+Strv tast_enum_callee_print_internal(const Tast_enum_callee* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_callee", indent);
@@ -169,7 +169,7 @@ Strv tast_enum_callee_print_internal(const Tast_enum_callee* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_enum_case_print_internal(const Tast_enum_case* lit, int indent) {
+Strv tast_enum_case_print_internal(const Tast_enum_case* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_case", indent);
@@ -180,7 +180,7 @@ Strv tast_enum_case_print_internal(const Tast_enum_case* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_enum_access_print_internal(const Tast_enum_access* lit, int indent) {
+Strv tast_enum_access_print_internal(const Tast_enum_access* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_access", indent);
@@ -192,7 +192,7 @@ Strv tast_enum_access_print_internal(const Tast_enum_access* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_enum_get_tag_print_internal(const Tast_enum_get_tag* lit, int indent) {
+Strv tast_enum_get_tag_print_internal(const Tast_enum_get_tag* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_get_tag\n", indent);
@@ -202,7 +202,7 @@ Strv tast_enum_get_tag_print_internal(const Tast_enum_get_tag* lit, int indent) 
     return string_to_strv(buf);
 }
 
-Strv tast_int_print_internal(const Tast_int* num, int indent) {
+Strv tast_int_print_internal(const Tast_int* num, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "number", indent);
@@ -213,7 +213,7 @@ Strv tast_int_print_internal(const Tast_int* num, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_float_print_internal(const Tast_float* num, int indent) {
+Strv tast_float_print_internal(const Tast_float* num, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "float", indent);
@@ -224,7 +224,7 @@ Strv tast_float_print_internal(const Tast_float* num, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_string_print_internal(const Tast_string* lit, int indent) {
+Strv tast_string_print_internal(const Tast_string* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "string", indent);
@@ -234,7 +234,7 @@ Strv tast_string_print_internal(const Tast_string* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_enum_tag_lit_print_internal(const Tast_enum_tag_lit* num, int indent) {
+Strv tast_enum_tag_lit_print_internal(const Tast_enum_tag_lit* num, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_tag_lit", indent);
@@ -245,7 +245,7 @@ Strv tast_enum_tag_lit_print_internal(const Tast_enum_tag_lit* num, int indent) 
     return string_to_strv(buf);
 }
 
-Strv tast_enum_lit_print_internal(const Tast_enum_lit* lit, int indent) {
+Strv tast_enum_lit_print_internal(const Tast_enum_lit* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "enum_lit", indent);
@@ -258,7 +258,7 @@ Strv tast_enum_lit_print_internal(const Tast_enum_lit* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_raw_union_lit_print_internal(const Tast_raw_union_lit* lit, int indent) {
+Strv tast_raw_union_lit_print_internal(const Tast_raw_union_lit* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "raw_union_lit", indent);
@@ -268,7 +268,7 @@ Strv tast_raw_union_lit_print_internal(const Tast_raw_union_lit* lit, int indent
     return string_to_strv(buf);
 }
 
-Strv tast_function_lit_print_internal(const Tast_function_lit* lit, int indent) {
+Strv tast_function_lit_print_internal(const Tast_function_lit* lit, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "function_lit", indent);
@@ -279,7 +279,7 @@ Strv tast_function_lit_print_internal(const Tast_function_lit* lit, int indent) 
     return string_to_strv(buf);
 }
 
-Strv tast_void_print_internal(const Tast_void* num, int indent) {
+Strv tast_void_print_internal(const Tast_void* num, Indent indent) {
     (void) num;
     String buf = {0};
 
@@ -288,7 +288,7 @@ Strv tast_void_print_internal(const Tast_void* num, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_block_print_internal(const Tast_block* block, int indent) {
+Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "block\n", indent);
@@ -317,7 +317,7 @@ Strv tast_block_print_internal(const Tast_block* block, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_function_params_print_internal(const Tast_function_params* function_params, int indent) {
+Strv tast_function_params_print_internal(const Tast_function_params* function_params, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "function_params\n", indent);
@@ -331,7 +331,7 @@ Strv tast_function_params_print_internal(const Tast_function_params* function_pa
     return string_to_strv(buf);
 }
 
-Strv tast_condition_print_internal(const Tast_condition* cond, int indent) {
+Strv tast_condition_print_internal(const Tast_condition* cond, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "condition\n", indent);
@@ -342,7 +342,7 @@ Strv tast_condition_print_internal(const Tast_condition* cond, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_for_with_cond_print_internal(const Tast_for_with_cond* for_cond, int indent) {
+Strv tast_for_with_cond_print_internal(const Tast_for_with_cond* for_cond, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "for_with_cond\n", indent);
@@ -354,7 +354,7 @@ Strv tast_for_with_cond_print_internal(const Tast_for_with_cond* for_cond, int i
     return string_to_strv(buf);
 }
 
-Strv tast_actual_break_print_internal(const Tast_actual_break* lang_break, int indent) {
+Strv tast_actual_break_print_internal(const Tast_actual_break* lang_break, Indent indent) {
     (void) lang_break;
     String buf = {0};
 
@@ -363,7 +363,7 @@ Strv tast_actual_break_print_internal(const Tast_actual_break* lang_break, int i
     return string_to_strv(buf);
 }
 
-Strv tast_yield_print_internal(const Tast_yield* yield, int indent) {
+Strv tast_yield_print_internal(const Tast_yield* yield, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "yield\n", indent);
@@ -389,7 +389,7 @@ Strv tast_yield_print_internal(const Tast_yield* yield, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_continue_print_internal(const Tast_continue* cont, int indent) {
+Strv tast_continue_print_internal(const Tast_continue* cont, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "continue2\n", indent);
@@ -400,7 +400,7 @@ Strv tast_continue_print_internal(const Tast_continue* cont, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_assignment_print_internal(const Tast_assignment* assign, int indent) {
+Strv tast_assignment_print_internal(const Tast_assignment* assign, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "assignment\n", indent);
@@ -410,7 +410,7 @@ Strv tast_assignment_print_internal(const Tast_assignment* assign, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_if_print_internal(const Tast_if* lang_if, int indent) {
+Strv tast_if_print_internal(const Tast_if* lang_if, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "if\n", indent);
@@ -422,7 +422,7 @@ Strv tast_if_print_internal(const Tast_if* lang_if, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_return_print_internal(const Tast_return* lang_rtn, int indent) {
+Strv tast_return_print_internal(const Tast_return* lang_rtn, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "return\n", indent);
@@ -433,7 +433,7 @@ Strv tast_return_print_internal(const Tast_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_label_print_internal(const Tast_label* label, int indent) {
+Strv tast_label_print_internal(const Tast_label* label, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "label", indent);
@@ -444,7 +444,7 @@ Strv tast_label_print_internal(const Tast_label* label, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_defer_print_internal(const Tast_defer* defer, int indent) {
+Strv tast_defer_print_internal(const Tast_defer* defer, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "defer", indent);
@@ -453,7 +453,7 @@ Strv tast_defer_print_internal(const Tast_defer* defer, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, int indent) {
+Strv tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "if_else_chain\n", indent);
@@ -467,7 +467,7 @@ Strv tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, int in
     return string_to_strv(buf);
 }
 
-Strv tast_module_alias_print_internal(const Tast_module_alias* alias, int indent) {
+Strv tast_module_alias_print_internal(const Tast_module_alias* alias, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "module_alias", indent);
@@ -478,7 +478,7 @@ Strv tast_module_alias_print_internal(const Tast_module_alias* alias, int indent
     return string_to_strv(buf);
 }
 
-Strv tast_function_decl_print_internal(const Tast_function_decl* fun_decl, int indent) {
+Strv tast_function_decl_print_internal(const Tast_function_decl* fun_decl, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "function_decl", indent);
@@ -492,7 +492,7 @@ Strv tast_function_decl_print_internal(const Tast_function_decl* fun_decl, int i
     return string_to_strv(buf);
 }
 
-Strv tast_function_def_print_internal(const Tast_function_def* fun_def, int indent) {
+Strv tast_function_def_print_internal(const Tast_function_def* fun_def, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "function_def", indent);
@@ -506,7 +506,7 @@ Strv tast_function_def_print_internal(const Tast_function_def* fun_def, int inde
     return string_to_strv(buf);
 }
 
-static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
+static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, type_name, indent);
     extend_name(NAME_LOG, buf, base.name);
     string_extend_cstr(&a_temp, buf, "\n");
@@ -517,7 +517,7 @@ static void extend_struct_def_base(String* buf, const char* type_name, Struct_de
     }
 }
 
-Strv tast_struct_def_print_internal(const Tast_struct_def* def, int indent) {
+Strv tast_struct_def_print_internal(const Tast_struct_def* def, Indent indent) {
     String buf = {0};
 
     extend_struct_def_base(&buf, "struct_def", def->base, indent);
@@ -525,7 +525,7 @@ Strv tast_struct_def_print_internal(const Tast_struct_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_raw_union_def_print_internal(const Tast_raw_union_def* def, int indent) {
+Strv tast_raw_union_def_print_internal(const Tast_raw_union_def* def, Indent indent) {
     String buf = {0};
 
     extend_struct_def_base(&buf, "raw_union_def", def->base, indent);
@@ -533,7 +533,7 @@ Strv tast_raw_union_def_print_internal(const Tast_raw_union_def* def, int indent
     return string_to_strv(buf);
 }
 
-Strv tast_primitive_def_print_internal(const Tast_primitive_def* def, int indent) {
+Strv tast_primitive_def_print_internal(const Tast_primitive_def* def, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "primitive_def\n", indent);
@@ -545,7 +545,7 @@ Strv tast_primitive_def_print_internal(const Tast_primitive_def* def, int indent
     return string_to_strv(buf);
 }
 
-Strv tast_enum_def_print_internal(const Tast_enum_def* def, int indent) {
+Strv tast_enum_def_print_internal(const Tast_enum_def* def, Indent indent) {
     String buf = {0};
 
     extend_struct_def_base(&buf, "enum_def", def->base, indent);
@@ -553,7 +553,7 @@ Strv tast_enum_def_print_internal(const Tast_enum_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Strv tast_import_path_print_internal(const Tast_import_path* import, int indent) {
+Strv tast_import_path_print_internal(const Tast_import_path* import, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "import\n", indent);
@@ -565,7 +565,7 @@ Strv tast_import_path_print_internal(const Tast_import_path* import, int indent)
     return string_to_strv(buf);
 }
 
-Strv tast_variable_def_print_internal(const Tast_variable_def* def, int indent) {
+Strv tast_variable_def_print_internal(const Tast_variable_def* def, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "variable_def", indent);
@@ -576,7 +576,7 @@ Strv tast_variable_def_print_internal(const Tast_variable_def* def, int indent) 
     return string_to_strv(buf);
 }
 
-Strv tast_operator_print_internal(const Tast_operator* operator, int indent) {
+Strv tast_operator_print_internal(const Tast_operator* operator, Indent indent) {
     switch (operator->type) {
         case TAST_BINARY:
             return tast_binary_print_internal(tast_binary_const_unwrap(operator), indent);
@@ -586,7 +586,7 @@ Strv tast_operator_print_internal(const Tast_operator* operator, int indent) {
     unreachable("");
 }
 
-Strv tast_def_print_internal(const Tast_def* def, int indent) {
+Strv tast_def_print_internal(const Tast_def* def, Indent indent) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
             return tast_function_def_print_internal(tast_function_def_const_unwrap(def), indent);
@@ -610,7 +610,7 @@ Strv tast_def_print_internal(const Tast_def* def, int indent) {
     unreachable("");
 }
 
-Strv tast_expr_print_internal(const Tast_expr* expr, int indent) {
+Strv tast_expr_print_internal(const Tast_expr* expr, Indent indent) {
     switch (expr->type) {
         case TAST_BLOCK:
             return tast_block_print_internal(tast_block_const_unwrap(expr), indent);
@@ -648,7 +648,7 @@ Strv tast_expr_print_internal(const Tast_expr* expr, int indent) {
     unreachable("");
 }
 
-Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
+Strv tast_stmt_print_internal(const Tast_stmt* stmt, Indent indent) {
     switch (stmt->type) {
         case TAST_EXPR:
             return tast_expr_print_internal(tast_expr_const_unwrap(stmt), indent);
@@ -670,7 +670,7 @@ Strv tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
     unreachable("");
 }
 
-Strv tast_print_internal(const Tast* tast, int indent) {
+Strv tast_print_internal(const Tast* tast, Indent indent) {
     switch (tast->type) {
         case TAST_STMT:
             return tast_stmt_print_internal(tast_stmt_const_unwrap(tast), indent);
