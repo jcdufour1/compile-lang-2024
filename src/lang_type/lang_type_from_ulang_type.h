@@ -175,9 +175,12 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
     }
 
     if (!try_lang_type_from_ulang_type_array_is_unsigned_int(lang_type.count)) {
-        if (!env.supress_type_inference_failures && !env.silent_generic_resol_errors) {
-            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_array_const_wrap(lang_type)));
-            todo();
+        if (!env.silent_generic_resol_errors) {
+            msg(
+                DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY,
+                uast_expr_get_pos(lang_type.count),
+                "length of statically sized array must be an integer literal\n"
+            );
         }
         return false;
     }

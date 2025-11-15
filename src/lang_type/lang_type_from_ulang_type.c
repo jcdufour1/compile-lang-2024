@@ -28,7 +28,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         case ULANG_TYPE_FN: {
             Lang_type_fn new_fn = {0};
             if (!try_lang_type_from_ulang_type_fn(&new_fn, ulang_type_fn_const_unwrap(lang_type))) {
-                todo();
                 return false;
             }
             *new_lang_type = lang_type_fn_const_wrap(new_fn);

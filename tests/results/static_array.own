@@ -1,4 +1,4 @@
-compile::stdout 21
+compile::stdout 24
 before 1: 8
 before 1: 76
 before 1: 77
@@ -20,6 +20,9 @@ after 3: 87
 thing 4: 1
 thing 4: 44
 thing 4: 87
+thing 5: 7
+thing 5: 3
+thing 5: 2
 
 compile::stderr 0
 
