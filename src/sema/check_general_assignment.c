@@ -26,8 +26,8 @@ static bool do_implicit_convertions_primitive(
         return false;
     }
 
-    int32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
-    int32_t src_bit_width = lang_type_primitive_get_bit_width(src_type);
+    uint32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
+    uint32_t src_bit_width = lang_type_primitive_get_bit_width(src_type);
 
     // both or none of types must be float
     if ((dest.type == LANG_TYPE_FLOAT) != (src_type.type == LANG_TYPE_FLOAT)) {

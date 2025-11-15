@@ -949,7 +949,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
             size_t count = 0;
             unwrap(try_strv_to_size_t(&count, count_tk.text));
             Ulang_type* item_type = arena_dup(&a_main, lang_type);
-            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, count, open_sq_tk.pos));
+            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, (int64_t)count, open_sq_tk.pos));
         }
     }
 

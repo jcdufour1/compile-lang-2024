@@ -32,12 +32,12 @@ static inline const char* get_log_level_str(int log_level) {
     abort();
 }
 
-static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
+static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
-        for (int idx = 0; idx < indent; idx++) {
+        for (Indent idx = 0; idx < indent; idx++) {
             fprintf(stderr, " ");
         }
         fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));

@@ -439,7 +439,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     if (mode == TOKEN_MODE_LOG) {
-        string_add_int(arena, &buf, token.pos.line);
+        string_extend_line(arena, &buf, token.pos.line);
     }
 
     Strv strv = {.str = buf.buf, .count = buf.info.count};

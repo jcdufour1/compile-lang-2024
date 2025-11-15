@@ -42,10 +42,24 @@ static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
     string_extend_cstr(arena, str, num_str);
 }
 
+static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num) {
+    char num_str[32] = {0};
+    sprintf(num_str, "%zu"PRId64, num);
+    string_extend_cstr(arena, str, num_str);
+}
+
 static inline void string_extend_uint64_t(Arena* arena, String* str, uint64_t num) {
     char num_str[32] = {0};
-    sprintf(num_str, "%zu", num);
+    sprintf(num_str, "%"PRIu64, num);
     string_extend_cstr(arena, str, num_str);
+}
+
+static inline void string_extend_uint16_t(Arena* arena, String* str, uint16_t num) {
+    string_extend_uint64_t(arena, str, (uint64_t)num);
+}
+
+static inline void string_extend_int16_t(Arena* arena, String* str, int16_t num) {
+    string_extend_int64_t(arena, str, (int64_t)num);
 }
 
 static inline void string_extend_int(Arena* arena, String* str, int num) {
@@ -55,12 +69,6 @@ static inline void string_extend_int(Arena* arena, String* str, int num) {
 static inline void string_extend_pointer(Arena* arena, String* str, const void* pointer) {
     char num_str[32] = {0};
     sprintf(num_str, "%p", pointer);
-    string_extend_cstr(arena, str, num_str);
-}
-
-static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num) {
-    char num_str[32];
-    sprintf(num_str, "%"PRId64, num);
     string_extend_cstr(arena, str, num_str);
 }
 
@@ -113,7 +121,7 @@ static inline void string_extend_cstr_indent(Arena* arena, String* string, const
     string_extend_strv_indent(arena, string, sv(cstr), indent);
 }
 
-static inline void string_add_line(Arena* arena, String* string, uint32_t num) {
+static inline void string_extend_line(Arena* arena, String* string, uint32_t num) {
     const char* fmt_str =  " (line %d)";
     static char num_str[200];
     sprintf(num_str, fmt_str, num);

@@ -13,9 +13,9 @@
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
 
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth);
+void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent);
 
-void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, int recursion_depth, const char* file_path, int line);
+void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, Indent indent, const char* file_path, int line);
 
 #define usymbol_log_table(log_level, sym_table) \
     do { \
@@ -40,8 +40,8 @@ bool usymbol_add(Uast_def* tast_of_symbol);
 
 void usymbol_update(Uast_def* tast_of_symbol);
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth);
-void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int recursion_depth, const char* file_path, int line);
+void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent);
+void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Indent indent, const char* file_path, int line);
 
 #define symbol_log_table(log_level, sym_table) \
     do { \
@@ -66,8 +66,8 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, int recursion_depth);
-void alloca_log_table_internal(int log_level, const Ir_table sym_table, int recursion_depth, const char* file_path, int line);
+void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent);
+void alloca_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
     do { \
@@ -148,7 +148,7 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name);
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 
-void init_extend_table_internal(String* buf, const Init_table sym_table, int recursion_depth);
+void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent);
 
 bool ir_name_to_name_add_internal(
     Strv key,

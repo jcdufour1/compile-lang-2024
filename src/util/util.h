@@ -53,7 +53,7 @@ typedef struct Pos_ {
 #define POS_BUILTIN ((Pos) {.file_path = MOD_PATH_BUILTIN})
 
 // log* functions and macros print messages that are intended for debugging
-static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
+static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
 
 #include <log_internal.h>
