@@ -44,7 +44,7 @@ static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
 
 static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num) {
     char num_str[32] = {0};
-    sprintf(num_str, "%zu"PRId64, num);
+    sprintf(num_str, "%"PRId64, num);
     string_extend_cstr(arena, str, num_str);
 }
 
