@@ -2,8 +2,7 @@ type io import = std.io
 type rt import = std.runtime
 type coll import = std.collections
 
-
-fn main() i32 {
+fn thing1() {
     let nums i32[3] = [8, 76, 77]
 
     for idx usize in 0..nums.count {
@@ -34,6 +33,20 @@ fn main() i32 {
         let ptr i32* = &nums[idx]
         io.printf("thing 4: %d\n", *ptr)
     }
+}
+
+type COUNT def = 3
+
+fn thing2() {
+    let nums i32[COUNT] = [7, 3, 2]
+    for idx usize in 0..nums.count {
+        io.printf("thing 5: %d\n", nums[idx])
+    }
+}
+
+fn main() i32 {
+    thing1()
+    thing2()
 
     return 0
 }

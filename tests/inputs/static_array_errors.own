@@ -13,5 +13,7 @@ fn main() i32 {
 
     let count_things i32 = nums.count_things
 
+    let nums3 i32[UNDEFINED] = [82]
+
     return 0
 }

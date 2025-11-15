@@ -83,9 +83,12 @@ typedef struct Ulang_type_regular_ {
     Pos pos;
 }Ulang_type_regular;
 
+struct Uast_expr;
+typedef struct Uast_expr_ Uast_expr;
+
 typedef struct Ulang_type_array_ {
     Ulang_type* item_type;
-    int64_t count; 
+    Uast_expr* count; 
     Pos pos;
 }Ulang_type_array;
 
@@ -270,7 +273,7 @@ static inline Ulang_type_fn ulang_type_fn_new(Ulang_type_tuple params, Ulang_typ
 static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Pos pos){
     return (Ulang_type_regular) { .atom = atom, .pos = pos};
 }
-static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, int64_t count, Pos pos){
+static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, Uast_expr* count, Pos pos){
     return (Ulang_type_array) { .item_type = item_type, .count = count, .pos = pos};
 }
 static inline Ulang_type_expr ulang_type_expr_new(Uast_expr* expr, int16_t pointer_depth, Pos pos){

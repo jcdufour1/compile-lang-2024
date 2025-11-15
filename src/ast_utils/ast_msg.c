@@ -31,3 +31,11 @@ PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, con
 void msg_not_lvalue_internal(const char* file, int line, Pos pos) {
     msg_internal(file, line, DIAG_NOT_LVALUE, pos, "expression is not an lvalue (lvalue is required)\n");
 }
+
+void msg_got_type_but_expected_expr_internal(const char* file, int line, Pos pos) {
+    msg_internal(file, line, DIAG_INVALID_CHAR_LIT /* TODO */, pos, "got type, but expected expression\n");
+}
+
+void msg_got_expr_but_expected_type_internal(const char* file, int line, Pos pos) {
+    msg_internal(file, line, DIAG_INVALID_CHAR_LIT /* TODO */, pos, "got expression, but expected type\n");
+}
