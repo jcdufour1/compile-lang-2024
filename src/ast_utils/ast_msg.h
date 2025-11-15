@@ -32,4 +32,14 @@ void msg_not_lvalue_internal(const char* file, int line, Pos pos);
 #define msg_not_lvalue(pos) \
     msg_not_lvalue_internal(__FILE__, __LINE__, pos)
 
+void msg_got_type_but_expected_expr_internal(const char* file, int line, Pos pos);
+
+#define msg_got_type_but_expected_expr(pos) \
+    msg_got_type_but_expected_expr_internal(__FILE__, __LINE__, pos)
+
+void msg_got_expr_but_expected_type_internal(const char* file, int line, Pos pos);
+
+#define msg_got_expr_but_expected_type(pos) \
+    msg_got_expr_but_expected_type_internal(__FILE__, __LINE__, pos)
+
 #endif // AST_MSG_H

@@ -112,7 +112,7 @@ static bool expand_def_ulang_type_array(
             *new_lang_type = lang_type;
             return true;
         case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg_todo("", dest_pos);
+            msg_got_type_but_expected_expr(uast_expr_get_pos(lang_type.count));
             return false;
         case EXPAND_EXPR_ERROR:
             return false;

@@ -1199,7 +1199,7 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_NONE:
-                msg(DIAG_EXPECTED_TYPE, tk_view_front(*tokens).pos, "expected type or expression\n");
+                msg(DIAG_EXPECTED_TYPE_BUT_GOT_EXPR, tk_view_front(*tokens).pos, "expected type or expression\n");
                 return PARSE_ERROR;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
