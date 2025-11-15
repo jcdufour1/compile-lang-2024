@@ -37,7 +37,13 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
         *ulang_type.item_type,
         include_scope
     )));
-    string_extend_int64_t(&a_main, &name, ulang_type.count);
+
+    Ulang_type count = {0};
+    if (!uast_expr_to_ulang_type(&count, ulang_type.count)) {
+        return util_literal_name_new();
+    }
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, count, include_scope)));
+
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 

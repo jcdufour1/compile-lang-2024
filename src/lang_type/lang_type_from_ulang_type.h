@@ -160,16 +160,32 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     unreachable("");
 }
 
+static inline bool try_lang_type_from_ulang_type_array_is_unsigned_int(const Uast_expr* expr) {
+    if (expr->type != UAST_LITERAL) {
+        return false;
+    }
+    const Uast_literal* lit = uast_literal_const_unwrap(expr);
+    return lit->type == UAST_INT && uast_int_const_unwrap(lit)->data >= 0;
+}
+
 static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type) {
     Lang_type item_type = {0};
     if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
-      return false;
+        return false;
+    }
+
+    if (!try_lang_type_from_ulang_type_array_is_unsigned_int(lang_type.count)) {
+        if (!env.supress_type_inference_failures && !env.silent_generic_resol_errors) {
+            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_array_const_wrap(lang_type)));
+            todo();
+        }
+        return false;
     }
 
     *new_lang_type = lang_type_array_const_wrap(lang_type_array_new(
         lang_type.pos,
         arena_dup(&a_main, &item_type),
-        lang_type.count,
+        uast_int_unwrap(uast_literal_unwrap(lang_type.count))->data,
         0
     ));
     return true;

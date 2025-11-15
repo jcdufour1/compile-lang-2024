@@ -938,18 +938,25 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
                 continue;
             }
 
-            Token count_tk = {0};
-            if (!consume_expect(&count_tk, tokens, "after `[`", TOKEN_INT_LITERAL)) {
-                return false;
+            Uast_expr* count = NULL;
+            switch (parse_expr(&count, tokens, scope_id)) {
+                case PARSE_EXPR_OK:
+                    break;
+                case PARSE_EXPR_NONE:
+                    msg_expected_expr(*tokens, "after `[`");
+                    return false;
+                case PARSE_EXPR_ERROR:
+                    return false;
             }
             if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
                 return false;
             }
 
-            size_t count = 0;
-            unwrap(try_strv_to_size_t(&count, count_tk.text));
-            Ulang_type* item_type = arena_dup(&a_main, lang_type);
-            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(item_type, (int64_t)count, open_sq_tk.pos));
+            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(
+                arena_dup(&a_main, lang_type),
+                count,
+                open_sq_tk.pos
+            ));
         }
     }
 

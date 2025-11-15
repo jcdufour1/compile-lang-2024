@@ -105,8 +105,19 @@ static bool expand_def_ulang_type_array(
     if (!expand_def_ulang_type(lang_type.item_type, dest_pos)) {
         return false;
     }
-    *new_lang_type = lang_type;
-    return true;
+
+    Ulang_type dummy = {0};
+    switch (expand_def_expr(&dummy, &lang_type.count, lang_type.count)) {
+        case EXPAND_EXPR_NEW_EXPR:
+            *new_lang_type = lang_type;
+            return true;
+        case EXPAND_EXPR_NEW_ULANG_TYPE:
+            msg_todo("", dest_pos);
+            return false;
+        case EXPAND_EXPR_ERROR:
+            return false;
+    }
+    unreachable("");
 }
 
 static bool expand_def_ulang_type_fn(
