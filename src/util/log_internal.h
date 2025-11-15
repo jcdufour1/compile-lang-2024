@@ -9,8 +9,10 @@ extern LOG_LEVEL params_log_level;
 #define LOG_RED "\033[1;31m"
 #define LOG_NORMAL "\033[0;39m"
 
-static inline const char* get_log_level_str(int log_level) {
+static inline const char* get_log_level_str(LOG_LEVEL log_level) {
     switch (log_level) {
+        case LOG_NEVER:
+            return ""; // TODO
         case LOG_TRACE:
             return "trace";
         case LOG_DEBUG:
