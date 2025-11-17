@@ -67,13 +67,13 @@ syn match ownOperator display "[\<]"  " TODO: this also catches < in (<, which c
 syn match ownOperator display "\v\zs[\>]\ze[^\)]"
 syn match ownOperator display "\v\zs[\.]\ze\h"
 
-syn match ownComment display "\v\/\/.*$"
-syn region ownComment display start="\v\/\*" end="\v\*\/"
-
 syn keyword ownOperator
     \ countof
     \ sizeof
     \ unsafe_cast
+
+syn match ownComment display "\v\/\/.*$"
+syn region ownComment display start="\v\/\*" end="\v\*\/"
 
 syn match ownStringLiteral display "\v\"(\\.|[^"])*\""
 
