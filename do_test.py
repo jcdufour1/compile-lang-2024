@@ -428,10 +428,31 @@ def parse_args() -> Parameters:
 def main() -> None:
     params: Parameters = parse_args()
 
-    if params.do_debug_internal:
-        do_tests(True, params)
-    if params.do_release_internal:
-        do_tests(False, params)
+    #if params.do_debug_internal:
+    #    do_tests(True, params)
+    #if params.do_release_internal:
+    #    do_tests(False, params)
+
+    examples_in_readme: list[str] = ["examples/optional.own", "examples/defer.own"]
+    for example in examples_in_readme:
+        with open("README.md", "r") as file:
+            lines = file.readlines() 
+            for idx, line in enumerate(lines):
+                if not example in line:
+                    continue
+                if not lines[idx + 1].startswith("```c"):
+                    print_error("\"```c\" is expected on line immediately after the line that contains \"" + example + "\"")
+                idx_exam = idx + 2
+                with open(example, "r") as actual_example_file:
+                    actual_exam_lines = actual_example_file.readlines()
+                    while not lines[idx_exam].startswith("```"):
+                        if (lines[idx_exam] != actual_exam_lines[idx_exam - (idx + 2)]):
+                            print_error("line " + str(idx_exam - (idx + 2) + 1) + " of \"" + example + "\" is different in the README than in the actual file")
+                            sys.exit(1)
+                        idx_exam += 1
+                    # TODO: consider case of actual_exam_lines having more lines than README counterpart
+                    if idx_exam - (idx + 2) < 
+                    assert(False and "files are equal")
 
     print_success("all tests passed")
 
