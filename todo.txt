@@ -106,6 +106,9 @@ for generics:
     proper error instead of crashing
 - member_name of member access should not be substituted in generic substitution
 - do_test.py should have confirmation before update
+- check that the main function has the correct signature (make expected failure test)
+- check that there are not duplicate main functions (make expected failure test)
+- append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -147,6 +150,7 @@ continue(<thing>)
 - figure out if I should de-duplilcate string literals, etc.
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
+- expected success test that excaped " is supported in string literal
 
 
 
@@ -161,9 +165,9 @@ continue(<thing>)
 - graphviz (for program control flow, etc.)
 - foreach idea:
   fn foreach_tokens(tokens Token[]) {
-    for idx i64 in tokens {
-        yield tokens[idx]
-    }
+      for idx in 0..tokens.count {
+          for_yield tokens[idx]
+      }
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 - when generics are mature, use them to associate custom allocators with things
@@ -174,3 +178,5 @@ continue(<thing>)
 
 # in the far future
 - try catch blocks with the question operator or similar
+- dynamic dispatch in generics (function pointers, constant expressions, etc. should be stored in 
+    table; there should be one table per generic variant)

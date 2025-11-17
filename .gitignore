@@ -16,6 +16,8 @@
 !tests2/**
 !third_party/
 !third_party/**
+!editors/
+!editors/**
 !todo.txt
 !README.md
 !LICENSE
