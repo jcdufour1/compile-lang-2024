@@ -2420,7 +2420,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Bool_vec new_gen_args_set = {0};
     vec_reserve(&a_main, &new_gen_args_set, amt_args_needed);
     while (new_gen_args_set.info.count < sym_name->gen_args.info.count) {
-        todo();
         vec_append(&a_main, &new_gen_args_set, true);
     }
     while (new_gen_args_set.info.count < amt_gen_args_needed) {
