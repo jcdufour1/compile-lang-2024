@@ -149,6 +149,7 @@ Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
             unreachable("");
         }
         case LANG_TYPE_FN: {
+            msg_todo("", lang_type_get_pos(lang_type));
             todo();
         }
         case LANG_TYPE_ARRAY:

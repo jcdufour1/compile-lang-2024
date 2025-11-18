@@ -21,7 +21,7 @@ fn move_items(dest ItemT*, src ItemT*, count_items u64) {
     libc.memmove(unsafe_cast<opaque*>dest, unsafe_cast<opaque*>src, sizeof(*dest)*count_items);
 }
 
-fn null() ItemT* {
+fn null(<ItemT>)() ItemT* {
     return unsafe_cast<ItemT*>0
 }
 
@@ -37,16 +37,16 @@ fn swap(<ItemT>)(lhs ItemT*, rhs ItemT*) {
 
 // TODO: return optional, etc.?
 fn alloc(<ItemT>)(count_items u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
-    let dummy ItemT* = null(ItemT);
+    let dummy ItemT* = null(<ItemT>)();
     let buf ItemT* = unsafe_cast<ItemT*>libc.malloc(sizeof(*dummy)*count_items)
-    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
+    assert(buf != null(<ItemT>), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 // TODO: return optional, etc.?
 fn realloc(<ItemT>)(buf ItemT*, new_cnt_items u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     buf = unsafe_cast<ItemT*>libc.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
-    assert(buf != null(ItemT), "out of memory", .file = file, .line = line, .column = column)
+    assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 

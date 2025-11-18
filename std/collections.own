@@ -142,7 +142,7 @@ type Darr struct(<ItemT>) {
 }
 
 fn darr_new(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
-    let darr Darr(<ItemT>) = {util.null(ItemT), 0, 0}
+    let darr Darr(<ItemT>) = {util.null(<ItemT>)(), 0, 0}
     darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
     return darr
 }
@@ -160,7 +160,7 @@ fn darr_slice(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count util.Optional(
 
 fn darr_free(<ItemT>)(using darr Darr(<ItemT>)*) {
     util.free(buf);
-    buf = util.null(ItemT)
+    buf = util.null(<ItemT>)()
     count = 0
     capacity = 0
 }
@@ -173,7 +173,7 @@ fn darr_reserve(<ItemT>)(darr Darr(<ItemT>)*, count_items_to_add usize) {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
             }
-            darr.buf = util.alloc(darr.capacity, ItemT)
+            darr.buf = util.alloc(<ItemT>)(darr.capacity)
         } else {
             for darr.count + count_items_to_add > darr.capacity {
                 darr.capacity *= 2
