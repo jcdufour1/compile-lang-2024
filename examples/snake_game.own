@@ -34,7 +34,7 @@ fn snake_first(snake Snake) Pos {
 }
 
 fn snake_new(init_pos Pos, init_dir Dir, squares: Pos) Snake {
-    let darr coll.Darr(<Pos>) = coll.darr_new(Pos, [init_pos]);
+    let darr coll.Darr(<Pos>) = coll.darr_new(<Pos>)([init_pos]);
     return {darr, init_dir}
 }
 
@@ -116,7 +116,7 @@ fn main() i32 {
     let snake Snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
     assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
-    let apples coll.Darr(<Pos>) = coll.darr_new(Pos)
+    let apples coll.Darr(<Pos>) = coll.darr_new(<Pos>)()
     for idx i32 in 0..COUNT_APPLES {
         coll.darr_append(&apples, rand_pos(SQUARES))
     }

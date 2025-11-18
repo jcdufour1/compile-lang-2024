@@ -152,6 +152,8 @@ continue(<thing>)
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
 - expected success test that excaped " is supported in string literal
+- in examples/snake_game.own:37, change "coll.darr_new(<Pos>)([init_pos])" to "coll.darr_new([init_pos])"
+    (Pos should be instanciated from [init_pos])?
 
 
 

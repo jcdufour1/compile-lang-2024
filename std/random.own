@@ -9,7 +9,7 @@ fn srand(seed util.Optional(<i32>) = .none) {
         c.srand(num)
         return
     }
-    c.srand(unsafe_cast<i32>posix.time(util.null(u64)))
+    c.srand(unsafe_cast<i32>posix.time(util.null(<u64>)()))
 }
 
 // min and max are inclusive
