@@ -64,8 +64,8 @@ fn move_snake(snake Snake*, squares Pos, do_grow u1) u1 {
         }
     }
     
-    let pos_at_1 Pos = coll.darr_at(snake.nodes, 1)
-    for idx_ usize in 1..(snake.nodes.count) {
+    let pos_at_1 Pos = coll.darr_at(snake.nodes, 0)
+    for idx_ usize in 1..snake.nodes.count {
         let idx usize = snake.nodes.count - idx_
         assert(idx < snake.nodes.count, "out of bounds")
         *coll.darr_at_ref(snake.nodes, idx) = coll.darr_at(snake.nodes, idx - 1)
