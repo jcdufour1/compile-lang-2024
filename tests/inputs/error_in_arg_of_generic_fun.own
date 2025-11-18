@@ -1,5 +1,5 @@
 
-fn copy(num NumT, NumT Type) NumT {
+fn copy(<NumT>)(num NumT) NumT {
     return num
 }
 

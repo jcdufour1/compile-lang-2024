@@ -2,13 +2,13 @@ type coll import = std.collections
 type io import = std.io
 
 fn main() i32 {
-    let num i32 = coll.str_to_int("83095", i32)
+    let num i32 = coll.str_to_int(<i32>)("83095")
     io.print_int(num)
 
-    num = coll.str_to_int("0", i32)
+    num = coll.str_to_int(<i32>)("0")
     io.print_int(num)
 
-    num = coll.str_to_int("-13", i32)
+    num = coll.str_to_int(<i32>)("-13")
     io.print_int(num)
 
     let str coll.Darr(<u8>) = coll.str_from_int(-1)
@@ -28,15 +28,15 @@ fn main() i32 {
     io.print_str(coll.darr_slice(str4))
 
     let input4 Str = "- 79"
-    if let .some(num4) = coll.str_consume_int(&input4, i32) => assert(0)
+    if let .some(num4) = coll.str_consume_int(<i32>)(&input4) => assert(0)
     else => io.print_str("yes 4")
 
     let input5 Str = "-76"
-    if let .some(num5) = coll.str_consume_int(&input5, i32) => io.print_int(num5)
+    if let .some(num5) = coll.str_consume_int(<i32>)(&input5) => io.print_int(num5)
     else => assert(0)
 
     let input6 Str = "0"
-    if let .some(num6) = coll.str_consume_int(&input6, i32) => io.print_int(num6)
+    if let .some(num6) = coll.str_consume_int(<i32>)(&input6) => io.print_int(num6)
     else => assert(0)
 
     return 0

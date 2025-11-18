@@ -1,35 +1,35 @@
 compile::stdout 0
 
 compile::stderr 30
-tests/inputs/int_instead_of_optional.own:37:44:[1;31merror[0;39m:function parameter `ItemType` was not specified
+tests/inputs/int_instead_of_optional.own:37:44:[1;31merror[0;39m:argument to generic function parameter `ItemType` was not specified
     36 | fn main() i32 {
     37 |     io.printf("test 100: got number %d\n", add_one_or_two_default_2(835, .some(11)))
        |                                            ^
     38 | 
-tests/inputs/int_instead_of_optional.own:15:99:[1;34mnote[0;39m:function parameter `ItemType` defined here
+tests/inputs/int_instead_of_optional.own:15:30:[1;34mnote[0;39m:generic function parameter `ItemType` defined here
     14 | 
-    15 | fn add_one_or_two_default_2(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
-       |                                                                                                   ^
+    15 | fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
+       |                              ^
     16 |     switch rhs {
 tests/inputs/int_instead_of_optional.own:40:69:[1;31merror[0;39m:argument is of type `u10`, but the corresponding parameter `lhs` is of type `Optional(<i32>)`
     39 |     let opt110 util.Optional(<i32>) = .some(838)
     40 |     io.printf("test 110: got number %d\n", add_one_or_two_default_2(835, opt110))
        |                                                                     ^
     41 | 
-tests/inputs/int_instead_of_optional.own:15:29:[1;34mnote[0;39m:corresponding parameter `lhs` defined here
+tests/inputs/int_instead_of_optional.own:15:41:[1;34mnote[0;39m:corresponding parameter `lhs` defined here
     14 | 
-    15 | fn add_one_or_two_default_2(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
-       |                             ^
+    15 | fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
+       |                                         ^
     16 |     switch rhs {
-tests/inputs/int_instead_of_optional.own:43:80:[1;31merror[0;39m:argument is of type `Optional(<i32>)`, but the corresponding parameter `rhs` is of type `Optional(<u32>)`
+tests/inputs/int_instead_of_optional.own:43:87:[1;31merror[0;39m:argument is of type `Optional(<i32>)`, but the corresponding parameter `rhs` is of type `Optional(<u32>)`
     42 |     let opt111 util.Optional(<i32>) = .some(838)
-    43 |     io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt111, u32))
-       |                                                                                ^
+    43 |     io.printf("test 111: got number %d\n", add_one_or_two_default_2(<u32>)(.some(14), opt111))
+       |                                                                                       ^
     44 |     return 0
-tests/inputs/int_instead_of_optional.own:15:60:[1;34mnote[0;39m:corresponding parameter `rhs` defined here
+tests/inputs/int_instead_of_optional.own:15:72:[1;34mnote[0;39m:corresponding parameter `rhs` defined here
     14 | 
-    15 | fn add_one_or_two_default_2(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
-       |                                                            ^
+    15 | fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
+       |                                                                        ^
     16 |     switch rhs {
 
 compile::return_code 1

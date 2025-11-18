@@ -26,7 +26,7 @@ fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
 fn calculate(line Str) {
     let old_line Str = line
 
-    let nums Darr(<i64>) = coll.darr_new(i64)
+    let nums Darr(<i64>) = coll.darr_new(<i64>)()
     defer coll.darr_free(&nums)
 
     for line.count > 0 {
@@ -84,20 +84,20 @@ fn calculate(line Str) {
         }
 
         if let .some(ch) = coll.slice_consume(&line, 'e') => {
-            coll.darr_append(&nums, math.e(i64))
+            coll.darr_append(&nums, math.e(<i64>)())
             continue
         }
 
         if coll.slice_starts_with(line, "pi") => {
             line = coll.slice_range(line, 2, line.count - 2)
-            coll.darr_append(&nums, math.pi(i64))
+            coll.darr_append(&nums, math.pi(<i64>)())
             continue
         }
 
         if coll.slice_starts_with(line, "sqrt") {
             if !check_stack(amt_consumed, nums.count, 1) => return
             line = coll.slice_range(line, 4, line.count - 4)
-            let result i64 = math.sqrt(coll.darr_pop(&nums))
+            let result = math.sqrt(coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
             continue
         }
@@ -105,7 +105,7 @@ fn calculate(line Str) {
         if coll.slice_starts_with(line, "log") {
             if !check_stack(amt_consumed, nums.count, 1) => return
             line = coll.slice_range(line, 3, line.count - 3)
-            let result i64 = math.log(coll.darr_pop(&nums), i64)
+            let result = math.log(coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
             continue
         }
@@ -113,11 +113,11 @@ fn calculate(line Str) {
         if coll.slice_starts_with(line, "abs") {
             if !check_stack(amt_consumed, nums.count, 1) => return
             line = coll.slice_range(line, 3, line.count - 3)
-            coll.darr_append(&nums, math.abs(coll.darr_pop(&nums), i64))
+            coll.darr_append(&nums, math.abs(coll.darr_pop(&nums)))
             continue
         }
 
-        if let .some(num) = coll.str_consume_int(&line, i64) {
+        if let .some(num) = coll.str_consume_int(<i64>)(&line) {
             coll.darr_append(&nums, num)
             continue
         }

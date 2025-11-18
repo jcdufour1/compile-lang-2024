@@ -5,7 +5,7 @@ type Token enum(<max_cap ''i32>){
     num i32
 }
 
-fn print_max(token Token(<max_cap>), max_cap ''i32) {
+fn print_max(<max_cap ''i32>)(token Token(<max_cap>)) {
     io.print_int(max_cap)
 }
 
@@ -18,8 +18,8 @@ fn main() i32 {
     let token1 Token(<eight>) = .num(7)
 
     let token2 Token(<8>) = .num(7)
-    print_max(token2, 9)
-    print_max(token2, eight)
+    print_max(<9>)(token2)
+    print_max(<eight>)(token2)
     print_max_incorrect(token2)
 
     let token_incorrect Token_incorrect(<8>)

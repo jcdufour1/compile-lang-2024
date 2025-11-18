@@ -33,7 +33,7 @@ fn fgetc(file File) util.Optional(<u8>) {
 }
 
 fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
-    let new_str coll.Darr(<u8>) = coll.darr_new(u8)
+    let new_str coll.Darr(<u8>) = coll.darr_new(<u8>)()
     for 1 {
         if let .some(ch) = fgetc(file) {
             coll.darr_append(&new_str, ch)
@@ -59,7 +59,7 @@ fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
 }
 
 fn close_file(file File) util.Optional(<void>) {
-    util.assert(file.file != util.null(opaque), "TODO")
+    util.assert(file.file != util.null(<opaque>)(), "TODO")
     
     if 0 == c.fclose(file.file) => return .none
     return .some

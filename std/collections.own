@@ -86,8 +86,7 @@ fn arr_insert(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>)*, it
     assert(arr.count < arr.capacity, "Arr overflow", .file = file, .line = line, .column = column);
     assert(index <= arr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (arr.count - index > 0) {
-        // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&rt.buf_at(arr.buf, index + 1), &rt.buf_at(arr.buf, index), arr.count - index, ItemT);
+        util.move_items(&rt.buf_at(arr.buf, index + 1), &rt.buf_at(arr.buf, index), arr.count - index);
     }
     rt.buf_at(arr.buf, index) = item
     arr.count += 1
@@ -110,12 +109,11 @@ fn arr_remove(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>)*, in
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     arr.count -= 1
     if (arr.count - index > 0) {
-        // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&rt.buf_at(arr.buf, index), &rt.buf_at(arr.buf, index + 1), arr.count - index, ItemT);
+        util.move_items(&rt.buf_at(arr.buf, index), &rt.buf_at(arr.buf, index + 1), arr.count - index);
     }
 }
 
-fn arr_at(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), line i32 = #line, column i32 = #column) ItemT {
+fn arr_at(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), index usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
     assert(index < arr.count, "out of bounds", .file = file, .line = line, .column = column);
     return rt.buf_at(arr.buf, index)
 }
@@ -186,8 +184,7 @@ fn darr_insert(<ItemT>)(darr Darr(<ItemT>)*, item ItemT, index usize, file Str =
     darr_reserve(darr, 1);
     assert(index <= darr.count, "out of bounds", .file = file, .line = line, .column = column);
     if (darr.count - index > 0) {
-        // TODO: fix type inference bug, then remove explicit ItemT arguent here
-        util.move_items(&rt.buf_at(darr.buf, index + 1), &rt.buf_at(darr.buf, index), darr.count - index, ItemT);
+        util.move_items(&rt.buf_at(darr.buf, index + 1), &rt.buf_at(darr.buf, index), darr.count - index);
     }
     rt.buf_at(darr.buf, index) = item
     darr.count += 1
@@ -241,7 +238,7 @@ fn darr_last(<ItemT>)(darr Darr(<ItemT>), file Str = #file, line i32 = #line, co
 // TODO: return result, optional, etc. instead of crashing?
 // TODO: check for overflow
 // TODO: call str_consume_int function to reduce duplication
-fn str_to_int(str Str, file Str = #file, line i32 = #line, column i32 = #column) NumT {
+fn str_to_int(<NumT>)(str Str, file Str = #file, line i32 = #line, column i32 = #column) NumT {
     let should_neg u1 = 0
     if slice_at(str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1
@@ -299,7 +296,7 @@ fn str_consume_int(<NumT>)(str Str*, file Str = #file, line i32 = #line, column 
 
 // TODO: return result, optional, etc. instead of crashing?
 fn str_from_int(<NumT>)(num NumT, file Str = #file, line i32 = #line, column i32 = #column) Darr(<u8>) {
-    let result Darr(<u8>) = darr_new(u8)
+    let result Darr(<u8>) = darr_new(<u8>)()
     if num == 0 {
         darr_append(&result, '0')
         return result

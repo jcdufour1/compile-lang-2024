@@ -8,8 +8,8 @@ type Token struct(<NumT, StrT>) {
 }
 
 fn main() i32 {
-    let arr coll.Arr(<Token(<i32, u8*>), 1000000>) = coll.arr_new(1000000, Token(<i32, u8*>))
-    coll.arr_append(&arr, {9187, "hello"}, Token(<i32, u8*>))
-    io.printf("%s\n", coll.arr_first(arr, Token(<i32, u8*>)).string);
+    let arr coll.Arr(<Token(<i32, u8*>), 1000000>) = coll.arr_new(<Token(<i32, u8*>), 1000000>)()
+    coll.arr_append(<Token(<i32, u8*>)>)(&arr, {9187, "hello"})
+    io.printf("%s\n", coll.arr_first(<Token(<i32, u8*>)>)(arr).string);
     return 0
 }
