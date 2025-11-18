@@ -101,7 +101,7 @@ hi def link ownCharLiteral    String
 hi def link ownDelimiter      Delimiter
 hi def link ownOperator       Operator
 hi def link ownStructLike     Structure
-hi def link ownComment Comment
+hi def link ownComment        Comment
 
 hi def link ownIntTypeError Error
 hi def link ownFloatTypeError Error

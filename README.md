@@ -42,7 +42,6 @@ fn main() i32 {
 
 ### [Defer](examples/defer.own)
 ```c
-
 type coll import = std.collections
 type io import = std.io
 
@@ -53,7 +52,7 @@ fn main() i32 {
     coll.darr_append(&nums, 3)
     coll.darr_append(&nums, 7)
 
-    for idx u64 in 0..nums.count {
+    for idx usize in 0..nums.count {
         io.print_int(coll.darr_at(nums, idx))
     }
 

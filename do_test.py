@@ -425,6 +425,31 @@ def parse_args() -> Parameters:
         do_release_actual
     )
 
+
+
+# TODO: rename this function
+# WARNING: readme_ex_lines will contain lines past actual file contents 
+#   (do_something needs to check for ``` delimiter internally)
+def do_something(readme_ex_lines: list[str], actual_ex_lines, example: str) -> None:
+    actual_is_too_small: bool = False
+
+    idx_readme: int = 0
+    while not readme_ex_lines[idx_readme].startswith("```"):
+        if idx_readme >= len(actual_ex_lines):
+            actual_is_too_small = True
+
+        if not actual_is_too_small and (readme_ex_lines[idx_readme] != actual_ex_lines[idx_readme]):
+            print_error("line " + str(idx_readme + 1) + " of \"" + example + "\" is different in the README than in the actual file")
+            sys.exit(1)
+        idx_readme += 1
+        if idx_readme >= len(readme_ex_lines):
+            print_error("could not find \"```\" delimiter for \"" + example + "\" in README")
+            sys.exit(1)
+
+    if actual_is_too_small or idx_readme != len(actual_ex_lines):
+        print_error("\"" + example + "\" is " + str(idx_readme) + " lines long in the README, but " + str(len(actual_ex_lines)) + " lines long in the actual file")
+        sys.exit(1)
+
 def main() -> None:
     params: Parameters = parse_args()
 
@@ -432,6 +457,20 @@ def main() -> None:
         do_tests(True, params)
     if params.do_release_internal:
         do_tests(False, params)
+
+    examples_in_readme: list[str] = ["examples/optional.own", "examples/defer.own"]
+    for example in examples_in_readme:
+        with open("README.md", "r") as file:
+            lines = file.readlines() 
+            for idx, line in enumerate(lines):
+                if not example in line:
+                    continue
+                if not lines[idx + 1].startswith("```c"):
+                    print_error("\"```c\" is expected on line immediately after the line that contains \"" + example + "\"")
+                idx_exam = idx + 2
+                with open(example, "r") as actual_example_file:
+                    actual_ex_lines = actual_example_file.readlines()
+                    do_something(lines[idx_exam:], actual_ex_lines, example)
 
     print_success("all tests passed")
 
