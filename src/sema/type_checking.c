@@ -2512,28 +2512,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
-        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            todo();
-            //bool found_gen = false;
-            //for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
-            //    if (strv_is_equal(
-            //        vec_at(fun_decl_temp->generics, idx_gen)->name.base,
-            //        param->base->name.base
-            //    )) {
-            //        if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
-            //            status = false;
-            //            goto error;
-            //        }
-            //        found_gen = true;
-            //        break;
-            //    }
-            //}
-
-            //if (!found_gen) {
-            //    todo();
-            //}
-        }
-
         if (curr_arg_count <= new_args_set.info.count && vec_at(new_args_set, curr_arg_count)) {
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
@@ -2850,16 +2828,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             );
             corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
             bool name_found = false;
-            size_t local_gen_count = 0;
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
-                if (vec_at(params->params, idx_param)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-                    todo();
-                    local_gen_count++;
-                }
-
                 if (strv_is_equal(vec_at(params->params, idx_param)->base->name.base, lhs->member_name->name.base)) {
                     param = vec_at(params->params, idx_param);
-                    curr_arg_count = idx_param - local_gen_count;
+                    curr_arg_count = idx_param;
                     name_found = true;
 
                     if (vec_at(new_args_set, curr_arg_count)) {
@@ -2876,12 +2848,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         log(LOG_DEBUG, FMT"\n", uast_param_print(param));
-        if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            // do not append generics to the new list of arguments
-            todo();
-            continue;
-        }
-
         Tast_expr* new_arg = NULL;
 
         Lang_type param_lang_type = {0};
@@ -2960,10 +2926,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     } else {
         unwrap(new_args_set.info.count == new_args.info.count);
         for (size_t idx = 0; idx < params->params.info.count; idx++) {
-            if (vec_at(params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-                continue;
-            }
-
             Lang_type param_lang_type = {0};
             if (!try_lang_type_from_ulang_type(&param_lang_type, vec_at(params->params, idx)->base->lang_type)) {
                 status = false;
@@ -3645,11 +3607,6 @@ bool try_set_function_params_types(
     Tast_variable_def_vec new_params = {0};
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Uast_param* def = vec_at(params->params, idx);
-        if (def->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            // do not add generic parameters to the new function parameters
-            continue;
-        }
-
         Tast_variable_def* new_def = NULL;
         if (try_set_variable_def_types(&new_def, def->base, add_to_sym_tbl, def->is_variadic)) {
             vec_append(&a_main, &new_params, new_def);

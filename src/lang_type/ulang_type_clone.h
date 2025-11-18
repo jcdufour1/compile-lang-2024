@@ -13,10 +13,6 @@ static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_n
     return new_vec;
 }
 
-static inline Ulang_type_gen_param ulang_type_gen_param_clone(Ulang_type_gen_param lang_type) {
-    return ulang_type_gen_param_new(lang_type.pos);
-}
-
 static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
     return ulang_type_expr_new(
         uast_expr_clone(lang_type.expr, false, 0, uast_expr_get_pos(lang_type.expr)),
@@ -78,10 +74,6 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
         case ULANG_TYPE_ARRAY:
             return ulang_type_array_const_wrap(ulang_type_array_clone(
                 ulang_type_array_const_unwrap(lang_type), use_new_scope, new_scope
-            ));
-        case ULANG_TYPE_GEN_PARAM:
-            return ulang_type_gen_param_const_wrap(ulang_type_gen_param_clone(
-                ulang_type_gen_param_const_unwrap(lang_type)
             ));
         case ULANG_TYPE_EXPR:
             return ulang_type_expr_const_wrap(ulang_type_expr_clone(

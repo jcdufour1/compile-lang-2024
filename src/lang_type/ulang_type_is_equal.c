@@ -27,9 +27,6 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
         case ULANG_TYPE_FN:
             // TODO
             todo();
-        case ULANG_TYPE_GEN_PARAM:
-            // TODO
-            todo();
         case ULANG_TYPE_EXPR: {
             Ulang_type a_inner = {0};
             Ulang_type b_inner = {0};

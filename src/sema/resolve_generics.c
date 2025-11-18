@@ -644,9 +644,7 @@ bool resolve_generics_function_def_call(
             generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
             for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
                 Uast_param* param = vec_at(decl->params->params, idx_param);
-                if (param->base->lang_type.type != ULANG_TYPE_GEN_PARAM) {
-                    generic_sub_param(param, gen_param, gen_arg);
-                }
+                generic_sub_param(param, gen_param, gen_arg);
             }
         }
     }

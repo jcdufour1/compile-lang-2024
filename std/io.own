@@ -74,13 +74,13 @@ fn print_str(str coll.Str, end coll.Str = "\n") {
     print_str_internal__(end)
 }
 
-fn print_float(num NumT, end coll.Str = "\n", NumT Type) {
+fn print_float(<NumT>)(num NumT, end coll.Str = "\n") {
     let cond u1 = num < 0.1 // this condition is to give errors for using non float type (for now)
     own_printf("%f", num)
     print_str_internal__(end)
 }
 
-fn print_int(num NumT, end coll.Str = "\n", NumT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+fn print_int(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line i32 = #line, column i32 = #column) {
     let cond u1 = num < 1 // this condition is to give errors for using non int type (for now)
     util.assert(sizeof(num) <= 8, "bit widths larger than 8 not implemented", .file = file, .line = line, .column = column)
     own_printf("%lld", unsafe_cast<i64>num)

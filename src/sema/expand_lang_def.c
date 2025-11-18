@@ -216,10 +216,6 @@ bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
             *lang_type = ulang_type_tuple_const_wrap(new_lang_type);
             return true;
         }
-        case ULANG_TYPE_GEN_PARAM: {
-            // TODO: actually implement this if needed
-            return true;
-        }
         case ULANG_TYPE_REMOVED:
             return true;
         case ULANG_TYPE_EXPR: {

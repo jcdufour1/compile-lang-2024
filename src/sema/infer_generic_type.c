@@ -74,9 +74,6 @@ bool infer_generic_type(
         case ULANG_TYPE_FN:
             // TODO
             return false;
-        case ULANG_TYPE_GEN_PARAM:
-            // TODO
-            return false;
         case ULANG_TYPE_ARRAY:
             // TODO
             return false;

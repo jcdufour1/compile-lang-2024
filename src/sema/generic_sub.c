@@ -74,17 +74,6 @@ void generic_sub_lang_type_regular(
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
-void generic_sub_lang_type_gen_param(
-    Ulang_type* new_lang_type,
-    Ulang_type_gen_param lang_type,
-    Name gen_param,
-    Ulang_type gen_arg
-) {
-    (void) gen_param;
-    (void) gen_arg;
-    *new_lang_type = ulang_type_gen_param_const_wrap(lang_type);
-}
-
 void generic_sub_lang_type_expr(
     Ulang_type* new_lang_type,
     Ulang_type_expr lang_type,
@@ -137,14 +126,6 @@ void generic_sub_lang_type(
         }
         case ULANG_TYPE_TUPLE:
             msg_todo("", ulang_type_get_pos(lang_type));
-            return;
-        case ULANG_TYPE_GEN_PARAM:
-            generic_sub_lang_type_gen_param(
-                new_lang_type,
-                ulang_type_gen_param_const_unwrap(lang_type),
-                gen_param,
-                gen_arg
-            );
             return;
         case ULANG_TYPE_EXPR:
             generic_sub_lang_type_expr(
@@ -575,8 +556,6 @@ GEN_SUB_NAME_STATUS generic_sub_name(
                 }
                 return GEN_SUB_NAME_ERROR;
             }
-            case ULANG_TYPE_GEN_PARAM:
-                unreachable("generic sub name should not be called with generic_parameter lang_type (lang_type should be substituted first)");
             case ULANG_TYPE_INT:
                 *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
                 return GEN_SUB_NAME_NEW_INT;
