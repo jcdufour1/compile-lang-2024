@@ -367,6 +367,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_FUNCTION_DEF: {
             Lang_type_fn new_lang_type = {0};
             Name new_name = {0};
+            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
@@ -2414,11 +2415,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
-    Ulang_type_vec new_gens = {0};
+    Ulang_type_vec new_gens = sym_name->gen_args;
     vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
-    while (new_gens.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &new_gens, ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(POS_BUILTIN)));
-    }
 
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
@@ -2648,6 +2646,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(fun_call->callee));
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
@@ -2824,9 +2823,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     // TODO: consider case of optional arguments and variadic arguments being used in same function
-    size_t prev_gen_count = 0;
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
-        size_t curr_arg_count = param_idx - prev_gen_count;
+        size_t curr_arg_count = param_idx;
         // TODO: use function try_set_struct_literal_member_types to reduce code duplication?
         Uast_param* param = vec_at(params->params, param_idx);
         Uast_expr* corres_arg = NULL;
@@ -2840,7 +2838,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
         } else {
-            todo();
             // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, param_idx + 1, param_idx + 1);
             status = false;
@@ -2857,6 +2854,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             size_t local_gen_count = 0;
             for (size_t idx_param = 0; idx_param < params->params.info.count; idx_param++) {
                 if (vec_at(params->params, idx_param)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                    todo();
                     local_gen_count++;
                 }
 
@@ -2878,9 +2876,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
+        log(LOG_DEBUG, FMT"\n", uast_param_print(param));
         if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            prev_gen_count++;
             // do not append generics to the new list of arguments
+            todo();
             continue;
         }
 

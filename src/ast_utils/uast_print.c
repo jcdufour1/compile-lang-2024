@@ -51,9 +51,6 @@ Strv uast_symbol_print_internal(const Uast_symbol* sym, Indent indent) {
     string_extend_cstr_indent(&a_temp, &buf, "symbol_untyped", indent);
     extend_pos(&buf, sym->pos);
     extend_name(NAME_LOG, &buf, sym->name);
-    for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
-        extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(sym->name.gen_args, idx));
-    }
     string_extend_cstr(&a_temp, &buf, "\n");
 
     return string_to_strv(buf);
