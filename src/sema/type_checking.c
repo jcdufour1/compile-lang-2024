@@ -2446,7 +2446,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, false, 0/* fun_name.scope_id TODO */, fun_call->pos);
         } else {
-            todo();
             // TODO: print max count correctly for variadic functions
             msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, param_idx + 1, param_idx + 1);
             status = false;
@@ -2519,6 +2518,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 "function parameter `"FMT"` has been assigned to more than once\n", 
                 name_print(NAME_MSG, vec_at(params->params, curr_arg_count)->base->name)
             );
+            // TODO: print pos of original assignment here?
             msg(
                 DIAG_NOTE,
                 fun_decl_temp->pos,
@@ -2623,7 +2623,28 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(fun_call->callee));
+    {
+        vec_foreach(idx, bool, is_set, new_args_set) {
+            if (!is_set && !vec_at(params->params, idx)->is_optional) {
+                msg(
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
+                    "argument to function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                status = false;
+            }
+        }
+        if (!status) {
+            goto error;
+        }
+    }
+
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
