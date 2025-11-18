@@ -2338,18 +2338,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
     }
 
-    if (fun_call->is_user_generated) {
-        assert(
-            sym_name->gen_args.info.count == 0 &&
-            "generics are already instanciated, and they should not have been"
-        );
-    }
-    sym_name->gen_args = (Ulang_type_vec) {0};
-
     bool status = true;
 
+    Name sym_name_plain = *sym_name;
+    sym_name_plain.gen_args = (Ulang_type_vec) {0};
     Uast_def* fun_decl_temp_ = NULL;
-    if (!usymbol_lookup(&fun_decl_temp_, *sym_name)) {
+    if (!usymbol_lookup(&fun_decl_temp_, sym_name_plain)) {
         Tast_expr* dummy = NULL;
         unwrap(
             !try_set_expr_types(&dummy, fun_call->callee) &&
@@ -2820,7 +2814,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Tast_expr_vec new_args = {0};
     memset(&new_args_set, 0, sizeof(new_args_set));
-    amt_args_needed -= fun_decl->generics.info.count;
     vec_reserve(&a_main, &new_args, amt_args_needed);
     while (new_args.info.count < amt_args_needed) {
         vec_append(&a_main, &new_args, NULL);
