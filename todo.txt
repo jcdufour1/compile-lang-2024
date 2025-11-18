@@ -101,6 +101,7 @@ for generics:
     -- make Name be stored as pointer or offset in structs instead of by value?
     -- better arena management
     -- use views instead of vecs in ast and ir nodes?
+    -- tokenizer could tokenize as parsing happens (with look ahead of about 3 tokens) instead of getting all tokens of file at once
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing

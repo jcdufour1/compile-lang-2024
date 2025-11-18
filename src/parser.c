@@ -1094,6 +1094,10 @@ static PARSE_STATUS parse_function_decl_common(
     Token name_token = consume(tokens);
 
     Uast_generic_param_vec gen_params = {0};
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
+        parse_generics_params(&gen_params, tokens, block_scope);
+    }
+
     if (!consume_expect(NULL, tokens,  " in function decl", TOKEN_OPEN_PAR)) {
         return PARSE_ERROR;
     }
@@ -1982,11 +1986,6 @@ static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
-    if (callee->type == UAST_SYMBOL && uast_symbol_unwrap(callee)->name.gen_args.info.count > 0) {
-        msg(DIAG_WRONG_GEN_TYPE, uast_expr_get_pos(callee), "`(<` and `>)` should not be used on function callee\n");
-        return PARSE_ERROR;
-    }
-
     bool is_first_time = true;
     bool prev_is_comma = false;
     Uast_expr_vec args = {0};
