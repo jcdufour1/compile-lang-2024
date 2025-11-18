@@ -137,7 +137,8 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
     }
 
     if (lang_type.type == LANG_TYPE_PRIMITIVE) {
-        unwrap(!strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, sv("void")));
+        // TODO: uncomment this?
+        //unwrap(!strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, sv("void")));
     }
 
     switch (lang_type.type) {
@@ -179,17 +180,23 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_RAW_UNION:
             fallthrough;
         case LANG_TYPE_STRUCT:
-            assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
+            // TODO: uncomment below assert?
+            //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
             // TODO: figure out why __attribute__((fallthrough)); is needed in only this one place
             //   when compiling with clang? Figure out if __attribute__((fallthrough)) should
             //   be used everywhere
             fallthrough;
-        case LANG_TYPE_VOID:
-            extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
+        case LANG_TYPE_VOID: {
+            Lang_type_atom atom = {0};
+            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
+            extend_lang_type_atom(string, mode, atom);
             goto end;
+        }
         case LANG_TYPE_PRIMITIVE: {
             Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
-            extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
+            Lang_type_atom atom = {0};
+            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
+            extend_lang_type_atom(string, mode, atom);
             unwrap(base.count >= 1);
             goto end;
         }
