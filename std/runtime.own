@@ -13,7 +13,7 @@ fn slice_at_ref(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = 
 
 extern("c") fn strlen(cstr u8*) u64
 
-fn bitwise_not(<ItemT>)(num NumT) NumT {
+fn bitwise_not(<NumT>)(num NumT) NumT {
     return unsafe_cast<NumT>(-1)^num
 }
 

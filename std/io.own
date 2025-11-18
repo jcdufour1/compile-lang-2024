@@ -54,7 +54,7 @@ fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
     defer util.cstr_free(cstr_opts)
     
     let ptr opaque* = c.fopen(cstr_path, cstr_opts)
-    if ptr == util.null(opaque) => return .none
+    if ptr == util.null(<opaque>)() => return .none
     return .some({ptr})
 }
 

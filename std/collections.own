@@ -10,14 +10,14 @@ type Str def = u8[]
 
 fn slice_range(<ItemT>)(slice ItemT[], start usize, count usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     if count < 1 {
-        return {util.null(ItemT), 0}
+        return {util.null(<ItemT>)(), 0}
     }
     assert(start < slice.count && start + count <= slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return {&rt.buf_at(slice.buf, start), count}
 }
 
 fn slice_at(<ItemT>)(slice ItemT[], index usize, file Str = #file, line i32 = #line, column i32 = #column) ItemT {
-    return *slice_at_ref(slice, index, ItemT, file, line, column)
+    return *slice_at_ref(slice, index, file, line, column)
 }
 
 type slice_at_ref def = rt.slice_at_ref 
@@ -60,7 +60,7 @@ type Arr struct(<ItemT, capacity ''usize>) {
 }
 
 fn arr_new(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT, max_capacity>) {
-    let arr Arr(<ItemT, max_capacity>) = {util.alloc(max_capacity, ItemT), 0}
+    let arr Arr(<ItemT, max_capacity>) = {util.alloc(<ItemT>)(max_capacity), 0}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
@@ -77,9 +77,8 @@ fn arr_slice(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), star
 }
 
 fn arr_free(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>)*) {
-    // TODO: remove ItemT explicit parameter below when possible
-    util.free(arr.buf, ItemT);
-    arr.buf = util.null(ItemT) 
+    util.free(arr.buf);
+    arr.buf = util.null(<ItemT>)() 
     arr.count = 0
 }
 
@@ -102,7 +101,7 @@ fn arr_append(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>)*, it
 
 fn arr_extend(<ItemT, max_capacity ''usize>)(dest Arr(<ItemT, max_capacity>)*, src ItemT[], file Str = #file, line i32 = #line, column i32 = #column) {
     for idx usize in 0..src.count {
-        arr_append(dest, src[idx], ItemT, .file = file, .line = line, .column = column)
+        arr_append(dest, src[idx], .file = file, .line = line, .column = column)
     }
 }
 

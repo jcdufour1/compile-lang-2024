@@ -17,7 +17,7 @@ The language design and implementation are not finished. Breaking changes will o
 type util import = std.util
 type io import = std.io
 
-fn divide(lhs NumT, rhs NumT, NumT Type) util.Optional(<NumT>) {
+fn divide(<NumT>)(lhs NumT, rhs NumT) util.Optional(<NumT>) {
     if rhs == 0 => return .none
     return .some(lhs/rhs)
 }

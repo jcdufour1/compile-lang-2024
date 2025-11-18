@@ -2,7 +2,7 @@
 type io import = std.io
 type util import = std.util
 
-fn add_one_or_two_default(lhs ItemType, rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
+fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -12,7 +12,7 @@ fn add_one_or_two_default(lhs ItemType, rhs util.Optional(<ItemType>) = .none, I
     return lhs
 }
 
-fn add_one_or_two_default_2(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none, ItemType Type) ItemType {
+fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {
         case .some(rhs_val): {
             if let .some(lhs_val) = lhs {
@@ -40,7 +40,7 @@ fn main() i32 {
     io.printf("test 110: got number %d\n", add_one_or_two_default_2(835, opt110))
 
     let opt111 util.Optional(<i32>) = .some(838)
-    io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt111, u32))
+    io.printf("test 111: got number %d\n", add_one_or_two_default_2(<u32>)(.some(14), opt111))
     return 0
 }
 

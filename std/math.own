@@ -1,17 +1,17 @@
 type util import = std.util
 type c import = std.libc
 
-fn min(<ItemT>)(lhs NumT, rhs NumT) NumT {
+fn min(<NumT>)(lhs NumT, rhs NumT) NumT {
     if lhs < rhs => return lhs
     return rhs
 }
 
-fn max(<ItemT>)(lhs NumT, rhs NumT) NumT {
+fn max(<NumT>)(lhs NumT, rhs NumT) NumT {
     if lhs > rhs => return lhs
     return rhs
 }
 
-fn abs(<ItemT>)(num NumT) NumT {
+fn abs(<NumT>)(num NumT) NumT {
     if num < unsafe_cast<NumT>0 {
         // TODO: "-num" should be allowed for floating point types
         return unsafe_cast<NumT>0 - num

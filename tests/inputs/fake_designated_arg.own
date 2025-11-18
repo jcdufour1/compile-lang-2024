@@ -10,17 +10,17 @@ type Local_arr struct(<ItemT>) {
     max u64
 }
 
-fn arr_new(max_capacity u64, ItemT Type, init_elems coll.Slice(<ItemT>) = [], file coll.Str = #file, line i32 = #line, column i32 = #column) Local_arr(<ItemT>) {
-    let arr Local_arr(<ItemT>) = {util.alloc(max_capacity, ItemT), 0, max_capacity}
+fn arr_new(<ItemT>)(max_capacity u64, init_elems coll.Slice(<ItemT>) = [], file coll.Str = #file, line i32 = #line, column i32 = #column) Local_arr(<ItemT>) {
+    let arr Local_arr(<ItemT>) = {util.alloc(<ItemT>)(max_capacity), 0, max_capacity}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
-fn arr_extend(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), ItemT Type, file coll.Str = #file, line i32 = #line, column i32 = #column) {
+fn arr_extend(<ItemT>)(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), file coll.Str = #file, line i32 = #line, column i32 = #column) {
 }
 
 fn main() i32 {
-    let arr Local_arr(<i32>) = arr_new(87, i32)
+    let arr Local_arr(<i32>) = arr_new(<i32>)(87)
     arr_extend(&arr, [], .file = file, column = 8)
     return 0
 }

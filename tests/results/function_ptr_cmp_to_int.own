@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/function_ptr_cmp_to_int.own:9:12:[1;31merror[0;39m:types `i32` and `fn()i32` are not valid operands to binary expression
+     8 | 
+     9 |     if num == add {
+       |            ^
+    10 |     }
+
+compile::return_code 1
+

@@ -11,14 +11,14 @@ fn main() i32 {
     let ptr i32* = &num
     let ptr_ptr i32** = &ptr
 
-    let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token*, [util.null(Token)])
-    *coll.arr_at_ref(arr, 0) = util.alloc(1, Token)
+    let arr coll.Arr(<Token*, 1>) = coll.arr_new(<Token*, 1>)([util.null(<Token>)()])
+    *coll.arr_at_ref(arr, 0) = util.alloc(<Token>)(1)
     coll.arr_at_ref(arr, 0).num = 9
 
     io.print_int(coll.arr_at_ref(arr, 0).num)
 
-    let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token**, [util.null(Token*)])
-    let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token***, [util.null(Token**)])
+    let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(<Token**, 1>)([util.null(<Token*>)()])
+    let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(<Token***, 1>)([util.null(<Token**>)()])
 
     return 0
 }
