@@ -26,13 +26,13 @@ fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
 fn calculate(line Str) {
     let old_line Str = line
 
-    let nums Darr(<i64>) = coll.darr_new(<i64>)()
+    let nums = coll.darr_new(<i64>)()
     defer coll.darr_free(&nums)
 
     for line.count > 0 {
         assert(!is_whitespace('-'))
 
-        let amt_consumed u64 = old_line.count - line.count
+        let amt_consumed = old_line.count - line.count
 
         if let .some(ch) = coll.slice_consume(&line, '\n') {
             assert(line.count == 0)
@@ -43,42 +43,42 @@ fn calculate(line Str) {
 
         if let .some(ch) = coll.slice_consume(&line, '+') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = coll.darr_pop(&nums) + coll.darr_pop(&nums)
+            let result = coll.darr_pop(&nums) + coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '-') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = coll.darr_pop(&nums) - coll.darr_pop(&nums)
+            let result = coll.darr_pop(&nums) - coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '/') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = coll.darr_pop(&nums)/coll.darr_pop(&nums)
+            let result = coll.darr_pop(&nums)/coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '*') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = coll.darr_pop(&nums)*coll.darr_pop(&nums)
+            let result = coll.darr_pop(&nums)*coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '%') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = coll.darr_pop(&nums)%coll.darr_pop(&nums)
+            let result = coll.darr_pop(&nums)%coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '^') => {
             if !check_stack(amt_consumed, nums.count, 2) => return
-            let result i64 = math.pow(coll.darr_pop(&nums), coll.darr_pop(&nums))
+            let result = math.pow(coll.darr_pop(&nums), coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
             continue
         }

@@ -110,6 +110,8 @@ for generics:
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
 - append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
+- in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
+     be able to remove u64. fix bug that prevents it from being possible.
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
