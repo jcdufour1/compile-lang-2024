@@ -2415,8 +2415,21 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
-    Ulang_type_vec new_gens = sym_name->gen_args;
-    vec_reserve(&a_main, &new_gens, fun_decl_temp->generics.info.count);
+    size_t amt_gen_args_needed = fun_decl_temp->generics.info.count;
+
+    Bool_vec new_gen_args_set = {0};
+    vec_reserve(&a_main, &new_gen_args_set, amt_args_needed);
+    while (new_gen_args_set.info.count < sym_name->gen_args.info.count) {
+        todo();
+        vec_append(&a_main, &new_gen_args_set, true);
+    }
+    while (new_gen_args_set.info.count < amt_gen_args_needed) {
+        vec_append(&a_main, &new_gen_args_set, false);
+    }
+
+    while (sym_name->gen_args.info.count < fun_decl_temp->generics.info.count) {
+        vec_append(&a_main, &sym_name->gen_args, ulang_type_removed_const_wrap(ulang_type_removed_new(0, fun_call->pos)));
+    }
 
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
@@ -2501,27 +2514,26 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         if (param->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            bool found_gen = false;
-            for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
-                if (strv_is_equal(
-                    vec_at(fun_decl_temp->generics, idx_gen)->name.base,
-                    param->base->name.base
-                )) {
-                    if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
-                        status = false;
-                        goto error;
-                    }
-                    found_gen = true;
-                    break;
-                }
-            }
+            todo();
+            //bool found_gen = false;
+            //for (size_t idx_gen = 0; idx_gen < fun_decl_temp->generics.info.count; idx_gen++) {
+            //    if (strv_is_equal(
+            //        vec_at(fun_decl_temp->generics, idx_gen)->name.base,
+            //        param->base->name.base
+            //    )) {
+            //        if (!uast_expr_to_ulang_type(vec_at_ref(&new_gens, idx_gen), corres_arg)) {
+            //            status = false;
+            //            goto error;
+            //        }
+            //        found_gen = true;
+            //        break;
+            //    }
+            //}
 
-            if (!found_gen) {
-                todo();
-            }
+            //if (!found_gen) {
+            //    todo();
+            //}
         }
-
-        sym_name->gen_args = new_gens;
 
         if (curr_arg_count <= new_args_set.info.count && vec_at(new_args_set, curr_arg_count)) {
             msg(
@@ -2568,23 +2580,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         goto error;
     }
 
-    size_t idx_gen_param = 0;
-    bool incre_param_next = false;
-    for (size_t idx = 0; status && idx < params->params.info.count; idx++) {
-        if (incre_param_next) {
-            idx_gen_param++;
-        }
-        incre_param_next = false;
-        if (vec_at(params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-            incre_param_next = true;
-        }
-
-        if (!vec_at(new_args_set, idx)) {
-            if (vec_at(params->params, idx)->is_optional) {
-                continue;
-            }
-
-            Name param_name = vec_at(params->params, idx)->base->name;
+    Uast_generic_param_vec gen_params = fun_decl_temp->generics;
+    for (size_t gen_idx = 0; status && gen_idx < gen_params.info.count; gen_idx++) {
+        if (!vec_at(new_gen_args_set, gen_idx)) {
+            Name param_name = vec_at(gen_params, gen_idx)->name;
             if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
                 size_t max_args = params->params.info.count;
@@ -2593,17 +2592,18 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
                 msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, min_args, max_args);
             } else {
-                if (vec_at(params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
+                if (1) {
                     bool infer_success = false;
-                    for (size_t param_idx = 0; status && param_idx < min(idx, fun_call->args.info.count); param_idx++) {
+                    for (size_t param_idx = 0; status && param_idx < fun_call->args.info.count; param_idx++) {
                         Tast_expr* arg_to_infer_from = NULL;
 
                         bool old_supress_type_infer = env.supress_type_inference_failures;
                         env.supress_type_inference_failures = true;
                         uint32_t old_error_count = env.error_count;
                         if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
+                            log(LOG_DEBUG, "%zu\n", gen_idx);
                             if (infer_generic_type(
-                                vec_at_ref(&sym_name->gen_args, idx_gen_param),
+                                vec_at_ref(&sym_name->gen_args, gen_idx),
                                 lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
                                 arg_to_infer_from->type == TAST_LITERAL,
                                 vec_at(params->params, param_idx)->base->lang_type,
@@ -2631,14 +2631,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
                 msg(
                     DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
-                    "function parameter `"FMT"` was not specified\n",
+                    "argument to generic function parameter `"FMT"` was not specified\n",
                     name_print(NAME_MSG, param_name)
                 );
                 msg(
                     DIAG_NOTE,
-                    vec_at(params->params, idx)->pos,
-                    "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                    vec_at(gen_params, gen_idx)->pos,
+                    "generic function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(gen_params, gen_idx)->name)
                 );
             }
             status = false;
@@ -2960,10 +2960,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     } else {
         unwrap(new_args_set.info.count == new_args.info.count);
-        size_t gen_arg_count = 0;
         for (size_t idx = 0; idx < params->params.info.count; idx++) {
             if (vec_at(params->params, idx)->base->lang_type.type == ULANG_TYPE_GEN_PARAM) {
-                gen_arg_count++;
                 continue;
             }
 
@@ -2973,26 +2971,26 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 goto error;
             }
 
-            if (!vec_at(new_args_set, idx - gen_arg_count)) {
+            if (!vec_at(new_args_set, idx)) {
                 // TODO: move error for function parameter unspecified to here?
                 if (vec_at(params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
-                    *vec_at_ref(&new_args_set, idx - gen_arg_count) = true;
+                    *vec_at_ref(&new_args_set, idx) = true;
                     // TODO: expected failure case for invalid optional_default
                     Uast_expr* new_default_ = uast_expr_clone(vec_at(params->params, idx)->optional_default, false, 0/*fun_name.scope_id TODO */, fun_call->pos);
                     switch (check_general_assignment(
                         &check_env,
-                        vec_at_ref(&new_args, idx - gen_arg_count),
+                        vec_at_ref(&new_args, idx),
                         param_lang_type,
                         new_default_,
                         uast_expr_get_pos(new_default_)
                     )) {
                         case CHECK_ASSIGN_OK:
-                            assert(vec_at(new_args, idx - gen_arg_count));
+                            assert(vec_at(new_args, idx));
                             break;
                         case CHECK_ASSIGN_INVALID:
                             msg_invalid_function_arg(
-                                vec_at(new_args, idx - gen_arg_count),
+                                vec_at(new_args, idx),
                                 vec_at(params->params, idx)->base,
                                 is_fun_callback
                             );
