@@ -391,24 +391,28 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                     Ulang_type_fn fn = ulang_type_fn_const_unwrap(lhs_lang_type);
 
                     if (fn.params.ulang_types.info.count != fun_def->decl->params->params.info.count) {
-                        // TODO: better error message?
                         msg(
                             DIAG_INVALID_COUNT_FUN_ARGS,
                             sym_untyped->pos,
-                            "function callback type has a different count of function arguments "
-                            "than the corresponding function\n"
+                            "function symbol `"FMT"` has %zu function parameters, but "
+                            "the corresponding variable definition has %zu function parameters\n",
+                            name_print(NAME_MSG, sym_untyped->name),
+                            fun_def->decl->params->params.info.count,
+                            fn.params.ulang_types.info.count
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            fn.pos,
+                            "corresponding variable definition defined here\n"
                         );
                         msg(
                             DIAG_NOTE,
                             fun_def->pos,
-                            "function definition `"FMT"` defined here\n",
+                            "function symbol `"FMT"` defined here\n",
                             name_print(NAME_MSG, fun_def->decl->name)
                         );
-                        todo();
                         return false;
                     }
-                    log(LOG_DEBUG, FMT"\n", uast_symbol_print(sym_untyped));
-                    log(LOG_DEBUG, FMT"\n", uast_function_def_print(fun_def));
 
                     vec_foreach(gen_idx, Uast_generic_param*, gen_param, fun_def->decl->generics) {
                         if (gen_idx < sym_untyped->name.gen_args.info.count) {
