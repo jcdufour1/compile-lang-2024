@@ -420,7 +420,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         }
 
                         bool did_infer = false;
-                        bool status = true;
 
                         vec_foreach(param_idx, Uast_param*, param, fun_def->decl->params->params) {
                             if (did_infer) {
@@ -443,15 +442,12 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                                 did_infer = true;
                             }
                             env.supress_type_inference_failures = old_supress_type_infer;
-                            status = old_error_count == env.error_count && status;
-                            if (!status) {
-                                todo();
+                            if (old_error_count != env.error_count) {
                                 return false;
                             }
                         }
 
                         if (!did_infer) {
-                            // print error for unspecified generic arg
                             msg(
                                 DIAG_FUNCTION_PARAM_NOT_SPECIFIED, sym_untyped->pos,
                                 "argument to generic function parameter `"FMT"` was not specified\n",
@@ -1483,10 +1479,14 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 return false;
             }
 
-            return try_set_symbol_types(new_tast, uast_symbol_new(
-                uast_expr_get_pos(uast),
-                lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)
-            ), is_from_check_assign);
+            return try_set_symbol_types(
+                new_tast,
+                uast_symbol_new(
+                    uast_expr_get_pos(uast),
+                    lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)
+                ),
+                is_from_check_assign
+            );
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast))) {
@@ -3760,13 +3760,6 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     Lang_type rtn_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&rtn_lang_type, env.parent_fn_rtn_type)) {
         return false;
-    }
-
-    static uint64_t count = 0;
-    count++;
-    if (count > 2) {
-        //log(LOG_DEBUG, FMT"\n", uast_expr_print(rtn->child));
-        //__asm__("int3");
     }
 
     Tast_expr* new_child = NULL;
