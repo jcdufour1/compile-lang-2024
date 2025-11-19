@@ -1918,17 +1918,23 @@ bool try_set_function_call_builtin_types(
     unreachable("");
 }
 
-bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
-    Tast_expr* new_callee = NULL;
-    if (!try_set_expr_types(&new_callee, fun_call->callee)) {
-        return false;
-    }
+typedef enum {
+    FUN_MIDDLE_RTN_NOW,
+    FUN_MIDDLE_NORMAL,
+    FUN_MIDDLE_ERROR,
 
-    bool status = true;
+    // for static asserts
+    FUN_MIDDLE_COUNT,
+} FUN_MIDDLE_STATUS;
 
-    Name fun_name = {0};
-    Uast_function_decl* fun_decl = NULL;
-    bool is_fun_callback = false;
+static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
+    Uast_function_decl** fun_decl,
+    Tast_expr** new_call,
+    bool* is_fun_callback,
+    Name* fun_name,
+    Tast_expr* new_callee,
+    Uast_function_call* fun_call
+) {
     switch (new_callee->type) {
         case TAST_ENUM_CALLEE: {
             // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
@@ -1937,7 +1943,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     DIAG_MISSING_ENUM_ARG, tast_enum_callee_unwrap(new_callee)->pos,
                     "() in enum case has no argument; add argument in () or remove ()\n"
                 );
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             if (fun_call->args.info.count > 1) {
                 msg(
@@ -1945,7 +1951,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             if (tast_enum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
                 unreachable("enum symbol with void callee should have been converted to TAST_ENUM_LIT instead of TAST_ENUM_CALLEE in try_set_symbol_types");
@@ -1962,7 +1968,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 &memb_lang_type,
                 vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
             )) {
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
 
             Tast_expr* new_item = NULL;
@@ -1982,11 +1988,9 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, memb_lang_type)
                     );
-                    status = false;
-                    break;
+                    return FUN_MIDDLE_ERROR;
                 case CHECK_ASSIGN_ERROR:
-                    status = false;
-                    break;
+                    return FUN_MIDDLE_ERROR;
                 default:
                     unreachable("");
             }
@@ -2000,21 +2004,21 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 enum_callee->enum_lang_type
             );
             *new_call = tast_literal_wrap(tast_enum_lit_wrap(new_lit));
-            return status;
+            return FUN_MIDDLE_RTN_NOW;
         }
         case TAST_ENUM_CASE: {
             // TAST_ENUM_CASE is for switch cases
             // TODO: can these checks be shared with TAST_ENUM_CALLEE?
             if (tast_enum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
                 msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             if (fun_call->args.info.count < 1) {
                 msg(
                     DIAG_MISSING_ENUM_ARG, tast_enum_case_unwrap(new_callee)->pos,
                     "() in enum case has no argument; add argument in () or remove ()\n"
                 );
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             if (fun_call->args.info.count > 1) {
                 msg(
@@ -2022,55 +2026,86 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             Tast_enum_case* new_case = NULL;
             if (!try_set_function_call_types_enum_case(&new_case, fun_call->args, tast_enum_case_unwrap(new_callee))) {
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
             *new_call = tast_enum_case_wrap(new_case);
-            return status;
+            return FUN_MIDDLE_RTN_NOW;
         }
         case TAST_LITERAL: {
             if (tast_literal_unwrap(new_callee)->type == TAST_ENUM_LIT) {
                 // TAST_ENUM_LIT in function callee means that the user used () with void enum varient in right hand side of assignment
                 msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
-                return false;
+                return FUN_MIDDLE_ERROR;
             } else if (tast_literal_unwrap(new_callee)->type == TAST_FUNCTION_LIT) {
-                fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
-                unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
-                break;
+                *fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
+                unwrap(function_decl_tbl_lookup(fun_decl, *fun_name));
+                return FUN_MIDDLE_NORMAL;
             } else {
                 msg(
                     DIAG_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
                     "callee is not callable\n"
                 );
-                return false;
+                return FUN_MIDDLE_ERROR;
             }
         }
         case TAST_SYMBOL: {
-            fun_name = tast_symbol_unwrap(new_callee)->base.name;
-            fun_decl = uast_function_decl_from_ulang_type_fn(
-                fun_name,
+            *fun_name = tast_symbol_unwrap(new_callee)->base.name;
+            *fun_decl = uast_function_decl_from_ulang_type_fn(
+                *fun_name,
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
                 tast_symbol_unwrap(new_callee)->pos
             );
-            is_fun_callback = true;
-            break;
+            *is_fun_callback = true;
+            return FUN_MIDDLE_NORMAL;
         }
         case TAST_MEMBER_ACCESS:
             if (tast_expr_get_lang_type(new_callee).type != LANG_TYPE_FN) {
                 todo();
             }
-            fun_decl = uast_function_decl_from_ulang_type_fn(
-                fun_name,
+            *fun_decl = uast_function_decl_from_ulang_type_fn(
+                *fun_name,
                 ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_expr_get_lang_type(new_callee))),
                 tast_expr_get_pos(new_callee)
             );
-            is_fun_callback = true;
-            break;
+            *is_fun_callback = true;
+            return FUN_MIDDLE_NORMAL;
         default:
-            unreachable(FMT, tast_expr_print(new_callee));
+            unreachable("");
+    }
+    unreachable("");
+}
+
+bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
+    Tast_expr* new_callee = NULL;
+    if (!try_set_expr_types(&new_callee, fun_call->callee)) {
+        return false;
+    }
+
+    bool status = true;
+
+    Name fun_name = {0};
+    Uast_function_decl* fun_decl = NULL;
+    bool is_fun_callback = false;
+
+    static_assert(FUN_MIDDLE_COUNT == 3, "exhausive handling of FUN_MIDDLE");
+    switch (try_set_function_call_types_middle_common(
+        &fun_decl,
+        new_call,
+        &is_fun_callback,
+        &fun_name,
+        new_callee,
+        fun_call
+    )) {
+        case FUN_MIDDLE_RTN_NOW:
+            return true;
+        case FUN_MIDDLE_ERROR:
+            return false;
+        case FUN_MIDDLE_NORMAL:
+            break;
     }
 
     Lang_type fun_rtn_type = {0};
@@ -2748,150 +2783,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
-    // TODO: remove most code in switch if we will only ever be handling tast_symbol here
-    switch (new_callee->type) {
-        case TAST_ENUM_CALLEE: {
-            // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
-            if (fun_call->args.info.count < 1) {
-                msg(
-                    DIAG_MISSING_ENUM_ARG, tast_enum_callee_unwrap(new_callee)->pos,
-                    "() in enum case has no argument; add argument in () or remove ()\n"
-                );
-                return false;
-            }
-            if (fun_call->args.info.count > 1) {
-                msg(
-                    DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_callee_unwrap(new_callee)->pos,
-                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
-                    fun_call->args.info.count
-                );
-                return false;
-            }
-            if (tast_enum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                unreachable("enum symbol with void callee should have been converted to TAST_ENUM_LIT instead of TAST_ENUM_CALLEE in try_set_symbol_types");
-            }
 
-            Tast_enum_callee* enum_callee = tast_enum_callee_unwrap(new_callee);
-
-            Uast_def* enum_def_ = NULL;
-            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)));
-            Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
-
-            Lang_type memb_lang_type = {0};
-            if (!try_lang_type_from_ulang_type(
-                &memb_lang_type,
-                vec_at(enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
-            )) {
-                status = false;
-                goto error;
-            }
-
-            Tast_expr* new_item = NULL;
-            switch (check_general_assignment(
-                &check_env,
-                &new_item,
-                memb_lang_type,
-                vec_at(fun_call->args, 0),
-                uast_expr_get_pos(vec_at(fun_call->args, 0))
-            )) {
-                case CHECK_ASSIGN_OK:
-                    break;
-                case CHECK_ASSIGN_INVALID:
-                    msg(
-                        DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
-                        "cannot assign "FMT" of type `"FMT"` to '"FMT"`\n", 
-                        tast_expr_print(new_item),
-                        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
-                        lang_type_print(LANG_TYPE_MODE_MSG, memb_lang_type)
-                   );
-                   status = false;
-                   break;
-                case CHECK_ASSIGN_ERROR:
-                    todo();
-                default:
-                    unreachable("");
-            }
-
-            enum_callee->tag->lang_type = lang_type_new_usize();
-
-            Tast_enum_lit* new_lit = tast_enum_lit_new(
-                enum_callee->pos,
-                enum_callee->tag,
-                new_item,
-                enum_callee->enum_lang_type
-            );
-            *new_call = tast_literal_wrap(tast_enum_lit_wrap(new_lit));
-            return status;
-        }
-        case TAST_ENUM_CASE: {
-            // TAST_ENUM_CASE is for switch cases
-            // TODO: can these checks be shared with TAST_ENUM_CALLEE?
-            if (tast_enum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
-                return false;
-            }
-            if (fun_call->args.info.count < 1) {
-                msg(
-                    DIAG_MISSING_ENUM_ARG, tast_enum_case_unwrap(new_callee)->pos,
-                    "() in enum case has no argument; add argument in () or remove ()\n"
-                );
-                return false;
-            }
-            if (fun_call->args.info.count > 1) {
-                msg(
-                    DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_case_unwrap(new_callee)->pos,
-                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
-                    fun_call->args.info.count
-                );
-                return false;
-            }
-            Tast_enum_case* new_case = NULL;
-            if (!try_set_function_call_types_enum_case(&new_case, fun_call->args, tast_enum_case_unwrap(new_callee))) {
-                return false;
-            }
-            *new_call = tast_enum_case_wrap(new_case);
-            return status;
-        }
-        case TAST_LITERAL: {
-            if (tast_literal_unwrap(new_callee)->type == TAST_ENUM_LIT) {
-                // TAST_ENUM_LIT in function callee means that the user used () with void enum varient in right hand side of assignment
-                msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
-                return false;
-            } else if (tast_literal_unwrap(new_callee)->type == TAST_FUNCTION_LIT) {
-                fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
-                unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
-                break;
-            } else {
-                msg(
-                    DIAG_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
-                    "callee is not callable\n"
-                );
-                return false;
-            }
-        }
-        case TAST_SYMBOL: {
-            fun_name = tast_symbol_unwrap(new_callee)->base.name;
-            fun_decl = uast_function_decl_from_ulang_type_fn(
-                fun_name,
-                ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
-                tast_symbol_unwrap(new_callee)->pos
-            );
-            is_fun_callback = true;
+    static_assert(FUN_MIDDLE_COUNT == 3, "exhausive handling of FUN_MIDDLE");
+    switch (try_set_function_call_types_middle_common(
+        &fun_decl,
+        new_call,
+        &is_fun_callback,
+        &fun_name,
+        new_callee,
+        fun_call
+    )) {
+        case FUN_MIDDLE_RTN_NOW:
+            return true;
+        case FUN_MIDDLE_ERROR:
+            return false;
+        case FUN_MIDDLE_NORMAL:
             break;
-        }
-        case TAST_MEMBER_ACCESS:
-            if (tast_expr_get_lang_type(new_callee).type != LANG_TYPE_FN) {
-                todo();
-            }
-            fun_decl = uast_function_decl_from_ulang_type_fn(
-                fun_name,
-                ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_expr_get_lang_type(new_callee))),
-                tast_expr_get_pos(new_callee)
-            );
-            is_fun_callback = true;
-            break;
-        default:
-            unreachable(FMT, tast_expr_print(new_callee));
     }
 
     Lang_type fun_rtn_type = {0};
