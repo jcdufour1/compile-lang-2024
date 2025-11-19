@@ -45,8 +45,6 @@ typedef struct {
     
     bool is_in_struct_base_def;
 
-    bool in_type_check_function;
-    
     bool is_in_defer;
     Pos parent_defer_pos;
 

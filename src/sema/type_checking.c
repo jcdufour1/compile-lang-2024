@@ -370,97 +370,95 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
             Uast_function_def* fun_def = uast_function_def_unwrap(sym_def);
 
             if (is_from_check_assign) {
-                if (!check_env.in_type_check_function) {
-                    Ulang_type lhs_lang_type = lang_type_to_ulang_type(check_env.lhs_lang_type);
+                Ulang_type lhs_lang_type = lang_type_to_ulang_type(check_env.lhs_lang_type);
 
-                    if (lhs_lang_type.type != ULANG_TYPE_FN) {
-                        msg(
-                            DIAG_BINARY_MISMATCHED_TYPES,
-                            sym_untyped->pos,
-                            "function callback cannot be assigned to non function callback type `"FMT"`\n",
-                            ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
-                        );
-                        msg(
-                            DIAG_NOTE,
-                            ulang_type_get_pos(lhs_lang_type),
-                            "non function callback type `"FMT"` defined here\n",
-                            ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
-                        );
-                        return false;
+                if (lhs_lang_type.type != ULANG_TYPE_FN) {
+                    msg(
+                        DIAG_BINARY_MISMATCHED_TYPES,
+                        sym_untyped->pos,
+                        "function callback cannot be assigned to non function callback type `"FMT"`\n",
+                        ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                    );
+                    msg(
+                        DIAG_NOTE,
+                        ulang_type_get_pos(lhs_lang_type),
+                        "non function callback type `"FMT"` defined here\n",
+                        ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                    );
+                    return false;
+                }
+                Ulang_type_fn fn = ulang_type_fn_const_unwrap(lhs_lang_type);
+
+                if (fn.params.ulang_types.info.count != fun_def->decl->params->params.info.count) {
+                    msg(
+                        DIAG_INVALID_COUNT_FUN_ARGS,
+                        sym_untyped->pos,
+                        "function symbol `"FMT"` has %zu function parameters, but "
+                        "the corresponding variable definition has %zu function parameters\n",
+                        name_print(NAME_MSG, sym_untyped->name),
+                        fun_def->decl->params->params.info.count,
+                        fn.params.ulang_types.info.count
+                    );
+                    msg(
+                        DIAG_NOTE,
+                        fn.pos,
+                        "corresponding variable definition defined here\n"
+                    );
+                    msg(
+                        DIAG_NOTE,
+                        fun_def->pos,
+                        "function symbol `"FMT"` defined here\n",
+                        name_print(NAME_MSG, fun_def->decl->name)
+                    );
+                    return false;
+                }
+
+                vec_foreach(gen_idx, Uast_generic_param*, gen_param, fun_def->decl->generics) {
+                    if (gen_idx < sym_untyped->name.gen_args.info.count) {
+                        continue;
                     }
-                    Ulang_type_fn fn = ulang_type_fn_const_unwrap(lhs_lang_type);
 
-                    if (fn.params.ulang_types.info.count != fun_def->decl->params->params.info.count) {
-                        msg(
-                            DIAG_INVALID_COUNT_FUN_ARGS,
-                            sym_untyped->pos,
-                            "function symbol `"FMT"` has %zu function parameters, but "
-                            "the corresponding variable definition has %zu function parameters\n",
-                            name_print(NAME_MSG, sym_untyped->name),
-                            fun_def->decl->params->params.info.count,
-                            fn.params.ulang_types.info.count
-                        );
-                        msg(
-                            DIAG_NOTE,
-                            fn.pos,
-                            "corresponding variable definition defined here\n"
-                        );
-                        msg(
-                            DIAG_NOTE,
-                            fun_def->pos,
-                            "function symbol `"FMT"` defined here\n",
-                            name_print(NAME_MSG, fun_def->decl->name)
-                        );
-                        return false;
-                    }
+                    bool did_infer = false;
 
-                    vec_foreach(gen_idx, Uast_generic_param*, gen_param, fun_def->decl->generics) {
-                        if (gen_idx < sym_untyped->name.gen_args.info.count) {
+                    vec_foreach(param_idx, Uast_param*, param, fun_def->decl->params->params) {
+                        if (did_infer) {
                             continue;
                         }
 
-                        bool did_infer = false;
-
-                        vec_foreach(param_idx, Uast_param*, param, fun_def->decl->params->params) {
-                            if (did_infer) {
-                                continue;
-                            }
-
-                            Ulang_type infered = {0};
-                            bool old_supress_type_infer = env.supress_type_inference_failures;
-                            env.supress_type_inference_failures = true;
-                            uint32_t old_error_count = env.error_count;
-                            if (infer_generic_type(
-                                &infered,
-                                vec_at(fn.params.ulang_types, param_idx),
-                                false,
-                                param->base->lang_type,
-                                gen_param->name, // Name name_to_infer,
-                                sym_untyped->pos
-                            )) {
-                                vec_append(&a_main, &sym_untyped->name.gen_args, infered);
-                                did_infer = true;
-                            }
-                            env.supress_type_inference_failures = old_supress_type_infer;
-                            if (old_error_count != env.error_count) {
-                                return false;
-                            }
+                        Ulang_type infered = {0};
+                        bool old_supress_type_infer = env.supress_type_inference_failures;
+                        env.supress_type_inference_failures = true;
+                        uint32_t old_error_count = env.error_count;
+                        if (infer_generic_type(
+                            &infered,
+                            vec_at(fn.params.ulang_types, param_idx),
+                            false,
+                            param->base->lang_type,
+                            gen_param->name, // Name name_to_infer,
+                            sym_untyped->pos
+                        )) {
+                            vec_append(&a_main, &sym_untyped->name.gen_args, infered);
+                            did_infer = true;
                         }
-
-                        if (!did_infer) {
-                            msg(
-                                DIAG_FUNCTION_PARAM_NOT_SPECIFIED, sym_untyped->pos,
-                                "argument to generic function parameter `"FMT"` was not specified\n",
-                                name_print(NAME_MSG, gen_param->name)
-                            );
-                            msg(
-                                DIAG_NOTE,
-                                gen_param->pos,
-                                "generic function parameter `"FMT"` defined here\n", 
-                                name_print(NAME_MSG, gen_param->name)
-                            );
+                        env.supress_type_inference_failures = old_supress_type_infer;
+                        if (old_error_count != env.error_count) {
                             return false;
                         }
+                    }
+
+                    if (!did_infer) {
+                        msg(
+                            DIAG_FUNCTION_PARAM_NOT_SPECIFIED, sym_untyped->pos,
+                            "argument to generic function parameter `"FMT"` was not specified\n",
+                            name_print(NAME_MSG, gen_param->name)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            gen_param->pos,
+                            "generic function parameter `"FMT"` defined here\n", 
+                            name_print(NAME_MSG, gen_param->name)
+                        );
+                        return false;
                     }
                 }
             }
@@ -1921,14 +1919,10 @@ bool try_set_function_call_builtin_types(
 }
 
 bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
-    bool old_in_type_check_function = check_env.in_type_check_function;
-    check_env.in_type_check_function = true;
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
-        check_env.in_type_check_function = old_in_type_check_function;
         return false;
     }
-    check_env.in_type_check_function = old_in_type_check_function;
 
     bool status = true;
 
@@ -2747,14 +2741,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
-    bool old_in_type_check_function = check_env.in_type_check_function;
-    check_env.in_type_check_function = true;
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
-        check_env.in_type_check_function = old_in_type_check_function;
         return false;
     }
-    check_env.in_type_check_function = old_in_type_check_function;
 
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;

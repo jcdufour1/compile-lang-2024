@@ -15,8 +15,6 @@ bool infer_generic_type(
     Name name_to_infer,
     Pos pos_arg
 ) {
-    // TODO: make helper function to do this lang_type conversion (to normalize integer bit widths)
-    
     // NOTE: do not set env.silent_generic_resol_errors here to suppress errors 
     //   (if those errors appear, there was likely a bug with the call site of infer_generic_type
     //     (eg. args arg_to_infer_from and param_corres_to_arg should possibly be switched)
