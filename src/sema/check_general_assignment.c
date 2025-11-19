@@ -256,7 +256,9 @@ CHECK_ASSIGN_STATUS check_general_assignment(
             check_env->break_type = lang_type_void_const_wrap(lang_type_void_new(pos));
         }
 
-        if (!try_set_expr_types(new_src, src)) {
+        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+
+        if (!try_set_expr_types_internal(new_src, src, false, (Lang_type) {0}, true)) {
             check_env->lhs_lang_type = old_lhs_lang_type;
             check_env->break_type = old_break_type;
             check_env->parent_of = old_parent_of;

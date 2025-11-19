@@ -32,6 +32,13 @@ fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.
     return 0
 }
 
+fn add_using_callback(<ItemType>)(lhs ItemType, rhs ItemType = .none, add_fn fn(ItemType, ItemType)ItemType) ItemType {
+    return add_fn(lhs, rhs)
+}
+
+fn add_callback(<ItemT>)(lhs ItemT, rhs ItemT) ItemT {
+    return lhs + rhs
+}
 
 fn main() i32 {
     io.printf("test 100: got number %d\n", add_one_or_two_default(78))
@@ -43,7 +50,9 @@ fn main() i32 {
     let opt111 util.Optional(<i32>) = .some(837)
     io.printf("test 111: got number %d\n", add_one_or_two_default_2(opt111, .some(13)))
     let opt112 util.Optional(<i32>) = .some(838)
-    io.printf("test 111: got number %d\n", add_one_or_two_default_2(.some(14), opt112))
+    io.printf("test 112: got number %d\n", add_one_or_two_default_2(.some(14), opt112))
+
+    io.printf("test 120: got number %d\n", add_using_callback(87, 32, add_callback))
 
     return 0
 }

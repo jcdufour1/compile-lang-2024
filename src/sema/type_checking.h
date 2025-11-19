@@ -44,6 +44,8 @@ typedef struct {
     PARENT_OF_DEFER parent_of_defer;
     
     bool is_in_struct_base_def;
+
+    bool in_type_check_function;
     
     bool is_in_defer;
     Pos parent_defer_pos;
@@ -56,6 +58,8 @@ bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign);
 
 // returns false if unsuccessful
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr);
+
+bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign);
 
 bool try_set_binary_types_finish(
     Tast_expr** new_tast,
@@ -139,7 +143,7 @@ bool try_set_function_params_types(
     bool add_to_sym_tbl
 );
 
-bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped);
+bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool is_from_check_assign);
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast);
 

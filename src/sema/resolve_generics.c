@@ -410,6 +410,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
 
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
+        log(LOG_DEBUG, "%d\n", env.silent_generic_resol_errors);
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
     }
@@ -630,7 +631,9 @@ bool resolve_generics_function_def_call(
     }
 
     if (def->decl->generics.info.count != gen_args.info.count) {
-        msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+        if (!env.supress_type_inference_failures) {
+            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+        }
         return false;
     }
 

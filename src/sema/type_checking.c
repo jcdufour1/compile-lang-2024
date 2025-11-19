@@ -56,7 +56,7 @@ static Strv parent_of_print_internal(PARENT_OF parent_of) {
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
-static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type);
+bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign);
 
 static Type_checking_env check_env = {0};
 
@@ -338,7 +338,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 }
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool is_from_check_assign) {
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
@@ -367,7 +367,106 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_FUNCTION_DEF: {
             Lang_type_fn new_lang_type = {0};
             Name new_name = {0};
-            if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
+            Uast_function_def* fun_def = uast_function_def_unwrap(sym_def);
+
+            if (is_from_check_assign) {
+                if (!check_env.in_type_check_function) {
+                    Ulang_type lhs_lang_type = lang_type_to_ulang_type(check_env.lhs_lang_type);
+
+                    if (lhs_lang_type.type != ULANG_TYPE_FN) {
+                        msg(
+                            DIAG_BINARY_MISMATCHED_TYPES,
+                            sym_untyped->pos,
+                            "function callback cannot be assigned to non function callback type `"FMT"`\n",
+                            ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            ulang_type_get_pos(lhs_lang_type),
+                            "non function callback type `"FMT"` defined here\n",
+                            ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                        );
+                        return false;
+                    }
+                    Ulang_type_fn fn = ulang_type_fn_const_unwrap(lhs_lang_type);
+
+                    if (fn.params.ulang_types.info.count != fun_def->decl->params->params.info.count) {
+                        // TODO: better error message?
+                        msg(
+                            DIAG_INVALID_COUNT_FUN_ARGS,
+                            sym_untyped->pos,
+                            "function callback type has a different count of function arguments "
+                            "than the corresponding function\n"
+                        );
+                        msg(
+                            DIAG_NOTE,
+                            fun_def->pos,
+                            "function definition `"FMT"` defined here\n",
+                            name_print(NAME_MSG, fun_def->decl->name)
+                        );
+                        todo();
+                        return false;
+                    }
+                    log(LOG_DEBUG, FMT"\n", uast_symbol_print(sym_untyped));
+                    log(LOG_DEBUG, FMT"\n", uast_function_def_print(fun_def));
+
+                    vec_foreach(gen_idx, Uast_generic_param*, gen_param, fun_def->decl->generics) {
+                        if (gen_idx < sym_untyped->name.gen_args.info.count) {
+                            continue;
+                        }
+
+                        bool did_infer = false;
+                        bool status = true;
+
+                        vec_foreach(param_idx, Uast_param*, param, fun_def->decl->params->params) {
+                            if (did_infer) {
+                                continue;
+                            }
+
+                            Ulang_type infered = {0};
+                            bool old_supress_type_infer = env.supress_type_inference_failures;
+                            env.supress_type_inference_failures = true;
+                            uint32_t old_error_count = env.error_count;
+                            if (infer_generic_type(
+                                &infered,
+                                vec_at(fn.params.ulang_types, param_idx),
+                                false,
+                                param->base->lang_type,
+                                gen_param->name, // Name name_to_infer,
+                                sym_untyped->pos
+                            )) {
+                                vec_append(&a_main, &sym_untyped->name.gen_args, infered);
+                                did_infer = true;
+                            }
+                            env.supress_type_inference_failures = old_supress_type_infer;
+                            status = old_error_count == env.error_count && status;
+                            if (!status) {
+                                todo();
+                                return false;
+                            }
+                        }
+
+                        if (!did_infer) {
+                            // print error for unspecified generic arg
+                            msg(
+                                DIAG_FUNCTION_PARAM_NOT_SPECIFIED, sym_untyped->pos,
+                                "argument to generic function parameter `"FMT"` was not specified\n",
+                                name_print(NAME_MSG, gen_param->name)
+                            );
+                            //msg(
+                            //    DIAG_NOTE,
+                            //    vec_at(gen_params, gen_idx)->pos,
+                            //    "generic function parameter `"FMT"` defined here\n", 
+                            //    name_print(NAME_MSG, vec_at(gen_params, gen_idx)->name)
+                            //);
+                            todo();
+                        }
+                    }
+
+                }
+            }
+
+            if (!resolve_generics_function_def_call(&new_lang_type, &new_name, fun_def, sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
@@ -389,7 +488,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             fallthrough;
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
-            if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
+            if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args, sym_untyped->pos)) {
                 if (!env.supress_type_inference_failures) {
                     usymbol_update(uast_poison_def_wrap(uast_poison_def_new(
                         uast_def_get_pos(sym_def),
@@ -1010,7 +1109,7 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
     }
 
     Tast_expr* new_child;
-    if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to)) {
+    if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to, false)) {
         return false;
     }
     if (unary->token_type == UNARY_REFER && !tast_expr_is_lvalue(new_child)) {
@@ -1341,7 +1440,7 @@ bool try_set_array_literal_types(
     return true;
 }
 
-static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type) {
+bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign) {
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
@@ -1356,7 +1455,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             return true;
         }
         case UAST_SYMBOL:
-            if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast))) {
+            if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast), is_from_check_assign)) {
                 return false;
             }
             unwrap(*new_tast);
@@ -1384,7 +1483,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
                 lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)
-            ));
+            ), is_from_check_assign);
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast))) {
@@ -1503,7 +1602,7 @@ static bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, b
 }
 
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
-    return try_set_expr_types_internal(new_tast, uast, false, (Lang_type) {0});
+    return try_set_expr_types_internal(new_tast, uast, false, (Lang_type) {0}, false);
 }
 
 STMT_STATUS try_set_def_types(Uast_def* uast) {
@@ -1819,10 +1918,14 @@ bool try_set_function_call_builtin_types(
 }
 
 bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* fun_call) {
+    bool old_in_type_check_function = check_env.in_type_check_function;
+    check_env.in_type_check_function = true;
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
+        check_env.in_type_check_function = old_in_type_check_function;
         return false;
     }
+    check_env.in_type_check_function = old_in_type_check_function;
 
     bool status = true;
 
@@ -2641,10 +2744,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
     }
 
+    bool old_in_type_check_function = check_env.in_type_check_function;
+    check_env.in_type_check_function = true;
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
+        check_env.in_type_check_function = old_in_type_check_function;
         return false;
     }
+    check_env.in_type_check_function = old_in_type_check_function;
 
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
@@ -3373,7 +3480,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.scope_id
             , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
-            if (!try_set_symbol_types(&new_expr, sym)) {
+            if (!try_set_symbol_types(&new_expr, sym, false)) {
                 return false;
             }
             *new_tast = tast_expr_wrap(new_expr);
@@ -3650,6 +3757,13 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     Lang_type rtn_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&rtn_lang_type, env.parent_fn_rtn_type)) {
         return false;
+    }
+
+    static uint64_t count = 0;
+    count++;
+    if (count > 2) {
+        //log(LOG_DEBUG, FMT"\n", uast_expr_print(rtn->child));
+        //__asm__("int3");
     }
 
     Tast_expr* new_child = NULL;
