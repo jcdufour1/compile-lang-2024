@@ -630,7 +630,9 @@ bool resolve_generics_function_def_call(
     }
 
     if (def->decl->generics.info.count != gen_args.info.count) {
-        msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+        if (!env.supress_type_inference_failures) {
+            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+        }
         return false;
     }
 

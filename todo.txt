@@ -112,6 +112,8 @@ for generics:
 - append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
 - in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
      be able to remove u64. fix bug that prevents it from being possible.
+- figure out why this does not work:
+    fn do_nothing(pretend_fn fn()) {
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

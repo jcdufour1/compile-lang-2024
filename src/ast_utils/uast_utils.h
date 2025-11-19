@@ -27,14 +27,14 @@ static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_d
         log(LOG_NOTE, FMT"\n", uast_print(uast)); \
     } while (0);
 
-bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics);
+bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics, Pos dest_pos);
 
-static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_vec generics) {
+static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_vec generics, Pos dest_pos) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
         case UAST_DEF:
-            return uast_def_get_lang_type(result,  uast_def_const_unwrap(stmt), generics);
+            return uast_def_get_lang_type(result,  uast_def_const_unwrap(stmt), generics, dest_pos);
         case UAST_RETURN:
             unreachable("");
         case UAST_FOR_WITH_COND:
@@ -55,10 +55,10 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
     unreachable("");
 }
 
-static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang_type_vec generics) {
+static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang_type_vec generics, Pos dest_pos) {
     switch (uast->type) {
         case UAST_STMT:
-            return uast_stmt_get_lang_type(result,  uast_stmt_const_unwrap(uast), generics);
+            return uast_stmt_get_lang_type(result,  uast_stmt_const_unwrap(uast), generics, dest_pos);
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_FOR_LOWER_BOUND:

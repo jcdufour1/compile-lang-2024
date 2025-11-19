@@ -988,7 +988,8 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     }
 }
 
-static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_table, Scope_id scope_id) {
+static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, Uast_generic_param_vec* gen_params /* TODO: remove gen_params */, bool add_to_sym_table, Scope_id scope_id) {
+    (void) gen_params;
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }

@@ -9,9 +9,17 @@ fn add(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
     return result
 }
 
+fn add_using_callback(lhs i32, rhs i32, add_fn fn()i32) i32 {
+    return add_fn(<i32>)()
+}
+
 type Token struct(<ItemType, PosType>) {
     item ItemType
     pos PosType
+}
+
+fn add_not_regular() i32 {
+    return 7
 }
 
 fn main() i32 {
@@ -19,5 +27,6 @@ fn main() i32 {
     let num2 i32 = add(<i32>)(7, 8, 9)
     let token1 Token = {.item = 87, .pos = 32}
     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
+    add_using_callback(8, 2, add_not_regular)
     return 0
 }

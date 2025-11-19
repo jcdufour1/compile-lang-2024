@@ -8,22 +8,26 @@
 
 bool infer_generic_type(
     Ulang_type* infered,
-    Ulang_type arg_to_infer_from,
+    Ulang_type arg_to_infer_from, // must have been set already (not a generic arg still)
     bool arg_to_infer_is_lit,
-    Ulang_type param_corres_to_arg,
+    Ulang_type param_corres_to_arg, // may still have generic stuff (must sometimes or always 
+                                    // have generic stuff for infer_generic_type to be useful)
     Name name_to_infer,
     Pos pos_arg
 ) {
-    // TODO: make helper function to do this lang_type conversion (to normalize integer bit widths)
-
+    // NOTE: do not set env.silent_generic_resol_errors here to suppress errors 
+    //   (if those errors appear, there was likely a bug with the call site of infer_generic_type
+    //     (eg. args arg_to_infer_from and param_corres_to_arg should possibly be switched)
+    //   )
     Lang_type temp_arg = {0};
     if (try_lang_type_from_ulang_type(&temp_arg, arg_to_infer_from)) {
         arg_to_infer_from = lang_type_to_ulang_type(lang_type_standardize(temp_arg, arg_to_infer_is_lit, pos_arg));
     }
 
-    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
-    //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name_to_infer));
+    // keep these (because they are useful for debugging)
+    //log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
+    //log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
+    //log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg.type) {
         case ULANG_TYPE_REGULAR: {

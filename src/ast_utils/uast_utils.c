@@ -2,11 +2,19 @@
 #include <str_and_num_utils.h>
 #include <lang_type_new_convenience.h>
 
-bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics) {
+bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics, Pos dest_pos) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_VARIABLE_DEF:
+            if (generics.info.count > 0) {
+                msg(
+                    DIAG_INVALID_COUNT_GENERIC_ARGS,
+                    dest_pos,
+                    "generic arguments were not expected here\n"
+                );
+                return false;
+            }
             return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type);
         case UAST_FUNCTION_DECL:
             return try_lang_type_from_ulang_type(result, uast_function_decl_const_unwrap(def)->return_type);
@@ -27,7 +35,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_POISON_DEF:
-            unreachable("");
+            return false;
         case UAST_IMPORT_PATH:
             unreachable("");
         case UAST_MOD_ALIAS:
