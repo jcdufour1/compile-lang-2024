@@ -93,8 +93,6 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             return serialize_ulang_type_fn(mod_path, ulang_type_fn_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_TUPLE:
             return serialize_ulang_type_tuple(mod_path, ulang_type_tuple_const_unwrap(ulang_type), include_scope);
-        case ULANG_TYPE_GEN_PARAM:
-            return serialize_ulang_type_gen_param(mod_path);
         case ULANG_TYPE_REMOVED:
             return serialize_ulang_type_removed(mod_path);
         case ULANG_TYPE_ARRAY:

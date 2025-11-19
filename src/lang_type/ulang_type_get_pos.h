@@ -10,8 +10,6 @@ static inline Pos ulang_type_get_pos(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REMOVED:
             return ulang_type_removed_const_unwrap(lang_type).pos;
-        case ULANG_TYPE_GEN_PARAM:
-            return ulang_type_gen_param_const_unwrap(lang_type).pos;
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).pos;
         case ULANG_TYPE_ARRAY:

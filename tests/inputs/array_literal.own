@@ -4,8 +4,8 @@ type coll import = std.collections
 fn main() i32 {
     let slice coll.Slice(<i32>) = [87, 131]
 
-    io.printf("%d\n", coll.slice_at(slice, 0, i32))
-    io.printf("%d\n", coll.slice_at(slice, 1, i32))
+    io.printf("%d\n", coll.slice_at(<i32>)(slice, 0))
+    io.printf("%d\n", coll.slice_at(<i32>)(slice, 1))
 
     return 0
 }

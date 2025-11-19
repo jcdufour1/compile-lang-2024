@@ -85,10 +85,6 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             string_extend_cstr(&a_main, string, "removed");
             return;
         }
-        case ULANG_TYPE_GEN_PARAM: {
-            string_extend_cstr(&a_main, string, "gen_param");
-            return;
-        }
         case ULANG_TYPE_EXPR: {
             string_extend_cstr(&a_main, string, "expr ");
             Ulang_type_expr expr = ulang_type_expr_const_unwrap(lang_type);

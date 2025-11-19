@@ -121,8 +121,17 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             fallthrough;
         case LANG_TYPE_ENUM:
             fallthrough;
-        case LANG_TYPE_VOID:
-            return lang_type_atom_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, a), lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
+        case LANG_TYPE_VOID: {
+            Lang_type_atom atom_a = {0};
+            Lang_type_atom atom_b = {0};
+            if (!try_lang_type_get_atom(&atom_a, LANG_TYPE_MODE_LOG, a)) {
+                return false;
+            }
+            if (!try_lang_type_get_atom(&atom_b, LANG_TYPE_MODE_LOG, b)) {
+                return false;
+            }
+            return lang_type_atom_is_equal(atom_a, atom_b);
+        }
         case LANG_TYPE_TUPLE:
             return lang_type_tuple_is_equal(lang_type_tuple_const_unwrap(a), lang_type_tuple_const_unwrap(b));
         case LANG_TYPE_FN:

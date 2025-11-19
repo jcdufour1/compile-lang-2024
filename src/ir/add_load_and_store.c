@@ -679,9 +679,13 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             Tast_def* new_def = NULL;
             unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
+            Lang_type_atom atom = {0};
+            if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, lang_type)) {
+                return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
+            }
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type))
+                rm_tuple_lang_type_atom(atom)
             ));
         }
         case LANG_TYPE_TUPLE:

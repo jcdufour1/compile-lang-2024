@@ -12,15 +12,15 @@ fn main() i32 {
     let ptr_ptr i32** = &ptr
 
     {
-        let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token)
-        let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***)
-        let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****)
+        let arr coll.Arr(<Token*, 1>) = coll.arr_new(<Token, 1>)()
+        let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(<Token***, 1>)()
+        let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(<Token****, 1>)()
     }
 
     {
-        let arr coll.Arr(<Token*, 1>) = coll.arr_new(1, Token, [util.null(Token)])
-        let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(1, Token***, [util.null(Token)])
-        let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(1, Token****, [util.null(Token)])
+        let arr coll.Arr(<Token*, 1>) = coll.arr_new(<Token, 1>)([util.null(<Token>)()])
+        let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(<Token***, 1>)([util.null(<Token>)()])
+        let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(<Token****, 1>)([util.null(<Token>)()])
     }
 
     return 0

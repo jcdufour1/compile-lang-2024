@@ -8,11 +8,11 @@ type Token struct {
 }
 
 fn main() i32 {
-    let arr coll.Arr(<Token, 1000000>) = coll.arr_new(1000000, Token)
+    let arr coll.Arr(<Token, 1000000>) = coll.arr_new(<Token, 1000000>)()
     defer coll.arr_free(&arr);
 
-    coll.arr_append(&arr, {9187, "hello"}, Token)
-    io.printf("%s\n", coll.arr_first(arr, Token).string);
+    coll.arr_append(<Token>)(&arr, {9187, "hello"})
+    io.printf("%s\n", coll.arr_first(<Token>)(arr).string);
 
     return 0
 }

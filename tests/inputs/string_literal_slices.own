@@ -8,7 +8,7 @@ fn main() i32 {
     io.printf("num2 = %d\n", 10)
     io.own_printf("hello\n")
 
-    io.own_printf(coll.slice_range("thing", 0, 3, u8))
+    io.own_printf(coll.slice_range(<u8>)("thing", 0, 3))
     io.own_printf("\n")
 
     io.own_printf(coll.slice_range("a computer is a thing", 2, 8))

@@ -40,10 +40,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
                 "could not infer the type of this variable definition\n"
             );
             return false;
-        case ULANG_TYPE_GEN_PARAM:
-            todo();
-            // TODO
-            return false;
         case ULANG_TYPE_ARRAY:
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
         case ULANG_TYPE_EXPR:

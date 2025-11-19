@@ -82,7 +82,6 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
                 *result = ulang_type_new_void(uast_def_get_pos(sym_def));
                 return EXPR_TO_ULANG_TYPE_NORMAL;
             case UAST_POISON_DEF:
-                todo();
                 return EXPR_TO_ULANG_TYPE_ERROR;
             case UAST_IMPORT_PATH:
                 unreachable("");

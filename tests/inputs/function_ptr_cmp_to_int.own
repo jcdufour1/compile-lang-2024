@@ -1,0 +1,13 @@
+
+fn add() i32 {
+    return 0
+}
+
+fn main() i32 {
+    let num i32 = 9
+
+    if num == add {
+    }
+
+    return 0
+}

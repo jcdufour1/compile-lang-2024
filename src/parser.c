@@ -993,23 +993,14 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
         return PARSE_EXPR_NONE;
     }
 
-    Uast_def* base = NULL;
+    Uast_variable_def* var_def = NULL;
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_def_or_generic_param(&base, tokens, false, add_to_sym_table, true, true, (Ulang_type) {0}, scope_id)) {
+    if (PARSE_OK != parse_variable_def(&var_def, tokens, false, add_to_sym_table, true, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
-    switch (base->type) {
-        case UAST_VARIABLE_DEF:
-            break;
-        case UAST_GENERIC_PARAM:
-            unwrap(base);
-            vec_append(&a_main, gen_params, uast_generic_param_unwrap(base));
-            break;
-        default:
-            unreachable("");
-    }
+
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         is_variadic = true;
     }
@@ -1037,22 +1028,8 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
-    switch (base->type) {
-        case UAST_VARIABLE_DEF:
-            *child = uast_param_new(uast_def_get_pos(base), uast_variable_def_unwrap(base), is_optional, is_variadic, opt_default);
-            return PARSE_EXPR_OK;
-        case UAST_GENERIC_PARAM: {
-            Uast_variable_def* param_var_def = uast_variable_def_new(
-                uast_def_get_pos(base),
-                ulang_type_gen_param_const_wrap(ulang_type_gen_param_new(uast_def_get_pos(base))),
-                name_new(curr_mod_path, uast_generic_param_unwrap(base)->name.base, (Ulang_type_vec) {0}, scope_id, (Attrs) {0})
-            );
-            *child = uast_param_new(uast_def_get_pos(base), param_var_def, is_optional, is_variadic, opt_default);
-            return PARSE_EXPR_OK;
-        }
-        default:
-            unreachable("");
-    }
+    *child = uast_param_new(var_def->pos, var_def, is_optional, is_variadic, opt_default);
+    return PARSE_EXPR_OK;
 }
 
 static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
@@ -1071,6 +1048,8 @@ static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_
                 vec_append(&a_main, &params, param);
                 break;
             case PARSE_EXPR_ERROR:
+                vec_reset(&using_params);
+                assert(using_params.info.count == 0);
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
                 done = true;
@@ -1094,12 +1073,17 @@ static PARSE_STATUS parse_function_decl_common(
     Token name_token = consume(tokens);
 
     Uast_generic_param_vec gen_params = {0};
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
+        parse_generics_params(&gen_params, tokens, block_scope);
+    }
+
     if (!consume_expect(NULL, tokens,  " in function decl", TOKEN_OPEN_PAR)) {
         return PARSE_ERROR;
     }
 
     Uast_function_params* params = NULL;
     if (PARSE_OK != parse_function_parameters(&params, tokens, &gen_params, add_to_sym_table, block_scope)) {
+        assert(using_params.info.count == 0);
         return PARSE_ERROR;
     }
 
@@ -1117,6 +1101,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope, (Attrs) {0}));
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
+        assert(using_params.info.count == 0);
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
@@ -1503,8 +1488,8 @@ static PARSE_STATUS parse_variable_def(
     }
 
     if (result_->type != UAST_VARIABLE_DEF) {
-        // TODO: expected failure case
-        todo();
+        msg(DIAG_EXPECTED_VARIABLE_DEF, uast_def_get_pos(result_), "expected variable definition\n");
+        return PARSE_ERROR;
     }
     *result = uast_variable_def_unwrap(result_);
     return PARSE_OK;
@@ -1540,23 +1525,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     Ulang_type lang_type = {0};
     Token type_tk = {0};
 
-    if (try_consume(&type_tk, tokens, TOKEN_GENERIC_TYPE)) {
-        Uast_generic_param* var_def = uast_generic_param_new(
-            name_token.pos,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),
-            false,
-            (Ulang_type) {0}
-        );
-
-        *result = uast_generic_param_wrap(var_def);
-
-        if (add_to_sym_table) {
-            if (!usymbol_add(uast_generic_param_wrap(var_def))) {
-                msg_redefinition_of_symbol(uast_generic_param_wrap(var_def));
-                return PARSE_ERROR;
-            }
-        }
-    } else if (try_consume(&type_tk, tokens, TOKEN_DOUBLE_TICK)) {
+    if (try_consume(&type_tk, tokens, TOKEN_DOUBLE_TICK)) {
         Ulang_type lang_type_expr = {0};
         if (!parse_lang_type_struct(&lang_type_expr, tokens, scope_id)) {
             return PARSE_ERROR;
@@ -1982,11 +1951,6 @@ static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
-    if (callee->type == UAST_SYMBOL && uast_symbol_unwrap(callee)->name.gen_args.info.count > 0) {
-        msg(DIAG_WRONG_GEN_TYPE, uast_expr_get_pos(callee), "`(<` and `>)` should not be used on function callee\n");
-        return PARSE_ERROR;
-    }
-
     bool is_first_time = true;
     bool prev_is_comma = false;
     Uast_expr_vec args = {0};

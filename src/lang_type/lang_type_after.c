@@ -120,51 +120,6 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0}), 0);
 }
 
-// TODO: remove this function and use try_lang_type_get_atom instead
-Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
-    switch (lang_type.type) {
-        case LANG_TYPE_PRIMITIVE: {
-            Lang_type_atom atom = lang_type_primitive_get_atom(mode, lang_type_primitive_const_unwrap(lang_type));
-            return atom;
-        }
-        case LANG_TYPE_ENUM: {
-            Lang_type_atom atom = lang_type_enum_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
-        case LANG_TYPE_STRUCT: {
-            Lang_type_atom atom = lang_type_struct_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
-        case LANG_TYPE_RAW_UNION: {
-            Lang_type_atom atom = lang_type_raw_union_const_unwrap(lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
-        case LANG_TYPE_TUPLE: {
-            unreachable("");
-        }
-        case LANG_TYPE_FN: {
-            todo();
-        }
-        case LANG_TYPE_ARRAY:
-            unreachable("");
-        case LANG_TYPE_REMOVED:
-            unreachable("");
-        case LANG_TYPE_VOID: {
-            Lang_type_atom atom = lang_type_atom_new_from_cstr("void", 0, SCOPE_TOP_LEVEL);
-            return atom;
-        }
-        case LANG_TYPE_INT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 // TODO: remove this function?
 void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {

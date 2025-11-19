@@ -9,7 +9,7 @@ type Token struct {
 }
 
 fn main() i32 {
-    let arr coll.Arr(<Token, 5>) = coll.arr_new(5, Token)
+    let arr coll.Arr(<Token, 5>) = coll.arr_new(<Token, 5>)()
     defer coll.arr_free(&arr)
 
     coll.arr_append(&arr, {9187, "hello"})
@@ -67,7 +67,7 @@ fn main() i32 {
     io.printf("%s\n", coll.arr_first(arr).string);
     io.printf("%s\n", coll.arr_at(arr, 1).string);
 
-    let arr2 coll.Arr(<i32, 5>) = coll.arr_new(5, i32, [9, 8])
+    let arr2 coll.Arr(<i32, 5>) = coll.arr_new(<i32, 5>)([9, 8])
     io.printf("%d\n", coll.arr_first(arr2));
     io.printf("%d\n", coll.arr_at(arr2, 1));
 
