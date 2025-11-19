@@ -457,16 +457,15 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                                 "argument to generic function parameter `"FMT"` was not specified\n",
                                 name_print(NAME_MSG, gen_param->name)
                             );
-                            //msg(
-                            //    DIAG_NOTE,
-                            //    vec_at(gen_params, gen_idx)->pos,
-                            //    "generic function parameter `"FMT"` defined here\n", 
-                            //    name_print(NAME_MSG, vec_at(gen_params, gen_idx)->name)
-                            //);
-                            todo();
+                            msg(
+                                DIAG_NOTE,
+                                gen_param->pos,
+                                "generic function parameter `"FMT"` defined here\n", 
+                                name_print(NAME_MSG, gen_param->name)
+                            );
+                            return false;
                         }
                     }
-
                 }
             }
 
