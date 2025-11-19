@@ -1922,6 +1922,9 @@ typedef enum {
     FUN_MIDDLE_RTN_NOW,
     FUN_MIDDLE_NORMAL,
     FUN_MIDDLE_ERROR,
+
+    // for static asserts
+    FUN_MIDDLE_COUNT,
 } FUN_MIDDLE_STATUS;
 
 static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
@@ -2088,6 +2091,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
 
+    static_assert(FUN_MIDDLE_COUNT == 3, "exhausive handling of FUN_MIDDLE");
     switch (try_set_function_call_types_middle_common(
         &fun_decl,
         new_call,
@@ -2780,6 +2784,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Uast_function_decl* fun_decl = NULL;
     bool is_fun_callback = false;
 
+    static_assert(FUN_MIDDLE_COUNT == 3, "exhausive handling of FUN_MIDDLE");
     switch (try_set_function_call_types_middle_common(
         &fun_decl,
         new_call,
