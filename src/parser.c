@@ -1575,7 +1575,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
             // TODO: should the "is_using" if statement also be ran for other two cases (Type and '')?
             if (is_using) {
-                log(LOG_DEBUG, "appending using_params\n");
                 vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
@@ -2620,7 +2619,6 @@ static PARSE_STATUS parse_block(
 
     // NOTE: this if statement should always run even if parse_block returns PARSE_ERROR
     while (using_params.info.count > 0) {
-        log(LOG_DEBUG, "popping using_params\n");
         vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
     }
     if (status != PARSE_OK) {
@@ -3352,7 +3350,6 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     }
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (params.do_prelude) {
-        log(LOG_DEBUG, "appending using_params\n");
         vec_append(
             &a_pass,
             &using_params,

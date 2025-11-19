@@ -367,7 +367,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_FUNCTION_DEF: {
             Lang_type_fn new_lang_type = {0};
             Name new_name = {0};
-            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
@@ -2569,37 +2568,34 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
                 msg_invalid_count_function_args(fun_call, fun_decl_temp->name, fun_decl_temp->pos, min_args, max_args);
             } else {
-                if (1) {
-                    bool infer_success = false;
-                    for (size_t param_idx = 0; status && param_idx < fun_call->args.info.count; param_idx++) {
-                        Tast_expr* arg_to_infer_from = NULL;
+                bool infer_success = false;
+                for (size_t param_idx = 0; status && param_idx < fun_call->args.info.count; param_idx++) {
+                    Tast_expr* arg_to_infer_from = NULL;
 
-                        bool old_supress_type_infer = env.supress_type_inference_failures;
-                        env.supress_type_inference_failures = true;
-                        uint32_t old_error_count = env.error_count;
-                        if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
-                            log(LOG_DEBUG, "%zu\n", gen_idx);
-                            if (infer_generic_type(
-                                vec_at_ref(&sym_name->gen_args, gen_idx),
-                                lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
-                                arg_to_infer_from->type == TAST_LITERAL,
-                                vec_at(params->params, param_idx)->base->lang_type,
-                                param_name,
-                                tast_expr_get_pos(arg_to_infer_from)
-                            )) {
-                                infer_success = true;
-                            }
-                        }
-                        env.supress_type_inference_failures = old_supress_type_infer;
-                        status = old_error_count == env.error_count && status;
-
-                        if (infer_success) {
-                            break;
+                    bool old_supress_type_infer = env.supress_type_inference_failures;
+                    env.supress_type_inference_failures = true;
+                    uint32_t old_error_count = env.error_count;
+                    if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx))) {
+                        if (infer_generic_type(
+                            vec_at_ref(&sym_name->gen_args, gen_idx),
+                            lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
+                            arg_to_infer_from->type == TAST_LITERAL,
+                            vec_at(params->params, param_idx)->base->lang_type,
+                            param_name,
+                            tast_expr_get_pos(arg_to_infer_from)
+                        )) {
+                            infer_success = true;
                         }
                     }
+                    env.supress_type_inference_failures = old_supress_type_infer;
+                    status = old_error_count == env.error_count && status;
+
                     if (infer_success) {
-                        continue;
+                        break;
                     }
+                }
+                if (infer_success) {
+                    continue;
                 }
 
                 if (!status) {
@@ -2868,7 +2864,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         }
 
-        log(LOG_DEBUG, FMT"\n", uast_param_print(param));
         Tast_expr* new_arg = NULL;
 
         Lang_type param_lang_type = {0};
