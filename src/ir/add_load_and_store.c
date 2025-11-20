@@ -197,7 +197,6 @@ static void load_block_stmts(
         unwrap(ir_is_label(vec_at(new_block->children, 0)));
     }
 
-    // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
         local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix(sv("rtn_val")));
@@ -2163,7 +2162,7 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
         if_else->pos,
         util_literal_ir_name_new(),
         (Ir_vec) {0},
-        POS_BUILTIN /* TODO */,
+        if_else->pos,
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(if_else->tasts, 0)->body->scope_id), util_literal_name_new()),
         (Cfg_node_vec) {0}
     );
@@ -2275,6 +2274,12 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         }
     }
     // TODO: remove some debug printing
+
+#ifdef NDEBUG
+    String check_cond_ = (String) {0};
+    String after_chk_ = (String) {0};
+    String after_loop_ = (String) {0};
+#else
     String for_template = {0};
     string_extend_cstr(&a_main, &for_template, "for_");
     string_extend_size_t(&a_main, &for_template, for_count);
@@ -2288,6 +2293,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     String after_loop_ = string_clone(&a_main, for_template);
     string_extend_cstr(&a_main, &after_loop_, "after_loop");
+#endif // NDEBUG
 
     Tast_operator* operator = old_for->condition->child;
     label_if_continue = util_literal_ir_name_new_prefix(string_to_strv(check_cond_));

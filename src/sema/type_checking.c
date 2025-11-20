@@ -3733,8 +3733,7 @@ error:
     return status;
 }
 
-// TODO: rename to try_set_continue_types
-bool try_set_continue2_types(Tast_continue** new_tast, Uast_continue* cont) {
+bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
     check_env.parent_of = PARENT_OF_BREAK; // TODO
@@ -4509,7 +4508,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
         }
         case UAST_CONTINUE: {
             Tast_continue* new_cont = NULL;
-            if (!try_set_continue2_types(&new_cont, uast_continue_unwrap(stmt))) {
+            if (!try_set_continue_types(&new_cont, uast_continue_unwrap(stmt))) {
                 return STMT_ERROR;
             }
             *new_tast = tast_continue_wrap(new_cont);
