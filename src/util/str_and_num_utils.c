@@ -406,13 +406,9 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
     //string_extend_cstr(&a_main, &var_name, "_");
 
 #ifndef NDEBUG
-    // TODO: these debug mode only prefixes can cause release to print errors in a different order than debug
-    //   mode, which causes problems for the testing system. disable debug only prefixes, etc. when
-    //   tests are being run, or figure out how to print errors in a consistant order regardless of
-    //   prefixes being added to strings
-    //string_extend_cstr(&a_main, &var_name, "__");
-    //string_extend_strv(&a_main, &var_name, debug_prefix);
-    //string_extend_cstr(&a_main, &var_name, "__");
+    string_extend_cstr(&a_main, &var_name, "__");
+    string_extend_strv(&a_main, &var_name, debug_prefix);
+    string_extend_cstr(&a_main, &var_name, "__");
 #endif // NDEBUG
 
     string_extend_size_t(&a_main, &var_name, count);

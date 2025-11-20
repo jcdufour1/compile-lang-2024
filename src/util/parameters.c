@@ -9,7 +9,6 @@ static Strv compiler_exe_name;
 
 static void print_usage(void);
 
-// TODO: 
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
