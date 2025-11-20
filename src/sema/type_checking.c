@@ -19,7 +19,6 @@
 #include <lang_type_get_pos.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>
-#include <expand_lang_def.h>
 #include <ulang_type_serialize.h>
 #include <symbol_table.h>
 #include <pos_vec.h>
@@ -2106,6 +2105,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             return false;
         case FUN_MIDDLE_NORMAL:
             break;
+        case FUN_MIDDLE_COUNT:
+            unreachable("");
     }
 
     Lang_type fun_rtn_type = {0};
@@ -2799,6 +2800,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             return false;
         case FUN_MIDDLE_NORMAL:
             break;
+        case FUN_MIDDLE_COUNT:
+            unreachable("");
     }
 
     Lang_type fun_rtn_type = {0};
@@ -4521,33 +4524,9 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 
 void try_set_types(void) {
     check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
-
-    {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
-        Uast_def* curr = NULL;
-        while (usym_tbl_iter_next(&curr, &iter)) {
-            expand_using_def(curr);
-        }
-    }
-    if (env.error_count > 0) {
-        return;
-    }
-
-    {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
-        Uast_def* curr = NULL;
-        while (usym_tbl_iter_next(&curr, &iter)) {
-            expand_def_def(curr);
-        }
-    }
-    if (env.error_count > 0) {
-        return;
-    }
-
-    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
     check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
 
-    // TODO: this def iteration should be abstracted to a separate function (try_set_block_types has similar)
+    // TODO: this def iteration should be abstracted to a separate function? (try_set_block_types has similar)
     {
         Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
         Uast_def* curr = NULL;

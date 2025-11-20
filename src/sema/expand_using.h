@@ -3,6 +3,4 @@
 
 #include <uast.h>
 
-void expand_using_def(Uast_def* def);
-
 #endif // EXPAND_USING_H

@@ -2,7 +2,6 @@
 #include <lang_type_from_ulang_type.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
-#include <expand_lang_def.h>
 #include <uast_expr_to_ulang_type.h>
 
 static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, Ulang_type_expr lang_type) {

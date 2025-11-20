@@ -20,25 +20,8 @@
 #include <time_utils.h>
 #include <ir_utils.h>
 
-static void add_opaque(int16_t pointer_depth) {
-    Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN,
-        lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN,
-            pointer_depth
-        )))
-    );
-    unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
-}
-
-static void add_void(void) {
-    unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
-}
-
 static void add_primitives(void) {
-    //add_opaque(0);
-    add_void();
-
+    unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
     vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
 }
 
@@ -125,6 +108,8 @@ void compile_file_to_ir(void) {
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level);
+    do_pass(expand_def, symbol_log_level);
+    do_pass(expand_using, symbol_log_level);
     do_pass(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
 

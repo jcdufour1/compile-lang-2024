@@ -177,3 +177,11 @@ void expand_using_def(Uast_def* def) {
     }
     unreachable("");
 }
+
+void expand_using(void) {
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        expand_def_def(curr);
+    }
+}

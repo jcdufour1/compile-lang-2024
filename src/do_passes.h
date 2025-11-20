@@ -7,6 +7,7 @@
 #include <token_vec.h>
 #include <parameters.h>
 #include <token_view.h>
+#include <expand_using.h>
 
 void tokenize_do_test(void);
 
@@ -31,5 +32,9 @@ Ir_block* assign_ir_ids(Ir_block* root);
 void emit_llvm_from_tree(const Ir_block* root);
 
 void emit_c_from_tree(void);
+
+void expand_def(void);
+
+void expand_using(void);
 
 #endif // PASSES_H

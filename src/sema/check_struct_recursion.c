@@ -7,7 +7,6 @@
 #include <msg.h>
 #include <uast_utils.h>
 #include <check_struct_recursion.h>
-#include <expand_lang_def.h>
 
 // TODO: consider using iterative approach to avoid stack overflow risk
 static Arena struct_like_rec_a = {0};
