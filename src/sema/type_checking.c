@@ -28,7 +28,6 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 #include <check_general_assignment.h>
-#include <expand_using.h>
 #include <lang_type_new_convenience.h>
 #include <ulang_type_is_equal.h>
 #include <ulang_type_remove_expr.h>

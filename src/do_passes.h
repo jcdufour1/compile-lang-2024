@@ -7,7 +7,6 @@
 #include <token_vec.h>
 #include <parameters.h>
 #include <token_view.h>
-#include <expand_using.h>
 
 void tokenize_do_test(void);
 

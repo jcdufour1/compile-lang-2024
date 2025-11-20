@@ -1,4 +1,3 @@
-#include <expand_using.h>
 #include <symbol_iter.h>
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
@@ -11,6 +10,8 @@ typedef enum {
 } EXPAND_USING_STMT;
 
 static void expand_using_block(Uast_block* block);
+
+static void expand_using_def(Uast_def* def);
 
 static void expand_using_using(Uast_using* using) {
     Uast_def* def = NULL;
@@ -140,7 +141,7 @@ static void expand_using_block(Uast_block* block) {
     }
 }
 
-void expand_using_def(Uast_def* def) {
+static void expand_using_def(Uast_def* def) {
     switch (def->type) {
         case UAST_LABEL:
             return;
@@ -182,6 +183,6 @@ void expand_using(void) {
     Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        expand_def_def(curr);
+        expand_using_def(curr);
     }
 }

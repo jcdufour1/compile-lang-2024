@@ -26,54 +26,54 @@ typedef enum {
     EXPAND_EXPR_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
 } EXPAND_EXPR_STATUS;
 
-bool expand_def_block(Uast_block* block);
+static bool expand_def_block(Uast_block* block);
 
-bool expand_def_def(Uast_def* def);
+static bool expand_def_def(Uast_def* def);
 
-bool expand_def_block(Uast_block* block);
+static bool expand_def_block(Uast_block* block);
 
-EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
+static EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
-bool expand_def_expr_vec(Uast_expr_vec* exprs);
+static bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
-bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr);
+static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr);
 
-EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr);
+static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr);
 
-bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
+static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 
-bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
+static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
 
-EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
+static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
 
-bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
+static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
 
-bool expand_def_ulang_type_regular(
+static bool expand_def_ulang_type_regular(
     Ulang_type_regular* new_lang_type,
     Ulang_type_regular lang_type,
     Pos dest_pos
 );
 
-bool expand_def_function_def(Uast_function_def* def);
+static bool expand_def_function_def(Uast_function_def* def);
 
-bool expand_def_switch(Uast_switch* lang_switch);
+static bool expand_def_switch(Uast_switch* lang_switch);
 
-bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
+static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
 
-bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
+static bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
 
-bool expand_def_operator(Uast_operator* oper);
+static bool expand_def_operator(Uast_operator* oper);
 
-bool expand_def_defer(Uast_defer* lang_defer);
+static bool expand_def_defer(Uast_defer* lang_defer);
 
-EXPAND_NAME_STATUS expand_def_name(
+static EXPAND_NAME_STATUS expand_def_name(
     Ulang_type* new_lang_type,
     Uast_expr** new_expr,
     Name* name,
     Pos dest_pos
 );
 
-bool expand_def_ulang_type_regular(
+static bool expand_def_ulang_type_regular(
     Ulang_type_regular* new_lang_type,
     Ulang_type_regular lang_type,
     Pos dest_pos
@@ -241,7 +241,7 @@ static bool expand_def_ulang_type_int(
     return true;
 }
 
-bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
+static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular new_lang_type = {0};
@@ -489,7 +489,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos) {
+static EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos) {
     Name actual = {0};
     if (!name_from_uname(&actual, *name, pos)) {
         return EXPAND_NAME_ERROR;
@@ -515,7 +515,7 @@ EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_e
 }
 
 // TODO: expected failure case for having generic parameters in def definition
-EXPAND_NAME_STATUS expand_def_name(
+static EXPAND_NAME_STATUS expand_def_name(
     Ulang_type* new_lang_type,
     Uast_expr** new_expr,
     Name* name,
@@ -703,11 +703,11 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
+static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
     return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 }
 
-bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
+static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
     Ulang_type dummy = {0};
     switch (expand_def_expr(&dummy, new_expr, expr)) {
         case EXPAND_EXPR_ERROR:
@@ -721,7 +721,7 @@ bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
     unreachable("");
 }
 
-EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr) {
+static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr) {
 #   define a(expr) ((expr) ? EXPAND_EXPR_NEW_EXPR : EXPAND_EXPR_ERROR)
 
     switch (expr->type) {
@@ -796,11 +796,11 @@ static bool expand_def_return(Uast_return* rtn) {
     return expand_def_expr_not_ulang_type(&rtn->child, rtn->child);
 }
 
-bool expand_def_defer(Uast_defer* lang_defer) {
+static bool expand_def_defer(Uast_defer* lang_defer) {
     return expand_def_stmt(&lang_defer->child, lang_defer->child);
 }
 
-bool expand_def_using(Uast_using* using) {
+static bool expand_def_using(Uast_using* using) {
     Uast_expr* dummy_expr = NULL;
     Ulang_type dummy_lang_type = {0};
     switch (expand_def_name(&dummy_lang_type, &dummy_expr, &using->sym_name, using->pos)) {
@@ -838,7 +838,7 @@ static bool expand_def_for_with_cond(Uast_for_with_cond* lang_for) {
     return expand_def_block(lang_for->body) && status;
 }
 
-bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
+static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR: {
             Uast_expr* new_expr = NULL;
@@ -894,7 +894,7 @@ static bool expand_def_param(Uast_param* param) {
     return status;
 }
 
-bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
+static bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
         status = expand_def_generic_param(vec_at(*params, idx)) && status;
@@ -902,7 +902,7 @@ bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     return status;
 }
 
-bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
+static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
         status = expand_def_variable_def(vec_at(*defs, idx)) && status;
@@ -910,7 +910,7 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     return status;
 }
 
-bool expand_def_expr_vec(Uast_expr_vec* exprs) {
+static bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
         status = expand_def_expr_not_ulang_type(vec_at_ref(exprs, idx), vec_at(*exprs, idx)) && status;
@@ -918,7 +918,7 @@ bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     return status;
 }
 
-bool expand_def_case_vec(Uast_case_vec* cases) {
+static bool expand_def_case_vec(Uast_case_vec* cases) {
     bool status = true;
     for (size_t idx = 0; idx < cases->info.count; idx++) {
         if (!expand_def_case(vec_at(*cases, idx))) {
@@ -928,7 +928,7 @@ bool expand_def_case_vec(Uast_case_vec* cases) {
     return status;
 }
 
-bool expand_def_if_vec(Uast_if_vec* ifs) {
+static bool expand_def_if_vec(Uast_if_vec* ifs) {
     bool status = true;
     for (size_t idx = 0; idx < ifs->info.count; idx++) {
         if (!expand_def_if(vec_at(*ifs, idx))) {
@@ -955,7 +955,7 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
     return status;
 }
 
-bool expand_def_function_def(Uast_function_def* def) {
+static bool expand_def_function_def(Uast_function_def* def) {
     bool status = expand_def_function_decl(def->decl);
     status = expand_def_block(def->body) && status;
     return status;
@@ -973,7 +973,7 @@ static bool expand_def_import_path(Uast_import_path* path) {
     return expand_def_block(path->block);
 }
 
-bool expand_def_def(Uast_def* def) {
+static bool expand_def_def(Uast_def* def) {
     switch (def->type) {
         case UAST_MOD_ALIAS:
             return expand_def_mod_alias(uast_mod_alias_unwrap(def));
@@ -1010,16 +1010,16 @@ bool expand_def_def(Uast_def* def) {
     unreachable("");
 }
 
-bool expand_def_switch(Uast_switch* lang_switch) {
+static bool expand_def_switch(Uast_switch* lang_switch) {
     bool status = expand_def_expr_not_ulang_type(&lang_switch->operand, lang_switch->operand);
     return expand_def_case_vec(&lang_switch->cases) && status;
 }
 
-bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
+static bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
     return expand_def_if_vec(&if_else->uasts);
 }
 
-bool expand_def_block(Uast_block* block) {
+static bool expand_def_block(Uast_block* block) {
     bool status = true;
 
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
@@ -1039,6 +1039,6 @@ void expand_def(void) {
     Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        expand_using_def(curr);
+        expand_def_def(curr);
     }
 }
