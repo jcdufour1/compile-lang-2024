@@ -49,7 +49,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
     return check_struct_rec_internal(uast_def_get_struct_def_base(def), rec_stack);
 }
 
-static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack /* TODO: consider using hash table for O(1) time */) {
+static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack) {
     if (lang_type.atom.pointer_depth > 0) {
         return true;
     }

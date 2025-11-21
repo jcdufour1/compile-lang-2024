@@ -100,6 +100,7 @@ typedef enum {
     DIAG_INVALID_TYPE,
     DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY,
     DIAG_EXPECTED_VARIABLE_DEF,
+    DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
 
     // count of cases for static asserts
     DIAG_COUNT,
