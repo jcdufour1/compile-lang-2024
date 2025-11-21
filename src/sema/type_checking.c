@@ -3911,13 +3911,10 @@ static bool check_for_exhaustiveness_inner(
                 unreachable("invalid enum value\n");
             }
             if (vec_at(exhaustive_data->covered, (size_t)curr_lit->data)) {
-                Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
-                Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     DIAG_DUPLICATE_CASE, curr_if->pos,
-                    "duplicate case `"FMT"."FMT"` in switch statement\n",
-                    name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(enum_def->base.members, (size_t)curr_lit->data)->name)
+                    "duplicate case `"FMT"` in switch statement\n",
+                    print_enum_def_member(exhaustive_data->oper_lang_type, (size_t)curr_lit->data)
                 );
                 msg(
                     DIAG_NOTE, vec_at(exhaustive_data->covered_pos,

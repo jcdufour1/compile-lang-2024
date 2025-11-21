@@ -161,8 +161,6 @@ next:
 }
 
 
-// TODO: this function should also actually do the implicit conversion I think
-// TODO: remove this function
 typedef enum {
     IMPLICIT_CONV_INVALID_TYPES,
     IMPLICIT_CONV_CONVERTED,
