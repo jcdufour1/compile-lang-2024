@@ -5,6 +5,6 @@ type Token enum {
 }
 
 fn main() i32 {
-    let token Token = Token.number
+    let token Token = Token.number()
     return 0
 }

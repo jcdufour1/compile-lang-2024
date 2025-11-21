@@ -176,19 +176,13 @@ static CHECK_ASSIGN_STATUS check_general_assignment_finish(
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
         if (src->type == TAST_ENUM_CALLEE) {
             Tast_enum_callee* callee = tast_enum_callee_unwrap(src);
-            Uast_def* enum_def_ = NULL;
-            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, callee->enum_lang_type)));
-            Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
 
-            // TODO: make helper function to print member more easily
             msg(
                 DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, tast_expr_get_pos(src),
                 "enum case with non-void inner type cannot be assigned without using (); "
-                "use `"FMT"."FMT"()` instead of `"FMT"."FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(enum_def.members, (size_t)callee->tag->data)->name),
-                lang_type_print(LANG_TYPE_MODE_MSG, callee->enum_lang_type),
-                name_print(NAME_MSG, vec_at(enum_def.members, (size_t)callee->tag->data)->name)
+                "use `"FMT"()` instead of `"FMT"`\n",
+                print_enum_def_member(callee->enum_lang_type, (size_t)callee->tag->data),
+                print_enum_def_member(callee->enum_lang_type, (size_t)callee->tag->data)
             );
             return CHECK_ASSIGN_ERROR;
         }

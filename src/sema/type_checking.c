@@ -3917,8 +3917,9 @@ static bool check_for_exhaustiveness_inner(
                     print_enum_def_member(exhaustive_data->oper_lang_type, (size_t)curr_lit->data)
                 );
                 msg(
-                    DIAG_NOTE, vec_at(exhaustive_data->covered_pos,
-                    (size_t)curr_lit->data), "case originally covered here\n"
+                    DIAG_NOTE,
+                    vec_at(exhaustive_data->covered_pos, (size_t)curr_lit->data),
+                    "case originally covered here\n"
                 );
                 return false;
             }
