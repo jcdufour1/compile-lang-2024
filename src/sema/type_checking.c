@@ -2205,7 +2205,6 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 }
             }
             if (!name_found) {
-                // TODO: this will print "member", but should print "parameter"
                 msg(
                     DIAG_INVALID_MEMBER_ACCESS,
                     lhs->pos,
@@ -2263,9 +2262,7 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
             }
         }
 
-        // TODO: print error, etc. if value already assigned
         if (vec_at(new_args_set, curr_arg_count)) {
-            // TODO: print error for respecified function arg
             msg(
                 DIAG_INVALID_MEMBER_ACCESS,
                 tast_expr_get_pos(vec_at(new_args, curr_arg_count)),
@@ -2306,7 +2303,6 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
         unwrap(new_args_set.info.count == new_args.info.count);
         for (size_t idx = 0; idx < new_args_set.info.count; idx++) {
             if (!vec_at(new_args_set, idx)) {
-                // TODO: move error for function parameter unspecified to here?
                 if (vec_at(params->params, idx)->is_optional) {
                     unwrap(!is_variadic);
                     *vec_at_ref(&new_args_set, idx) = true;
@@ -2358,8 +2354,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 msg_invalid_count_function_args(fun_call, fun_decl->name, fun_decl->pos, min_args, max_args);
             } else {
                 msg(
-                    DIAG_INVALID_COUNT_FUN_ARGS /* TODO */, fun_call->pos,
-                    "function parameter `"FMT"` was not specified\n",
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
+                    "argument to function parameter `"FMT"` was not specified\n",
                     name_print(NAME_MSG, param_name)
                 );
                 msg(
@@ -2848,7 +2844,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         if (uast_expr_is_designator(corres_arg)) {
-            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
             Uast_member_access* lhs = uast_member_access_unwrap(
                 uast_binary_unwrap(uast_operator_unwrap(corres_arg))->lhs // parser should catch invalid assignment
             );
@@ -3090,7 +3085,7 @@ static void msg_invalid_member_internal(
     msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
-    Tast_stmt** new_tast, // TODO: change to tast_expr
+    Tast_stmt** new_tast,
     Uast_member_access* access,
     Ustruct_def_base def_base,
     Tast_expr* new_callee
@@ -4181,7 +4176,6 @@ error:
     return status;
 }
 
-// TODO: remove this function
 bool try_set_using_types(const Uast_using* using) {
     bool status = true;
     Uast_def* def = NULL;
@@ -4193,10 +4187,15 @@ bool try_set_using_types(const Uast_using* using) {
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
         Name lang_type_name = {0};
-        name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
+        if (!name_from_uname(
+            &lang_type_name,
+            ulang_type_get_atom(var_def->lang_type).str,
+            ulang_type_get_pos(var_def->lang_type)
+        )) {
+            return false;
+        }
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
-        // TODO: expected failure case for using `using` on enum, etc.
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
             Uast_variable_def* curr = vec_at(struct_def->base.members, idx);
