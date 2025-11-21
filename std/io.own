@@ -95,7 +95,7 @@ type PrintFormatArg struct {
 
 type PrintFormat struct {
     format Str
-    args PrintFormatArg
+    args PrintFormatArg[]
 }
 
 fn print_internal(format PrintFormat) {
@@ -106,9 +106,9 @@ fn print_internal(format PrintFormat) {
         print_str(coll.slice_range(format.format, idx, 1), .end = "")
     }
 
-    //for idx in 0..args.count {
-        //assert(0, "not implemented")
-        ////args[idx].print_item_fn(args[idx].item)
-    //}
+    for idx usize in 0..format.args.count {
+        assert(0, "not implemented")
+        //args[idx].print_item_fn(args[idx].item)
+    }
 }
 

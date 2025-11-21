@@ -17,5 +17,6 @@ type assert def = _builtin__util.assert
 type usize def = _builtin__util.usize
 type ptr def = _builtin__util.ptr
 
+// TODO: remove min and max from the prelude?
 type min def = _builtin__math.min
 type max def = _builtin__math.max

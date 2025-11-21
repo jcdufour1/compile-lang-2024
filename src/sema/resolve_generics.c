@@ -38,8 +38,7 @@ static void msg_undefined_type_internal(
             ulang_type_regular_const_unwrap(lang_type).atom.str,
             pos
         )) {
-            todo();
-            unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name))));
+            usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name)));
         }
     }
 }
