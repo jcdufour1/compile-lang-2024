@@ -48,6 +48,7 @@ syn match ownFloatTypeError display "\v<f\d\d*\zs\h*\ze>"
 
 syn keyword ownPreludeType
     \ usize
+    \ ptr
 
 syn match ownIntLiteral display "\v<0>"
 syn match ownIntLiteral display "\v<[1-9](_*\d)*>"
