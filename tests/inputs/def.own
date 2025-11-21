@@ -3,7 +3,6 @@ type io import = std.io
 type util import = std.util
 
 type Opt def = util.Optional
-//type Token def = io.Token
 type print def = io.printf
 
 fn add_internal(<NumType>)(lhs NumType, rhs NumType) NumType {

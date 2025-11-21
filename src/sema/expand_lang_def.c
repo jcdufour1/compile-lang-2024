@@ -396,11 +396,13 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
-            if (new_name->gen_args.info.count > 0) {
+            if (access->member_name->name.gen_args.info.count > 0) {
                 if (name.gen_args.info.count > 0) {
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     msg(
                         DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
                         uast_expr_get_pos(expr), 
@@ -408,8 +410,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
                     );
                     return EXPAND_NAME_ERROR;
                 }
-            } else {
-                new_name->gen_args = name.gen_args;
             }
 
 
@@ -445,9 +445,10 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         }
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
-            *new_name = sym->name;
-            if (new_name->gen_args.info.count > 0) {
+            if (sym->name.gen_args.info.count > 0) {
                 if (name.gen_args.info.count > 0) {
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
@@ -458,9 +459,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
                     );
                     return EXPAND_NAME_ERROR;
                 }
-            } else {
-                new_name->gen_args = name.gen_args;
             }
+            *new_name = sym->name;
 
             return expand_def_name_internal(
                 new_lang_type,
