@@ -9,7 +9,6 @@ static Strv compiler_exe_name;
 
 static void print_usage(void);
 
-// TODO: 
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
@@ -266,7 +265,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 97, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 99, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
@@ -365,6 +364,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-type", DIAG_INVALID_TYPE, LOG_ERROR, true, false},
     {"non-int-literal-in-static-array", DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY, LOG_ERROR, true, false},
     {"expected-variable-def", DIAG_EXPECTED_VARIABLE_DEF, LOG_ERROR, true, false},
+    {"using-on-non-struct-variable", DIAG_USING_ON_NON_STRUCT_VARIABLE, LOG_ERROR, true, false},
+    {"def-dest-and-src-both-have-gen-args", DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS, LOG_ERROR, true, false},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

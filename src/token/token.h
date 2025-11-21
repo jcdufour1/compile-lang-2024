@@ -61,7 +61,6 @@ typedef enum {
     TOKEN_ENUM,
     TOKEN_SYMBOL,
     TOKEN_DOUBLE_QUOTE,
-    TOKEN_SEMICOLON,
     TOKEN_NEW_LINE,
     TOKEN_COMMA,
     TOKEN_COLON,
@@ -174,8 +173,6 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_CLOSE_CURLY_BRACE:
             return false;
         case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
             return false;
         case TOKEN_COMMA:
             return false;
@@ -321,8 +318,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_CLOSE_CURLY_BRACE:
             return false;
         case TOKEN_SYMBOL:
-            return false;
-        case TOKEN_SEMICOLON:
             return false;
         case TOKEN_COLON:
             return false;
@@ -516,8 +511,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
             return false;
         case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
             return false;
         case TOKEN_COMMA:
             return true;

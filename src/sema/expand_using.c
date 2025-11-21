@@ -1,4 +1,3 @@
-#include <expand_using.h>
 #include <symbol_iter.h>
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
@@ -11,6 +10,8 @@ typedef enum {
 } EXPAND_USING_STMT;
 
 static void expand_using_block(Uast_block* block);
+
+static void expand_using_def(Uast_def* def);
 
 static void expand_using_using(Uast_using* using) {
     Uast_def* def = NULL;
@@ -26,8 +27,22 @@ static void expand_using_using(Uast_using* using) {
         vec_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
-        // TODO: expected failure case for using `using` on enum, etc.
+        if (struct_def_->type != UAST_STRUCT_DEF) {
+            msg(
+                DIAG_USING_ON_NON_STRUCT_VARIABLE,
+                using->pos,
+                "`using` cannot be used on a variable definition of a non-struct type\n"
+            );
+            msg(
+                DIAG_NOTE,
+                uast_def_get_pos(struct_def_),
+                "type `"FMT"` is defined as a non-struct type\n",
+                ulang_type_print(LANG_TYPE_MODE_MSG, var_def->lang_type)
+            );
+            return;
+        }
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
+
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
             Uast_variable_def* curr = vec_at(struct_def->base.members, idx);
             Name alias_name = using->sym_name;
@@ -48,6 +63,7 @@ static void expand_using_using(Uast_using* using) {
             }
         }
         return;
+
     } else if (def->type == UAST_MOD_ALIAS) {
         Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
         bool is_builtin = strv_is_equal(MOD_PATH_BUILTIN, using->sym_name.mod_path);
@@ -140,7 +156,7 @@ static void expand_using_block(Uast_block* block) {
     }
 }
 
-void expand_using_def(Uast_def* def) {
+static void expand_using_def(Uast_def* def) {
     switch (def->type) {
         case UAST_LABEL:
             return;
@@ -176,4 +192,12 @@ void expand_using_def(Uast_def* def) {
             return;
     }
     unreachable("");
+}
+
+void expand_using(void) {
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        expand_using_def(curr);
+    }
 }

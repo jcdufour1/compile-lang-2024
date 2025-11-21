@@ -729,7 +729,7 @@ void emit_c_from_tree(void) {
             return;
         }
 
-        FILE* file = fopen(strv_to_cstr(&a_pass, test_output), "w");
+        FILE* file = fopen(strv_dup(&a_pass, test_output), "w");
         if (!file) {
             msg(
                 DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "FMT" %s\n",

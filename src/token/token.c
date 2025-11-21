@@ -18,8 +18,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("}");
         case TOKEN_DOUBLE_QUOTE:
             return sv("\"");
-        case TOKEN_SEMICOLON:
-            return sv(";");
         case TOKEN_COMMA:
             return sv(",");
         case TOKEN_SINGLE_PLUS:
@@ -180,8 +178,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("}");
         case TOKEN_DOUBLE_QUOTE:
             return sv("\"");
-        case TOKEN_SEMICOLON:
-            return sv(";");
         case TOKEN_COMMA:
             return sv(",");
         case TOKEN_SINGLE_PLUS:
@@ -338,7 +334,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -351,7 +347,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_OPEN_CURLY_BRACE: fallthrough;
         case TOKEN_CLOSE_CURLY_BRACE: fallthrough;
         case TOKEN_DOUBLE_QUOTE: fallthrough;
-        case TOKEN_SEMICOLON: fallthrough;
         case TOKEN_COMMA: fallthrough;
         case TOKEN_SINGLE_MINUS: fallthrough;
         case TOKEN_COLON: fallthrough;

@@ -1,0 +1,46 @@
+compile::stdout 0
+
+compile::stderr 40
+tests/inputs/def_both_src_and_dest_have_gen_args.own:6:5:[1;31merror[0;39m:def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)
+     5 | fn main() i32 {
+     6 |     add(<i32>)()
+       |     ^
+     7 |     add2(<i32>)()
+tests/inputs/def_both_src_and_dest_have_gen_args.own:2:16:[1;34mnote[0;39m:in expansion of def
+     1 | 
+     2 | type add def = add_internal(<i64>)
+       |                ^
+     3 | type add2 def = add_internal.thing(<i64>)
+tests/inputs/def_both_src_and_dest_have_gen_args.own:6:5:[1;31merror[0;39m:def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)
+     5 | fn main() i32 {
+     6 |     add(<i32>)()
+       |     ^
+     7 |     add2(<i32>)()
+tests/inputs/def_both_src_and_dest_have_gen_args.own:2:16:[1;34mnote[0;39m:in expansion of def
+     1 | 
+     2 | type add def = add_internal(<i64>)
+       |                ^
+     3 | type add2 def = add_internal.thing(<i64>)
+tests/inputs/def_both_src_and_dest_have_gen_args.own:7:5:[1;31merror[0;39m:def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)
+     6 |     add(<i32>)()
+     7 |     add2(<i32>)()
+       |     ^
+     8 |     return 0
+tests/inputs/def_both_src_and_dest_have_gen_args.own:3:29:[1;34mnote[0;39m:in expansion of def
+     2 | type add def = add_internal(<i64>)
+     3 | type add2 def = add_internal.thing(<i64>)
+       |                             ^
+     4 | 
+tests/inputs/def_both_src_and_dest_have_gen_args.own:7:5:[1;31merror[0;39m:def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)
+     6 |     add(<i32>)()
+     7 |     add2(<i32>)()
+       |     ^
+     8 |     return 0
+tests/inputs/def_both_src_and_dest_have_gen_args.own:3:29:[1;34mnote[0;39m:in expansion of def
+     2 | type add def = add_internal(<i64>)
+     3 | type add2 def = add_internal.thing(<i64>)
+       |                             ^
+     4 | 
+
+compile::return_code 1
+

@@ -105,7 +105,7 @@ static bool is_unary(TOKEN_TYPE token_type);
 static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos);
 
 static bool prev_is_newline(void) {
-    return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
+    return prev_token.type == TOKEN_NEW_LINE;
 }
 
 // TODO: inline this function?
@@ -123,7 +123,7 @@ static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_opaq
         *result = temp;
     }
     if (rm_newlines && !can_end_stmt(prev_token)) {
-        while (try_consume_internal(NULL, tokens, false, TOKEN_SEMICOLON, false) || try_consume_internal(NULL, tokens, false, TOKEN_NEW_LINE, false));
+        while (try_consume_internal(NULL, tokens, false, TOKEN_NEW_LINE, false));
     }
     return true;
 }
@@ -147,7 +147,7 @@ static bool try_consume_newlines(Tk_view* tokens) {
     Token dummy = {0};
     bool is_newline = false;
     if (can_end_stmt(tk_view_front(*tokens))) {
-        while (try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE, false) || try_consume_internal(&dummy, tokens, false, TOKEN_SEMICOLON, false)) {
+        while (try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE, false)) {
             is_newline = true;
         }
     }
@@ -552,8 +552,6 @@ static bool can_end_stmt(Token token) {
             return true;
         case TOKEN_DOUBLE_QUOTE:
             return true;
-        case TOKEN_SEMICOLON:
-            return true;
         case TOKEN_COMMA:
             return false;
         case TOKEN_COLON:
@@ -701,8 +699,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
             return false;
         case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
             return false;
         case TOKEN_COMMA:
             return false;
@@ -1268,7 +1264,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
         if (!consume_expect(&name_token, tokens, "in variable definition", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        try_consume(NULL, tokens, TOKEN_SEMICOLON);
+        try_consume_newlines(tokens);
         if (!try_consume_newlines(tokens) && !try_consume(NULL, tokens, TOKEN_COMMA)) {
             msg_parser_expected(tk_view_front(*tokens), "", TOKEN_NEW_LINE, TOKEN_COMMA);
             return PARSE_ERROR;
@@ -1927,7 +1923,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */)) {
         goto error;
     }
-    try_consume(NULL, tokens, TOKEN_SEMICOLON);
+    try_consume_newlines(tokens);
 
     status = PARSE_OK;
 error:
@@ -2011,7 +2007,7 @@ static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_
             return PARSE_ERROR;
     }
 
-    try_consume(NULL, tokens, TOKEN_SEMICOLON);
+    try_consume_newlines(tokens);
     return PARSE_OK;
 }
 
@@ -2445,7 +2441,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
     // TODO: use try_consume_newlines(tokens) instead of try_consume(NULL, tokens, TOKEN_NEW_LINE)
-    while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    try_consume_newlines(tokens);
     unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     if (starts_with_label(*tokens)) {
@@ -2596,7 +2592,7 @@ static PARSE_STATUS parse_block(
     if (new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
         status = PARSE_ERROR;
     }
-    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, POS_BUILTIN /* TODO */, new_scope);
+    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, tk_view_front(*tokens).pos, new_scope);
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -2968,7 +2964,7 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     ));
 
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3023,7 +3019,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -3153,7 +3149,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 76, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 75, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -3236,8 +3232,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
     int depth
 ) {
-    // TODO: use array_count here
-    if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
+    if (bin_idx >= array_count(BIN_IDX_TO_TOKEN_TYPES)) {
         return parse_unary(result, tokens, false, scope_id);
     }
 
@@ -3354,7 +3349,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
         vec_append(
             &a_pass,
             &using_params,
-            uast_using_new((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: do not hardcode path */} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
+            uast_using_new((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: avoid hardcoding path */} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );
     }
     if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {

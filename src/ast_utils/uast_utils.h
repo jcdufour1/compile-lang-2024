@@ -222,4 +222,9 @@ static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, S
     unreachable("member not found");
 }
 
+Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_idx);
+
+#define print_enum_def_member(enum_def_lang_type, memb_idx) \
+    strv_print(print_enum_def_member_internal(enum_def_lang_type, memb_idx))
+
 #endif // UAST_UTIL_H

@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/enum_non_void_case_empty_par.own:8:28:[1;31merror[0;39m:() in enum case has no argument; add argument in () or remove ()
+     7 | fn main() i32 {
+     8 |     let token Token = Token.number()
+       |                            ^
+     9 |     return 0
+
+compile::return_code 1
+

@@ -34,7 +34,6 @@ bool infer_generic_type(
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
                 if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
-                    // TODO
                     return false;
                 }
                 *infered = arg_to_infer_from;

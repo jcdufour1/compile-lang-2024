@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/invalid_count_fun_args.own:5:5:[1;31merror[0;39m:function parameter `format_string` was not specified
+tests/inputs/invalid_count_fun_args.own:5:5:[1;31merror[0;39m:argument to function parameter `format_string` was not specified
      4 | fn main() i32 {
      5 |     printf()
        |     ^

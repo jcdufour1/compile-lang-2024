@@ -10,7 +10,6 @@
 #include <symbol_log.h>
 #include <msg_todo.h>
 #include <symbol_iter.h>
-#include <expand_lang_def.h>
 #include <uast_expr_to_ulang_type.h>
 #include <check_gen_constraints.h>
 #include <ulang_type_remove_expr.h>
@@ -326,8 +325,14 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_def* after_res_ = NULL;
-            // TODO: make this line more than one line
-            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_raw_union_def_new)) {
+            if (!resolve_generics_ulang_type_internal_struct_like(
+                &after_res_,
+                result,
+                uast_def_get_struct_def_base(before_res),
+                lang_type,
+                uast_def_get_pos(before_res),
+                local_uast_raw_union_def_new
+            )) {
                 return false;
             }
             *type = LANG_TYPE_RAW_UNION;
@@ -335,8 +340,14 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_ENUM_DEF: {
             Uast_def* after_res_ = NULL;
-            // TODO: make this line more than one line
-            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_enum_def_new)) {
+            if (!resolve_generics_ulang_type_internal_struct_like(
+                &after_res_,
+                result,
+                uast_def_get_struct_def_base(before_res),
+                lang_type,
+                uast_def_get_pos(before_res),
+                local_uast_enum_def_new
+            )) {
                 return false;
             }
             *type = LANG_TYPE_ENUM;
@@ -344,8 +355,14 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_STRUCT_DEF: {
             Uast_def* after_res_ = NULL;
-            // TODO: make this line more than one line
-            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
+            if (!resolve_generics_ulang_type_internal_struct_like(
+                &after_res_,
+                result,
+                uast_def_get_struct_def_base(before_res),
+                lang_type,
+                uast_def_get_pos(before_res),
+                local_uast_struct_def_new
+            )) {
                 return false;
             }
             *type = LANG_TYPE_STRUCT;
@@ -597,12 +614,6 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    // TODO: do not call expand_def_function_def on every call to resolve_generics_function_def_call (this could be wasteful)
-    //   this is done earlier anyway (unless there is a bug)
-    if (!expand_def_function_def(def)) {
-        return false;
-    }
-
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id, (Attrs) {0});
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id, (Attrs) {0});
 

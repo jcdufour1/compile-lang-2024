@@ -3,7 +3,6 @@
 #include <ulang_type.h>
 #include <lang_type.h>
 #include <ulang_type_clone.h>
-#include <expand_lang_def.h>
 #include <uast_clone.h>
 #include <type_checking.h>
 #include <msg_todo.h>
@@ -14,7 +13,67 @@
 
 // TODO: consider if def definition has pointer_depth > 0
 
-bool expand_def_ulang_type_regular(
+typedef enum {
+    EXPAND_NAME_ERROR,
+    EXPAND_NAME_NORMAL, // only changes name
+    EXPAND_NAME_NEW_EXPR, // new_expr must be substituted where the name was
+    EXPAND_NAME_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
+} EXPAND_NAME_STATUS;
+
+typedef enum {
+    EXPAND_EXPR_ERROR,
+    EXPAND_EXPR_NEW_EXPR, // new_expr must be substituted where the name was
+    EXPAND_EXPR_NEW_ULANG_TYPE, // new_expr must be substituted where the name was
+} EXPAND_EXPR_STATUS;
+
+static bool expand_def_block(Uast_block* block);
+
+static bool expand_def_def(Uast_def* def);
+
+static bool expand_def_block(Uast_block* block);
+
+static EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
+
+static bool expand_def_expr_vec(Uast_expr_vec* exprs);
+
+static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr);
+
+static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr);
+
+static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
+
+static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
+
+static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
+
+static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos);
+
+static bool expand_def_ulang_type_regular(
+    Ulang_type_regular* new_lang_type,
+    Ulang_type_regular lang_type,
+    Pos dest_pos
+);
+
+static bool expand_def_function_def(Uast_function_def* def);
+
+static bool expand_def_switch(Uast_switch* lang_switch);
+
+static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt);
+
+static bool expand_def_if_else_chain(Uast_if_else_chain* if_else);
+
+static bool expand_def_operator(Uast_operator* oper);
+
+static bool expand_def_defer(Uast_defer* lang_defer);
+
+static EXPAND_NAME_STATUS expand_def_name(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Name* name,
+    Pos dest_pos
+);
+
+static bool expand_def_ulang_type_regular(
     Ulang_type_regular* new_lang_type,
     Ulang_type_regular lang_type,
     Pos dest_pos
@@ -50,8 +109,13 @@ bool expand_def_ulang_type_regular(
                 msg_todo("", uast_expr_get_pos(access->callee));
                 return false;
             }
-            // TODO: use uname_new function
-            Uname new_uname = {.mod_alias = uast_symbol_unwrap(access->callee)->name, .base = access->member_name->name.base, .gen_args = lang_type.atom.str.gen_args};
+
+            Uname new_uname = uname_new(
+                uast_symbol_unwrap(access->callee)->name,
+                access->member_name->name.base,
+                lang_type.atom.str.gen_args,
+                SCOPE_TOP_LEVEL/*TODO*/
+            );
             *new_lang_type = ulang_type_regular_new(ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth), lang_type.pos);
             return true;
         }
@@ -182,7 +246,7 @@ static bool expand_def_ulang_type_int(
     return true;
 }
 
-bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
+static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular new_lang_type = {0};
@@ -275,7 +339,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         case UAST_IMPORT_PATH:
             return EXPAND_NAME_NORMAL;
         case UAST_MOD_ALIAS:
-            // TODO
             fallthrough;
         case UAST_GENERIC_PARAM:
             fallthrough;
@@ -321,7 +384,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         }
     }
 
-    // TODO: this clone is expensive I think
     Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, true, name.scope_id, dest_pos);
     if (is_expanded_from) {
         pos_expanded_from_append(uast_expr_get_pos_ref(expr), expanded_from);
@@ -334,8 +396,22 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
-            unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
-            new_name->gen_args = name.gen_args;
+            if (access->member_name->name.gen_args.info.count > 0) {
+                if (name.gen_args.info.count > 0) {
+                    Pos temp_pos = uast_expr_get_pos(expr);
+                    *uast_expr_get_pos_ref(expr) = dest_pos;
+                    pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
+                    msg(
+                        DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
+                        uast_expr_get_pos(expr), 
+                        "def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)\n"
+                    );
+                    return EXPAND_NAME_ERROR;
+                }
+            }
+
 
             Uast_def* result = NULL;
             if (access->callee->type == UAST_SYMBOL) {
@@ -369,15 +445,22 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         }
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
-            *new_name = sym->name;
-            if (new_name->gen_args.info.count > 0) {
+            if (sym->name.gen_args.info.count > 0) {
                 if (name.gen_args.info.count > 0) {
-                    // TODO: expected failure case?
-                    msg_todo("", dest_pos);
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
+                    Pos temp_pos = uast_expr_get_pos(expr);
+                    *uast_expr_get_pos_ref(expr) = dest_pos;
+                    pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
+                    msg(
+                        DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
+                        uast_expr_get_pos(expr), 
+                        "def destination and source both have generic arguments (only one of destination or source is allowed generic arguments)\n"
+                    );
+                    return EXPAND_NAME_ERROR;
                 }
-            } else {
-                new_name->gen_args = name.gen_args;
             }
+            *new_name = sym->name;
 
             return expand_def_name_internal(
                 new_lang_type,
@@ -423,14 +506,18 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_EXPR_REMOVED:
             fallthrough;
-        case UAST_ENUM_GET_TAG:
+        case UAST_ENUM_GET_TAG: {
+            Pos temp_pos = uast_expr_get_pos(expr);
+            *uast_expr_get_pos_ref(expr) = dest_pos;
+            pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
             msg_todo("", uast_expr_get_pos(expr));
             return EXPAND_NAME_ERROR;
+        }
     }
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos) {
+static EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos) {
     Name actual = {0};
     if (!name_from_uname(&actual, *name, pos)) {
         return EXPAND_NAME_ERROR;
@@ -443,10 +530,6 @@ EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_e
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
             return EXPAND_NAME_NEW_EXPR;
-            // TODO: below unwraps and return are unreachable
-            unwrap(strv_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
-            unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
-            return EXPAND_NAME_NEW_EXPR;
         case EXPAND_NAME_NEW_ULANG_TYPE:
             return EXPAND_NAME_NEW_ULANG_TYPE;
         case EXPAND_NAME_ERROR:
@@ -456,7 +539,7 @@ EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_e
 }
 
 // TODO: expected failure case for having generic parameters in def definition
-EXPAND_NAME_STATUS expand_def_name(
+static EXPAND_NAME_STATUS expand_def_name(
     Ulang_type* new_lang_type,
     Uast_expr** new_expr,
     Name* name,
@@ -478,7 +561,7 @@ EXPAND_NAME_STATUS expand_def_name(
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
-    return expand_def_ulang_type(&def->lang_type, def->pos /* TODO */);
+    return expand_def_ulang_type(&def->lang_type, def->pos);
 }
 
 static bool expand_def_case(Uast_case* lang_case) {
@@ -644,11 +727,11 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
+static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
     return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 }
 
-bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
+static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
     Ulang_type dummy = {0};
     switch (expand_def_expr(&dummy, new_expr, expr)) {
         case EXPAND_EXPR_ERROR:
@@ -656,13 +739,13 @@ bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
         case EXPAND_EXPR_NEW_EXPR:
             return true;
         case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg(DIAG_INVALID_TYPE /* TODO */, uast_expr_get_pos(expr), "expected expression, but got type\n");
+            msg(DIAG_EXPECTED_EXPR_BUT_GOT_TYPE, uast_expr_get_pos(expr), "expected expression, but got type\n");
             return false;
     }
     unreachable("");
 }
 
-EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr) {
+static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr) {
 #   define a(expr) ((expr) ? EXPAND_EXPR_NEW_EXPR : EXPAND_EXPR_ERROR)
 
     switch (expr->type) {
@@ -737,11 +820,11 @@ static bool expand_def_return(Uast_return* rtn) {
     return expand_def_expr_not_ulang_type(&rtn->child, rtn->child);
 }
 
-bool expand_def_defer(Uast_defer* lang_defer) {
+static bool expand_def_defer(Uast_defer* lang_defer) {
     return expand_def_stmt(&lang_defer->child, lang_defer->child);
 }
 
-bool expand_def_using(Uast_using* using) {
+static bool expand_def_using(Uast_using* using) {
     Uast_expr* dummy_expr = NULL;
     Ulang_type dummy_lang_type = {0};
     switch (expand_def_name(&dummy_lang_type, &dummy_expr, &using->sym_name, using->pos)) {
@@ -779,7 +862,7 @@ static bool expand_def_for_with_cond(Uast_for_with_cond* lang_for) {
     return expand_def_block(lang_for->body) && status;
 }
 
-bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
+static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR: {
             Uast_expr* new_expr = NULL;
@@ -835,7 +918,7 @@ static bool expand_def_param(Uast_param* param) {
     return status;
 }
 
-bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
+static bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
         status = expand_def_generic_param(vec_at(*params, idx)) && status;
@@ -843,7 +926,7 @@ bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     return status;
 }
 
-bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
+static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
         status = expand_def_variable_def(vec_at(*defs, idx)) && status;
@@ -851,7 +934,7 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     return status;
 }
 
-bool expand_def_expr_vec(Uast_expr_vec* exprs) {
+static bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
         status = expand_def_expr_not_ulang_type(vec_at_ref(exprs, idx), vec_at(*exprs, idx)) && status;
@@ -859,7 +942,7 @@ bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     return status;
 }
 
-bool expand_def_case_vec(Uast_case_vec* cases) {
+static bool expand_def_case_vec(Uast_case_vec* cases) {
     bool status = true;
     for (size_t idx = 0; idx < cases->info.count; idx++) {
         if (!expand_def_case(vec_at(*cases, idx))) {
@@ -869,7 +952,7 @@ bool expand_def_case_vec(Uast_case_vec* cases) {
     return status;
 }
 
-bool expand_def_if_vec(Uast_if_vec* ifs) {
+static bool expand_def_if_vec(Uast_if_vec* ifs) {
     bool status = true;
     for (size_t idx = 0; idx < ifs->info.count; idx++) {
         if (!expand_def_if(vec_at(*ifs, idx))) {
@@ -896,7 +979,7 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
     return status;
 }
 
-bool expand_def_function_def(Uast_function_def* def) {
+static bool expand_def_function_def(Uast_function_def* def) {
     bool status = expand_def_function_decl(def->decl);
     status = expand_def_block(def->body) && status;
     return status;
@@ -914,7 +997,7 @@ static bool expand_def_import_path(Uast_import_path* path) {
     return expand_def_block(path->block);
 }
 
-bool expand_def_def(Uast_def* def) {
+static bool expand_def_def(Uast_def* def) {
     switch (def->type) {
         case UAST_MOD_ALIAS:
             return expand_def_mod_alias(uast_mod_alias_unwrap(def));
@@ -935,7 +1018,6 @@ bool expand_def_def(Uast_def* def) {
         case UAST_ENUM_DEF:
             return expand_def_enum_def(uast_enum_def_unwrap(def));
         case UAST_PRIMITIVE_DEF:
-            // TODO
             return true;
         case UAST_FUNCTION_DECL:
             return expand_def_function_decl(uast_function_decl_unwrap(def));
@@ -951,16 +1033,16 @@ bool expand_def_def(Uast_def* def) {
     unreachable("");
 }
 
-bool expand_def_switch(Uast_switch* lang_switch) {
+static bool expand_def_switch(Uast_switch* lang_switch) {
     bool status = expand_def_expr_not_ulang_type(&lang_switch->operand, lang_switch->operand);
     return expand_def_case_vec(&lang_switch->cases) && status;
 }
 
-bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
+static bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
     return expand_def_if_vec(&if_else->uasts);
 }
 
-bool expand_def_block(Uast_block* block) {
+static bool expand_def_block(Uast_block* block) {
     bool status = true;
 
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
@@ -976,3 +1058,10 @@ bool expand_def_block(Uast_block* block) {
     return status;
 }
 
+void expand_def(void) {
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        expand_def_def(curr);
+    }
+}

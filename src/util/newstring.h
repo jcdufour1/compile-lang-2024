@@ -154,7 +154,7 @@ static inline String string_clone(Arena* new_arena, String string) {
 }
 
 static inline const char* string_to_cstr(Arena* arena, String string) {
-    return strv_to_cstr(arena, string_to_strv(string));
+    return strv_dup(arena, string_to_strv(string));
 }
 
 __attribute__((format (printf, 3, 4)))

@@ -96,14 +96,11 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
         return QSORT_MORE_THAN;
     }
 
-    // TODO: remove if condition (always run if body) when possible
-    if (rhs->pos_for_sort.file_path.count != SIZE_MAX) {
-        int file_result = strncmp(lhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.count);
-        if (file_result < 0) {
-            return QSORT_LESS_THAN;
-        } else if (file_result > 0) {
-            return QSORT_MORE_THAN;
-        }
+    int file_result = strncmp(lhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.str, rhs->pos_for_sort.file_path.count);
+    if (file_result < 0) {
+        return QSORT_LESS_THAN;
+    } else if (file_result > 0) {
+        return QSORT_MORE_THAN;
     }
 
     if (lhs->pos_for_sort.line < rhs->pos_for_sort.line) {
@@ -211,7 +208,6 @@ void msg_internal(
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
         size_t buf_cap_needed = 0;
 
-        // TODO: do this in string_extend_f, etc. (maybe not, because vsnprintf would be a pain to implement)
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));

@@ -20,25 +20,8 @@
 #include <time_utils.h>
 #include <ir_utils.h>
 
-static void add_opaque(int16_t pointer_depth) {
-    Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN,
-        lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(
-            POS_BUILTIN,
-            pointer_depth
-        )))
-    );
-    unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
-}
-
-static void add_void(void) {
-    unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
-}
-
 static void add_primitives(void) {
-    //add_opaque(0);
-    add_void();
-
+    unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
     vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
 }
 
@@ -125,6 +108,8 @@ void compile_file_to_ir(void) {
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level);
+    do_pass(expand_using, symbol_log_level);
+    do_pass(expand_def, symbol_log_level);
     do_pass(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
 
@@ -170,7 +155,6 @@ NEVER_RETURN void do_passes(void) {
         unreachable("should have exited before now\n");
     }
 
-    // TODO: place emit_c_from_tree, etc. into do_pass macro?
     if (params.stop_after > STOP_AFTER_IR) {
         switch (params.backend_info.backend) {
             case BACKEND_NONE:
@@ -178,17 +162,12 @@ NEVER_RETURN void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                emit_c_from_tree();
+                do_pass(emit_c_from_tree, ir_log_level);
                 break;
             default:
                 unreachable("");
         }
     }
-    if (env.error_count > 0) {
-        local_exit(EXIT_CODE_FAIL);
-    }
-    arena_reset(&a_temp);
-    arena_reset(&a_pass);
 
     static_assert(
         PARAMETERS_COUNT == 26,

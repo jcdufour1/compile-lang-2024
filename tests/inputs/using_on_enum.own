@@ -1,0 +1,12 @@
+
+type Token enum {
+    int i32
+}
+
+fn incorrect_using(using token Token) {
+}
+
+fn main() i32 {
+    incorrect_using(.num)
+    return 0
+}
