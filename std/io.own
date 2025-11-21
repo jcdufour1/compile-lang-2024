@@ -99,16 +99,30 @@ type PrintFormat struct {
 }
 
 fn print_internal(format PrintFormat) {
-    for idx usize in 0..format.format.count {
-        if (format.format[idx] == '%') {
-            assert(0, "not implemented")
+    let arg_idx usize = 0
+    let skip_one u1 = 0
+
+    
+    for format_idx usize in 0..format.format.count {
+        if skip_one {
+            skip_one = 0
+            continue
         }
-        print_str(coll.slice_range(format.format, idx, 1), .end = "")
+
+        if (format.format[format_idx] == '%') {
+            if (format.format[format_idx + 1] == '%') {
+                print_str(coll.slice_range(format.format, format_idx, 1), .end = "")
+                skip_one = 1
+            } else {
+                let curr = format.args[arg_idx]
+                curr.print_item_fn(curr.item)
+                arg_idx += 1
+            }
+        } else {
+            print_str(coll.slice_range(format.format, format_idx, 1), .end = "")
+        }
     }
 
-    for idx usize in 0..format.args.count {
-        assert(0, "not implemented")
-        //args[idx].print_item_fn(args[idx].item)
-    }
+    assert(arg_idx == format.args.count)
 }
 
