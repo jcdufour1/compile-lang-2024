@@ -87,3 +87,28 @@ fn print_int(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line 
     print_str_internal__(end)
 }
 
+// TODO: change opaque* to ptr
+type PrintFormatArg struct {
+    item opaque*
+    print_item_fn fn(opaque*)void
+}
+
+type PrintFormat struct {
+    format Str
+    args PrintFormatArg
+}
+
+fn print_internal(format PrintFormat) {
+    for idx usize in 0..format.format.count {
+        if (format.format[idx] == '%') {
+            assert(0, "not implemented")
+        }
+        print_str(coll.slice_range(format.format, idx, 1), .end = "")
+    }
+
+    //for idx in 0..args.count {
+        //assert(0, "not implemented")
+        ////args[idx].print_item_fn(args[idx].item)
+    //}
+}
+
