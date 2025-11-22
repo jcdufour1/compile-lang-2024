@@ -5,8 +5,8 @@ fn main() i32 {
     let num = 2_100_005_009
 
     io.print_internal({"num = %%\n", []}, io.print_buf_file, io.stdout())
-    io.print_internal({"num = %.\n", [{unsafe_cast<opaque*>&num, io.print_i32(<io.File>)}]}, io.print_buf_file, io.stderr())
-    io.print_internal({"65%% is not the same as %%%%, %%%%%. or %.%%%%\n", [{unsafe_cast<opaque*>&num, io.print_i32(<io.File>)}, {unsafe_cast<opaque*>&num, io.print_i32(<io.File>)}]}, io.print_buf_file, io.stderr())
+    io.print_internal({"num = %.\n", [{unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
+    io.print_internal({"65%% is not the same as %%%%, %%%%%. or %.%%%%\n", [{unsafe_cast<opaque*>&num, io.print_i32}, {unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
 
     return 0
 }

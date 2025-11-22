@@ -432,7 +432,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                             vec_at(fn.params.ulang_types, param_idx),
                             false,
                             param->base->lang_type,
-                            gen_param->name, // Name name_to_infer,
+                            gen_param->name,
                             sym_untyped->pos
                         )) {
                             vec_append(&a_main, &sym_untyped->name.gen_args, infered);
@@ -1488,7 +1488,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             );
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
-            if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast))) {
+            if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast), is_from_check_assign)) {
                 return false;
             }
             *new_tast = tast_expr_unwrap(new_tast_);
@@ -3309,7 +3309,7 @@ bool try_set_member_access_types_finish(
     unreachable("");
 }
 
-bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access) {
+bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access, bool is_from_check_assign) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
@@ -3384,7 +3384,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.scope_id
             , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
-            if (!try_set_symbol_types(&new_expr, sym, false)) {
+            if (!try_set_symbol_types(&new_expr, sym, is_from_check_assign)) {
                 return false;
             }
             *new_tast = tast_expr_wrap(new_expr);
