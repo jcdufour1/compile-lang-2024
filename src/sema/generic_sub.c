@@ -58,6 +58,8 @@ void generic_sub_lang_type_regular(
 
     unwrap(name_from_uname(&temp, lang_type.atom.str, lang_type.pos));
     if (name_is_equal(gen_param, temp)) {
+        //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+        //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.atom.str.scope_id);
 
         int16_t base_depth = lang_type.atom.pointer_depth;
@@ -66,12 +68,16 @@ void generic_sub_lang_type_regular(
         return;
     }
 
+    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(*gen_args, idx)));
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(*gen_args, idx), gen_param, gen_arg);
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(*gen_args, idx)));
     }
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
+    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
 }
 
 void generic_sub_lang_type_expr(
@@ -110,6 +116,7 @@ void generic_sub_lang_type(
                 gen_param,
                 gen_arg
             );
+            //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
             return;
         case ULANG_TYPE_ARRAY:
             msg_todo("", ulang_type_get_pos(lang_type));
@@ -139,7 +146,7 @@ void generic_sub_lang_type(
             msg_todo("", ulang_type_get_pos(lang_type));
             return;
         case ULANG_TYPE_REMOVED:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
             return;
     }
     unreachable("");
@@ -179,6 +186,7 @@ void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         generic_sub_lang_type(&vec_at(base->members, idx)->lang_type, vec_at(base->members, idx)->lang_type, gen_param, gen_arg);
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(base->members, idx)->lang_type));
     }
     Pos pos = POS_BUILTIN;
     if (base->members.info.count > 0) {
@@ -356,6 +364,7 @@ void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         assert(gen_arg.type != ULANG_TYPE_EXPR);
+        log(LOG_DEBUG, FMT"\n", uast_def_print(curr));
         generic_sub_def(curr, gen_param, gen_arg);
     }
 

@@ -95,12 +95,12 @@ type PrintFormatArg struct(<BufT>) {
     print_item_fn fn(BufT, Print_buf_fn, opaque*)void
 }
 
-type PrintFormat struct {
+type PrintFormat struct(<BufT>) {
     format Str
-    args PrintFormatArg[]
+    args PrintFormatArg(<BufT>)[]
 }
 
-fn print_internal(<BufT>)(print_buf BufT, print_buf_fn Print_buf_fn, format PrintFormat) {
+fn print_internal(<BufT>)(print_buf BufT, print_buf_fn Print_buf_fn, format PrintFormat(<BufT>)) {
     let arg_idx usize = 0
     let skip_one u1 = 0
     
@@ -112,15 +112,16 @@ fn print_internal(<BufT>)(print_buf BufT, print_buf_fn Print_buf_fn, format Prin
 
         if (format.format[format_idx] == '%') {
             if (format.format[format_idx + 1] == '%') {
-                print_buf_fn(print_buf, coll.slice_range(format.format, format_idx, 1))
+                print_buf_fn(print_buf, format.format[format_idx])
                 skip_one = 1
             } else {
-                let curr = format.args[arg_idx]
+                let curr PrintFormatArg(<BufT>) = format.args[arg_idx]
                 curr.print_item_fn(print_buf, print_buf_fn, curr.item)
                 arg_idx += 1
+                skip_one = 1
             }
         } else {
-            print_buf_fn(print_buf, coll.slice_range(format.format, format_idx, 1))
+            print_buf_fn(print_buf, format.format[format_idx])
         }
     }
 
