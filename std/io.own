@@ -1,5 +1,5 @@
 type rt import = std.runtime
-type c import = std.libc
+type libc import = std.libc
 type coll import = std.collections
 type util import = std.util
 
@@ -10,9 +10,10 @@ extern("c") fn own_stderr() opaque*
 extern("c") fn own_stdin() opaque*
 extern("c") fn own_argv() Str[]
 
-type printf def = c.printf
-type puts def = c.puts
-type fopen def = c.fopen
+type printf def = libc.printf
+type puts def = libc.puts
+type fopen def = libc.fopen
+type fputc def = libc.fputc
 
 type File struct {
     file opaque*
@@ -100,6 +101,32 @@ type PrintFormat struct(<BufT>) {
     args PrintFormatArg(<BufT>)[]
 }
 
+fn print_i32(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
+    let actual_item i32 = *unsafe_cast<i32*>item
+
+    let buf u8[12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if actual_item < 0 {
+        print_buf_fn(print_buf, '-')
+    }
+
+    let buf_idx usize = 11
+    for actual_item > 0 {
+        buf[buf_idx] = unsafe_cast<u8>(actual_item%10) + '0'
+        assert(buf[buf_idx] > 0)
+
+        actual_item /= 10
+        buf_idx -= 1
+    }
+
+    buf_idx += 1
+
+    for idx usize in buf_idx..12 {
+        print_buf_fn(print_buf, buf[idx])
+    }
+}
+
+fn print_buf_file(file File, ch u8) => fputc(ch, file.file)
+
 fn print_internal(<BufT>)(format PrintFormat(<BufT>), print_buf_fn Print_buf_fn, print_buf BufT) {
     let arg_idx usize = 0
     let skip_one u1 = 0
@@ -115,6 +142,7 @@ fn print_internal(<BufT>)(format PrintFormat(<BufT>), print_buf_fn Print_buf_fn,
                 print_buf_fn(print_buf, format.format[format_idx])
                 skip_one = 1
             } else {
+                // TODO: remove PrintFormatArg(<BufT>) when possible
                 let curr PrintFormatArg(<BufT>) = format.args[arg_idx]
                 curr.print_item_fn(print_buf, print_buf_fn, curr.item)
                 arg_idx += 1

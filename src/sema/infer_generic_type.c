@@ -1,10 +1,36 @@
-
-#include <infer_generic_type.h>
 #include <lang_type_print.h>
 #include <lang_type_from_ulang_type.h>
 #include <str_and_num_utils.h>
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
+#include <infer_generic_type.h>
+
+static bool infer_generic_type_tuple(
+    Ulang_type* infered,
+    Ulang_type_tuple arg_to_infer_from, // must have been set already (not a generic arg still)
+    Ulang_type_tuple param_corres_to_arg, // may still have generic stuff (must sometimes or always 
+                                          // have generic stuff for infer_generic_type to be useful)
+    Name name_to_infer,
+    Pos pos_arg
+) {
+    log(LOG_DEBUG, "infer_generic_type_tuple: arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(arg_to_infer_from)));
+    log(LOG_DEBUG, "infer_generic_type_tuple: param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(param_corres_to_arg)));
+    log(LOG_DEBUG, "infer_generic_type_tuple: name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
+
+    vec_foreach(idx, Ulang_type, curr, param_corres_to_arg.ulang_types) {
+        if (infer_generic_type(
+            infered,
+            vec_at(arg_to_infer_from.ulang_types, idx),
+            false,
+            curr,
+            name_to_infer,
+            pos_arg
+        )) {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool infer_generic_type(
     Ulang_type* infered,
@@ -25,9 +51,9 @@ bool infer_generic_type(
     }
 
     // keep these (because they are useful for debugging)
-    //log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    //log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
-    //log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
+    log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
+    log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
+    log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg.type) {
         case ULANG_TYPE_REGULAR: {
@@ -74,9 +100,19 @@ bool infer_generic_type(
         case ULANG_TYPE_TUPLE:
             // TODO
             return false;
-        case ULANG_TYPE_FN:
-            // TODO
-            return false;
+        case ULANG_TYPE_FN: {
+            Ulang_type_fn fn = ulang_type_fn_const_unwrap(param_corres_to_arg);
+            if (arg_to_infer_from.type != ULANG_TYPE_FN) {
+                return false;
+            }
+            return infer_generic_type_tuple(
+                infered,
+                ulang_type_fn_const_unwrap(arg_to_infer_from).params,
+                fn.params,
+                name_to_infer,
+                pos_arg
+            );
+        }
         case ULANG_TYPE_ARRAY:
             // TODO
             return false;
