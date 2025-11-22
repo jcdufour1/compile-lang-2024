@@ -100,7 +100,7 @@ type PrintFormat struct(<BufT>) {
     args PrintFormatArg(<BufT>)[]
 }
 
-fn print_internal(<BufT>)(print_buf BufT, print_buf_fn Print_buf_fn, format PrintFormat(<BufT>)) {
+fn print_internal(<BufT>)(format PrintFormat(<BufT>), print_buf_fn Print_buf_fn, print_buf BufT) {
     let arg_idx usize = 0
     let skip_one u1 = 0
     

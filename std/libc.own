@@ -1,5 +1,6 @@
 
 extern("c") fn puts(format_string u8*) i32
+extern("c") fn fputc(c i32, file opaque*) i32
 extern("c") fn printf(format_string u8*, args opaque...) i32
 extern("c") fn fopen(file_path u8*, flags u8*) opaque*
 extern("c") fn fclose(file opaque*) i32
