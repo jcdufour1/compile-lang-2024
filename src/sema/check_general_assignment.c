@@ -91,6 +91,53 @@ after:
     return true;
 }
 
+static bool should_convert_src_to_cstr(Lang_type dest, Tast_expr** new_src) {
+    Lang_type src_type = tast_expr_get_lang_type(*new_src);
+    if (dest.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
+        return false;
+    }
+    if (lang_type_get_pointer_depth(dest) != 1) {
+        return false;
+    }
+    if (src_type.type != LANG_TYPE_STRUCT) {
+        return false;
+    }
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+        MOD_PATH_RUNTIME,
+        sv("Slice"),
+        ulang_type_gen_args_char_new(),
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+}
+
+static bool should_convert_src_to_printformat(Lang_type dest, Tast_expr** new_src) {
+    if (dest.type != LANG_TYPE_STRUCT) {
+        return false;
+    }
+    Name dest_name = lang_type_struct_const_unwrap(dest).atom.str;
+    dest_name.gen_args.info.count = 0;
+
+    if (!strv_is_equal(dest_name.mod_path, MOD_PATH_RUNTIME)) {
+        return false;
+    }
+    if (!strv_is_equal(dest_name.base, sv("PrintFormat"))) {
+        return false;
+    }
+
+    Lang_type src_type = tast_expr_get_lang_type(*new_src);
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+        MOD_PATH_RUNTIME,
+        sv("Slice"),
+        ulang_type_gen_args_char_new(),
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+}
+
 bool do_implicit_convertions(
     Lang_type dest,
     Tast_expr** new_src,
@@ -98,33 +145,17 @@ bool do_implicit_convertions(
     bool src_is_zero,
     bool implicit_pointer_depth
 ) {
-    *new_src = src;
     Lang_type src_type = tast_expr_get_lang_type(*new_src);
-    if (dest.type != LANG_TYPE_PRIMITIVE) {
-        goto next;
+    *new_src = src;
+    if (should_convert_src_to_cstr(dest, new_src)) {
+        tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
+        return true;
     }
-    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
-        goto next;
-    }
-    if (lang_type_get_pointer_depth(dest) != 1) {
-        goto next;
-    }
-    if (src_type.type != LANG_TYPE_STRUCT) {
-        goto next;
-    }
-    if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
-        MOD_PATH_RUNTIME,
-        sv("Slice"),
-        ulang_type_gen_args_char_new(),
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
-    ))) {
-        goto next;
-    }
-    tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
-    return true;
 
-next:
+    if (should_convert_src_to_printformat(dest, new_src)) {
+        todo();
+    }
+
     if (dest.type != src_type.type) {
         return false;
     }

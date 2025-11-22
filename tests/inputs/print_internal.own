@@ -8,6 +8,10 @@ fn main() i32 {
     io.print_internal({"num = %.\n", [{unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
     io.print_internal({"65%% is not the same as %%%%, %%%%%. or %.%%%%\n", [{unsafe_cast<opaque*>&num, io.print_i32}, {unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
 
+    io.print_internal("num = %", io.print_buf_file, io.stdout())
+    //io.print_internal({"num = %.\n", [{unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
+    //io.print_internal({"65%% is not the same as %%%%, %%%%%. or %.%%%%\n", [{unsafe_cast<opaque*>&num, io.print_i32}, {unsafe_cast<opaque*>&num, io.print_i32}]}, io.print_buf_file, io.stderr())
+
     return 0
 }
 
