@@ -180,6 +180,10 @@ static inline Ulang_type_array* ulang_type_array_unwrap(Ulang_type* ulang_type) 
     unwrap(ulang_type->type == ULANG_TYPE_ARRAY);
     return &ulang_type->as.ulang_type_array;
 }
+static inline Ulang_type_tuple* ulang_type_tuple_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_TUPLE);
+    return &ulang_type->as.ulang_type_tuple;
+}
 static inline Ulang_type_expr* ulang_type_expr_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_EXPR);
     return &ulang_type->as.ulang_type_expr;

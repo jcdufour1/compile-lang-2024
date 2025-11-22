@@ -101,7 +101,7 @@ type PrintFormat struct(<BufT>) {
     args PrintFormatArg(<BufT>)[]
 }
 
-fn print_i32(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
+fn print_i32(<BufT>)(print_buf BufT, print_buf_fn Print_buf_fn, item opaque*) {
     let actual_item i32 = *unsafe_cast<i32*>item
 
     let buf u8[12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

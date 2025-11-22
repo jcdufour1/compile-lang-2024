@@ -333,6 +333,21 @@ static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos) {
     unreachable("");
 }
 
+static void ulang_type_tuple_append_pos(Ulang_type_tuple* new_tuple, Ulang_type_tuple tuple, Pos new_pos) {
+    Pos* new_pos_ptr = &new_pos;
+    vec_foreach_ref(idx, Ulang_type, curr, tuple.ulang_types) {
+        pos_expanded_from_append(ulang_type_get_pos_ref(curr), arena_dup(&a_main, new_pos_ptr));
+    }
+    *new_tuple = tuple;
+}
+
+static void ulang_type_fn_append_pos(Ulang_type_fn* new_fn, Ulang_type_fn fn, Pos new_pos) {
+    ulang_type_tuple_append_pos(&fn.params, fn.params, new_pos);
+    Pos* new_pos_ptr = &new_pos;
+    pos_expanded_from_append(ulang_type_get_pos_ref(fn.return_type), arena_dup(&a_main, new_pos_ptr));
+    *new_fn = fn;
+}
+
 static EXPAND_NAME_STATUS expand_def_name_internal(
     Ulang_type* new_lang_type,
     Uast_expr** new_expr,
@@ -508,12 +523,20 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_OPERATOR:
             fallthrough;
-        case UAST_FN:
-            fallthrough;
         case UAST_INDEX: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
             pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
+            *new_expr = expr;
+            return EXPAND_NAME_NEW_EXPR;
+        }
+        case UAST_FN: {
+            Uast_fn* uast_fn = uast_fn_unwrap(expr);
+            Pos temp_pos = uast_expr_get_pos(expr);
+            *uast_expr_get_pos_ref(expr) = dest_pos;
+            pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
+            ulang_type_fn_append_pos(&uast_fn->ulang_type, uast_fn->ulang_type, dest_pos);
+            uast_fn->ulang_type.pos = uast_expr_get_pos(expr);
             *new_expr = expr;
             return EXPAND_NAME_NEW_EXPR;
         }
@@ -594,7 +617,7 @@ static EXPAND_NAME_STATUS expand_def_name(
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
-    return expand_def_ulang_type(&def->lang_type, def->pos);
+     return expand_def_ulang_type(&def->lang_type, def->pos);
 }
 
 static bool expand_def_case(Uast_case* lang_case) {
