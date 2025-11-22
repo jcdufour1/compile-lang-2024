@@ -709,15 +709,7 @@ bool resolve_generics_function_def_call(
     }
     decl->name = name;
     Uast_function_decl* dummy = NULL;
-    static uint64_t count = 0;
-    count++;
-    if (count == 6) {
-        __asm__("int3");
-    }
-    log(LOG_DEBUG, "%zu\n", count);
-    //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, decl->name));
     unwrap(function_decl_tbl_add(decl));
-    //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, decl->name));
     assert(function_decl_tbl_lookup(&dummy, decl->name));
 
     // TODO: consider caching ulang_types

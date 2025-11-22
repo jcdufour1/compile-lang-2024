@@ -28,8 +28,8 @@ fn argv() Str[] {
 }
 
 fn fgetc(file File) util.Optional(<u8>) {
-    let ch i32 = c.fgetc(file.file)
-    if ch == c.EOF => return .none
+    let ch i32 = libc.fgetc(file.file)
+    if ch == libc.EOF => return .none
     return .some(unsafe_cast<u8>ch)
 }
 
@@ -54,7 +54,7 @@ fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
     let cstr_opts u8* = util.str_to_cstr(options)
     defer util.cstr_free(cstr_opts)
     
-    let ptr opaque* = c.fopen(cstr_path, cstr_opts)
+    let ptr opaque* = libc.fopen(cstr_path, cstr_opts)
     if ptr == util.null(<opaque>)() => return .none
     return .some({ptr})
 }
@@ -62,7 +62,7 @@ fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
 fn close_file(file File) util.Optional(<void>) {
     util.assert(file.file != util.null(<opaque>)(), "TODO")
     
-    if 0 == c.fclose(file.file) => return .none
+    if 0 == libc.fclose(file.file) => return .none
     return .some
 }
 

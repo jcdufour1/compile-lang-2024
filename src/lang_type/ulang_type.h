@@ -90,6 +90,7 @@ typedef struct Ulang_type_array_ {
     Ulang_type* item_type;
     Uast_expr* count; 
     Pos pos;
+    int16_t pointer_depth;
 }Ulang_type_array;
 
 struct Uast_expr_;
@@ -278,9 +279,7 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
         case ULANG_TYPE_ARRAY:
-            // TODO: add pointer_depth to Ulang_type_array?
-            msg_todo("", ulang_type_array_const_unwrap(lang_type).pos);
-            return 0;
+            return ulang_type_array_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_EXPR:
             return ulang_type_expr_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_INT:
@@ -305,8 +304,7 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_ARRAY:
-            // TODO
-            msg_todo("", ulang_type_array_const_unwrap(*lang_type).pos);
+            ulang_type_array_unwrap(lang_type)->pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_EXPR:
             ulang_type_expr_unwrap(lang_type)->pointer_depth = pointer_depth;

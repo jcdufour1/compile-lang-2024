@@ -80,6 +80,17 @@ void generic_sub_lang_type_regular(
     log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
 }
 
+void generic_sub_lang_type_array(
+    Ulang_type* new_lang_type,
+    Ulang_type_array lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    generic_sub_lang_type(lang_type.item_type, *lang_type.item_type, gen_param, gen_arg);
+    generic_sub_expr(&lang_type.count, lang_type.count, gen_param, gen_arg);
+    *new_lang_type = ulang_type_array_const_wrap(lang_type);
+}
+
 void generic_sub_lang_type_expr(
     Ulang_type* new_lang_type,
     Ulang_type_expr lang_type,
@@ -119,7 +130,12 @@ void generic_sub_lang_type(
             //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
             return;
         case ULANG_TYPE_ARRAY:
-            msg_todo("", ulang_type_get_pos(lang_type));
+            generic_sub_lang_type_array(
+                new_lang_type,
+                ulang_type_array_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
             return;
         case ULANG_TYPE_FN: {
             Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
