@@ -1587,6 +1587,8 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             );
             return false;
         }
+        case UAST_FN:
+            todo();
         case UAST_EXPR_REMOVED: {
             Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
             String buf = {0};
@@ -1595,7 +1597,6 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             msg(DIAG_EXPECTED_EXPRESSION, removed->pos, FMT"\n", string_print(buf));
             return false;
         }
-
     }
     unreachable("");
 }
@@ -2398,6 +2399,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
         case UAST_OPERATOR:
             todo();
+        case UAST_FN:
+            msg_todo("invalid function callee", fun_call->pos);
+            return false;
         case UAST_SYMBOL:
             sym_name = &uast_symbol_unwrap(fun_call->callee)->name;
             break;

@@ -3246,6 +3246,18 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 }
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
+    if (tk_view_front(*tokens).type == TOKEN_FN) {
+        Ulang_type lang_type = {0};
+        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_fn_wrap(uast_fn_new(
+            ulang_type_get_pos(lang_type),
+            ulang_type_fn_const_unwrap(lang_type)
+        ));
+        return PARSE_EXPR_OK;
+    }
+
     Uast_expr* lhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {

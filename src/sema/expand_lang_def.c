@@ -154,7 +154,35 @@ static bool expand_def_ulang_type_regular(
             ));
             return true;
         }
-        default:
+        case UAST_FN:
+            todo();
+        case UAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case UAST_BLOCK:
+            fallthrough;
+        case UAST_SWITCH:
+            fallthrough;
+        case UAST_UNKNOWN:
+            fallthrough;
+        case UAST_OPERATOR:
+            fallthrough;
+        case UAST_LITERAL:
+            fallthrough;
+        case UAST_FUNCTION_CALL:
+            fallthrough;
+        case UAST_STRUCT_LITERAL:
+            fallthrough;
+        case UAST_ARRAY_LITERAL:
+            fallthrough;
+        case UAST_TUPLE:
+            fallthrough;
+        case UAST_MACRO:
+            fallthrough;
+        case UAST_ENUM_ACCESS:
+            fallthrough;
+        case UAST_ENUM_GET_TAG:
+            fallthrough;
+        case UAST_EXPR_REMOVED:
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
     }
@@ -477,6 +505,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_OPERATOR:
             fallthrough;
+        case UAST_FN:
+            fallthrough;
         case UAST_INDEX: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
@@ -582,6 +612,10 @@ static bool expand_def_function_call(Uast_function_call* call) {
 
 static bool expand_def_struct_literal(Uast_struct_literal* lit) {
     return expand_def_expr_vec(&lit->members);
+}
+
+static bool expand_def_fn(Uast_fn* fn) {
+    return expand_def_ulang_type_fn(&fn->ulang_type, fn->ulang_type, fn->pos);
 }
 
 static bool expand_def_binary(Uast_binary* bin) {
@@ -810,6 +844,9 @@ static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr**
         case UAST_EXPR_REMOVED:
             *new_expr = expr;
             return EXPAND_EXPR_NEW_EXPR;
+        case UAST_FN:
+            *new_expr = expr;
+            return a(expand_def_fn(uast_fn_unwrap(expr)));
     }
     unreachable("");
 
