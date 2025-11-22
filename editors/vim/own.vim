@@ -40,6 +40,7 @@ syn match ownFunctionCall display "\zs\w*\ze([^<]"
 
 syn match ownIntType display "\v<[u|i][1-9]\d*>"
 syn match ownFloatType display "\v<f[1-9]\d*>"
+syn keyword ownVoidType void
 syn match ownTypeType display "\v<Type>"
 
 syn match ownIntTypeError display "\v<[i|u]\d\d*\zs\D\D*\ze\d*>"
@@ -94,6 +95,7 @@ hi def link ownStmt           Statement
 hi def link ownLabel          Label
 hi def link ownIntType        Type
 hi def link ownFloatType      Type
+hi def link ownVoidType      Type
 hi def link ownTypeType       Type
 hi def link ownPreludeType    Type
 hi def link ownFunctionCall   Function
