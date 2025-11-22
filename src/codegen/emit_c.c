@@ -55,7 +55,7 @@ static void emit_c_loc(String* output, Loc loc, Pos pos) {
 }
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
-static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr) {
+static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr, bool is_from_fn) {
     if (opaque_ptr && ir_lang_type_get_pointer_depth(ir_lang_type) != 0) {
         string_extend_cstr(&a_pass, output, "void*");
         return;
@@ -64,16 +64,21 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
-            string_extend_cstr(&a_pass, output, "(");
-            c_extend_type_call_str(output, *fn.return_type, opaque_ptr);
+            if (!is_from_fn) {
+                string_extend_cstr(&a_pass, output, "(");
+            }
+            c_extend_type_call_str(output, *fn.return_type, opaque_ptr, true);
             string_extend_cstr(&a_pass, output, "(*)(");
             for (size_t idx = 0; idx < fn.params.ir_lang_types.info.count; idx++) {
                 if (idx > 0) {
                     string_extend_cstr(&a_pass, output, ", ");
                 }
-                c_extend_type_call_str(output, vec_at(fn.params.ir_lang_types, idx), opaque_ptr);
+                c_extend_type_call_str(output, vec_at(fn.params.ir_lang_types, idx), opaque_ptr, true);
             }
-            string_extend_cstr(&a_pass, output, "))");
+            string_extend_cstr(&a_pass, output, ")");
+            if (!is_from_fn) {
+                string_extend_cstr(&a_pass, output, ")");
+            }
             return;
         }
         case IR_LANG_TYPE_TUPLE:
@@ -107,15 +112,29 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
             return;
         }
 
-        c_extend_type_call_str(output, vec_at(params->params, idx)->lang_type, true);
+        c_extend_type_call_str(output, vec_at(params->params, idx)->lang_type, true, false);
         string_extend_cstr(&a_pass, output, " ");
         emit_c_extend_name(output, vec_at(params->params, idx)->name_self);
     }
 }
 
+// TODO: remove IR_LANG_TYPE_TUPLE
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
+    log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, decl->return_type));
     emit_c_loc(output, ir_get_loc(decl), decl->pos);
-    c_extend_type_call_str(output, decl->return_type, true);
+    switch (decl->return_type.type) {
+        case IR_LANG_TYPE_FN:
+            todo();
+        case IR_LANG_TYPE_VOID:
+            break;
+        case IR_LANG_TYPE_STRUCT:
+            break;
+        case IR_LANG_TYPE_PRIMITIVE:
+            break;
+        case IR_LANG_TYPE_TUPLE:
+            todo();
+    }
+    c_extend_type_call_str(output, decl->return_type, true, false);
     string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, decl->name);
 
@@ -177,7 +196,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         } else {
             ir_lang_type = curr->lang_type;
         }
-        c_extend_type_call_str(&buf, ir_lang_type, true);
+        c_extend_type_call_str(&buf, ir_lang_type, true, false);
         string_extend_cstr(&a_pass, &buf, " ");
         emit_c_extend_name(&buf, curr->name_self);
         assert(curr->count > 0);
@@ -268,7 +287,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     // start of actual function call
     string_extend_cstr(&a_pass, &strs->output, "    ");
     if (fun_call->lang_type.type != IR_LANG_TYPE_VOID) {
-        c_extend_type_call_str(&strs->output, fun_call->lang_type, true);
+        c_extend_type_call_str(&strs->output, fun_call->lang_type, true, false);
         string_extend_cstr(&a_pass, &strs->output, " ");
         emit_c_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_pass, &strs->output, " = ");
@@ -280,7 +299,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
     unwrap(ir_lookup(&callee, fun_call->callee));
     string_extend_cstr(&a_pass, &strs->output, "(");
     if (callee->type != IR_EXPR) {
-        c_extend_type_call_str(&strs->output, lang_type_from_ir_name(fun_call->callee), false);
+        c_extend_type_call_str(&strs->output, lang_type_from_ir_name(fun_call->callee), false, false);
     }
     string_extend_cstr(&a_pass, &strs->output, "(");
     emit_c_expr_piece(strs, fun_call->callee);
@@ -306,7 +325,7 @@ static void emit_c_unary_operator(Emit_c_strs* strs, IR_UNARY_TYPE unary_type, I
     switch (unary_type) {
         case IR_UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_pass, &strs->output, "(");
-            c_extend_type_call_str(&strs->output, cast_to, true);
+            c_extend_type_call_str(&strs->output, cast_to, true, false);
             string_extend_cstr(&a_pass, &strs->output, ")");
             return;
     }
@@ -372,7 +391,7 @@ static void emit_c_binary_operator(Emit_c_strs* strs, IR_BINARY_TYPE bin_type) {
 
 static void emit_c_operator(Emit_c_strs* strs, const Ir_operator* oper) {
     string_extend_cstr(&a_pass, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, ir_operator_get_lang_type(oper), true);
+    c_extend_type_call_str(&strs->output, ir_operator_get_lang_type(oper), true, false);
     string_extend_cstr(&a_pass, &strs->output, " ");
     emit_c_extend_name(&strs->output, ir_operator_get_name(oper));
     string_extend_cstr(&a_pass, &strs->output, " = ");
@@ -511,7 +530,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* lang_alloca) {
     Ir_name storage_loc = util_literal_ir_name_new();
 
     string_extend_cstr(&a_pass, output, "    ");
-    c_extend_type_call_str(output, ir_lang_type_pointer_depth_dec(lang_alloca->lang_type), true);
+    c_extend_type_call_str(output, ir_lang_type_pointer_depth_dec(lang_alloca->lang_type), true, false);
     string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, storage_loc);
     string_extend_cstr(&a_pass, output, ";\n");
@@ -566,7 +585,7 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     unwrap(ir_lookup(&src, store->ir_src));
 
     string_extend_cstr(&a_pass, &strs->output, "    *((");
-    c_extend_type_call_str(&strs->output, store->lang_type, true);
+    c_extend_type_call_str(&strs->output, store->lang_type, true, false);
     string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, store->ir_dest);
     string_extend_cstr(&a_pass, &strs->output, ") = ");
@@ -578,13 +597,13 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
     emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     string_extend_cstr(&a_pass, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, load->lang_type, true);
+    c_extend_type_call_str(&strs->output, load->lang_type, true, false);
     string_extend_cstr(&a_pass, &strs->output, " ");
     emit_c_extend_name(&strs->output, load->name);
     string_extend_cstr(&a_pass, &strs->output, " = ");
 
     string_extend_cstr(&a_pass, &strs->output, "*((");
-    c_extend_type_call_str(&strs->output, load->lang_type, true);
+    c_extend_type_call_str(&strs->output, load->lang_type, true, false);
     string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, load->ir_src);
 
@@ -601,7 +620,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     string_extend_cstr(&a_pass, &strs->output, " = ");
 
     string_extend_cstr(&a_pass, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, lang_type_from_ir_name(load->ir_src), false);
+    c_extend_type_call_str(&strs->output, lang_type_from_ir_name(load->ir_src), false, false);
     string_extend_cstr(&a_pass, &strs->output, ")");
     emit_c_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_pass, &strs->output, ")->");
@@ -616,7 +635,7 @@ static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access
     string_extend_cstr(&a_pass, &strs->output, " = ");
 
     string_extend_cstr(&a_pass, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, access->lang_type, false);
+    c_extend_type_call_str(&strs->output, access->lang_type, false, false);
     string_extend_cstr(&a_pass, &strs->output, "*)");
     emit_c_extend_name(&strs->output, access->callee);
     string_extend_cstr(&a_pass, &strs->output, ")[");

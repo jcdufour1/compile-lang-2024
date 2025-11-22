@@ -2694,6 +2694,28 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         goto error;
     }
 
+    {
+        vec_foreach(idx, bool, is_set, new_args_set) {
+            if (!is_set && !vec_at(params->params, idx)->is_optional) {
+                msg(
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
+                    "argument to function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                status = false;
+            }
+        }
+        if (!status) {
+            goto error;
+        }
+    }
+
     Uast_generic_param_vec gen_params = fun_decl_temp->generics;
     for (size_t gen_idx = 0; status && gen_idx < gen_params.info.count; gen_idx++) {
         if (!vec_at(new_gen_args_set, gen_idx)) {
@@ -2753,28 +2775,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 );
             }
             status = false;
-            goto error;
-        }
-    }
-
-    {
-        vec_foreach(idx, bool, is_set, new_args_set) {
-            if (!is_set && !vec_at(params->params, idx)->is_optional) {
-                msg(
-                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
-                    "argument to function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
-                );
-                msg(
-                    DIAG_NOTE,
-                    vec_at(params->params, idx)->pos,
-                    "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
-                );
-                status = false;
-            }
-        }
-        if (!status) {
             goto error;
         }
     }
