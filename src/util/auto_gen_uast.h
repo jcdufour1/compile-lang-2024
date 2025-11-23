@@ -337,6 +337,16 @@ static Uast_type uast_gen_enum_get_tag(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_orelse(const char* prefix) {
+    const char* base_name = "orelse";
+    Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Uast_expr*", "expr_to_unwrap");
+    append_member(&lit.members, "Uast_block*", "if_error");
+
+    return lit;
+}
+
 static Uast_type uast_gen_if_else_chain(const char* prefix) {
     Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false)};
 
@@ -373,6 +383,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_macro(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_access(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_get_tag(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_orelse(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;

@@ -566,6 +566,17 @@ Strv uast_macro_print_internal(const Uast_macro* macro, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_orelse_print_internal(const Uast_orelse* orelse, Indent indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "orelse\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(orelse->expr_to_unwrap, indent));
+    string_extend_strv(&a_temp, &buf, uast_block_print_internal(orelse->if_error, indent));
+
+    return string_to_strv(buf);
+}
+
 Strv uast_expr_removed_print_internal(const Uast_expr_removed* removed, Indent indent) {
     (void) removed;
     String buf = {0};
@@ -762,6 +773,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, Indent indent) {
             return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(expr), indent);
         case UAST_MACRO:
             return uast_macro_print_internal(uast_macro_const_unwrap(expr), indent);
+        case UAST_ORELSE:
+            return uast_orelse_print_internal(uast_orelse_const_unwrap(expr), indent);
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_print_internal(uast_expr_removed_const_unwrap(expr), indent);
     }
