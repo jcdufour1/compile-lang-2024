@@ -26,5 +26,25 @@ static inline Pos ulang_type_get_pos(Ulang_type lang_type) {
     unreachable("");
 }
 
+static inline Pos* ulang_type_get_pos_ref(Ulang_type* lang_type) {
+    switch (lang_type->type) {
+        case ULANG_TYPE_REMOVED:
+            return &ulang_type_removed_unwrap(lang_type)->pos;
+        case ULANG_TYPE_REGULAR:
+            return &ulang_type_regular_unwrap(lang_type)->pos;
+        case ULANG_TYPE_ARRAY:
+            return &ulang_type_array_unwrap(lang_type)->pos;
+        case ULANG_TYPE_TUPLE:
+            return &ulang_type_tuple_unwrap(lang_type)->pos;
+        case ULANG_TYPE_FN:
+            return &ulang_type_fn_unwrap(lang_type)->pos;
+        case ULANG_TYPE_EXPR:
+            return &ulang_type_expr_unwrap(lang_type)->pos;
+        case ULANG_TYPE_INT:
+            return &ulang_type_int_unwrap(lang_type)->pos;
+    }
+    unreachable("");
+}
+
 
 #endif // ULANG_TYPE_GET_POS_H

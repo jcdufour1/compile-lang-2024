@@ -432,7 +432,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                             vec_at(fn.params.ulang_types, param_idx),
                             false,
                             param->base->lang_type,
-                            gen_param->name, // Name name_to_infer,
+                            gen_param->name,
                             sym_untyped->pos
                         )) {
                             vec_append(&a_main, &sym_untyped->name.gen_args, infered);
@@ -1485,7 +1485,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             );
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
-            if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast))) {
+            if (!try_set_member_access_types(&new_tast_, uast_member_access_unwrap(uast), is_from_check_assign)) {
                 return false;
             }
             *new_tast = tast_expr_unwrap(new_tast_);
@@ -1587,6 +1587,9 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             );
             return false;
         }
+        case UAST_FN:
+            msg_todo("", uast_expr_get_pos(uast));
+            return false;
         case UAST_EXPR_REMOVED: {
             Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
             String buf = {0};
@@ -1595,7 +1598,6 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             msg(DIAG_EXPECTED_EXPRESSION, removed->pos, FMT"\n", string_print(buf));
             return false;
         }
-
     }
     unreachable("");
 }
@@ -2398,6 +2400,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
         case UAST_OPERATOR:
             todo();
+        case UAST_FN:
+            msg_todo("invalid function callee", fun_call->pos);
+            return false;
         case UAST_SYMBOL:
             sym_name = &uast_symbol_unwrap(fun_call->callee)->name;
             break;
@@ -2687,6 +2692,28 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         goto error;
     }
 
+    {
+        vec_foreach(idx, bool, is_set, new_args_set) {
+            if (!is_set && !vec_at(params->params, idx)->is_optional) {
+                msg(
+                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
+                    "argument to function parameter `"FMT"` was not specified\n",
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                msg(
+                    DIAG_NOTE,
+                    vec_at(params->params, idx)->pos,
+                    "function parameter `"FMT"` defined here\n", 
+                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
+                );
+                status = false;
+            }
+        }
+        if (!status) {
+            goto error;
+        }
+    }
+
     Uast_generic_param_vec gen_params = fun_decl_temp->generics;
     for (size_t gen_idx = 0; status && gen_idx < gen_params.info.count; gen_idx++) {
         if (!vec_at(new_gen_args_set, gen_idx)) {
@@ -2746,28 +2773,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 );
             }
             status = false;
-            goto error;
-        }
-    }
-
-    {
-        vec_foreach(idx, bool, is_set, new_args_set) {
-            if (!is_set && !vec_at(params->params, idx)->is_optional) {
-                msg(
-                    DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
-                    "argument to function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
-                );
-                msg(
-                    DIAG_NOTE,
-                    vec_at(params->params, idx)->pos,
-                    "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, vec_at(params->params, idx)->base->name)
-                );
-                status = false;
-            }
-        }
-        if (!status) {
             goto error;
         }
     }
@@ -3302,7 +3307,7 @@ bool try_set_member_access_types_finish(
     unreachable("");
 }
 
-bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access) {
+bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access, bool is_from_check_assign) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
@@ -3377,7 +3382,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.scope_id
             , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
-            if (!try_set_symbol_types(&new_expr, sym, false)) {
+            if (!try_set_symbol_types(&new_expr, sym, is_from_check_assign)) {
                 return false;
             }
             *new_tast = tast_expr_wrap(new_expr);

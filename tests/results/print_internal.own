@@ -1,0 +1,9 @@
+compile::stdout 1
+num = %
+
+compile::stderr 2
+num = 2100005009
+65% is not the same as %%, %%2100005009 or 2100005009%%
+
+compile::return_code 0
+

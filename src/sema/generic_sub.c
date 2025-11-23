@@ -74,6 +74,17 @@ void generic_sub_lang_type_regular(
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
+void generic_sub_lang_type_array(
+    Ulang_type* new_lang_type,
+    Ulang_type_array lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    generic_sub_lang_type(lang_type.item_type, *lang_type.item_type, gen_param, gen_arg);
+    generic_sub_expr(&lang_type.count, lang_type.count, gen_param, gen_arg);
+    *new_lang_type = ulang_type_array_const_wrap(lang_type);
+}
+
 void generic_sub_lang_type_expr(
     Ulang_type* new_lang_type,
     Ulang_type_expr lang_type,
@@ -112,7 +123,12 @@ void generic_sub_lang_type(
             );
             return;
         case ULANG_TYPE_ARRAY:
-            msg_todo("", ulang_type_get_pos(lang_type));
+            generic_sub_lang_type_array(
+                new_lang_type,
+                ulang_type_array_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
             return;
         case ULANG_TYPE_FN: {
             Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
@@ -139,7 +155,7 @@ void generic_sub_lang_type(
             msg_todo("", ulang_type_get_pos(lang_type));
             return;
         case ULANG_TYPE_REMOVED:
-            todo();
+            msg_todo("", ulang_type_get_pos(lang_type));
             return;
     }
     unreachable("");
@@ -425,6 +441,9 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             return;
         case UAST_MACRO:
             *new_expr = expr;
+            return;
+        case UAST_FN:
+            todo();
             return;
         case UAST_EXPR_REMOVED:
             *new_expr = expr;

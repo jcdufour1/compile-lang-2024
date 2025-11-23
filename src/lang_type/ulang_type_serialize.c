@@ -40,7 +40,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
 
     Ulang_type count = {0};
     if (!uast_expr_to_ulang_type(&count, ulang_type.count)) {
-        return util_literal_name_new();
+        return util_literal_name_new_poison();
     }
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, count, include_scope)));
 
@@ -101,7 +101,7 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             // TODO: consider if all Ulang_type_exprs should be removed before doing actual type checking?
             Ulang_type inner = {0};
             if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
-                return util_literal_name_new();
+                return util_literal_name_new_poison();
             }
             return serialize_ulang_type(mod_path, inner, include_scope);
         }
