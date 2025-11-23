@@ -435,6 +435,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                             gen_param->name,
                             sym_untyped->pos
                         )) {
+                            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, infered));
                             vec_append(&a_main, &sym_untyped->name.gen_args, infered);
                             did_infer = true;
                         }
