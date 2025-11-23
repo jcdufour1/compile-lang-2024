@@ -63,7 +63,6 @@ static inline Lang_type lang_type_new_print_format(Ulang_type gen_arg) {
 static inline Lang_type lang_type_new_print_format_arg(Ulang_type gen_arg) {
     Ulang_type_vec gen_args = {0};
     vec_append(&a_main, &gen_args, gen_arg);
-    //))); // TODO: allocate gen_args at start of program, etc. to save space
     return lang_type_struct_const_wrap(lang_type_struct_new(
         POS_BUILTIN, lang_type_atom_new(
             name_new(

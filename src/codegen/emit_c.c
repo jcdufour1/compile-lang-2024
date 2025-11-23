@@ -120,7 +120,6 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
 
 // TODO: remove IR_LANG_TYPE_TUPLE
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
-    log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, decl->return_type));
     emit_c_loc(output, ir_get_loc(decl), decl->pos);
     switch (decl->return_type.type) {
         case IR_LANG_TYPE_FN:

@@ -51,9 +51,9 @@ bool infer_generic_type(
     }
 
     // keep these (because they are useful for debugging)
-    log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
-    log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
-    log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
+    //log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
+    //log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
+    //log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     switch (param_corres_to_arg.type) {
         case ULANG_TYPE_REGULAR: {

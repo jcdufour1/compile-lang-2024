@@ -435,7 +435,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                             gen_param->name,
                             sym_untyped->pos
                         )) {
-                            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, infered));
                             vec_append(&a_main, &sym_untyped->name.gen_args, infered);
                             did_infer = true;
                         }
@@ -895,10 +894,8 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
     switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_rhs), oper->rhs, oper->pos)) {
         case CHECK_ASSIGN_OK:
             *new_tast = tast_assignment_wrap(tast_assignment_new(oper->pos, new_lhs, new_rhs));
-            log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_tast));
             return true;
         case CHECK_ASSIGN_INVALID:
-    todo();
             msg(
                 DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
                 oper->pos,
@@ -908,7 +905,6 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
             );
             return false;
         case CHECK_ASSIGN_ERROR:
-    todo();
             return false;
     }
     unreachable("");
@@ -1592,7 +1588,8 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             return false;
         }
         case UAST_FN:
-            todo();
+            msg_todo("", uast_expr_get_pos(uast));
+            return false;
         case UAST_EXPR_REMOVED: {
             Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
             String buf = {0};

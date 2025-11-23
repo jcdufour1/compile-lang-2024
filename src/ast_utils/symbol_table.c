@@ -657,7 +657,6 @@ bool c_forward_struct_tbl_add(Ir_name* value, Ir_name key) {
 //
 
 bool function_decl_tbl_add(Uast_function_decl* decl) {
-    assert(strv_is_equal(serialize_name_symbol_table(&a_main, decl->name), serialize_name_symbol_table(&a_main, decl->name)));
     return generic_tbl_add((Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(&a_main, decl->name), decl);
 }
 
