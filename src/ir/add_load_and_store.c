@@ -1085,6 +1085,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     load_variable_def(new_block, new_var);
 
     Tast_def* struct_def_ = NULL;
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)))));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)))));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
