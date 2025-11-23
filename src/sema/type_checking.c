@@ -1550,11 +1550,11 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             return true;
         }
         case UAST_ORELSE: {
-            Tast_orelse* new_for = NULL;
-            if (!try_set_orelse(&new_for, uast_orelse_unwrap(uast))) {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_orelse(&new_expr, uast_orelse_unwrap(uast))) {
                 return false;
             }
-            *new_tast = tast_orelse_wrap(new_for);
+            *new_tast = new_expr;
             return true;
         }
         case UAST_ARRAY_LITERAL: {
@@ -3847,6 +3847,39 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
 
     *new_tast = tast_if_else_chain_new(if_else->pos, new_ifs, false);
     return status;
+}
+
+static bool try_set_orelse_lang_type_is_optional(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_ENUM) {
+        return false;
+    }
+    Lang_type_enum lang_enum = lang_type_enum_const_unwrap(lang_type);
+    Name enum_name = lang_enum.atom.str;
+    enum_name.gen_args.info.count = 0;
+        
+    return name_is_equal(
+        enum_name,
+        name_new(MOD_PATH_RUNTIME, sv("Optional"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+    );
+}
+
+bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
+    Tast_expr* to_unwrap = NULL;
+    if (!try_set_expr_types(&to_unwrap, orelse->expr_to_unwrap)) {
+        return false;
+    }
+    Lang_type to_unwrap_type = tast_expr_get_lang_type(to_unwrap);
+
+    if (!try_set_orelse_lang_type_is_optional(to_unwrap_type)) {
+        msg_todo(
+            "`orelse` when the type of the left hand side of `orelse` is not an optional",
+            tast_expr_get_pos(to_unwrap)
+        );
+        return false;
+    }
+
+
+    todo();
 }
 
 bool try_set_case_types(Tast_if** new_tast, const Uast_case* lang_case) {
