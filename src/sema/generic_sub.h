@@ -93,6 +93,8 @@ GEN_SUB_NAME_STATUS generic_sub_name(
     Ulang_type gen_arg
 );
 
+void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg);
+
 void generic_sub_array_literal(Uast_array_literal* lit, Name gen_param, Ulang_type gen_arg);
 
 #endif // GENERIC_SUB_H

@@ -395,6 +395,10 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             *new_expr = expr;
             generic_sub_struct_literal(uast_struct_literal_unwrap(expr), gen_param, gen_arg);
             return;
+        case UAST_ORELSE:
+            *new_expr = expr;
+            generic_sub_orelse(uast_orelse_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_TUPLE:
             *new_expr = expr;
             msg_todo("", uast_expr_get_pos(expr));
@@ -444,6 +448,13 @@ void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         generic_sub_expr(vec_at_ref(&lit->members, idx), vec_at(lit->members, idx), gen_param, gen_arg);
     }
+}
+
+void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg) {
+    (void) orelse;
+    (void) gen_param;
+    (void) gen_arg;
+    todo();
 }
 
 void generic_sub_member_access(Uast_expr** new_expr, Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {

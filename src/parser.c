@@ -3146,8 +3146,6 @@ static PARSE_EXPR_STATUS parse_right_unary(
                 return status;
             }
             *result = uast_orelse_wrap(result_);
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(*result));
-            todo();
             return PARSE_EXPR_OK;
         }
         default:

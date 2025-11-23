@@ -1549,6 +1549,14 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             *new_tast = tast_if_else_chain_wrap(new_for);
             return true;
         }
+        case UAST_ORELSE: {
+            Tast_orelse* new_for = NULL;
+            if (!try_set_orelse(&new_for, uast_orelse_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = tast_orelse_wrap(new_for);
+            return true;
+        }
         case UAST_ARRAY_LITERAL: {
             Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
@@ -2398,6 +2406,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             todo();
         case UAST_OPERATOR:
             todo();
+        case UAST_ORELSE:
+            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_SYMBOL:
             sym_name = &uast_symbol_unwrap(fun_call->callee)->name;
             break;
