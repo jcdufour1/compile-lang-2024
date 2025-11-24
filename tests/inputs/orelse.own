@@ -1,8 +1,11 @@
 type io import = std.io
+type util import = std.util
 
 fn main() i32 {
-    let file = io.open_file("std/does_not_exist", "r") orelse {
+    let file io.File = io.open_file("std/does_not_exist", "r") orelse {
         assert(0, "not implemented")
+        yield {util.null(<opaque>)()}
+        return 0
     }
 
     return 0

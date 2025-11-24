@@ -3892,7 +3892,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         orelse->pos,
         true,
         uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)),
-        scope_to_name_tbl_lookup(orelse->scope_id)
+        orelse->break_out_of
     )));
 
     Uast_block* if_true = uast_block_new(
@@ -3943,8 +3943,16 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     vec_append(&a_main, &cases, if_false_case);
 
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
+
     log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
-    todo();
+
+    Tast_block* new_block = NULL;
+    if (!try_set_switch_types(&new_block, lang_switch)) {
+        return false;
+    }
+
+    *new_tast = tast_block_wrap(new_block);
+    return true;
 }
 
 // TODO: remove this function?

@@ -3107,6 +3107,11 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     Pos pos,
     Scope_id scope_id
 ) {
+    Name scope_name = {0};
+    if (PARSE_OK != label_thing(&scope_name, scope_id)) {
+        return PARSE_EXPR_ERROR;
+    }
+
     Uast_block* if_error = NULL;
     if (PARSE_OK != parse_block(
         &if_error,
@@ -3118,7 +3123,7 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         return PARSE_EXPR_ERROR;
     }
 
-    *result = uast_orelse_new(pos, lhs, if_error, scope_id);
+    *result = uast_orelse_new(pos, lhs, if_error, scope_id, scope_name);
     return PARSE_EXPR_OK;
 }
 
