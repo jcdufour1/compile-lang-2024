@@ -1,12 +1,36 @@
 type io import = std.io
 type util import = std.util
 
-fn main() i32 {
-    let file io.File = io.open_file("std/does_not_exist", "r") orelse {
-        assert(0, "not implemented")
-        yield {util.null(<opaque>)()}
-        return 0
+fn do_thing(should_succeed u1) util.Optional(<i32>) {
+    if should_succeed => return .some(9)
+    return .none
+}
+
+type FALSE def = 0
+type TRUE def = 1
+
+fn thing1() {
+    let num i32 = do_thing(FALSE) orelse {
+        io.print_str("yes1")
+        return
+        yield 0
     }
+    io.print_str("no1")
+}
+
+fn thing2() {
+    let num i32 = do_thing(TRUE) orelse {
+        io.print_str("no2")
+        return
+        yield 0
+    }
+    io.print_str("yes2")
+    io.print_int(num)
+}
+
+fn main() i32 {
+    thing1()
+    //thing2()
 
     return 0
 }
