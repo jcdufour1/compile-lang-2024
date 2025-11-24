@@ -3879,9 +3879,75 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     }
 
 
+    Uast_expr* is_false_cond = NULL;
+
+    Uast_case_vec cases = {0};
+
+    Name some_var_name = util_literal_name_new();
+    Uast_expr_vec some_args = {0};
+    vec_append(&a_main, &some_args, uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)));
+
+    Uast_stmt_vec if_true_children = {0};
+    vec_append(&a_main, &if_true_children, uast_yield_wrap(uast_yield_new(
+        orelse->pos,
+        true,
+        uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)),
+        scope_to_name_tbl_lookup(orelse->scope_id)
+    )));
+
+    Uast_block* if_true = uast_block_new(
+        orelse->pos,
+        if_true_children,
+        orelse->pos,
+        symbol_collection_new(orelse->scope_id, util_literal_name_new())
+    );
+
+    Uast_case* if_true_case = uast_case_new(
+        orelse->pos,
+        false,
+        uast_function_call_wrap(uast_function_call_new(
+            orelse->pos,
+            some_args,
+            uast_member_access_wrap(uast_member_access_new(
+                orelse->pos,
+                uast_symbol_new(orelse->pos, name_new(
+                    MOD_PATH_RUNTIME, sv("some"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                )),
+                uast_unknown_wrap(uast_unknown_new(orelse->pos))
+            )),
+            false
+        )),
+        if_true,
+        if_true->scope_id
+    );
+    vec_append(&a_main, &cases, if_true_case);
+
+    Uast_case* if_false_case = NULL;
+    if (is_false_cond) {
+        if_false_case = uast_case_new(
+            orelse->pos,
+            false,
+            is_false_cond,
+            orelse->if_error,
+            orelse->if_error->scope_id
+        );
+    } else {
+        if_false_case = uast_case_new(
+            orelse->pos,
+            true,
+            is_false_cond,
+            orelse->if_error,
+            orelse->if_error->scope_id
+        );
+    }
+    vec_append(&a_main, &cases, if_false_case);
+
+    Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
     todo();
 }
 
+// TODO: remove this function?
 bool try_set_case_types(Tast_if** new_tast, const Uast_case* lang_case) {
     todo();
     (void) env;

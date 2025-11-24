@@ -3118,7 +3118,7 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         return PARSE_EXPR_ERROR;
     }
 
-    *result = uast_orelse_new(pos, lhs, if_error);
+    *result = uast_orelse_new(pos, lhs, if_error, scope_id);
     return PARSE_EXPR_OK;
 }
 

@@ -343,6 +343,7 @@ static Uast_type uast_gen_orelse(const char* prefix) {
 
     append_member(&lit.members, "Uast_expr*", "expr_to_unwrap");
     append_member(&lit.members, "Uast_block*", "if_error");
+    append_member(&lit.members, "Scope_id", "scope_id");
 
     return lit;
 }

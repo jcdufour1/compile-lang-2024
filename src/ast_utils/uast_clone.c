@@ -338,10 +338,12 @@ Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, 
 }
 
 Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Scope_id scope = use_new_scope ? new_scope : orelse->scope_id;
     return uast_orelse_new(
         orelse->pos,
         uast_expr_clone(orelse->expr_to_unwrap, use_new_scope, new_scope, dest_pos),
-        uast_block_clone(orelse->if_error, use_new_scope, new_scope, dest_pos)
+        uast_block_clone(orelse->if_error, use_new_scope, new_scope, dest_pos),
+        scope
     );
 }
 
