@@ -3,6 +3,11 @@
 #include <util.h>
 #include <arena.h>
 #include <symbol_iter.h>
+#include <ir_lang_type_print.h>
+#include <ir_utils.h>
+#include <tast_utils.h>
+
+static Ir_lang_type curr_fun_rtn_type = {0};
 
 #define rm_void_internal(item, wrap_fn) \
     do { \
@@ -15,6 +20,7 @@
 static Ir* rm_void_block(Ir_block* block);
 
 static Ir* rm_void_function_def(Ir_function_def* def) {
+    curr_fun_rtn_type = def->decl->return_type;
     rm_void_block(def->body);
     return ir_def_wrap(ir_function_def_wrap(def));
 }
@@ -79,6 +85,20 @@ static Ir* rm_void_import_path(Ir_import_path* import) {
     return ir_import_path_wrap(import);
 }
 
+static Ir* rm_void_load_element_ptr(Ir_load_element_ptr* load) {
+    rm_void_internal(load, ir_load_element_ptr_wrap);
+}
+
+static Ir* rm_void_return(Ir_return* rtn) {
+    assert(!ir_lang_type_is_equal(curr_fun_rtn_type, (Ir_lang_type) {0}));
+
+    if (curr_fun_rtn_type.type == IR_LANG_TYPE_VOID && lang_type_from_ir_name(rtn->child).type == IR_LANG_TYPE_VOID) {
+        //todo();
+    }
+    
+    return ir_return_wrap(rtn);
+}
+
 static Ir* rm_void_ir(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -86,7 +106,7 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_EXPR:
             return rm_void_expr(ir_expr_unwrap(ir));
         case IR_LOAD_ELEMENT_PTR:
-            return ir;
+            return rm_void_load_element_ptr(ir_load_element_ptr_unwrap(ir));
         case IR_ARRAY_ACCESS:
             return ir;
         case IR_FUNCTION_PARAMS:
@@ -94,7 +114,7 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_DEF:
             return rm_void_def(ir_def_unwrap(ir));
         case IR_RETURN:
-            return ir;
+            return rm_void_return(ir_return_unwrap(ir));
         case IR_GOTO:
             return ir;
         case IR_COND_GOTO:

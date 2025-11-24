@@ -145,8 +145,6 @@ for generics:
 - expected failure test for:
 continue(<thing>)
 -tests for ir printing
--consider if this is good enough syntax for passing generic function callback:
-    add_fn(<i16>)
 - literal suffixes
 - use DIAG_ERROR for things that must be an error?
 - expected failure test for invalid type in unsafe_cast
@@ -156,8 +154,6 @@ continue(<thing>)
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
 - expected success test that excaped " is supported in string literal
-- in examples/snake_game.own:37, change "coll.darr_new(<Pos>)([init_pos])" to "coll.darr_new([init_pos])"
-    (Pos should be instanciated from [init_pos])?
 
 
 
@@ -187,3 +183,4 @@ continue(<thing>)
 - try catch blocks with the question operator or similar
 - dynamic dispatch in generics (function pointers, constant expressions, etc. should be stored in 
     table; there should be one table per generic variant)
+- function to set break point in source code (eg. `breakpoint`)

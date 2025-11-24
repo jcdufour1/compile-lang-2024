@@ -417,6 +417,8 @@ static void emit_c_expr(Emit_c_strs* strs, const Ir_expr* expr) {
 static void extend_c_literal(Emit_c_strs* strs, const Ir_literal* lit) {
     switch (lit->type) {
         case IR_STRING:
+            log(LOG_DEBUG, FMT"\n", ir_literal_print(lit));
+            //todo();
             string_extend_cstr(&a_pass, &strs->output, "\"");
             string_extend_strv(&a_pass, &strs->output, ir_string_const_unwrap(lit)->data);
             string_extend_cstr(&a_pass, &strs->output, "\"");

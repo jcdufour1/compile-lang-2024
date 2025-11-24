@@ -121,6 +121,7 @@ bool do_implicit_convertions(
     ))) {
         goto next;
     }
+
     tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
     return true;
 

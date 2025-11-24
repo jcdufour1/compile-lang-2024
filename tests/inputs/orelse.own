@@ -1,7 +1,8 @@
-type io import = std.io
-type util import = std.util
+type rt import = std.runtime
 
-fn do_thing(should_succeed u1) util.Optional(<i32>) {
+extern("c") fn printf(format_string u8*, args opaque...) i32
+
+fn do_thing(should_succeed u1) rt.Optional(<i32>) {
     if should_succeed => return .some(9)
     return .none
 }
@@ -11,21 +12,21 @@ type TRUE def = 1
 
 fn thing1() {
     let num i32 = do_thing(FALSE) orelse {
-        io.print_str("yes1")
+        printf("yes1\n")
         return
         yield 0
     }
-    io.print_str("no1")
+    printf("no1\n")
 }
 
 fn thing2() {
     let num i32 = do_thing(TRUE) orelse {
-        io.print_str("no2")
+        //io.print_str("no2")
         return
         yield 0
     }
-    io.print_str("yes2")
-    io.print_int(num)
+    //io.print_str("yes2")
+    //io.print_int(num)
 }
 
 fn main() i32 {
