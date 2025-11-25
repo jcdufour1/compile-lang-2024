@@ -305,7 +305,8 @@ Uast_yield* uast_yield_clone(const Uast_yield* yield, bool use_new_scope, Scope_
         yield->pos,
         yield->do_yield_expr,
         yield->do_yield_expr ? uast_expr_clone(yield->yield_expr, use_new_scope, new_scope, dest_pos) : NULL,
-        name_clone(yield->break_out_of, use_new_scope, new_scope)
+        name_clone(yield->break_out_of, use_new_scope, new_scope),
+        yield->is_user_generated
     );
 }
 

@@ -231,6 +231,15 @@ static void msg_invalid_count_struct_literal_args_internal(
     msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos, is_array)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+    if (check_env.switch_is_orelse) {
+        msg_internal(
+            file, line,
+            DIAG_MISSING_YIELD_STATEMENT/*TODO */, pos,
+            "no return statement in error handling block of orelse\n"
+        );
+        return;
+    }
+
     if (is_auto_inserted) {
         msg_internal(
             file, line,
@@ -3702,6 +3711,10 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
         goto error;
     }
 
+    if (check_env.switch_is_orelse && yield->is_user_generated) {
+        msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, yield->pos, "cannot yield out of error handling block of `orelse`\n");
+    }
+
     switch (check_env.parent_of_defer) {
         case PARENT_OF_DEFER_FOR:
             break;
@@ -3893,7 +3906,8 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         orelse->pos,
         true,
         uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)),
-        orelse->break_out_of
+        orelse->break_out_of,
+        false
     )));
 
     Uast_block* if_true = uast_block_new(
@@ -3947,13 +3961,15 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
 
+    bool old_switch_is_orelse = check_env.switch_is_orelse;
+    check_env.switch_is_orelse = true;
+
     Tast_block* new_block = NULL;
     if (!try_set_switch_types(&new_block, lang_switch)) {
+        check_env.switch_is_orelse = old_switch_is_orelse;
         return false;
     }
-    Uast_def* def = NULL;
-    unwrap(usymbol_lookup(&def, orelse->break_out_of));
-    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
+    check_env.switch_is_orelse = old_switch_is_orelse;
 
     *new_tast = tast_block_wrap(new_block);
     return true;

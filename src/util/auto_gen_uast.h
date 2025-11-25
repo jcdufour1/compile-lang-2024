@@ -576,6 +576,7 @@ static Uast_type uast_gen_yield(const char* prefix) {
     append_member(&yield.members, "bool", "do_yield_expr");
     append_member(&yield.members, "Uast_expr*", "yield_expr");
     append_member(&yield.members, "Name", "break_out_of");
+    append_member(&yield.members, "bool", "is_user_generated");
 
     return yield;
 }

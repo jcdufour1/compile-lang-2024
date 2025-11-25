@@ -1981,7 +1981,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
             unreachable("");
     }
 
-    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id));
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id), true);
     return PARSE_OK;
 }
 
@@ -2014,7 +2014,7 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
             unreachable("");
     }
 
-    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of);
+    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of, true);
     return PARSE_OK;
 }
 
@@ -2598,7 +2598,8 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
         start_token.pos,
         true,
         uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)),
-        default_brk_label
+        default_brk_label,
+        true /* TODO */
     )));
 
     if (cases.info.count < 1) {

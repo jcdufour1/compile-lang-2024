@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/orelse_print_num_result_in_error_handling_block.own:14:22:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+    13 |     let num i32 = do_thing(TRUE) orelse {
+    14 |         io.print_int(num)
+       |                      ^
+    15 |         return
+
+compile::return_code 1
+
