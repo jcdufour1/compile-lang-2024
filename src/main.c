@@ -125,7 +125,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -170,7 +170,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

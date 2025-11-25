@@ -418,7 +418,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -552,7 +552,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -663,6 +663,11 @@ static void long_option_print_immediately(Strv curr_opt) {
     params.print_immediately = true;
 }
 
+static void long_option_build_dir(Strv curr_opt) {
+    (void) curr_opt;
+    params.build_dir = curr_opt;
+}
+
 static void long_option_no_prelude(Strv curr_opt) {
     (void) curr_opt;
     params.do_prelude = false;
@@ -704,7 +709,7 @@ static void long_option_max_errors(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 26,
+    PARAMETERS_COUNT == 27,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -727,6 +732,12 @@ Long_option_pair long_options[] = {
         "This option will cause the error order to be unstable and seemingly random",
         long_option_print_immediately,
         ARG_NONE
+    },
+    {
+        "build-dir",
+        "directory to store build artifacts (default is `.own`)",
+        long_option_build_dir,
+        ARG_REGULAR
     },
     {
         "target-triplet",
@@ -798,7 +809,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 26,
+    PARAMETERS_COUNT == 27,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -806,6 +817,7 @@ static void set_params_to_defaults(void) {
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
     params.max_errors = 30;
+    params.build_dir = sv(".own");
 
 #ifdef NDEBUG
     params_log_level = LOG_INFO;
@@ -866,7 +878,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -894,7 +906,10 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
             case STOP_AFTER_IR:
                 if (params.dump_dot) {
-                    params.output_file_path = sv("test.dot");
+                    todo();
+                    //String buf = {0};
+                    //string_extend_f(&a_main, &buf, FMT"/test.dot");
+                    //params.output_file_path = string_to_strv(buf);
                 } else {
                     params.output_file_path = sv("test.ownir");
                 }

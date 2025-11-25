@@ -1,9 +1,6 @@
 #include <newstring.h>
 
-__attribute__((format (printf, 3, 4)))
-void string_extend_f(Arena* arena, String* string, const char* format, ...) {
-    va_list args1;
-    va_start(args1, format);
+static void string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1) {
     va_list args2;
     va_copy(args2, args1);
 
@@ -20,7 +17,29 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...) {
 
     string_extend_strv(arena, string, (Strv) {temp_buf.buf, count_needed - 1});
 
+    va_end(args2);
+}
+
+__attribute__((format (printf, 3, 4)))
+void string_extend_f(Arena* arena, String* string, const char* format, ...) {
+    va_list args1;
+    va_start(args1, format);
+
+    string_extend_f_va(arena, string, format, args1);
+
     va_end(args1);
+}
+
+__attribute__((format (printf, 2, 3)))
+Strv strv_from_f(Arena* arena, const char* format, ...) {
+    va_list args1;
+    va_start(args1, format);
+
+    String buf = {0};
+    string_extend_f_va(arena, &buf, format, args1);
+
     va_end(args1);
+
+    return string_to_strv(buf);
 }
 
