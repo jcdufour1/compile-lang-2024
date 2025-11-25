@@ -718,10 +718,12 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
 }
 
 void emit_c_from_tree(void) {
-    String test_output_ = {0};
-    string_extend_strv(&a_pass, &test_output_, params.output_file_path);
-    string_extend_cstr(&a_pass, &test_output_, ".c");
-    Strv test_output = string_to_strv(test_output_);
+    Strv test_output = strv_from_f(
+        &a_temp,
+        FMT"/"FMT".c",
+        strv_print(params.build_dir),
+        strv_print(params.output_file_path)
+    );
     if (params.stop_after == STOP_AFTER_BACKEND_IR) {
         test_output = params.output_file_path;
     }

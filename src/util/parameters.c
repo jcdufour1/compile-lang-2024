@@ -265,13 +265,14 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 101, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 102, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false, false},
     {"missing-command-line-arg", DIAG_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true, false},
     {"file-could-not-open", DIAG_FILE_COULD_NOT_OPEN, LOG_ERROR, true, false},
+    {"directory-could-not-be-made", DIAG_DIR_COULD_NOT_BE_MADE, LOG_ERROR, true, false},
     {"file-could-not-read", DIAG_FILE_COULD_NOT_READ, LOG_ERROR, true, false},
     {"diag-enum-non-void-case-no-par-on-assign", DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, LOG_ERROR, true, false},
     {"diag-function-param-not-specified", DIAG_FUNCTION_PARAM_NOT_SPECIFIED, LOG_ERROR, true, false},
@@ -907,9 +908,6 @@ void parse_args(int argc, char** argv) {
             case STOP_AFTER_IR:
                 if (params.dump_dot) {
                     todo();
-                    //String buf = {0};
-                    //string_extend_f(&a_main, &buf, FMT"/test.dot");
-                    //params.output_file_path = string_to_strv(buf);
                 } else {
                     params.output_file_path = sv("test.ownir");
                 }
@@ -965,5 +963,10 @@ void parse_args(int argc, char** argv) {
         "the buffer (params.usize_size_ux) is too small"
     );
     params.sizeof_usize = arch_row.sizeof_usize;
+
+    // TODO: decide best place to do this
+    if (!make_dir(params.build_dir)) {
+        local_exit(EXIT_CODE_FAIL);
+    }
 }
 

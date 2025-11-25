@@ -103,6 +103,7 @@ typedef enum {
     DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
     DIAG_YIELD_OUT_OF_ERROR_HANDLING_BLOCK,
     DIAG_MISSING_RETURN_IN_DEFER,
+    DIAG_DIR_COULD_NOT_BE_MADE,
 
     // count of cases for static asserts
     DIAG_COUNT,

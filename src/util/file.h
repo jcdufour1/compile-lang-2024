@@ -34,4 +34,6 @@ Strv file_basename(Strv file_path);
 // TODO: move this function and declaration?
 NEVER_RETURN void local_exit(int exit_code);
 
+bool make_dir(Strv dir_path);
+
 #endif // FILE_H
