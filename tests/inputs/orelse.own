@@ -21,17 +21,17 @@ fn thing1() {
 
 fn thing2() {
     let num i32 = do_thing(TRUE) orelse {
-        //io.print_str("no2")
+        printf("no2\n")
         return
         yield 0
     }
-    //io.print_str("yes2")
+    printf("yes2\n")
     //io.print_int(num)
 }
 
 fn main() i32 {
-    thing1()
-    //thing2()
+    //thing1()
+    thing2()
 
     return 0
 }

@@ -3950,6 +3950,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     if (!try_set_switch_types(&new_block, lang_switch)) {
         return false;
     }
+    todo();
 
     *new_tast = tast_block_wrap(new_block);
     return true;

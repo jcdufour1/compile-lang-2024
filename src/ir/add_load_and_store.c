@@ -2844,6 +2844,7 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
+    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, vec_top(pairs).label->name));
     load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_yield_check));
     add_label(new_block, name_to_ir_name(after_yield_check), new_block->pos);
 
