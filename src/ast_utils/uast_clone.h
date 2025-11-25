@@ -46,6 +46,8 @@ Uast_enum_get_tag* uast_enum_get_tag_clone(
 
 Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
+Uast_fn* uast_fn_clone(const Uast_fn* fn, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
+
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
 #endif // UAST_CLONE_H

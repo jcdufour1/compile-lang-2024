@@ -239,6 +239,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_array_literal_wrap(uast_array_literal_clone(uast_array_literal_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_ORELSE:
             return uast_orelse_wrap(uast_orelse_clone(uast_orelse_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_FN:
+            return uast_fn_wrap(uast_fn_clone(uast_fn_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_wrap(uast_expr_removed_clone(uast_expr_removed_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
     }
@@ -347,6 +349,11 @@ Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Sc
         scope,
         name_clone(orelse->break_out_of, use_new_scope, new_scope)
     );
+}
+
+Uast_fn* uast_fn_clone(const Uast_fn* fn, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) dest_pos;
+    return uast_fn_new(fn->pos, ulang_type_fn_clone(fn->ulang_type, use_new_scope, new_scope));
 }
 
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

@@ -349,6 +349,15 @@ static Uast_type uast_gen_orelse(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_fn(const char* prefix) {
+    const char* base_name = "fn";
+    Uast_type fn = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&fn.members, "Ulang_type_fn", "ulang_type");
+
+    return fn;
+}
+
 static Uast_type uast_gen_if_else_chain(const char* prefix) {
     Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false)};
 
@@ -386,6 +395,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_access(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_get_tag(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_orelse(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_fn(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;

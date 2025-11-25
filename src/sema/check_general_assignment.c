@@ -91,6 +91,179 @@ after:
     return true;
 }
 
+static bool should_convert_src_to_cstr(Lang_type dest, Tast_expr** new_src) {
+    Lang_type src_type = tast_expr_get_lang_type(*new_src);
+    if (dest.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
+        return false;
+    }
+    if (lang_type_get_pointer_depth(dest) != 1) {
+        return false;
+    }
+    if (src_type.type != LANG_TYPE_STRUCT) {
+        return false;
+    }
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+        MOD_PATH_RUNTIME,
+        sv("Slice"),
+        ulang_type_gen_args_char_new(),
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+}
+
+static bool should_convert_src_to_print_format(Lang_type dest, Tast_expr** new_src) {
+    if (dest.type != LANG_TYPE_STRUCT) {
+        return false;
+    }
+    Name dest_name = lang_type_struct_const_unwrap(dest).atom.str;
+    dest_name.gen_args.info.count = 0;
+
+    if (!strv_is_equal(dest_name.mod_path, MOD_PATH_RUNTIME)) {
+        return false;
+    }
+    if (!strv_is_equal(dest_name.base, sv("PrintFormat"))) {
+        return false;
+    }
+
+    Lang_type src_type = tast_expr_get_lang_type(*new_src);
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+        MOD_PATH_RUNTIME,
+        sv("Slice"),
+        ulang_type_gen_args_char_new(),
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+}
+
+static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* src, Lang_type dest) {
+    Pos pos = tast_expr_get_pos(src);
+    Strv str = tast_string_unwrap(tast_literal_unwrap(src))->data;
+    String new_buf = {0};
+
+    for (size_t idx = 0; idx < str.count; idx++) {
+        char curr = strv_at(str, idx);
+        if (curr == '%') {
+            string_extend_cstr(&a_main, &new_buf, "%%");
+        } else if (curr == '{') {
+            todo();
+        } else if (curr == '}') {
+            todo();
+        } else {
+            vec_append(&a_main, &new_buf, curr);
+        }
+    }
+
+    Tast_expr_vec new_inner_membs = {0};
+    //for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+    //    todo();
+    //    Uast_expr* rhs = vec_at(lit->members, idx);
+    //    Tast_expr* new_rhs = NULL;
+    //    switch (check_general_assignment(
+    //         &check_env,
+    //         &new_rhs,
+    //         gen_arg,
+    //         rhs,
+    //         uast_expr_get_pos(rhs)
+    //    )) {
+    //        case CHECK_ASSIGN_OK:
+    //            break;
+    //        case CHECK_ASSIGN_INVALID:
+    //            msg(
+    //                DIAG_ASSIGNMENT_MISMATCHED_TYPES,
+    //                uast_expr_get_pos(rhs),
+    //                "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
+    //                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+    //                lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
+    //            );
+    //            return false;
+    //        case CHECK_ASSIGN_ERROR:
+    //            return false;
+    //        default:
+    //            unreachable("");
+    //    }
+
+    //    vec_append(&a_main, &new_membs, new_rhs);
+    //}
+
+    Tast_variable_def_vec inner_def_membs = {0};
+    //for (size_t idx = 0; idx < new_membs.info.count; idx++) {
+    //    vec_append(&a_main, &inner_def_membs, tast_variable_def_new(
+    //        lit->pos,
+    //        gen_arg,
+    //        false,
+    //        util_literal_name_new()
+    //    ));
+    //}
+    Tast_struct_def* inner_def = tast_struct_def_new(
+        pos,
+        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()}
+    );
+    sym_tbl_add(tast_struct_def_wrap(inner_def));
+
+    Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
+        pos,
+        new_inner_membs,
+        util_literal_name_new(),
+        lang_type_struct_const_wrap(lang_type_struct_new(pos, lang_type_atom_new(inner_def->base.name, 0)))
+    );
+
+    log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(new_inner_lit));
+    //todo();
+
+    Ulang_type gen_arg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.gen_args, 0);
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest));
+    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
+    Lang_type unary_lang_type = lang_type_new_print_format_arg(gen_arg);
+    lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
+
+
+    Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        pos,
+        tast_struct_literal_wrap(new_inner_lit),
+        UNARY_REFER,
+        unary_lang_type
+    )));
+
+    Tast_expr_vec new_slice_membs = {0};
+    vec_append(&a_main, &new_slice_membs, ptr);
+    vec_append(&a_main, &new_slice_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, (int64_t)new_inner_membs.info.count, lang_type_new_usize()))));
+
+    Lang_type outer_type = lang_type_new_slice(pos, lang_type_to_ulang_type(lang_type_new_print_format_arg(gen_arg)), 0/*TODO*/);
+    Tast_expr_vec new_membs = {0};
+    vec_append(&a_main, &new_membs, tast_literal_wrap(tast_string_wrap(tast_string_new(pos, string_to_strv(new_buf), false))));
+    vec_append(&a_main, &new_membs, tast_struct_literal_wrap(tast_struct_literal_new(
+        pos,
+        new_slice_membs,
+        util_literal_name_new(),
+        outer_type
+    )));
+    Tast_struct_def* new_src_def = tast_struct_def_new(
+        pos,
+        (Struct_def_base) {.members = (Tast_variable_def_vec) {0}, .name = util_literal_name_new()}
+    );
+    sym_tbl_add(tast_struct_def_wrap(new_src_def));
+
+    // TODO: move this to lang_type_new_slice function?
+    LANG_TYPE_TYPE dummy = {0};
+    Ulang_type result = {0};
+    if (!resolve_generics_ulang_type_regular(&dummy, &result, ulang_type_regular_const_unwrap(lang_type_to_ulang_type(outer_type)))) {
+        todo();
+    }
+
+    *new_src = tast_struct_literal_wrap(tast_struct_literal_new(
+        pos,
+        new_membs,
+        new_src_def->base.name,
+        lang_type_new_print_format(gen_arg)
+    ));
+
+    msg_todo("formatting", tast_expr_get_pos(*new_src))
+    return false;
+}
+
 bool do_implicit_convertions(
     Lang_type dest,
     Tast_expr** new_src,
@@ -98,34 +271,19 @@ bool do_implicit_convertions(
     bool src_is_zero,
     bool implicit_pointer_depth
 ) {
-    *new_src = src;
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest));
+
     Lang_type src_type = tast_expr_get_lang_type(*new_src);
-    if (dest.type != LANG_TYPE_PRIMITIVE) {
-        goto next;
-    }
-    if (lang_type_primitive_const_unwrap(dest).type != LANG_TYPE_UNSIGNED_INT) {
-        goto next;
-    }
-    if (lang_type_get_pointer_depth(dest) != 1) {
-        goto next;
-    }
-    if (src_type.type != LANG_TYPE_STRUCT) {
-        goto next;
-    }
-    if (!name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
-        MOD_PATH_RUNTIME,
-        sv("Slice"),
-        ulang_type_gen_args_char_new(),
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
-    ))) {
-        goto next;
+    *new_src = src;
+    if (should_convert_src_to_cstr(dest, new_src)) {
+        tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
+        return true;
     }
 
-    tast_string_unwrap(tast_literal_unwrap(*new_src))->is_cstr = true;
-    return true;
+    if (should_convert_src_to_print_format(dest, new_src)) {
+        return do_src_to_print_format_conversions(new_src, src, dest);
+    }
 
-next:
     if (dest.type != src_type.type) {
         return false;
     }

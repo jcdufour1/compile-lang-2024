@@ -577,6 +577,16 @@ Strv uast_orelse_print_internal(const Uast_orelse* orelse, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_fn_print_internal(const Uast_fn* fn, Indent indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "fn", indent);
+    string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, ulang_type_fn_const_wrap(fn->ulang_type)));
+    string_extend_cstr(&a_temp, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv uast_expr_removed_print_internal(const Uast_expr_removed* removed, Indent indent) {
     (void) removed;
     String buf = {0};
@@ -775,6 +785,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, Indent indent) {
             return uast_macro_print_internal(uast_macro_const_unwrap(expr), indent);
         case UAST_ORELSE:
             return uast_orelse_print_internal(uast_orelse_const_unwrap(expr), indent);
+        case UAST_FN:
+            return uast_fn_print_internal(uast_fn_const_unwrap(expr), indent);
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_print_internal(uast_expr_removed_const_unwrap(expr), indent);
     }

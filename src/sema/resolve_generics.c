@@ -27,6 +27,7 @@ static void msg_undefined_type_internal(
     Ulang_type lang_type
 ) {
     if (!env.silent_generic_resol_errors) {
+        unwrap(!env.silent_generic_resol_errors);
         msg_internal(
             file, line, DIAG_UNDEFINED_TYPE, pos,
             "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
@@ -38,7 +39,7 @@ static void msg_undefined_type_internal(
             ulang_type_regular_const_unwrap(lang_type).atom.str,
             pos
         )) {
-            unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name))));
+            usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name)));
         }
     }
 }
@@ -235,6 +236,7 @@ static void resolve_generics_serialize_struct_def_base(
 
     vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
         Ulang_type inner = {0};
+        // TODO: remove this unwrap?
         unwrap(ulang_type_remove_expr(&inner, *gen_arg));
         *gen_arg = inner;
     }
@@ -257,10 +259,19 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Uast_def** after_res,
     Ulang_type* result,
     Ustruct_def_base old_base,
-    Ulang_type lang_type,
+    Ulang_type lang_type, // TODO: change Ulang_type to Ulang_type_regular
     Pos pos_def,
     Obj_new obj_new
 ) {
+    {
+        vec_foreach(idx, Ulang_type, gen_arg, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args) {
+            Lang_type dummy = {0};
+            if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
+                return false;
+            }
+        }
+    }
+
     Name new_name = name_new(
         old_base.name.mod_path,
         old_base.name.base,
@@ -289,8 +300,14 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             *after_res = new_def_;
         } else {
             Ustruct_def_base new_base = {0};
+            // TODO: struct def base is substituted for every encounter of a struct like Lang_type
+            //   compilation times could possibly be improved by only making def base sometimes
             resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
+
             *after_res = (void*)obj_new(pos_def, new_base);
+            if ((*after_res)->type == UAST_STRUCT_DEF) {
+                Uast_struct_def* struct_def = uast_struct_def_unwrap(*after_res);
+            }
         }
     }
 
@@ -303,7 +320,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         return true;
     }
     if (struct_like_tbl_add(*after_res)) {
-        usym_tbl_add(*after_res);
+        usym_tbl_update(*after_res);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
@@ -663,7 +680,7 @@ bool resolve_generics_function_def_call(
     decl->name = name;
     Uast_function_decl* dummy = NULL;
     unwrap(function_decl_tbl_add(decl));
-    unwrap(function_decl_tbl_lookup(&dummy, decl->name));
+    assert(function_decl_tbl_lookup(&dummy, decl->name));
 
     // TODO: consider caching ulang_types
     Ulang_type_vec ulang_types = {0};

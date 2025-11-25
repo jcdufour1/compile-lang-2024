@@ -78,6 +78,8 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
 
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope);
 
+static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id);
+
 static PARSE_STATUS parse_expr_generic(
     Uast_expr** result,
     Uast_expr* lhs,
@@ -1041,7 +1043,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
 // type will be parsed if possible
 static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    Ulang_type_atom atom = {0};
+    Ulang_type inner = {0};
     Ulang_type_vec types = {0};
     bool is_comma = true;
 
@@ -1050,12 +1052,10 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     unwrap(try_consume(&tk_start, tokens, TOKEN_OPEN_PAR));
 
     while (is_comma) {
-        Pos atom_pos = {0};
-        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens, scope_id)) {
+        if (!parse_lang_type_struct(&inner, tokens, scope_id)) {
             break;
         }
-        Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
-        vec_append(&a_main, &types, new_child);
+        vec_append(&a_main, &types, inner);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -3521,6 +3521,18 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 }
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
+    if (tk_view_front(*tokens).type == TOKEN_FN) {
+        Ulang_type lang_type = {0};
+        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_fn_wrap(uast_fn_new(
+            ulang_type_get_pos(lang_type),
+            ulang_type_fn_const_unwrap(lang_type)
+        ));
+        return PARSE_EXPR_OK;
+    }
+
     Uast_expr* lhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {

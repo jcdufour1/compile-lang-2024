@@ -90,6 +90,7 @@ typedef struct Ulang_type_array_ {
     Ulang_type* item_type;
     Uast_expr* count; 
     Pos pos;
+    int16_t pointer_depth;
 }Ulang_type_array;
 
 struct Uast_expr_;
@@ -178,6 +179,10 @@ static inline Ulang_type_int ulang_type_int_const_unwrap(const Ulang_type ulang_
 static inline Ulang_type_array* ulang_type_array_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_ARRAY);
     return &ulang_type->as.ulang_type_array;
+}
+static inline Ulang_type_tuple* ulang_type_tuple_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_TUPLE);
+    return &ulang_type->as.ulang_type_tuple;
 }
 static inline Ulang_type_expr* ulang_type_expr_unwrap(Ulang_type* ulang_type) {
     unwrap(ulang_type->type == ULANG_TYPE_EXPR);
@@ -278,9 +283,7 @@ static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
         case ULANG_TYPE_ARRAY:
-            // TODO: add pointer_depth to Ulang_type_array?
-            msg_todo("", ulang_type_array_const_unwrap(lang_type).pos);
-            return 0;
+            return ulang_type_array_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_EXPR:
             return ulang_type_expr_const_unwrap(lang_type).pointer_depth;
         case ULANG_TYPE_INT:
@@ -305,8 +308,7 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
             ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_ARRAY:
-            // TODO
-            msg_todo("", ulang_type_array_const_unwrap(*lang_type).pos);
+            ulang_type_array_unwrap(lang_type)->pointer_depth = pointer_depth;
             return;
         case ULANG_TYPE_EXPR:
             ulang_type_expr_unwrap(lang_type)->pointer_depth = pointer_depth;

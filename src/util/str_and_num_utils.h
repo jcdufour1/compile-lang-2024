@@ -27,6 +27,10 @@ Name util_literal_name_new_prefix_scope_internal(
 #define util_literal_name_new() \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
+static inline Name util_literal_name_new_poison(void) {
+    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
 #define util_literal_ir_name_new(ir_name_tables) \
     util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 

@@ -11,6 +11,7 @@ type Result enum(<OkT, ErrorT>) {
 }
 
 type usize def = rt.usize
+type ptr def = opaque*
 
 // overlapping regions are allowed
 // count_items is the number of items to move, not the number of bytes
