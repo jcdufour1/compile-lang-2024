@@ -160,4 +160,7 @@ static inline const char* string_to_cstr(Arena* arena, String string) {
 __attribute__((format (printf, 3, 4)))
 void string_extend_f(Arena* arena, String* string, const char* format, ...);
 
+__attribute__((format (printf, 2, 3)))
+Strv strv_from_f(Arena* arena, const char* format, ...);
+
 #endif // NEWSTRING_H

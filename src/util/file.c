@@ -9,6 +9,11 @@
 #include <newstring.h>
 #include <msg_todo.h>
 #include <env.h>
+#include <time.h>
+
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
 
 bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
@@ -148,5 +153,30 @@ NEVER_RETURN void local_exit(int exit_code) {
     arena_free(&a_leak);
 
     exit(exit_code);
+}
+
+bool make_dir(Strv dir_path) {
+    const char* dir_cstr = strv_dup(&a_temp, dir_path);
+
+    struct stat dir_status = {0};
+    if (-1 == stat(dir_cstr, &dir_status)) {
+        if (errno == ENOENT) {
+            if (0 != mkdir(dir_cstr, 0755)) {
+                msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not make directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
+                return false;
+            }
+            return true;
+        }
+        msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not stat directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
+        return false;
+    }
+
+    if (!S_ISDIR(dir_status.st_mode)) {
+        msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "`"FMT"` exists but is not a directory\n", strv_print(dir_path));
+        msg(DIAG_NOTE, POS_BUILTIN, "`"FMT"` is the build-dir specified (or default)\n", strv_print(dir_path));
+        return false;
+    }
+    
+    return true;
 }
 

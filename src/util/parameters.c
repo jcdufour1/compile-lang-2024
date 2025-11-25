@@ -265,13 +265,14 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 101, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 102, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false, false},
     {"missing-command-line-arg", DIAG_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true, false},
     {"file-could-not-open", DIAG_FILE_COULD_NOT_OPEN, LOG_ERROR, true, false},
+    {"directory-could-not-be-made", DIAG_DIR_COULD_NOT_BE_MADE, LOG_ERROR, true, false},
     {"file-could-not-read", DIAG_FILE_COULD_NOT_READ, LOG_ERROR, true, false},
     {"diag-enum-non-void-case-no-par-on-assign", DIAG_ENUM_NON_VOID_CASE_NO_PAR_ON_ASSIGN, LOG_ERROR, true, false},
     {"diag-function-param-not-specified", DIAG_FUNCTION_PARAM_NOT_SPECIFIED, LOG_ERROR, true, false},
@@ -418,7 +419,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -552,7 +553,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 static void long_option_run(Strv curr_opt) {
     (void) curr_opt;
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -663,6 +664,11 @@ static void long_option_print_immediately(Strv curr_opt) {
     params.print_immediately = true;
 }
 
+static void long_option_build_dir(Strv curr_opt) {
+    (void) curr_opt;
+    params.build_dir = curr_opt;
+}
+
 static void long_option_no_prelude(Strv curr_opt) {
     (void) curr_opt;
     params.do_prelude = false;
@@ -704,7 +710,7 @@ static void long_option_max_errors(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 26,
+    PARAMETERS_COUNT == 27,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -727,6 +733,12 @@ Long_option_pair long_options[] = {
         "This option will cause the error order to be unstable and seemingly random",
         long_option_print_immediately,
         ARG_NONE
+    },
+    {
+        "build-dir",
+        "directory to store build artifacts (default is `.own`)",
+        long_option_build_dir,
+        ARG_REGULAR
     },
     {
         "target-triplet",
@@ -798,7 +810,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 26,
+    PARAMETERS_COUNT == 27,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -806,6 +818,7 @@ static void set_params_to_defaults(void) {
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
     params.max_errors = 30;
+    params.build_dir = sv(".own");
 
 #ifdef NDEBUG
     params_log_level = LOG_INFO;
@@ -866,7 +879,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 26,
+        PARAMETERS_COUNT == 27,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -894,7 +907,7 @@ void parse_args(int argc, char** argv) {
                 unreachable("");
             case STOP_AFTER_IR:
                 if (params.dump_dot) {
-                    params.output_file_path = sv("test.dot");
+                    todo();
                 } else {
                     params.output_file_path = sv("test.ownir");
                 }
@@ -950,5 +963,10 @@ void parse_args(int argc, char** argv) {
         "the buffer (params.usize_size_ux) is too small"
     );
     params.sizeof_usize = arch_row.sizeof_usize;
+
+    // TODO: decide best place to do this
+    if (!make_dir(params.build_dir)) {
+        local_exit(EXIT_CODE_FAIL);
+    }
 }
 

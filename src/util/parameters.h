@@ -69,12 +69,13 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 26
+#define PARAMETERS_COUNT 27
 typedef struct {
     Target_triplet target_triplet;
     uint32_t sizeof_usize; 
     uint32_t sizeof_ptr_non_fn; 
     char usize_size_ux[8]; // eg. "u64"
+    Strv build_dir;
     Strv input_file_path;
     Strv output_file_path;
     Strv path_c_compiler;
