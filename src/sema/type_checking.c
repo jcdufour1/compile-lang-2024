@@ -3684,6 +3684,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
+    check_env.break_in_case = true;
 error:
     check_env.parent_of = old_parent_of;
     return status;

@@ -18,7 +18,6 @@ fn thing1() {
     let num i32 = do_thing(FALSE) orelse {
         printf("yes1\n")
         return
-        yield 0
     }
     printf("no1\n")
 }
@@ -27,7 +26,6 @@ fn thing2() {
     let num i32 = do_thing(TRUE) orelse {
         printf("no2\n")
         return
-        yield 0
     }
     printf("yes2\n")
     printf("%d\n", num)
@@ -37,7 +35,6 @@ fn thing3() Token {
     let num i32 = do_thing(FALSE) orelse {
         printf("yes3\n")
         return {"hello"}
-        yield 0
     }
     printf("no3\n")
     return {"bye"}
