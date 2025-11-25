@@ -470,10 +470,8 @@ void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_
 }
 
 void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg) {
-    (void) orelse;
-    (void) gen_param;
-    (void) gen_arg;
-    todo();
+    generic_sub_expr(&orelse->expr_to_unwrap, orelse->expr_to_unwrap, gen_param, gen_arg);
+    generic_sub_block(orelse->if_error, gen_param, gen_arg);
 }
 
 void generic_sub_member_access(Uast_expr** new_expr, Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {

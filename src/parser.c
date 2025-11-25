@@ -282,10 +282,10 @@ bool consume_expect_internal(const char* file, int line, Token* result, Tk_view*
     
 // TODO: give this function a better name
 // returns the modified name of the label
-static PARSE_STATUS label_thing_ex(Name* new_name, Scope_id block_scope, Scope_id label_scope) {
+static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
     assert(new_scope_name.base.count > 0);
     // TODO: remove label->block_scope and use label->name.scope_id instead
-    new_scope_name.scope_id = label_scope;
+    new_scope_name.scope_id = block_scope;
     Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name, scope_to_name_tbl_lookup(block_scope));
     if (!usymbol_add(uast_label_wrap(label))) {
         msg_redefinition_of_symbol(uast_label_wrap(label));
@@ -294,32 +294,6 @@ static PARSE_STATUS label_thing_ex(Name* new_name, Scope_id block_scope, Scope_i
     Name old_name = new_scope_name;
     memset(&new_scope_name, 0, sizeof(new_scope_name));
     *new_name = old_name;
-    return PARSE_OK;
-}
-
-// TODO: give this function a better name
-// returns the modified name of the label
-static PARSE_STATUS label_thing(Name* new_name, Scope_id block_scope) {
-    return label_thing_ex(new_name, block_scope, block_scope);
-}
-
-// TODO: give this function a better name
-// returns the modified name of the label
-static PARSE_STATUS label_thing_orelse(Name* new_name, Scope_id block_scope) {
-    assert(new_scope_name_when_leaving_block.base.count > 0);
-    // TODO: remove label->block_scope and use label->name.scope_id instead
-    new_scope_name_when_leaving_block.scope_id = block_scope;
-    Uast_label* label = uast_label_new(new_scope_name_pos, new_scope_name_when_leaving_block, scope_to_name_tbl_lookup(block_scope));
-    if (!usymbol_add(uast_label_wrap(label))) {
-        msg_redefinition_of_symbol(uast_label_wrap(label));
-        return PARSE_ERROR;
-    }
-    assert(new_scope_name_when_leaving_block.base.count > 0);
-    Name old_name = new_scope_name_when_leaving_block;
-    memset(&new_scope_name_when_leaving_block, 0, sizeof(new_scope_name_when_leaving_block));
-    assert(old_name.base.count > 0);
-    *new_name = old_name;
-    assert(new_name->base.count > 0);
     return PARSE_OK;
 }
 
@@ -3137,10 +3111,7 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     Scope_id parent
 ) {
     Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
-
     Scope_id if_error_scope = symbol_collection_new(outer, util_literal_name_new());
-
-    memset(&new_scope_name, 0, sizeof(new_scope_name));
 
     Uast_block* if_error = NULL;
     if (PARSE_OK != parse_block(
@@ -3154,17 +3125,10 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     }
 
     Name break_out_of = {0};
-    // tODO: remove label_thing_ex? (only have label_thing)
-    if (PARSE_OK != label_thing_ex(&break_out_of, outer, outer)) {
+    if (PARSE_OK != label_thing(&break_out_of, outer)) {
         return PARSE_EXPR_ERROR;
     }
     assert(break_out_of.base.count > 0);
-
-    //Name break_out_of = {0};
-    //if (PARSE_OK != label_thing_orelse(&break_out_of, scope_id)) {
-    //    return PARSE_EXPR_ERROR;
-    //}
-    //assert(break_out_of.base.count > 0);
 
     Uast_orelse* orelse = uast_orelse_new(pos, lhs, if_error, outer, break_out_of);
 

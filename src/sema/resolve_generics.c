@@ -303,11 +303,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             // TODO: struct def base is substituted for every encounter of a struct like Lang_type
             //   compilation times could possibly be improved by only making def base sometimes
             resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
-
             *after_res = (void*)obj_new(pos_def, new_base);
-            if ((*after_res)->type == UAST_STRUCT_DEF) {
-                Uast_struct_def* struct_def = uast_struct_def_unwrap(*after_res);
-            }
         }
     }
 

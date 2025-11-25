@@ -234,7 +234,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
     if (check_env.switch_is_orelse) {
         msg_internal(
             file, line,
-            DIAG_MISSING_YIELD_STATEMENT/*TODO */, pos,
+            DIAG_MISSING_RETURN_IN_DEFER, pos,
             "no return statement in error handling block of orelse\n"
         );
         return;
@@ -269,7 +269,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            DIAG_MISSING_RETURN, pos,
+            DIAG_MISSING_RETURN_IN_FUN, pos,
             "no return statement in function that returns `"FMT"`\n",
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
@@ -2408,22 +2408,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
         case UAST_EXPR_REMOVED:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_BLOCK:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_IF_ELSE_CHAIN:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_ASSIGNMENT:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_OPERATOR:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_ORELSE:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_FN:
             msg_todo("invalid function callee", fun_call->pos);
@@ -2460,22 +2460,22 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_LITERAL:
             return try_set_function_call_types_old(new_call, fun_call);
         case UAST_FUNCTION_CALL:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_STRUCT_LITERAL:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_TUPLE:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_ENUM_GET_TAG:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_ENUM_ACCESS:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_SWITCH:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_UNKNOWN: {
             Uast_def* def = NULL;
@@ -2500,10 +2500,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             ));
         }
         case UAST_ARRAY_LITERAL:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_MACRO:
-            msg_todo("", uast_expr_get_pos(fun_call->callee));
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
     }
 
@@ -3730,7 +3730,11 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     }
 
     if (check_env.switch_is_orelse && yield->is_user_generated) {
-        msg(DIAG_BREAK_OUT_OF_DEFER/*TODO*/, yield->pos, "cannot yield out of error handling block of `orelse`\n");
+        msg(
+            DIAG_YIELD_OUT_OF_ERROR_HANDLING_BLOCK,
+            yield->pos,
+            "cannot yield out of error handling block of `orelse`\n"
+        );
     }
 
     switch (check_env.parent_of_defer) {
@@ -3975,13 +3979,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     }
     vec_append(&a_main, &cases, if_false_case);
 
-    Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
-
-    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
-
     bool old_switch_is_orelse = check_env.switch_is_orelse;
     check_env.switch_is_orelse = true;
 
+    Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;

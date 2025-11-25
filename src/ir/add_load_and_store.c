@@ -179,9 +179,6 @@ static void load_block_stmts(
     Lang_type lang_type,
     bool is_top_level // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
 ) {
-    static uint64_t recursion_depth = 0;
-    recursion_depth++;
-
     Tast_def* dummy = NULL;
     unwrap(!symbol_lookup(&dummy, *yield_dest_name));
 
@@ -450,8 +447,6 @@ static void load_block_stmts(
 
     if (lang_type.type == LANG_TYPE_VOID) {
         assert(break_expr->name.base.count > 0);
-        log(LOG_DEBUG, FMT"\n", tast_variable_def_print(break_expr));
-        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
@@ -475,11 +470,8 @@ static void load_block_stmts(
     load_assignment(new_block, is_cont2_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-        log(LOG_DEBUG, "recursion_depth %zu: "FMT"\n", recursion_depth, tast_stmt_print(vec_at(children, idx)));
         load_stmt(new_block, vec_at(children, idx), false);
     }
-    //todo();
 
     Defer_pair_vec* pairs = &vec_top_ref(&defered_collections.coll_stack)->pairs;
     while (pairs->info.count > 0) {
@@ -511,7 +503,6 @@ static void load_block_stmts(
     vec_pop(&defered_collections.coll_stack);
 
     unwrap(defered_collections.coll_stack.info.count == old_colls_count);
-    recursion_depth--;
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
@@ -1311,15 +1302,9 @@ static Ir_name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 }
 
 static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
-    if (old_sym->base.lang_type.type == LANG_TYPE_VOID) {
-        //msg(DIAG_ASSIGNMENT_TO_VOID, old_sym->pos, "cannot assign to void\n");
-    }
-
     Tast_def* var_def_ = NULL;
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
-    //log(LOG_DEBUG, FMT"\n", tast_def_print(var_def_));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
-    log(LOG_DEBUG, FMT"\n", ir_variable_def_print(var_def));
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, var_def->name_corr_param)) {
         load_variable_def(new_block, tast_variable_def_unwrap(var_def_));
@@ -2619,9 +2604,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 #               ifndef NDEBUG
                     Tast_def* brk_name_def = NULL;
                     unwrap(symbol_lookup(&brk_name_def, break_name));
-                    log(LOG_DEBUG, FMT"\n", tast_stmt_print(old_stmt));
-                    log(LOG_DEBUG, FMT"\n", tast_def_print(brk_name_def));
-                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_def_get_lang_type(brk_name_def)));
                     if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
                         unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
                     }
@@ -2893,7 +2875,6 @@ static Ir_block* load_block(
     if (!is_top_level) {
         load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
     }
-    log(LOG_DEBUG, FMT"\n", tast_block_print(old_block));
     load_block_stmts(
         new_block,
         old_block->children,

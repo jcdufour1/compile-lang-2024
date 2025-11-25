@@ -244,9 +244,6 @@ void* sym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool symbol_add(Tast_def* item) {
-    if (strv_is_equal(tast_def_get_name(item).base, sv("str____46"))) {
-        //todo();
-    }
     Name name = tast_def_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(&a_main, name),

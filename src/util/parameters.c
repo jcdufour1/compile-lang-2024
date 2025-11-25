@@ -265,7 +265,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 99, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 101, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
@@ -286,7 +286,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"redefinition-of-symbol", DIAG_REDEFINITION_SYMBOL, LOG_ERROR, true, false},
     {"invalid-struct-member-in-literal", DIAG_INVALID_MEMBER_IN_LITERAL, LOG_ERROR, true, false},
     {"invalid-member-access", DIAG_INVALID_MEMBER_ACCESS, LOG_ERROR, true, false},
-    {"missing-return-statement", DIAG_MISSING_RETURN, LOG_ERROR, true, false},
+    {"missing-return-in-fun", DIAG_MISSING_RETURN_IN_FUN, LOG_ERROR, true, false},
+    {"missing-return-in-defer", DIAG_MISSING_RETURN_IN_DEFER, LOG_ERROR, true, false},
     {"invalid-count-fun-args", DIAG_INVALID_COUNT_FUN_ARGS, LOG_ERROR, true, false},
     {"invalid-function-arg", DIAG_INVALID_FUN_ARG, LOG_ERROR, true, false},
     {"mismatched-return-type", DIAG_MISMATCHED_RETURN_TYPE, LOG_ERROR, true, false},
@@ -366,6 +367,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"expected-variable-def", DIAG_EXPECTED_VARIABLE_DEF, LOG_ERROR, true, false},
     {"using-on-non-struct-variable", DIAG_USING_ON_NON_STRUCT_VARIABLE, LOG_ERROR, true, false},
     {"def-dest-and-src-both-have-gen-args", DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS, LOG_ERROR, true, false},
+    {"yield-out-of-error-handling-block", DIAG_YIELD_OUT_OF_ERROR_HANDLING_BLOCK, LOG_ERROR, true, false},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
