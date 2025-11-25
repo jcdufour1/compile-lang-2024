@@ -3129,13 +3129,15 @@ static PARSE_EXPR_STATUS parse_high_presidence(
 }
 
 static PARSE_EXPR_STATUS parse_orelse_finish(
-    Uast_orelse** result,
+    Uast_block** result,
     Tk_view* tokens,
     Uast_expr* lhs,
     Pos pos,
-    Scope_id scope_id
+    Scope_id parent
 ) {
-    Scope_id block_scope = symbol_collection_new(scope_id, util_literal_name_new());
+    Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
+
+    Scope_id if_error_scope = symbol_collection_new(outer, util_literal_name_new());
 
     memset(&new_scope_name, 0, sizeof(new_scope_name));
 
@@ -3144,14 +3146,15 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         &if_error,
         tokens,
         false,
-        block_scope,
+        if_error_scope,
         (Uast_stmt_vec) {0}
     )) {
         return PARSE_EXPR_ERROR;
     }
 
     Name break_out_of = {0};
-    if (PARSE_OK != label_thing_ex(&break_out_of, block_scope, scope_id)) {
+    // tODO: remove label_thing_ex? (only have label_thing)
+    if (PARSE_OK != label_thing_ex(&break_out_of, outer, outer)) {
         return PARSE_EXPR_ERROR;
     }
     assert(break_out_of.base.count > 0);
@@ -3162,7 +3165,16 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     //}
     //assert(break_out_of.base.count > 0);
 
-    *result = uast_orelse_new(pos, lhs, if_error, scope_id, break_out_of);
+    Uast_orelse* orelse = uast_orelse_new(pos, lhs, if_error, outer, break_out_of);
+
+    Uast_stmt_vec block_children = {0};
+    vec_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));
+    *result = uast_block_new(
+        orelse->pos,
+        block_children,
+        orelse->if_error->pos_end,
+        outer
+    );
     return PARSE_EXPR_OK;
 }
 
@@ -3184,12 +3196,12 @@ static PARSE_EXPR_STATUS parse_right_unary(
     static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only right unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_ORELSE: {
-            Uast_orelse* result_ = NULL;
+            Uast_block* result_ = NULL;
             status = parse_orelse_finish(&result_, tokens, *result, oper.pos, scope_id);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
-            *result = uast_orelse_wrap(result_);
+            *result = uast_block_wrap(result_);
             return PARSE_EXPR_OK;
         }
         default:

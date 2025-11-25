@@ -30,7 +30,7 @@ fn thing2() {
 }
 
 fn main() i32 {
-    //thing1()
+    thing1()
     thing2()
 
     return 0
