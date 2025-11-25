@@ -186,6 +186,8 @@ static bool expand_def_ulang_type_regular(
             fallthrough;
         case UAST_ENUM_GET_TAG:
             fallthrough;
+        case UAST_ORELSE:
+            fallthrough;
         case UAST_EXPR_REMOVED:
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
@@ -562,6 +564,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_EXPR_REMOVED:
             fallthrough;
+        case UAST_ORELSE:
+            fallthrough;
         case UAST_ENUM_GET_TAG: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
@@ -638,6 +642,24 @@ static bool expand_def_function_call(Uast_function_call* call) {
 
 static bool expand_def_struct_literal(Uast_struct_literal* lit) {
     return expand_def_expr_vec(&lit->members);
+}
+
+static bool expand_def_orelse(Uast_orelse* orelse) {
+    if (!expand_def_block(orelse->if_error)) {
+        return false;
+    }
+
+    Ulang_type dummy = {0};
+    switch (expand_def_expr(&dummy, &orelse->expr_to_unwrap, orelse->expr_to_unwrap)) {
+        case EXPAND_EXPR_ERROR:
+            return false;
+        case EXPAND_EXPR_NEW_EXPR:
+            return true;
+        case EXPAND_EXPR_NEW_ULANG_TYPE:
+            msg_got_type_but_expected_expr(uast_expr_get_pos(orelse->expr_to_unwrap));
+            return false;
+    }
+    unreachable("");
 }
 
 static bool expand_def_fn(Uast_fn* fn) {
@@ -852,6 +874,9 @@ static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr**
         case UAST_STRUCT_LITERAL:
             *new_expr = expr;
             return a(expand_def_struct_literal(uast_struct_literal_unwrap(expr)));
+        case UAST_ORELSE:
+            *new_expr = expr;
+            return a(expand_def_orelse(uast_orelse_unwrap(expr)));
         case UAST_ARRAY_LITERAL:
             *new_expr = expr;
             return a(expand_def_array_literal(uast_array_literal_unwrap(expr)));

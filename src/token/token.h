@@ -99,6 +99,7 @@ typedef enum {
     TOKEN_SIZEOF,
     TOKEN_COUNTOF,
     TOKEN_USING,
+    TOKEN_ORELSE,
 
     // comment
     TOKEN_COMMENT,
@@ -279,6 +280,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_USING:
             return false;
+        case TOKEN_ORELSE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -437,6 +440,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_USING:
             return false;
+        case TOKEN_ORELSE:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -625,6 +630,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_ONE_LINE_BLOCK_START:
             return false;
         case TOKEN_USING:
+            return false;
+        case TOKEN_ORELSE:
             return false;
         case TOKEN_COUNT:
             unreachable("");

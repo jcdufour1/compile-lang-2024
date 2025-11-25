@@ -6,6 +6,12 @@ type Slice struct(<ItemT>) {
     count usize
 }
 
+type Optional enum(<ItemT>) {
+    some ItemT
+    none
+}
+
+// TODO: move assert function to runtime?
 fn slice_at_ref(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return &buf_at(slice.buf, index)

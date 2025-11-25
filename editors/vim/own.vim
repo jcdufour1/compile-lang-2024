@@ -18,6 +18,7 @@ syn keyword ownKeyword
     \ let
     \ switch
     \ type
+    \ orelse
 
 syn keyword ownStmt
     \ break
@@ -95,7 +96,7 @@ hi def link ownStmt           Statement
 hi def link ownLabel          Label
 hi def link ownIntType        Type
 hi def link ownFloatType      Type
-hi def link ownVoidType      Type
+hi def link ownVoidType       Type
 hi def link ownTypeType       Type
 hi def link ownPreludeType    Type
 hi def link ownFunctionCall   Function

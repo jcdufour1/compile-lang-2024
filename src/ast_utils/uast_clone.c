@@ -237,6 +237,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_ARRAY_LITERAL:
             return uast_array_literal_wrap(uast_array_literal_clone(uast_array_literal_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_ORELSE:
+            return uast_orelse_wrap(uast_orelse_clone(uast_orelse_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_FN:
             return uast_fn_wrap(uast_fn_clone(uast_fn_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_EXPR_REMOVED:
@@ -305,7 +307,8 @@ Uast_yield* uast_yield_clone(const Uast_yield* yield, bool use_new_scope, Scope_
         yield->pos,
         yield->do_yield_expr,
         yield->do_yield_expr ? uast_expr_clone(yield->yield_expr, use_new_scope, new_scope, dest_pos) : NULL,
-        name_clone(yield->break_out_of, use_new_scope, new_scope)
+        name_clone(yield->break_out_of, use_new_scope, new_scope),
+        yield->is_user_generated
     );
 }
 
@@ -335,6 +338,17 @@ Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, 
 
 Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_array_literal_new(if_else->pos, uast_expr_vec_clone(if_else->members, use_new_scope, new_scope, dest_pos));
+}
+
+Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Scope_id scope = use_new_scope ? new_scope : orelse->scope_id;
+    return uast_orelse_new(
+        orelse->pos,
+        uast_expr_clone(orelse->expr_to_unwrap, use_new_scope, new_scope, dest_pos),
+        uast_block_clone(orelse->if_error, use_new_scope, new_scope, dest_pos),
+        scope,
+        name_clone(orelse->break_out_of, use_new_scope, new_scope)
+    );
 }
 
 Uast_fn* uast_fn_clone(const Uast_fn* fn, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {

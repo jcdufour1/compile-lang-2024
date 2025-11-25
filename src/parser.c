@@ -23,6 +23,7 @@ static Name curr_mod_alias; // placeholder mod alias of the file that is current
 static Token prev_token;
 
 static Name new_scope_name;
+static Name new_scope_name_when_leaving_block;
 static Pos new_scope_name_pos;
 
 static Name default_brk_label = {0};
@@ -656,6 +657,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_USING:
             return false;
+        case TOKEN_ORELSE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -814,6 +817,168 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_USING:
             return false;
+        case TOKEN_ORELSE:
+            return false;
+        case TOKEN_COUNT:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static bool is_right_unary(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_SINGLE_PLUS:
+            return false;
+        case TOKEN_SINGLE_MINUS:
+            return false;
+        case TOKEN_ASTERISK:
+            return false;
+        case TOKEN_SLASH:
+            return false;
+        case TOKEN_LESS_THAN:
+            return false;
+        case TOKEN_GREATER_THAN:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
+            return false;
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            return false;
+        case TOKEN_LOGICAL_NOT:
+            return false;
+        case TOKEN_STRING_LITERAL:
+            return false;
+        case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_FLOAT_LITERAL:
+            return false;
+        case TOKEN_SYMBOL:
+            return false;
+        case TOKEN_OPEN_PAR:
+            return false;
+        case TOKEN_CLOSE_PAR:
+            return false;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return false;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return false;
+        case TOKEN_DOUBLE_QUOTE:
+            return false;
+        case TOKEN_COMMA:
+            return false;
+        case TOKEN_COLON:
+            return false;
+        case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_SINGLE_DOT:
+            return false;
+        case TOKEN_DOUBLE_DOT:
+            return false;
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
+        case TOKEN_BITWISE_XOR:
+            return false;
+        case TOKEN_VOID:
+            return false;
+        case TOKEN_UNSAFE_CAST:
+            return false;
+        case TOKEN_FN:
+            return false;
+        case TOKEN_FOR:
+            return false;
+        case TOKEN_IF:
+            return false;
+        case TOKEN_RETURN:
+            return false;
+        case TOKEN_EXTERN:
+            return false;
+        case TOKEN_STRUCT:
+            return false;
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
+        case TOKEN_NEW_LINE:
+            return false;
+        case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_ELSE:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return false;
+        case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
+            return false;
+        case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
+        case TOKEN_ENUM:
+            return false;
+        case TOKEN_MODULO:
+            return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
+            return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
+            return false;
+        case TOKEN_SHIFT_LEFT:
+            return false;
+        case TOKEN_SHIFT_RIGHT:
+            return false;
+        case TOKEN_OPEN_GENERIC:
+            return false;
+        case TOKEN_CLOSE_GENERIC:
+            return false;
+        case TOKEN_IMPORT:
+            return false;
+        case TOKEN_DEF:
+            return false;
+        case TOKEN_EOF:
+            return false;
+        case TOKEN_ASSIGN_BY_BIN:
+            return false;
+        case TOKEN_MACRO:
+            return false;
+        case TOKEN_DEFER:
+            return false;
+        case TOKEN_SIZEOF:
+            return false;
+        case TOKEN_YIELD:
+            return false;
+        case TOKEN_COUNTOF:
+            return false;
+        case TOKEN_DOUBLE_TICK:
+            return false;
+        case TOKEN_GENERIC_TYPE:
+            return false;
+        case TOKEN_BITWISE_NOT:
+            return false;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            return false;
+        case TOKEN_USING:
+            return false;
+        case TOKEN_ORELSE:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -1790,7 +1955,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
             unreachable("");
     }
 
-    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id));
+    *new_break = uast_yield_new(break_token.pos, do_break_expr, break_expr, name_clone(break_out_of, true, scope_id), true);
     return PARSE_OK;
 }
 
@@ -1823,7 +1988,7 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
             unreachable("");
     }
 
-    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of);
+    *new_yield = uast_yield_new(yield_token.pos, do_break_expr, break_expr, break_out_of, true);
     return PARSE_OK;
 }
 
@@ -2407,7 +2572,8 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
         start_token.pos,
         true,
         uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)),
-        default_brk_label
+        default_brk_label,
+        true /* TODO */
     )));
 
     if (cases.info.count < 1) {
@@ -2675,6 +2841,7 @@ static PARSE_STATUS parse_block(
     try_consume_newlines(tokens);
 
 end:
+    new_scope_name_when_leaving_block = new_scope_name;
     return status;
 }
 
@@ -2936,16 +3103,88 @@ static PARSE_EXPR_STATUS parse_high_presidence(
     return parse_high_presidence_internal(result, lhs, tokens, scope_id);
 }
 
+static PARSE_EXPR_STATUS parse_orelse_finish(
+    Uast_block** result,
+    Tk_view* tokens,
+    Uast_expr* lhs,
+    Pos pos,
+    Scope_id parent
+) {
+    Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
+    Scope_id if_error_scope = symbol_collection_new(outer, util_literal_name_new());
+
+    Uast_block* if_error = NULL;
+    if (PARSE_OK != parse_block(
+        &if_error,
+        tokens,
+        false,
+        if_error_scope,
+        (Uast_stmt_vec) {0}
+    )) {
+        return PARSE_EXPR_ERROR;
+    }
+
+    Name break_out_of = {0};
+    if (PARSE_OK != label_thing(&break_out_of, outer)) {
+        return PARSE_EXPR_ERROR;
+    }
+    assert(break_out_of.base.count > 0);
+
+    Uast_orelse* orelse = uast_orelse_new(pos, lhs, if_error, outer, break_out_of);
+
+    Uast_stmt_vec block_children = {0};
+    vec_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));
+    *result = uast_block_new(
+        orelse->pos,
+        block_children,
+        orelse->if_error->pos_end,
+        outer
+    );
+    return PARSE_EXPR_OK;
+}
+
+static PARSE_EXPR_STATUS parse_right_unary(
+    Uast_expr** result,
+    Tk_view* tokens,
+    Scope_id scope_id
+) {
+    PARSE_EXPR_STATUS status = parse_high_presidence(result, tokens, scope_id);
+    if (status != PARSE_EXPR_OK) {
+        return status;
+    }
+
+    if (!is_right_unary(tk_view_front(*tokens).type)) {
+        return PARSE_EXPR_OK;
+    }
+
+    Token oper = consume(tokens);
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only right unary operators need to be handled here");
+    switch (oper.type) {
+        case TOKEN_ORELSE: {
+            Uast_block* result_ = NULL;
+            status = parse_orelse_finish(&result_, tokens, *result, oper.pos, scope_id);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            *result = uast_block_wrap(result_);
+            return PARSE_EXPR_OK;
+        }
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
     Tk_view* tokens,
-    bool can_be_tuple,
+    bool can_be_tuple, // TODO: remove this parameter?
     Scope_id scope_id
 ) {
     (void) can_be_tuple;
 
     if (!is_unary(tk_view_front(*tokens).type)) {
-        return parse_high_presidence(result, tokens, scope_id);
+        return parse_right_unary(result, tokens, scope_id);
     }
     Token oper = consume_unary(tokens);
 
@@ -2964,7 +3203,7 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     ));
 
-    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3019,7 +3258,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 75, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -3149,7 +3388,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 75, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 76, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

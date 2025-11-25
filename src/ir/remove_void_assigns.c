@@ -3,6 +3,9 @@
 #include <util.h>
 #include <arena.h>
 #include <symbol_iter.h>
+#include <ir_lang_type_print.h>
+#include <ir_utils.h>
+#include <tast_utils.h>
 
 #define rm_void_internal(item, wrap_fn) \
     do { \
@@ -79,6 +82,10 @@ static Ir* rm_void_import_path(Ir_import_path* import) {
     return ir_import_path_wrap(import);
 }
 
+static Ir* rm_void_load_element_ptr(Ir_load_element_ptr* load) {
+    rm_void_internal(load, ir_load_element_ptr_wrap);
+}
+
 static Ir* rm_void_ir(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -86,7 +93,7 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_EXPR:
             return rm_void_expr(ir_expr_unwrap(ir));
         case IR_LOAD_ELEMENT_PTR:
-            return ir;
+            return rm_void_load_element_ptr(ir_load_element_ptr_unwrap(ir));
         case IR_ARRAY_ACCESS:
             return ir;
         case IR_FUNCTION_PARAMS:

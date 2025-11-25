@@ -349,7 +349,10 @@ static void load_block_stmts(
     if (lang_type.type == LANG_TYPE_VOID) {
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
-        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {.lang_type = lang_type, .name = local_rtn_def->name}));
+        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+            .lang_type = lang_type,
+            .name = local_rtn_def->name
+        }));
     }
     Tast_defer* defer = NULL;
     Tast_variable_def* old_rtn_def = NULL;
@@ -1299,10 +1302,6 @@ static Ir_name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 }
 
 static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
-    if (old_sym->base.lang_type.type == LANG_TYPE_VOID) {
-        msg(DIAG_ASSIGNMENT_TO_VOID, old_sym->pos, "cannot assign to void\n");
-    }
-
     Tast_def* var_def_ = NULL;
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
@@ -2597,16 +2596,28 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
             // TODO: this will not always work for custom scopes?
             if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
+                Tast_yield* yield = tast_yield_unwrap(old_stmt);
                 unwrap(is_yielding);
+                Name break_name = ir_name_to_name(vec_at(defered_collections.coll_stack, idx).break_name);
+                Lang_type yield_expr_type = tast_expr_get_lang_type(yield->yield_expr);
+
+#               ifndef NDEBUG
+                    Tast_def* brk_name_def = NULL;
+                    unwrap(symbol_lookup(&brk_name_def, break_name));
+                    if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
+                        unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
+                    }
+#               endif // NDEBUG
+
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(tast_yield_unwrap(old_stmt)->yield_expr),
-                        .name = ir_name_to_name(vec_at(defered_collections.coll_stack, idx).break_name)
+                        .lang_type = yield_expr_type,
+                        .name = break_name
                     })),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
-                if (tast_expr_get_lang_type(tast_yield_unwrap(old_stmt)->yield_expr).type != LANG_TYPE_VOID) {
+                if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID) {
                     load_assignment(new_block, new_assign);
                 }
             }

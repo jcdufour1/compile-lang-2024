@@ -337,6 +337,18 @@ static Uast_type uast_gen_enum_get_tag(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_orelse(const char* prefix) {
+    const char* base_name = "orelse";
+    Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Uast_expr*", "expr_to_unwrap");
+    append_member(&lit.members, "Uast_block*", "if_error");
+    append_member(&lit.members, "Scope_id", "scope_id");
+    append_member(&lit.members, "Name", "break_out_of");
+
+    return lit;
+}
+
 static Uast_type uast_gen_fn(const char* prefix) {
     const char* base_name = "fn";
     Uast_type fn = {.name = uast_name_new(prefix, base_name, false)};
@@ -382,6 +394,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_macro(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_access(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_get_tag(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_orelse(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_fn(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
@@ -573,6 +586,7 @@ static Uast_type uast_gen_yield(const char* prefix) {
     append_member(&yield.members, "bool", "do_yield_expr");
     append_member(&yield.members, "Uast_expr*", "yield_expr");
     append_member(&yield.members, "Name", "break_out_of");
+    append_member(&yield.members, "bool", "is_user_generated");
 
     return yield;
 }

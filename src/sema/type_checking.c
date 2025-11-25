@@ -231,6 +231,15 @@ static void msg_invalid_count_struct_literal_args_internal(
     msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos, is_array)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+    if (check_env.switch_is_orelse) {
+        msg_internal(
+            file, line,
+            DIAG_MISSING_RETURN_IN_DEFER, pos,
+            "no return statement in error handling block of orelse\n"
+        );
+        return;
+    }
+
     if (is_auto_inserted) {
         msg_internal(
             file, line,
@@ -260,7 +269,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            DIAG_MISSING_RETURN, pos,
+            DIAG_MISSING_RETURN_IN_FUN, pos,
             "no return statement in function that returns `"FMT"`\n",
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
@@ -1549,6 +1558,14 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             *new_tast = tast_if_else_chain_wrap(new_for);
             return true;
         }
+        case UAST_ORELSE: {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_orelse(&new_expr, uast_orelse_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = new_expr;
+            return true;
+        }
         case UAST_ARRAY_LITERAL: {
             Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
@@ -2391,15 +2408,23 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
         case UAST_EXPR_REMOVED:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_BLOCK:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_IF_ELSE_CHAIN:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_ASSIGNMENT:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_OPERATOR:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
+        case UAST_ORELSE:
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_FN:
             msg_todo("invalid function callee", fun_call->pos);
             return false;
@@ -2435,17 +2460,23 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_LITERAL:
             return try_set_function_call_types_old(new_call, fun_call);
         case UAST_FUNCTION_CALL:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_STRUCT_LITERAL:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_TUPLE:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_ENUM_GET_TAG:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_ENUM_ACCESS:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_SWITCH:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_UNKNOWN: {
             Uast_def* def = NULL;
             unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.switch_lang_type)));
@@ -2469,9 +2500,11 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             ));
         }
         case UAST_ARRAY_LITERAL:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_MACRO:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
     }
 
     bool status = true;
@@ -3678,6 +3711,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
+    check_env.break_in_case = true;
 error:
     check_env.parent_of = old_parent_of;
     return status;
@@ -3693,6 +3727,14 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
         msg_undefined_symbol(yield->break_out_of, yield->pos);
         status = false;
         goto error;
+    }
+
+    if (check_env.switch_is_orelse && yield->is_user_generated) {
+        msg(
+            DIAG_YIELD_OUT_OF_ERROR_HANDLING_BLOCK,
+            yield->pos,
+            "cannot yield out of error handling block of `orelse`\n"
+        );
     }
 
     switch (check_env.parent_of_defer) {
@@ -3843,6 +3885,116 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
     return status;
 }
 
+static bool try_set_orelse_lang_type_is_optional(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_ENUM) {
+        return false;
+    }
+    Lang_type_enum lang_enum = lang_type_enum_const_unwrap(lang_type);
+    Name enum_name = lang_enum.atom.str;
+    enum_name.gen_args.info.count = 0;
+        
+    return name_is_equal(
+        enum_name,
+        name_new(MOD_PATH_RUNTIME, sv("Optional"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+    );
+}
+
+bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
+    Tast_expr* to_unwrap = NULL;
+    if (!try_set_expr_types(&to_unwrap, orelse->expr_to_unwrap)) {
+        return false;
+    }
+    Lang_type to_unwrap_type = tast_expr_get_lang_type(to_unwrap);
+
+    if (!try_set_orelse_lang_type_is_optional(to_unwrap_type)) {
+        msg_todo(
+            "`orelse` when the type of the left hand side of `orelse` is not an optional",
+            tast_expr_get_pos(to_unwrap)
+        );
+        return false;
+    }
+
+
+    Uast_expr* is_false_cond = NULL;
+
+    Uast_case_vec cases = {0};
+
+    Name some_var_name = util_literal_name_new();
+    Uast_expr_vec some_args = {0};
+    vec_append(&a_main, &some_args, uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)));
+
+    Uast_stmt_vec if_true_children = {0};
+    vec_append(&a_main, &if_true_children, uast_yield_wrap(uast_yield_new(
+        orelse->pos,
+        true,
+        uast_symbol_wrap(uast_symbol_new(orelse->pos, some_var_name)),
+        orelse->break_out_of,
+        false
+    )));
+
+    Uast_block* if_true = uast_block_new(
+        orelse->pos,
+        if_true_children,
+        orelse->pos,
+        symbol_collection_new(orelse->scope_id, util_literal_name_new())
+    );
+
+    Uast_case* if_true_case = uast_case_new(
+        orelse->pos,
+        false,
+        uast_function_call_wrap(uast_function_call_new(
+            orelse->pos,
+            some_args,
+            uast_member_access_wrap(uast_member_access_new(
+                orelse->pos,
+                uast_symbol_new(orelse->pos, name_new(
+                    MOD_PATH_RUNTIME, sv("some"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                )),
+                uast_unknown_wrap(uast_unknown_new(orelse->pos))
+            )),
+            false
+        )),
+        if_true,
+        if_true->scope_id
+    );
+    vec_append(&a_main, &cases, if_true_case);
+
+    Uast_case* if_false_case = NULL;
+    if (is_false_cond) {
+        if_false_case = uast_case_new(
+            orelse->pos,
+            false,
+            is_false_cond,
+            orelse->if_error,
+            orelse->if_error->scope_id
+        );
+    } else {
+        if_false_case = uast_case_new(
+            orelse->pos,
+            true,
+            is_false_cond,
+            orelse->if_error,
+            orelse->if_error->scope_id
+        );
+    }
+    vec_append(&a_main, &cases, if_false_case);
+
+    bool old_switch_is_orelse = check_env.switch_is_orelse;
+    check_env.switch_is_orelse = true;
+
+    Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
+    Tast_block* new_block = NULL;
+    if (!try_set_switch_types(&new_block, lang_switch)) {
+        check_env.switch_is_orelse = old_switch_is_orelse;
+        return false;
+    }
+    check_env.switch_is_orelse = old_switch_is_orelse;
+
+    *new_tast = tast_block_wrap(new_block);
+    return true;
+}
+
+// TODO: remove this function?
 bool try_set_case_types(Tast_if** new_tast, const Uast_case* lang_case) {
     todo();
     (void) env;

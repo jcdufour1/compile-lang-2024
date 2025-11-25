@@ -1,0 +1,21 @@
+compile::stdout 0
+
+compile::stderr 15
+tests/inputs/orelse_sema_errors.own:13:34:[1;31merror[0;39m:no return statement in error handling block of orelse
+    12 | fn thing1() {
+    13 |     let num i32 = do_thing(TRUE) orelse {
+       |                                  ^
+    14 |         io.print_int(8)
+tests/inputs/orelse_sema_errors.own:21:9:[1;31merror[0;39m:cannot yield out of error handling block of `orelse`
+    20 |         io.print_int(8)
+    21 |         yield 8
+       |         ^
+    22 |     }
+tests/inputs/orelse_sema_errors.own:28:9:[1;31merror[0;39m:cannot yield out of error handling block of `orelse`
+    27 |         io.print_int(8)
+    28 |         yield 8
+       |         ^
+    29 |         return
+
+compile::return_code 1
+

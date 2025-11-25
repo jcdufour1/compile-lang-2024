@@ -48,7 +48,7 @@ fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
 }
 
 // TODO: return Result instead of Optional to specify the reason for open_file failing
-fn open_file(file_path coll.Str, options coll.Str) util.Optional(<File>) {
+fn open_file(file_path Str, options Str) util.Optional(<File>) {
     let cstr_path u8* = util.str_to_cstr(file_path)
     defer util.cstr_free(cstr_path)
     let cstr_opts u8* = util.str_to_cstr(options)

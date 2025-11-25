@@ -45,6 +45,8 @@ typedef struct {
     
     bool is_in_struct_base_def;
 
+    bool switch_is_orelse;
+
     bool is_in_defer;
     Pos parent_defer_pos;
 
@@ -152,6 +154,8 @@ bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast);
 bool try_set_module_alias_types(Tast_block** new_tast, Uast_mod_alias* tast);
 
 bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch);
+
+bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse);
 
 bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else);
 
