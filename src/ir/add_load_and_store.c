@@ -2619,18 +2619,13 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 #               ifndef NDEBUG
                     Tast_def* brk_name_def = NULL;
                     unwrap(symbol_lookup(&brk_name_def, break_name));
-                    log(LOG_DEBUG, FMT"\n", tast_stmt_print(old_stmt));
-                    log(LOG_DEBUG, FMT"\n", tast_def_print(brk_name_def));
-                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_def_get_lang_type(brk_name_def)));
-                    if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
-                        unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
-                    }
+                    unwrap(lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type));
 #               endif // NDEBUG
 
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_def_get_lang_type(brk_name_def),
+                        .lang_type = yield_expr_type,
                         .name = break_name
                     })),
                     tast_yield_unwrap(old_stmt)->yield_expr
@@ -2844,7 +2839,6 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    log(LOG_INFO, FMT"\n", name_print(NAME_LOG, vec_top(pairs).label->name));
     load_single_is_rtn_check(new_block, vec_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(vec_top(pairs).label->name), name_to_ir_name(after_yield_check));
     add_label(new_block, name_to_ir_name(after_yield_check), new_block->pos);
 

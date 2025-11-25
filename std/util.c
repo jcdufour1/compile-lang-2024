@@ -80,6 +80,8 @@ Str_slice own_argv(void) {
         return own_argv_cache;
     }
     
+    // TODO: separate function should be created to get argv by index to avoid mandatory malloc use)
+    //         (own_argv should maybe be removed entirely)
     own_argv_cache.buf = malloc(sizeof(*own_argv_cache.buf)*actual_argv_count);
     if (!own_argv_cache.buf) {
         fprintf(stderr, "fetal error: out of memory (when allocating space for argv)\n");

@@ -1,0 +1,18 @@
+
+
+type c import = std.libc
+type util import = std.util
+type posix import = std.posix
+
+fn srand(seed util.Optional(<i32>) = .none) {
+    if let .some(num) = seed {
+        c.srand(num)
+        return
+    }
+    c.srand(unsafe_cast<i32>posix.time(util.null(<u64>)()))
+}
+
+// min and max are inclusive
+fn int_range(min i32, max i32) i32 {
+    return min + c.rand()%(max - min)
+}

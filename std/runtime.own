@@ -1,4 +1,5 @@
 // TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
+// TODO: count should be usize by default when usize is implemented
 
 type Slice struct(<ItemT>) {
     buf ItemT*
@@ -17,4 +18,8 @@ fn slice_at_ref(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = 
 }
 
 extern("c") fn strlen(cstr u8*) u64
+
+fn bitwise_not(<NumT>)(num NumT) NumT {
+    return unsafe_cast<NumT>(-1)^num
+}
 

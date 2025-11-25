@@ -1,0 +1,89 @@
+type rt import = std.runtime
+type c import = std.libc
+type coll import = std.collections
+type util import = std.util
+
+extern("c") fn own_printf(format Str, args opaque...) i32
+extern("c") fn own_fprintf(file File, format Str, args opaque...) i32
+extern("c") fn own_stdout() opaque*
+extern("c") fn own_stderr() opaque*
+extern("c") fn own_stdin() opaque*
+extern("c") fn own_argv() Str[]
+
+type printf def = c.printf
+type puts def = c.puts
+type fopen def = c.fopen
+
+type File struct {
+    file opaque*
+}
+
+fn stdout() File => return {own_stdout()}
+fn stderr() File => return {own_stderr()}
+fn stdin() File => return {own_stdin()}
+
+fn argv() Str[] {
+    return own_argv()
+}
+
+fn fgetc(file File) util.Optional(<u8>) {
+    let ch i32 = c.fgetc(file.file)
+    if ch == c.EOF => return .none
+    return .some(unsafe_cast<u8>ch)
+}
+
+fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
+    let new_str coll.Darr(<u8>) = coll.darr_new(<u8>)()
+    for 1 {
+        if let .some(ch) = fgetc(file) {
+            coll.darr_append(&new_str, ch)
+            if ch == delim => return .some(new_str)
+        } else {
+            coll.darr_free(&new_str)
+            return .none
+        }
+    }
+    return .none
+}
+
+// TODO: return Result instead of Optional to specify the reason for open_file failing
+fn open_file(file_path Str, options Str) util.Optional(<File>) {
+    let cstr_path u8* = util.str_to_cstr(file_path)
+    defer util.cstr_free(cstr_path)
+    let cstr_opts u8* = util.str_to_cstr(options)
+    defer util.cstr_free(cstr_opts)
+    
+    let ptr opaque* = c.fopen(cstr_path, cstr_opts)
+    if ptr == util.null(<opaque>)() => return .none
+    return .some({ptr})
+}
+
+fn close_file(file File) util.Optional(<void>) {
+    util.assert(file.file != util.null(<opaque>)(), "TODO")
+    
+    if 0 == c.fclose(file.file) => return .none
+    return .some
+}
+
+fn print_str_internal__(str coll.Str) {
+    own_printf("%.*s", str.count, str.buf)
+}
+
+fn print_str(str coll.Str, end coll.Str = "\n") {
+    print_str_internal__(str)
+    print_str_internal__(end)
+}
+
+fn print_float(<NumT>)(num NumT, end coll.Str = "\n") {
+    let cond u1 = num < 0.1 // this condition is to give errors for using non float type (for now)
+    own_printf("%f", num)
+    print_str_internal__(end)
+}
+
+fn print_int(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line i32 = #line, column i32 = #column) {
+    let cond u1 = num < 1 // this condition is to give errors for using non int type (for now)
+    util.assert(sizeof(num) <= 8, "bit widths larger than 8 not implemented", .file = file, .line = line, .column = column)
+    own_printf("%lld", unsafe_cast<i64>num)
+    print_str_internal__(end)
+}
+
