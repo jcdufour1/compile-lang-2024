@@ -1,0 +1,11 @@
+compile::stdout 5
+yes1
+yes2
+9
+yes3
+hello
+
+compile::stderr 0
+
+compile::return_code 0
+

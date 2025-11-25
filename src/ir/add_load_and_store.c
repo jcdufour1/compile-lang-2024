@@ -2619,7 +2619,12 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 #               ifndef NDEBUG
                     Tast_def* brk_name_def = NULL;
                     unwrap(symbol_lookup(&brk_name_def, break_name));
-                    unwrap(lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type));
+                    log(LOG_DEBUG, FMT"\n", tast_stmt_print(old_stmt));
+                    log(LOG_DEBUG, FMT"\n", tast_def_print(brk_name_def));
+                    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_def_get_lang_type(brk_name_def)));
+                    if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
+                        unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
+                    }
 #               endif // NDEBUG
 
                 Tast_assignment* new_assign = tast_assignment_new(
