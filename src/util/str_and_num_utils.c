@@ -22,6 +22,7 @@ size_t get_count_excape_seq(Strv strv) {
 // \n excapes are actually stored as is in tokens and irs, but should be printed as \0a
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
     while (strv.count > 0) {
+        // TODO: extend "\x0a", etc instead of handling every case to simplify this function
         char front_char = strv_consume(&strv);
         if (front_char == '\\') {
             vec_append(arena, string, '\\');

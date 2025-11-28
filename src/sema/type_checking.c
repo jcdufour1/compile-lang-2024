@@ -4175,6 +4175,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
     size_t old_switch_prev_idx = check_env.switch_prev_idx;
+    bool old_curr_block_has_defer = check_env.curr_block_has_defer;
     check_env.break_in_case = false;
     if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
         check_env.break_type = check_env.lhs_lang_type;
@@ -4287,7 +4288,8 @@ error_inner:
         stmts,
         lang_switch->pos /* TODO */,
         vec_at(new_if_else->tasts, 0)->body->lang_type,
-        outer_scope_id //vec_at(new_if_else->tasts, 0)->body->scope_id /* TODO */
+        outer_scope_id, //vec_at(new_if_else->tasts, 0)->body->scope_id /* TODO */
+        check_env.curr_block_has_defer
     );
     //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
     //    scope_get_parent_tbl_update(vec_at(new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
@@ -4298,6 +4300,7 @@ error:
     check_env.break_in_case = false;
     check_env.break_type = check_env.break_type;
     check_env.switch_prev_idx = old_switch_prev_idx;
+    check_env.curr_block_has_defer = old_curr_block_has_defer;
     return status;
 }
 
@@ -4480,6 +4483,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     do_test_bit_width();
 
     bool status = true;
+    bool old_curr_block_has_defer = check_env.curr_block_has_defer;
 
     Tast_stmt_vec new_tasts = {0};
 
@@ -4562,7 +4566,15 @@ error:
     //} else if (check_env.parent_of == PARENT_OF_IF) {
     //    todo();
     //}
-    *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
+    *new_tast = tast_block_new(
+        block->pos,
+        new_tasts,
+        block->pos_end,
+        yield_type,
+        block->scope_id,
+        check_env.curr_block_has_defer
+    );
+    check_env.curr_block_has_defer = old_curr_block_has_defer;
     if (status) {
         unwrap(*new_tast);
     } else {

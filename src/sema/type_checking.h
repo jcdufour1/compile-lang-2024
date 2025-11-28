@@ -46,6 +46,7 @@ typedef struct {
     bool is_in_struct_base_def;
 
     bool switch_is_orelse;
+    bool curr_block_has_defer;
 
     bool is_in_defer;
     Pos parent_defer_pos;
