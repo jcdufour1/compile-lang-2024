@@ -154,6 +154,9 @@ continue(<thing>)
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
 - expected success test that excaped " is supported in string literal
+- write documentation
+- documentation should note that using can emulate inheritance in structs (I also need expected
+    success test case for that)
 
 
 
@@ -184,3 +187,5 @@ continue(<thing>)
 - dynamic dispatch in generics (function pointers, constant expressions, etc. should be stored in 
     table; there should be one table per generic variant)
 - function to set break point in source code (eg. `breakpoint`)
+- use own calling convention
+    - types larger than 16 bytes should by passed by pointer?
