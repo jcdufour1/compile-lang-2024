@@ -46,6 +46,8 @@ static Strv parent_of_print_internal(PARENT_OF parent_of) {
             return sv("PARENT_OF_BREAK");
         case PARENT_OF_IF:
             return sv("PARENT_OF_IF");
+        case PARENT_OF_ORELSE:
+            return sv("PARENT_OF_ORELSE");
     }
     unreachable("");
 }
@@ -3770,7 +3772,6 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
-                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.break_type));
                 msg_invalid_yield_type(yield->pos, new_child, false);
                 status = false;
                 goto error;
@@ -4068,14 +4069,16 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Lang_type old_break_type = check_env.break_type;
     check_env.break_type = yield_type;
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.break_type));
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.parent_of = PARENT_OF_ORELSE;
+
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;
-        check_env.break_type = old_break_type;
+        check_env.parent_of = old_parent_of;
         return false;
     }
     check_env.switch_is_orelse = old_switch_is_orelse;
-    check_env.break_type = old_break_type;
+    check_env.parent_of = old_parent_of;
 
     *new_tast = tast_block_wrap(new_block);
     return true;
@@ -4112,13 +4115,10 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         NULL
     );
 
-    log(LOG_DEBUG, "mark->scope_id: %zu\n", mark->scope_id);
     log(LOG_DEBUG, FMT"\n", uast_orelse_print(orelse));
-    //log(LOG_DEBUG, FMT"\n", uast_block_print());
     if (!try_set_orelse(new_tast, orelse)) {
         return false;
     }
-    log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_tast));
 
     return true;
 }
@@ -4326,7 +4326,6 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
          tast_expr_get_lang_type(new_operand_typed)
     );
 
-    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         Uast_case* old_case = vec_at(lang_switch->cases, idx);
         Uast_condition* cond = NULL;
@@ -4636,7 +4635,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 unreachable("");
         }
     }
-    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);

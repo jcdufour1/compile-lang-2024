@@ -34,10 +34,28 @@ fn thing3() {
     printf("no3\n")
 }
 
+fn thing4() {
+    do_thing(FALSE)?
+    printf("no4\n")
+}
+
+fn thing5() {
+    let num = do_thing(TRUE)?
+    printf("yes5: %d\n", num)
+}
+
+fn thing6() {
+    do_thing(TRUE)?
+    printf("yes6\n")
+}
+
 fn main() i32 {
-    //thing1()
-    //thing2()
+    thing1()
+    thing2()
     thing3()
+    thing4()
+    thing5()
+    thing6()
 
     return 0
 }

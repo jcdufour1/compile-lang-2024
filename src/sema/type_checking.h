@@ -12,6 +12,7 @@ typedef enum {
     PARENT_OF_RETURN,
     PARENT_OF_BREAK,
     PARENT_OF_IF,
+    PARENT_OF_ORELSE,
 } PARENT_OF;
 
 typedef enum {
