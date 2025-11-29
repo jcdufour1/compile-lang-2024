@@ -969,11 +969,12 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
         }
     }
 
-    // TODO: remove below line
+    Lang_type old_lhs_lang_type = check_env.lhs_lang_type;
     check_env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
     }
+    check_env.lhs_lang_type = old_lhs_lang_type;
 
     return try_set_binary_types_finish(
         new_tast,
@@ -3769,6 +3770,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
+                log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.break_type));
                 msg_invalid_yield_type(yield->pos, new_child, false);
                 status = false;
                 goto error;
@@ -3929,13 +3931,28 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     ORELSE_TYPE orelse_type = {0};
     Strv some_sv = {0};
+    Lang_type yield_type = {0};
     static_assert(ORELSE_COUNT == 2, "exhausive handling of orelse result states");
     if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Optional"))) {
         orelse_type = ORELSE_OPTIONAL;
         some_sv = sv("some");
+        
+        if (!try_lang_type_from_ulang_type(
+            &yield_type,
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+        )) {
+            return false;
+        }
     } else if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Result"))) {
         orelse_type = ORELSE_RESULT;
         some_sv = sv("ok");
+
+        if (!try_lang_type_from_ulang_type(
+            &yield_type,
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+        )) {
+            return false;
+        }
     } else {
         msg_todo(
             "`orelse` when the type of the left hand side of `orelse` is not an optional or result type",
@@ -4048,12 +4065,17 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
-    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
+
+    Lang_type old_break_type = check_env.break_type;
+    check_env.break_type = yield_type;
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, check_env.break_type));
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;
+        check_env.break_type = old_break_type;
         return false;
     }
     check_env.switch_is_orelse = old_switch_is_orelse;
+    check_env.break_type = old_break_type;
 
     *new_tast = tast_block_wrap(new_block);
     return true;
@@ -4284,7 +4306,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     size_t old_switch_prev_idx = check_env.switch_prev_idx;
     check_env.break_in_case = false;
     if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
+        // TODO: check_env.break_type should eventually be set to its previous value
         check_env.break_type = check_env.lhs_lang_type;
+    } else if (check_env.parent_of == PARENT_OF_ORELSE) {
     } else {
         check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }

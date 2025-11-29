@@ -29,9 +29,15 @@ fn thing2() {
     printf("yes2: %d\n", num)
 }
 
+fn thing3() {
+    let num = do_thing(FALSE)?
+    printf("no3\n")
+}
+
 fn main() i32 {
-    thing1()
-    thing2()
+    //thing1()
+    //thing2()
+    thing3()
 
     return 0
 }
