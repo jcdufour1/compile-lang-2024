@@ -2105,6 +2105,7 @@ static PARSE_STATUS parse_literal(Uast_expr** lit, Tk_view* tokens) {
     return PARSE_ERROR;
 }
 
+// TODO: parse_symbol should return PARSE_STATUS for consistancy?
 static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
     Token token = consume(tokens);
     unwrap(token.type == TOKEN_SYMBOL);
@@ -3119,10 +3120,11 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     Token dummy = {0};
     if (try_consume(&dummy, tokens, TOKEN_OPEN_PAR)) {
         if (tk_view_front(*tokens).type != TOKEN_SYMBOL) {
-            todo();
+            msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+            return PARSE_EXPR_ERROR;
         }
         is_err_symbol = true;
-        err_symbol = parse_symbol(tokens, if_error_scope /* TODO */);
+        err_symbol = parse_symbol(tokens, if_error_scope);
         if (!consume_expect(&dummy, tokens, "after name of error symbol", TOKEN_CLOSE_PAR)) {
             return PARSE_EXPR_ERROR;
         }

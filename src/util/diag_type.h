@@ -104,6 +104,7 @@ typedef enum {
     DIAG_YIELD_OUT_OF_ERROR_HANDLING_BLOCK,
     DIAG_MISSING_RETURN_IN_DEFER,
     DIAG_DIR_COULD_NOT_BE_MADE,
+    DIAG_ORELSE_ERR_SYMBOL_ON_OPTIONAL,
 
     // count of cases for static asserts
     DIAG_COUNT,

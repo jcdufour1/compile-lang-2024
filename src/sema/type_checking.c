@@ -3902,6 +3902,9 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
 typedef enum {
     ORELSE_RESULT,
     ORELSE_OPTIONAL,
+
+    // for static asserts
+    ORELSE_COUNT,
 } ORELSE_TYPE;
 
 bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
@@ -3913,6 +3916,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     ORELSE_TYPE orelse_type = {0};
     Strv some_sv = {0};
+    static_assert(ORELSE_COUNT == 2, "exhausive handling of orelse result states");
     if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Optional"))) {
         orelse_type = ORELSE_OPTIONAL;
         some_sv = sv("some");
@@ -3931,6 +3935,24 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Uast_expr_vec error_args = {0};
     if (orelse->is_error_symbol) {
+        static_assert(
+            ORELSE_COUNT == 2,
+            "exhausive handling of orelse result states (not all are explicitly handled)"
+        );
+        if (orelse_type == ORELSE_OPTIONAL) {
+            msg(
+                DIAG_ORELSE_ERR_SYMBOL_ON_OPTIONAL,
+                orelse->error_symbol->pos,
+                "orelse error symbol cannot be used when the left hand side of orelse is Optional\n"
+            );
+            msg(
+                DIAG_NOTE,
+                lang_type_get_pos(to_unwrap_type),
+                "left hand side of orelse type defined here\n"
+            );
+            return false;
+        }
+
         vec_append(&a_main, &error_args, uast_symbol_wrap(orelse->error_symbol));
         is_false_cond = uast_function_call_wrap(uast_function_call_new(
             orelse->error_symbol->pos,
