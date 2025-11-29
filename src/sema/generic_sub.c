@@ -415,6 +415,8 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             *new_expr = expr;
             generic_sub_orelse(uast_orelse_unwrap(expr), gen_param, gen_arg);
             return;
+        case UAST_QUESTION_MARK:
+            todo();
         case UAST_TUPLE:
             *new_expr = expr;
             msg_todo("", uast_expr_get_pos(expr));

@@ -3174,6 +3174,31 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     return PARSE_EXPR_OK;
 }
 
+static PARSE_EXPR_STATUS parse_question_mark_finish(
+    Uast_block** result,
+    Uast_expr* lhs,
+    Pos pos,
+    Scope_id parent
+) {
+    Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
+
+    Name break_out_of = {0};
+    if (PARSE_OK != label_thing(&break_out_of, outer)) {
+        return PARSE_EXPR_ERROR;
+    }
+
+    Uast_question_mark* mark = uast_question_mark_new(pos, lhs, outer, break_out_of);
+    Uast_stmt_vec block_children = {0};
+    vec_append(&a_main, &block_children, uast_expr_wrap(uast_question_mark_wrap(mark)));
+    *result = uast_block_new(
+        mark->pos,
+        block_children,
+        mark->pos,
+        outer
+    );
+    return PARSE_EXPR_OK;
+}
+
 static PARSE_EXPR_STATUS parse_right_unary(
     Uast_expr** result,
     Tk_view* tokens,
@@ -3201,7 +3226,13 @@ static PARSE_EXPR_STATUS parse_right_unary(
             return PARSE_EXPR_OK;
         }
         case TOKEN_QUESTION_MARK: {
-            todo();
+            Uast_block* result_ = NULL;
+            status = parse_question_mark_finish(&result_, *result, oper.pos, scope_id);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            *result = uast_block_wrap(result_);
+            return PARSE_EXPR_OK;
         }
         default:
             unreachable("");

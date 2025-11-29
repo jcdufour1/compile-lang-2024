@@ -1566,6 +1566,14 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             *new_tast = new_expr;
             return true;
         }
+        case UAST_QUESTION_MARK: {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_question_mark(&new_expr, uast_question_mark_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = new_expr;
+            return true;
+        }
         case UAST_ARRAY_LITERAL: {
             Uast_array_literal* lit = uast_array_literal_unwrap(uast);
 
@@ -2424,6 +2432,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             return false;
         case UAST_ORELSE:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
+        case UAST_QUESTION_MARK:
+            msg_todo("this type of function callee", fun_call->pos);
             return false;
         case UAST_FN:
             msg_todo("invalid function callee", fun_call->pos);
@@ -4043,6 +4054,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     *new_tast = tast_block_wrap(new_block);
     return true;
+}
+
+bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
+    todo();
 }
 
 // TODO: remove this function?

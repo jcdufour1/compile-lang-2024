@@ -351,6 +351,17 @@ static Uast_type uast_gen_orelse(const char* prefix) {
     return orelse;
 }
 
+static Uast_type uast_gen_question_mark(const char* prefix) {
+    const char* base_name = "question_mark";
+    Uast_type mark = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&mark.members, "Uast_expr*", "expr_to_unwrap");
+    append_member(&mark.members, "Scope_id", "scope_id");
+    append_member(&mark.members, "Name", "break_out_of");
+
+    return mark;
+}
+
 static Uast_type uast_gen_fn(const char* prefix) {
     const char* base_name = "fn";
     Uast_type fn = {.name = uast_name_new(prefix, base_name, false)};
@@ -398,6 +409,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_enum_get_tag(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_orelse(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_fn(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_question_mark(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;
