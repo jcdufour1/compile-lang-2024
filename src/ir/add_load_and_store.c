@@ -492,8 +492,7 @@ static void load_block_stmts(
         vec_pop(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
-            // TODO: expected failure test
-            todo();
+            unreachable("`defer defer` should have been caught in eariler passes");
         }
     }
 
