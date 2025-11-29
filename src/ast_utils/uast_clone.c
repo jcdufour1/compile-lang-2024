@@ -347,7 +347,9 @@ Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Sc
         uast_expr_clone(orelse->expr_to_unwrap, use_new_scope, new_scope, dest_pos),
         uast_block_clone(orelse->if_error, use_new_scope, new_scope, dest_pos),
         scope,
-        name_clone(orelse->break_out_of, use_new_scope, new_scope)
+        name_clone(orelse->break_out_of, use_new_scope, new_scope),
+        orelse->is_error_symbol,
+        uast_symbol_clone(orelse->error_symbol, use_new_scope, new_scope)
     );
 }
 

@@ -3885,7 +3885,7 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
     return status;
 }
 
-static bool try_set_orelse_lang_type_is_optional(Lang_type lang_type) {
+static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
     if (lang_type.type != LANG_TYPE_ENUM) {
         return false;
     }
@@ -3895,9 +3895,14 @@ static bool try_set_orelse_lang_type_is_optional(Lang_type lang_type) {
         
     return name_is_equal(
         enum_name,
-        name_new(MOD_PATH_RUNTIME, sv("Optional"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
     );
 }
+
+typedef enum {
+    ORELSE_RESULT,
+    ORELSE_OPTIONAL,
+} ORELSE_TYPE;
 
 bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     Tast_expr* to_unwrap = NULL;
@@ -3906,37 +3911,40 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     }
     Lang_type to_unwrap_type = tast_expr_get_lang_type(to_unwrap);
 
-    if (!try_set_orelse_lang_type_is_optional(to_unwrap_type)) {
+    ORELSE_TYPE orelse_type = {0};
+    Strv some_sv = {0};
+    if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Optional"))) {
+        orelse_type = ORELSE_OPTIONAL;
+        some_sv = sv("some");
+    } else if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Result"))) {
+        orelse_type = ORELSE_RESULT;
+        some_sv = sv("ok");
+    } else {
         msg_todo(
-            "`orelse` when the type of the left hand side of `orelse` is not an optional",
+            "`orelse` when the type of the left hand side of `orelse` is not an optional or result type",
             tast_expr_get_pos(to_unwrap)
         );
         return false;
     }
 
+    Uast_expr* is_false_cond = NULL;
 
     Uast_expr_vec error_args = {0};
-    vec_append(&a_main, error_args, uast_symbol_wrap(orelse->error_symbol));
-    Uast_expr* is_false_cond = uast_function_call_wrap(uast_function_call_new(
-        orelse->error_symbol->pos,
-        error_args
-        uast_member_access_wrap(uast_member_access_new(
+    if (orelse->is_error_symbol) {
+        vec_append(&a_main, &error_args, uast_symbol_wrap(orelse->error_symbol));
+        is_false_cond = uast_function_call_wrap(uast_function_call_new(
             orelse->error_symbol->pos,
-            uast_symbol_new(orelse->pos, name_new(
-                MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+            error_args,
+            uast_member_access_wrap(uast_member_access_new(
+                orelse->error_symbol->pos,
+                uast_symbol_new(orelse->pos, name_new(
+                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                )),
+                uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
             )),
-            uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
-        )),
-        false
-    ));
-
-    Uast_expr* is_false_cond = uast_member_access_wrap(uast_member_access_new(
-        orelse->pos,
-        uast_symbol_new(orelse->pos, name_new(
-            MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
-        )),
-        uast_unknown_wrap(uast_unknown_new(orelse->pos))
-    ));
+            false
+        ));
+    }
 
     Uast_case_vec cases = {0};
 
@@ -3969,7 +3977,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
             uast_member_access_wrap(uast_member_access_new(
                 orelse->pos,
                 uast_symbol_new(orelse->pos, name_new(
-                    MOD_PATH_RUNTIME, sv("some"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME, some_sv, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->pos))
             )),

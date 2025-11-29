@@ -3126,7 +3126,6 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         if (!consume_expect(&dummy, tokens, "after name of error symbol", TOKEN_CLOSE_PAR)) {
             return PARSE_EXPR_ERROR;
         }
-        todo();
     }
 
     Uast_block* if_error = NULL;
@@ -3146,7 +3145,15 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     }
     assert(break_out_of.base.count > 0);
 
-    Uast_orelse* orelse = uast_orelse_new(pos, lhs, if_error, outer, break_out_of);
+    Uast_orelse* orelse = uast_orelse_new(
+        pos,
+        lhs,
+        if_error,
+        outer,
+        break_out_of,
+        is_err_symbol,
+        err_symbol
+    );
 
     Uast_stmt_vec block_children = {0};
     vec_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));

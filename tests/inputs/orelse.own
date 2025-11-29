@@ -50,15 +50,26 @@ fn thing4() Token {
         printf("yes4: error is %d\n", err)
         return {"hello"}
     }
-    printf("no3\n")
+    printf("no4\n")
+    return {"bye"}
+}
+
+fn thing5() Token {
+    let num i32 = do_thing_with_err_val(TRUE) orelse(err) {
+        printf("no5: error is %d\n", err)
+        return {"hello"}
+    }
+    printf("yes5\n")
+    printf("%d\n", num)
     return {"bye"}
 }
 
 fn main() i32 {
-    //thing1()
-    //thing2()
-    //printf("%s\n", thing3().string)
+    thing1()
+    thing2()
+    printf("%s\n", thing3().string)
     thing4()
+    thing5()
 
     return 0
 }
