@@ -3113,6 +3113,22 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
     Scope_id if_error_scope = symbol_collection_new(outer, util_literal_name_new());
 
+    bool is_err_symbol = false;
+    Uast_symbol* err_symbol = NULL;
+
+    Token dummy = {0};
+    if (try_consume(&dummy, tokens, TOKEN_OPEN_PAR)) {
+        if (tk_view_front(*tokens).type != TOKEN_SYMBOL) {
+            todo();
+        }
+        is_err_symbol = true;
+        err_symbol = parse_symbol(tokens, if_error_scope /* TODO */);
+        if (!consume_expect(&dummy, tokens, "after name of error symbol", TOKEN_CLOSE_PAR)) {
+            return PARSE_EXPR_ERROR;
+        }
+        todo();
+    }
+
     Uast_block* if_error = NULL;
     if (PARSE_OK != parse_block(
         &if_error,

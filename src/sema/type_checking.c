@@ -3915,7 +3915,28 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     }
 
 
-    Uast_expr* is_false_cond = NULL;
+    Uast_expr_vec error_args = {0};
+    vec_append(&a_main, error_args, uast_symbol_wrap(orelse->error_symbol));
+    Uast_expr* is_false_cond = uast_function_call_wrap(uast_function_call_new(
+        orelse->error_symbol->pos,
+        error_args
+        uast_member_access_wrap(uast_member_access_new(
+            orelse->error_symbol->pos,
+            uast_symbol_new(orelse->pos, name_new(
+                MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+            )),
+            uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
+        )),
+        false
+    ));
+
+    Uast_expr* is_false_cond = uast_member_access_wrap(uast_member_access_new(
+        orelse->pos,
+        uast_symbol_new(orelse->pos, name_new(
+            MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+        )),
+        uast_unknown_wrap(uast_unknown_new(orelse->pos))
+    ));
 
     Uast_case_vec cases = {0};
 
