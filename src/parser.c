@@ -3196,6 +3196,8 @@ static PARSE_EXPR_STATUS parse_question_mark_finish(
         mark->pos,
         outer
     );
+    log(LOG_DEBUG, FMT"\n", uast_question_mark_print(mark));
+    log(LOG_DEBUG, FMT"\n", uast_block_print(*result));
     return PARSE_EXPR_OK;
 }
 

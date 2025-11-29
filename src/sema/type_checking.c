@@ -3765,7 +3765,6 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
 
     Tast_expr* new_child = NULL;
     if (yield->do_yield_expr) {
-        __asm__("int3");
         switch (check_general_assignment(&check_env, &new_child, check_env.break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -4049,7 +4048,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
-    __asm__("int3");
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;
         return false;
@@ -4071,7 +4070,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         return false;
     }
 
-    Scope_id inner_scope = symbol_collection_new(mark->scope_id, util_literal_name_new());
+    Scope_id error_scope = symbol_collection_new(mark->scope_id, util_literal_name_new());
 
     Uast_stmt_vec if_err_children = {0};
     vec_append(&a_main, &if_err_children, uast_return_wrap(uast_return_new(
@@ -4079,7 +4078,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos))),
         true
     )));
-    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, inner_scope);
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope);
 
     Uast_orelse* orelse = uast_orelse_new(
         mark->pos,
@@ -4091,13 +4090,15 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         NULL
     );
 
+    log(LOG_DEBUG, "mark->scope_id: %zu\n", mark->scope_id);
     log(LOG_DEBUG, FMT"\n", uast_orelse_print(orelse));
+    //log(LOG_DEBUG, FMT"\n", uast_block_print());
     if (!try_set_orelse(new_tast, orelse)) {
         return false;
     }
     log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_tast));
 
-    todo();
+    return true;
 }
 
 // TODO: remove this function?

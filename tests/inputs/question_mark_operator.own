@@ -20,11 +20,18 @@ type Token struct {
 }
 
 fn thing1() {
-    do_thing(TRUE)?
+    let num i32 = do_thing(FALSE)?
     printf("no1\n")
+}
+
+fn thing2() {
+    let num i32 = do_thing(TRUE)?
+    printf("yes2: %d\n", num)
 }
 
 fn main() i32 {
     thing1()
+    thing2()
+
     return 0
 }
