@@ -284,6 +284,7 @@ bool do_implicit_convertions(
         return do_src_to_print_format_conversions(new_src, src, dest);
     }
 
+    log(LOG_DEBUG, FMT" "FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest), lang_type_print(LANG_TYPE_MODE_LOG, src_type));
     if (dest.type != src_type.type) {
         return false;
     }

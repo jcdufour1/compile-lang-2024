@@ -232,6 +232,8 @@ static void msg_invalid_count_struct_literal_args_internal(
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (check_env.switch_is_orelse) {
+        // TODO: make this note below better
+        // NOTE: if false positive occurs here, yield->lang_type could be incorrect
         msg_internal(
             file, line,
             DIAG_MISSING_RETURN_IN_DEFER, pos,
@@ -3763,6 +3765,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
 
     Tast_expr* new_child = NULL;
     if (yield->do_yield_expr) {
+        __asm__("int3");
         switch (check_general_assignment(&check_env, &new_child, check_env.break_type/* TODO: this will not work in all situations*/, yield->yield_expr, yield->pos)) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -4046,6 +4049,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
+    __asm__("int3");
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;
         return false;
@@ -4057,6 +4061,42 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 }
 
 bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
+    Lang_type fn_rtn_type = {0};
+    if (!try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type)) {
+        return false;
+    }
+
+    if (fn_rtn_type.type != LANG_TYPE_VOID) {
+        msg_todo("question mark operator when the function has a return type of non-void", mark->pos);
+        return false;
+    }
+
+    Scope_id inner_scope = symbol_collection_new(mark->scope_id, util_literal_name_new());
+
+    Uast_stmt_vec if_err_children = {0};
+    vec_append(&a_main, &if_err_children, uast_return_wrap(uast_return_new(
+        mark->pos,
+        uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos))),
+        true
+    )));
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, inner_scope);
+
+    Uast_orelse* orelse = uast_orelse_new(
+        mark->pos,
+        mark->expr_to_unwrap,
+        if_error,
+        mark->scope_id,
+        mark->break_out_of,
+        false,
+        NULL
+    );
+
+    log(LOG_DEBUG, FMT"\n", uast_orelse_print(orelse));
+    if (!try_set_orelse(new_tast, orelse)) {
+        return false;
+    }
+    log(LOG_DEBUG, FMT"\n", tast_expr_print(*new_tast));
+
     todo();
 }
 
@@ -4261,6 +4301,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
          tast_expr_get_lang_type(new_operand_typed)
     );
 
+    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         Uast_case* old_case = vec_at(lang_switch->cases, idx);
         Uast_condition* cond = NULL;
@@ -4570,6 +4611,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 unreachable("");
         }
     }
+    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);
