@@ -2105,6 +2105,7 @@ static PARSE_STATUS parse_literal(Uast_expr** lit, Tk_view* tokens) {
     return PARSE_ERROR;
 }
 
+// TODO: parse_symbol should return PARSE_STATUS for consistancy?
 static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
     Token token = consume(tokens);
     unwrap(token.type == TOKEN_SYMBOL);
@@ -3113,6 +3114,22 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
     Scope_id if_error_scope = symbol_collection_new(outer, util_literal_name_new());
 
+    bool is_err_symbol = false;
+    Uast_symbol* err_symbol = NULL;
+
+    Token dummy = {0};
+    if (try_consume(&dummy, tokens, TOKEN_OPEN_PAR)) {
+        if (tk_view_front(*tokens).type != TOKEN_SYMBOL) {
+            msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+            return PARSE_EXPR_ERROR;
+        }
+        is_err_symbol = true;
+        err_symbol = parse_symbol(tokens, if_error_scope);
+        if (!consume_expect(&dummy, tokens, "after name of error symbol", TOKEN_CLOSE_PAR)) {
+            return PARSE_EXPR_ERROR;
+        }
+    }
+
     Uast_block* if_error = NULL;
     if (PARSE_OK != parse_block(
         &if_error,
@@ -3130,7 +3147,15 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     }
     assert(break_out_of.base.count > 0);
 
-    Uast_orelse* orelse = uast_orelse_new(pos, lhs, if_error, outer, break_out_of);
+    Uast_orelse* orelse = uast_orelse_new(
+        pos,
+        lhs,
+        if_error,
+        outer,
+        break_out_of,
+        is_err_symbol,
+        err_symbol
+    );
 
     Uast_stmt_vec block_children = {0};
     vec_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));

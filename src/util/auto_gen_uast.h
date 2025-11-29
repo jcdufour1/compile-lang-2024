@@ -339,14 +339,16 @@ static Uast_type uast_gen_enum_get_tag(const char* prefix) {
 
 static Uast_type uast_gen_orelse(const char* prefix) {
     const char* base_name = "orelse";
-    Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
+    Uast_type orelse = {.name = uast_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Uast_expr*", "expr_to_unwrap");
-    append_member(&lit.members, "Uast_block*", "if_error");
-    append_member(&lit.members, "Scope_id", "scope_id");
-    append_member(&lit.members, "Name", "break_out_of");
+    append_member(&orelse.members, "Uast_expr*", "expr_to_unwrap");
+    append_member(&orelse.members, "Uast_block*", "if_error");
+    append_member(&orelse.members, "Scope_id", "scope_id");
+    append_member(&orelse.members, "Name", "break_out_of");
+    append_member(&orelse.members, "bool", "is_error_symbol");
+    append_member(&orelse.members, "Uast_symbol*", "error_symbol");
 
-    return lit;
+    return orelse;
 }
 
 static Uast_type uast_gen_fn(const char* prefix) {

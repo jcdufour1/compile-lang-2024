@@ -4,11 +4,7 @@ type libc import = std.libc
 type coll import = std.collections
 
 type Optional def = rt.Optional
-
-type Result enum(<OkT, ErrorT>) {
-    ok OkT
-    error ErrorT
-}
+type Result def = rt.Result
 
 type usize def = rt.usize
 type ptr def = opaque*

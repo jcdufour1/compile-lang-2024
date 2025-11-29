@@ -30,10 +30,19 @@ fn thing3() {
     }
 }
 
+fn thing4() {
+    let num i32 = do_thing(TRUE) orelse(err) {
+        io.print_int(8)
+        yield 8
+        return
+    }
+}
+
 fn main() i32 {
     thing1()
     thing2()
     thing3()
+    thing4()
 
     return 0
 }
