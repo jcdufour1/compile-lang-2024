@@ -4,8 +4,10 @@ type util import = std.util
 
 fn read(file io.File) {
     for 1 {
-        if let .some(line) = io.getline(file) => io.print_str(coll.darr_slice(line), "")
-        else => return
+        let line = io.getline(file)?
+        defer coll.darr_free(&line)
+
+        io.print_str(coll.darr_slice(line), "")
     }
 }
 

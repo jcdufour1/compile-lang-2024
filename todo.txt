@@ -114,6 +114,8 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- better error message for (this error message could be made better by banning using most assignments as expressions?):
+    if let str = getline() => break
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

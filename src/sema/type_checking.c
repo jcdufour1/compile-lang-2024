@@ -1721,49 +1721,44 @@ bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign) {
 }
 
 bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_vec args, Tast_enum_case* enum_case) {
-    switch (enum_case->tag->lang_type.type) {
-        case LANG_TYPE_VOID:
-            unreachable("this error should have already been caught");
-        default: {
-            Uast_symbol* sym = uast_symbol_unwrap(vec_at(args, 0));
-            // tast_enum_case->tag->lang_type is of selected varient of enum (maybe)
-            Uast_variable_def* new_def = uast_variable_def_new(
-                enum_case->pos,
-                lang_type_to_ulang_type(enum_case->tag->lang_type),
-                name_new(
-                    sym->name.mod_path,
-                    sym->name.base,
-                    (Ulang_type_vec) {0} /* TODO */,
-                    sym->name.scope_id
-                , (Attrs) {0})
-            );
-            if (!usymbol_add(uast_variable_def_wrap(new_def))) {
-                // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
-                try_set_msg_redefinition_of_symbol(uast_variable_def_wrap(new_def));
-                return false;
-            }
-
-            Lang_type def_lang_type = {0};
-            if (!try_lang_type_from_ulang_type(&def_lang_type, new_def->lang_type)) {
-                return false;
-            }
-            Uast_assignment* new_assign = uast_assignment_new(
-                new_def->pos,
-                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
-                uast_enum_access_wrap(uast_enum_access_new(
-                    new_def->pos,
-                    enum_case->tag,
-                    def_lang_type,
-                    uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
-                ))
-            );
-
-            vec_append(&a_main, &check_env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
-
-            *new_case = enum_case;
-            return true;
-        }
+    Uast_symbol* sym = uast_symbol_unwrap(vec_at(args, 0));
+    Uast_variable_def* new_def = uast_variable_def_new(
+        enum_case->pos,
+        lang_type_to_ulang_type(enum_case->tag->lang_type),
+        name_new(
+            sym->name.mod_path,
+            sym->name.base,
+            (Ulang_type_vec) {0} /* TODO */,
+            sym->name.scope_id
+        , (Attrs) {0})
+    );
+    if (!usymbol_add(uast_variable_def_wrap(new_def))) {
+        // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
+        try_set_msg_redefinition_of_symbol(uast_variable_def_wrap(new_def));
+        return false;
     }
+
+    Lang_type def_lang_type = {0};
+    if (!try_lang_type_from_ulang_type(&def_lang_type, new_def->lang_type)) {
+        return false;
+    }
+
+    if (enum_case->tag->lang_type.type != LANG_TYPE_VOID) {
+        Uast_assignment* new_assign = uast_assignment_new(
+            new_def->pos,
+            uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
+            uast_enum_access_wrap(uast_enum_access_new(
+                new_def->pos,
+                enum_case->tag,
+                def_lang_type,
+                uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
+            ))
+        );
+        vec_append(&a_main, &check_env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
+    }
+
+    *new_case = enum_case;
+    return true;
 }
 
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, Ulang_type_fn lang_type, Pos pos) {
@@ -2039,10 +2034,6 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
         case TAST_ENUM_CASE: {
             // TAST_ENUM_CASE is for switch cases
             // TODO: can these checks be shared with TAST_ENUM_CALLEE?
-            if (tast_enum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
-                return FUN_MIDDLE_ERROR;
-            }
             if (fun_call->args.info.count < 1) {
                 msg(
                     DIAG_MISSING_ENUM_ARG, tast_enum_case_unwrap(new_callee)->pos,

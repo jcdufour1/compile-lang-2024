@@ -8,7 +8,7 @@ fn is_whitespace(ch u8) u1 {
     return ch != '-' && 0 != c.isspace(unsafe_cast<i32>ch)
 }
 
-fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
+fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) util.Optional(<void>) {
     if nums_len < min_nums_count {
         for idx u64 in 0..amt_consumed => io.print_str(" ", "")
         io.print_str("^");
@@ -17,10 +17,10 @@ fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) u1 {
         io.print_str(" numbers to be on the stack, but ", "");
         io.print_int(nums_len, "");
         io.print_str(" were found");
-        return 0;
+        return .none;
     }
 
-    return 1;
+    return .some;
 }
 
 fn calculate(line Str) {
@@ -42,42 +42,42 @@ fn calculate(line Str) {
         if let .some(ch) = coll.slice_try_get(&line, is_whitespace) => continue
 
         if let .some(ch) = coll.slice_consume(&line, '+') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = coll.darr_pop(&nums) + coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '-') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = coll.darr_pop(&nums) - coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '/') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = coll.darr_pop(&nums)/coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '*') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = coll.darr_pop(&nums)*coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '%') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = coll.darr_pop(&nums)%coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
         if let .some(ch) = coll.slice_consume(&line, '^') => {
-            if !check_stack(amt_consumed, nums.count, 2) => return
+            check_stack(amt_consumed, nums.count, 2)?
             let result = math.pow(coll.darr_pop(&nums), coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
             continue
@@ -95,7 +95,7 @@ fn calculate(line Str) {
         }
 
         if coll.slice_starts_with(line, "sqrt") {
-            if !check_stack(amt_consumed, nums.count, 1) => return
+            check_stack(amt_consumed, nums.count, 1)?
             line = coll.slice_range(line, 4, line.count - 4)
             let result = math.sqrt(coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
@@ -103,7 +103,7 @@ fn calculate(line Str) {
         }
 
         if coll.slice_starts_with(line, "log") {
-            if !check_stack(amt_consumed, nums.count, 1) => return
+            check_stack(amt_consumed, nums.count, 1)?
             line = coll.slice_range(line, 3, line.count - 3)
             let result = math.log(coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
@@ -111,7 +111,7 @@ fn calculate(line Str) {
         }
 
         if coll.slice_starts_with(line, "abs") {
-            if !check_stack(amt_consumed, nums.count, 1) => return
+            check_stack(amt_consumed, nums.count, 1)?
             line = coll.slice_range(line, 3, line.count - 3)
             coll.darr_append(&nums, math.abs(coll.darr_pop(&nums)))
             continue
