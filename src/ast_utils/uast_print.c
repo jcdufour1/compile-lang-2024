@@ -587,6 +587,16 @@ Strv uast_fn_print_internal(const Uast_fn* fn, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv uast_question_mark_print_internal(const Uast_question_mark* mark, Indent indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "question_mark\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mark->expr_to_unwrap, indent));
+
+    return string_to_strv(buf);
+}
+
 Strv uast_expr_removed_print_internal(const Uast_expr_removed* removed, Indent indent) {
     (void) removed;
     String buf = {0};
@@ -787,6 +797,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, Indent indent) {
             return uast_orelse_print_internal(uast_orelse_const_unwrap(expr), indent);
         case UAST_FN:
             return uast_fn_print_internal(uast_fn_const_unwrap(expr), indent);
+        case UAST_QUESTION_MARK:
+            return uast_question_mark_print_internal(uast_question_mark_const_unwrap(expr), indent);
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_print_internal(uast_expr_removed_const_unwrap(expr), indent);
     }

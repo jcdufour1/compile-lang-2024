@@ -1,0 +1,61 @@
+type rt import = std.runtime
+
+extern("c") fn printf(format_string u8*, args opaque...) i32
+
+fn do_thing(should_succeed u1) rt.Optional(<i32>) {
+    if should_succeed => return .some(9)
+    return .none
+}
+
+fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i32>) {
+    if should_succeed => return .ok(9)
+    return .error(27)
+}
+
+type FALSE def = 0
+type TRUE def = 1
+
+type Token struct {
+    string u8*
+}
+
+fn thing1() {
+    let num i32 = do_thing(FALSE)?
+    printf("no1\n")
+}
+
+fn thing2() {
+    let num i32 = do_thing(TRUE)?
+    printf("yes2: %d\n", num)
+}
+
+fn thing3() {
+    let num = do_thing(FALSE)?
+    printf("no3\n")
+}
+
+fn thing4() {
+    do_thing(FALSE)?
+    printf("no4\n")
+}
+
+fn thing5() {
+    let num = do_thing(TRUE)?
+    printf("yes5: %d\n", num)
+}
+
+fn thing6() {
+    do_thing(TRUE)?
+    printf("yes6\n")
+}
+
+fn main() i32 {
+    thing1()
+    thing2()
+    thing3()
+    thing4()
+    thing5()
+    thing6()
+
+    return 0
+}

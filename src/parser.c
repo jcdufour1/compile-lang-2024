@@ -659,6 +659,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_ORELSE:
             return false;
+        case TOKEN_QUESTION_MARK:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -819,6 +821,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_ORELSE:
             return false;
+        case TOKEN_QUESTION_MARK:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -978,6 +982,8 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
         case TOKEN_USING:
             return false;
         case TOKEN_ORELSE:
+            return true;
+        case TOKEN_QUESTION_MARK:
             return true;
         case TOKEN_COUNT:
             unreachable("");
@@ -3168,6 +3174,31 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
     return PARSE_EXPR_OK;
 }
 
+static PARSE_EXPR_STATUS parse_question_mark_finish(
+    Uast_block** result,
+    Uast_expr* lhs,
+    Pos pos,
+    Scope_id parent
+) {
+    Scope_id outer = symbol_collection_new(parent, util_literal_name_new());
+
+    Name break_out_of = {0};
+    if (PARSE_OK != label_thing(&break_out_of, outer)) {
+        return PARSE_EXPR_ERROR;
+    }
+
+    Uast_question_mark* mark = uast_question_mark_new(pos, lhs, outer, break_out_of);
+    Uast_stmt_vec block_children = {0};
+    vec_append(&a_main, &block_children, uast_expr_wrap(uast_question_mark_wrap(mark)));
+    *result = uast_block_new(
+        mark->pos,
+        block_children,
+        mark->pos,
+        outer
+    );
+    return PARSE_EXPR_OK;
+}
+
 static PARSE_EXPR_STATUS parse_right_unary(
     Uast_expr** result,
     Tk_view* tokens,
@@ -3183,11 +3214,20 @@ static PARSE_EXPR_STATUS parse_right_unary(
     }
 
     Token oper = consume(tokens);
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only right unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only right unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_ORELSE: {
             Uast_block* result_ = NULL;
             status = parse_orelse_finish(&result_, tokens, *result, oper.pos, scope_id);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            *result = uast_block_wrap(result_);
+            return PARSE_EXPR_OK;
+        }
+        case TOKEN_QUESTION_MARK: {
+            Uast_block* result_ = NULL;
+            status = parse_question_mark_finish(&result_, *result, oper.pos, scope_id);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
@@ -3228,7 +3268,7 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     ));
 
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3283,7 +3323,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -3413,7 +3453,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 76, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 77, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

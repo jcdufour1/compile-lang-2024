@@ -48,6 +48,8 @@ Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Sc
 
 Uast_fn* uast_fn_clone(const Uast_fn* fn, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
+Uast_question_mark* uast_question_mark_clone(const Uast_question_mark* mark, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
+
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
 #endif // UAST_CLONE_H

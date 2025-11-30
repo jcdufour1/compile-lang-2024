@@ -210,15 +210,9 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
         lang_type_struct_const_wrap(lang_type_struct_new(pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
 
-    log(LOG_DEBUG, FMT"\n", tast_struct_literal_print(new_inner_lit));
-    //todo();
-
     Ulang_type gen_arg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.gen_args, 0);
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest));
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
     Lang_type unary_lang_type = lang_type_new_print_format_arg(gen_arg);
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
-
 
     Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
         pos,
@@ -271,8 +265,6 @@ bool do_implicit_convertions(
     bool src_is_zero,
     bool implicit_pointer_depth
 ) {
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, dest));
-
     Lang_type src_type = tast_expr_get_lang_type(*new_src);
     *new_src = src;
     if (should_convert_src_to_cstr(dest, new_src)) {

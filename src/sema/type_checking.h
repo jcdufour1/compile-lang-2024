@@ -12,6 +12,7 @@ typedef enum {
     PARENT_OF_RETURN,
     PARENT_OF_BREAK,
     PARENT_OF_IF,
+    PARENT_OF_ORELSE,
 } PARENT_OF;
 
 typedef enum {
@@ -156,6 +157,8 @@ bool try_set_module_alias_types(Tast_block** new_tast, Uast_mod_alias* tast);
 bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch);
 
 bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse);
+
+bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark);
 
 bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else);
 

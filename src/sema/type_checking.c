@@ -46,6 +46,8 @@ static Strv parent_of_print_internal(PARENT_OF parent_of) {
             return sv("PARENT_OF_BREAK");
         case PARENT_OF_IF:
             return sv("PARENT_OF_IF");
+        case PARENT_OF_ORELSE:
+            return sv("PARENT_OF_ORELSE");
     }
     unreachable("");
 }
@@ -232,6 +234,8 @@ static void msg_invalid_count_struct_literal_args_internal(
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (check_env.switch_is_orelse) {
+        // TODO: make this note below better
+        // NOTE: if false positive occurs here, yield->lang_type could be incorrect
         msg_internal(
             file, line,
             DIAG_MISSING_RETURN_IN_DEFER, pos,
@@ -967,11 +971,12 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
         }
     }
 
-    // TODO: remove below line
+    Lang_type old_lhs_lang_type = check_env.lhs_lang_type;
     check_env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
         return false;
     }
+    check_env.lhs_lang_type = old_lhs_lang_type;
 
     return try_set_binary_types_finish(
         new_tast,
@@ -1561,6 +1566,14 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
         case UAST_ORELSE: {
             Tast_expr* new_expr = NULL;
             if (!try_set_orelse(&new_expr, uast_orelse_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = new_expr;
+            return true;
+        }
+        case UAST_QUESTION_MARK: {
+            Tast_expr* new_expr = NULL;
+            if (!try_set_question_mark(&new_expr, uast_question_mark_unwrap(uast))) {
                 return false;
             }
             *new_tast = new_expr;
@@ -2425,6 +2438,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_ORELSE:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
+        case UAST_QUESTION_MARK:
+            msg_todo("this type of function callee", fun_call->pos);
+            return false;
         case UAST_FN:
             msg_todo("invalid function callee", fun_call->pos);
             return false;
@@ -3180,6 +3196,10 @@ bool try_set_member_access_types_finish_enum_def(
     (void) new_callee;
 
     switch (check_env.parent_of) {
+        case PARENT_OF_ORELSE:
+            msg_todo("", access->pos);
+            msg_todo("", uast_enum_def_get_pos(enum_def));
+            return false;
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             Uast_expr* new_expr_ = NULL;
@@ -3916,13 +3936,28 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     ORELSE_TYPE orelse_type = {0};
     Strv some_sv = {0};
+    Lang_type yield_type = {0};
     static_assert(ORELSE_COUNT == 2, "exhausive handling of orelse result states");
     if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Optional"))) {
         orelse_type = ORELSE_OPTIONAL;
         some_sv = sv("some");
+        
+        if (!try_lang_type_from_ulang_type(
+            &yield_type,
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+        )) {
+            return false;
+        }
     } else if (try_set_orelse_lang_type_is(to_unwrap_type, sv("Result"))) {
         orelse_type = ORELSE_RESULT;
         some_sv = sv("ok");
+
+        if (!try_lang_type_from_ulang_type(
+            &yield_type,
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+        )) {
+            return false;
+        }
     } else {
         msg_todo(
             "`orelse` when the type of the left hand side of `orelse` is not an optional or result type",
@@ -4035,14 +4070,54 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
+
+    check_env.break_type = yield_type;
+    PARENT_OF old_parent_of = check_env.parent_of;
+    check_env.parent_of = PARENT_OF_ORELSE;
+
     if (!try_set_switch_types(&new_block, lang_switch)) {
         check_env.switch_is_orelse = old_switch_is_orelse;
+        check_env.parent_of = old_parent_of;
         return false;
     }
     check_env.switch_is_orelse = old_switch_is_orelse;
+    check_env.parent_of = old_parent_of;
 
     *new_tast = tast_block_wrap(new_block);
     return true;
+}
+
+bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
+    Lang_type fn_rtn_type = {0};
+    if (!try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type)) {
+        return false;
+    }
+
+    if (fn_rtn_type.type != LANG_TYPE_VOID) {
+        msg_todo("question mark operator when the function has a return type of non-void", mark->pos);
+        return false;
+    }
+
+    Scope_id error_scope = symbol_collection_new(mark->scope_id, util_literal_name_new());
+
+    Uast_stmt_vec if_err_children = {0};
+    vec_append(&a_main, &if_err_children, uast_return_wrap(uast_return_new(
+        mark->pos,
+        uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos))),
+        true
+    )));
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope);
+
+    Uast_orelse* orelse = uast_orelse_new(
+        mark->pos,
+        mark->expr_to_unwrap,
+        if_error,
+        mark->scope_id,
+        mark->break_out_of,
+        false,
+        NULL
+    );
+    return try_set_orelse(new_tast, orelse);
 }
 
 // TODO: remove this function?
@@ -4228,7 +4303,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     size_t old_switch_prev_idx = check_env.switch_prev_idx;
     check_env.break_in_case = false;
     if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
+        // TODO: check_env.break_type should eventually be set to its previous value
         check_env.break_type = check_env.lhs_lang_type;
+    } else if (check_env.parent_of == PARENT_OF_ORELSE) {
     } else {
         check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
