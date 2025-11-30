@@ -4093,6 +4093,8 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         return false;
     }
 
+    bool is_error_symbol = false;
+    Uast_symbol* error_symbol = NULL;
     Uast_expr* fun_rtn_expr = NULL;
     if (fn_rtn_type.type == LANG_TYPE_VOID) {
         fun_rtn_expr = uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos)));
@@ -4104,8 +4106,26 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             )),
             uast_unknown_wrap(uast_unknown_new(mark->pos))
         ));
+    } else if (try_set_orelse_lang_type_is(fn_rtn_type, sv("Result"))) {
+        Name sym_name = util_literal_name_new();
+        is_error_symbol = true;
+        error_symbol = uast_symbol_new(mark->pos, sym_name);
+        Uast_expr_vec fun_rtn_args = {0};
+        vec_append(&a_main, &fun_rtn_args, uast_symbol_wrap(uast_symbol_new(mark->pos, sym_name)));
+        fun_rtn_expr = uast_function_call_wrap(uast_function_call_new(
+            mark->pos,
+            fun_rtn_args,
+            uast_member_access_wrap(uast_member_access_new(
+                mark->pos,
+                uast_symbol_new(mark->pos, name_new(
+                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                )),
+                uast_unknown_wrap(uast_unknown_new(mark->pos))
+            )),
+            false
+        ));
     } else {
-        msg_todo("question mark operator when the function has a return type of non-void", mark->pos);
+        msg_todo("`?` operator when the function has return type other than void, optional, or result", mark->pos);
         return false;
     }
 
@@ -4125,8 +4145,8 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         if_error,
         mark->scope_id,
         mark->break_out_of,
-        false,
-        NULL
+        is_error_symbol,
+        error_symbol
     );
     return try_set_orelse(new_tast, orelse);
 }
