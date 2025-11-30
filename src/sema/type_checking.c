@@ -1743,7 +1743,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
         return false;
     }
 
-    if (enum_case->lang_type.type != LANG_TYPE_VOID) {
+    if (enum_case->tag->lang_type.type != LANG_TYPE_VOID) {
         Uast_assignment* new_assign = uast_assignment_new(
             new_def->pos,
             uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
