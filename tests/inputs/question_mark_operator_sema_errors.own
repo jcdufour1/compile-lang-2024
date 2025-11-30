@@ -25,9 +25,15 @@ fn thing2() rt.Result(<i32, u8>) {
     return .ok(8)
 }
 
+fn thing3() rt.Result(<i32, u8>) {
+    do_thing(TRUE)?
+    return .ok(8)
+}
+
 fn main() i32 {
     thing1()
     thing2()
+    thing3()
 
     return 0
 }

@@ -4131,6 +4131,20 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             return false;
         }
         Lang_type src_to_unwrap_type = tast_expr_get_lang_type(src_to_unwrap);
+        if (!try_set_orelse_lang_type_is(src_to_unwrap_type, sv("Result"))) {
+            msg(
+                DIAG_RESULT_EXPECTED_ON_QUESTION_MARK_LHS,
+                uast_expr_get_pos(mark->expr_to_unwrap),
+                "expected result type on left hand side of `?`, but got type `"FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, src_to_unwrap_type)
+            );
+            msg(
+                DIAG_NOTE,
+                lang_type_get_pos(fn_rtn_type),
+                "result type is required for the left hand side of `?` because the function return type is a result type\n"
+            );
+            return false;
+        }
 
         Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.gen_args, 1);
         Lang_type src_error_type = {0};
@@ -4165,7 +4179,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             case CHECK_ASSIGN_INVALID: {
                 Lang_type lhs = tast_expr_get_lang_type(new_src);
                 msg(
-                    DIAG_INVALID_STMT_TOP_LEVEL /* TODO */,
+                    DIAG_MISMATCHED_ERROR_T,
                     mark->pos,
                     "ErrorT of `?` left hand side is of type `"FMT"`, "
                     "but ErrorT of the function return type is of type `"FMT"` "
@@ -4934,7 +4948,7 @@ void try_set_types(void) {
         resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN);
     } else {
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
-        // TODO: use warn for warnings instead of msg to reduce mistakes?
+        // TODO: use diag for warnings and error for errors to reduce mistakes?
     }
 after_main:
 
