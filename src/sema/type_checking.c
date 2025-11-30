@@ -4093,8 +4093,111 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         return false;
     }
 
-    if (fn_rtn_type.type != LANG_TYPE_VOID) {
-        msg_todo("question mark operator when the function has a return type of non-void", mark->pos);
+    bool is_error_symbol = false;
+    Uast_symbol* error_symbol = NULL;
+    Uast_expr* fun_rtn_expr = NULL;
+    if (fn_rtn_type.type == LANG_TYPE_VOID) {
+        fun_rtn_expr = uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos)));
+    } else if (try_set_orelse_lang_type_is(fn_rtn_type, sv("Optional"))) {
+        fun_rtn_expr = uast_member_access_wrap(uast_member_access_new(
+            mark->pos,
+            uast_symbol_new(mark->pos, name_new(
+                MOD_PATH_RUNTIME, sv("none"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+            )),
+            uast_unknown_wrap(uast_unknown_new(mark->pos))
+        ));
+    } else if (try_set_orelse_lang_type_is(fn_rtn_type, sv("Result"))) {
+        Name sym_name = util_literal_name_new();
+        is_error_symbol = true;
+        error_symbol = uast_symbol_new(mark->pos, sym_name);
+        Uast_expr_vec fun_rtn_args = {0};
+        vec_append(&a_main, &fun_rtn_args, uast_symbol_wrap(uast_symbol_new(mark->pos, sym_name)));
+        fun_rtn_expr = uast_function_call_wrap(uast_function_call_new(
+            mark->pos,
+            fun_rtn_args,
+            uast_member_access_wrap(uast_member_access_new(
+                mark->pos,
+                uast_symbol_new(mark->pos, name_new(
+                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                )),
+                uast_unknown_wrap(uast_unknown_new(mark->pos))
+            )),
+            false
+        ));
+
+        // TODO: try_set_expr_types will be called again when try_set_orelse is called, which could be wasteful?
+        Tast_expr* src_to_unwrap = NULL;
+        if (!try_set_expr_types(&src_to_unwrap, mark->expr_to_unwrap)) {
+            return false;
+        }
+        Lang_type src_to_unwrap_type = tast_expr_get_lang_type(src_to_unwrap);
+        if (!try_set_orelse_lang_type_is(src_to_unwrap_type, sv("Result"))) {
+            msg(
+                DIAG_RESULT_EXPECTED_ON_QUESTION_MARK_LHS,
+                uast_expr_get_pos(mark->expr_to_unwrap),
+                "expected result type on left hand side of `?`, but got type `"FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, src_to_unwrap_type)
+            );
+            msg(
+                DIAG_NOTE,
+                lang_type_get_pos(fn_rtn_type),
+                "result type is required for the left hand side of `?` because the function return type is a result type\n"
+            );
+            return false;
+        }
+
+        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.gen_args, 1);
+        Lang_type src_error_type = {0};
+        if (!try_lang_type_from_ulang_type(&src_error_type, src_uerror_type)) {
+            return false;
+        }
+        Uast_variable_def* src_err_type_var_def = uast_variable_def_new(
+            mark->pos,
+            src_uerror_type,
+            util_literal_name_new()
+        );
+        unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
+
+        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).atom.str.gen_args, 1);
+        Lang_type dest_error_type = {0};
+        if (!try_lang_type_from_ulang_type(&dest_error_type, dest_uerror_type)) {
+            return false;
+        }
+
+        Tast_expr* new_src = NULL;
+        // TODO: make function that is similar to check_general_assignment, but accepts Ulang_type
+        //   for src instead of Uast_expr (so that less code would be need above)?
+        switch (check_general_assignment(
+            &check_env,
+            &new_src,
+            dest_error_type,
+            uast_symbol_wrap(uast_symbol_new(mark->pos, src_err_type_var_def->name)),
+            mark->pos
+        )) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID: {
+                Lang_type lhs = tast_expr_get_lang_type(new_src);
+                msg(
+                    DIAG_MISMATCHED_ERROR_T,
+                    mark->pos,
+                    "ErrorT of `?` left hand side is of type `"FMT"`, "
+                    "but ErrorT of the function return type is of type `"FMT"` "
+                    "(`"FMT"` cannot be assigned to `"FMT"`)\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs),
+                    lang_type_print(LANG_TYPE_MODE_MSG, dest_error_type),
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs),
+                    lang_type_print(LANG_TYPE_MODE_MSG, dest_error_type)
+                );
+                msg(DIAG_NOTE, lang_type_get_pos(lhs), "ErrorT of left hand side defined here\n");
+                msg(DIAG_NOTE, lang_type_get_pos(dest_error_type), "ErrorT of function return type defined here\n");
+                return false;
+            }
+            case CHECK_ASSIGN_ERROR:
+                return false;
+        }
+    } else {
+        msg_todo("`?` operator when the function has return type other than void, optional, or result", mark->pos);
         return false;
     }
 
@@ -4103,7 +4206,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
     Uast_stmt_vec if_err_children = {0};
     vec_append(&a_main, &if_err_children, uast_return_wrap(uast_return_new(
         mark->pos,
-        uast_literal_wrap(uast_void_wrap(uast_void_new(mark->pos))),
+        fun_rtn_expr,
         true
     )));
     Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope);
@@ -4114,8 +4217,8 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         if_error,
         mark->scope_id,
         mark->break_out_of,
-        false,
-        NULL
+        is_error_symbol,
+        error_symbol
     );
     return try_set_orelse(new_tast, orelse);
 }
@@ -4845,7 +4948,7 @@ void try_set_types(void) {
         resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, POS_BUILTIN);
     } else {
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
-        // TODO: use warn for warnings instead of msg to reduce mistakes?
+        // TODO: use diag for warnings and error for errors to reduce mistakes?
     }
 after_main:
 

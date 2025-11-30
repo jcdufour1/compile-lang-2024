@@ -7,7 +7,7 @@ fn do_thing(should_succeed u1) rt.Optional(<i32>) {
     return .none
 }
 
-fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i32>) {
+fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i64>) {
     if should_succeed => return .ok(9)
     return .error(27)
 }
@@ -49,6 +49,52 @@ fn thing6() {
     printf("yes6\n")
 }
 
+fn thing7() rt.Optional(<i32>) {
+    do_thing(TRUE)?
+    printf("yes7.1\n")
+    return .some(8)
+}
+
+fn thing8() rt.Optional(<i32>) {
+    do_thing(FALSE)?
+    printf("no7.1\n")
+    return .some(8)
+}
+
+fn thing9() rt.Optional(<i32>) {
+    do_thing_with_err_val(FALSE)?
+    printf("no9.1\n")
+    return .some(8)
+}
+
+fn thing10() {
+    do_thing_with_err_val(FALSE)?
+    printf("no10.1\n")
+}
+
+fn thing11() rt.Optional(<i32>) {
+    do_thing_with_err_val(TRUE)?
+    printf("yes11.1\n")
+    return .some(8)
+}
+
+fn thing12() {
+    do_thing_with_err_val(TRUE)?
+    printf("yes12.1\n")
+}
+
+fn thing13() rt.Result(<i32, i64>) {
+    do_thing_with_err_val(TRUE)?
+    printf("yes13.1\n")
+    return .ok(7)
+}
+
+fn thing14() rt.Result(<i32, i64>) {
+    do_thing_with_err_val(FALSE)?
+    printf("no14.1\n")
+    return .ok(7)
+}
+
 fn main() i32 {
     thing1()
     thing2()
@@ -56,6 +102,34 @@ fn main() i32 {
     thing4()
     thing5()
     thing6()
+
+    switch thing7() {
+        case .some: printf("yes7.2\n")
+        case .none: printf("no7.2\n")
+    }
+
+    switch thing8() {
+        case .some: printf("no8.2\n")
+        case .none: printf("yes8.2\n")
+    }
+
+    switch thing9() {
+        case .some: printf("no9.2\n")
+        case .none: printf("yes9.2\n")
+    }
+    thing10()
+
+    switch thing11() {
+        case .some: printf("yes11.2\n")
+        case .none: printf("no11.2\n")
+    }
+    thing12()
+
+    switch thing13() {
+        case .ok: printf("yes13.2\n")
+        case .error: printf("no13.2\n")
+    }
+    thing14()
 
     return 0
 }
