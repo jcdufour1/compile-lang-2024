@@ -27,13 +27,13 @@ fn argv() Str[] {
     return own_argv()
 }
 
-fn fgetc(file File) util.Optional(<u8>) {
+fn fgetc(file File) u8? {
     let ch i32 = libc.fgetc(file.file)
     if ch == libc.EOF => return .none
     return .some(unsafe_cast<u8>ch)
 }
 
-fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
+fn getline(file File, delim u8 = '\n') coll.Darr(<u8>)? {
     let new_str coll.Darr(<u8>) = coll.darr_new(<u8>)()
     for 1 {
         if let .some(ch) = fgetc(file) {
@@ -48,7 +48,7 @@ fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
 }
 
 // TODO: return Result instead of Optional to specify the reason for open_file failing
-fn open_file(file_path Str, options Str) util.Optional(<File>) {
+fn open_file(file_path Str, options Str) File? {
     let cstr_path u8* = util.str_to_cstr(file_path)
     defer util.cstr_free(cstr_path)
     let cstr_opts u8* = util.str_to_cstr(options)
@@ -59,7 +59,7 @@ fn open_file(file_path Str, options Str) util.Optional(<File>) {
     return .some({ptr})
 }
 
-fn close_file(file File) util.Optional(<void>) {
+fn close_file(file File) void? {
     util.assert(file.file != util.null(<opaque>)(), "TODO")
     
     if 0 == libc.fclose(file.file) => return .none

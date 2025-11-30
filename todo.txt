@@ -116,6 +116,7 @@ for generics:
     fn do_nothing(pretend_fn fn()) {
 - better error message for (this error message could be made better by banning using most assignments as expressions?):
     if let str = getline() => break
+- test case for using "i32?" as generic arg
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

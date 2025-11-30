@@ -22,7 +22,7 @@ fn slice_at(<ItemT>)(slice ItemT[], index usize, file Str = #file, line i32 = #l
 
 type slice_at_ref def = rt.slice_at_ref 
 
-fn slice_consume(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
+fn slice_consume(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
     if slice.count < 1 => return .none
     if slice[0] != to_consume => return .none
 
@@ -30,7 +30,7 @@ fn slice_consume(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file, li
     return .some(slice[0])
 }
 
-fn slice_try_get(<ItemT>)(slice ItemT[]*, should_get fn (ItemT) u1, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<ItemT>) {
+fn slice_try_get(<ItemT>)(slice ItemT[]*, should_get fn (ItemT) u1, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
     if slice.count < 1 => return .none
     if !should_get(slice[0]) => return .none
 
@@ -65,7 +65,7 @@ fn arr_new(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str = #f
     return arr
 }
 
-fn arr_slice(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count util.Optional(<usize>) = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
+fn arr_slice(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     let actual_count usize = arr.count - start
     if let .some(num) = count {
         actual_count = num
@@ -144,7 +144,7 @@ fn darr_new(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #line
     return darr
 }
 
-fn darr_slice(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count util.Optional(<usize>) = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
+fn darr_slice(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     let actual_count usize = darr.count - start
     if let .some(num) = count {
         actual_count = num
@@ -268,7 +268,7 @@ fn str_to_int(<NumT>)(str Str, file Str = #file, line i32 = #line, column i32 = 
 }
 
 // TODO: check for overflow
-fn str_consume_int(<NumT>)(str Str*, file Str = #file, line i32 = #line, column i32 = #column) util.Optional(<NumT>) {
+fn str_consume_int(<NumT>)(str Str*, file Str = #file, line i32 = #line, column i32 = #column) NumT? {
     let should_neg u1 = 0
     if slice_at(*str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1

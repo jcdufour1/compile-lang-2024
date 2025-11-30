@@ -135,14 +135,35 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
     return EXPR_TO_ULANG_TYPE_NORMAL;
 }
 
+static EXPR_TO_ULANG_TYPE uast_block_to_ulang_type_internal(Ulang_type* result, const Uast_block* block) {
+    if (block->children.info.count != 1) {
+        msg_todo("interpreting this expression as a type", block->pos);
+        return false;
+    }
+
+    Uast_stmt* mark_ = vec_at(block->children, 0);
+    if (mark_->type != UAST_EXPR || uast_expr_unwrap(mark_)->type != UAST_QUESTION_MARK) {
+        msg_todo("interpreting this expression as a type", block->pos);
+        return false;
+    }
+    Uast_question_mark* mark = uast_question_mark_unwrap(uast_expr_unwrap(mark_));
+
+    Ulang_type inner_type = {0};
+    if (!uast_expr_to_ulang_type(&inner_type, mark->expr_to_unwrap)) {
+        return EXPR_TO_ULANG_TYPE_ERROR;
+    }
+
+    *result = ulang_type_new_optional(mark->pos, inner_type);
+    return EXPR_TO_ULANG_TYPE_NORMAL;
+}
+
 static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_BLOCK:
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return EXPR_TO_ULANG_TYPE_ERROR;
+            return uast_block_to_ulang_type_internal(result, uast_block_const_unwrap(expr));
         case UAST_SWITCH:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;

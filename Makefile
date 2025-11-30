@@ -4,6 +4,7 @@ CC_COMPILER ?= cc
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
+# TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
 C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion \
 			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \

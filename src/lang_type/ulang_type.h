@@ -258,6 +258,7 @@ static inline Ulang_type_fn ulang_type_fn_new(Ulang_type_tuple params, Ulang_typ
 static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Pos pos){
     return (Ulang_type_regular) { .atom = atom, .pos = pos};
 }
+// TODO: add pointer_depth parameter to ulang_type_array_new?
 static inline Ulang_type_array ulang_type_array_new(Ulang_type* item_type, Uast_expr* count, Pos pos){
     return (Ulang_type_array) { .item_type = item_type, .count = count, .pos = pos};
 }
