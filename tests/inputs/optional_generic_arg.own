@@ -1,0 +1,10 @@
+
+fn thing(<TypeT>)() TypeT {
+    return .none
+}
+
+fn main() i32 {
+    let opt i32? = thing(<i32?>)()
+
+    return 0
+}
