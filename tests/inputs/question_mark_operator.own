@@ -49,6 +49,18 @@ fn thing6() {
     printf("yes6\n")
 }
 
+fn thing7() rt.Optional(<i32>) {
+    do_thing(TRUE)?
+    printf("yes7.1\n")
+    return .some(8)
+}
+
+fn thing8() rt.Optional(<i32>) {
+    do_thing(FALSE)?
+    printf("no7.1\n")
+    return .some(8)
+}
+
 fn main() i32 {
     thing1()
     thing2()
@@ -56,6 +68,16 @@ fn main() i32 {
     thing4()
     thing5()
     thing6()
+
+    switch thing7() {
+        case .some: printf("yes7.2\n")
+        case .none: printf("no7.2\n")
+    }
+
+    switch thing8() {
+        case .some: printf("no8.2\n")
+        case .none: printf("yes8.2\n")
+    }
 
     return 0
 }
