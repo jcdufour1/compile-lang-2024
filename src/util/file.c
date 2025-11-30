@@ -159,14 +159,11 @@ bool make_dir(Strv dir_path) {
     const char* dir_cstr = strv_dup(&a_temp, dir_path);
 
     struct stat dir_status = {0};
+    if (0 == mkdir(dir_cstr, 0755)) {
+        return true;
+    }
+
     if (-1 == stat(dir_cstr, &dir_status)) {
-        if (errno == ENOENT) {
-            if (0 != mkdir(dir_cstr, 0755)) {
-                msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not make directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
-                return false;
-            }
-            return true;
-        }
         msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not stat directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
         return false;
     }
