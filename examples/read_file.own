@@ -5,7 +5,7 @@ type util import = std.util
 fn read(file io.File) {
     for 1 {
         let line = io.getline(file)?
-        defer coll.darr_free(line)
+        defer coll.darr_free(&line)
 
         io.print_str(coll.darr_slice(line), "")
     }
