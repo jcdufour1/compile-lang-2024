@@ -1312,7 +1312,6 @@ static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
     unwrap(var_def);
     if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, old_sym->base.name));
         unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(lang_alloca))) > 0);
     }
 

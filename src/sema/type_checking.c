@@ -3196,6 +3196,10 @@ bool try_set_member_access_types_finish_enum_def(
     (void) new_callee;
 
     switch (check_env.parent_of) {
+        case PARENT_OF_ORELSE:
+            msg_todo("", access->pos);
+            msg_todo("", uast_enum_def_get_pos(enum_def));
+            return false;
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             Uast_expr* new_expr_ = NULL;
@@ -4067,7 +4071,6 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
     Uast_switch* lang_switch = uast_switch_new(orelse->pos, orelse->expr_to_unwrap, cases);
     Tast_block* new_block = NULL;
 
-    Lang_type old_break_type = check_env.break_type;
     check_env.break_type = yield_type;
     PARENT_OF old_parent_of = check_env.parent_of;
     check_env.parent_of = PARENT_OF_ORELSE;
@@ -4114,13 +4117,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         false,
         NULL
     );
-
-    log(LOG_DEBUG, FMT"\n", uast_orelse_print(orelse));
-    if (!try_set_orelse(new_tast, orelse)) {
-        return false;
-    }
-
-    return true;
+    return try_set_orelse(new_tast, orelse);
 }
 
 // TODO: remove this function?
