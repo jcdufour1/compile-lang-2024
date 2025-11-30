@@ -4124,6 +4124,64 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             )),
             false
         ));
+
+        // TODO: try_set_expr_types will be called again when try_set_orelse is called, which could be wasteful?
+        Tast_expr* src_to_unwrap = NULL;
+        if (!try_set_expr_types(&src_to_unwrap, mark->expr_to_unwrap)) {
+            return false;
+        }
+        Lang_type src_to_unwrap_type = tast_expr_get_lang_type(src_to_unwrap);
+
+        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.gen_args, 1);
+        Lang_type src_error_type = {0};
+        if (!try_lang_type_from_ulang_type(&src_error_type, src_uerror_type)) {
+            return false;
+        }
+        Uast_variable_def* src_err_type_var_def = uast_variable_def_new(
+            mark->pos,
+            src_uerror_type,
+            util_literal_name_new()
+        );
+        unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
+
+        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).atom.str.gen_args, 1);
+        Lang_type dest_error_type = {0};
+        if (!try_lang_type_from_ulang_type(&dest_error_type, dest_uerror_type)) {
+            return false;
+        }
+
+        Tast_expr* new_src = NULL;
+        // TODO: make function that is similar to check_general_assignment, but accepts Ulang_type
+        //   for src instead of Uast_expr (so that less code would be need above)?
+        switch (check_general_assignment(
+            &check_env,
+            &new_src,
+            dest_error_type,
+            uast_symbol_wrap(uast_symbol_new(mark->pos, src_err_type_var_def->name)),
+            mark->pos
+        )) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID: {
+                Lang_type lhs = tast_expr_get_lang_type(new_src);
+                msg(
+                    DIAG_INVALID_STMT_TOP_LEVEL /* TODO */,
+                    mark->pos,
+                    "ErrorT of `?` left hand side is of type `"FMT"`, "
+                    "but ErrorT of the function return type is of type `"FMT"` "
+                    "(`"FMT"` cannot be assigned to `"FMT"`)\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs),
+                    lang_type_print(LANG_TYPE_MODE_MSG, dest_error_type),
+                    lang_type_print(LANG_TYPE_MODE_MSG, lhs),
+                    lang_type_print(LANG_TYPE_MODE_MSG, dest_error_type)
+                );
+                msg(DIAG_NOTE, lang_type_get_pos(lhs), "ErrorT of left hand side defined here\n");
+                msg(DIAG_NOTE, lang_type_get_pos(dest_error_type), "ErrorT of function return type defined here\n");
+                return false;
+            }
+            case CHECK_ASSIGN_ERROR:
+                return false;
+        }
     } else {
         msg_todo("`?` operator when the function has return type other than void, optional, or result", mark->pos);
         return false;
