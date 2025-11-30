@@ -33,7 +33,7 @@ fn fgetc(file File) util.Optional(<u8>) {
     return .some(unsafe_cast<u8>ch)
 }
 
-fn getline(file File, delim u8 = '\n') util.Optional(<coll.Darr(<u8>)>) {
+fn getline(file File, delim u8 = '\n') coll.Darr(<u8>)? {
     let new_str coll.Darr(<u8>) = coll.darr_new(<u8>)()
     for 1 {
         if let .some(ch) = fgetc(file) {

@@ -1089,10 +1089,15 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
 
     Token open_sq_tk = {0};
-    if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK) {
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK || tk_view_front(*tokens).type == TOKEN_QUESTION_MARK) {
         while (1) {
             if (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
                 ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+                continue;
+            }
+
+            if (try_consume(&open_sq_tk, tokens, TOKEN_QUESTION_MARK)) {
+                *lang_type = ulang_type_new_optional(open_sq_tk.pos, *lang_type);
                 continue;
             }
 
