@@ -7,7 +7,7 @@ fn do_thing(should_succeed u1) rt.Optional(<i32>) {
     return .none
 }
 
-fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i32 /* TODO: change to i64 so that tests will fail if wrong arg of Result enum is used */>) {
+fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i64>) {
     if should_succeed => return .ok(9)
     return .error(27)
 }
@@ -83,13 +83,13 @@ fn thing12() {
     printf("yes12.1\n")
 }
 
-fn thing13() rt.Result(<i32, i32>) {
+fn thing13() rt.Result(<i32, i64>) {
     do_thing_with_err_val(TRUE)?
     printf("yes13.1\n")
     return .ok(7)
 }
 
-fn thing14() rt.Result(<i32, i32>) {
+fn thing14() rt.Result(<i32, i64>) {
     do_thing_with_err_val(FALSE)?
     printf("no14.1\n")
     return .ok(7)

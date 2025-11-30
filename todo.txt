@@ -157,6 +157,8 @@ continue(<thing>)
 - write documentation
 - documentation should note that using can emulate inheritance in structs (I also need expected
     success test case for that)
+- expected failure case for function Result type being diffent from lhs of question mark 
+- expected failure case for function return type being Result, but `?` lhs being non-result type
 
 
 
