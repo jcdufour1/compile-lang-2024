@@ -61,6 +61,28 @@ fn thing8() rt.Optional(<i32>) {
     return .some(8)
 }
 
+fn thing9() rt.Optional(<i32>) {
+    do_thing_with_err_val(FALSE)?
+    printf("no9.1\n")
+    return .some(8)
+}
+
+fn thing10() {
+    do_thing_with_err_val(FALSE)?
+    printf("no10.1\n")
+}
+
+fn thing11() rt.Optional(<i32>) {
+    do_thing_with_err_val(TRUE)?
+    printf("yes11.1\n")
+    return .some(8)
+}
+
+fn thing12() {
+    do_thing_with_err_val(TRUE)?
+    printf("yes12.1\n")
+}
+
 fn main() i32 {
     thing1()
     thing2()
@@ -78,6 +100,18 @@ fn main() i32 {
         case .some: printf("no8.2\n")
         case .none: printf("yes8.2\n")
     }
+
+    switch thing9() {
+        case .some: printf("no9.2\n")
+        case .none: printf("yes9.2\n")
+    }
+    thing10()
+
+    switch thing11() {
+        case .some: printf("yes11.2\n")
+        case .none: printf("no11.2\n")
+    }
+    thing12()
 
     return 0
 }

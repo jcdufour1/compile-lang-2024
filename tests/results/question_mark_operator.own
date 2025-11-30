@@ -1,10 +1,14 @@
-compile::stdout 6
+compile::stdout 10
 yes2: 9
 yes5: 9
 yes6
 yes7.1
 yes7.2
 yes8.2
+yes9.2
+yes11.1
+yes11.2
+yes12.1
 
 compile::stderr 0
 
