@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/question_mark_operator_sema_errors.own:19:16:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
+    18 | fn thing1() {
+    19 |     let num u8 = do_thing(TRUE)?
+       |                ^
+    20 |     printf("num = %d\n", num)
+
+compile::return_code 1
+

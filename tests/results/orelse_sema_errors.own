@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 30
+compile::stderr 35
 tests/inputs/orelse_sema_errors.own:13:34:[1;31merror[0;39m:no return statement in error handling block of orelse
     12 | fn thing1() {
     13 |     let num i32 = do_thing(TRUE) orelse {
@@ -31,6 +31,11 @@ std/util.own:6:23:[1;34mnote[0;39m:in expansion of def
      6 | type Optional def = rt.Optional
        |                       ^
      7 | type Result def = rt.Result
+tests/inputs/orelse_sema_errors.own:42:16:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
+    41 | fn thing5() {
+    42 |     let num u8 = do_thing(TRUE) orelse {
+       |                ^
+    43 |         return
 
 compile::return_code 1
 

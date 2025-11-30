@@ -38,11 +38,18 @@ fn thing4() {
     }
 }
 
+fn thing5() {
+    let num u8 = do_thing(TRUE) orelse {
+        return
+    }
+}
+
 fn main() i32 {
     thing1()
     thing2()
     thing3()
     thing4()
+    thing5()
 
     return 0
 }
