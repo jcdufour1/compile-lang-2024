@@ -8,7 +8,7 @@ fn is_whitespace(ch u8) u1 {
     return ch != '-' && 0 != c.isspace(unsafe_cast<i32>ch)
 }
 
-fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) util.Optional(<void>) {
+fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
     if nums_len < min_nums_count {
         for idx u64 in 0..amt_consumed => io.print_str(" ", "")
         io.print_str("^");
