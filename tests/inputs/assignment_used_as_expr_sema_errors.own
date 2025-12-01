@@ -5,12 +5,9 @@ fn do_thing() i32? {
 }
 
 fn main() i32 {
-    if let num = do_thing() {
+    switch num = do_thing() {
+        case .some(num): break
     }
-
-    //switch num = do_thing() {
-    //    case .some(num): break
-    //}
 
     return 0
 }

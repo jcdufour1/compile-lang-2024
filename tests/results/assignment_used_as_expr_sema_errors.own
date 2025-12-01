@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/assignment_used_as_expr_sema_errors.own:8:16:[1;31merror[0;39m:assignment cannot be used as an expression in this situation
+     7 | fn main() i32 {
+     8 |     switch num = do_thing() {
+       |                ^
+     9 |         case .some(num): break
+
+compile::return_code 1
+

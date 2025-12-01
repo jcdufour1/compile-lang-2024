@@ -108,6 +108,7 @@ typedef enum {
     DIAG_MISMATCHED_ERROR_T,
     DIAG_RESULT_EXPECTED_ON_QUESTION_MARK_LHS,
     DIAG_ASSIGNMENT_USED_AS_EXPRESSION,
+    DIAG_IF_LET_INVALID_SYNTAX,
 
     // count of cases for static asserts
     DIAG_COUNT,

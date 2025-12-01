@@ -4424,8 +4424,6 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     Uast_expr* oper = uast_expr_clone(lang_switch->operand, true, outer_scope_id, lang_switch->pos /* TODO */);
 
     Tast_expr* new_operand_typed = NULL;
-    log(LOG_DEBUG, FMT"\n", uast_switch_print(lang_switch));
-    todo();
     if (!try_set_expr_types(&new_operand_typed, oper, true)) {
         return false;
     }
