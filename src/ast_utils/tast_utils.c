@@ -10,7 +10,7 @@ Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
 
 Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Tast_expr* new_lit = NULL;
-    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos)));
+    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos), true));
     return new_lit;
 }
 
