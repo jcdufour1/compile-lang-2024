@@ -924,8 +924,8 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
 }
 
 // returns false if unsuccessful
-bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
-    if (operator->token_type == BINARY_SINGLE_EQUAL && check_env.expr_is_actually_used_as_expr) {
+bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator, bool is_actually_used_as_expr) {
+    if (operator->token_type == BINARY_SINGLE_EQUAL && is_actually_used_as_expr) {
         msg(
             DIAG_ASSIGNMENT_USED_AS_EXPRESSION,
             operator->pos,
@@ -1141,11 +1141,11 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
 }
 
 // returns false if unsuccessful
-bool try_set_operator_types(Tast_expr** new_tast, Uast_operator* operator) {
+bool try_set_operator_types(Tast_expr** new_tast, Uast_operator* operator, bool is_actually_used_as_expr) {
     if (operator->type == UAST_UNARY) {
         return try_set_unary_types(new_tast, uast_unary_unwrap(operator));
     } else if (operator->type == UAST_BINARY) {
-        return try_set_binary_types(new_tast, uast_binary_unwrap(operator));
+        return try_set_binary_types(new_tast, uast_binary_unwrap(operator), is_actually_used_as_expr);
     } else {
         unreachable("");
     }
@@ -1542,7 +1542,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             goto end;
         }
         case UAST_OPERATOR:
-            if (!try_set_operator_types(new_tast, uast_operator_unwrap(uast))) {
+            if (!try_set_operator_types(new_tast, uast_operator_unwrap(uast), check_env.expr_is_actually_used_as_expr)) {
                 status = false;
                 goto end;
             }
@@ -1767,13 +1767,13 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
 }
 
 // TODO: remove Uast_assignment?
-bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign) {
+bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign, bool is_actually_used_as_expr) {
     return try_set_binary_types(new_expr, uast_binary_new(
         assign->pos,
         assign->lhs,
         assign->rhs,
         BINARY_SINGLE_EQUAL
-    ));
+    ), is_actually_used_as_expr);
 }
 
 bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_vec args, Tast_enum_case* enum_case) {
@@ -3629,7 +3629,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
 
 static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* cond) {
     Tast_expr* new_child_ = NULL;
-    if (!try_set_operator_types(&new_child_, cond->child)) {
+    if (!try_set_operator_types(&new_child_, cond->child, check_env.expr_is_actually_used_as_expr/* TODO */)) {
         return false;
     }
 
@@ -4446,14 +4446,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         lang_switch->operand
     );
     Tast_expr* new_oper_assign = NULL;
-
-    bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
-    check_env.expr_is_actually_used_as_expr = false;
-    if (!try_set_assignment_types(&new_oper_assign, oper_assign)) {
-        check_env.expr_is_actually_used_as_expr = old_expr_is_actually_used_as_expr;
+    if (!try_set_assignment_types(&new_oper_assign, oper_assign, false)) {
         return false;
     }
-    check_env.expr_is_actually_used_as_expr = old_expr_is_actually_used_as_expr;
 
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
@@ -4924,7 +4919,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
         }
         case UAST_ASSIGNMENT: {
             Tast_expr* new_tast_ = NULL;
-            if (!try_set_assignment_types(&new_tast_, uast_assignment_unwrap(stmt))) {
+            assert(check_env.expr_is_actually_used_as_expr == false);
+            if (!try_set_assignment_types(&new_tast_, uast_assignment_unwrap(stmt), false)) {
                 status = STMT_ERROR;
                 goto end;
             }

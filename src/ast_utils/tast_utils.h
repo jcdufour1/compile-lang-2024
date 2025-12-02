@@ -447,7 +447,7 @@ Tast_literal* util_tast_literal_new_from_double(double value, Pos pos);
 
 Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type);
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type, bool is_actually_used_as_expr);
 
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 

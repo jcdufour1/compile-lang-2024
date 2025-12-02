@@ -57,7 +57,7 @@ typedef struct {
     bool expr_is_actually_used_as_expr;
 } Type_checking_env;
 
-bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign);
+bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign, bool is_actually_used_as_expr);
 
 // returns false if unsuccessful
 bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr, bool expr_is_actually_used_as_expr);
@@ -73,7 +73,7 @@ bool try_set_binary_types_finish(
 );
 
 // returns false if unsuccessful
-bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator);
+bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator, bool is_actually_used_as_expr);
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def, bool is_top_level);
 
