@@ -812,20 +812,32 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
 }
 
 static bool expand_def_index(Uast_index* index, bool is_rhs, Uast_expr* rhs) {
-    Uast_expr* callee_rhs = rhs;
-    if (is_rhs) {
-        msg_soft_todo("", uast_expr_get_pos(rhs));
-        msg_soft_todo("", index->pos);
-        is_rhs = false;
-        callee_rhs = NULL;
-    }
     Uast_expr* index_rhs = rhs;
+    Uast_expr* callee_rhs = rhs;
+
     if (is_rhs) {
-        msg_soft_todo("", uast_expr_get_pos(rhs));
-        msg_soft_todo("", index->pos);
-        is_rhs = false;
-        callee_rhs = NULL;
+        if (rhs->type == UAST_OPERATOR && uast_operator_unwrap(rhs)->type == UAST_BINARY) {
+            index_rhs = uast_binary_unwrap(uast_operator_unwrap(rhs))->rhs;
+            callee_rhs = uast_binary_unwrap(uast_operator_unwrap(rhs))->lhs;
+        } else if (rhs->type == UAST_INDEX) {
+            index_rhs = uast_index_unwrap(rhs)->index;
+            callee_rhs = uast_index_unwrap(rhs)->callee;
+        } else if (rhs->type == UAST_LITERAL) {
+            is_rhs = false;
+            rhs = NULL;
+        } else if (rhs->type == UAST_SYMBOL) {
+            is_rhs = false;
+            rhs = NULL;
+        } else {
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(rhs));
+            todo();
+            msg_soft_todo("", uast_expr_get_pos(rhs));
+            msg_soft_todo("", index->pos);
+            is_rhs = false;
+            callee_rhs = NULL;
+        }
     }
+
     bool status = expand_def_expr_not_ulang_type(&index->callee, index->callee, is_rhs, callee_rhs);
     return expand_def_expr_not_ulang_type(&index->index, index->index, is_rhs, index_rhs) && status;
 }
