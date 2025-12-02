@@ -114,9 +114,6 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
-- better error message for (this error message could be made better by banning using most assignments as expressions?):
-    if let str = getline() => break
-- test case for using "i32?" as generic arg
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
@@ -160,6 +157,7 @@ continue(<thing>)
 - write documentation
 - documentation should note that using can emulate inheritance in structs (I also need expected
     success test case for that)
+- use libclang to get extern c definitions automatically
 
 
 
