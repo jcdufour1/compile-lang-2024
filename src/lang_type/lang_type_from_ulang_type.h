@@ -18,8 +18,9 @@ static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
-// TODO: remove Pos parameter
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type);
+
+bool try_lang_type_from_ulang_type_ex(Lang_type* new_lang_type, Ulang_type lang_type, bool is_rhs, Uast_expr* rhs);
 
 // TODO: remove these two forward decls and replace with better system
 bool lang_type_atom_is_signed(Lang_type_atom atom);

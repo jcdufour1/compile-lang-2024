@@ -923,6 +923,21 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
     unreachable("");
 }
 
+static bool check_assignment_infer(Tast_expr** new_lhs, Uast_expr* lhs, Uast_expr* rhs) {
+    Uast_def* lhs_def = NULL;
+    if (lhs->type != UAST_SYMBOL || !usymbol_lookup(&lhs_def, uast_symbol_unwrap(lhs)->name)) {
+        return false;
+    }
+    Lang_type result = NULL;
+    if (!try_lang_type_from_ulang_type_ex()) {
+        return false;
+    }
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(lhs));
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(rhs));
+    log(LOG_DEBUG, FMT"\n", uast_def_print(lhs_def));
+    todo();
+}
+
 // returns false if unsuccessful
 bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator, bool is_actually_used_as_expr) {
     if (operator->token_type == BINARY_SINGLE_EQUAL && is_actually_used_as_expr) {
@@ -941,7 +956,10 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator, bool is_a
     }
 
     Tast_expr* new_lhs;
-    if (!try_set_expr_types(&new_lhs, operator->lhs, true)) {
+    if (
+        !try_set_expr_types(&new_lhs, operator->lhs, true) &&
+        !check_assignment_infer(&new_lhs, operator->lhs, operator->rhs)
+    ) {
         env.supress_type_inference_failures = old_supress_type_infer;
 
         if (env.error_count > old_error_count || operator->token_type != BINARY_SINGLE_EQUAL) {

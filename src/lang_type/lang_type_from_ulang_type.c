@@ -12,11 +12,17 @@ static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, 
     return try_lang_type_from_ulang_type(new_lang_type, inner);
 }
 
-bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
+bool try_lang_type_from_ulang_type_ex(Lang_type* new_lang_type, Ulang_type lang_type, bool is_rhs, Uast_expr* rhs) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
+            if (is_rhs) {
+                todo();
+            }
             return try_lang_type_from_ulang_type_regular(new_lang_type, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE: {
+            if (is_rhs) {
+                todo();
+            }
             Lang_type_tuple new_tuple = {0};
             if (!try_lang_type_from_ulang_type_tuple(&new_tuple, ulang_type_tuple_const_unwrap(lang_type))) {
                 return false;
@@ -25,6 +31,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_FN: {
+            if (is_rhs) {
+                todo();
+            }
             Lang_type_fn new_fn = {0};
             if (!try_lang_type_from_ulang_type_fn(&new_fn, ulang_type_fn_const_unwrap(lang_type))) {
                 return false;
@@ -33,6 +42,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return true;
         }
         case ULANG_TYPE_REMOVED:
+            if (is_rhs) {
+                todo();
+            }
             msg(
                 DIAG_TYPE_COULD_NOT_BE_INFERED,
                 ulang_type_get_pos(lang_type),
@@ -40,10 +52,19 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             );
             return false;
         case ULANG_TYPE_ARRAY:
+            if (is_rhs) {
+                todo();
+            }
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
         case ULANG_TYPE_EXPR:
+            if (is_rhs) {
+                todo();
+            }
             return try_lang_type_from_ulang_type_expr(new_lang_type, ulang_type_expr_const_unwrap(lang_type));
         case ULANG_TYPE_INT: {
+            if (is_rhs) {
+                todo();
+            }
             Ulang_type_int lang_int = ulang_type_int_const_unwrap(lang_type);
             *new_lang_type = lang_type_int_const_wrap(lang_type_int_new(
                 lang_int.pos,
@@ -54,6 +75,10 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
         }
     }
     unreachable("");
+}
+
+bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
+    return try_lang_type_from_ulang_type_ex(new_lang_type, lang_type, false, NULL);
 }
 
 // TODO: move this function
