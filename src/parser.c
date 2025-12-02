@@ -661,6 +661,9 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_QUESTION_MARK:
             return true;
+        case TOKEN_UNDERSCORE:
+            // TODO
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -822,6 +825,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_ORELSE:
             return false;
         case TOKEN_QUESTION_MARK:
+            return false;
+        case TOKEN_UNDERSCORE:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -985,6 +990,8 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_QUESTION_MARK:
             return true;
+        case TOKEN_UNDERSCORE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -3228,7 +3235,7 @@ static PARSE_EXPR_STATUS parse_right_unary(
     }
 
     Token oper = consume(tokens);
-    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only right unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only right unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_ORELSE: {
             Uast_block* result_ = NULL;
@@ -3282,7 +3289,7 @@ static PARSE_EXPR_STATUS parse_unary(
         oper.pos
     ));
 
-    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3337,7 +3344,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -3467,7 +3474,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 77, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 78, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -3564,6 +3571,10 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 }
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
+    if (tk_view_front(*tokens).type == TOKEN_UNDERSCORE) {
+        *result = uast_underscore_wrap(uast_underscore_new());
+    }
+
     if (tk_view_front(*tokens).type == TOKEN_FN) {
         Ulang_type lang_type = {0};
         if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
@@ -3588,7 +3599,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     if (try_consume(&equal_tk, tokens, TOKEN_ASSIGN_BY_BIN)) {
         is_assign_bin = true;
         oper = consume(tokens);
-        unwrap(token_is_binary(oper.type) && "this is likely a bug in the tokenizer");
+        assert(token_is_binary(oper.type) && "this is likely a bug in the tokenizer");
     } else if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         *result = lhs;
         unwrap(*result);
