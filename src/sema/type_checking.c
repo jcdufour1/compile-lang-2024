@@ -4446,9 +4446,14 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         lang_switch->operand
     );
     Tast_expr* new_oper_assign = NULL;
+
+    bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
+    check_env.expr_is_actually_used_as_expr = false;
     if (!try_set_assignment_types(&new_oper_assign, oper_assign)) {
+        check_env.expr_is_actually_used_as_expr = old_expr_is_actually_used_as_expr;
         return false;
     }
+    check_env.expr_is_actually_used_as_expr = old_expr_is_actually_used_as_expr;
 
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
