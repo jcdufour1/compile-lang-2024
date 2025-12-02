@@ -259,21 +259,29 @@ static bool expand_def_ulang_type_array(
 static bool expand_def_ulang_type_fn(
     Ulang_type_fn* new_lang_type,
     Ulang_type_fn lang_type,
-    Pos dest_pos
+    Pos dest_pos,
+    bool is_rhs,
+    Uast_expr* rhs
 ) {
     bool status = true;
 
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
-        todo();
-        //if (!expand_def_ulang_type(vec_at_ref(&lang_type.params.ulang_types, idx), dest_pos)) {
-        //    status = false;
-        //}
+        Uast_expr* gen_rhs = rhs;
+        if (is_rhs) {
+            todo();
+        }
+        if (!expand_def_ulang_type(vec_at_ref(&lang_type.params.ulang_types, idx), dest_pos, is_rhs, gen_rhs)) {
+            status = false;
+        }
     }
 
-    todo();
-    //if (!expand_def_ulang_type(lang_type.return_type, dest_pos)) {
-    //    status = false;
-    //}
+    Uast_expr* rtn_rhs = rhs;
+    if (is_rhs) {
+        todo();
+    }
+    if (!expand_def_ulang_type(lang_type.return_type, dest_pos, is_rhs, rtn_rhs)) {
+        status = false;
+    }
 
     *new_lang_type = lang_type;
     return status;
@@ -299,18 +307,19 @@ static bool expand_def_ulang_type_tuple(
 
 static bool expand_def_ulang_type_expr(
     Ulang_type* new_lang_type,
-    Ulang_type_expr lang_type
+    Ulang_type_expr lang_type,
+    bool is_rhs,
+    Uast_expr* rhs
 ) {
-    todo();
-    //switch (expand_def_expr(new_lang_type, &lang_type.expr, lang_type.expr)) {
-    //    case EXPAND_EXPR_ERROR:
-    //        return false;
-    //    case EXPAND_EXPR_NEW_EXPR:
-    //        *new_lang_type = ulang_type_expr_const_wrap(lang_type);
-    //        return true;
-    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
-    //        return true;
-    //}
+    switch (expand_def_expr(new_lang_type, &lang_type.expr, lang_type.expr, is_rhs, rhs)) {
+        case EXPAND_EXPR_ERROR:
+            return false;
+        case EXPAND_EXPR_NEW_EXPR:
+            *new_lang_type = ulang_type_expr_const_wrap(lang_type);
+            return true;
+        case EXPAND_EXPR_NEW_ULANG_TYPE:
+            return true;
+    }
     unreachable("");
 }
 
@@ -341,7 +350,7 @@ static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos, bool is_r
         }
         case ULANG_TYPE_FN: {
             Ulang_type_fn new_lang_type = {0};
-            if (!expand_def_ulang_type_fn(&new_lang_type, ulang_type_fn_const_unwrap(*lang_type), dest_pos)) {
+            if (!expand_def_ulang_type_fn(&new_lang_type, ulang_type_fn_const_unwrap(*lang_type), dest_pos, is_rhs, rhs)) {
                 return false;
             }
             *lang_type = ulang_type_fn_const_wrap(new_lang_type);
@@ -359,7 +368,7 @@ static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos, bool is_r
             return true;
         case ULANG_TYPE_EXPR: {
             Ulang_type new_lang_type = {0};
-            if (!expand_def_ulang_type_expr(&new_lang_type, ulang_type_expr_const_unwrap(*lang_type))) {
+            if (!expand_def_ulang_type_expr(&new_lang_type, ulang_type_expr_const_unwrap(*lang_type), is_rhs, rhs)) {
                 return false;
             }
             *lang_type = new_lang_type;
@@ -415,8 +424,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     for (size_t idx = 0; idx < new_name->gen_args.info.count; idx++) {
         Ulang_type* curr = vec_at_ref(&new_name->gen_args, idx);
         Pos curr_pos = ulang_type_get_pos(*curr);
-        todo();
-        //gen_arg_status = expand_def_ulang_type(curr, curr_pos) && gen_arg_status;
+        gen_arg_status = expand_def_ulang_type(curr, curr_pos, false/*TODO*/, NULL) && gen_arg_status;
     }
     if (!gen_arg_status) {
         return EXPAND_NAME_ERROR;
@@ -710,8 +718,8 @@ static bool expand_def_orelse(Uast_orelse* orelse) {
     unreachable("");
 }
 
-static bool expand_def_fn(Uast_fn* fn) {
-    return expand_def_ulang_type_fn(&fn->ulang_type, fn->ulang_type, fn->pos);
+static bool expand_def_fn(Uast_fn* fn, bool is_rhs, Uast_expr* rhs) {
+    return expand_def_ulang_type_fn(&fn->ulang_type, fn->ulang_type, fn->pos, is_rhs, rhs);
 }
 
 static bool expand_def_binary(Uast_binary* bin) {
@@ -720,10 +728,9 @@ static bool expand_def_binary(Uast_binary* bin) {
     return status;
 }
 
-static bool expand_def_unary(Uast_unary* unary) {
+static bool expand_def_unary(Uast_unary* unary, bool is_rhs, Uast_expr* rhs) {
     bool status = expand_def_expr_not_ulang_type(&unary->child, unary->child, false, NULL);
-    todo();
-    //status = expand_def_ulang_type(&unary->lang_type, unary->pos /* TODO */) && status;
+    status = expand_def_ulang_type(&unary->lang_type, unary->pos /* TODO */, is_rhs, rhs) && status;
     return status;
 }
 
@@ -737,62 +744,90 @@ static bool expand_def_if(Uast_if* lang_if) {
     return status;
 }
 
-static EXPAND_EXPR_STATUS expand_def_member_access(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_member_access* access) {
-    todo();
-    //if (!expand_def_expr_not_ulang_type(&access->callee, access->callee)) {
-    //    return EXPAND_EXPR_ERROR;
-    //}
+static EXPAND_EXPR_STATUS expand_def_member_access(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_member_access* access,
+    bool is_rhs,
+    Uast_expr* rhs
+) {
+    if (!expand_def_expr_not_ulang_type(&access->callee, access->callee, is_rhs, rhs)) {
+        return EXPAND_EXPR_ERROR;
+    }
 
-    //Uast_def* callee_def = NULL;
-    //switch (access->callee->type) {
-    //    case UAST_SYMBOL: {
-    //        Uast_symbol* sym = uast_symbol_unwrap(access->callee);
-    //        Ulang_type_vec old_gen_args = sym->name.gen_args;
-    //        memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
-    //        if (!usymbol_lookup(&callee_def, sym->name)) {
-    //            sym->name.gen_args = old_gen_args;
-    //            *new_expr = uast_member_access_wrap(access);
-    //            return EXPAND_EXPR_NEW_EXPR;
-    //        }
-    //        sym->name.gen_args = old_gen_args;
-    //        break;
-    //    }
-    //    default:
-    //        *new_expr = uast_member_access_wrap(access);
-    //        return EXPAND_EXPR_NEW_EXPR;
-    //}
+    Uast_def* callee_def = NULL;
+    switch (access->callee->type) {
+        case UAST_SYMBOL: {
+            Uast_symbol* sym = uast_symbol_unwrap(access->callee);
+            Ulang_type_vec old_gen_args = sym->name.gen_args;
+            memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
+            if (!usymbol_lookup(&callee_def, sym->name)) {
+                sym->name.gen_args = old_gen_args;
+                *new_expr = uast_member_access_wrap(access);
+                return EXPAND_EXPR_NEW_EXPR;
+            }
+            sym->name.gen_args = old_gen_args;
+            break;
+        }
+        default:
+            *new_expr = uast_member_access_wrap(access);
+            return EXPAND_EXPR_NEW_EXPR;
+    }
 
-    //Uast_symbol* sym = uast_symbol_unwrap(access->callee);
-    //if (callee_def->type == UAST_MOD_ALIAS) {
-    //    Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_TOP_LEVEL);
-    //    Name name = {0};
-    //    if (!name_from_uname(&name, uname, access->pos)) {
-    //        msg_todo("error message for this situation", access->pos);
-    //        return EXPAND_EXPR_ERROR;
-    //    }
-    //    EXPAND_NAME_STATUS status = expand_def_symbol(new_lang_type, new_expr, uast_symbol_new(access->pos, name));
-    //    switch (status) {
-    //        case EXPAND_NAME_NORMAL:
-    //            *new_expr = uast_member_access_wrap(access);
-    //            return EXPAND_EXPR_NEW_EXPR;
-    //        case EXPAND_NAME_NEW_EXPR:
-    //            return EXPAND_EXPR_NEW_EXPR;
-    //        case EXPAND_NAME_NEW_ULANG_TYPE:
-    //            return EXPAND_EXPR_NEW_ULANG_TYPE;
-    //        case EXPAND_NAME_ERROR:
-    //            return EXPAND_EXPR_ERROR;
-    //    }
-    //    unreachable("");
-    //}
+    Uast_symbol* sym = uast_symbol_unwrap(access->callee);
+    if (callee_def->type == UAST_MOD_ALIAS) {
+        Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_TOP_LEVEL);
+        Name name = {0};
+        if (!name_from_uname(&name, uname, access->pos)) {
+            msg_todo("error message for this situation", access->pos);
+            return EXPAND_EXPR_ERROR;
+        }
+        Uast_expr* new_rhs = rhs;
+        if (is_rhs) {
+            todo();
+        }
+        EXPAND_NAME_STATUS status = expand_def_symbol(
+            new_lang_type,
+            new_expr,
+            uast_symbol_new(access->pos, name),
+            is_rhs,
+            new_rhs
+        );
+        switch (status) {
+            case EXPAND_NAME_NORMAL:
+                *new_expr = uast_member_access_wrap(access);
+                return EXPAND_EXPR_NEW_EXPR;
+            case EXPAND_NAME_NEW_EXPR:
+                return EXPAND_EXPR_NEW_EXPR;
+            case EXPAND_NAME_NEW_ULANG_TYPE:
+                return EXPAND_EXPR_NEW_ULANG_TYPE;
+            case EXPAND_NAME_ERROR:
+                return EXPAND_EXPR_ERROR;
+        }
+        unreachable("");
+    }
 
-    //*new_expr = uast_member_access_wrap(access);
-    //return EXPAND_EXPR_NEW_EXPR;
+    *new_expr = uast_member_access_wrap(access);
+    return EXPAND_EXPR_NEW_EXPR;
 }
 
-static bool expand_def_index(Uast_index* index) {
-    todo();
-    //bool status = expand_def_expr_not_ulang_type(&index->callee, index->callee);
-    //return expand_def_expr_not_ulang_type(&index->index, index->index) && status;
+static bool expand_def_index(Uast_index* index, bool is_rhs, Uast_expr* rhs) {
+    Uast_expr* callee_rhs = rhs;
+    if (is_rhs) {
+        msg_soft_todo("", uast_expr_get_pos(rhs));
+        msg_soft_todo("", index->pos);
+        is_rhs = false;
+        callee_rhs = NULL;
+    }
+    Uast_expr* index_rhs = rhs;
+    if (is_rhs) {
+        msg_soft_todo("", uast_expr_get_pos(rhs));
+        msg_soft_todo("", index->pos);
+        is_rhs = false;
+        callee_rhs = NULL;
+    }
+    bool status = expand_def_expr_not_ulang_type(&index->callee, index->callee, is_rhs, callee_rhs);
+    return expand_def_expr_not_ulang_type(&index->index, index->index, is_rhs, index_rhs) && status;
 }
 
 bool expand_def_operator(Uast_operator* oper) {
@@ -800,7 +835,7 @@ bool expand_def_operator(Uast_operator* oper) {
         case UAST_BINARY:
             return expand_def_binary(uast_binary_unwrap(oper));
         case UAST_UNARY:
-            return expand_def_unary(uast_unary_unwrap(oper));
+            return expand_def_unary(uast_unary_unwrap(oper), false/*TODO*/, NULL);
     }
     unreachable("");
 }
@@ -962,10 +997,16 @@ static EXPAND_EXPR_STATUS expand_def_expr(
             unreachable("");
         }
         case UAST_MEMBER_ACCESS:
-            return expand_def_member_access(new_lang_type, new_expr, uast_member_access_unwrap(expr));
+            return expand_def_member_access(
+                new_lang_type,
+                new_expr,
+                uast_member_access_unwrap(expr),
+                is_rhs,
+                rhs
+            );
         case UAST_INDEX:
             *new_expr = expr;
-            return a(expand_def_index(uast_index_unwrap(expr)));
+            return a(expand_def_index(uast_index_unwrap(expr), is_rhs, rhs));
         case UAST_LITERAL:
             *new_expr = expr;
             return a(expand_def_literal(uast_literal_unwrap(expr)));
@@ -1001,7 +1042,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(
             return a(expand_def_question_mark(uast_question_mark_unwrap(expr)));;
         case UAST_FN:
             *new_expr = expr;
-            return a(expand_def_fn(uast_fn_unwrap(expr)));
+            return a(expand_def_fn(uast_fn_unwrap(expr), is_rhs, rhs));
     }
     unreachable("");
 

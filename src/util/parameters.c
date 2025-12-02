@@ -256,8 +256,8 @@ typedef struct {
     const char* str;
     DIAG_TYPE type;
     LOG_LEVEL default_level;
-    bool must_be_error;
-    bool is_type_infer_error;
+    bool must_be_error; // TODO: remove?
+    bool is_type_infer_error; // TODO: remove?
 } Expect_fail_pair;
 
 typedef struct {
@@ -265,7 +265,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 107, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 108, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
@@ -313,6 +313,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"non-exhaustive-switch", DIAG_NON_EXHAUSTIVE_SWITCH, LOG_ERROR, true, false},
     {"enum-lit-invalid-arg", DIAG_ENUM_LIT_INVALID_ARG, LOG_ERROR, true, false},
     {"not-yet-implemented", DIAG_NOT_YET_IMPLEMENTED, LOG_ERROR, true, false},
+    {"soft-not-yet-implemented", DIAG_SOFT_NOT_YET_IMPLEMENTED, LOG_WARNING, true, false},
     {"duplicate-default", DIAG_DUPLICATE_DEFAULT, LOG_ERROR, true, false},
     {"duplicate-case", DIAG_DUPLICATE_CASE, LOG_ERROR, true, false},
     {"invalid-count-generic-args", DIAG_INVALID_COUNT_GENERIC_ARGS, LOG_ERROR, true, false},
