@@ -38,7 +38,13 @@ static bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
 static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr);
 
-static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr);
+static EXPAND_EXPR_STATUS expand_def_expr(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_expr* expr,
+    bool is_rhs,
+    Uast_expr* rhs
+);
 
 static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 
@@ -208,17 +214,18 @@ static bool expand_def_ulang_type_array(
         return false;
     }
 
-    Ulang_type dummy = {0};
-    switch (expand_def_expr(&dummy, &lang_type.count, lang_type.count)) {
-        case EXPAND_EXPR_NEW_EXPR:
-            *new_lang_type = lang_type;
-            return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg_got_type_but_expected_expr(uast_expr_get_pos(lang_type.count));
-            return false;
-        case EXPAND_EXPR_ERROR:
-            return false;
-    }
+    todo();
+    //Ulang_type dummy = {0};
+    //switch (expand_def_expr(&dummy, &lang_type.count, lang_type.count)) {
+    //    case EXPAND_EXPR_NEW_EXPR:
+    //        *new_lang_type = lang_type;
+    //        return true;
+    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
+    //        msg_got_type_but_expected_expr(uast_expr_get_pos(lang_type.count));
+    //        return false;
+    //    case EXPAND_EXPR_ERROR:
+    //        return false;
+    //}
     unreachable("");
 }
 
@@ -264,15 +271,16 @@ static bool expand_def_ulang_type_expr(
     Ulang_type* new_lang_type,
     Ulang_type_expr lang_type
 ) {
-    switch (expand_def_expr(new_lang_type, &lang_type.expr, lang_type.expr)) {
-        case EXPAND_EXPR_ERROR:
-            return false;
-        case EXPAND_EXPR_NEW_EXPR:
-            *new_lang_type = ulang_type_expr_const_wrap(lang_type);
-            return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
-            return true;
-    }
+    todo();
+    //switch (expand_def_expr(new_lang_type, &lang_type.expr, lang_type.expr)) {
+    //    case EXPAND_EXPR_ERROR:
+    //        return false;
+    //    case EXPAND_EXPR_NEW_EXPR:
+    //        *new_lang_type = ulang_type_expr_const_wrap(lang_type);
+    //        return true;
+    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
+    //        return true;
+    //}
     unreachable("");
 }
 
@@ -657,16 +665,17 @@ static bool expand_def_orelse(Uast_orelse* orelse) {
         return false;
     }
 
-    Ulang_type dummy = {0};
-    switch (expand_def_expr(&dummy, &orelse->expr_to_unwrap, orelse->expr_to_unwrap)) {
-        case EXPAND_EXPR_ERROR:
-            return false;
-        case EXPAND_EXPR_NEW_EXPR:
-            return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg_got_type_but_expected_expr(uast_expr_get_pos(orelse->expr_to_unwrap));
-            return false;
-    }
+    todo();
+    //Ulang_type dummy = {0};
+    //switch (expand_def_expr(&dummy, &orelse->expr_to_unwrap, orelse->expr_to_unwrap)) {
+    //    case EXPAND_EXPR_ERROR:
+    //        return false;
+    //    case EXPAND_EXPR_NEW_EXPR:
+    //        return true;
+    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
+    //        msg_got_type_but_expected_expr(uast_expr_get_pos(orelse->expr_to_unwrap));
+    //        return false;
+    //}
     unreachable("");
 }
 
@@ -762,7 +771,12 @@ bool expand_def_operator(Uast_operator* oper) {
     unreachable("");
 }
 
-bool expand_def_underscore(Uast_underscore* underscore) {
+bool expand_def_underscore(Uast_underscore* underscore, bool is_rhs, Uast_expr* rhs) {
+    (void) rhs;
+    if (!is_rhs) {
+        msg_todo("error message", underscore->pos);
+        return false;
+    }
     todo();
 }
 
@@ -771,16 +785,17 @@ static bool expand_def_array_literal(Uast_array_literal* lit) {
 }
 
 static bool expand_def_question_mark(Uast_question_mark* mark) {
-    Ulang_type dummy = {0};
-    switch (expand_def_expr(&dummy, &mark->expr_to_unwrap, mark->expr_to_unwrap)) {
-        case EXPAND_EXPR_ERROR:
-            return false;
-        case EXPAND_EXPR_NEW_EXPR:
-            return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg_got_type_but_expected_expr(mark->pos);
-            return false;
-    }
+    todo();
+    //Ulang_type dummy = {0};
+    //switch (expand_def_expr(&dummy, &mark->expr_to_unwrap, mark->expr_to_unwrap)) {
+    //    case EXPAND_EXPR_ERROR:
+    //        return false;
+    //    case EXPAND_EXPR_NEW_EXPR:
+    //        return true;
+    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
+    //        msg_got_type_but_expected_expr(mark->pos);
+    //        return false;
+    //}
     unreachable("");
 }
 
@@ -840,20 +855,27 @@ static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr
 }
 
 static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr) {
+    todo();
     Ulang_type dummy = {0};
-    switch (expand_def_expr(&dummy, new_expr, expr)) {
-        case EXPAND_EXPR_ERROR:
-            return false;
-        case EXPAND_EXPR_NEW_EXPR:
-            return true;
-        case EXPAND_EXPR_NEW_ULANG_TYPE:
-            msg(DIAG_EXPECTED_EXPR_BUT_GOT_TYPE, uast_expr_get_pos(expr), "expected expression, but got type\n");
-            return false;
-    }
+    //switch (expand_def_expr(&dummy, new_expr, expr)) {
+    //    case EXPAND_EXPR_ERROR:
+    //        return false;
+    //    case EXPAND_EXPR_NEW_EXPR:
+    //        return true;
+    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
+    //        msg(DIAG_EXPECTED_EXPR_BUT_GOT_TYPE, uast_expr_get_pos(expr), "expected expression, but got type\n");
+    //        return false;
+    //}
     unreachable("");
 }
 
-static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_expr* expr) {
+static EXPAND_EXPR_STATUS expand_def_expr(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_expr* expr,
+    bool is_rhs,
+    Uast_expr* rhs
+) {
 #   define a(expr) ((expr) ? EXPAND_EXPR_NEW_EXPR : EXPAND_EXPR_ERROR)
 
     switch (expr->type) {
@@ -874,7 +896,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr**
             return a(expand_def_operator(uast_operator_unwrap(expr)));
         case UAST_UNDERSCORE:
             *new_expr = expr;
-            return a(expand_def_underscore(uast_underscore_unwrap(expr)));
+            return a(expand_def_underscore(uast_underscore_unwrap(expr), is_rhs, rhs));
         case UAST_SYMBOL: {
             switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:
