@@ -170,5 +170,9 @@ bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name);
 
 bool name_to_ir_name_add(Name_to_ir_name_table_node node);
 
+bool expand_again_add(Arena* arena, Uast_def* item);
+    
+bool expand_again_lookup(Uast_def** result, Name name);
+
 #endif // SYMBOL_TABLE_H
 

@@ -50,7 +50,13 @@ static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
 
 static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
 
-static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym);
+static EXPAND_NAME_STATUS expand_def_symbol(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_symbol* sym,
+    bool is_rhs,
+    Uast_expr* rhs
+);
 
 static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos, bool is_rhs, Uast_expr* rhs);
 
@@ -78,6 +84,8 @@ static EXPAND_NAME_STATUS expand_def_name(
     Name* name,
     Pos dest_pos
 );
+
+static bool must_expand_again = false;
 
 static bool expand_def_ulang_type_regular(
     Ulang_type* new_lang_type,
@@ -214,7 +222,10 @@ static bool expand_def_ulang_type_array(
 ) {
     Uast_expr* item_type_rhs = rhs;
     if (is_rhs) {
-        todo();
+        item_type_rhs = rhs/*TODO*/;
+        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *lang_type.item_type));
+        log(LOG_DEBUG, FMT"\n", uast_expr_print(rhs));
+        //todo();
     }
     if (!expand_def_ulang_type(lang_type.item_type, dest_pos, is_rhs, item_type_rhs)) {
         return false;
@@ -222,7 +233,13 @@ static bool expand_def_ulang_type_array(
 
     Uast_expr* count_rhs = rhs;
     if (is_rhs) {
-        todo();
+        if (rhs->type != UAST_ARRAY_LITERAL) {
+            msg_todo("", dest_pos);
+            return false;
+        }
+        Uast_array_literal* rhs_arr = uast_array_literal_unwrap(rhs);
+        Uast_int* new_count = uast_int_new(rhs_arr->pos, (int64_t)rhs_arr->members.info.count);
+        count_rhs = uast_literal_wrap(uast_int_wrap(new_count));
     }
     
     Ulang_type dummy = {0};
@@ -788,12 +805,19 @@ bool expand_def_operator(Uast_operator* oper) {
     unreachable("");
 }
 
-bool expand_def_underscore(Uast_underscore* underscore, bool is_rhs, Uast_expr* rhs) {
-    (void) rhs;
-    if (!is_rhs) {
+bool expand_def_underscore(Uast_expr** new_expr, Uast_underscore* underscore, bool is_rhs, Uast_expr* rhs) {
+    if (is_rhs) {
+        if (rhs->type != UAST_LITERAL || uast_literal_unwrap(rhs)->type != UAST_INT) {
+            msg_todo("non-int type here", uast_expr_get_pos(rhs));
+            return false;
+        }
+        *new_expr = rhs;
         return true;
     }
-    todo();
+
+    *new_expr = uast_underscore_wrap(underscore);
+    must_expand_again = true;
+    return true;
 }
 
 static bool expand_def_array_literal(Uast_array_literal* lit) {
@@ -866,7 +890,19 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-static EXPAND_NAME_STATUS expand_def_symbol(Ulang_type* new_lang_type, Uast_expr** new_expr, Uast_symbol* sym) {
+static EXPAND_NAME_STATUS expand_def_symbol(
+    Ulang_type* new_lang_type,
+    Uast_expr** new_expr,
+    Uast_symbol* sym,
+    bool is_rhs,
+    Uast_expr* rhs
+) {
+    Uast_def* def = NULL;
+    if (expand_again_lookup(&def, sym->name)) {
+        if (!expand_def_def(def, is_rhs, rhs)) {
+            return false;
+        }
+    }
     return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 }
 
@@ -910,10 +946,9 @@ static EXPAND_EXPR_STATUS expand_def_expr(
             *new_expr = expr;
             return a(expand_def_operator(uast_operator_unwrap(expr)));
         case UAST_UNDERSCORE:
-            *new_expr = expr;
-            return a(expand_def_underscore(uast_underscore_unwrap(expr), is_rhs, rhs));
+            return a(expand_def_underscore(new_expr, uast_underscore_unwrap(expr), is_rhs, rhs));
         case UAST_SYMBOL: {
-            switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr))) {
+            switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr), is_rhs, rhs)) {
                 case EXPAND_NAME_NORMAL:
                     *new_expr = expr;
                     return EXPAND_EXPR_NEW_EXPR;
@@ -1155,39 +1190,63 @@ static bool expand_def_import_path(Uast_import_path* path) {
 }
 
 static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
+    bool status = true;
+    bool old_must_expand_again = must_expand_again;
+
     switch (def->type) {
         case UAST_MOD_ALIAS:
-            return expand_def_mod_alias(uast_mod_alias_unwrap(def));
+            status = expand_def_mod_alias(uast_mod_alias_unwrap(def));
+            break;
         case UAST_IMPORT_PATH:
-            return expand_def_import_path(uast_import_path_unwrap(def));
+            status = expand_def_import_path(uast_import_path_unwrap(def));
+            break;
         case UAST_POISON_DEF:
-            return false;
+            status = false;
+            break;
         case UAST_GENERIC_PARAM:
-            return expand_def_generic_param(uast_generic_param_unwrap(def));
+            status = expand_def_generic_param(uast_generic_param_unwrap(def));
+            break;
         case UAST_FUNCTION_DEF:
-            return expand_def_function_def(uast_function_def_unwrap(def));
+            status = expand_def_function_def(uast_function_def_unwrap(def));
+            break;
         case UAST_VARIABLE_DEF:
-            return expand_def_variable_def(uast_variable_def_unwrap(def), is_rhs, rhs);
+            status = expand_def_variable_def(uast_variable_def_unwrap(def), is_rhs, rhs);
+            break;
         case UAST_STRUCT_DEF:
-            return expand_def_struct_def(uast_struct_def_unwrap(def));
+            status = expand_def_struct_def(uast_struct_def_unwrap(def));
+            break;
         case UAST_RAW_UNION_DEF:
-            return expand_def_raw_union_def(uast_raw_union_def_unwrap(def));
+            status = expand_def_raw_union_def(uast_raw_union_def_unwrap(def));
+            break;
         case UAST_ENUM_DEF:
-            return expand_def_enum_def(uast_enum_def_unwrap(def));
+            status = expand_def_enum_def(uast_enum_def_unwrap(def));
+            break;
         case UAST_PRIMITIVE_DEF:
-            return true;
+            status = true;
+            break;
         case UAST_FUNCTION_DECL:
-            return expand_def_function_decl(uast_function_decl_unwrap(def));
+            status = expand_def_function_decl(uast_function_decl_unwrap(def));
+            break;
         case UAST_LANG_DEF:
-            return expand_def_lang_def(uast_lang_def_unwrap(def));
+            status = expand_def_lang_def(uast_lang_def_unwrap(def));
+            break;
         case UAST_VOID_DEF:
-            return true;
+            status = true;
+            break;
         case UAST_LABEL:
-            return true;
+            status = true;
+            break;
         case UAST_BUILTIN_DEF:
-            return true;
+            status = true;
+            break;
     }
-    unreachable("");
+
+    if (must_expand_again) {
+        expand_again_add(&a_pass, def);
+    }
+    must_expand_again = old_must_expand_again;
+
+    return status;
 }
 
 static bool expand_def_switch(Uast_switch* lang_switch) {
