@@ -762,6 +762,10 @@ bool expand_def_operator(Uast_operator* oper) {
     unreachable("");
 }
 
+bool expand_def_underscore(Uast_underscore* underscore) {
+    todo();
+}
+
 static bool expand_def_array_literal(Uast_array_literal* lit) {
     return expand_def_expr_vec(&lit->members);
 }
@@ -870,7 +874,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr**
             return a(expand_def_operator(uast_operator_unwrap(expr)));
         case UAST_UNDERSCORE:
             *new_expr = expr;
-            return a(true);
+            return a(expand_def_underscore(uast_underscore_unwrap(expr)));
         case UAST_SYMBOL: {
             switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:
