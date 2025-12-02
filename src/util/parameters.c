@@ -265,7 +265,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 105, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 107, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
     {"note", DIAG_NOTE, LOG_NOTE, false, false},
@@ -372,6 +372,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"orelse-err-symbol-on-optional", DIAG_ORELSE_ERR_SYMBOL_ON_OPTIONAL, LOG_ERROR, true, false},
     {"mismatched-error-t", DIAG_MISMATCHED_ERROR_T, LOG_ERROR, true, false},
     {"result-expected-on-question-mark-lhs", DIAG_RESULT_EXPECTED_ON_QUESTION_MARK_LHS, LOG_ERROR, true, false},
+    {"assignment-used-as-expression", DIAG_ASSIGNMENT_USED_AS_EXPRESSION, LOG_ERROR, true, false},
+    {"if-let-invalid_syntax", DIAG_IF_LET_INVALID_SYNTAX, LOG_ERROR, true, false},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

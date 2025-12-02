@@ -10,15 +10,15 @@ Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
 
 Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Tast_expr* new_lit = NULL;
-    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos)));
+    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos), true));
     return new_lit;
 }
 
-Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type, bool is_actually_used_as_expr) {
     Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
-    unwrap(try_set_binary_types(&new_tast, binary));
+    unwrap(try_set_binary_types(&new_tast, binary, is_actually_used_as_expr));
 
     return tast_operator_unwrap(new_tast);
 }

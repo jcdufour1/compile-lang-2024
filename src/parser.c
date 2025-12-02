@@ -2441,6 +2441,15 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
 
     Uast_case_vec cases = {0};
 
+    if (is_true_cond->type != UAST_MEMBER_ACCESS && is_true_cond->type != UAST_FUNCTION_CALL) {
+        msg(
+            DIAG_IF_LET_INVALID_SYNTAX,
+            uast_expr_get_pos(is_true_cond),
+            "expected enum case (e.g. `.some(num)`) here\n"
+        );
+        return PARSE_ERROR;
+    }
+
     Uast_case* if_true_case = uast_case_new(
         if_token.pos,
         false,
