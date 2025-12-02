@@ -171,7 +171,7 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
     }
     
     if (lang_type.count->type == UAST_UNDERSCORE) {
-        if (!env.silent_generic_resol_errors && !env.supress_type_inference_failures) {
+        if (!env.silent_generic_resol_errors) {
             msg(
                 DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY/*TODO*/,
                 uast_expr_get_pos(lang_type.count),
