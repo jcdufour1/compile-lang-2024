@@ -190,6 +190,8 @@ static bool expand_def_ulang_type_regular(
             fallthrough;
         case UAST_QUESTION_MARK:
             fallthrough;
+        case UAST_UNDERSCORE:
+            fallthrough;
         case UAST_EXPR_REMOVED:
             msg_todo("", uast_expr_get_pos(new_expr));
             return false;
@@ -570,6 +572,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_QUESTION_MARK:
             fallthrough;
+        case UAST_UNDERSCORE:
+            fallthrough;
         case UAST_ENUM_GET_TAG: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
@@ -864,6 +868,9 @@ static EXPAND_EXPR_STATUS expand_def_expr(Ulang_type* new_lang_type, Uast_expr**
         case UAST_OPERATOR:
             *new_expr = expr;
             return a(expand_def_operator(uast_operator_unwrap(expr)));
+        case UAST_UNDERSCORE:
+            *new_expr = expr;
+            return a(true);
         case UAST_SYMBOL: {
             switch (expand_def_symbol(new_lang_type, new_expr, uast_symbol_unwrap(expr))) {
                 case EXPAND_NAME_NORMAL:

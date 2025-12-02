@@ -597,6 +597,15 @@ Strv uast_question_mark_print_internal(const Uast_question_mark* mark, Indent in
     return string_to_strv(buf);
 }
 
+Strv uast_underscore_print_internal(const Uast_underscore* underscore, Indent indent) {
+    (void) underscore;
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "underscore\n", indent);
+
+    return string_to_strv(buf);
+}
+
 Strv uast_expr_removed_print_internal(const Uast_expr_removed* removed, Indent indent) {
     (void) removed;
     String buf = {0};
@@ -799,6 +808,8 @@ Strv uast_expr_print_internal(const Uast_expr* expr, Indent indent) {
             return uast_fn_print_internal(uast_fn_const_unwrap(expr), indent);
         case UAST_QUESTION_MARK:
             return uast_question_mark_print_internal(uast_question_mark_const_unwrap(expr), indent);
+        case UAST_UNDERSCORE:
+            return uast_underscore_print_internal(uast_underscore_const_unwrap(expr), indent);
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_print_internal(uast_expr_removed_const_unwrap(expr), indent);
     }

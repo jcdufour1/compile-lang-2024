@@ -243,6 +243,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_fn_wrap(uast_fn_clone(uast_fn_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_QUESTION_MARK:
             return uast_question_mark_wrap(uast_question_mark_clone(uast_question_mark_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_UNDERSCORE:
+            todo();
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_wrap(uast_expr_removed_clone(uast_expr_removed_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
     }

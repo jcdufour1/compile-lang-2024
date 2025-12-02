@@ -362,6 +362,13 @@ static Uast_type uast_gen_question_mark(const char* prefix) {
     return mark;
 }
 
+static Uast_type uast_gen_underscore(const char* prefix) {
+    const char* base_name = "underscore";
+    Uast_type underscore = {.name = uast_name_new(prefix, base_name, false)};
+
+    return underscore;
+}
+
 static Uast_type uast_gen_fn(const char* prefix) {
     const char* base_name = "fn";
     Uast_type fn = {.name = uast_name_new(prefix, base_name, false)};
@@ -410,6 +417,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_orelse(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_fn(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_question_mark(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_underscore(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;

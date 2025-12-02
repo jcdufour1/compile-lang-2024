@@ -256,6 +256,9 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
         case UAST_QUESTION_MARK:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
+        case UAST_UNDERSCORE:
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_EXPR_REMOVED:
             *pointer_depth = 0;
             return EXPR_TO_ULANG_TYPE_PTR_DEPTH;

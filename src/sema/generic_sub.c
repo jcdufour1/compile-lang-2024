@@ -453,6 +453,8 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
         case UAST_FN:
             todo();
             return;
+        case UAST_UNDERSCORE:
+            todo();
         case UAST_EXPR_REMOVED:
             *new_expr = expr;
             return;

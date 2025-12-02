@@ -3571,8 +3571,10 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 }
 
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
-    if (tk_view_front(*tokens).type == TOKEN_UNDERSCORE) {
-        *result = uast_underscore_wrap(uast_underscore_new());
+    Token underscore_tk = {0};
+    if (try_consume(&underscore_tk, tokens, TOKEN_UNDERSCORE)) {
+        *result = uast_underscore_wrap(uast_underscore_new(underscore_tk.pos));
+        return PARSE_EXPR_OK;
     }
 
     if (tk_view_front(*tokens).type == TOKEN_FN) {
