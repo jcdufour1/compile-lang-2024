@@ -99,6 +99,7 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
                 }
                 count++;
                 if (!env.silent_generic_resol_errors) {
+                    todo();
                     msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
                 }
                 return EXPR_TO_ULANG_TYPE_ERROR;

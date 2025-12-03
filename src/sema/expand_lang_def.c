@@ -699,22 +699,28 @@ static bool expand_def_struct_literal(Uast_struct_literal* lit) {
     return expand_def_expr_vec(&lit->members);
 }
 
-static bool expand_def_orelse(Uast_orelse* orelse) {
+static bool expand_def_orelse(Uast_orelse* orelse, bool is_rhs, Uast_expr* rhs) {
     if (!expand_def_block(orelse->if_error)) {
         return false;
     }
 
-    todo();
-    //Ulang_type dummy = {0};
-    //switch (expand_def_expr(&dummy, &orelse->expr_to_unwrap, orelse->expr_to_unwrap)) {
-    //    case EXPAND_EXPR_ERROR:
-    //        return false;
-    //    case EXPAND_EXPR_NEW_EXPR:
-    //        return true;
-    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
-    //        msg_got_type_but_expected_expr(uast_expr_get_pos(orelse->expr_to_unwrap));
-    //        return false;
-    //}
+    Uast_expr* to_unwrap_rhs = rhs;
+    if (is_rhs) {
+        msg_soft_todo("", orelse->pos);
+        is_rhs = false;
+        rhs = NULL;
+    }
+
+    Ulang_type dummy = {0};
+    switch (expand_def_expr(&dummy, &orelse->expr_to_unwrap, orelse->expr_to_unwrap, is_rhs, to_unwrap_rhs)) {
+        case EXPAND_EXPR_ERROR:
+            return false;
+        case EXPAND_EXPR_NEW_EXPR:
+            return true;
+        case EXPAND_EXPR_NEW_ULANG_TYPE:
+            msg_got_type_but_expected_expr(uast_expr_get_pos(orelse->expr_to_unwrap));
+            return false;
+    }
     unreachable("");
 }
 
@@ -871,18 +877,24 @@ static bool expand_def_array_literal(Uast_array_literal* lit) {
     return expand_def_expr_vec(&lit->members);
 }
 
-static bool expand_def_question_mark(Uast_question_mark* mark) {
-    todo();
-    //Ulang_type dummy = {0};
-    //switch (expand_def_expr(&dummy, &mark->expr_to_unwrap, mark->expr_to_unwrap)) {
-    //    case EXPAND_EXPR_ERROR:
-    //        return false;
-    //    case EXPAND_EXPR_NEW_EXPR:
-    //        return true;
-    //    case EXPAND_EXPR_NEW_ULANG_TYPE:
-    //        msg_got_type_but_expected_expr(mark->pos);
-    //        return false;
-    //}
+static bool expand_def_question_mark(Uast_question_mark* mark, bool is_rhs, Uast_expr* rhs) {
+    Uast_expr* to_unwrap_rhs = rhs;
+    if (is_rhs) {
+        msg_soft_todo("", mark->pos);
+        is_rhs = false;
+        to_unwrap_rhs = NULL;
+    }
+
+    Ulang_type dummy = {0};
+    switch (expand_def_expr(&dummy, &mark->expr_to_unwrap, mark->expr_to_unwrap, is_rhs, to_unwrap_rhs)) {
+        case EXPAND_EXPR_ERROR:
+            return false;
+        case EXPAND_EXPR_NEW_EXPR:
+            return true;
+        case EXPAND_EXPR_NEW_ULANG_TYPE:
+            msg_got_type_but_expected_expr(mark->pos);
+            return false;
+    }
     unreachable("");
 }
 
@@ -1030,7 +1042,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(
             return a(expand_def_struct_literal(uast_struct_literal_unwrap(expr)));
         case UAST_ORELSE:
             *new_expr = expr;
-            return a(expand_def_orelse(uast_orelse_unwrap(expr)));
+            return a(expand_def_orelse(uast_orelse_unwrap(expr), is_rhs, rhs));
         case UAST_ARRAY_LITERAL:
             *new_expr = expr;
             return a(expand_def_array_literal(uast_array_literal_unwrap(expr)));
@@ -1051,7 +1063,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(
             return EXPAND_EXPR_NEW_EXPR;
         case UAST_QUESTION_MARK:
             *new_expr = expr;
-            return a(expand_def_question_mark(uast_question_mark_unwrap(expr)));;
+            return a(expand_def_question_mark(uast_question_mark_unwrap(expr), is_rhs, rhs));;
         case UAST_FN:
             *new_expr = expr;
             return a(expand_def_fn(uast_fn_unwrap(expr), is_rhs, rhs));
