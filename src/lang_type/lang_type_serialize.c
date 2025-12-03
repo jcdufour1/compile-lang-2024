@@ -1,6 +1,7 @@
 // TODO: get rid of all functions in this file if they will not be used and bug fixed
 #include <lang_type_serialize.h>
 
+/*
 Strv serialize_struct_def_base(Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -16,28 +17,30 @@ Strv serialize_struct_def_base(Struct_def_base base) {
 }
 
 Strv serialize_lang_type_get_prefix(Lang_type lang_type) {
-    switch (lang_type.type) {
-        case LANG_TYPE_RAW_UNION:
-            return sv("RAW_UNION");
-        case LANG_TYPE_STRUCT:
-            return sv("STRUCT");
-        case LANG_TYPE_ENUM:
-            return sv("ENUM");
-        case LANG_TYPE_PRIMITIVE:
-            return sv("PRI");
-        case LANG_TYPE_TUPLE:
-            todo();
-        case LANG_TYPE_VOID:
-            return sv("VOID");
-        case LANG_TYPE_FN:
-            return sv("FN");
-        case LANG_TYPE_ARRAY:
-            return sv("ARRAY");
-        case LANG_TYPE_INT:
-            return sv("INT");
-        case LANG_TYPE_REMOVED:
-            return sv("REMOVED");
-    }
+    (void) lang_type;
+    todo();
+    //switch (lang_type.type) {
+    //    case LANG_TYPE_RAW_UNION:
+    //        return sv("RAW_UNION");
+    //    case LANG_TYPE_STRUCT:
+    //        return sv("STRUCT");
+    //    case LANG_TYPE_ENUM:
+    //        return sv("ENUM");
+    //    case LANG_TYPE_PRIMITIVE:
+    //        return sv("PRI");
+    //    case LANG_TYPE_TUPLE:
+    //        todo();
+    //    case LANG_TYPE_VOID:
+    //        return sv("VOID");
+    //    case LANG_TYPE_FN:
+    //        return sv("FN");
+    //    case LANG_TYPE_ARRAY:
+    //        return sv("ARRAY");
+    //    case LANG_TYPE_CONST_EXPR:
+    //        return sv("INT");
+    //    case LANG_TYPE_REMOVED:
+    //        return sv("REMOVED");
+    //}
     unreachable("");
 }
 
@@ -115,3 +118,4 @@ Lang_type deserialize_lang_type(Strv* serialized) {
     log(LOG_DEBUG, FMT"\n", strv_print(*serialized));
     todo();
 }
+*/

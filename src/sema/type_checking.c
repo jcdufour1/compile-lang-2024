@@ -16,7 +16,6 @@
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
 #include <symbol_log.h>
-#include <lang_type_get_pos.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>
 #include <ulang_type_serialize.h>

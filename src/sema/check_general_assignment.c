@@ -305,7 +305,7 @@ bool do_implicit_convertions(
             return false; // TODO
         case LANG_TYPE_REMOVED:
             return true; // TODO
-        case LANG_TYPE_INT:
+        case LANG_TYPE_CONST_EXPR:
             return false; // TODO
     }
     unreachable("");

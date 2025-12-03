@@ -244,7 +244,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
                 ulang_type_struct_lit_new(
                     lit->pos,
-                    uast_struct_literal_clone(lit, false, 0, lit->pos),
+                    uast_struct_literal_clone(lit, false, 0, lit->pos), // TODO: remove this clone?
                     0
                 )
             ));

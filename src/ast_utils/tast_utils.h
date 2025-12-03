@@ -105,6 +105,20 @@ static inline bool lang_type_array_is_equal(Lang_type_array a, Lang_type_array b
     return lang_type_is_equal(*a.item_type, *b.item_type);
 }
 
+static inline bool lang_type_const_expr_is_equal(Lang_type_const_expr a, Lang_type_const_expr b) {
+    if (a.type != b.type) {
+        return false;
+    }
+    
+    switch (a.type) {
+        case LANG_TYPE_INT:
+            return lang_type_int_const_unwrap(a).data == lang_type_int_const_unwrap(b).data;
+        case LANG_TYPE_STRUCT_LIT:
+            return lang_type_struct_lit_const_unwrap(a).lit == lang_type_struct_lit_const_unwrap(b).lit;
+    }
+    unreachable("");
+}
+
 // TOOD: move these lang_type functions
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     if (a.type != b.type) {
@@ -137,8 +151,11 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             return lang_type_fn_is_equal(lang_type_fn_const_unwrap(a), lang_type_fn_const_unwrap(b));
         case LANG_TYPE_ARRAY:
             return lang_type_array_is_equal(lang_type_array_const_unwrap(a), lang_type_array_const_unwrap(b));
-        case LANG_TYPE_INT:
-            return lang_type_int_const_unwrap(a).data == lang_type_int_const_unwrap(b).data;
+        case LANG_TYPE_CONST_EXPR:
+            return lang_type_const_expr_is_equal(
+                lang_type_const_expr_const_unwrap(a),
+                lang_type_const_expr_const_unwrap(b)
+            );
         case LANG_TYPE_REMOVED:
             return true;
     }

@@ -29,7 +29,11 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child)),
         if_cond_child,
         BINARY_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), 32, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(
+            lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)),
+            32/*TODO*/,
+            0
+        )))
     );
 
     return tast_binary_wrap(binary);
