@@ -114,6 +114,7 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- remove Lang_type_atom and Ulang_type_atom
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

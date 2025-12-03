@@ -610,8 +610,51 @@ static void gen_ulang_type_new_forward_decl(Ulang_type_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, false);
 }
 
+// "constructors" for ulang_types
 static void gen_ulang_type_new_define(Ulang_type_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, true);
+}
+
+static void gen_ulang_type_add_ptr_depth(Ulang_type_type ulang_type) {
+    for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
+        gen_ulang_type_add_ptr_depth(vec_at(ulang_type.sub_types, idx));
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline void ");
+    extend_ulang_type_name_lower(&function, ulang_type.name);
+    string_extend_cstr(&gen_a, &function, "_add_pointer_depth(");
+    extend_ulang_type_name_first_upper(&function, ulang_type.name);
+    string_extend_cstr(&gen_a, &function, "* ulang_type, int16_t ptr_depth_to_add) {\n    ");
+
+    if (ulang_type.sub_types.info.count > 0) {
+        string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "switch (ulang_type->type) {\n");
+        vec_foreach(idx, Ulang_type_type, sub_type, ulang_type.sub_types) {
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "        case ");
+            extend_ulang_type_name_upper(&function, ulang_type.name);
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, ":\n");
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "            ");
+            extend_ulang_type_name_lower(&function, sub_type.name);
+            string_extend_cstr(&gen_a, &function, "_add_pointer_depth(");
+            extend_ulang_type_name_lower(&function, sub_type.name);
+            string_extend_cstr(&gen_a, &function, "_unwrap(ulang_type), ptr_depth_to_add);\n");
+            string_extend_cstr(&gen_a, &function, "            return;\n");
+        }
+        // do switch
+        string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "    }\n");
+        string_extend_cstr(&gen_a, &function, "    unreachable("");\n");
+    } else {
+        if (strv_is_equal(ulang_type.name.base, sv("regular"))) {
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type_regular_unwrap(ulang_type)->atom.pointer_depth += ptr_depth_to_add;\n");
+        } else {
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->pointer_depth += ptr_depth_to_add;\n");
+        }
+    }
+
+    string_extend_cstr(&gen_a, &function, "}\n");
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
 static void gen_ulang_type_vecs(Ulang_type_type ulang_type) {
@@ -676,6 +719,7 @@ static void gen_ulang_type(const char* file_path, bool implementation) {
     ulang_type_gen_print_forward_decl(ulang_type);
     if (implementation) {
         gen_ulang_type_new_define(ulang_type);
+        gen_ulang_type_add_ptr_depth(ulang_type);
     }
 
     if (implementation) {
