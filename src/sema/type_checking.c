@@ -1238,11 +1238,41 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
     return access->callee->type == UAST_UNKNOWN;
 }
 
+bool try_set_struct_literal_member_types_simplify(
+    Uast_expr_vec* membs,
+    Uast_variable_def_vec memb_defs
+) {
+    for (size_t idx = 0; idx < membs->info.count; idx++) {
+        Uast_variable_def* memb_def = vec_at(memb_defs, idx);
+        Uast_expr** memb = vec_at_ref(membs, idx);
+        if (uast_expr_is_designator(*memb)) {
+            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
+            Uast_member_access* lhs = uast_member_access_unwrap(
+                uast_binary_unwrap(uast_operator_unwrap(*memb))->lhs // parser should catch invalid assignment
+            );
+            *memb = uast_binary_unwrap(uast_operator_unwrap(*memb))->rhs;
+            if (!strv_is_equal(memb_def->name.base, lhs->member_name->name.base)) {
+                msg(
+                    DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
+                    "expected `."FMT" =`, got `."FMT" =`\n", 
+                    strv_print(memb_def->name.base), strv_print(lhs->member_name->name.base)
+                );
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs, Pos pos) {
     if (membs.info.count != memb_defs.info.count) {
         msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos, false);
         return false;
     }
+
+    // TODO: call try_set_struct_literal_member_types_simplify here to reduce duplication
+    //try_set_struct_literal_member_types_simplify();
 
     for (size_t idx = 0; idx < membs.info.count; idx++) {
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);

@@ -115,6 +115,10 @@ Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_
     String name = {0};
     string_extend_cstr(&a_main, &name, "_struct");
     string_extend_size_t(&a_main, &name, ulang_type.lit->members.info.count);
+
+    todo();
+    //try_set_struct_literal_member_types_simplify(ulang_type.lit->members, );
+
     vec_foreach(idx, Uast_expr*, memb, ulang_type.lit->members) {
         string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type_expr_lit(mod_path, memb)));
     }
