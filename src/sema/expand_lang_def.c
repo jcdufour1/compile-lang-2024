@@ -131,8 +131,8 @@ static bool expand_def_ulang_type_regular(
                 SCOPE_TOP_LEVEL/*TODO*/
             );
             *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth),
-                lang_type.pos
+                lang_type.pos,
+                ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth)
             ));
             return true;
         }

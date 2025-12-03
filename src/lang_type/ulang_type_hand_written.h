@@ -3,6 +3,13 @@
 
 #include <name.h>
 
+typedef enum {
+    LANG_TYPE_MODE_LOG,
+    LANG_TYPE_MODE_MSG,
+    LANG_TYPE_MODE_EMIT_LLVM,
+    LANG_TYPE_MODE_EMIT_C,
+} LANG_TYPE_MODE;
+
 typedef struct Ulang_type_atom_ {
     Uname str;
     int16_t pointer_depth; // for function parameter: 2 means that function argument must also have 2 for this field
@@ -24,5 +31,11 @@ static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, in
 
 struct Uast_expr_;
 typedef struct Uast_expr_ Uast_expr;
+
+#define ulang_type_print(mode, lang_type) strv_print(ulang_type_print_internal((mode), (lang_type)))
+
+Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
+
+void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 #endif // ULANG_TYPE_HAND_WRITTEN

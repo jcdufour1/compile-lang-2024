@@ -307,9 +307,12 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         }
     }
 
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_get_pos(lang_type),
+        ulang_type_atom_new(
+            name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
+        )
+    ));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy, new_name)) {

@@ -172,6 +172,7 @@ static Ulang_type_type ulang_type_gen_fn(const char* prefix) {
 
     append_member(&sym.members, "Ulang_type_tuple", "params");
     append_member(&sym.members, "Ulang_type*", "return_type");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -181,7 +182,7 @@ static Ulang_type_type ulang_type_gen_array(const char* prefix) {
     Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Ulang_type*", "item_type");
-    append_member(&sym.members, "int64_t", "count");
+    append_member(&sym.members, "Uast_expr*", "count");
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -190,6 +191,8 @@ static Ulang_type_type ulang_type_gen_array(const char* prefix) {
 static Ulang_type_type ulang_type_gen_removed(const char* prefix) {
     const char* base_name = "removed";
     Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -226,6 +229,7 @@ static Ulang_type_type ulang_type_gen_tuple(const char* prefix) {
     Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Ulang_type_vec", "ulang_types");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -632,7 +636,7 @@ static void gen_ulang_type_add_ptr_depth(Ulang_type_type ulang_type) {
         string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "switch (ulang_type->type) {\n");
         vec_foreach(idx, Ulang_type_type, sub_type, ulang_type.sub_types) {
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "        case ");
-            extend_ulang_type_name_upper(&function, ulang_type.name);
+            extend_ulang_type_name_upper(&function, sub_type.name);
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, ":\n");
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "            ");
             extend_ulang_type_name_lower(&function, sub_type.name);
@@ -643,10 +647,10 @@ static void gen_ulang_type_add_ptr_depth(Ulang_type_type ulang_type) {
         }
         // do switch
         string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "    }\n");
-        string_extend_cstr(&gen_a, &function, "    unreachable("");\n");
+        string_extend_cstr(&gen_a, &function, "    unreachable(\"\");\n");
     } else {
         if (strv_is_equal(ulang_type.name.base, sv("regular"))) {
-            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type_regular_unwrap(ulang_type)->atom.pointer_depth += ptr_depth_to_add;\n");
+            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->atom.pointer_depth += ptr_depth_to_add;\n");
         } else {
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->pointer_depth += ptr_depth_to_add;\n");
         }
