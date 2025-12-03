@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 30
+compile::stderr 35
 tests/inputs/static_array_errors.own:6:23:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
      5 | fn main() i32 {
      6 |     let nums i32[3] = [8, 76]
@@ -26,11 +26,16 @@ tests/inputs/static_array_errors.own:14:32:[1;31merror[0;39m:`count_things` is
     14 |     let count_things i32 = nums.count_things
        |                                ^
     15 | 
-tests/inputs/static_array_errors.own:16:19:[1;31merror[0;39m:length of statically sized array must be an integer literal
+tests/inputs/static_array_errors.own:16:19:[1;31merror[0;39m:count of statically sized array must be an integer literal
     15 | 
     16 |     let nums3 i32[UNDEFINED] = [82]
        |                   ^
     17 | 
+tests/inputs/static_array_errors.own:18:19:[1;31merror[0;39m:could not infer count of elements in the static array
+    17 | 
+    18 |     let nums4 i32[_]
+       |                   ^
+    19 | 
 
 compile::return_code 1
 

@@ -59,6 +59,20 @@ typedef struct {
 
 
 typedef struct {
+    Tast_def* tast;
+    Strv key;
+    SYM_TBL_STATUS status;
+} Expand_again_table_tast;
+static_assert(sizeof(Expand_again_table_tast) == sizeof(Generic_symbol_table_tast), "");
+
+typedef struct {
+    Expand_again_table_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Expand_again_table;
+
+
+typedef struct {
     Ir* tast;
     Strv key;
     SYM_TBL_STATUS status;
@@ -215,10 +229,14 @@ typedef struct {
 } File_path_to_text;
 
 
+// TODO: this symbol_collection system is suboptional (come up with a better system):
+//   - Expand_again is only used in one pass, but is stored everywhere
+//   - Symbol_table and Ir_table are stored even in Uast
 typedef struct {
     Usymbol_table usymbol_table;
     Symbol_table symbol_table;
     Ir_table alloca_table;
+    Expand_again_table expand_again_table;
 } Symbol_collection;
 
 #endif // SYMBOL_TABLE_STRUCT_H

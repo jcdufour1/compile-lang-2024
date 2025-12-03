@@ -93,11 +93,6 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
                 msg(DIAG_INVALID_TYPE, sym->pos, "symbol of function definition is not allowed here\n");
                 return EXPR_TO_ULANG_TYPE_ERROR;
             case UAST_VARIABLE_DEF: {
-                static uint64_t count = 0;
-                if (count == 0) {
-                    //todo();
-                }
-                count++;
                 if (!env.silent_generic_resol_errors) {
                     msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");
                 }
@@ -254,6 +249,9 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_QUESTION_MARK:
+            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            return EXPR_TO_ULANG_TYPE_ERROR;
+        case UAST_UNDERSCORE:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_EXPR_REMOVED:

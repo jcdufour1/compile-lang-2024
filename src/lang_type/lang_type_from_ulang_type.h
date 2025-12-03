@@ -169,13 +169,24 @@ static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type,
     if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
         return false;
     }
+    
+    if (lang_type.count->type == UAST_UNDERSCORE) {
+        if (!env.silent_generic_resol_errors) {
+            msg(
+                DIAG_STATIC_ARRAY_COUNT_NOT_INFERED,
+                uast_expr_get_pos(lang_type.count),
+                "could not infer count of elements in the static array\n"
+            );
+        }
+        return false;
+    }
 
     if (!try_lang_type_from_ulang_type_array_is_unsigned_int(lang_type.count)) {
         if (!env.silent_generic_resol_errors) {
             msg(
                 DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY,
                 uast_expr_get_pos(lang_type.count),
-                "length of statically sized array must be an integer literal\n"
+                "count of statically sized array must be an integer literal\n"
             );
         }
         return false;

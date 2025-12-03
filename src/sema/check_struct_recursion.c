@@ -115,7 +115,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack)
             case ULANG_TYPE_TUPLE:
                 todo();
             default:
-                unreachable("");
+                todo(); // TODO: remove this default case
         }
     }
 

@@ -78,6 +78,7 @@ typedef enum {
     TOKEN_DEFER,
     TOKEN_DOUBLE_TICK,
     TOKEN_ONE_LINE_BLOCK_START,
+    TOKEN_UNDERSCORE,
 
     // keywords
     TOKEN_FN,
@@ -287,6 +288,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_QUESTION_MARK:
             return false;
+        case TOKEN_UNDERSCORE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -449,6 +452,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_QUESTION_MARK:
             return true;
+        case TOKEN_UNDERSCORE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -641,6 +646,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_ORELSE:
             return false;
         case TOKEN_QUESTION_MARK:
+            return false;
+        case TOKEN_UNDERSCORE:
             return false;
         case TOKEN_COUNT:
             unreachable("");

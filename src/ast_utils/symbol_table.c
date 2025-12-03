@@ -243,6 +243,10 @@ void* sym_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->symbol_table;
 }
 
+void* expand_get_tbl_from_collection(Symbol_collection* collection) {
+    return &collection->expand_again_table;
+}
+
 bool symbol_add(Tast_def* item) {
     Name name = tast_def_get_name(item);
     return generic_symbol_add(
@@ -307,6 +311,29 @@ bool sym_tbl_lookup(Tast_def** result, Name key) {
         (void**)result,
         (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->symbol_table,
         serialize_name_symbol_table(&a_temp, key)
+    );
+}
+
+//
+// Expand_again implementation
+//
+
+bool expand_again_add(Arena* arena, Uast_def* item) {
+    Name name = uast_def_get_name(item);
+    return generic_symbol_add(
+        serialize_name_symbol_table(arena, name),
+        item,
+        (Get_tbl_from_collection_fn)expand_get_tbl_from_collection,
+        name.scope_id
+    );
+}
+
+bool expand_again_lookup(Uast_def** result, Name name) {
+    return generic_symbol_lookup(
+        (void**)result,
+        serialize_name_symbol_table(&a_temp, name),
+        (Get_tbl_from_collection_fn)expand_get_tbl_from_collection,
+        name.scope_id
     );
 }
 

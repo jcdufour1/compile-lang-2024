@@ -44,9 +44,17 @@ fn thing2() {
     }
 }
 
+fn thing3() {
+    let nums i32[_] = [91, 0o103 /*67*/, 0x45 /*69*/]
+    for idx usize in 0..nums.count {
+        io.printf("thing 6: %d\n", nums[idx])
+    }
+}
+
 fn main() i32 {
     thing1()
     thing2()
+    thing3()
 
     return 0
 }
