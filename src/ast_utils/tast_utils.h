@@ -6,7 +6,6 @@
 #include <ir_lang_type_after.h>
 #include <ulang_type.h>
 #include <lang_type_print.h>
-#include <ulang_type_get_pos.h>
 #include <ulang_type_new_convenience.h>
 
 // TODO: remove this forward declaration

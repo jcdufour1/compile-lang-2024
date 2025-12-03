@@ -91,10 +91,8 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
             return ulang_type_expr_const_wrap(ulang_type_expr_clone(
                 ulang_type_expr_const_unwrap(lang_type)
             ));
-        case ULANG_TYPE_INT:
-            return ulang_type_int_const_wrap(ulang_type_int_clone(
-                ulang_type_int_const_unwrap(lang_type)
-            ));
+        case ULANG_TYPE_CONST_EXPR:
+            todo();
     }
     unreachable("");
 }

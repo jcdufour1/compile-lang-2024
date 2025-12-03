@@ -3,7 +3,6 @@
 #include <ulang_type.h>
 #include <uast.h>
 #include <name.h>
-#include <ulang_type_get_pos.h>
 #include <msg.h>
 #include <uast_utils.h>
 #include <check_struct_recursion.h>

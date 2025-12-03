@@ -105,8 +105,9 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             }
             return serialize_ulang_type(mod_path, inner, include_scope);
         }
-        case ULANG_TYPE_INT:
-            return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
+        case ULANG_TYPE_CONST_EXPR:
+            todo();
+            //return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }

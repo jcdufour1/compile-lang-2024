@@ -8,7 +8,6 @@
 #include <strv_struct.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
-#include <ulang_type_get_pos.h>
 
 // TODO: figure out where to put these things
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
@@ -189,6 +188,7 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     Strv member_name,
     Pos dest_pos
 ) {
+    (void) new_expr;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(base->members, idx);
         if (strv_is_equal(curr->name.base, member_name)) {
@@ -199,13 +199,14 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
 
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_INT) {
+            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_CONST_EXPR) {
                 msg_todo("non-integer expression here", dest_pos);
                 return UAST_GET_MEMB_DEF_NONE;
             }
-            Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
-            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
-            return UAST_GET_MEMB_DEF_EXPR;
+            todo();
+            //Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
+            //*new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+            //return UAST_GET_MEMB_DEF_EXPR;
         }
     }
 

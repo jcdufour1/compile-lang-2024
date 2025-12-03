@@ -1,6 +1,5 @@
 #include <do_passes.h>
 #include <symbol_iter.h>
-#include <ulang_type_get_pos.h>
 #include <bool_vec.h>
 #include <arena.h>
 

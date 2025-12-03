@@ -91,10 +91,11 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             string_extend_strv(&a_main, string, uast_expr_print_internal(expr.expr, 0));
             return;
         }
-        case ULANG_TYPE_INT: {
-            string_extend_cstr(&a_main, string, "int ");
-            string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
-            return;
+        case ULANG_TYPE_CONST_EXPR: {
+            todo();
+            //string_extend_cstr(&a_main, string, "int ");
+            //string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
+            //return;
         }
     }
     unreachable("");

@@ -151,9 +151,11 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
-        case ULANG_TYPE_INT:
-            msg_todo("", ulang_type_get_pos(lang_type));
-            return;
+        case ULANG_TYPE_CONST_EXPR:
+            todo();
+        //case ULANG_TYPE_INT:
+        //    msg_todo("", ulang_type_get_pos(lang_type));
+        //    return;
         case ULANG_TYPE_REMOVED:
             msg_todo("", ulang_type_get_pos(lang_type));
             return;
@@ -595,9 +597,11 @@ GEN_SUB_NAME_STATUS generic_sub_name(
                 }
                 return GEN_SUB_NAME_ERROR;
             }
-            case ULANG_TYPE_INT:
-                *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
-                return GEN_SUB_NAME_NEW_INT;
+            case ULANG_TYPE_CONST_EXPR:
+                todo();
+            //case ULANG_TYPE_INT:
+                //*new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
+                //return GEN_SUB_NAME_NEW_INT;
             case ULANG_TYPE_TUPLE:
                 msg_todo("", name_pos);
                 return GEN_SUB_NAME_ERROR;

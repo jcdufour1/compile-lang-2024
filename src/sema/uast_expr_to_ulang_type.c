@@ -217,9 +217,10 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
                 msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
                 return EXPR_TO_ULANG_TYPE_ERROR;
             }
-            const Uast_int* lang_int = uast_int_const_unwrap(lit);
-            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->pos, lang_int->data, 0));
-            return EXPR_TO_ULANG_TYPE_NORMAL;
+            //const Uast_int* lang_int = uast_int_const_unwrap(lit);
+            todo();
+            //*result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->pos, lang_int->data, 0));
+            //return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_FUNCTION_CALL:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
