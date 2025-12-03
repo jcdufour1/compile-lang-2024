@@ -2,9 +2,9 @@
 
 #ifdef IN_AUTOGEN
     static Arena fake_a_leak = {0};
-#    define A_LEAK_THIS_FILE fake_a_leak
+#   define A_LEAK_THIS_FILE fake_a_leak
 #else
-#    define A_LEAK_THIS_FILE a_leak
+#   define A_LEAK_THIS_FILE a_leak
 #endif // IN_AUTOGEN
 
 

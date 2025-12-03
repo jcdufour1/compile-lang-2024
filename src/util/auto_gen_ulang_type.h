@@ -619,40 +619,52 @@ static void gen_ulang_type_new_define(Ulang_type_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, true);
 }
 
-static void gen_ulang_type_set_ptr_depth_common(Ulang_type_type ulang_type, Strv op_str, Strv name_op_str) {
+static void gen_ulang_type_set_ptr_depth_common(Ulang_type_type ulang_type, Strv op_str, Strv name_op_str, bool is_get) {
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        gen_ulang_type_set_ptr_depth_common(vec_at(ulang_type.sub_types, idx), op_str, name_op_str);
+        gen_ulang_type_set_ptr_depth_common(vec_at(ulang_type.sub_types, idx), op_str, name_op_str, is_get);
     }
 
     String function = {0};
 
-    string_extend_cstr(&gen_a, &function, "static inline void ");
+    string_extend_f(&gen_a, &function, "static inline %s ", is_get ? "int16_t" : "void");
+    string_extend_cstr(&gen_a, &function, " ");
     extend_ulang_type_name_lower(&function, ulang_type.name);
     string_extend_f(&gen_a, &function, "_"FMT"_pointer_depth(", strv_print(name_op_str));
     extend_ulang_type_name_first_upper(&function, ulang_type.name);
-    string_extend_cstr(&gen_a, &function, "* ulang_type, int16_t new_ptr_depth) {\n    ");
+    string_extend_f(&gen_a, &function, "%s ulang_type%s) {\n    ", is_get ? "" : "*", is_get ? "" : ", int16_t new_ptr_depth");
 
     if (ulang_type.sub_types.info.count > 0) {
-        string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "switch (ulang_type->type) {\n");
+        string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "switch (ulang_type%stype) {\n", is_get ? "." : "->");
         vec_foreach(idx, Ulang_type_type, sub_type, ulang_type.sub_types) {
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "        case ");
             extend_ulang_type_name_upper(&function, sub_type.name);
             string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, ":\n");
-            string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "            ");
+            string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "            %s", is_get ? "return " : "");
             extend_ulang_type_name_lower(&function, sub_type.name);
             string_extend_f(&gen_a, &function, "_"FMT"_pointer_depth(", strv_print(name_op_str));
             extend_ulang_type_name_lower(&function, sub_type.name);
-            string_extend_cstr(&gen_a, &function, "_unwrap(ulang_type), new_ptr_depth);\n");
-            string_extend_cstr(&gen_a, &function, "            return;\n");
+            string_extend_f(&gen_a, &function, "%s_unwrap(ulang_type)%s);\n", is_get ? "_const" : "", is_get ? "" : ", new_ptr_depth");
+            if (!is_get) {
+                string_extend_cstr(&gen_a, &function, "            return;\n");
+            }
         }
         // do switch
         string_extend_cstr(&gen_a/*TODO: rename to a_gen?*/, &function, "    }\n");
         string_extend_cstr(&gen_a, &function, "    unreachable(\"\");\n");
     } else {
         if (strv_is_equal(ulang_type.name.base, sv("regular"))) {
-            string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->atom.pointer_depth "FMT" new_ptr_depth;\n", strv_print(op_str));
+            if (is_get) {
+                string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "return ulang_type.atom.pointer_depth;;\n");
+            } else {
+                string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->atom.pointer_depth "FMT" new_ptr_depth;\n", strv_print(op_str));
+            }
         } else {
-            string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->pointer_depth "FMT"  new_ptr_depth;\n", strv_print(op_str));
+            if (is_get) {
+                string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "return ulang_type.pointer_depth;;\n");
+            } else {
+                string_extend_f(&gen_a/*TODO: rename to a_gen?*/, &function, "ulang_type->pointer_depth "FMT"  new_ptr_depth;\n", strv_print(op_str));
+            }
+
         }
     }
 
@@ -662,7 +674,7 @@ static void gen_ulang_type_set_ptr_depth_common(Ulang_type_type ulang_type, Strv
 }
 
 static void gen_ulang_type_get_ptr_depth(Ulang_type_type ulang_type) {
-    gen_ulang_type_get_ptr_depth_common(ulang_type, sv("="), sv("get"), true);
+    gen_ulang_type_set_ptr_depth_common(ulang_type, sv("="), sv("get"), true);
 }
 
 static void gen_ulang_type_set_ptr_depth(Ulang_type_type ulang_type) {

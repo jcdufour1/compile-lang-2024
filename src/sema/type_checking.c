@@ -2665,7 +2665,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     while (sym_name->gen_args.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &sym_name->gen_args, ulang_type_removed_const_wrap(ulang_type_removed_new(0, fun_call->pos)));
+        vec_append(&a_main, &sym_name->gen_args, ulang_type_removed_const_wrap(ulang_type_removed_new(fun_call->pos, 0)));
     }
 
     // TODO: deduplicate this with below for loop?

@@ -148,24 +148,25 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 fn.pos,
                 lang_type_tuple_to_ulang_type_tuple(fn.params),
                 new_rtn_type,
-                fn.pointer_depth
+                1/*TODO*/
             ));
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             Ulang_type new_item_type = lang_type_to_ulang_type(*array.item_type);
             return ulang_type_array_const_wrap(ulang_type_array_new(
+                array.pos,
                 arena_dup(&a_main, &new_item_type),
                 uast_literal_wrap(uast_int_wrap(uast_int_new(array.pos, array.count))),
-                array.pos
+                array.pointer_depth
             ));
         }
         case LANG_TYPE_INT: {
             Lang_type_int lang_int = lang_type_int_const_unwrap(lang_type);
             return ulang_type_int_const_wrap(ulang_type_int_new(
+                lang_int.pos,
                 lang_int.data,
-                lang_int.pointer_depth,
-                lang_int.pos
+                lang_int.pointer_depth
             ));
         }
         case LANG_TYPE_REMOVED:

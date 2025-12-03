@@ -469,9 +469,11 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     memset(&name_before.gen_args, 0, sizeof(name_before.gen_args));
     unwrap(usym_tbl_lookup(&before_res, name_before));
     Ulang_type dummy = {0};
-    Ulang_type lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-        ulang_type_atom_new(name_to_uname(name), 0),
-        uast_def_get_pos(before_res))
+    Ulang_type lang_type = ulang_type_regular_const_wrap(
+        ulang_type_regular_new(
+            uast_def_get_pos(before_res),
+            ulang_type_atom_new(name_to_uname(name), 0)
+        )
     );
 
     Uast_def* after_res = NULL;
@@ -648,9 +650,10 @@ bool resolve_generics_function_def_call(
         Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
         *ulang_type_rtn_type = cached->return_type;
         Ulang_type_fn new_fn = ulang_type_fn_new(
-            ulang_type_tuple_new(ulang_types, def->decl->pos),
+            def->decl->pos,
+            ulang_type_tuple_new(def->decl->pos, ulang_types, 0),
             ulang_type_rtn_type,
-            def->decl->pos
+            1/*TODO*/
         );
         if (!try_lang_type_from_ulang_type_fn(type_res, new_fn)) {
             return false;
@@ -693,9 +696,10 @@ bool resolve_generics_function_def_call(
     Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
     *ulang_type_rtn_type = decl->return_type;
     Ulang_type_fn new_fn = ulang_type_fn_new(
-        ulang_type_tuple_new(ulang_types, def->decl->pos),
+        def->decl->pos,
+        ulang_type_tuple_new(def->decl->pos, ulang_types, 0),
         ulang_type_rtn_type,
-        def->decl->pos
+        1/*TODO*/
     );
     Lang_type_fn rtn_type_ = {0};
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn)) {
