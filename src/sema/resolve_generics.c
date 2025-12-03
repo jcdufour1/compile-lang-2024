@@ -469,7 +469,10 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     memset(&name_before.gen_args, 0, sizeof(name_before.gen_args));
     unwrap(usym_tbl_lookup(&before_res, name_before));
     Ulang_type dummy = {0};
-    Ulang_type lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(name_to_uname(name), 0), uast_def_get_pos(before_res)));
+    Ulang_type lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_atom_new(name_to_uname(name), 0),
+        uast_def_get_pos(before_res))
+    );
 
     Uast_def* after_res = NULL;
     if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {

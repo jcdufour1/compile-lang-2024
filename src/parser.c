@@ -1050,7 +1050,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         return false;
     }
 
-    *lang_type = ulang_type_tuple_new(types, tk_start.pos);
+    *lang_type = ulang_type_tuple_new(tk_start.pos, types, lang_type->pos);
     return true;
 }
 

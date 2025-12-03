@@ -38,4 +38,9 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type);
 
+//static inline void ulang_type_add_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
+//    int16_t prev = ulang_type_get_pointer_depth(*lang_type);
+//    ulang_type_set_pointer_depth(lang_type, prev + pointer_depth);
+//}
+
 #endif // ULANG_TYPE_HAND_WRITTEN

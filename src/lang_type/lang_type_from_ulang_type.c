@@ -134,20 +134,21 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             fallthrough;
         case LANG_TYPE_ENUM:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
+                lang_type_get_pos(lang_type),
                 ulang_type_atom_new(
                     name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)),
                     lang_type_get_pointer_depth(lang_type)
-                ),
-                lang_type_get_pos(lang_type)
+                )
             ));
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
             Ulang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
             *new_rtn_type = lang_type_to_ulang_type(*fn.return_type);
             return ulang_type_fn_const_wrap(ulang_type_fn_new(
+                fn.pos,
                 lang_type_tuple_to_ulang_type_tuple(fn.params),
                 new_rtn_type,
-                fn.pos
+                fn.pointer_depth
             ));
         }
         case LANG_TYPE_ARRAY: {
