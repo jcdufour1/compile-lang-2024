@@ -50,6 +50,18 @@ bool ulang_type_array_is_equal(Ulang_type_array a, Ulang_type_array b) {
     return uast_int_unwrap(a_lit)->data == uast_int_unwrap(b_lit)->data;
 }
 
+bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b) {
+    if (a.type != b.type) {
+        return false;
+    }
+
+    switch (a.type) {
+        case ULANG_TYPE_INT:
+            return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
+    }
+    unreachable("");
+}
+
 bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
     if (a.type != b.type) {
         return false;
@@ -73,8 +85,7 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
             return ulang_type_is_equal(a_inner, b_inner);
         }
         case ULANG_TYPE_CONST_EXPR:
-            todo();
-            //return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
+            return ulang_type_const_expr_is_equal(ulang_type_const_expr_const_unwrap(a), ulang_type_const_expr_const_unwrap(b));
         case ULANG_TYPE_REMOVED:
             return ulang_type_removed_const_unwrap(a).pointer_depth == ulang_type_removed_const_unwrap(b).pointer_depth;
     }

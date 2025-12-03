@@ -569,6 +569,15 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
     generic_sub_lang_type(&unary->lang_type, unary->lang_type, gen_param, gen_arg);
 }
 
+GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_int** new_expr, Pos name_pos, Ulang_type_const_expr gen_arg) {
+    switch (gen_arg.type) {
+        case ULANG_TYPE_INT:
+            *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
+            return GEN_SUB_NAME_NEW_INT;
+    }
+    unreachable("");
+}
+
 GEN_SUB_NAME_STATUS generic_sub_name(
     Uast_int** new_expr,
     int16_t* pointer_depth_to_add, // this variable should be used if and only if 
@@ -598,10 +607,11 @@ GEN_SUB_NAME_STATUS generic_sub_name(
                 return GEN_SUB_NAME_ERROR;
             }
             case ULANG_TYPE_CONST_EXPR:
-                todo();
-            //case ULANG_TYPE_INT:
-                //*new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
-                //return GEN_SUB_NAME_NEW_INT;
+                return generic_sub_name_const_expr(
+                    new_expr,
+                    name_pos,
+                    ulang_type_const_expr_const_unwrap(gen_arg)
+                );
             case ULANG_TYPE_TUPLE:
                 msg_todo("", name_pos);
                 return GEN_SUB_NAME_ERROR;

@@ -376,6 +376,8 @@ static bool expand_def_ulang_type(Ulang_type* lang_type, Pos dest_pos, bool is_r
             *lang_type = new_lang_type;
             return true;
         }
+        case ULANG_TYPE_CONST_EXPR:
+            todo();
         //case ULANG_TYPE_INT: {
         //    Ulang_type_int new_lang_type = {0};
         //    if (!expand_def_ulang_type_int(&new_lang_type, ulang_type_int_const_unwrap(*lang_type))) {

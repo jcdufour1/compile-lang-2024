@@ -200,13 +200,21 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
             if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_CONST_EXPR) {
-                msg_todo("non-integer expression here", dest_pos);
+                msg_todo("non expression here", dest_pos);
                 return UAST_GET_MEMB_DEF_NONE;
             }
-            todo();
-            //Ulang_type_int lang_int = ulang_type_int_const_unwrap(vec_at(base->name.gen_args, idx));
-            //*new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
-            //return UAST_GET_MEMB_DEF_EXPR;
+
+            Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(vec_at(base->name.gen_args, idx));
+            switch (const_expr.type) {
+                case ULANG_TYPE_INT: {
+                    Ulang_type_int lang_int = ulang_type_int_const_unwrap(const_expr);
+                    *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+                    return UAST_GET_MEMB_DEF_EXPR;
+                }
+            }
+
+            msg_todo("this type of expression in this situation", ulang_type_const_expr_get_pos(const_expr));
+            return UAST_GET_MEMB_DEF_NONE;
         }
     }
 

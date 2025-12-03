@@ -12,4 +12,6 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b);
 
 bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b);
 
+bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b);
+
 #endif // ULANG_TYPE_IS_EQUAL_H
