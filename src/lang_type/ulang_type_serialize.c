@@ -52,11 +52,78 @@ Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_
         case ULANG_TYPE_INT:
             return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_STRUCT_LIT:
-            todo();
+            return serialize_ulang_type_struct_lit(mod_path, ulang_type_struct_lit_const_unwrap(ulang_type), include_scope);
     }
     unreachable("");
 }
 
+static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) {
+    switch (expr->type) {
+        case UAST_LITERAL:
+            todo();
+        case UAST_SYMBOL:
+            todo();
+        case UAST_STRUCT_LITERAL:
+            todo();
+        case UAST_ARRAY_LITERAL:
+            todo();
+        case UAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case UAST_BLOCK:
+            fallthrough;
+        case UAST_SWITCH:
+            fallthrough;
+        case UAST_UNKNOWN:
+            fallthrough;
+        case UAST_OPERATOR:
+            fallthrough;
+        case UAST_MEMBER_ACCESS:
+            fallthrough;
+        case UAST_INDEX:
+            fallthrough;
+        case UAST_FUNCTION_CALL:
+            fallthrough;
+        case UAST_TUPLE:
+            fallthrough;
+        case UAST_MACRO:
+            fallthrough;
+        case UAST_ENUM_ACCESS:
+            fallthrough;
+        case UAST_ENUM_GET_TAG:
+            fallthrough;
+        case UAST_ORELSE:
+            fallthrough;
+        case UAST_FN:
+            fallthrough;
+        case UAST_QUESTION_MARK:
+            fallthrough;
+        case UAST_UNDERSCORE:
+            fallthrough;
+        case UAST_EXPR_REMOVED:
+            msg_todo(
+                "actual error message for non-literal found where literal was expected",
+                uast_expr_get_pos(expr)
+            );
+            return name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    }
+
+    todo();
+    //return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
+Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type, bool include_scope) {
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_struct");
+    string_extend_size_t(&a_main, &name, ulang_type.lit->members.info.count);
+    vec_foreach(idx, Uast_expr*, memb, ulang_type.lit->members) {
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type_expr_lit(mod_path, memb)));
+    }
+    log(LOG_DEBUG, FMT"\n", string_print(name));
+    (void) mod_path;
+    (void) include_scope;
+    todo();
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
 
 Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool include_scope) {
     (void) mod_path;

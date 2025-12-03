@@ -23,22 +23,18 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
             )));
             return true;
         }
-        case ULANG_TYPE_STRUCT_LIT:
+        case ULANG_TYPE_STRUCT_LIT: {
             Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(lang_type);
-
-            Tast_struct_literal* new_data = NULL;
-            if (!try_set_struct_literal_types()) {
-                return false;
-            }
 
             *new_lang_type = lang_type_const_expr_const_wrap(lang_type_struct_lit_const_wrap(
                 lang_type_struct_lit_new(
                     lit.pos,
-                    lit.data,
+                    lit.lit,
                     lit.pointer_depth
                 )
             ));
-            todo();
+            return true;
+        }
     }
     unreachable("");
 }

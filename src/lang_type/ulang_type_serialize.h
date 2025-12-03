@@ -19,6 +19,8 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
 
 Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool include_scope);
 
+Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type, bool include_scope);
+
 Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_type, bool include_scope);
 
 #endif // ULANG_TYPE_SERIALIZE_H
