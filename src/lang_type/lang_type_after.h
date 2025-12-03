@@ -6,6 +6,7 @@
 #include <lang_type_after.h>
 #include <str_and_num_utils.h>
 #include <parameters.h>
+#include <lang_type_mode.h>
 
 Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primitive lang_type);
 

@@ -207,7 +207,8 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
         vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
     }
-    return ulang_type_tuple_new(new_types, lang_type.pos);
+    // TODO: uncomment lang_type.pointer_depth below
+    return ulang_type_tuple_new(lang_type.pos, new_types, /*lang_type.pointer_depth*/0);
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE

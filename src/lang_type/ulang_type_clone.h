@@ -15,42 +15,54 @@ static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_n
 
 static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
     return ulang_type_expr_new(
+        lang_type.pos,
         uast_expr_clone(lang_type.expr, false, 0, uast_expr_get_pos(lang_type.expr)),
-        lang_type.pointer_depth,
-        lang_type.pos
+        lang_type.pointer_depth
     );
 }
 
 static inline Ulang_type_int ulang_type_int_clone(Ulang_type_int lang_type) {
-    return ulang_type_int_new(lang_type.data, lang_type.pointer_depth, lang_type.pos);
+    return ulang_type_int_new(lang_type.pos, lang_type.data, lang_type.pointer_depth);
 }
 
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
-    return ulang_type_tuple_new(ulang_type_vec_clone(lang_type.ulang_types, use_new_scope, new_scope), lang_type.pos);
+    return ulang_type_tuple_new(
+        lang_type.pos,
+        ulang_type_vec_clone(lang_type.ulang_types, use_new_scope, new_scope),
+        lang_type.pointer_depth
+    );
 }
 
 static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lang_type, bool use_new_scope, Scope_id new_scope) {
     return ulang_type_regular_new(
-        ulang_type_atom_new(uname_clone(lang_type.atom.str, use_new_scope, new_scope), lang_type.atom.pointer_depth),
-        lang_type.pos
+        lang_type.pos,
+        ulang_type_atom_new(
+            uname_clone(lang_type.atom.str, use_new_scope, new_scope),
+            lang_type.atom.pointer_depth
+        )
     );
 }
 
 static inline Ulang_type_array ulang_type_array_clone(Ulang_type_array lang_type, bool use_new_scope, Scope_id new_scope) {
     Ulang_type new_item_type = ulang_type_clone(*lang_type.item_type, use_new_scope, new_scope);
-    return ulang_type_array_new(arena_dup(&a_main, &new_item_type), lang_type.count, lang_type.pos);
+    return ulang_type_array_new(lang_type.pos, arena_dup(&a_main, &new_item_type), lang_type.count, lang_type.pointer_depth);
 }
 
 static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, bool use_new_scope, Scope_id new_scope) {
     Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type));
     *rtn_type = ulang_type_clone(*lang_type.return_type, use_new_scope, new_scope);
-    return ulang_type_fn_new(ulang_type_tuple_clone(lang_type.params, use_new_scope, new_scope), rtn_type, lang_type.pos);
+    return ulang_type_fn_new(
+        lang_type.pos,
+       ulang_type_tuple_clone(lang_type.params, use_new_scope, new_scope),
+       rtn_type,
+       lang_type.pointer_depth
+    );
 }
 
 static inline Ulang_type_removed ulang_type_removed_clone(Ulang_type_removed lang_type, bool use_new_scope, Scope_id new_scope) {
     (void) use_new_scope;
     (void) new_scope;
-    return ulang_type_removed_new(lang_type.pointer_depth, lang_type.pos);
+    return ulang_type_removed_new(lang_type.pos, lang_type.pointer_depth);
 }
 
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_scope, Scope_id new_scope) {

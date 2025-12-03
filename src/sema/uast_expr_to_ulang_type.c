@@ -120,11 +120,11 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
 
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        sym->pos,
         ulang_type_atom_new(
             name_to_uname(sym->name),
             0
-        ),
-        sym->pos
+        )
     ));
 
     return EXPR_TO_ULANG_TYPE_NORMAL;
@@ -180,7 +180,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             Name memb_name = access->member_name->name;
 
             Uname new_name = uname_new(uast_symbol_unwrap(access->callee)->name, memb_name.base, memb_name.gen_args, memb_name.scope_id);
-            Ulang_type_regular reg = ulang_type_regular_new(ulang_type_atom_new(new_name, 0), access->pos);
+            Ulang_type_regular reg = ulang_type_regular_new(access->pos, ulang_type_atom_new(new_name, 0));
             *result = ulang_type_regular_const_wrap(reg);
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
@@ -218,7 +218,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
                 return EXPR_TO_ULANG_TYPE_ERROR;
             }
             const Uast_int* lang_int = uast_int_const_unwrap(lit);
-            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->data, 0, lang_int->pos));
+            *result = ulang_type_int_const_wrap(ulang_type_int_new(lang_int->pos, lang_int->data, 0));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_FUNCTION_CALL:

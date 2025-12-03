@@ -131,8 +131,8 @@ static bool expand_def_ulang_type_regular(
                 SCOPE_TOP_LEVEL/*TODO*/
             );
             *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth),
-                lang_type.pos
+                lang_type.pos,
+                ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth)
             ));
             return true;
         }
@@ -156,8 +156,8 @@ static bool expand_def_ulang_type_regular(
             if (!expand_def_ulang_type_regular(
                 &index_ulang_type,
                 ulang_type_regular_new(
-                    ulang_type_atom_new(name_to_uname(uast_symbol_unwrap(index->callee)->name), 0),
-                    uast_expr_get_pos(index->callee)
+                    uast_expr_get_pos(index->callee),
+                    ulang_type_atom_new(name_to_uname(uast_symbol_unwrap(index->callee)->name), 0)
                 ),
                 uast_expr_get_pos(index->callee)
             )) {
