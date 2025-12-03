@@ -15,15 +15,29 @@ static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, 
 bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_type_const_expr lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_INT: {
-            Ulang_type_int lang_int = ulang_type_int_const_unwrap(lang_type);
-            *new_lang_type = lang_type_int_const_wrap(lang_type_int_new(
-                lang_int.pos,
-                lang_int.data,
-                lang_int.pointer_depth
-            ));
+            Ulang_type_int lit = ulang_type_int_const_unwrap(lang_type);
+            *new_lang_type = lang_type_const_expr_const_wrap(lang_type_int_const_wrap(lang_type_int_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
             return true;
         }
         case ULANG_TYPE_STRUCT_LIT:
+            Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(lang_type);
+
+            Tast_struct_literal* new_data = NULL;
+            if (!try_set_struct_literal_types()) {
+                return false;
+            }
+
+            *new_lang_type = lang_type_const_expr_const_wrap(lang_type_struct_lit_const_wrap(
+                lang_type_struct_lit_new(
+                    lit.pos,
+                    lit.data,
+                    lit.pointer_depth
+                )
+            ));
             todo();
     }
     unreachable("");
@@ -127,6 +141,24 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     unreachable("");
 }
 
+Ulang_type lang_type_const_expr_to_ulang_type(Lang_type_const_expr lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT: {
+            // TODO: rename LANG_TYPE_INT to LANG_TYPE_INT_LIT
+            Lang_type_int lang_int = lang_type_int_const_unwrap(lang_type);
+            return ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(ulang_type_int_new(
+                lang_int.pos,
+                lang_int.data,
+                lang_int.pointer_depth
+            )));
+        }
+        case LANG_TYPE_STRUCT_LIT:
+            todo();
+    }
+    unreachable("");
+    
+}
+
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
@@ -171,13 +203,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 array.pointer_depth
             ));
         }
-        case LANG_TYPE_INT: {
-            Lang_type_int lang_int = lang_type_int_const_unwrap(lang_type);
-            return ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(ulang_type_int_new(
-                lang_int.pos,
-                lang_int.data,
-                lang_int.pointer_depth
-            )));
+        case LANG_TYPE_CONST_EXPR: {
+            return lang_type_const_expr_to_ulang_type(lang_type_const_expr_const_unwrap(lang_type));
         }
         case LANG_TYPE_REMOVED:
             unreachable("");

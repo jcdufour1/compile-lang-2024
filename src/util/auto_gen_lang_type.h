@@ -611,6 +611,77 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
+static void gen_lang_type_get_pos(Lang_type_type type, bool implementation, bool is_ref) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        gen_lang_type_get_pos(vec_at(type.sub_types, idx), implementation, is_ref);
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline Pos ");
+    if (is_ref) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+
+    string_extend_cstr(&gen_a, &function, "    lang_type_");
+    extend_strv_lower(&function, type.name.base);
+    if (is_ref) {
+        string_extend_f(&gen_a, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
+    } else {
+        string_extend_f(&gen_a, &function, "%sget_pos(const ", type.name.is_topmost ? "" : "_");
+    }
+    extend_lang_type_name_first_upper(&function, type.name);
+    string_extend_f(&gen_a, &function, "%s lang_type)", is_ref ? "*" : "");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        if (type.sub_types.info.count < 1) {
+            if (is_ref) {
+                string_extend_cstr(&gen_a, &function, "    return &lang_type->pos;\n");
+            } else {
+                string_extend_cstr(&gen_a, &function, "    return lang_type.pos;\n");
+            }
+        } else {
+            string_extend_f(&gen_a, &function, "    switch (lang_type%stype) {\n", is_ref ? "->" : ".");
+
+            for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+                Lang_type_type curr = vec_at(type.sub_types, idx);
+                string_extend_cstr(&gen_a, &function, "        case ");
+                extend_lang_type_name_upper(&function, curr.name);
+                string_extend_cstr(&gen_a, &function, ":\n");
+
+
+                string_extend_cstr(&gen_a, &function, "            return lang_type_");
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_get_pos_ref(lang_type_");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_get_pos(lang_type_");
+                }
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_unwrap(lang_type));\n");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_const_unwrap(lang_type));\n");
+                }
+
+                string_extend_cstr(&gen_a, &function, "        break;\n");
+            }
+
+            string_extend_cstr(&gen_a, &function, "    }\n");
+        }
+
+        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
+        string_extend_cstr(&gen_a, &function, "}\n");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+}
+
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {
     lang_type_gen_new_internal(lang_type, false);
 }
@@ -682,6 +753,8 @@ static void gen_lang_type(const char* file_path, bool implementation) {
     if (implementation) {
         gen_lang_type_new_define(lang_type);
     }
+    gen_lang_type_get_pos(lang_type, implementation, false);
+    gen_lang_type_get_pos(lang_type, implementation, true);
 
     if (implementation) {
         gen_gen("#endif // LANG_TYPE_H\n");

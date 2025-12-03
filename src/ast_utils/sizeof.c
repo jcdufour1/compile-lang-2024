@@ -76,7 +76,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         }
         case LANG_TYPE_VOID:
             return 0;
-        case LANG_TYPE_INT:
+        case LANG_TYPE_CONST_EXPR:
             // TODO
             return 0;
         case LANG_TYPE_TUPLE:
@@ -120,10 +120,11 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
-            // TODO
-            todo();
-        case LANG_TYPE_INT:
-            todo();
+            msg_todo("", lang_type_get_pos(lang_type));
+            return 0;
+        case LANG_TYPE_CONST_EXPR:
+            msg_todo("", lang_type_get_pos(lang_type));
+            return 0;
         case LANG_TYPE_REMOVED:
             unreachable("");
     }
