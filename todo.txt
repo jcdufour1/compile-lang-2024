@@ -114,6 +114,8 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- remove Lang_type_atom and Ulang_type_atom
+- set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

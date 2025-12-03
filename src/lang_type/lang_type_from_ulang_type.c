@@ -123,8 +123,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
-                ulang_type_atom_new_from_cstr("void", 0),
-                POS_BUILTIN
+                POS_BUILTIN,
+                ulang_type_atom_new_from_cstr("void", 0)
             ));
         case LANG_TYPE_PRIMITIVE:
             fallthrough;
@@ -134,37 +134,39 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             fallthrough;
         case LANG_TYPE_ENUM:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
+                lang_type_get_pos(lang_type),
                 ulang_type_atom_new(
                     name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)),
                     lang_type_get_pointer_depth(lang_type)
-                ),
-                lang_type_get_pos(lang_type)
+                )
             ));
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
             Ulang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
             *new_rtn_type = lang_type_to_ulang_type(*fn.return_type);
             return ulang_type_fn_const_wrap(ulang_type_fn_new(
+                fn.pos,
                 lang_type_tuple_to_ulang_type_tuple(fn.params),
                 new_rtn_type,
-                fn.pos
+                1/*TODO*/
             ));
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
             Ulang_type new_item_type = lang_type_to_ulang_type(*array.item_type);
             return ulang_type_array_const_wrap(ulang_type_array_new(
+                array.pos,
                 arena_dup(&a_main, &new_item_type),
                 uast_literal_wrap(uast_int_wrap(uast_int_new(array.pos, array.count))),
-                array.pos
+                array.pointer_depth
             ));
         }
         case LANG_TYPE_INT: {
             Lang_type_int lang_int = lang_type_int_const_unwrap(lang_type);
             return ulang_type_int_const_wrap(ulang_type_int_new(
+                lang_int.pos,
                 lang_int.data,
-                lang_int.pointer_depth,
-                lang_int.pos
+                lang_int.pointer_depth
             ));
         }
         case LANG_TYPE_REMOVED:

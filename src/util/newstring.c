@@ -1,5 +1,13 @@
 #include <newstring.h>
 
+#ifdef IN_AUTOGEN
+    static Arena fake_a_leak = {0};
+#   define A_LEAK_THIS_FILE fake_a_leak
+#else
+#   define A_LEAK_THIS_FILE a_leak
+#endif // IN_AUTOGEN
+
+
 static void string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1) {
     va_list args2;
     va_copy(args2, args1);
@@ -10,7 +18,7 @@ static void string_extend_f_va(Arena* arena, String* string, const char* format,
     count_needed++;
     if (count_needed > temp_buf.info.count) {
         while (temp_buf.info.count < count_needed) {
-            vec_append(&a_leak, &temp_buf, '\0');
+            vec_append(&A_LEAK_THIS_FILE, &temp_buf, '\0');
         }
     }
     vsnprintf(temp_buf.buf, count_needed, format, args2);

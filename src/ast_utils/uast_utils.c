@@ -57,7 +57,11 @@ bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, 
     Uname base_name = name_to_uname(base.name);
     base_name.gen_args = gen_args;
     LANG_TYPE_TYPE type = {0};
-    return resolve_generics_ulang_type_regular(&type, result, ulang_type_regular_new(ulang_type_atom_new(base_name, 0), pos));
+    return resolve_generics_ulang_type_regular(
+        &type,
+        result,
+        ulang_type_regular_new(pos, ulang_type_atom_new(base_name, 0))
+    );
 }
 
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
@@ -68,7 +72,7 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
 
     Ulang_type* return_type = arena_alloc(&a_main, sizeof(*return_type));
     *return_type = decl->return_type;
-    Ulang_type_fn fn = ulang_type_fn_new(ulang_type_tuple_new(params, decl->pos), return_type, decl->pos);
+    Ulang_type_fn fn = ulang_type_fn_new(decl->pos, ulang_type_tuple_new(decl->pos, params, 0), return_type, 1/*TODO*/);
     return ulang_type_fn_const_wrap(fn);
 }
 

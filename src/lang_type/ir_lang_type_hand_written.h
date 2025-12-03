@@ -4,6 +4,12 @@
 #include <strv.h>
 #include <vector.h>
 #include <ulang_type.h>
+#include <strv.h>
+#include <vector.h>
+#include <name.h>
+#include <lang_type_mode.h>
+#include <msg_todo.h>
+#include <parameters.h>
 
 typedef struct {
     Ir_name str;
