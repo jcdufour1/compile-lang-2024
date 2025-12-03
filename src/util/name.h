@@ -35,6 +35,16 @@ typedef struct {
     Attrs attrs;
 } Ir_name;
 
+typedef struct {
+    Vec_base info;
+    Name* buf;
+} Name_vec;
+
+typedef struct {
+    Vec_base info;
+    Ir_name* buf;
+} Ir_name_vec;
+
 // TODO: nodes should store Uname_id (which would contain size_t) instead of Uname?
 //   lookup table should store actual name struct associated with Uname_id
 

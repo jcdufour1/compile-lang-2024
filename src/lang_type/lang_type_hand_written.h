@@ -4,6 +4,7 @@
 #include <strv.h>
 #include <vector.h>
 #include <ulang_type.h>
+#include <name.h>
 
 typedef struct {
     Name str;

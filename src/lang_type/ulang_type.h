@@ -1,3 +1,4 @@
+/*
 #ifndef ULANG_TYPE_H
 #define ULANG_TYPE_H
 
@@ -27,18 +28,6 @@ static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, in
         pointer_depth
     );
 }
-
-// TODO: move this struct
-typedef struct {
-    Vec_base info;
-    Name* buf;
-} Name_vec;
-
-// TODO: move this struct
-typedef struct {
-    Vec_base info;
-    Ir_name* buf;
-} Ir_name_vec;
 
 
 struct Ulang_type_tuple_;
@@ -334,3 +323,4 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
 
 #endif // ULANG_TYPE_H
 
+*/
