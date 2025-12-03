@@ -574,6 +574,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_OPERATOR:
             fallthrough;
+        case UAST_STRUCT_LITERAL:
+            fallthrough;
         case UAST_INDEX: {
             Pos temp_pos = uast_expr_get_pos(expr);
             *uast_expr_get_pos_ref(expr) = dest_pos;
@@ -600,8 +602,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         case UAST_UNKNOWN:
             fallthrough;
         case UAST_FUNCTION_CALL:
-            fallthrough;
-        case UAST_STRUCT_LITERAL:
             fallthrough;
         case UAST_ARRAY_LITERAL:
             fallthrough;
