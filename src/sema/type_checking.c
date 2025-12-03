@@ -1672,7 +1672,9 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             status = false;
             goto end;
         case UAST_UNDERSCORE:
-            todo();
+            msg_todo("", uast_expr_get_pos(uast));
+            status = false;
+            goto end;
         case UAST_EXPR_REMOVED: {
             Uast_expr_removed* removed = uast_expr_removed_unwrap(uast);
             String buf = {0};
@@ -2470,7 +2472,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
         case UAST_UNDERSCORE:
-            todo();
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_EXPR_REMOVED:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;

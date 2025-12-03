@@ -223,9 +223,6 @@ static bool expand_def_ulang_type_array(
     Uast_expr* item_type_rhs = rhs;
     if (is_rhs) {
         item_type_rhs = rhs/*TODO*/;
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *lang_type.item_type));
-        log(LOG_DEBUG, FMT"\n", uast_expr_print(rhs));
-        //todo();
     }
     if (!expand_def_ulang_type(lang_type.item_type, dest_pos, is_rhs, item_type_rhs)) {
         return false;
@@ -267,19 +264,23 @@ static bool expand_def_ulang_type_fn(
 
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         Uast_expr* gen_rhs = rhs;
+        bool gen_is_rhs = is_rhs;
         if (is_rhs) {
-            todo();
+            msg_soft_todo("", ulang_type_get_pos(vec_at(lang_type.params.ulang_types, idx)));
+            gen_is_rhs = false;
         }
-        if (!expand_def_ulang_type(vec_at_ref(&lang_type.params.ulang_types, idx), dest_pos, is_rhs, gen_rhs)) {
+        if (!expand_def_ulang_type(vec_at_ref(&lang_type.params.ulang_types, idx), dest_pos, gen_is_rhs, gen_rhs)) {
             status = false;
         }
     }
 
     Uast_expr* rtn_rhs = rhs;
+    bool rtn_is_rhs = is_rhs;
     if (is_rhs) {
-        todo();
+        msg_soft_todo("", ulang_type_get_pos(*lang_type.return_type));
+        rtn_is_rhs = false;
     }
-    if (!expand_def_ulang_type(lang_type.return_type, dest_pos, is_rhs, rtn_rhs)) {
+    if (!expand_def_ulang_type(lang_type.return_type, dest_pos, rtn_is_rhs, rtn_rhs)) {
         status = false;
     }
 
@@ -501,8 +502,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     msg(
                         DIAG_DEF_DEST_AND_SRC_BOTH_HAVE_GEN_ARGS,
                         uast_expr_get_pos(expr), 
@@ -547,8 +546,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             Uast_symbol* sym = uast_symbol_unwrap(expr);
             if (sym->name.gen_args.info.count > 0) {
                 if (name.gen_args.info.count > 0) {
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
-                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
@@ -790,14 +787,16 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
             return EXPAND_EXPR_ERROR;
         }
         Uast_expr* new_rhs = rhs;
+        bool new_is_rhs = is_rhs;
         if (is_rhs) {
-            todo();
+            msg_soft_todo("", access->pos);
+            new_is_rhs = false;
         }
         EXPAND_NAME_STATUS status = expand_def_symbol(
             new_lang_type,
             new_expr,
             uast_symbol_new(access->pos, name),
-            is_rhs,
+            new_is_rhs,
             new_rhs
         );
         switch (status) {
@@ -836,8 +835,6 @@ static bool expand_def_index(Uast_index* index, bool is_rhs, Uast_expr* rhs) {
             is_rhs = false;
             rhs = NULL;
         } else {
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(rhs));
-            todo();
             msg_soft_todo("", uast_expr_get_pos(rhs));
             msg_soft_todo("", index->pos);
             is_rhs = false;

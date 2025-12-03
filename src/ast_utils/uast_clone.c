@@ -244,7 +244,7 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
         case UAST_QUESTION_MARK:
             return uast_question_mark_wrap(uast_question_mark_clone(uast_question_mark_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_UNDERSCORE:
-            todo();
+            return uast_underscore_wrap(uast_underscore_clone(uast_underscore_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_wrap(uast_expr_removed_clone(uast_expr_removed_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
     }
@@ -371,6 +371,13 @@ Uast_question_mark* uast_question_mark_clone(const Uast_question_mark* mark, boo
         scope,
         name_clone(mark->break_out_of, use_new_scope, new_scope)
     );
+}
+
+Uast_underscore* uast_underscore_clone(const Uast_underscore* underscore, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) use_new_scope;
+    (void) new_scope;
+    (void) dest_pos;
+    return uast_underscore_new(underscore->pos);
 }
 
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
