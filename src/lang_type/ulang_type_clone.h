@@ -25,6 +25,18 @@ static inline Ulang_type_int ulang_type_int_clone(Ulang_type_int lang_type) {
     return ulang_type_int_new(lang_type.pos, lang_type.data, lang_type.pointer_depth);
 }
 
+static inline Ulang_type_struct_lit ulang_type_struct_lit_clone(
+    Ulang_type_struct_lit lang_type,
+    bool use_new_scope,
+    Scope_id new_scope
+) {
+    return ulang_type_struct_lit_new(
+        lang_type.pos,
+        uast_struct_literal_clone(lang_type.lit, use_new_scope, new_scope, lang_type.pos),
+        lang_type.pointer_depth
+    );
+}
+
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
     return ulang_type_tuple_new(
         lang_type.pos,
@@ -58,6 +70,12 @@ static inline Ulang_type_const_expr ulang_type_const_expr_clone(
     switch (lang_type.type) {
         case ULANG_TYPE_INT:
             return ulang_type_int_const_wrap(ulang_type_int_clone(ulang_type_int_const_unwrap(lang_type)));
+        case ULANG_TYPE_STRUCT_LIT:
+            return ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_clone(
+                ulang_type_struct_lit_const_unwrap(lang_type),
+                use_new_scope,
+                new_scope
+            ));
     }
     unreachable("");
 }

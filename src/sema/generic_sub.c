@@ -574,6 +574,8 @@ GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_int** new_expr, Pos name_po
         case ULANG_TYPE_INT:
             *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
             return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_STRUCT_LIT:
+            todo();
     }
     unreachable("");
 }

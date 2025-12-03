@@ -51,6 +51,8 @@ Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_
     switch (ulang_type.type) {
         case ULANG_TYPE_INT:
             return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
+        case ULANG_TYPE_STRUCT_LIT:
+            todo();
     }
     unreachable("");
 }

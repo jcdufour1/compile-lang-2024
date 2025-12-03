@@ -58,6 +58,8 @@ bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_ex
     switch (a.type) {
         case ULANG_TYPE_INT:
             return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
+        case ULANG_TYPE_STRUCT_LIT:
+            todo();
     }
     unreachable("");
 }

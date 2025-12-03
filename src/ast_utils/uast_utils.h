@@ -211,6 +211,9 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                     *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
+                case ULANG_TYPE_STRUCT_LIT: {
+                    todo();
+                }
             }
 
             msg_todo("this type of expression in this situation", ulang_type_const_expr_get_pos(const_expr));

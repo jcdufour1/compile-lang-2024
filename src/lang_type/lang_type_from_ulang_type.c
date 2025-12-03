@@ -23,6 +23,8 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
             ));
             return true;
         }
+        case ULANG_TYPE_STRUCT_LIT:
+            todo();
     }
     unreachable("");
 }

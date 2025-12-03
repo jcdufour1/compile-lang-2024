@@ -1,6 +1,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
+#include <uast_clone.h>
 
 typedef enum {
     EXPR_TO_ULANG_TYPE_NORMAL,
@@ -239,9 +240,14 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_STRUCT_LITERAL: {
-            *result = ulang_type_struct_new()
-
-            msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+            const Uast_struct_literal* lit = uast_struct_literal_const_unwrap(expr);
+            *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
+                ulang_type_struct_lit_new(
+                    lit->pos,
+                    uast_struct_literal_clone(lit, false, 0, lit->pos),
+                    0
+                )
+            ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_ARRAY_LITERAL:

@@ -32,6 +32,9 @@ static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, in
 struct Uast_expr_;
 typedef struct Uast_expr_ Uast_expr;
 
+struct Uast_struct_literal_;
+typedef struct Uast_struct_literal_ Uast_struct_literal;
+
 #define ulang_type_print(mode, lang_type) strv_print(ulang_type_print_internal((mode), (lang_type)))
 
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
