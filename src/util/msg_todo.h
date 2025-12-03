@@ -25,6 +25,11 @@ static inline void msg_todo_internal(const char* file, int line, Strv feature, P
 }
 
 static inline void msg_soft_todo_internal(const char* file, int line, Strv feature, Pos pos) {
+    (void) file;
+    (void) line;
+    (void) feature;
+    (void) pos;
+
 #   ifndef NDEBUG
 
         msg_internal(

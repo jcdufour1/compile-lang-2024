@@ -292,6 +292,7 @@ static bool expand_def_ulang_type_tuple(
     Ulang_type_tuple lang_type,
     Pos dest_pos
 ) {
+    (void) dest_pos;
     bool status = true;
 
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
