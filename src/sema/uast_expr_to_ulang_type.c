@@ -152,6 +152,27 @@ static EXPR_TO_ULANG_TYPE uast_block_to_ulang_type_internal(Ulang_type* result, 
     return EXPR_TO_ULANG_TYPE_NORMAL;
 }
 
+static EXPR_TO_ULANG_TYPE uast_literal_to_ulang_type_internal(Ulang_type* result, const Uast_literal* lit) {
+    switch (lit->type) {
+        case UAST_INT: {
+            const Uast_int* lang_int = uast_int_const_unwrap(lit);
+            *result = ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(
+                ulang_type_int_new(lang_int->pos, lang_int->data, 0)
+            ));
+            return EXPR_TO_ULANG_TYPE_NORMAL;
+        }
+        case UAST_VOID:
+            // TODO: make expected success case for void being used as generic arg
+            fallthrough;
+        case UAST_FLOAT:
+            fallthrough;
+        case UAST_STRING:
+            msg_todo("interpreting this expression as a type", uast_literal_get_pos(lit));
+            return EXPR_TO_ULANG_TYPE_ERROR;
+    }
+    unreachable("");
+}
+
 static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, int16_t* pointer_depth, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
@@ -212,23 +233,17 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_LITERAL: {
-            const Uast_literal* lit = uast_literal_const_unwrap(expr);
-            if (lit->type != UAST_INT) {
-                msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-                return EXPR_TO_ULANG_TYPE_ERROR;
-            }
-            const Uast_int* lang_int = uast_int_const_unwrap(lit);
-            *result = ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(
-                ulang_type_int_new(lang_int->pos, lang_int->data, 0)
-            ));
-            return EXPR_TO_ULANG_TYPE_NORMAL;
+            return uast_literal_to_ulang_type_internal(result, uast_literal_const_unwrap(expr));
         }
         case UAST_FUNCTION_CALL:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
-        case UAST_STRUCT_LITERAL:
+        case UAST_STRUCT_LITERAL: {
+            *result = ulang_type_struct_new()
+
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
-            return EXPR_TO_ULANG_TYPE_ERROR;
+            return EXPR_TO_ULANG_TYPE_NORMAL;
+        }
         case UAST_ARRAY_LITERAL:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
