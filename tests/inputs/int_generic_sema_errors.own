@@ -15,11 +15,10 @@ fn print_max_incorrect(token Token(<max_cap>)) {
 
 fn main() i32 {
     let eight i32 = 8
-    let token1 Token(<eight>) = .num(7)
 
+    let token1 Token(<eight>) = .num(7)
     let token2 Token(<8>) = .num(7)
     print_max(<9>)(token2)
-    print_max(<eight>)(token2)
     print_max_incorrect(token2)
 
     let token_incorrect Token_incorrect(<8>)

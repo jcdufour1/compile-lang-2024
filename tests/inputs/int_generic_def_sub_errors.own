@@ -1,0 +1,18 @@
+type io import = std.io
+
+type Token enum(<max_cap ''i32>){
+    num i32
+}
+
+fn print_max(<max_cap ''i32>)(token Token(<max_cap>)) {
+    io.print_int(max_cap)
+}
+
+fn main() i32 {
+    let eight i32 = 8
+
+    print_max(<eight>)(token2)
+
+    return 0
+}
+
