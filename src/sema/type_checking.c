@@ -1243,6 +1243,7 @@ bool try_set_struct_literal_member_types_simplify(
     Uast_variable_def_vec memb_defs
 ) {
     for (size_t idx = 0; idx < membs->info.count; idx++) {
+        // TODO: print error message here for membs having too many args
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);
         Uast_expr** memb = vec_at_ref(membs, idx);
         if (uast_expr_is_designator(*memb)) {

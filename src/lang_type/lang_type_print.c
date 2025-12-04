@@ -134,7 +134,8 @@ static void extend_lang_type_const_expr_to_string(String* string, Lang_type_cons
             string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
             return;
         case LANG_TYPE_STRUCT_LIT:
-            todo();
+            string_extend_strv(&a_temp, string, uast_struct_literal_print_internal(lang_type_struct_lit_const_unwrap(lang_type).lit, 0));
+            return;
     }
     unreachable("");
 }

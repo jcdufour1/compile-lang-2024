@@ -702,7 +702,14 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
-            Ir_name array_name = name_to_ir_name(serialize_ulang_type(MOD_PATH_ARRAYS, lang_type_to_ulang_type(lang_type), true));
+            Ir_name array_name = name_to_ir_name(serialize_ulang_type(
+                MOD_PATH_ARRAYS,
+                lang_type_to_ulang_type(lang_type),
+                true,
+                false/*TODO*/,
+                (Name) {0},
+                0
+            ));
 
             Ir* array_def_ = NULL;
             if (ir_lookup(&array_def_, array_name)) {

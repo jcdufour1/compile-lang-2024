@@ -142,7 +142,7 @@ static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, co
         case UAST_MOD_ALIAS:
             return false;
         case UAST_LANG_DEF:
-            todo();
+            return false;
         case UAST_BUILTIN_DEF:
             return false;
         case UAST_LABEL:

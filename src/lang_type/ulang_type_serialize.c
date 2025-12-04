@@ -2,6 +2,9 @@
 #include <ulang_type.h>
 #include <name.h>
 #include <uast_expr_to_ulang_type.h>
+#include <type_checking.h>
+
+#define poison name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
 
 Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
     Name temp = {0};
@@ -26,7 +29,14 @@ Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos
 Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool include_scope) {
     String name = {0};
     extend_name(NAME_LOG, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
-    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type, include_scope)));
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+        mod_path,
+        *ulang_type.return_type,
+        include_scope,
+        false/*TODO*/,
+        (Name) {0},
+        0
+    )));
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
@@ -35,24 +45,70 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
         mod_path,
         *ulang_type.item_type,
-        include_scope
+        include_scope,
+        false/*TODO*/,
+        (Name) {0},
+        0
     )));
 
     Ulang_type count = {0};
     if (!uast_expr_to_ulang_type(&count, ulang_type.count)) {
         return util_literal_name_new_poison();
     }
-    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, count, include_scope)));
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+        mod_path,
+        count,
+        include_scope,
+        false/*TODO*/,
+        (Name) {0},
+        0
+    )));
 
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
-Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_type, bool include_scope) {
+Name serialize_ulang_type_const_expr(
+    Strv mod_path,
+    Ulang_type_const_expr ulang_type,
+    bool include_scope,
+    bool is_parent_name,
+    Name parent_name,
+    size_t parent_idx
+) {
     switch (ulang_type.type) {
         case ULANG_TYPE_INT:
             return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_STRUCT_LIT:
-            return serialize_ulang_type_struct_lit(mod_path, ulang_type_struct_lit_const_unwrap(ulang_type), include_scope);
+            return serialize_ulang_type_struct_lit(
+                mod_path,
+                ulang_type_struct_lit_const_unwrap(ulang_type),
+                include_scope,
+                is_parent_name,
+                parent_name,
+                parent_idx
+            );
+    }
+    unreachable("");
+}
+
+static Name serialize_ulang_type_expr_lit_literal(Strv mod_path, const Uast_literal* lit) {
+    (void) mod_path;
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+
+    switch (lit->type) {
+        case UAST_INT:
+            string_extend_int64_t(&a_main, &name, uast_int_const_unwrap(lit)->data);
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+        case UAST_FLOAT:
+            msg_todo("float literal as generic argument", uast_literal_get_pos(lit));
+            return poison;
+        case UAST_STRING:
+            msg_todo("string literal as generic argument", uast_literal_get_pos(lit));
+            return poison;
+        case UAST_VOID:
+            msg_todo("void literal as generic argument", uast_literal_get_pos(lit));
+            return poison;
     }
     unreachable("");
 }
@@ -60,7 +116,7 @@ Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_
 static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_LITERAL:
-            todo();
+            return serialize_ulang_type_expr_lit_literal(mod_path, uast_literal_const_unwrap(expr));
         case UAST_SYMBOL:
             todo();
         case UAST_STRUCT_LITERAL:
@@ -111,21 +167,74 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
     //return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
-Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type, bool include_scope) {
+Name serialize_ulang_type_struct_lit(
+    Strv mod_path,
+    Ulang_type_struct_lit ulang_type,
+    bool include_scope,
+    bool is_parent_info,
+    Name parent_name,
+    size_t parent_idx
+) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "_struct");
     string_extend_size_t(&a_main, &name, ulang_type.lit->members.info.count);
 
-    todo();
-    //try_set_struct_literal_member_types_simplify(ulang_type.lit->members, );
+    if (!is_parent_info) {
+        msg_todo("", ulang_type.pos);
+        return poison;
+    }
+    Uast_def* parent_def = NULL;
+    if (!usymbol_lookup(&parent_def, parent_name)) {
+        todo();
+    }
+    //if (parent_def->type != UAST_STRUCT_DEF) {
+    //    msg_todo("actual error message for this: def of this is not a struct", uast_def_get_pos(parent_def));
+    //    msg(DIAG_NOTE, ulang_type.pos, "\n");
+    //    return poison;
+    //}
+    log(LOG_DEBUG, FMT"\n", uast_def_print(parent_def));
+
+    Ustruct_def_base def_base = {0};
+    if (!try_uast_def_get_struct_def_base(&def_base, parent_def)) {
+        msg_todo("", ulang_type.pos);
+        msg_todo("", uast_def_get_pos(parent_def));
+        return poison;
+    }
+    assert(name_is_equal(parent_name, uast_def_get_name(parent_def)));
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, parent_name));
+    log(LOG_DEBUG, "%zu\n", parent_idx);
+    Uast_generic_param* gen_param = vec_at(def_base.generics, parent_idx);
+    if (!gen_param->is_expr) {
+        todo();
+    }
+    log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
+    Ulang_type memb_def_type = gen_param->expr_lang_type;
+    if (memb_def_type.type != ULANG_TYPE_REGULAR) {
+        todo();
+    }
+    Name memb_def_name = {0};
+    if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, ulang_type.pos/*TODO*/)) {
+        return poison;
+    }
+    Uast_def* memb_def = NULL;
+    if (!usymbol_lookup(&memb_def, memb_def_name)) {
+        todo();
+    }
+    if (memb_def->type != UAST_STRUCT_DEF) {
+        todo();
+    }
+    if (!try_set_struct_literal_member_types_simplify(&ulang_type.lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
+        todo();
+    }
 
     vec_foreach(idx, Uast_expr*, memb, ulang_type.lit->members) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type_expr_lit(mod_path, memb)));
+        string_extend_strv(
+            &a_main,
+            &name,
+            serialize_name(serialize_ulang_type_expr_lit(mod_path, memb))
+        );
     }
-    log(LOG_DEBUG, FMT"\n", string_print(name));
-    (void) mod_path;
-    (void) include_scope;
-    todo();
+
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
@@ -142,7 +251,14 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
         Ulang_type curr = vec_at(ulang_type.ulang_types, idx);
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, curr, include_scope)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+            mod_path,
+            curr,
+            include_scope,
+            false/*TODO*/,
+            (Name) {0},
+            0
+        )));
     }
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0, (Attrs) {0});
 }
@@ -162,12 +278,26 @@ Name serialize_ulang_type_removed(Strv mod_path) {
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {
     String name = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, vec_at(vec, idx), include_scope)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(
+            mod_path,
+            vec_at(vec, idx),
+            include_scope,
+            false/*TODO*/,
+            (Name) {0},
+            0
+        )));
     }
     return string_to_strv(name);
 }
 
-Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_scope) {
+Name serialize_ulang_type(
+    Strv mod_path,
+    Ulang_type ulang_type,
+    bool include_scope,
+    bool is_parent_name,
+    Name parent_name,
+    size_t parent_idx
+) {
     switch (ulang_type.type) {
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type), include_scope);
@@ -185,12 +315,23 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             if (!uast_expr_to_ulang_type(&inner, ulang_type_expr_const_unwrap(ulang_type).expr)) {
                 return util_literal_name_new_poison();
             }
-            return serialize_ulang_type(mod_path, inner, include_scope);
+            return serialize_ulang_type(
+                mod_path,
+                inner,
+                include_scope,
+                false/*TODO*/,
+                (Name) {0},
+                0
+            );
         }
         case ULANG_TYPE_CONST_EXPR:
             return serialize_ulang_type_const_expr(
                 mod_path,
-                ulang_type_const_expr_const_unwrap(ulang_type), include_scope
+                ulang_type_const_expr_const_unwrap(ulang_type),
+                include_scope,
+                is_parent_name,
+                parent_name,
+                parent_idx
             );
     }
     unreachable("");
