@@ -51,10 +51,7 @@ bool ulang_type_array_is_equal(Ulang_type_array a, Ulang_type_array b) {
 }
 
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
-    if (!try_set_struct_literal_member_types_simplify(&ulang_type.lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
-        todo();
-    }
-
+    todo();
 }
 
 bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b) {
