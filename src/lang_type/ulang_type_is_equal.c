@@ -51,6 +51,8 @@ bool ulang_type_array_is_equal(Ulang_type_array a, Ulang_type_array b) {
 }
 
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
+    (void) a;
+    (void) b;
     todo();
 }
 

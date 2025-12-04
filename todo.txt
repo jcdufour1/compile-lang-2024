@@ -117,6 +117,8 @@ for generics:
 - remove Lang_type_atom and Ulang_type_atom
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - expected success case for nested struct literals used in generic arg
+- use _Generic to make printing more concise?
+- use _Generic to make wrapping more concise?
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

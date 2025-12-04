@@ -43,7 +43,7 @@ static void add_builtin_defs(void) {
     add_builtin_def(sv("usize"));
 }
 
-#define do_pass(pass_fn, sym_log_fn) \
+#define do_pass_ex(pass_fn, sym_log_fn, sym_log_dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
@@ -56,7 +56,7 @@ static void add_builtin_defs(void) {
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+            sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
@@ -64,7 +64,11 @@ static void add_builtin_defs(void) {
         arena_reset(&a_pass);\
     } while (0)
 
-#define do_pass_status(pass_fn, sym_log_fn) \
+// TODO: remove this macro, just use do_pass_ex?
+#define do_pass(pass_fn, sym_log_fn) \
+    do_pass_ex(pass_fn, sym_log_fn, stderr)
+
+#define do_pass_status(pass_fn, sym_log_fn, dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         bool status = pass_fn(); \
@@ -79,7 +83,7 @@ static void add_builtin_defs(void) {
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+            sym_log_fn(dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
@@ -107,9 +111,10 @@ void compile_file_to_ir(void) {
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
     // generate ir from file(s)
-    do_pass_status(parse, usymbol_log_level);
-    do_pass(expand_using, symbol_log_level);
-    do_pass(expand_def, symbol_log_level);
+    do_pass_status(parse, usymbol_log_level, stderr);
+    do_pass_ex(expand_using, usymbol_log_level, stderr);
+    do_pass_ex(expand_def, usymbol_log_level, stderr);
+    //log(LOG_DEBUG, FMT"\n", 
     do_pass(try_set_types, symbol_log_level);
     do_pass(add_load_and_store, ir_log_level);
 
