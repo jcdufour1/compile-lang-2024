@@ -1,4 +1,4 @@
-compile::stdout 25
+compile::stdout 29
 8
 8
 903
@@ -24,6 +24,10 @@ bye
 9.300000
 9.300000
 9.300000
+this is a string
+this is a string
+this is a string
+this is a string
 
 compile::stderr 0
 

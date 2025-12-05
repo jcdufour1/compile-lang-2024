@@ -11,6 +11,9 @@ static void extend_lang_type_const_expr_tag_to_string(String* buf, Lang_type_con
         case LANG_TYPE_STRUCT_LIT:
             string_extend_cstr(&a_temp, buf, "struct_lit");
             return;
+        case LANG_TYPE_STRING_LIT:
+            string_extend_cstr(&a_temp, buf, "string_lit");
+            return;
         case LANG_TYPE_FN_LIT:
             string_extend_cstr(&a_temp, buf, "fn");
             return;
@@ -141,6 +144,9 @@ static void extend_lang_type_const_expr_to_string(String* string, Lang_type_cons
             return;
         case LANG_TYPE_FLOAT_LIT:
             string_extend_double(&a_temp, string, lang_type_float_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_STRING_LIT:
+            serialize_strv_actual(string, lang_type_string_lit_const_unwrap(lang_type).data);
             return;
         case LANG_TYPE_STRUCT_LIT:
             // TODO: this looks ugly

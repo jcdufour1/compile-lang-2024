@@ -72,6 +72,8 @@ Ir_name name_to_ir_name(Name name);
 
 void extend_name_ir(String* buf, Name name);
 
+void serialize_strv_actual(String* buf, Strv strv);
+
 void serialize_strv(String* buf, Strv strv);
 
 Strv serialize_name_symbol_table(Arena* arena, Name name);

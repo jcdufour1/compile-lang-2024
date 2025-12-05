@@ -113,6 +113,8 @@ static inline bool lang_type_const_expr_is_equal(Lang_type_const_expr a, Lang_ty
     switch (a.type) {
         case LANG_TYPE_INT:
             return lang_type_int_const_unwrap(a).data == lang_type_int_const_unwrap(b).data;
+        case LANG_TYPE_STRING_LIT:
+            return strv_is_equal(lang_type_string_lit_const_unwrap(a).data, lang_type_string_lit_const_unwrap(b).data);
         case LANG_TYPE_STRUCT_LIT:
             return lang_type_struct_lit_const_unwrap(a).lit == lang_type_struct_lit_const_unwrap(b).lit;
         case LANG_TYPE_FN_LIT:

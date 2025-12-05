@@ -164,6 +164,8 @@ bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_ex
             return ulang_type_int_const_unwrap(a).data == ulang_type_int_const_unwrap(b).data;
         case ULANG_TYPE_FLOAT_LIT:
             return ulang_type_float_lit_const_unwrap(a).data == ulang_type_float_lit_const_unwrap(b).data;
+        case ULANG_TYPE_STRING_LIT:
+            return strv_is_equal(ulang_type_string_lit_const_unwrap(a).data, ulang_type_string_lit_const_unwrap(b).data);
         case ULANG_TYPE_STRUCT_LIT:
             return ulang_type_struct_lit_is_equal(
                 ulang_type_struct_lit_const_unwrap(a),

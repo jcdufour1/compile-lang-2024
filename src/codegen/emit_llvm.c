@@ -8,7 +8,6 @@
 #include <ir_utils.h>
 #include <errno.h>
 #include <tast_serialize.h>
-#include <lang_type_serialize.h>
 #include <lang_type_print.h>
 #include <symbol_iter.h>
 #include <codegen_common.h>

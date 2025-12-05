@@ -127,6 +127,26 @@ void extend_name_c(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
 
+// TODO: improve naming of serialize_strv_actual and serialize_strv
+void serialize_strv_actual(String* buf, Strv strv) {
+    string_extend_cstr(&a_main, buf, "_");
+    string_extend_size_t(&a_main, buf, strv.count);
+    string_extend_cstr(&a_main, buf, "_");
+    // TODO: refactor this for loop into a separate function
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        char curr = strv.str[idx];
+
+        if (isalnum(curr)) {
+            vec_append(&a_main, buf, curr);
+        } else if (curr == '_') {
+            string_extend_cstr(&a_main, buf, "__");
+        } else {
+            string_extend_f(&a_main, buf, "_%02x", curr);
+        }
+    }
+    string_extend_cstr(&a_main, buf, "_");
+}
+
 void serialize_strv(String* buf, Strv strv) {
     string_extend_cstr(&a_main, buf, "_");
     string_extend_size_t(&a_main, buf, strv.count);

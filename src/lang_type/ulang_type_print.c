@@ -59,6 +59,10 @@ static void string_extend_ulang_type_const_expr(String* string, Ulang_type_const
             string_extend_cstr(&a_main, string, "float ");
             string_extend_strv(&a_main, string, serialize_double(ulang_type_float_lit_const_unwrap(lang_type).data));
             return;
+        case ULANG_TYPE_STRING_LIT:
+            string_extend_cstr(&a_main, string, "string ");
+            serialize_strv_actual(string, ulang_type_string_lit_const_unwrap(lang_type).data);
+            return;
         case ULANG_TYPE_STRUCT_LIT:
             string_extend_cstr(&a_main, string, "struct ");
             string_extend_strv(&a_main, string, uast_struct_literal_print_internal(

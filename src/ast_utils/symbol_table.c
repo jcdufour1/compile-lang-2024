@@ -12,7 +12,6 @@
 #include <tast_utils.h>
 #include <ir_utils.h>
 #include <tast_serialize.h>
-#include <lang_type_serialize.h>
 #include <symbol_log.h>
 
 #define SYM_TBL_DEFAULT_CAPACITY 1

@@ -583,6 +583,12 @@ GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_p
                 ulang_type_float_lit_const_unwrap(gen_arg).data
             )));
             return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_STRING_LIT:
+            *new_expr = uast_literal_wrap(uast_string_wrap(uast_string_new(
+                name_pos,
+                ulang_type_string_lit_const_unwrap(gen_arg).data
+            )));
+            return GEN_SUB_NAME_NEW_INT;
         case ULANG_TYPE_STRUCT_LIT:
             *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(
                 ulang_type_struct_lit_const_unwrap(gen_arg).lit,

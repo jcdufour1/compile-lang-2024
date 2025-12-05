@@ -174,10 +174,14 @@ static EXPR_TO_ULANG_TYPE uast_literal_to_ulang_type_internal(Ulang_type* result
             ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
+        case UAST_STRING: {
+            const Uast_string* string = uast_string_const_unwrap(lit);
+            *result = ulang_type_const_expr_const_wrap(ulang_type_string_lit_const_wrap(
+                ulang_type_string_lit_new(string->pos, string->data, 0)
+            ));
+            return EXPR_TO_ULANG_TYPE_NORMAL;
+        }
         case UAST_VOID:
-            // TODO: make expected success case for void being used as generic arg
-            fallthrough;
-        case UAST_STRING:
             msg_todo("interpreting this expression as a type", uast_literal_get_pos(lit));
             return EXPR_TO_ULANG_TYPE_ERROR;
     }

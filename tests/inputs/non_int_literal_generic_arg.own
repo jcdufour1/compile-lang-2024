@@ -91,9 +91,18 @@ type Float struct(<float_value ''f32>) {
     num i32
 }
 
+type String1 struct(<str_value ''Str>) {
+    num i32
+}
+
 fn float_print(<float_val>)(float Float(<float_val>)) {
     io.print_float(float_val)
     io.print_float(float.float_value)
+}
+
+fn string_print(<str_val>)(str String1(<str_val>)) {
+    io.print_str(str_val)
+    io.print_str(str.str_value)
 }
 
 fn float_tests() {
@@ -106,10 +115,17 @@ fn float_tests() {
     float_print(float2)
 }
 
+fn string_tests() {
+    let string String1(<"this is a string">) = {0}
+    string_print(<"this is a string">)(string)
+    string_print(string)
+}
+
 fn main() i32 {
     struct_literal_tests()
     symbol_tests()
     float_tests()
+    string_tests()
 
     return 0
 }

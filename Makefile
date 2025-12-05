@@ -72,7 +72,6 @@ OBJS=\
 	 ${BUILD_DIR}/util/cfg.o \
 	 ${BUILD_DIR}/util/newstring.o \
 	 ${BUILD_DIR}/error_msg.o \
-	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_is_equal.o \
@@ -244,9 +243,6 @@ ${BUILD_DIR}/ast_utils/sizeof.o: ${DEP_COMMON} src/ast_utils/sizeof.c
 
 ${BUILD_DIR}/ast_utils/symbol_table.o: ${DEP_COMMON} src/ast_utils/symbol_table.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_table.o src/ast_utils/symbol_table.c
-
-${BUILD_DIR}/lang_type/lang_type_serialize.o: ${DEP_COMMON} src/lang_type/lang_type_serialize.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_serialize.o src/lang_type/lang_type_serialize.c
 
 ${BUILD_DIR}/lang_type/ulang_type_serialize.o: ${DEP_COMMON} src/lang_type/ulang_type_serialize.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_serialize.o src/lang_type/ulang_type_serialize.c
