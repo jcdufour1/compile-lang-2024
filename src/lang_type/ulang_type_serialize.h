@@ -26,6 +26,8 @@ Name serialize_ulang_type(
 
 Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool include_scope);
 
+Name serialize_ulang_type_float_lit(Strv mod_path, Ulang_type_float_lit ulang_type, bool include_scope);
+
 Name serialize_ulang_type_struct_lit(
     Strv mod_path,
     Ulang_type_struct_lit ulang_type,

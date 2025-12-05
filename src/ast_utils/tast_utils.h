@@ -117,6 +117,8 @@ static inline bool lang_type_const_expr_is_equal(Lang_type_const_expr a, Lang_ty
             return lang_type_struct_lit_const_unwrap(a).lit == lang_type_struct_lit_const_unwrap(b).lit;
         case LANG_TYPE_FN_LIT:
             return name_is_equal(lang_type_fn_lit_const_unwrap(a).name, lang_type_fn_lit_const_unwrap(b).name);
+        case LANG_TYPE_FLOAT_LIT:
+            return lang_type_float_lit_const_unwrap(a).data == lang_type_float_lit_const_unwrap(b).data;
     }
     unreachable("");
 }

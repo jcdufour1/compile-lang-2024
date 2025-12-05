@@ -64,9 +64,29 @@ fn symbol_tests() {
     symbol_print(bye)
 }
 
+type Float struct(<float_value ''f32>) {
+    num i32
+}
+
+fn float_print(<float_val>)(float Float(<float_val>)) {
+    io.print_float(float_val)
+    io.print_float(float.float_value)
+}
+
+fn float_tests() {
+    let float1 Float(<8.9>) = {0}
+    float_print(<8.9>)(float1)
+    float_print(float1)
+
+    let float2 Float(<9.3>) = {0}
+    float_print(<9.3>)(float2)
+    float_print(float2)
+}
+
 fn main() i32 {
     struct_literal_tests()
     symbol_tests()
+    float_tests()
 
     return 0
 }

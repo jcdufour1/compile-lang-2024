@@ -167,10 +167,15 @@ static EXPR_TO_ULANG_TYPE uast_literal_to_ulang_type_internal(Ulang_type* result
             ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
+        case UAST_FLOAT: {
+            const Uast_float* lang_float = uast_float_const_unwrap(lit);
+            *result = ulang_type_const_expr_const_wrap(ulang_type_float_lit_const_wrap(
+                ulang_type_float_lit_new(lang_float->pos, lang_float->data, 0)
+            ));
+            return EXPR_TO_ULANG_TYPE_NORMAL;
+        }
         case UAST_VOID:
             // TODO: make expected success case for void being used as generic arg
-            fallthrough;
-        case UAST_FLOAT:
             fallthrough;
         case UAST_STRING:
             msg_todo("interpreting this expression as a type", uast_literal_get_pos(lit));

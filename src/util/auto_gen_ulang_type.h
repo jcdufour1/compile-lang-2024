@@ -251,6 +251,16 @@ static Ulang_type_type ulang_type_gen_int(const char* prefix) {
     return lit;
 }
 
+static Ulang_type_type ulang_type_gen_float_lit(const char* prefix) {
+    const char* base_name = "float_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "double", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
 static Ulang_type_type ulang_type_gen_struct_lit(const char* prefix) {
     const char* base_name = "struct_lit";
     Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
@@ -295,6 +305,7 @@ static Ulang_type_type ulang_type_gen_const_expr(const char* prefix) {
     Ulang_type_type ulang_type = {.name = ulang_type_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int(base_name)); // TODO: rename int to int_lit for consistancy?
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_struct_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_fn_lit(base_name));
 

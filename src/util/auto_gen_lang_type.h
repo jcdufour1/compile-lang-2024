@@ -176,6 +176,16 @@ static Lang_type_type lang_type_gen_int(const char* prefix) {
     return lit;
 }
 
+static Lang_type_type lang_type_gen_float_lit(const char* prefix) {
+    const char* base_name = "float_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "double", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
 static Lang_type_type lang_type_gen_struct_lit(const char* prefix) {
     const char* base_name = "struct_lit";
     Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -202,6 +212,7 @@ static Lang_type_type lang_type_gen_const_expr(const char* prefix) {
 
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int(base_name)); // TODO: rename lang_type_int to lang_type_gen_int
                                                                             //   and ulang_type_int to ulang_type_gen_int?
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn_lit(base_name));
 

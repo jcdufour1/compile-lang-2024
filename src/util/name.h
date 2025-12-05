@@ -80,6 +80,9 @@ Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name);
 
 Strv serialize_name(Name name);
 
+// TODO: move this function?
+Strv serialize_double(double num);
+
 Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name);
 
 Strv name_print_internal(NAME_MODE mode, bool serialize, Name name);

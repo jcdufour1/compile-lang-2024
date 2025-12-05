@@ -217,6 +217,33 @@ Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     return serialize_name_symbol_table(arena, *(Name*)&name);
 }
 
+Strv serialize_double(double num) {
+    String buf = {0};
+
+    String temp = {0};
+    string_extend_double(&a_temp, &temp, num);
+    size_t idx_decimal = 0;
+    bool did_find_dec = false;
+    vec_foreach(idx, char, curr, temp) {
+        idx_decimal = idx;
+        if (curr == '.') {
+            did_find_dec = true;
+            break;
+        }
+    }
+    unwrap(did_find_dec);
+
+    string_extend_f(
+        &a_main,
+        &buf,
+        FMT"_"FMT,
+        strv_print(string_slice(temp, 0, idx_decimal)),
+        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
+    );
+
+    return string_to_strv(buf);
+}
+
 Strv serialize_name(Name name) {
     String buf = {0};
 

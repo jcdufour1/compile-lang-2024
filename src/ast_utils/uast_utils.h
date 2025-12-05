@@ -212,6 +212,11 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                     *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
+                case ULANG_TYPE_FLOAT_LIT: {
+                    Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(const_expr);
+                    *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(dest_pos, lit.data)));
+                    return UAST_GET_MEMB_DEF_EXPR;
+                }
                 case ULANG_TYPE_STRUCT_LIT: {
                     Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
                     *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(

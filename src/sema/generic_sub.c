@@ -572,7 +572,16 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
 GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_pos, Ulang_type_const_expr gen_arg) {
     switch (gen_arg.type) {
         case ULANG_TYPE_INT:
-            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data)));
+            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(
+                name_pos,
+                ulang_type_int_const_unwrap(gen_arg).data
+            )));
+            return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_FLOAT_LIT:
+            *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(
+                name_pos,
+                ulang_type_float_lit_const_unwrap(gen_arg).data
+            )));
             return GEN_SUB_NAME_NEW_INT;
         case ULANG_TYPE_STRUCT_LIT:
             *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(

@@ -1,4 +1,4 @@
-compile::stdout 14
+compile::stdout 22
 8
 8
 903
@@ -13,6 +13,14 @@ bye
 bye
 bye
 bye
+8.900000
+8.900000
+8.900000
+8.900000
+9.300000
+9.300000
+9.300000
+9.300000
 
 compile::stderr 0
 

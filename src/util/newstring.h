@@ -157,6 +157,12 @@ static inline const char* string_to_cstr(Arena* arena, String string) {
     return strv_dup(arena, string_to_strv(string));
 }
 
+static inline Strv string_slice(String string, size_t start, size_t count) {
+    unwrap(start < string.info.count && "out of bounds");
+    unwrap(start + count <= string.info.count && "out of bounds");
+    return (Strv) {.str = string.buf + start, .count = count};
+}
+
 __attribute__((format (printf, 3, 4)))
 void string_extend_f(Arena* arena, String* string, const char* format, ...);
 

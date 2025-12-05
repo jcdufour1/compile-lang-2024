@@ -44,6 +44,16 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
             ));
             return true;
         }
+        case ULANG_TYPE_FLOAT_LIT: {
+            Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_const_expr_const_wrap(lang_type_float_lit_const_wrap(lang_type_float_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+            return true;
+        }
     }
     unreachable("");
 }
@@ -152,6 +162,14 @@ Ulang_type lang_type_const_expr_to_ulang_type(Lang_type_const_expr lang_type) {
             // TODO: rename LANG_TYPE_INT to LANG_TYPE_INT_LIT
             Lang_type_int lit = lang_type_int_const_unwrap(lang_type);
             return ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(ulang_type_int_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+        }
+        case LANG_TYPE_FLOAT_LIT: {
+            Lang_type_float_lit lit = lang_type_float_lit_const_unwrap(lang_type);
+            return ulang_type_const_expr_const_wrap(ulang_type_float_lit_const_wrap(ulang_type_float_lit_new(
                 lit.pos,
                 lit.data,
                 lit.pointer_depth

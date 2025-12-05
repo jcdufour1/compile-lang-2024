@@ -78,6 +78,8 @@ Name serialize_ulang_type_const_expr(
     switch (ulang_type.type) {
         case ULANG_TYPE_INT:
             return serialize_ulang_type_int(mod_path, ulang_type_int_const_unwrap(ulang_type), include_scope);
+        case ULANG_TYPE_FLOAT_LIT:
+            return serialize_ulang_type_float_lit(mod_path, ulang_type_float_lit_const_unwrap(ulang_type), include_scope);
         case ULANG_TYPE_STRUCT_LIT:
             return serialize_ulang_type_struct_lit(
                 mod_path,
@@ -268,6 +270,15 @@ Name serialize_ulang_type_int(Strv mod_path, Ulang_type_int ulang_type, bool inc
     String name = {0};
     string_extend_cstr(&a_main, &name, "_");
     string_extend_int64_t(&a_main, &name, ulang_type.data);
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
+Name serialize_ulang_type_float_lit(Strv mod_path, Ulang_type_float_lit ulang_type, bool include_scope) {
+    (void) mod_path;
+    (void) include_scope;
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_strv(&a_main, &name, serialize_double(ulang_type.data));
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 

@@ -14,6 +14,9 @@ static void extend_lang_type_const_expr_tag_to_string(String* buf, Lang_type_con
         case LANG_TYPE_FN_LIT:
             string_extend_cstr(&a_temp, buf, "fn");
             return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_cstr(&a_temp, buf, "float");
+            return;
     }
     unreachable("");
 }
@@ -135,6 +138,9 @@ static void extend_lang_type_const_expr_to_string(String* string, Lang_type_cons
     switch (lang_type.type) {
         case LANG_TYPE_INT:
             string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_double(&a_temp, string, lang_type_float_lit_const_unwrap(lang_type).data);
             return;
         case LANG_TYPE_STRUCT_LIT:
             // TODO: this looks ugly
