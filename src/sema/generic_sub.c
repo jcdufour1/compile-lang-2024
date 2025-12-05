@@ -582,8 +582,11 @@ GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_p
                 name_pos
             )); // clone
             return GEN_SUB_NAME_NEW_INT;
-        case ULANG_TYPE_FN_LIT:
-            todo();
+        case ULANG_TYPE_FN_LIT: {
+            Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(gen_arg);
+            *new_expr = uast_symbol_wrap(uast_symbol_new(lit.pos, lit.name));
+            return GEN_SUB_NAME_NEW_INT; // TODO: rename GEN_SUB_NAME_NEW_INT
+        }
     }
     unreachable("");
 }

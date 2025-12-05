@@ -20,16 +20,19 @@ bool ulang_type_tuple_is_equal(Ulang_type_tuple a, Ulang_type_tuple b) {
 }
 
 bool ulang_type_fn_is_equal(Ulang_type_fn a, Ulang_type_fn b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
     if (!ulang_type_tuple_is_equal(a.params, b.params)) {
         return false;
     }
-    if (!ulang_type_is_equal(*a.return_type, *b.return_type)) {
-        return false;
-    }
-    return a.pointer_depth == b.pointer_depth;
+    return ulang_type_is_equal(*a.return_type, *b.return_type);
 }
 
 bool ulang_type_array_is_equal(Ulang_type_array a, Ulang_type_array b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
     if (!ulang_type_is_equal(*a.item_type, *b.item_type)) {
         return false;
     }
@@ -70,6 +73,9 @@ static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) 
 }
 
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
     if (a.lit->members.info.count != b.lit->members.info.count) {
         return false;
     }
@@ -133,6 +139,13 @@ bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_l
     return true;
 }
 
+bool ulang_type_fn_lit_is_equal(Ulang_type_fn_lit a, Ulang_type_fn_lit b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
+    return name_is_equal(a.name, b.name);
+}
+
 bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b) {
     if (a.type != b.type) {
         return false;
@@ -147,7 +160,10 @@ bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_ex
                 ulang_type_struct_lit_const_unwrap(b)
             );
         case ULANG_TYPE_FN_LIT:
-            todo();
+            return ulang_type_fn_lit_is_equal(
+                ulang_type_fn_lit_const_unwrap(a),
+                ulang_type_fn_lit_const_unwrap(b)
+            );
     }
     unreachable("");
 }

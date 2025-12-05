@@ -219,8 +219,13 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                     )); // clone
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
-                case ULANG_TYPE_FN_LIT:
-                    todo();
+                case ULANG_TYPE_FN_LIT: {
+                    Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(const_expr);
+                    *new_expr = uast_symbol_wrap(uast_symbol_new(
+                        lit.pos, lit.name
+                    )); // clone
+                    return UAST_GET_MEMB_DEF_EXPR;
+                }
             }
 
             msg_todo("this type of expression in this situation", ulang_type_const_expr_get_pos(const_expr));

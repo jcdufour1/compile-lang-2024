@@ -37,6 +37,18 @@ static inline Ulang_type_struct_lit ulang_type_struct_lit_clone(
     );
 }
 
+static inline Ulang_type_fn_lit ulang_type_fn_lit_clone(
+    Ulang_type_fn_lit lang_type,
+    bool use_new_scope,
+    Scope_id new_scope
+) {
+    return ulang_type_fn_lit_new(
+        lang_type.pos,
+        name_clone(lang_type.name, use_new_scope, new_scope),
+        lang_type.pointer_depth
+    );
+}
+
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
     return ulang_type_tuple_new(
         lang_type.pos,
@@ -77,7 +89,11 @@ static inline Ulang_type_const_expr ulang_type_const_expr_clone(
                 new_scope
             ));
         case ULANG_TYPE_FN_LIT:
-            todo();
+            return ulang_type_fn_lit_const_wrap(ulang_type_fn_lit_clone(
+                ulang_type_fn_lit_const_unwrap(lang_type),
+                use_new_scope,
+                new_scope
+            ));
     }
     unreachable("");
 }

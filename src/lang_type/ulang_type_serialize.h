@@ -44,4 +44,13 @@ Name serialize_ulang_type_const_expr(
     size_t parent_idx
 );
 
+Name serialize_ulang_type_fn_lit(
+    Strv mod_path,
+    Ulang_type_fn_lit ulang_type,
+    bool include_scope,
+    bool is_parent_info,
+    Name parent_name,
+    size_t parent_idx
+);
+
 #endif // ULANG_TYPE_SERIALIZE_H

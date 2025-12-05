@@ -88,7 +88,14 @@ Name serialize_ulang_type_const_expr(
                 parent_idx
             );
         case ULANG_TYPE_FN_LIT:
-            todo();
+            return serialize_ulang_type_fn_lit(
+                mod_path,
+                ulang_type_fn_lit_const_unwrap(ulang_type),
+                include_scope,
+                is_parent_name,
+                parent_name,
+                parent_idx
+            );
     }
     unreachable("");
 }
@@ -236,6 +243,21 @@ Name serialize_ulang_type_struct_lit(
             serialize_name(serialize_ulang_type_expr_lit(mod_path, memb))
         );
     }
+
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
+Name serialize_ulang_type_fn_lit(
+    Strv mod_path,
+    Ulang_type_fn_lit ulang_type,
+    bool include_scope,
+    bool is_parent_info,
+    Name parent_name,
+    size_t parent_idx
+) {
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_fn");
+    string_extend_strv(&a_main, &name, serialize_name(ulang_type.name));
 
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }

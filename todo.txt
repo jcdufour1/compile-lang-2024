@@ -122,6 +122,7 @@ for generics:
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
     if Token in general is undefined
+- expected failure case for generic parameter having the same name as top level function
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

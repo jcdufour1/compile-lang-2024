@@ -49,6 +49,28 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     return;
 }
 
+static void string_extend_ulang_type_const_expr(String* string, Ulang_type_const_expr lang_type) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_INT:
+            string_extend_cstr(&a_main, string, "int ");
+            string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
+            return;
+        case ULANG_TYPE_STRUCT_LIT:
+            string_extend_cstr(&a_main, string, "struct ");
+            string_extend_strv(&a_main, string, uast_struct_literal_print_internal(
+                ulang_type_struct_lit_const_unwrap(lang_type).lit,
+                0
+            ));
+            return;
+        case ULANG_TYPE_FN_LIT:
+            string_extend_cstr(&a_main, string, "fn ");
+            extend_name(NAME_LOG, string, ulang_type_fn_lit_const_unwrap(lang_type).name);
+            return;
+    }
+    unreachable("");
+}
+
+// TODO: accept arena argument
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_ARRAY: {
@@ -92,10 +114,8 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             return;
         }
         case ULANG_TYPE_CONST_EXPR: {
-            todo();
-            //string_extend_cstr(&a_main, string, "int ");
-            //string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
-            //return;
+            string_extend_ulang_type_const_expr(string, ulang_type_const_expr_const_unwrap(lang_type));
+            return;
         }
     }
     unreachable("");

@@ -1,0 +1,20 @@
+compile::stdout 14
+8
+8
+903
+903
+hello
+hello
+hello
+hello
+hello
+bye
+bye
+bye
+bye
+bye
+
+compile::stderr 0
+
+compile::return_code 0
+
