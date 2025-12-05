@@ -106,11 +106,11 @@ static Name serialize_ulang_type_expr_lit_literal(Strv mod_path, const Uast_lite
             string_extend_int64_t(&a_main, &name, uast_int_const_unwrap(lit)->data);
             return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case UAST_FLOAT:
-            msg_todo("float literal as generic argument", uast_literal_get_pos(lit));
-            return poison;
+            string_extend_strv(&a_main, &name, serialize_double(uast_float_const_unwrap(lit)->data));
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case UAST_STRING:
-            msg_todo("string literal as generic argument", uast_literal_get_pos(lit));
-            return poison;
+            serialize_strv_actual(&name, uast_string_const_unwrap(lit)->data);
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case UAST_VOID:
             msg_todo("void literal as generic argument", uast_literal_get_pos(lit));
             return poison;

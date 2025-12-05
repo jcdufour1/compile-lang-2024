@@ -48,6 +48,14 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* resul
         }
         case UAST_UNARY: {
             const Uast_unary* unary = uast_unary_const_unwrap(oper);
+            if (unary->token_type == UNARY_UNSAFE_CAST) {
+                if (unary->child->type != UAST_STRUCT_LITERAL) {
+                    msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
+                    return EXPR_TO_ULANG_TYPE_ERROR;
+                }
+                todo();
+            }
+
             if (unary->token_type != UNARY_DEREF) {
                 msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
                 return EXPR_TO_ULANG_TYPE_ERROR;

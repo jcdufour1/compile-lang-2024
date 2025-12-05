@@ -223,16 +223,21 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRUCT_LIT: {
+                    todo();
                     Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
                     *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(
-                        lit.lit, false, 0, lit.pos
+                        lit.lit,
+                        false,
+                        0,
+                        lit.pos
                     )); // clone
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FN_LIT: {
                     Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(const_expr);
                     *new_expr = uast_symbol_wrap(uast_symbol_new(
-                        lit.pos, lit.name
+                        lit.pos,
+                        lit.name
                     )); // clone
                     return UAST_GET_MEMB_DEF_EXPR;
                 }

@@ -377,6 +377,7 @@ static bool expand_def_ulang_type_expr(
                     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, parent_name));
                     log(LOG_DEBUG, "%zu\n", parent_idx);
                     Uast_generic_param* gen_param = vec_at(def_base.generics, parent_idx);
+                    log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
                     if (!gen_param->is_expr) {
                         todo();
                     }
@@ -400,12 +401,24 @@ static bool expand_def_ulang_type_expr(
                     if (!try_set_struct_literal_member_types_simplify(&lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
                         todo();
                     }
+
+                    Uast_struct_def* struct_def = uast_struct_def_unwrap(memb_def);
+                    lang_type.expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                        lit->pos,
+                        lang_type.expr,
+                        UNARY_UNSAFE_CAST,
+                        ulang_type_regular_const_wrap(ulang_type_regular_new(lit->pos, ulang_type_atom_new(
+                            name_to_uname(struct_def->base.name),
+                            0
+                        )))
+                    )));
                 } else if (parent_def->type == UAST_FUNCTION_DEF) {
                     Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);
                     Uast_generic_param* gen_param = vec_at(fun_def->decl->generics, parent_idx);
 
 
 
+                    // TODO: deduplicate below and similar above
                     if (!gen_param->is_expr) {
                         todo();
                     }
@@ -428,6 +441,17 @@ static bool expand_def_ulang_type_expr(
                     if (!try_set_struct_literal_member_types_simplify(&lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
                         todo();
                     }
+
+                    Uast_struct_def* struct_def = uast_struct_def_unwrap(memb_def);
+                    lang_type.expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                        lit->pos,
+                        lang_type.expr,
+                        UNARY_UNSAFE_CAST,
+                        ulang_type_regular_const_wrap(ulang_type_regular_new(lit->pos, ulang_type_atom_new(
+                            name_to_uname(struct_def->base.name),
+                            0
+                        )))
+                    )));
                 } else {
                     todo();
                 }

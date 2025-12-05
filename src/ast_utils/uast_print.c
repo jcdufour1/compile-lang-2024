@@ -36,11 +36,14 @@ Strv uast_unary_print_internal(const Uast_unary* unary, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "unary", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv(&a_temp, &buf, unary_type_to_strv(unary->token_type));
     extend_pos(&buf, unary->pos);
     string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "", indent);
+    string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, unary->lang_type));
 
-    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(unary->child, indent + INDENT_WIDTH));
+    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(unary->child, indent));
 
     return string_to_strv(buf);
 }

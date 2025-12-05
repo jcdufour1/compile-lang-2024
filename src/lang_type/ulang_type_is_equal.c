@@ -67,7 +67,7 @@ static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) 
         case UAST_VOID:
             return true;
         case UAST_FLOAT:
-            todo();
+            return uast_float_const_unwrap(a)->data == uast_float_const_unwrap(b)->data;
     }
     unreachable("");
 }

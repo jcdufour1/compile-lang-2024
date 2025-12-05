@@ -32,6 +32,7 @@ static Uname uname_normalize(Uname name) {
 
 static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
+    assert(base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 

@@ -1244,7 +1244,9 @@ bool try_set_struct_literal_member_types_simplify(
 ) {
     for (size_t idx = 0; idx < membs->info.count; idx++) {
         // TODO: print error message here for membs having too many args
+        log(LOG_DEBUG, "%zu\n", idx);
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);
+        log(LOG_DEBUG, FMT"\n", uast_variable_def_print(memb_def));
         Uast_expr** memb = vec_at_ref(membs, idx);
         if (uast_expr_is_designator(*memb)) {
             // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
@@ -1663,7 +1665,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 lit->pos,
                 "the type of array literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting array literal not yet implemented\n)"
+                "(note: casting array literal not yet implemented)\n"
             );
             status = false;
             goto end;
@@ -1692,8 +1694,9 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 lit->pos,
                 "the type of struct literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting struct literal not yet implemented\n)"
+                "(note: casting struct literal not yet implemented)\n"
             );
+            todo();
             status = false;
             goto end;
         }
