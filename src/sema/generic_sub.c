@@ -582,6 +582,8 @@ GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_p
                 name_pos
             )); // clone
             return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_FN_LIT:
+            todo();
     }
     unreachable("");
 }

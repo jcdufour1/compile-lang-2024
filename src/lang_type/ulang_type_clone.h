@@ -76,6 +76,8 @@ static inline Ulang_type_const_expr ulang_type_const_expr_clone(
                 use_new_scope,
                 new_scope
             ));
+        case ULANG_TYPE_FN_LIT:
+            todo();
     }
     unreachable("");
 }

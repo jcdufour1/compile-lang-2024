@@ -146,6 +146,8 @@ bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_ex
                 ulang_type_struct_lit_const_unwrap(a),
                 ulang_type_struct_lit_const_unwrap(b)
             );
+        case ULANG_TYPE_FN_LIT:
+            todo();
     }
     unreachable("");
 }

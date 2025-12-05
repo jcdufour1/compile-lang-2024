@@ -16,6 +16,7 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
     switch (lang_type.type) {
         case ULANG_TYPE_INT: {
             Ulang_type_int lit = ulang_type_int_const_unwrap(lang_type);
+
             *new_lang_type = lang_type_const_expr_const_wrap(lang_type_int_const_wrap(lang_type_int_new(
                 lit.pos,
                 lit.data,
@@ -35,6 +36,16 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
             ));
             return true;
         }
+        case ULANG_TYPE_FN_LIT:
+            Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_const_expr_const_wrap(lang_type_fn_lit_const_wrap(
+                lang_type_fn_lit_new(
+                    lit.pos,
+                    lit.lit,
+                    lit.pointer_depth
+                )
+            ));
     }
     unreachable("");
 }

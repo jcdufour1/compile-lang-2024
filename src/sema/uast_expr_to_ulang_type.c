@@ -2,6 +2,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <ast_msg.h>
 #include <uast_clone.h>
+#include <ulang_type_clone.h>
 
 typedef enum {
     EXPR_TO_ULANG_TYPE_NORMAL,
@@ -90,9 +91,13 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_internal(Ulang_type* result,
                 unreachable("");
             case UAST_GENERIC_PARAM:
                 break;
-            case UAST_FUNCTION_DEF:
-                msg(DIAG_INVALID_TYPE, sym->pos, "symbol of function definition is not allowed here\n");
-                return EXPR_TO_ULANG_TYPE_ERROR;
+            case UAST_FUNCTION_DEF: {
+                Uast_function_def* fun_def = uast_function_def_unwrap(sym_def);
+                *result = ulang_type_const_expr_const_wrap(ulang_type_fn_lit_const_wrap(
+                    ulang_type_fn_lit_new(sym->pos, fun_def->decl->name, 1)
+                ));
+                return EXPR_TO_ULANG_TYPE_NORMAL;
+            }
             case UAST_VARIABLE_DEF: {
                 if (!env.silent_generic_resol_errors) {
                     msg(DIAG_INVALID_TYPE, sym->pos, "symbol of variable is not allowed here\n");

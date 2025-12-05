@@ -87,6 +87,8 @@ Name serialize_ulang_type_const_expr(
                 parent_name,
                 parent_idx
             );
+        case ULANG_TYPE_FN_LIT:
+            todo();
     }
     unreachable("");
 }
