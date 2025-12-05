@@ -120,6 +120,8 @@ for generics:
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
+- error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
+    if Token in general is undefined
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

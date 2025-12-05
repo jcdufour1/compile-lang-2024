@@ -393,6 +393,7 @@ static bool expand_def_ulang_type_expr(
                     if (!usymbol_lookup(&memb_def, memb_def_name)) {
                         todo();
                     }
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, memb_def_name));
                     if (memb_def->type != UAST_STRUCT_DEF) {
                         todo();
                     }

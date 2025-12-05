@@ -4,7 +4,11 @@ type Alloc struct {
     max_thing i32
 }
 
-type Token enum(<alloc ''Alloc>){
+type Token1 enum(<alloc ''Alloc>) {
+    num i32
+}
+
+type Token2 enum(<max_cap ''i32, alloc ''Alloc>) {
     num i32
 }
 
@@ -12,19 +16,23 @@ fn do_thing_with_alloc(alloc Alloc) {
     io.print_int(alloc.max_thing)
 }
 
-fn print_max(<alloc ''Alloc>)(token Token(<alloc>)) {
+fn print_max1(<alloc ''Alloc>)(token Token1(<alloc>)) {
+    do_thing_with_alloc(alloc)
+}
+
+fn print_max2(<max_cap ''i32, alloc ''Alloc>)(token Token2(<max_cap, alloc>)) {
     do_thing_with_alloc(alloc)
 }
 
 type ALLOC1 def = {.max_thing = 8}
 
 fn main() i32 {
-    let token1 Token(<ALLOC1>) = .num(7)
-    let token2 Token(<{.max_thing = 903}>) = .num(7)
-    print_max(<ALLOC1>)(token1)
-    print_max(token1)
-    print_max(<{.max_thing = 903}>)(token2)
-    print_max(token2)
+    let token1 Token1(<ALLOC1>) = .num(7)
+    let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
+    print_max1(<ALLOC1>)(token1)
+    print_max1(token1)
+    print_max2(<87, {.max_thing = 903}>)(token2)
+    print_max2(token2)
 
     return 0
 }
