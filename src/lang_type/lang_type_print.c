@@ -150,7 +150,7 @@ static void extend_lang_type_const_expr_to_string(String* string, Lang_type_cons
             return;
         case LANG_TYPE_STRUCT_LIT:
             // TODO: this looks ugly
-            string_extend_strv(&a_temp, string, uast_struct_literal_print_internal(lang_type_struct_lit_const_unwrap(lang_type).lit, 0));
+            string_extend_strv(&a_temp, string, uast_expr_print_internal(lang_type_struct_lit_const_unwrap(lang_type).expr, 0));
             return;
         case LANG_TYPE_FN_LIT:
             extend_name(NAME_MSG, string, lang_type_fn_lit_const_unwrap(lang_type).name);

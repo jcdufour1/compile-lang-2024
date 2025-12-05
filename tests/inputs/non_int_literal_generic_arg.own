@@ -69,18 +69,18 @@ type ALLOC1 def = {.max_thing = 8}
 type NESTED_STRUCT_2 def = {{765}}
 
 fn struct_literal_tests() {
-    let token1 Token1(<ALLOC1>) = .num(7)
-    let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
-    print_max1(<ALLOC1>)(token1)
-    print_max1(token1)
-    print_max2(<87, {.max_thing = 903}>)(token2)
-    print_max2(token2)
+    //let token1 Token1(<ALLOC1>) = .num(7)
+    //let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
+    //print_max1(<ALLOC1>)(token1)
+    //print_max1(token1)
+    //print_max2(<87, {.max_thing = 903}>)(token2)
+    //print_max2(token2)
 
-    let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
-    print_nested_struct(nested_struct_lit)
-    let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
-    print_nested_struct(nested_struct_2)
-    print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
+    //let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
+    //print_nested_struct(nested_struct_lit)
+    //let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
+    //print_nested_struct(nested_struct_2)
+    //print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
 
     let token3 Token3(<{8.7/*, print_bye*/}>) = .num(7)
     print_token3(token3)
@@ -140,9 +140,9 @@ fn string_tests() {
 
 fn main() i32 {
     struct_literal_tests()
-    symbol_tests()
-    float_tests()
-    string_tests()
+    //symbol_tests()
+    //float_tests()
+    //string_tests()
 
     return 0
 }

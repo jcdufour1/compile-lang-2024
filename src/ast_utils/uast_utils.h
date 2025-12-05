@@ -223,14 +223,8 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRUCT_LIT: {
-                    todo();
                     Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
-                    *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(
-                        lit.lit,
-                        false,
-                        0,
-                        lit.pos
-                    )); // clone
+                    *new_expr = uast_expr_clone(lit.expr, false, 0, lit.pos); // clone
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FN_LIT: {

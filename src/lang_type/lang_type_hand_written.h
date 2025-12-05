@@ -29,6 +29,9 @@ static inline Lang_type_atom lang_type_atom_new(Name str, int16_t pointer_depth)
 struct Tast_struct_literal_;
 typedef struct Tast_struct_literal_ Tast_struct_literal;
 
+struct Uast_expr_;
+typedef struct Uast_expr_ Uast_expr;
+
 static inline Lang_type_atom lang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth, Scope_id scope_id) {
     return lang_type_atom_new(
         name_new(MOD_PATH_BUILTIN, sv(cstr), (Ulang_type_vec) {0}, scope_id, (Attrs) {0}),

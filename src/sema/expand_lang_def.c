@@ -412,6 +412,8 @@ static bool expand_def_ulang_type_expr(
                             0
                         )))
                     )));
+                    log(LOG_DEBUG, FMT"\n", uast_expr_print(lang_type.expr));
+                    todo();
                 } else if (parent_def->type == UAST_FUNCTION_DEF) {
                     Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);
                     Uast_generic_param* gen_param = vec_at(fun_def->decl->generics, parent_idx);
