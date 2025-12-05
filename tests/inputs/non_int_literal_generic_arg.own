@@ -19,11 +19,12 @@ fn print_max(<alloc ''Alloc>)(token Token(<alloc>)) {
 type ALLOC1 def = {.max_thing = 8}
 
 fn main() i32 {
-    let token Token(<ALLOC1>) = .num(7)
-    //let token Token(<{.max_thing = 8}>)// = .num(7)
-    print_max(<ALLOC1>)(token)
-    print_max(token)
-    //io.print_int(token.max_cap)
+    let token1 Token(<ALLOC1>) = .num(7)
+    let token2 Token(<{.max_thing = 903}>) = .num(7)
+    print_max(<ALLOC1>)(token1)
+    print_max(token1)
+    print_max(<{.max_thing = 903}>)(token2)
+    print_max(token2)
 
     return 0
 }

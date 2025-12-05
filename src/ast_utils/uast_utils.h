@@ -8,6 +8,7 @@
 #include <strv_struct.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
+#include <uast_clone.h>
 
 // TODO: figure out where to put these things
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
@@ -207,12 +208,16 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
             Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(vec_at(base->name.gen_args, idx));
             switch (const_expr.type) {
                 case ULANG_TYPE_INT: {
-                    Ulang_type_int lang_int = ulang_type_int_const_unwrap(const_expr);
-                    *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lang_int.data)));
+                    Ulang_type_int lit = ulang_type_int_const_unwrap(const_expr);
+                    *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRUCT_LIT: {
-                    todo();
+                    Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
+                    *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(
+                        lit.lit, false, 0, lit.pos
+                    )); // clone
+                    return UAST_GET_MEMB_DEF_EXPR;
                 }
             }
 

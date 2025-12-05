@@ -1221,18 +1221,15 @@ static EXPAND_NAME_STATUS expand_def_symbol(
     Uast_expr* rhs
 ) {
     // TODO: avoid setting env.silent_generic_resol_errors to true here?
-    bool old_silent_generic_resol_errors = env.silent_generic_resol_errors;
-    env.silent_generic_resol_errors = true;
+    EXPAND_NAME_STATUS status = expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
+
     Uast_def* def = NULL;
     if (expand_again_lookup(&def, sym->name)) {
         if (!expand_def_def(def, is_rhs, rhs)) {
-            env.silent_generic_resol_errors = old_silent_generic_resol_errors;
-            return false;
+            status = EXPAND_NAME_ERROR;
         }
     }
-    env.silent_generic_resol_errors = old_silent_generic_resol_errors;
-
-    return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
+    return status;
 }
 
 static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr, bool is_rhs, Uast_expr* rhs) {
