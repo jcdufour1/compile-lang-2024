@@ -50,10 +50,87 @@ bool ulang_type_array_is_equal(Ulang_type_array a, Ulang_type_array b) {
     return uast_int_unwrap(a_lit)->data == uast_int_unwrap(b_lit)->data;
 }
 
+// TODO: move this function elsewhere?
+static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) {
+    if (a->type != b->type) {
+        return false;
+    }
+
+    switch (a->type) {
+        case UAST_INT:
+            return uast_int_const_unwrap(a)->data == uast_int_const_unwrap(b)->data;
+        case UAST_STRING:
+            todo();
+        case UAST_VOID:
+            return true;
+        case UAST_FLOAT:
+            todo();
+    }
+    unreachable("");
+}
+
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
-    (void) a;
-    (void) b;
-    todo();
+    if (a.lit->members.info.count != b.lit->members.info.count) {
+        return false;
+    }
+
+    vec_foreach(idx, Uast_expr*, curr_a, a.lit->members) {
+        Uast_expr* curr_b = vec_at(b.lit->members, idx);
+        if (curr_a->type != curr_b->type) {
+            return false;
+        }
+
+        switch (curr_a->type) {
+            case UAST_IF_ELSE_CHAIN:
+                todo();
+            case UAST_BLOCK:
+                todo();
+            case UAST_SWITCH:
+                todo();
+            case UAST_UNKNOWN:
+                todo();
+            case UAST_OPERATOR:
+                todo();
+            case UAST_SYMBOL:
+                todo();
+            case UAST_MEMBER_ACCESS:
+                todo();
+            case UAST_INDEX:
+                todo();
+            case UAST_LITERAL:
+                if (!uast_literal_is_equal(uast_literal_unwrap(curr_a), uast_literal_unwrap(curr_b))) {
+                    return false;
+                }
+                continue;
+            case UAST_FUNCTION_CALL:
+                todo();
+            case UAST_STRUCT_LITERAL:
+                todo();
+            case UAST_ARRAY_LITERAL:
+                todo();
+            case UAST_TUPLE:
+                todo();
+            case UAST_MACRO:
+                todo();
+            case UAST_ENUM_ACCESS:
+                todo();
+            case UAST_ENUM_GET_TAG:
+                todo();
+            case UAST_ORELSE:
+                todo();
+            case UAST_FN:
+                todo();
+            case UAST_QUESTION_MARK:
+                todo();
+            case UAST_UNDERSCORE:
+                todo();
+            case UAST_EXPR_REMOVED:
+                todo();
+        }
+        unreachable("");
+    }
+
+    return true;
 }
 
 bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b) {

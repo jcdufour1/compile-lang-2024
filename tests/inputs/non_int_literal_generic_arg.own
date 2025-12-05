@@ -1,4 +1,4 @@
-//type io import = std.io
+type io import = std.io
 
 type Alloc struct {
     max_thing i32
@@ -8,18 +8,22 @@ type Token enum(<alloc ''Alloc>){
     num i32
 }
 
-//fn print_max(<alloc ''Alloc>)(token Token(<alloc>)) {
-//    io.print_int(alloc)
-//}
-//
-//type ALLOC1 def = {.max_thing = 8}
+fn do_thing_with_alloc(alloc Alloc) {
+    io.print_int(alloc.max_thing)
+}
 
-//fn main() i32 {
-    //let token Token(<ALLOC1>) = .num(7)
-    let token Token(<{.max_thing = 8}>)// = .num(7)
-    ////print_max(<ALLOC1>)(token)
-    ////print_max(token)
-    ////io.print_int(token.max_cap)
+fn print_max(<alloc ''Alloc>)(token Token(<alloc>)) {
+    do_thing_with_alloc(alloc)
+}
 
-    //return 0
-//}
+type ALLOC1 def = {.max_thing = 8}
+
+fn main() i32 {
+    let token Token(<ALLOC1>) = .num(7)
+    //let token Token(<{.max_thing = 8}>)// = .num(7)
+    print_max(<ALLOC1>)(token)
+    print_max(token)
+    //io.print_int(token.max_cap)
+
+    return 0
+}

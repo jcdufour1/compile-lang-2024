@@ -119,6 +119,7 @@ for generics:
 - expected success case for nested struct literals used in generic arg
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
+- make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

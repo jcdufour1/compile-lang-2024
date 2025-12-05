@@ -370,37 +370,64 @@ static bool expand_def_ulang_type_expr(
                 //}
                 log(LOG_DEBUG, FMT"\n", uast_def_print(parent_def));
 
-                Ustruct_def_base def_base = {0};
-                if (!try_uast_def_get_struct_def_base(&def_base, parent_def)) {
-                    todo();
-                    //msg_todo("", ulang_type.pos);
-                    //msg_todo("", uast_def_get_pos(parent_def));
-                    //return poison;
-                }
                 assert(name_is_equal(parent_name, uast_def_get_name(parent_def)));
-                log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, parent_name));
-                log(LOG_DEBUG, "%zu\n", parent_idx);
-                Uast_generic_param* gen_param = vec_at(def_base.generics, parent_idx);
-                if (!gen_param->is_expr) {
-                    todo();
-                }
-                log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
-                Ulang_type memb_def_type = gen_param->expr_lang_type;
-                if (memb_def_type.type != ULANG_TYPE_REGULAR) {
-                    todo();
-                }
-                Name memb_def_name = {0};
-                if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, lang_type.pos/*TODO*/)) {
-                    return false;
-                }
-                Uast_def* memb_def = NULL;
-                if (!usymbol_lookup(&memb_def, memb_def_name)) {
-                    todo();
-                }
-                if (memb_def->type != UAST_STRUCT_DEF) {
-                    todo();
-                }
-                if (!try_set_struct_literal_member_types_simplify(&lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
+
+                Ustruct_def_base def_base = {0};
+                if (try_uast_def_get_struct_def_base(&def_base, parent_def)) {
+                    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, parent_name));
+                    log(LOG_DEBUG, "%zu\n", parent_idx);
+                    Uast_generic_param* gen_param = vec_at(def_base.generics, parent_idx);
+                    if (!gen_param->is_expr) {
+                        todo();
+                    }
+                    log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
+                    Ulang_type memb_def_type = gen_param->expr_lang_type;
+                    if (memb_def_type.type != ULANG_TYPE_REGULAR) {
+                        todo();
+                    }
+                    Name memb_def_name = {0};
+                    if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, lang_type.pos/*TODO*/)) {
+                        return false;
+                    }
+                    Uast_def* memb_def = NULL;
+                    if (!usymbol_lookup(&memb_def, memb_def_name)) {
+                        todo();
+                    }
+                    if (memb_def->type != UAST_STRUCT_DEF) {
+                        todo();
+                    }
+                    if (!try_set_struct_literal_member_types_simplify(&lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
+                        todo();
+                    }
+                } else if (parent_def->type == UAST_FUNCTION_DEF) {
+                    Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);
+                    Uast_generic_param* gen_param = vec_at(fun_def->decl->generics, parent_idx);
+
+
+
+                    if (!gen_param->is_expr) {
+                        todo();
+                    }
+                    log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
+                    Ulang_type memb_def_type = gen_param->expr_lang_type;
+                    if (memb_def_type.type != ULANG_TYPE_REGULAR) {
+                        todo();
+                    }
+                    Name memb_def_name = {0};
+                    if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, lang_type.pos/*TODO*/)) {
+                        return false;
+                    }
+                    Uast_def* memb_def = NULL;
+                    if (!usymbol_lookup(&memb_def, memb_def_name)) {
+                        todo();
+                    }
+                    if (memb_def->type != UAST_STRUCT_DEF) {
+                        todo();
+                    }
+                    if (!try_set_struct_literal_member_types_simplify(&lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
+                        todo();
+                    }
+                } else {
                     todo();
                 }
             }
@@ -1193,12 +1220,18 @@ static EXPAND_NAME_STATUS expand_def_symbol(
     bool is_rhs,
     Uast_expr* rhs
 ) {
+    // TODO: avoid setting env.silent_generic_resol_errors to true here?
+    bool old_silent_generic_resol_errors = env.silent_generic_resol_errors;
+    env.silent_generic_resol_errors = true;
     Uast_def* def = NULL;
     if (expand_again_lookup(&def, sym->name)) {
         if (!expand_def_def(def, is_rhs, rhs)) {
+            env.silent_generic_resol_errors = old_silent_generic_resol_errors;
             return false;
         }
     }
+    env.silent_generic_resol_errors = old_silent_generic_resol_errors;
+
     return expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 }
 
