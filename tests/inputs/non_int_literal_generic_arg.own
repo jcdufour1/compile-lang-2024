@@ -53,6 +53,7 @@ fn print_nested_struct(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_
 }
 
 type ALLOC1 def = {.max_thing = 8}
+type NESTED_STRUCT_2 def = {{765}}
 
 fn struct_literal_tests() {
     let token1 Token1(<ALLOC1>) = .num(7)
@@ -64,6 +65,9 @@ fn struct_literal_tests() {
 
     let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
     print_nested_struct(nested_struct_lit)
+    let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
+    print_nested_struct(nested_struct_2)
+    print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
 }
 
 fn symbol_print(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {

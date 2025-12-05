@@ -199,10 +199,7 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
                     serialize_ulang_type(
                         name.mod_path,
                         vec_at(name.gen_args, idx),
-                        false,
-                        true,
-                        base_name,
-                        idx/*TODO*/
+                        false
                     )
                 )
             );
