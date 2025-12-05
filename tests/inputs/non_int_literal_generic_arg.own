@@ -12,6 +12,14 @@ type Token2 enum(<max_cap ''i32, alloc ''Alloc>) {
     num i32
 }
 
+type NestedAlloc struct {
+    alloc Alloc
+}
+
+type NestedStruct enum(<alloc ''NestedAlloc>) {
+    num i32
+}
+
 type Symbol struct(<print_fn ''fn()void>) {
     num i32
 }
@@ -28,12 +36,20 @@ fn do_thing_with_alloc(alloc Alloc) {
     io.print_int(alloc.max_thing)
 }
 
+fn do_thing_with_nested_alloc(nested_alloc NestedAlloc) {
+    do_thing_with_alloc(nested_alloc.alloc)
+}
+
 fn print_max1(<alloc ''Alloc>)(token Token1(<alloc>)) {
     do_thing_with_alloc(alloc)
 }
 
 fn print_max2(<max_cap ''i32, alloc ''Alloc>)(token Token2(<max_cap, alloc>)) {
     do_thing_with_alloc(alloc)
+}
+
+fn print_nested_struct(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_alloc>)) {
+    do_thing_with_nested_alloc(nested_alloc)
 }
 
 type ALLOC1 def = {.max_thing = 8}
@@ -45,6 +61,9 @@ fn struct_literal_tests() {
     print_max1(token1)
     print_max2(<87, {.max_thing = 903}>)(token2)
     print_max2(token2)
+
+    let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
+    print_nested_struct(nested_struct_lit)
 }
 
 fn symbol_print(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {

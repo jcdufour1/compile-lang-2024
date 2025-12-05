@@ -6,6 +6,8 @@
 
 #define poison name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
 
+static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr);
+
 Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
     Name temp = {0};
     unwrap(name_from_uname(&temp, atom.str, pos));
@@ -102,6 +104,23 @@ Name serialize_ulang_type_const_expr(
     unreachable("");
 }
 
+static Name serialize_ulang_type_expr_lit_struct_literal(Strv mod_path, const Uast_struct_literal* lit) {
+    String name = {0};
+
+    string_extend_cstr(&a_main, &name, "_struct");
+    string_extend_size_t(&a_main, &name, lit->members.info.count);
+
+    vec_foreach(idx, Uast_expr*, memb, lit->members) {
+        string_extend_strv(
+            &a_main,
+            &name,
+            serialize_name(serialize_ulang_type_expr_lit(mod_path, memb))
+        );
+    }
+
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+}
+
 static Name serialize_ulang_type_expr_lit_literal(Strv mod_path, const Uast_literal* lit) {
     (void) mod_path;
     String name = {0};
@@ -131,7 +150,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
         case UAST_SYMBOL:
             todo();
         case UAST_STRUCT_LITERAL:
-            todo();
+            return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(expr));
         case UAST_ARRAY_LITERAL:
             todo();
         case UAST_IF_ELSE_CHAIN:
@@ -186,67 +205,7 @@ Name serialize_ulang_type_struct_lit(
     Name parent_name,
     size_t parent_idx
 ) {
-    String name = {0};
-    string_extend_cstr(&a_main, &name, "_struct");
-    string_extend_size_t(&a_main, &name, ulang_type.lit->members.info.count);
-
-    //if (!is_parent_info) {
-    //    msg_todo("", ulang_type.pos);
-    //    return poison;
-    //}
-    //Uast_def* parent_def = NULL;
-    //if (!usymbol_lookup(&parent_def, parent_name)) {
-    //    todo();
-    //}
-    ////if (parent_def->type != UAST_STRUCT_DEF) {
-    ////    msg_todo("actual error message for this: def of this is not a struct", uast_def_get_pos(parent_def));
-    ////    msg(DIAG_NOTE, ulang_type.pos, "\n");
-    ////    return poison;
-    ////}
-    //log(LOG_DEBUG, FMT"\n", uast_def_print(parent_def));
-
-    //Ustruct_def_base def_base = {0};
-    //if (!try_uast_def_get_struct_def_base(&def_base, parent_def)) {
-    //    msg_todo("", ulang_type.pos);
-    //    msg_todo("", uast_def_get_pos(parent_def));
-    //    return poison;
-    //}
-    //assert(name_is_equal(parent_name, uast_def_get_name(parent_def)));
-    //log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, parent_name));
-    //log(LOG_DEBUG, "%zu\n", parent_idx);
-    //Uast_generic_param* gen_param = vec_at(def_base.generics, parent_idx);
-    //if (!gen_param->is_expr) {
-    //    todo();
-    //}
-    //log(LOG_DEBUG, FMT"\n", uast_generic_param_print(gen_param));
-    //Ulang_type memb_def_type = gen_param->expr_lang_type;
-    //if (memb_def_type.type != ULANG_TYPE_REGULAR) {
-    //    todo();
-    //}
-    //Name memb_def_name = {0};
-    //if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, ulang_type.pos/*TODO*/)) {
-    //    return poison;
-    //}
-    //Uast_def* memb_def = NULL;
-    //if (!usymbol_lookup(&memb_def, memb_def_name)) {
-    //    todo();
-    //}
-    //if (memb_def->type != UAST_STRUCT_DEF) {
-    //    todo();
-    //}
-    //if (!try_set_struct_literal_member_types_simplify(&ulang_type.lit->members, uast_struct_def_unwrap(memb_def)->base.members)) {
-    //    todo();
-    //}
-
-    vec_foreach(idx, Uast_expr*, memb, ulang_type.lit->members) {
-        string_extend_strv(
-            &a_main,
-            &name,
-            serialize_name(serialize_ulang_type_expr_lit(mod_path, memb))
-        );
-    }
-
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return serialize_ulang_type_expr_lit_struct_literal(mod_path, ulang_type.lit);
 }
 
 Name serialize_ulang_type_fn_lit(

@@ -72,16 +72,14 @@ static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) 
     unreachable("");
 }
 
-bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
-    if (a.pointer_depth != b.pointer_depth) {
-        return false;
-    }
-    if (a.lit->members.info.count != b.lit->members.info.count) {
+// TODO: move this function elsewhere?
+static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uast_struct_literal* b) {
+    if (a->members.info.count != b->members.info.count) {
         return false;
     }
 
-    vec_foreach(idx, Uast_expr*, curr_a, a.lit->members) {
-        Uast_expr* curr_b = vec_at(b.lit->members, idx);
+    vec_foreach(idx, Uast_expr*, curr_a, a->members) {
+        Uast_expr* curr_b = vec_at(b->members, idx);
         if (curr_a->type != curr_b->type) {
             return false;
         }
@@ -111,7 +109,10 @@ bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_l
             case UAST_FUNCTION_CALL:
                 todo();
             case UAST_STRUCT_LITERAL:
-                todo();
+                if (!uast_struct_literal_is_equal(uast_struct_literal_unwrap(curr_a), uast_struct_literal_unwrap(curr_b))) {
+                    return false;
+                }
+                continue;
             case UAST_ARRAY_LITERAL:
                 todo();
             case UAST_TUPLE:
@@ -137,6 +138,13 @@ bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_l
     }
 
     return true;
+}
+
+bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
+    return uast_struct_literal_is_equal(a.lit, b.lit);
 }
 
 bool ulang_type_fn_lit_is_equal(Ulang_type_fn_lit a, Ulang_type_fn_lit b) {

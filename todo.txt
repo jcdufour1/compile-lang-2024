@@ -114,11 +114,13 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- remove PrintFormatArg and PrintFormat from std/runtime.own?
 - remove Lang_type_atom and Ulang_type_atom
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - expected success case for nested struct literals used in generic arg
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
+- make max and min "functions" using _Generic
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
     if Token in general is undefined
