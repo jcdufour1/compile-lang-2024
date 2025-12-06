@@ -80,8 +80,8 @@ static inline Ulang_type_array ulang_type_array_clone(Ulang_type_array lang_type
     return ulang_type_array_new(lang_type.pos, arena_dup(&a_main, &new_item_type), lang_type.count, lang_type.pointer_depth);
 }
 
-static inline Ulang_type_const_expr ulang_type_const_expr_clone(
-    Ulang_type_const_expr lang_type,
+static inline Ulang_type_lit ulang_type_lit_clone(
+    Ulang_type_lit lang_type,
     bool use_new_scope,
     Scope_id new_scope
 ) {
@@ -151,9 +151,9 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_sco
             return ulang_type_expr_const_wrap(ulang_type_expr_clone(
                 ulang_type_expr_const_unwrap(lang_type)
             ));
-        case ULANG_TYPE_CONST_EXPR:
-            return ulang_type_const_expr_const_wrap(ulang_type_const_expr_clone(
-                ulang_type_const_expr_const_unwrap(lang_type), use_new_scope, new_scope
+        case ULANG_TYPE_LIT:
+            return ulang_type_lit_const_wrap(ulang_type_lit_clone(
+                ulang_type_lit_const_unwrap(lang_type), use_new_scope, new_scope
             ));
     }
     unreachable("");

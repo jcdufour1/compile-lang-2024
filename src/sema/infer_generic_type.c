@@ -138,7 +138,7 @@ bool infer_generic_type(
                 pos_arg
             );
         }
-        case ULANG_TYPE_CONST_EXPR: {
+        case ULANG_TYPE_LIT: {
             // TODO
             return false;
         }

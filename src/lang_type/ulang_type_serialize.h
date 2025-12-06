@@ -25,7 +25,7 @@ Name serialize_ulang_type_string_lit(Ulang_type_string_lit ulang_type);
 
 Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type);
 
-Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_type);
+Name serialize_ulang_type_lit(Strv mod_path, Ulang_type_lit ulang_type);
 
 Name serialize_ulang_type_fn_lit(Ulang_type_fn_lit ulang_type);
 

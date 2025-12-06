@@ -49,7 +49,7 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     return;
 }
 
-static void string_extend_ulang_type_const_expr(String* string, Ulang_type_const_expr lang_type) {
+static void string_extend_ulang_type_lit(String* string, Ulang_type_lit lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_INT_LIT:
             string_extend_cstr(&a_main, string, "int ");
@@ -121,8 +121,8 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             string_extend_strv(&a_main, string, uast_expr_print_internal(expr.expr, 0));
             return;
         }
-        case ULANG_TYPE_CONST_EXPR: {
-            string_extend_ulang_type_const_expr(string, ulang_type_const_expr_const_unwrap(lang_type));
+        case ULANG_TYPE_LIT: {
+            string_extend_ulang_type_lit(string, ulang_type_lit_const_unwrap(lang_type));
             return;
         }
     }

@@ -200,12 +200,12 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
 
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_CONST_EXPR) {
+            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_LIT) {
                 msg_todo("non const expression here", dest_pos);
                 return UAST_GET_MEMB_DEF_NONE;
             }
 
-            Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(vec_at(base->name.gen_args, idx));
+            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(vec_at(base->name.gen_args, idx));
             switch (const_expr.type) {
                 case ULANG_TYPE_INT_LIT: {
                     Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(const_expr);
@@ -241,7 +241,7 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                 }
             }
 
-            msg_todo("this type of expression in this situation", ulang_type_const_expr_get_pos(const_expr));
+            msg_todo("this type of expression in this situation", ulang_type_lit_get_pos(const_expr));
             return UAST_GET_MEMB_DEF_NONE;
         }
     }

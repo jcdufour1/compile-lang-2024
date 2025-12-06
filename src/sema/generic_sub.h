@@ -98,8 +98,8 @@ void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg)
 void generic_sub_question_mark(Uast_question_mark* mark, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_lang_type_const_expr(
-    Ulang_type_const_expr* new_lang_type,
-    Ulang_type_const_expr lang_type,
+    Ulang_type_lit* new_lang_type,
+    Ulang_type_lit lang_type,
     Name gen_param,
     Ulang_type gen_arg
 );

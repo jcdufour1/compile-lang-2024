@@ -60,7 +60,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
     return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 }
 
-Name serialize_ulang_type_const_expr(Strv mod_path, Ulang_type_const_expr ulang_type) {
+Name serialize_ulang_type_lit(Strv mod_path, Ulang_type_lit ulang_type) {
     switch (ulang_type.type) {
         case ULANG_TYPE_INT_LIT:
             return serialize_ulang_type_int_lit(ulang_type_int_lit_const_unwrap(ulang_type));
@@ -287,10 +287,10 @@ Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_sco
             }
             return serialize_ulang_type(mod_path, inner, include_scope);
         }
-        case ULANG_TYPE_CONST_EXPR:
-            return serialize_ulang_type_const_expr(
+        case ULANG_TYPE_LIT:
+            return serialize_ulang_type_lit(
                 mod_path,
-                ulang_type_const_expr_const_unwrap(ulang_type)
+                ulang_type_lit_const_unwrap(ulang_type)
             );
     }
     unreachable("");

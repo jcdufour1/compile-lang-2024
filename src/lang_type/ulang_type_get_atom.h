@@ -16,7 +16,7 @@ static inline Ulang_type_atom ulang_type_get_atom(Ulang_type lang_type) {
             unreachable("");
         case ULANG_TYPE_EXPR:
             unreachable("");
-        case ULANG_TYPE_CONST_EXPR:
+        case ULANG_TYPE_LIT:
             unreachable("");
         case ULANG_TYPE_REMOVED:
             unreachable("");

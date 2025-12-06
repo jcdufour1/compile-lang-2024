@@ -213,7 +213,7 @@ bool ulang_type_fn_lit_is_equal(Ulang_type_fn_lit a, Ulang_type_fn_lit b) {
     return name_is_equal(a.name, b.name);
 }
 
-bool ulang_type_const_expr_is_equal(Ulang_type_const_expr a, Ulang_type_const_expr b) {
+bool ulang_type_lit_is_equal(Ulang_type_lit a, Ulang_type_lit b) {
     if (a.type != b.type) {
         return false;
     }
@@ -261,8 +261,8 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
             }
             return ulang_type_is_equal(a_inner, b_inner);
         }
-        case ULANG_TYPE_CONST_EXPR:
-            return ulang_type_const_expr_is_equal(ulang_type_const_expr_const_unwrap(a), ulang_type_const_expr_const_unwrap(b));
+        case ULANG_TYPE_LIT:
+            return ulang_type_lit_is_equal(ulang_type_lit_const_unwrap(a), ulang_type_lit_const_unwrap(b));
         case ULANG_TYPE_REMOVED:
             return ulang_type_removed_const_unwrap(a).pointer_depth == ulang_type_removed_const_unwrap(b).pointer_depth;
     }

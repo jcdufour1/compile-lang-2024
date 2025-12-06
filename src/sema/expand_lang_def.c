@@ -538,7 +538,7 @@ static bool expand_def_ulang_type(
             *lang_type = new_lang_type;
             return true;
         }
-        case ULANG_TYPE_CONST_EXPR:
+        case ULANG_TYPE_LIT:
             msg_todo("", ulang_type_get_pos(*lang_type));
             return false;
     }

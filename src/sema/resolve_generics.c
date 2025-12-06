@@ -644,13 +644,13 @@ static bool resolve_generics_serialize_function_decl(
 
 static void name_normalize(Uast_generic_param_vec gen_params, Name* name) {
     vec_foreach_ref(idx, Ulang_type, gen_arg, name->gen_args) {
-        if (gen_arg->type == ULANG_TYPE_CONST_EXPR) {
-            // TODO: rename ulang_type_const_expr to ulang_type_lit?
-            Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(*gen_arg);
+        if (gen_arg->type == ULANG_TYPE_LIT) {
+            // TODO: rename ulang_type_lit to ulang_type_lit?
+            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(*gen_arg);
             if (const_expr.type == ULANG_TYPE_STRUCT_LIT) {
                 Ulang_type_struct_lit struct_lit = ulang_type_struct_lit_const_unwrap(const_expr);
                 unwrap(vec_at(gen_params, idx)->is_expr);
-                *gen_arg = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
+                *gen_arg = ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
                     struct_lit.pos,
                     uast_operator_wrap(uast_unary_wrap(uast_unary_new(struct_lit.pos, struct_lit.expr, UNARY_UNSAFE_CAST, vec_at(gen_params, idx)->expr_lang_type))),
                     struct_lit.pointer_depth

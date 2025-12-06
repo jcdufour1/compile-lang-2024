@@ -310,8 +310,8 @@ static Ulang_type_type ulang_type_gen_expr(const char* prefix) {
     return sym;
 }
 
-static Ulang_type_type ulang_type_gen_const_expr(const char* prefix) {
-    const char* base_name = "const_expr";
+static Ulang_type_type ulang_type_gen_lit(const char* prefix) {
+    const char* base_name = "lit";
     Ulang_type_type ulang_type = {.name = ulang_type_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name)); // TODO: rename int to int_lit for consistancy?
@@ -332,7 +332,7 @@ static Ulang_type_type ulang_type_gen_ulang_type(void) {
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_array(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_expr(base_name));
-    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_const_expr(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_removed(base_name));
 
     return ulang_type;

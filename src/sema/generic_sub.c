@@ -135,8 +135,8 @@ void generic_sub_lang_type_fn_lit(
 }
 
 void generic_sub_lang_type_const_expr(
-    Ulang_type_const_expr* new_lang_type,
-    Ulang_type_const_expr lang_type,
+    Ulang_type_lit* new_lang_type,
+    Ulang_type_lit lang_type,
     Name gen_param,
     Ulang_type gen_arg
 ) {
@@ -232,15 +232,15 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
-        case ULANG_TYPE_CONST_EXPR: {
-            Ulang_type_const_expr new_lit = {0};
+        case ULANG_TYPE_LIT: {
+            Ulang_type_lit new_lit = {0};
             generic_sub_lang_type_const_expr(
                 &new_lit,
-                ulang_type_const_expr_const_unwrap(lang_type),
+                ulang_type_lit_const_unwrap(lang_type),
                 gen_param,
                 gen_arg
             );
-            *new_lang_type = ulang_type_const_expr_const_wrap(new_lit);
+            *new_lang_type = ulang_type_lit_const_wrap(new_lit);
             return;
         }
         case ULANG_TYPE_REMOVED:
@@ -656,7 +656,7 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
     generic_sub_lang_type(&unary->lang_type, unary->lang_type, gen_param, gen_arg);
 }
 
-GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_pos, Ulang_type_const_expr gen_arg) {
+GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_pos, Ulang_type_lit gen_arg) {
     switch (gen_arg.type) {
         case ULANG_TYPE_INT_LIT:
             *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(
@@ -721,11 +721,11 @@ GEN_SUB_NAME_STATUS generic_sub_name(
                 }
                 return GEN_SUB_NAME_ERROR;
             }
-            case ULANG_TYPE_CONST_EXPR:
+            case ULANG_TYPE_LIT:
                 return generic_sub_name_const_expr(
                     new_expr,
                     name_pos,
-                    ulang_type_const_expr_const_unwrap(gen_arg)
+                    ulang_type_lit_const_unwrap(gen_arg)
                 );
             case ULANG_TYPE_TUPLE:
                 msg_todo("", name_pos);

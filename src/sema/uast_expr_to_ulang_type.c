@@ -54,7 +54,7 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_int_liternal(Ulang_type* r
                     return EXPR_TO_ULANG_TYPE_ERROR;
                 }
 
-                *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
+                *result = ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(
                     ulang_type_struct_lit_new(unary->pos, unary->child, 0)
                 ));
                 return EXPR_TO_ULANG_TYPE_NORMAL;
@@ -105,7 +105,7 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_int_liternal(Ulang_type* res
                 break;
             case UAST_FUNCTION_DEF: {
                 Uast_function_def* fun_def = uast_function_def_unwrap(sym_def);
-                *result = ulang_type_const_expr_const_wrap(ulang_type_fn_lit_const_wrap(
+                *result = ulang_type_lit_const_wrap(ulang_type_fn_lit_const_wrap(
                     ulang_type_fn_lit_new(sym->pos, fun_def->decl->name, 1)
                 ));
                 return EXPR_TO_ULANG_TYPE_NORMAL;
@@ -174,21 +174,21 @@ static EXPR_TO_ULANG_TYPE uast_literal_to_ulang_type_int_liternal(Ulang_type* re
     switch (lit->type) {
         case UAST_INT: {
             const Uast_int* lang_int = uast_int_const_unwrap(lit);
-            *result = ulang_type_const_expr_const_wrap(ulang_type_int_lit_const_wrap(
+            *result = ulang_type_lit_const_wrap(ulang_type_int_lit_const_wrap(
                 ulang_type_int_lit_new(lang_int->pos, lang_int->data, 0)
             ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_FLOAT: {
             const Uast_float* lang_float = uast_float_const_unwrap(lit);
-            *result = ulang_type_const_expr_const_wrap(ulang_type_float_lit_const_wrap(
+            *result = ulang_type_lit_const_wrap(ulang_type_float_lit_const_wrap(
                 ulang_type_float_lit_new(lang_float->pos, lang_float->data, 0)
             ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
         case UAST_STRING: {
             const Uast_string* string = uast_string_const_unwrap(lit);
-            *result = ulang_type_const_expr_const_wrap(ulang_type_string_lit_const_wrap(
+            *result = ulang_type_lit_const_wrap(ulang_type_string_lit_const_wrap(
                 ulang_type_string_lit_new(string->pos, string->data, 0)
             ));
             return EXPR_TO_ULANG_TYPE_NORMAL;
@@ -267,7 +267,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_STRUCT_LITERAL: {
             const Uast_struct_literal* lit = uast_struct_literal_const_unwrap(expr);
-            *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
+            *result = ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(
                 ulang_type_struct_lit_new(
                     lit->pos,
                     uast_struct_literal_wrap(uast_struct_literal_clone(lit, false, 0, lit->pos)), // clone
