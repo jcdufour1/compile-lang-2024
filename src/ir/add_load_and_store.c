@@ -4,7 +4,6 @@
 #include <ir.h>
 #include <symbol_table.h>
 #include <type_checking.h>
-#include <tast_serialize.h>
 #include <ir_lang_type_after.h>
 #include <lang_type_from_ulang_type.h>
 #include <token_type_to_operator_type.h>

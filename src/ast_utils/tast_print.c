@@ -1,7 +1,6 @@
 #include <tast.h>
 #include <ir_utils.h>
 #include <util.h>
-#include <tast_serialize.h>
 #include <lang_type_print.h>
 #include <pos_util.h>
 

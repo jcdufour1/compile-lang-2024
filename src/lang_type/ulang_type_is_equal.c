@@ -140,7 +140,7 @@ static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uas
     return true;
 }
 
-static bool uast_expr_is_equal(const Uast_expr* a, const Uast_expr* b) {
+bool uast_expr_is_equal(const Uast_expr* a, const Uast_expr* b) {
     if (a->type != b->type) {
         return false;
     }

@@ -7,6 +7,7 @@
 #include <ulang_type.h>
 #include <lang_type_print.h>
 #include <ulang_type_new_convenience.h>
+#include <ulang_type_is_equal.h>
 
 // TODO: remove this forward declaration
 static inline Ulang_type ulang_type_new_int_x(Strv base);
@@ -116,7 +117,7 @@ static inline bool lang_type_const_expr_is_equal(Lang_type_const_expr a, Lang_ty
         case LANG_TYPE_STRING_LIT:
             return strv_is_equal(lang_type_string_lit_const_unwrap(a).data, lang_type_string_lit_const_unwrap(b).data);
         case LANG_TYPE_STRUCT_LIT:
-            return lang_type_struct_lit_const_unwrap(a).lit == lang_type_struct_lit_const_unwrap(b).lit;
+            return uast_expr_is_equal(lang_type_struct_lit_const_unwrap(a).lit, lang_type_struct_lit_const_unwrap(b).lit);
         case LANG_TYPE_FN_LIT:
             return name_is_equal(lang_type_fn_lit_const_unwrap(a).name, lang_type_fn_lit_const_unwrap(b).name);
         case LANG_TYPE_FLOAT_LIT:
