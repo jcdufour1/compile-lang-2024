@@ -122,6 +122,7 @@ for generics:
 - make basic "did you mean" (just symbols initially)
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - document or make functions for uast_def_get_ulang_type
+- test with both -fsanitize=address and -fsanitize=undefined in ci?
 - expected failure tests for non-int generic arg const expressions
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?

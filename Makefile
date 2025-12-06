@@ -34,8 +34,8 @@ BUILD_DIR_RELEASE ?= ./build/release/
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
-    C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
-    #C_FLAGS += -fsanitize=undefined -fno-omit-frame-pointer
+    #C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
+    C_FLAGS += -fsanitize=undefined -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
