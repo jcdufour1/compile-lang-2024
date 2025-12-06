@@ -694,6 +694,25 @@ static bool resolve_generics_serialize_function_decl(
     return true;
 }
 
+static void name_normalize(Uast_generic_param_vec gen_params, Name* name) {
+    vec_foreach_ref(idx, Ulang_type, gen_arg, name->gen_args) {
+        if (gen_arg->type == ULANG_TYPE_CONST_EXPR) {
+            // TODO: rename ulang_type_const_expr to ulang_type_lit?
+            Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(*gen_arg);
+            if (const_expr.type == ULANG_TYPE_STRUCT_LIT) {
+                Ulang_type_struct_lit struct_lit = ulang_type_struct_lit_const_unwrap(const_expr);
+                unwrap(vec_at(gen_params, idx)->is_expr);
+                *gen_arg = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
+                    struct_lit.pos,
+                    uast_operator_wrap(uast_unary_wrap(uast_unary_new(struct_lit.pos, struct_lit.expr, UNARY_UNSAFE_CAST, vec_at(gen_params, idx)->expr_lang_type))),
+                    struct_lit.pointer_depth
+                )));
+            }
+            
+        }
+    }
+}
+
 bool resolve_generics_function_def_call(
     Lang_type_fn* type_res,
     Name* new_name,
@@ -702,6 +721,7 @@ bool resolve_generics_function_def_call(
     Pos pos_gen_args
 ) {
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id, (Attrs) {0});
+    name_normalize(def->decl->generics, &name);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id, (Attrs) {0});
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
@@ -774,6 +794,7 @@ bool resolve_generics_function_def_call(
     *type_res = rtn_type_;
     *new_name = name;
 
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
     vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
 
     return true;

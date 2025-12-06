@@ -33,15 +33,15 @@ type Symbol struct(<print_fn ''fn()void>) {
 }
 
 fn print_hello() {
-    io.print_str("hello")
+    //io.print_str("hello")
 }
 
 fn print_bye() {
-    io.print_str("bye")
+    //io.print_str("bye")
 }
 
 fn do_thing_with_alloc(alloc Alloc) {
-    io.print_int(alloc.max_thing)
+    //io.print_int(alloc.max_thing)
 }
 
 fn do_thing_with_nested_alloc(nested_alloc NestedAlloc) {
@@ -61,31 +61,36 @@ fn print_nested_struct(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_
 }
 
 fn do_thing_with_token3internal(token3internal Token3Internal) {
-    io.print_float(token3internal.float_num)
+    //io.print_float(token3internal.float_num)
+}
+
+fn print_float(float f32) {
+    io.print_float(float)
 }
 
 fn print_token3(<token3internal ''Token3Internal>)(token Token3(<token3internal>)) {
-    do_thing_with_token3internal(token3internal)
-    //io.print_float(token3internal)
-    ////io.print_float(<f32>)(token.token3.float_num)
+    //do_thing_with_token3internal(token3internal)
+    print_float(token3internal.float_num)
+    //io.print_float(<f32>)(token.token3.float_num)
+    //io.print_float(token.token3.float_num)
 }
 
-type ALLOC1 def = {.max_thing = 8}
-type NESTED_STRUCT_2 def = {{765}}
+//type ALLOC1 def = {.max_thing = 8}
+//type NESTED_STRUCT_2 def = {{765}}
 
 fn struct_literal_tests() {
-    let token1 Token1(<ALLOC1>) = .num(7)
-    let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
-    print_max1(<ALLOC1>)(token1)
-    print_max1(token1)
-    print_max2(<87, {.max_thing = 903}>)(token2)
-    print_max2(token2)
+    //let token1 Token1(<ALLOC1>) = .num(7)
+    //let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
+    //print_max1(<ALLOC1>)(token1)
+    //print_max1(token1)
+    //print_max2(<87, {.max_thing = 903}>)(token2)
+    //print_max2(token2)
 
-    let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
-    print_nested_struct(nested_struct_lit)
-    let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
-    print_nested_struct(nested_struct_2)
-    print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
+    //let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
+    //print_nested_struct(nested_struct_lit)
+    //let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
+    //print_nested_struct(nested_struct_2)
+    //print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
 
     let token3 Token3(<{8.7/*, print_bye*/}>) = .num(7)
     print_token3(token3)
@@ -118,13 +123,13 @@ type String1 struct(<str_value ''Str>) {
 }
 
 fn float_print(<float_val>)(float Float(<float_val>)) {
-    io.print_float(float_val)
-    io.print_float(float.float_value)
+    //io.print_float(float_val)
+    //io.print_float(float.float_value)
 }
 
 fn string_print(<str_val>)(str String1(<str_val>)) {
-    io.print_str(str_val)
-    io.print_str(str.str_value)
+    //io.print_str(str_val)
+    //io.print_str(str.str_value)
 }
 
 fn float_tests() {

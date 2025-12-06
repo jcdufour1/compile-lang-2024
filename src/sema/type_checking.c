@@ -2906,6 +2906,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     "generic function parameter `"FMT"` defined here\n", 
                     name_print(NAME_MSG, vec_at(gen_params, gen_idx)->name)
                 );
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(fun_call->args, 0)));
+                todo();
             }
             status = false;
             goto error;
@@ -3527,6 +3529,19 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             *new_tast = tast_expr_wrap(new_expr);
 
             return true;
+        }
+        case TAST_STRUCT_LITERAL: {
+            Tast_struct_literal* callee_lit = tast_struct_literal_unwrap(new_callee);
+
+            Uast_def* struct_def = NULL;
+            if (!usymbol_lookup(
+                &struct_def,
+                lang_type_struct_const_unwrap(callee_lit->lang_type).atom.str
+            )) {
+                todo();
+            }
+
+            return try_set_member_access_types_finish(new_tast, struct_def, access, new_callee);
         }
         default:
             unreachable(FMT, tast_expr_print(new_callee));
@@ -4824,6 +4839,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         }
     }
 
+    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);
         Tast_stmt* new_stmt = NULL;

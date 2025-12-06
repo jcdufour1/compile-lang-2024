@@ -129,6 +129,7 @@ for generics:
 - expected failure tests for non-int generic arg const expressions
 - enable -Wenum-switch?
 - document or make functions for uast_def_get_ulang_type
+- make recursion depth O(1) for importing n modules deep
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

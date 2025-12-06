@@ -944,9 +944,11 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     bool is_rhs,
     Uast_expr* rhs
 ) {
+    log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
     if (!expand_def_expr_not_ulang_type(&access->callee, access->callee, is_rhs, rhs)) {
         return EXPAND_EXPR_ERROR;
     }
+    log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
 
     Uast_def* callee_def = NULL;
     switch (access->callee->type) {
@@ -957,6 +959,7 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
             if (!usymbol_lookup(&callee_def, sym->name)) {
                 sym->name.gen_args = old_gen_args;
                 *new_expr = uast_member_access_wrap(access);
+                log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
                 return EXPAND_EXPR_NEW_EXPR;
             }
             sym->name.gen_args = old_gen_args;
@@ -964,6 +967,7 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
         }
         default:
             *new_expr = uast_member_access_wrap(access);
+            log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_EXPR_NEW_EXPR;
     }
 
@@ -990,6 +994,10 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
         );
         switch (status) {
             case EXPAND_NAME_NORMAL:
+                log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
+                if (strv_is_equal(access->member_name->name.base, sv("print_float"))) {
+                    //__asm__("int3");
+                }
                 *new_expr = uast_member_access_wrap(access);
                 return EXPAND_EXPR_NEW_EXPR;
             case EXPAND_NAME_NEW_EXPR:
@@ -1664,8 +1672,4 @@ void expand_def(void) {
         //}
         expand_def_def(curr, false/*TODO*/, NULL);
     }
-
-    Uast_def* def = NULL;
-    unwrap(usymbol_lookup(&def, name_new_quick(MOD_PATH_RUNTIME, sv("Slice"), SCOPE_TOP_LEVEL)));
-    log(LOG_DEBUG, FMT"\n", uast_def_print(def));
 }
