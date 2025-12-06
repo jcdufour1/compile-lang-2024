@@ -3,8 +3,29 @@
 #include <ulang_type.h>
 #include <resolve_generics.h>
 
-void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
-    switch (type) {
+static void extend_lang_type_lit_tag_to_string(String* buf, Lang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT:
+            string_extend_cstr(&a_temp, buf, "int");
+            return;
+        case LANG_TYPE_STRUCT_LIT:
+            string_extend_cstr(&a_temp, buf, "struct_lit");
+            return;
+        case LANG_TYPE_STRING_LIT:
+            string_extend_cstr(&a_temp, buf, "string_lit");
+            return;
+        case LANG_TYPE_FN_LIT:
+            string_extend_cstr(&a_temp, buf, "fn");
+            return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_cstr(&a_temp, buf, "float");
+            return;
+    }
+    unreachable("");
+}
+
+void extend_lang_type_tag_to_string(String* buf, Lang_type lang_type) {
+    switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             string_extend_cstr(&a_temp, buf, "primitive");
             return;
@@ -29,8 +50,8 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_ARRAY:
             string_extend_cstr(&a_temp, buf, "array");
             return;
-        case LANG_TYPE_INT:
-            string_extend_cstr(&a_temp, buf, "int");
+        case LANG_TYPE_LIT:
+            extend_lang_type_lit_tag_to_string(buf, lang_type_lit_const_unwrap(lang_type));
             return;
         case LANG_TYPE_REMOVED:
             string_extend_cstr(&a_temp, buf, "removed");
@@ -116,6 +137,28 @@ Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
     return string_to_strv(buf);
 }
 
+static void extend_lang_type_lit_to_string(String* string, Lang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT:
+            string_extend_int64_t(&a_temp, string, lang_type_int_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_double(&a_temp, string, lang_type_float_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_STRING_LIT:
+            serialize_strv_actual(string, lang_type_string_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_STRUCT_LIT:
+            // TODO: this looks ugly
+            string_extend_strv(&a_temp, string, uast_expr_print_internal(lang_type_struct_lit_const_unwrap(lang_type).lit, 0));
+            return;
+        case LANG_TYPE_FN_LIT:
+            extend_name(NAME_MSG, string, lang_type_fn_lit_const_unwrap(lang_type).name);
+            return;
+    }
+    unreachable("");
+}
+
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&a_temp, string, '<');
@@ -123,7 +166,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
-            extend_lang_type_tag_to_string(string, lang_type.type);
+            extend_lang_type_tag_to_string(string, lang_type);
             string_extend_cstr(&a_main, string, " ");
             break;
         case LANG_TYPE_MODE_MSG:
@@ -202,8 +245,8 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_REMOVED:
             goto end;
-        case LANG_TYPE_INT:
-            string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
+        case LANG_TYPE_LIT:
+            extend_lang_type_lit_to_string(string, lang_type_lit_const_unwrap(lang_type));
             goto end;
     }
     unreachable("");

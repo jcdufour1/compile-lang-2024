@@ -17,4 +17,16 @@ Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, 
 
 Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_scope);
 
+Name serialize_ulang_type_int_lit(Ulang_type_int_lit ulang_type);
+
+Name serialize_ulang_type_float_lit(Ulang_type_float_lit ulang_type);
+
+Name serialize_ulang_type_string_lit(Ulang_type_string_lit ulang_type);
+
+Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type);
+
+Name serialize_ulang_type_lit(Strv mod_path, Ulang_type_lit ulang_type);
+
+Name serialize_ulang_type_fn_lit(Ulang_type_fn_lit ulang_type);
+
 #endif // ULANG_TYPE_SERIALIZE_H

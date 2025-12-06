@@ -2,11 +2,10 @@
 #define LANG_TYPE_AFTER_H
 
 #include <msg_todo.h>
-#include <lang_type_get_pos.h>
-#include <lang_type_after.h>
 #include <str_and_num_utils.h>
 #include <parameters.h>
 #include <lang_type_mode.h>
+#include <lang_type.h>
 
 Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primitive lang_type);
 
@@ -136,7 +135,7 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
             return false;
         case LANG_TYPE_REMOVED:
             return false;
-        case LANG_TYPE_INT:
+        case LANG_TYPE_LIT:
             return false;
     }
     unreachable("");

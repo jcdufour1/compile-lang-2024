@@ -6,6 +6,10 @@
 #include <uast.h>
 #include <ulang_type_is_equal.h>
 
+Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
+}
+
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
 }
@@ -28,6 +32,7 @@ static Uname uname_normalize(Uname name) {
 
 static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
+    assert(base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
@@ -56,7 +61,6 @@ Name ir_name_to_name(Ir_name name) {
     }
 
     Ir_name_to_name_table_node* result = NULL;
-    //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_EMIT_C, name));
     unwrap(
         ir_name_to_name_lookup(&result, name) &&
         "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"
@@ -123,6 +127,26 @@ void extend_name_c(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
 
+// TODO: improve naming of serialize_strv_actual and serialize_strv
+void serialize_strv_actual(String* buf, Strv strv) {
+    string_extend_cstr(&a_main, buf, "_");
+    string_extend_size_t(&a_main, buf, strv.count);
+    string_extend_cstr(&a_main, buf, "_");
+    // TODO: refactor this for loop into a separate function
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        char curr = strv.str[idx];
+
+        if (isalnum(curr)) {
+            vec_append(&a_main, buf, curr);
+        } else if (curr == '_') {
+            string_extend_cstr(&a_main, buf, "__");
+        } else {
+            string_extend_f(&a_main, buf, "_%02x", curr);
+        }
+    }
+    string_extend_cstr(&a_main, buf, "_");
+}
+
 void serialize_strv(String* buf, Strv strv) {
     string_extend_cstr(&a_main, buf, "_");
     string_extend_size_t(&a_main, buf, strv.count);
@@ -185,7 +209,20 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            string_extend_strv(arena, &buf, serialize_name_symbol_table(&a_main, serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
+            Name base_name = name;
+            base_name.gen_args = (Ulang_type_vec) {0};
+            string_extend_strv(
+                arena,
+                &buf,
+                serialize_name_symbol_table(
+                    &a_main,
+                    serialize_ulang_type(
+                        name.mod_path,
+                        vec_at(name.gen_args, idx),
+                        false
+                    )
+                )
+            );
         }
     }
 
@@ -195,6 +232,33 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
 Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
     return serialize_name_symbol_table(arena, *(Name*)&name);
+}
+
+Strv serialize_double(double num) {
+    String buf = {0};
+
+    String temp = {0};
+    string_extend_double(&a_temp, &temp, num);
+    size_t idx_decimal = 0;
+    bool did_find_dec = false;
+    vec_foreach(idx, char, curr, temp) {
+        idx_decimal = idx;
+        if (curr == '.') {
+            did_find_dec = true;
+            break;
+        }
+    }
+    unwrap(did_find_dec);
+
+    string_extend_f(
+        &a_main,
+        &buf,
+        FMT"_"FMT,
+        strv_print(string_slice(temp, 0, idx_decimal)),
+        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
+    );
+
+    return string_to_strv(buf);
 }
 
 Strv serialize_name(Name name) {

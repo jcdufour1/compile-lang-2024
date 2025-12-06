@@ -52,6 +52,8 @@ Uast_question_mark* uast_question_mark_clone(const Uast_question_mark* mark, boo
 
 Uast_underscore* uast_underscore_clone(const Uast_underscore* underscore, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
+Uast_struct_literal* uast_struct_literal_clone(const Uast_struct_literal* lit, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
+
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos);
 
 #endif // UAST_CLONE_H

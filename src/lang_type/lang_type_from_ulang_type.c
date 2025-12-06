@@ -12,6 +12,56 @@ static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, 
     return try_lang_type_from_ulang_type(new_lang_type, inner);
 }
 
+bool try_lang_type_from_ulang_type_lit(Lang_type* new_lang_type, Ulang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_INT_LIT: {
+            Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_lit_const_wrap(lang_type_int_lit_const_wrap(lang_type_int_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+            return true;
+        }
+        case ULANG_TYPE_STRING_LIT: {
+            Ulang_type_string_lit lit = ulang_type_string_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_lit_const_wrap(lang_type_string_lit_const_wrap(
+                lang_type_string_lit_new(lit.pos, lit.data, lit.pointer_depth)
+            ));
+            return true;
+        }
+        case ULANG_TYPE_STRUCT_LIT: {
+            Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_lit_const_wrap(lang_type_struct_lit_const_wrap(
+                lang_type_struct_lit_new(lit.pos, lit.expr, lit.pointer_depth)
+            ));
+            return true;
+        }
+        case ULANG_TYPE_FN_LIT: {
+            Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_lit_const_wrap(lang_type_fn_lit_const_wrap(
+                lang_type_fn_lit_new(lit.pos, lit.name, lit.pointer_depth)
+            ));
+            return true;
+        }
+        case ULANG_TYPE_FLOAT_LIT: {
+            Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(lang_type);
+
+            *new_lang_type = lang_type_lit_const_wrap(lang_type_float_lit_const_wrap(lang_type_float_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+            return true;
+        }
+    }
+    unreachable("");
+}
+
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -43,15 +93,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
             return try_lang_type_from_ulang_type_array(new_lang_type, ulang_type_array_const_unwrap(lang_type));
         case ULANG_TYPE_EXPR:
             return try_lang_type_from_ulang_type_expr(new_lang_type, ulang_type_expr_const_unwrap(lang_type));
-        case ULANG_TYPE_INT: {
-            Ulang_type_int lang_int = ulang_type_int_const_unwrap(lang_type);
-            *new_lang_type = lang_type_int_const_wrap(lang_type_int_new(
-                lang_int.pos,
-                lang_int.data,
-                lang_int.pointer_depth
-            ));
-            return true;
-        }
+        case ULANG_TYPE_LIT:
+            return try_lang_type_from_ulang_type_lit(new_lang_type, ulang_type_lit_const_unwrap(lang_type));
     }
     unreachable("");
 }
@@ -117,6 +160,54 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     unreachable("");
 }
 
+Ulang_type lang_type_lit_to_ulang_type(Lang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT: {
+            // TODO: rename LANG_TYPE_INT_LIT to LANG_TYPE_INT_LIT_LIT
+            Lang_type_int_lit lit = lang_type_int_lit_const_unwrap(lang_type);
+            return ulang_type_lit_const_wrap(ulang_type_int_lit_const_wrap(ulang_type_int_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+        }
+        case LANG_TYPE_FLOAT_LIT: {
+            Lang_type_float_lit lit = lang_type_float_lit_const_unwrap(lang_type);
+            return ulang_type_lit_const_wrap(ulang_type_float_lit_const_wrap(ulang_type_float_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+        }
+        case LANG_TYPE_STRING_LIT: {
+            Lang_type_string_lit lit = lang_type_string_lit_const_unwrap(lang_type);
+            return ulang_type_lit_const_wrap(ulang_type_string_lit_const_wrap(ulang_type_string_lit_new(
+                lit.pos,
+                lit.data,
+                lit.pointer_depth
+            )));
+        }
+        case LANG_TYPE_STRUCT_LIT: {
+            Lang_type_struct_lit lit = lang_type_struct_lit_const_unwrap(lang_type);
+            return ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
+                lit.pos,
+                lit.lit, // TODO: change Lang_type_struct_lit.lit to Lang_type_struct_lit.data
+                lit.pointer_depth
+            )));
+        }
+        case LANG_TYPE_FN_LIT: {
+            Lang_type_fn_lit lit = lang_type_fn_lit_const_unwrap(lang_type);
+            return ulang_type_lit_const_wrap(ulang_type_fn_lit_const_wrap(ulang_type_fn_lit_new(
+                lit.pos,
+                lit.name,
+                lit.pointer_depth
+            )));
+        }
+    }
+    unreachable("");
+    
+}
+
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
@@ -161,13 +252,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 array.pointer_depth
             ));
         }
-        case LANG_TYPE_INT: {
-            Lang_type_int lang_int = lang_type_int_const_unwrap(lang_type);
-            return ulang_type_int_const_wrap(ulang_type_int_new(
-                lang_int.pos,
-                lang_int.data,
-                lang_int.pointer_depth
-            ));
+        case LANG_TYPE_LIT: {
+            return lang_type_lit_to_ulang_type(lang_type_lit_const_unwrap(lang_type));
         }
         case LANG_TYPE_REMOVED:
             unreachable("");

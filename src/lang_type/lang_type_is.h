@@ -10,9 +10,6 @@ static inline bool lang_type_is_slice(Ulang_type* gen_arg, Lang_type lang_type) 
         return false;
     }
     Lang_type_struct lang_type_struct = lang_type_struct_const_unwrap(lang_type);
-    if (!strv_is_equal(lang_type_struct.atom.str.base, sv("Slice"))) {
-        return false;
-    }
     if (!strv_is_equal(lang_type_struct.atom.str.mod_path, MOD_PATH_RUNTIME)) {
         return false;
     }

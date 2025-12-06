@@ -100,6 +100,12 @@ bool try_set_tuple_assignment_types(
     Uast_tuple* tuple
 );
 
+bool try_set_struct_literal_member_types_simplify(
+    Uast_expr_vec* membs,
+    Uast_variable_def_vec memb_defs,
+    Pos pos
+);
+
 bool try_set_struct_literal_types(
     Tast_struct_literal** new_tast,
     Lang_type dest_lang_type,

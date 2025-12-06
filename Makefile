@@ -5,6 +5,7 @@ CC_COMPILER ?= cc
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
+# TODO: enable -Wswitch-enum?
 C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion \
 			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
@@ -71,7 +72,6 @@ OBJS=\
 	 ${BUILD_DIR}/util/cfg.o \
 	 ${BUILD_DIR}/util/newstring.o \
 	 ${BUILD_DIR}/error_msg.o \
-	 ${BUILD_DIR}/lang_type/lang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_is_equal.o \
@@ -243,9 +243,6 @@ ${BUILD_DIR}/ast_utils/sizeof.o: ${DEP_COMMON} src/ast_utils/sizeof.c
 
 ${BUILD_DIR}/ast_utils/symbol_table.o: ${DEP_COMMON} src/ast_utils/symbol_table.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/symbol_table.o src/ast_utils/symbol_table.c
-
-${BUILD_DIR}/lang_type/lang_type_serialize.o: ${DEP_COMMON} src/lang_type/lang_type_serialize.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/lang_type_serialize.o src/lang_type/lang_type_serialize.c
 
 ${BUILD_DIR}/lang_type/ulang_type_serialize.o: ${DEP_COMMON} src/lang_type/ulang_type_serialize.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_serialize.o src/lang_type/ulang_type_serialize.c

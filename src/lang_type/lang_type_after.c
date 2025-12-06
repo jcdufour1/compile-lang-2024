@@ -191,7 +191,7 @@ bool try_lang_type_get_atom(Lang_type_atom* result, LANG_TYPE_MODE mode, Lang_ty
         case LANG_TYPE_VOID:
             *result = lang_type_atom_new_from_cstr("void", 0, SCOPE_TOP_LEVEL);
             return true;
-        case LANG_TYPE_INT:
+        case LANG_TYPE_LIT:
             return false;
     }
     unreachable("");
@@ -221,7 +221,7 @@ void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
             unreachable("");
         case LANG_TYPE_REMOVED:
             unreachable("");
-        case LANG_TYPE_INT:
+        case LANG_TYPE_LIT:
             unreachable("");
     }
     unreachable("");

@@ -6,7 +6,6 @@
 #include <lang_type_print.h>
 #include <uast_utils.h>
 #include <resolve_generics.h>
-#include <ulang_type_get_pos.h>
 #include <msg.h>
 #include <tast_utils.h>
 #include <ulang_type_serialize.h>

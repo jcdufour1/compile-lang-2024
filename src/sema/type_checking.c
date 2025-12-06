@@ -16,7 +16,6 @@
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
 #include <symbol_log.h>
-#include <lang_type_get_pos.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>
 #include <ulang_type_serialize.h>
@@ -1239,11 +1238,46 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
     return access->callee->type == UAST_UNKNOWN;
 }
 
+bool try_set_struct_literal_member_types_simplify(
+    Uast_expr_vec* membs,
+    Uast_variable_def_vec memb_defs,
+    Pos pos
+) {
+    if (membs->info.count != memb_defs.info.count) {
+        msg_invalid_count_struct_literal_args(*membs, memb_defs.info.count, memb_defs.info.count, pos, false);
+        return false;
+    }
+
+    for (size_t idx = 0; idx < membs->info.count; idx++) {
+        Uast_variable_def* memb_def = vec_at(memb_defs, idx);
+        Uast_expr** memb = vec_at_ref(membs, idx);
+        if (uast_expr_is_designator(*memb)) {
+            Uast_member_access* lhs = uast_member_access_unwrap(
+                uast_binary_unwrap(uast_operator_unwrap(*memb))->lhs // parser should catch invalid assignment
+            );
+            *memb = uast_binary_unwrap(uast_operator_unwrap(*memb))->rhs;
+            if (!strv_is_equal(memb_def->name.base, lhs->member_name->name.base)) {
+                msg(
+                    DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
+                    "expected `."FMT" =`, got `."FMT" =`\n", 
+                    strv_print(memb_def->name.base), strv_print(lhs->member_name->name.base)
+                );
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs, Pos pos) {
     if (membs.info.count != memb_defs.info.count) {
         msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos, false);
         return false;
     }
+
+    // TODO: call try_set_struct_literal_member_types_simplify here to reduce duplication
+    //try_set_struct_literal_member_types_simplify();
 
     for (size_t idx = 0; idx < membs.info.count; idx++) {
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);
@@ -1633,7 +1667,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 lit->pos,
                 "the type of array literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting array literal not yet implemented\n)"
+                "(note: casting array literal not yet implemented)\n"
             );
             status = false;
             goto end;
@@ -1662,7 +1696,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 lit->pos,
                 "the type of struct literal could not be infered; "
                 "consider casting the struct literal to the desired type"
-                "(note: casting struct literal not yet implemented\n)"
+                "(note: casting struct literal not yet implemented)\n"
             );
             status = false;
             goto end;
@@ -3495,6 +3529,17 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             *new_tast = tast_expr_wrap(new_expr);
 
             return true;
+        }
+        case TAST_STRUCT_LITERAL: {
+            Tast_struct_literal* callee_lit = tast_struct_literal_unwrap(new_callee);
+
+            Uast_def* struct_def = NULL;
+            unwrap(usymbol_lookup(
+                &struct_def,
+                lang_type_struct_const_unwrap(callee_lit->lang_type).atom.str
+            ));
+
+            return try_set_member_access_types_finish(new_tast, struct_def, access, new_callee);
         }
         default:
             unreachable(FMT, tast_expr_print(new_callee));

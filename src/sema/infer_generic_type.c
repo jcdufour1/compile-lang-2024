@@ -4,6 +4,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
 #include <infer_generic_type.h>
+#include <ulang_type_clone.h>
 
 static bool infer_generic_type_tuple(
     Ulang_type* infered,
@@ -13,9 +14,9 @@ static bool infer_generic_type_tuple(
     Name name_to_infer,
     Pos pos_arg
 ) {
-    log(LOG_DEBUG, "infer_generic_type_tuple: arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(arg_to_infer_from)));
-    log(LOG_DEBUG, "infer_generic_type_tuple: param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(param_corres_to_arg)));
-    log(LOG_DEBUG, "infer_generic_type_tuple: name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
+    //log(LOG_DEBUG, "infer_generic_type_tuple: arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(arg_to_infer_from)));
+    //log(LOG_DEBUG, "infer_generic_type_tuple: param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(param_corres_to_arg)));
+    //log(LOG_DEBUG, "infer_generic_type_tuple: name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
 
     vec_foreach(idx, Ulang_type, curr, param_corres_to_arg.ulang_types) {
         if (infer_generic_type(
@@ -50,7 +51,6 @@ bool infer_generic_type(
         arg_to_infer_from = lang_type_to_ulang_type(lang_type_standardize(temp_arg, arg_to_infer_is_lit, pos_arg));
     }
 
-    // keep these (because they are useful for debugging)
     //log(LOG_DEBUG, "arg_to_infer_from: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, arg_to_infer_from));
     //log(LOG_DEBUG, "param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, param_corres_to_arg));
     //log(LOG_DEBUG, "name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
@@ -138,9 +138,10 @@ bool infer_generic_type(
                 pos_arg
             );
         }
-        case ULANG_TYPE_INT:
+        case ULANG_TYPE_LIT: {
             // TODO
             return false;
+        }
     }
     unreachable("");
 }

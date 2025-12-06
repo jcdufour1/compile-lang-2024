@@ -49,6 +49,36 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     return;
 }
 
+static void string_extend_ulang_type_lit(String* string, Ulang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_INT_LIT:
+            string_extend_cstr(&a_main, string, "int ");
+            string_extend_int64_t(&a_main, string, ulang_type_int_lit_const_unwrap(lang_type).data);
+            return;
+        case ULANG_TYPE_FLOAT_LIT:
+            string_extend_cstr(&a_main, string, "float ");
+            string_extend_strv(&a_main, string, serialize_double(ulang_type_float_lit_const_unwrap(lang_type).data));
+            return;
+        case ULANG_TYPE_STRING_LIT:
+            string_extend_cstr(&a_main, string, "string ");
+            serialize_strv_actual(string, ulang_type_string_lit_const_unwrap(lang_type).data);
+            return;
+        case ULANG_TYPE_STRUCT_LIT:
+            string_extend_cstr(&a_main, string, "struct ");
+            string_extend_strv(&a_main, string, uast_expr_print_internal(
+                ulang_type_struct_lit_const_unwrap(lang_type).expr,
+                0
+            ));
+            return;
+        case ULANG_TYPE_FN_LIT:
+            string_extend_cstr(&a_main, string, "fn ");
+            extend_name(NAME_LOG, string, ulang_type_fn_lit_const_unwrap(lang_type).name);
+            return;
+    }
+    unreachable("");
+}
+
+// TODO: accept arena argument
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_ARRAY: {
@@ -91,9 +121,8 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             string_extend_strv(&a_main, string, uast_expr_print_internal(expr.expr, 0));
             return;
         }
-        case ULANG_TYPE_INT: {
-            string_extend_cstr(&a_main, string, "int ");
-            string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
+        case ULANG_TYPE_LIT: {
+            string_extend_ulang_type_lit(string, ulang_type_lit_const_unwrap(lang_type));
             return;
         }
     }

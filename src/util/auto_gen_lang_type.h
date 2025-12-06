@@ -166,6 +166,70 @@ static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     return lang_type;
 }
 
+static Lang_type_type lang_type_gen_int_lit(const char* prefix) {
+    const char* base_name = "int_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "int64_t", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Lang_type_type lang_type_gen_float_lit(const char* prefix) {
+    const char* base_name = "float_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "double", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Lang_type_type lang_type_gen_string_lit(const char* prefix) {
+    const char* base_name = "string_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Strv", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Lang_type_type lang_type_gen_struct_lit(const char* prefix) {
+    const char* base_name = "struct_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Uast_expr*", "lit");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Lang_type_type lang_type_gen_fn_lit(const char* prefix) {
+    const char* base_name = "fn_lit";
+    Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Name", "name");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Lang_type_type lang_type_gen_lit(const char* prefix) {
+    const char* base_name = "lit";
+    Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int_lit(base_name)); // TODO: rename lang_type_int_lit to lang_type_gen_int
+                                                                            //   and ulang_type_int_lit to ulang_type_gen_int?
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string_lit(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn_lit(base_name));
+
+    return lang_type;
+}
+
 static Lang_type_type lang_type_gen_fn(const char* prefix) {
     const char* base_name = "fn";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -237,16 +301,6 @@ static Lang_type_type lang_type_gen_void(const char* prefix) {
     return sym;
 }
 
-static Lang_type_type lang_type_gen_int(const char* prefix) {
-    const char* base_name = "int";
-    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
-
-    append_member(&sym.members, "int64_t", "data");
-    append_member(&sym.members, "int16_t", "pointer_depth");
-
-    return sym;
-}
-
 static Lang_type_type lang_type_gen_lang_type(void) {
     const char* base_name = "lang_type";
     Lang_type_type lang_type = {.name = lang_type_name_new(base_name, "", true)};
@@ -259,8 +313,7 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_array(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int(base_name)); // TODO: rename lang_type_int to lang_type_gen_int
-                                                                            //   and ulang_type_int to ulang_type_gen_int?
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_removed(base_name));
 
     return lang_type;
@@ -591,6 +644,77 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
+static void gen_lang_type_get_pos(Lang_type_type type, bool implementation, bool is_ref) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        gen_lang_type_get_pos(vec_at(type.sub_types, idx), implementation, is_ref);
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline Pos ");
+    if (is_ref) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+
+    string_extend_cstr(&gen_a, &function, "    lang_type_");
+    extend_strv_lower(&function, type.name.base);
+    if (is_ref) {
+        string_extend_f(&gen_a, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
+    } else {
+        string_extend_f(&gen_a, &function, "%sget_pos(const ", type.name.is_topmost ? "" : "_");
+    }
+    extend_lang_type_name_first_upper(&function, type.name);
+    string_extend_f(&gen_a, &function, "%s lang_type)", is_ref ? "*" : "");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        if (type.sub_types.info.count < 1) {
+            if (is_ref) {
+                string_extend_cstr(&gen_a, &function, "    return &lang_type->pos;\n");
+            } else {
+                string_extend_cstr(&gen_a, &function, "    return lang_type.pos;\n");
+            }
+        } else {
+            string_extend_f(&gen_a, &function, "    switch (lang_type%stype) {\n", is_ref ? "->" : ".");
+
+            for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+                Lang_type_type curr = vec_at(type.sub_types, idx);
+                string_extend_cstr(&gen_a, &function, "        case ");
+                extend_lang_type_name_upper(&function, curr.name);
+                string_extend_cstr(&gen_a, &function, ":\n");
+
+
+                string_extend_cstr(&gen_a, &function, "            return lang_type_");
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_get_pos_ref(lang_type_");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_get_pos(lang_type_");
+                }
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_unwrap(lang_type));\n");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_const_unwrap(lang_type));\n");
+                }
+
+                string_extend_cstr(&gen_a, &function, "        break;\n");
+            }
+
+            string_extend_cstr(&gen_a, &function, "    }\n");
+        }
+
+        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
+        string_extend_cstr(&gen_a, &function, "}\n");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+}
+
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {
     lang_type_gen_new_internal(lang_type, false);
 }
@@ -662,6 +786,8 @@ static void gen_lang_type(const char* file_path, bool implementation) {
     if (implementation) {
         gen_lang_type_new_define(lang_type);
     }
+    gen_lang_type_get_pos(lang_type, implementation, false);
+    gen_lang_type_get_pos(lang_type, implementation, true);
 
     if (implementation) {
         gen_gen("#endif // LANG_TYPE_H\n");

@@ -95,6 +95,7 @@ static PARSE_STATUS parse_expr_index(
     Pos oper_pos
 );
 
+// TODO: rename to parse_general_binary?
 static PARSE_EXPR_STATUS parse_generic_binary(
     Uast_expr** result,
     Tk_view* tokens,

@@ -34,6 +34,21 @@ static inline const char* get_log_level_str(LOG_LEVEL log_level) {
     abort();
 }
 
+static inline void log_internal_ex(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        for (Indent idx = 0; idx < indent; idx++) {
+            fprintf(dest, " ");
+        }
+        fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        vfprintf(dest, format, args);
+    }
+
+    va_end(args);
+}
+
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
     va_list args;
     va_start(args, format);

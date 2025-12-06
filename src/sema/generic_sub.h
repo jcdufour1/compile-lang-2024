@@ -84,7 +84,7 @@ void generic_sub_member_access(
 void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 
 GEN_SUB_NAME_STATUS generic_sub_name(
-    Uast_int** new_expr,
+    Uast_expr** new_expr,
     int16_t* pointer_depth_to_add, // this variable should be used if and only if 
                                    //   GEN_SUB_NAME_NORMAL is returned
     Name* name,
@@ -96,6 +96,27 @@ GEN_SUB_NAME_STATUS generic_sub_name(
 void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_question_mark(Uast_question_mark* mark, Name gen_param, Ulang_type gen_arg);
+
+void generic_sub_lang_type_lit(
+    Ulang_type_lit* new_lang_type,
+    Ulang_type_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
+
+void generic_sub_lang_type_struct_lit(
+    Ulang_type_struct_lit* new_lang_type,
+    Ulang_type_struct_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
+
+void generic_sub_lang_type_fn_lit(
+    Ulang_type_fn_lit* new_lang_type,
+    Ulang_type_fn_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
 
 void generic_sub_array_literal(Uast_array_literal* lit, Name gen_param, Ulang_type gen_arg);
 

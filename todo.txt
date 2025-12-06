@@ -110,15 +110,45 @@ for generics:
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
 - append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
+- store pos in Uast_struct_def_base?
+- store pos in Tast_struct_def_base?
 - in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- remove PrintFormatArg and PrintFormat from std/runtime.own?
 - remove Lang_type_atom and Ulang_type_atom
+- make attribute to disable initialization check for a specific variable
+- make basic "did you mean" (just symbols initially)
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
+- document or make functions for uast_def_get_ulang_type
+- expected success case for nested struct literals used in generic arg
+- use _Generic to make printing more concise?
+- use _Generic to make wrapping more concise?
+- test case for def alias used within struct literal generic arg
+- make this error message better (and make expected failure case):
+    tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
+    --float8.69999999999999929
+    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
+    >)`, but the corresponding parameter `token` is of type `Token3(<struct_literal
+    --float8.69999999999999929
+    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
+    >)`
+- make max and min "functions" using _Generic
+- make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
+- error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
+    if Token in general is undefined
+- expected failure case for generic parameter having the same name as top level function
+- float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
+- expected failure tests for non-int generic arg const expressions
+- enable -Wenum-switch?
+- make recursion depth O(1) for importing n modules deep
+- use -fsanitize-undefined?
+
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
 - orelse, !!, ??, etc.
 - extern("c") defintions
@@ -126,8 +156,7 @@ for generics:
 - global constants
 - global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
-- mandatory initialization or similar
-- manual zero initialization
+- std function for manual zero initialization
 - safe cast (use "cast(<i64>)" to cast num to i64)?
 - test for break in switch case 
 - distinct

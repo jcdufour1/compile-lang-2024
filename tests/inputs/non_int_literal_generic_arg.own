@@ -1,0 +1,161 @@
+type io import = std.io
+
+type Alloc struct {
+    max_thing i32
+}
+
+type Token1 enum(<alloc ''Alloc>) {
+    num i32
+}
+
+type Token2 enum(<max_cap ''i32, alloc ''Alloc>) {
+    num i32
+}
+
+type Token3Internal struct {
+    float_num f32
+    print_fn fn()void
+}
+
+type Token3 enum(<token3 ''Token3Internal>) {
+    num i32
+}
+
+type NestedAlloc struct {
+    alloc Alloc
+}
+
+type NestedStruct enum(<alloc ''NestedAlloc>) {
+    num i32
+}
+
+type Symbol struct(<print_fn ''fn()void>) {
+    num i32
+}
+
+fn print_hello() {
+    io.print_str("hello")
+}
+
+fn print_bye() {
+    io.print_str("bye")
+}
+
+fn do_thing_with_alloc(alloc Alloc) {
+    io.print_int(alloc.max_thing)
+}
+
+fn do_thing_with_nested_alloc(nested_alloc NestedAlloc) {
+    do_thing_with_alloc(nested_alloc.alloc)
+}
+
+fn print_max1(<alloc ''Alloc>)(token Token1(<alloc>)) {
+    do_thing_with_alloc(alloc)
+}
+
+fn print_max2(<max_cap ''i32, alloc ''Alloc>)(token Token2(<max_cap, alloc>)) {
+    do_thing_with_alloc(alloc)
+}
+
+fn print_nested_struct(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_alloc>)) {
+    do_thing_with_nested_alloc(nested_alloc)
+}
+
+fn do_thing_with_token3internal(token3internal Token3Internal) {
+    io.print_float(token3internal.float_num)
+}
+
+fn print_float(float f32) {
+    io.print_float(float)
+}
+
+fn print_token3(<token3internal ''Token3Internal>)(token Token3(<token3internal>)) {
+    do_thing_with_token3internal(token3internal)
+    print_float(token3internal.float_num)
+    print_float(token.token3.float_num)
+    io.print_float(<f32>)(token.token3.float_num)
+    io.print_float(token.token3.float_num)
+    token.token3.print_fn()
+}
+
+type ALLOC1 def = {.max_thing = 8}
+type NESTED_STRUCT_2 def = {{765}}
+
+fn struct_literal_tests() {
+    let token1 Token1(<ALLOC1>) = .num(7)
+    let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
+    print_max1(<ALLOC1>)(token1)
+    print_max1(token1)
+    print_max2(<87, {.max_thing = 903}>)(token2)
+    print_max2(token2)
+
+    let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
+    print_nested_struct(nested_struct_lit)
+    let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
+    print_nested_struct(nested_struct_2)
+    print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
+
+    let token3 Token3(<{8.7, print_bye}>) = .num(7)
+    print_token3(token3)
+    print_token3(<{8.7, print_bye}>)(token3)
+}
+
+fn symbol_print(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {
+    do_print_fn()
+    symbol.print_fn()
+}
+
+fn symbol_tests() {
+    let hello Symbol(<print_hello>) = {0}
+    hello.print_fn()
+    symbol_print(<print_hello>)(hello)
+    symbol_print(hello)
+
+    let bye Symbol(<print_bye>) = {0}
+    bye.print_fn()
+    symbol_print(<print_bye>)(bye)
+    symbol_print(bye)
+}
+
+type Float struct(<float_value ''f32>) {
+    num i32
+}
+
+type String1 struct(<str_value ''Str>) {
+    num i32
+}
+
+fn float_print(<float_val>)(float Float(<float_val>)) {
+    io.print_float(float_val)
+    io.print_float(float.float_value)
+}
+
+fn string_print(<str_val>)(str String1(<str_val>)) {
+    io.print_str(str_val)
+    io.print_str(str.str_value)
+}
+
+fn float_tests() {
+    let float1 Float(<8.9>) = {0}
+    float_print(<8.9>)(float1)
+    float_print(float1)
+
+    let float2 Float(<9.3>) = {0}
+    float_print(<9.3>)(float2)
+    float_print(float2)
+}
+
+fn string_tests() {
+    let string String1(<"this is a string">) = {0}
+    string_print(<"this is a string">)(string)
+    string_print(string)
+}
+
+fn main() i32 {
+    struct_literal_tests()
+    symbol_tests()
+    float_tests()
+    string_tests()
+
+    return 0
+}

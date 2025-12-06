@@ -62,6 +62,8 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
+Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id);
+
 Uname name_to_uname(Name name);
 
 Name ir_name_to_name(Ir_name name);
@@ -70,6 +72,8 @@ Ir_name name_to_ir_name(Name name);
 
 void extend_name_ir(String* buf, Name name);
 
+void serialize_strv_actual(String* buf, Strv strv);
+
 void serialize_strv(String* buf, Strv strv);
 
 Strv serialize_name_symbol_table(Arena* arena, Name name);
@@ -77,6 +81,9 @@ Strv serialize_name_symbol_table(Arena* arena, Name name);
 Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name);
 
 Strv serialize_name(Name name);
+
+// TODO: move this function?
+Strv serialize_double(double num);
 
 Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name);
 

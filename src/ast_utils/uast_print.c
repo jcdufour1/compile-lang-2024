@@ -36,11 +36,14 @@ Strv uast_unary_print_internal(const Uast_unary* unary, Indent indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_temp, &buf, "unary", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv(&a_temp, &buf, unary_type_to_strv(unary->token_type));
     extend_pos(&buf, unary->pos);
     string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "", indent);
+    string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, unary->lang_type));
 
-    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(unary->child, indent + INDENT_WIDTH));
+    string_extend_strv(&a_temp, &buf, uast_expr_print_internal(unary->child, indent));
 
     return string_to_strv(buf);
 }
@@ -333,6 +336,7 @@ Strv uast_using_print_internal(const Uast_using* using, Indent indent) {
 
     string_extend_cstr_indent(&a_temp, &buf, "using: ", indent);
     extend_name(NAME_LOG, &buf, using->sym_name);
+    string_extend_cstr_indent(&a_temp, &buf, "\n", indent);
 
     return string_to_strv(buf);
 }
@@ -654,11 +658,12 @@ Strv uast_function_def_print_internal(const Uast_function_def* fun_def, Indent i
     return string_to_strv(buf);
 }
 
-static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_def_base base, Indent indent, Pos pos) {
+static void extend_ustruct_def_base(String* buf, const void* main_ptr, const char* type_name, Ustruct_def_base base, Indent indent, Pos pos) {
     string_extend_cstr_indent(&a_temp, buf, type_name, indent);
     extend_pos(buf, pos);
     extend_name(NAME_LOG, buf, base.name);
-    string_extend_cstr(&a_temp, buf, "\n");
+    string_extend_f(&a_temp, buf, " %p ", main_ptr);
+    string_extend_cstr(&a_temp, buf, " \n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Strv memb_text = uast_variable_def_print_internal(vec_at(base.members, idx), indent + INDENT_WIDTH);
@@ -668,14 +673,14 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
 
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent) {
     String buf = {0};
-    extend_ustruct_def_base(&buf, "<unknown>", base, indent, POS_BUILTIN);
+    extend_ustruct_def_base(&buf, NULL, "<unknown>", base, indent, POS_BUILTIN);
     return string_to_strv(buf);
 }
 
 Strv uast_struct_def_print_internal(const Uast_struct_def* def, Indent indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "struct_def", def->base, indent, def->pos);
+    extend_ustruct_def_base(&buf, def, "struct_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -683,7 +688,7 @@ Strv uast_struct_def_print_internal(const Uast_struct_def* def, Indent indent) {
 Strv uast_raw_union_def_print_internal(const Uast_raw_union_def* def, Indent indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "raw_union_def", def->base, indent, def->pos);
+    extend_ustruct_def_base(&buf, def, "raw_union_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -691,7 +696,7 @@ Strv uast_raw_union_def_print_internal(const Uast_raw_union_def* def, Indent ind
 Strv uast_enum_def_print_internal(const Uast_enum_def* def, Indent indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "enum_def", def->base, indent, def->pos);
+    extend_ustruct_def_base(&buf, def, "enum_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }

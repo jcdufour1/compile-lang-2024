@@ -1,0 +1,47 @@
+compile::stdout 41
+8
+8
+903
+903
+71
+765
+765
+8.700000
+8.700000
+8.700000
+8.700000
+8.700000
+bye
+8.700000
+8.700000
+8.700000
+8.700000
+8.700000
+bye
+hello
+hello
+hello
+hello
+hello
+bye
+bye
+bye
+bye
+bye
+8.900000
+8.900000
+8.900000
+8.900000
+9.300000
+9.300000
+9.300000
+9.300000
+this is a string
+this is a string
+this is a string
+this is a string
+
+compile::stderr 0
+
+compile::return_code 0
+

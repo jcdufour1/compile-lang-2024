@@ -42,4 +42,14 @@ void msg_got_expr_but_expected_type_internal(const char* file, int line, Pos pos
 #define msg_got_expr_but_expected_type(pos) \
     msg_got_expr_but_expected_type_internal(__FILE__, __LINE__, pos)
 
+void msg_struct_literal_assigned_to_non_struct_gen_param_internal(
+    const char* file,
+    int line,
+    Pos pos_struct_lit,
+    Pos pos_gen_param
+);
+
+#define msg_struct_literal_assigned_to_non_struct_gen_param(pos_struct_lit, pos_gen_param) \
+    msg_struct_literal_assigned_to_non_struct_gen_param_internal(__FILE__, __LINE__, pos_struct_lit, pos_gen_param)
+
 #endif // AST_MSG_H

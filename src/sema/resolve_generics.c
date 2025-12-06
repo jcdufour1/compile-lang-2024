@@ -1,10 +1,8 @@
 #include <resolve_generics.h>
 #include <type_checking.h>
-#include <lang_type_serialize.h>
 #include <ulang_type.h>
 #include <uast_clone.h>
 #include <uast_utils.h>
-#include <ulang_type_get_pos.h>
 #include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
@@ -16,9 +14,6 @@
 
 static bool is_in_struct_base_def;
 
-#define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args, min_args, max_args) \
-    msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
-
 // TODO: move this function and macro to better place
 static void msg_undefined_type_internal(
     const char* file,
@@ -27,12 +22,12 @@ static void msg_undefined_type_internal(
     Ulang_type lang_type
 ) {
     if (!env.silent_generic_resol_errors) {
-        unwrap(!env.silent_generic_resol_errors);
         msg_internal(
             file, line, DIAG_UNDEFINED_TYPE, pos,
             "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
         );
 
+        // TODO: add name member to all ulang_types so that poison can be added for all of them?
         Name name = {0};
         if (lang_type.type == ULANG_TYPE_REGULAR && name_from_uname(
             &name,
@@ -47,12 +42,12 @@ static void msg_undefined_type_internal(
 #define msg_undefined_type(pos, lang_type) \
     msg_undefined_type_internal(__FILE__, __LINE__,  pos, lang_type)
 
-static void msg_invalid_count_generic_args_internal(
+void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Pos pos_def,
     Pos pos_gen_args,
-    Ulang_type_vec gen_args,
+    size_t gen_args_count,
     size_t min_args,
     size_t max_args
 ) {
@@ -61,7 +56,7 @@ static void msg_invalid_count_generic_args_internal(
     }
 
     String message = {0};
-    string_extend_size_t(&a_temp, &message, gen_args.info.count);
+    string_extend_size_t(&a_temp, &message, gen_args_count);
     string_extend_cstr(&a_temp, &message, " generic arguments are passed");
     // TODO: print base type (eg. `Token`)
     string_extend_cstr(&a_temp, &message, ", but ");
@@ -255,7 +250,7 @@ static void resolve_generics_serialize_struct_def_base(
 
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 
-static bool resolve_generics_ulang_type_internal_struct_like(
+static bool resolve_generics_ulang_type_int_liternal_struct_like(
     Uast_def** after_res,
     Ulang_type* result,
     Ustruct_def_base old_base,
@@ -279,12 +274,19 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         SCOPE_TOP_LEVEL /* TODO */,
         (Attrs) {0}
     );
+
     if (!struct_like_tbl_lookup(after_res, new_name)) {
+        if (env.silent_generic_resol_errors) {
+            // this early return is nessessary to avoid storing uasts in struct_like_tbl that have
+            //   not been fully run through the expand_def pass
+            return false;
+        }
+
         if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
                 pos_def,
                 ulang_type_get_pos(lang_type),
-                new_name.gen_args,
+                new_name.gen_args.info.count,
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
@@ -303,6 +305,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             // TODO: struct def base is substituted for every encounter of a struct like Lang_type
             //   compilation times could possibly be improved by only making def base sometimes
             resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
+            // TODO: avoid casting function pointers?
             *after_res = (void*)obj_new(pos_def, new_base);
         }
     }
@@ -315,6 +318,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     ));
 
     Tast_def* dummy = NULL;
+    // TODO: remove symbol_lookup?
     if (symbol_lookup(&dummy, new_name)) {
         return true;
     }
@@ -337,11 +341,11 @@ static void* local_uast_struct_def_new(Pos pos, Ustruct_def_base base) {
     return uast_struct_def_new(pos, base);
 }
 
-static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
+static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -356,7 +360,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_ENUM_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -371,7 +375,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_STRUCT_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -424,6 +428,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             msg_todo("", ulang_type_get_pos(lang_type));
             return false;
         case UAST_BUILTIN_DEF:
+            log(LOG_FATAL, FMT"\n", uast_def_print(before_res));
+            msg(DIAG_NOTE, uast_def_get_pos(before_res), "\n");
             unreachable(
                 "this should have been removed in expand_lang_def "
                 "(or error should have been printed in expand_lang_def)"
@@ -455,7 +461,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         *gen_arg = inner;
     }
 
-    return resolve_generics_ulang_type_internal(
+    return resolve_generics_ulang_type_int_liternal(
         type,
         result,
         before_res,
@@ -477,7 +483,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     );
 
     Uast_def* after_res = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
+    if (!resolve_generics_ulang_type_int_liternal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
         return false;
     }
 
@@ -584,7 +590,7 @@ static bool resolve_generics_serialize_function_decl(
                 msg_invalid_count_generic_args(
                     old_decl->pos,
                     pos_gen_args,
-                    gen_args,
+                    gen_args.info.count,
                     old_decl->generics.info.count,
                     old_decl->generics.info.count
                 );
@@ -610,7 +616,7 @@ static bool resolve_generics_serialize_function_decl(
         msg_invalid_count_generic_args(
             old_decl->pos,
             pos_gen_args,
-            gen_args,
+            gen_args.info.count,
             old_decl->generics.info.count,
             old_decl->generics.info.count
         );
@@ -628,6 +634,25 @@ static bool resolve_generics_serialize_function_decl(
     return true;
 }
 
+static void name_normalize(Uast_generic_param_vec gen_params, Name* name) {
+    vec_foreach_ref(idx, Ulang_type, gen_arg, name->gen_args) {
+        if (gen_arg->type == ULANG_TYPE_LIT) {
+            // TODO: rename ulang_type_lit to ulang_type_lit?
+            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(*gen_arg);
+            if (const_expr.type == ULANG_TYPE_STRUCT_LIT) {
+                Ulang_type_struct_lit struct_lit = ulang_type_struct_lit_const_unwrap(const_expr);
+                unwrap(vec_at(gen_params, idx)->is_expr);
+                *gen_arg = ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
+                    struct_lit.pos,
+                    uast_operator_wrap(uast_unary_wrap(uast_unary_new(struct_lit.pos, struct_lit.expr, UNARY_UNSAFE_CAST, vec_at(gen_params, idx)->expr_lang_type))),
+                    struct_lit.pointer_depth
+                )));
+            }
+            
+        }
+    }
+}
+
 bool resolve_generics_function_def_call(
     Lang_type_fn* type_res,
     Name* new_name,
@@ -636,6 +661,7 @@ bool resolve_generics_function_def_call(
     Pos pos_gen_args
 ) {
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id, (Attrs) {0});
+    name_normalize(def->decl->generics, &name);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id, (Attrs) {0});
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
@@ -664,7 +690,7 @@ bool resolve_generics_function_def_call(
 
     if (def->decl->generics.info.count != gen_args.info.count) {
         if (!env.supress_type_inference_failures) {
-            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args.info.count, def->decl->generics.info.count, def->decl->generics.info.count);
         }
         return false;
     }

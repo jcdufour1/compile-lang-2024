@@ -3,7 +3,6 @@
 #include <msg.h>
 #include <ir_utils.h>
 #include <name.h>
-#include <ulang_type_get_pos.h>
 #include <bool_vec.h>
 #include <symbol_log.h>
 #include <cfg_foreach.h>

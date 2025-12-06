@@ -4,7 +4,6 @@
 #include <lang_type_after.h>
 #include <ir_lang_type_after.h>
 #include <name.h>
-#include <ulang_type_get_pos.h>
 
 Ir_lang_type ir_operator_get_lang_type(const Ir_operator* operator) {
     if (operator->type == IR_UNARY) {

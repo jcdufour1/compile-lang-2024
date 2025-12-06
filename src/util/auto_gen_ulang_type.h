@@ -241,14 +241,54 @@ static Ulang_type_type ulang_type_gen_void(const char* prefix) {
     return sym;
 }
 
-static Ulang_type_type ulang_type_gen_int(const char* prefix) {
-    const char* base_name = "int";
-    Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
+static Ulang_type_type ulang_type_gen_int_lit(const char* prefix) {
+    const char* base_name = "int_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
 
-    append_member(&sym.members, "int64_t", "data");
-    append_member(&sym.members, "int16_t", "pointer_depth");
+    append_member(&lit.members, "int64_t", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
 
-    return sym;
+    return lit;
+}
+
+static Ulang_type_type ulang_type_gen_float_lit(const char* prefix) {
+    const char* base_name = "float_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "double", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Ulang_type_type ulang_type_gen_string_lit(const char* prefix) {
+    const char* base_name = "string_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Strv", "data");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Ulang_type_type ulang_type_gen_struct_lit(const char* prefix) {
+    const char* base_name = "struct_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Uast_expr*", "expr");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
+}
+
+static Ulang_type_type ulang_type_gen_fn_lit(const char* prefix) {
+    const char* base_name = "fn_lit";
+    Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Name", "name");
+    append_member(&lit.members, "int16_t", "pointer_depth");
+
+    return lit;
 }
 
 static Ulang_type_type ulang_type_gen_regular(const char* prefix) {
@@ -270,6 +310,19 @@ static Ulang_type_type ulang_type_gen_expr(const char* prefix) {
     return sym;
 }
 
+static Ulang_type_type ulang_type_gen_lit(const char* prefix) {
+    const char* base_name = "lit";
+    Ulang_type_type ulang_type = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name)); // TODO: rename int to int_lit for consistancy?
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_float_lit(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_string_lit(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_struct_lit(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_fn_lit(base_name));
+
+    return ulang_type;
+}
+
 static Ulang_type_type ulang_type_gen_ulang_type(void) {
     const char* base_name = "ulang_type";
     Ulang_type_type ulang_type = {.name = ulang_type_name_new(base_name, "", true)};
@@ -279,7 +332,7 @@ static Ulang_type_type ulang_type_gen_ulang_type(void) {
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_array(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_expr(base_name));
-    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_removed(base_name));
 
     return ulang_type;
@@ -619,6 +672,77 @@ static void gen_ulang_type_new_define(Ulang_type_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, true);
 }
 
+static void gen_ulang_type_get_pos(Ulang_type_type type, bool implementation, bool is_ref) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        gen_ulang_type_get_pos(vec_at(type.sub_types, idx), implementation, is_ref);
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline Pos ");
+    if (is_ref) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+
+    string_extend_cstr(&gen_a, &function, "    ulang_type_");
+    extend_strv_lower(&function, type.name.base);
+    if (is_ref) {
+        string_extend_f(&gen_a, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
+    } else {
+        string_extend_f(&gen_a, &function, "%sget_pos(const ", type.name.is_topmost ? "" : "_");
+    }
+    extend_ulang_type_name_first_upper(&function, type.name);
+    string_extend_f(&gen_a, &function, "%s ulang_type)", is_ref ? "*" : "");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        if (type.sub_types.info.count < 1) {
+            if (is_ref) {
+                string_extend_cstr(&gen_a, &function, "    return &ulang_type->pos;\n");
+            } else {
+                string_extend_cstr(&gen_a, &function, "    return ulang_type.pos;\n");
+            }
+        } else {
+            string_extend_f(&gen_a, &function, "    switch (ulang_type%stype) {\n", is_ref ? "->" : ".");
+
+            for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+                Ulang_type_type curr = vec_at(type.sub_types, idx);
+                string_extend_cstr(&gen_a, &function, "        case ");
+                extend_ulang_type_name_upper(&function, curr.name);
+                string_extend_cstr(&gen_a, &function, ":\n");
+
+
+                string_extend_cstr(&gen_a, &function, "            return ulang_type_");
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_get_pos_ref(ulang_type_");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_get_pos(ulang_type_");
+                }
+                extend_strv_lower(&function, curr.name.base);
+                if (is_ref) {
+                    string_extend_cstr(&gen_a, &function, "_unwrap(ulang_type));\n");
+                } else {
+                    string_extend_cstr(&gen_a, &function, "_const_unwrap(ulang_type));\n");
+                }
+
+                string_extend_cstr(&gen_a, &function, "        break;\n");
+            }
+
+            string_extend_cstr(&gen_a, &function, "    }\n");
+        }
+
+        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
+        string_extend_cstr(&gen_a, &function, "}\n");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+}
+
 static void gen_ulang_type_set_ptr_depth_common(Ulang_type_type ulang_type, Strv op_str, Strv name_op_str, bool is_get) {
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
         gen_ulang_type_set_ptr_depth_common(vec_at(ulang_type.sub_types, idx), op_str, name_op_str, is_get);
@@ -751,6 +875,8 @@ static void gen_ulang_type(const char* file_path, bool implementation) {
         gen_ulang_type_set_ptr_depth(ulang_type);
         gen_ulang_type_add_ptr_depth(ulang_type);
     }
+    gen_ulang_type_get_pos(ulang_type, implementation, false);
+    gen_ulang_type_get_pos(ulang_type, implementation, true);
 
     if (implementation) {
         gen_gen("#endif // ULANG_TYPE_H\n");

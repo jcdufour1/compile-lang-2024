@@ -18,7 +18,7 @@ PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, con
         "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
-    Uast_def* original_def;
+    Uast_def* original_def = NULL;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg_internal(
         file, line, DIAG_NOTE, uast_def_get_pos(original_def),
@@ -38,4 +38,25 @@ void msg_got_type_but_expected_expr_internal(const char* file, int line, Pos pos
 
 void msg_got_expr_but_expected_type_internal(const char* file, int line, Pos pos) {
     msg_internal(file, line, DIAG_INVALID_CHAR_LIT /* TODO */, pos, "got expression, but expected type\n");
+}
+
+
+void msg_struct_literal_assigned_to_non_struct_gen_param_internal(
+    const char* file,
+    int line,
+    Pos pos_struct_lit,
+    Pos pos_gen_param
+) {
+    msg_internal(
+        file, line,
+        DIAG_INVALID_TYPE,
+        pos_struct_lit,
+        "struct literal assigned to non-struct generic parameter\n"
+    );
+    msg_internal(
+        file, line,
+        DIAG_NOTE,
+        pos_gen_param,
+        "non-struct generic parameter type defined here\n"
+    );
 }
