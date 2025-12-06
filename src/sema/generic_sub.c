@@ -134,7 +134,7 @@ void generic_sub_lang_type_fn_lit(
     *new_lang_type = lang_type;
 }
 
-void generic_sub_lang_type_const_expr(
+void generic_sub_lang_type_lit(
     Ulang_type_lit* new_lang_type,
     Ulang_type_lit lang_type,
     Name gen_param,
@@ -234,7 +234,7 @@ void generic_sub_lang_type(
             return;
         case ULANG_TYPE_LIT: {
             Ulang_type_lit new_lit = {0};
-            generic_sub_lang_type_const_expr(
+            generic_sub_lang_type_lit(
                 &new_lit,
                 ulang_type_lit_const_unwrap(lang_type),
                 gen_param,

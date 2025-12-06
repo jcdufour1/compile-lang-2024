@@ -486,14 +486,6 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     if (!resolve_generics_ulang_type_int_liternal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
         return false;
     }
-    if (after_res->type == UAST_STRUCT_DEF) {
-        Ulang_type local_lang_type = ulang_type_regular_const_wrap(
-            ulang_type_regular_new(
-                uast_def_get_pos(after_res),
-                ulang_type_atom_new(name_to_uname(uast_def_get_name(after_res)), 0)
-            )
-        );
-    }
 
     switch (before_res->type) {
         case UAST_STRUCT_DEF:
