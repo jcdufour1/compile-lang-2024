@@ -14,8 +14,8 @@ static inline bool try_lang_type_from_ulang_type_expr(Lang_type* new_lang_type, 
 
 bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_type_const_expr lang_type) {
     switch (lang_type.type) {
-        case ULANG_TYPE_INT: {
-            Ulang_type_int lit = ulang_type_int_const_unwrap(lang_type);
+        case ULANG_TYPE_INT_LIT: {
+            Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(lang_type);
 
             *new_lang_type = lang_type_const_expr_const_wrap(lang_type_int_const_wrap(lang_type_int_new(
                 lit.pos,
@@ -165,7 +165,7 @@ Ulang_type lang_type_const_expr_to_ulang_type(Lang_type_const_expr lang_type) {
         case LANG_TYPE_INT: {
             // TODO: rename LANG_TYPE_INT to LANG_TYPE_INT_LIT
             Lang_type_int lit = lang_type_int_const_unwrap(lang_type);
-            return ulang_type_const_expr_const_wrap(ulang_type_int_const_wrap(ulang_type_int_new(
+            return ulang_type_const_expr_const_wrap(ulang_type_int_lit_const_wrap(ulang_type_int_lit_new(
                 lit.pos,
                 lit.data,
                 lit.pointer_depth

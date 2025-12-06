@@ -141,7 +141,7 @@ void generic_sub_lang_type_const_expr(
     Ulang_type gen_arg
 ) {
     switch (lang_type.type) {
-        case ULANG_TYPE_INT:
+        case ULANG_TYPE_INT_LIT:
             *new_lang_type = lang_type;
             return;
         case ULANG_TYPE_FLOAT_LIT:
@@ -658,10 +658,10 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
 
 GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_pos, Ulang_type_const_expr gen_arg) {
     switch (gen_arg.type) {
-        case ULANG_TYPE_INT:
+        case ULANG_TYPE_INT_LIT:
             *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(
                 name_pos,
-                ulang_type_int_const_unwrap(gen_arg).data
+                ulang_type_int_lit_const_unwrap(gen_arg).data
             )));
             return GEN_SUB_NAME_NEW_INT;
         case ULANG_TYPE_FLOAT_LIT:

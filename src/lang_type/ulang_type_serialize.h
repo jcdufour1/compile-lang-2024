@@ -17,7 +17,7 @@ Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, 
 
 Name serialize_ulang_type(Strv mod_path, Ulang_type ulang_type, bool include_scope);
 
-Name serialize_ulang_type_int(Ulang_type_int ulang_type);
+Name serialize_ulang_type_int_lit(Ulang_type_int_lit ulang_type);
 
 Name serialize_ulang_type_float_lit(Ulang_type_float_lit ulang_type);
 

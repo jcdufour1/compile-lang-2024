@@ -467,9 +467,9 @@ static bool expand_def_ulang_type_expr(
     unreachable("");
 }
 
-static bool expand_def_ulang_type_int(
-    Ulang_type_int* new_lang_type,
-    Ulang_type_int lang_type
+static bool expand_def_ulang_type_int_lit(
+    Ulang_type_int_lit* new_lang_type,
+    Ulang_type_int_lit lang_type
 ) {
     *new_lang_type = lang_type;
     return true;

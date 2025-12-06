@@ -250,7 +250,7 @@ static void resolve_generics_serialize_struct_def_base(
 
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 
-static bool resolve_generics_ulang_type_internal_struct_like(
+static bool resolve_generics_ulang_type_int_liternal_struct_like(
     Uast_def** after_res,
     Ulang_type* result,
     Ustruct_def_base old_base,
@@ -341,11 +341,11 @@ static void* local_uast_struct_def_new(Pos pos, Ustruct_def_base base) {
     return uast_struct_def_new(pos, base);
 }
 
-static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
+static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -360,7 +360,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_ENUM_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -375,7 +375,7 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         }
         case UAST_STRUCT_DEF: {
             Uast_def* after_res_ = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_like(
+            if (!resolve_generics_ulang_type_int_liternal_struct_like(
                 &after_res_,
                 result,
                 uast_def_get_struct_def_base(before_res),
@@ -461,7 +461,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         *gen_arg = inner;
     }
 
-    return resolve_generics_ulang_type_internal(
+    return resolve_generics_ulang_type_int_liternal(
         type,
         result,
         before_res,
@@ -483,7 +483,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     );
 
     Uast_def* after_res = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
+    if (!resolve_generics_ulang_type_int_liternal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
         return false;
     }
     if (after_res->type == UAST_STRUCT_DEF) {

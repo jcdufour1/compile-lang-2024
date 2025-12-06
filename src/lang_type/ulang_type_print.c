@@ -51,9 +51,9 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
 
 static void string_extend_ulang_type_const_expr(String* string, Ulang_type_const_expr lang_type) {
     switch (lang_type.type) {
-        case ULANG_TYPE_INT:
+        case ULANG_TYPE_INT_LIT:
             string_extend_cstr(&a_main, string, "int ");
-            string_extend_int64_t(&a_main, string, ulang_type_int_const_unwrap(lang_type).data);
+            string_extend_int64_t(&a_main, string, ulang_type_int_lit_const_unwrap(lang_type).data);
             return;
         case ULANG_TYPE_FLOAT_LIT:
             string_extend_cstr(&a_main, string, "float ");

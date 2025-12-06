@@ -221,7 +221,7 @@ static Lang_type_type lang_type_gen_const_expr(const char* prefix) {
     Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int(base_name)); // TODO: rename lang_type_int to lang_type_gen_int
-                                                                            //   and ulang_type_int to ulang_type_gen_int?
+                                                                            //   and ulang_type_int_lit to ulang_type_gen_int?
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));

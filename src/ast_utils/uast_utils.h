@@ -207,8 +207,8 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
 
             Ulang_type_const_expr const_expr = ulang_type_const_expr_const_unwrap(vec_at(base->name.gen_args, idx));
             switch (const_expr.type) {
-                case ULANG_TYPE_INT: {
-                    Ulang_type_int lit = ulang_type_int_const_unwrap(const_expr);
+                case ULANG_TYPE_INT_LIT: {
+                    Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
