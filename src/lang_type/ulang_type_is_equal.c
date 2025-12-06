@@ -140,45 +140,11 @@ static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uas
     return true;
 }
 
-static bool uast_expr_is_equal(const Uast_expr* a, const Uast_expr* b) {
-    if (a->type != b->type) {
-        return false;
-    }
-
-    if (a->type == UAST_STRUCT_LITERAL) {
-        return uast_struct_literal_is_equal(
-            uast_struct_literal_const_unwrap(a),
-            uast_struct_literal_const_unwrap(b)
-        );
-    }
-
-    if (a->type != UAST_OPERATOR) {
-        msg_todo("", uast_expr_get_pos(a));
-        msg_todo("", uast_expr_get_pos(b));
-        return false;
-    }
-    const Uast_operator* oper_a = uast_operator_const_unwrap(a);
-    const Uast_operator* oper_b = uast_operator_const_unwrap(b);
-
-    if (oper_a->type != UAST_UNARY || oper_b->type != UAST_UNARY) {
-        msg_todo("", uast_expr_get_pos(a));
-        msg_todo("", uast_expr_get_pos(b));
-        return false;
-    }
-    const Uast_unary* unary_a = uast_unary_const_unwrap(oper_a);
-    const Uast_unary* unary_b = uast_unary_const_unwrap(oper_b);
-
-    if (!ulang_type_is_equal(unary_a->lang_type, unary_b->lang_type)) {
-        return false;
-    }
-    return uast_expr_is_equal(unary_a->child, unary_b->child);
-}
-
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
-    return uast_expr_is_equal(a.expr, b.expr);
+    return uast_struct_literal_is_equal(a.lit, b.lit);
 }
 
 bool ulang_type_fn_lit_is_equal(Ulang_type_fn_lit a, Ulang_type_fn_lit b) {

@@ -65,8 +65,8 @@ static void string_extend_ulang_type_const_expr(String* string, Ulang_type_const
             return;
         case ULANG_TYPE_STRUCT_LIT:
             string_extend_cstr(&a_main, string, "struct ");
-            string_extend_strv(&a_main, string, uast_expr_print_internal(
-                ulang_type_struct_lit_const_unwrap(lang_type).expr,
+            string_extend_strv(&a_main, string, uast_struct_literal_print_internal(
+                ulang_type_struct_lit_const_unwrap(lang_type).lit,
                 0
             ));
             return;

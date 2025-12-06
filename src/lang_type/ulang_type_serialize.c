@@ -173,25 +173,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
 }
 
 Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type) {
-    if (ulang_type.expr->type == UAST_STRUCT_LITERAL) {
-        return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(ulang_type.expr));
-    }
-
-    if (ulang_type.expr->type != UAST_OPERATOR) {
-        msg_todo("", ulang_type.pos);
-        return poison;
-    }
-    const Uast_operator* oper = uast_operator_const_unwrap(ulang_type.expr);
-    if (oper->type != UAST_UNARY) {
-        msg_todo("", ulang_type.pos);
-        return poison;
-    }
-    const Uast_expr* child = uast_unary_const_unwrap(oper)->child;
-    if (child->type != UAST_STRUCT_LITERAL) {
-        msg_todo("", ulang_type.pos);
-        return poison;
-    }
-    return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(child));
+    return serialize_ulang_type_expr_lit_struct_literal(mod_path, ulang_type.lit);
 }
 
 Name serialize_ulang_type_fn_lit(Ulang_type_fn_lit ulang_type) {
