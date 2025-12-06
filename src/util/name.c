@@ -61,7 +61,6 @@ Name ir_name_to_name(Ir_name name) {
     }
 
     Ir_name_to_name_table_node* result = NULL;
-    //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_EMIT_C, name));
     unwrap(
         ir_name_to_name_lookup(&result, name) &&
         "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"

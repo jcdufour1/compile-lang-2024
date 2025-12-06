@@ -134,7 +134,8 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
         case UAST_STRUCT_LITERAL:
             return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(expr));
         case UAST_ARRAY_LITERAL:
-            todo();
+            msg_todo("array literal used as literal", uast_expr_get_pos(expr));
+            return poison;
         case UAST_IF_ELSE_CHAIN:
             fallthrough;
         case UAST_BLOCK:
@@ -174,9 +175,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
             );
             return name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     }
-
-    todo();
-    //return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    unreachable("");
 }
 
 Name serialize_ulang_type_struct_lit(Strv mod_path, Ulang_type_struct_lit ulang_type) {

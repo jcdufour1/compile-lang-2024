@@ -95,6 +95,87 @@ void generic_sub_lang_type_expr(
     *new_lang_type = ulang_type_expr_const_wrap(lang_type);
 }
 
+void generic_sub_lang_type_struct_lit(
+    Ulang_type_struct_lit* new_lang_type,
+    Ulang_type_struct_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    generic_sub_expr(&lang_type.expr, lang_type.expr, gen_param, gen_arg);
+    *new_lang_type = lang_type;
+}
+
+void generic_sub_lang_type_fn_lit(
+    Ulang_type_fn_lit* new_lang_type,
+    Ulang_type_fn_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    Uast_expr* unexpected = NULL;
+    int16_t pointer_depth_to_add = 0;
+    switch (generic_sub_name(
+        &unexpected,
+        &pointer_depth_to_add,
+        &lang_type.name,
+        lang_type.pos,
+        gen_param,
+        gen_arg
+    )) {
+        case GEN_SUB_NAME_NORMAL:
+            lang_type.pointer_depth += pointer_depth_to_add;
+            *new_lang_type = lang_type;
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", uast_expr_get_pos(unexpected));
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    *new_lang_type = lang_type;
+}
+
+void generic_sub_lang_type_const_expr(
+    Ulang_type_const_expr* new_lang_type,
+    Ulang_type_const_expr lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_INT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_FLOAT_LIT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_STRING_LIT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_STRUCT_LIT: {
+            Ulang_type_struct_lit new_lit = {0};
+            generic_sub_lang_type_struct_lit(
+                &new_lit,
+                ulang_type_struct_lit_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_struct_lit_const_wrap(new_lit);
+            return;
+        }
+        case ULANG_TYPE_FN_LIT: {
+            Ulang_type_fn_lit new_lit = {0};
+            generic_sub_lang_type_fn_lit(
+                &new_lit,
+                ulang_type_fn_lit_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_fn_lit_const_wrap(new_lit);
+            return;
+        }
+    }
+    unreachable("");
+}
+
 void generic_sub_lang_type_tuple(Ulang_type_tuple* lang_type, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lang_type->ulang_types.info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(lang_type->ulang_types, idx), gen_param, gen_arg);
@@ -151,11 +232,17 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
-        case ULANG_TYPE_CONST_EXPR:
-            todo();
-        //case ULANG_TYPE_INT:
-        //    msg_todo("", ulang_type_get_pos(lang_type));
-        //    return;
+        case ULANG_TYPE_CONST_EXPR: {
+            Ulang_type_const_expr new_lit = {0};
+            generic_sub_lang_type_const_expr(
+                &new_lit,
+                ulang_type_const_expr_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_const_expr_const_wrap(new_lit);
+            return;
+        }
         case ULANG_TYPE_REMOVED:
             msg_todo("", ulang_type_get_pos(lang_type));
             return;

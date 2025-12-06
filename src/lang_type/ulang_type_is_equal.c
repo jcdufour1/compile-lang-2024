@@ -63,7 +63,7 @@ static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) 
         case UAST_INT:
             return uast_int_const_unwrap(a)->data == uast_int_const_unwrap(b)->data;
         case UAST_STRING:
-            todo();
+            return strv_is_equal(uast_string_const_unwrap(a)->data, uast_string_const_unwrap(b)->data);
         case UAST_VOID:
             return true;
         case UAST_FLOAT:

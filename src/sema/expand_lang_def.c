@@ -399,7 +399,9 @@ static bool expand_def_ulang_type_expr(
                     Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);
                     gen_param = vec_at(fun_def->decl->generics, parent_idx);
                 } else {
-                    todo();
+                    msg_todo("", uast_def_get_pos(parent_def));
+                    msg(DIAG_NOTE, lit->pos, "\n");
+                    return false;
                 }
                 unwrap(gen_param);
 
@@ -537,15 +539,8 @@ static bool expand_def_ulang_type(
             return true;
         }
         case ULANG_TYPE_CONST_EXPR:
-            todo();
-        //case ULANG_TYPE_INT: {
-        //    Ulang_type_int new_lang_type = {0};
-        //    if (!expand_def_ulang_type_int(&new_lang_type, ulang_type_int_const_unwrap(*lang_type))) {
-        //        return false;
-        //    }
-        //    *lang_type = ulang_type_int_const_wrap(new_lang_type);
-        //    return true;
-        //}
+            msg_todo("", ulang_type_get_pos(*lang_type));
+            return false;
     }
     unreachable("");
 }
@@ -575,11 +570,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     bool is_expanded_from,
     Pos* expanded_from
 ) {
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, name));
     Uast_def* def = NULL;
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
-    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, *new_name));
     if (!usymbol_lookup(&def, *new_name)) {
         new_name->gen_args = name.gen_args;
         return EXPAND_NAME_NORMAL;
@@ -591,7 +584,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     base_name.gen_args = (Ulang_type_vec) {0};
     for (size_t idx = 0; idx < new_name->gen_args.info.count; idx++) {
         Ulang_type* curr = vec_at_ref(&new_name->gen_args, idx);
-        log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, *curr));
         Pos curr_pos = ulang_type_get_pos(*curr);
         gen_arg_status = expand_def_ulang_type(
             curr,
@@ -952,11 +944,9 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     bool is_rhs,
     Uast_expr* rhs
 ) {
-    log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
     if (!expand_def_expr_not_ulang_type(&access->callee, access->callee, is_rhs, rhs)) {
         return EXPAND_EXPR_ERROR;
     }
-    log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
 
     Uast_def* callee_def = NULL;
     switch (access->callee->type) {
@@ -967,7 +957,6 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
             if (!usymbol_lookup(&callee_def, sym->name)) {
                 sym->name.gen_args = old_gen_args;
                 *new_expr = uast_member_access_wrap(access);
-                log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
                 return EXPAND_EXPR_NEW_EXPR;
             }
             sym->name.gen_args = old_gen_args;
@@ -975,7 +964,6 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
         }
         default:
             *new_expr = uast_member_access_wrap(access);
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
             return EXPAND_EXPR_NEW_EXPR;
     }
 
@@ -1489,9 +1477,7 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
             status = expand_def_function_def(uast_function_def_unwrap(def));
             break;
         case UAST_VARIABLE_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(def));
             status = expand_def_variable_def(uast_variable_def_unwrap(def), is_rhs, rhs);
-            log(LOG_DEBUG, FMT"\n", uast_def_print(def));
             break;
         case UAST_STRUCT_DEF:
             status = expand_def_struct_def(uast_struct_def_unwrap(def));
@@ -1559,9 +1545,6 @@ void expand_def(void) {
     Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        //if (strv_is_equal(uast_def_get_name(curr).base, sv("Slice"))) {
-        //    todo();
-        //}
         expand_def_def(curr, false/*TODO*/, NULL);
     }
 }

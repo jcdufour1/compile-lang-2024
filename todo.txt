@@ -125,6 +125,7 @@ for generics:
 - expected success case for nested struct literals used in generic arg
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
+- test case for def alias used within struct literal generic arg
 - make this error message better (and make expected failure case):
     tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
     --float8.69999999999999929
@@ -147,6 +148,7 @@ for generics:
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
 - orelse, !!, ??, etc.
 - extern("c") defintions

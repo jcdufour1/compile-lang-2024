@@ -1128,8 +1128,6 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
     }
 
     Tast_expr* new_child;
-    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, cast_to));
-    log(LOG_DEBUG, FMT"\n", uast_expr_print(unary->child));
     if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to, false, true)) {
         return false;
     }
@@ -1251,9 +1249,7 @@ bool try_set_struct_literal_member_types_simplify(
     }
 
     for (size_t idx = 0; idx < membs->info.count; idx++) {
-        log(LOG_DEBUG, "%zu\n", idx);
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);
-        log(LOG_DEBUG, FMT"\n", uast_variable_def_print(memb_def));
         Uast_expr** memb = vec_at_ref(membs, idx);
         if (uast_expr_is_designator(*memb)) {
             Uast_member_access* lhs = uast_member_access_unwrap(
@@ -3349,8 +3345,6 @@ bool try_set_member_access_types_finish_enum_def(
                     break;
                 case UAST_GET_MEMB_DEF_EXPR: {
                     Tast_expr* new_expr = NULL;
-                    //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, cast_to));
-                    log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr_));
                     if (!try_set_expr_types(&new_expr, new_expr_ , true)) {
                         return false;
                     }
@@ -3540,12 +3534,10 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_struct_literal* callee_lit = tast_struct_literal_unwrap(new_callee);
 
             Uast_def* struct_def = NULL;
-            if (!usymbol_lookup(
+            unwrap(usymbol_lookup(
                 &struct_def,
                 lang_type_struct_const_unwrap(callee_lit->lang_type).atom.str
-            )) {
-                todo();
-            }
+            ));
 
             return try_set_member_access_types_finish(new_tast, struct_def, access, new_callee);
         }
@@ -4845,7 +4837,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_block_print(block));
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(block->children, idx);
         Tast_stmt* new_stmt = NULL;
