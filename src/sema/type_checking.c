@@ -1696,7 +1696,6 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 "consider casting the struct literal to the desired type"
                 "(note: casting struct literal not yet implemented)\n"
             );
-            todo();
             status = false;
             goto end;
         }

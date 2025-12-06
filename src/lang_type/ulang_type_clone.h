@@ -40,7 +40,7 @@ static inline Ulang_type_struct_lit ulang_type_struct_lit_clone(
 ) {
     return ulang_type_struct_lit_new(
         lang_type.pos,
-        uast_struct_literal_clone(lang_type.lit, use_new_scope, new_scope, lang_type.pos),
+        uast_expr_clone(lang_type.expr, use_new_scope, new_scope, lang_type.pos),
         lang_type.pointer_depth
     );
 }

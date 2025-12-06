@@ -36,11 +36,7 @@ bool try_lang_type_from_ulang_type_const_expr(Lang_type* new_lang_type, Ulang_ty
             Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(lang_type);
 
             *new_lang_type = lang_type_const_expr_const_wrap(lang_type_struct_lit_const_wrap(
-                lang_type_struct_lit_new(
-                    lit.pos,
-                    lit.lit,
-                    lit.pointer_depth
-                )
+                lang_type_struct_lit_new(lit.pos, lit.expr, lit.pointer_depth)
             ));
             return true;
         }

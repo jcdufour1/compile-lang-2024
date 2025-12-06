@@ -590,12 +590,12 @@ GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_p
             )));
             return GEN_SUB_NAME_NEW_INT;
         case ULANG_TYPE_STRUCT_LIT:
-            *new_expr = uast_struct_literal_wrap(uast_struct_literal_clone(
-                ulang_type_struct_lit_const_unwrap(gen_arg).lit,
+            *new_expr = uast_expr_clone(
+                ulang_type_struct_lit_const_unwrap(gen_arg).expr,
                 false,
                 0,
                 name_pos
-            )); // clone
+            ); // clone
             return GEN_SUB_NAME_NEW_INT;
         case ULANG_TYPE_FN_LIT: {
             Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(gen_arg);

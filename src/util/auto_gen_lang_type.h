@@ -200,7 +200,7 @@ static Lang_type_type lang_type_gen_struct_lit(const char* prefix) {
     const char* base_name = "struct_lit";
     Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Uast_struct_literal*", "lit");
+    append_member(&lit.members, "Uast_expr*", "lit");
     append_member(&lit.members, "int16_t", "pointer_depth");
 
     return lit;

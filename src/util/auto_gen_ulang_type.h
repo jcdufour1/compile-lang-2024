@@ -275,7 +275,7 @@ static Ulang_type_type ulang_type_gen_struct_lit(const char* prefix) {
     const char* base_name = "struct_lit";
     Ulang_type_type lit = {.name = ulang_type_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Uast_struct_literal*", "lit");
+    append_member(&lit.members, "Uast_expr*", "expr");
     append_member(&lit.members, "int16_t", "pointer_depth");
 
     return lit;

@@ -53,7 +53,11 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_internal(Ulang_type* resul
                     msg_todo("interpreting this expression as a type", uast_operator_get_pos(oper));
                     return EXPR_TO_ULANG_TYPE_ERROR;
                 }
-                todo();
+
+                *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
+                    ulang_type_struct_lit_new(unary->pos, unary->child, 0)
+                ));
+                return EXPR_TO_ULANG_TYPE_NORMAL;
             }
 
             if (unary->token_type != UNARY_DEREF) {
@@ -266,7 +270,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_internal(Ulang_type* result, i
             *result = ulang_type_const_expr_const_wrap(ulang_type_struct_lit_const_wrap(
                 ulang_type_struct_lit_new(
                     lit->pos,
-                    uast_struct_literal_clone(lit, false, 0, lit->pos), // TODO: remove this clone?
+                    uast_struct_literal_wrap(uast_struct_literal_clone(lit, false, 0, lit->pos)), // clone
                     0
                 )
             ));
