@@ -182,6 +182,7 @@ typedef enum {
     UAST_GET_MEMB_DEF_COUNT,
 } UAST_GET_MEMB_DEF;
 
+// TODO: move this function to uast_utils.c file
 static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     Uast_expr** new_expr,
     Uast_variable_def** member_def,
@@ -210,30 +211,39 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                 case ULANG_TYPE_INT: {
                     Ulang_type_int lit = ulang_type_int_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
+                    log(LOG_DEBUG, "thing 1\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FLOAT_LIT: {
                     Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(dest_pos, lit.data)));
+                    log(LOG_DEBUG, "thing 2\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRING_LIT: {
                     Ulang_type_string_lit lit = ulang_type_string_lit_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_string_wrap(uast_string_new(dest_pos, lit.data)));
+                    log(LOG_DEBUG, "thing 3\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRUCT_LIT: {
-                    todo();
                     Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
-                    *new_expr = uast_expr_clone(lit.expr, false, 0, lit.pos); // clone
+                    Uast_expr* inner = uast_expr_clone(lit.expr, false, 0, lit.pos); // clone
+                    unwrap(gen_param->is_expr);
+                    *new_expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
+                        lit.pos,
+                        inner,
+                        UNARY_UNSAFE_CAST,
+                        gen_param->expr_lang_type
+                    )));
+                    log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
+                    log(LOG_DEBUG, "thing 4\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FN_LIT: {
                     Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(const_expr);
-                    *new_expr = uast_symbol_wrap(uast_symbol_new(
-                        lit.pos,
-                        lit.name
-                    )); // clone
+                    *new_expr = uast_symbol_wrap(uast_symbol_new(lit.pos, lit.name));
+                    log(LOG_DEBUG, "thing 5\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
             }

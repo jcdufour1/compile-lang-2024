@@ -1128,6 +1128,8 @@ bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
     }
 
     Tast_expr* new_child;
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, cast_to));
+    log(LOG_DEBUG, FMT"\n", uast_expr_print(unary->child));
     if (!try_set_expr_types_internal(&new_child, unary->child, true, cast_to, false, true)) {
         return false;
     }
@@ -1249,7 +1251,6 @@ bool try_set_struct_literal_member_types_simplify(
         log(LOG_DEBUG, FMT"\n", uast_variable_def_print(memb_def));
         Uast_expr** memb = vec_at_ref(membs, idx);
         if (uast_expr_is_designator(*memb)) {
-            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
             Uast_member_access* lhs = uast_member_access_unwrap(
                 uast_binary_unwrap(uast_operator_unwrap(*memb))->lhs // parser should catch invalid assignment
             );
@@ -2906,8 +2907,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     "generic function parameter `"FMT"` defined here\n", 
                     name_print(NAME_MSG, vec_at(gen_params, gen_idx)->name)
                 );
-                log(LOG_DEBUG, FMT"\n", uast_expr_print(vec_at(fun_call->args, 0)));
-                todo();
             }
             status = false;
             goto error;
@@ -3345,6 +3344,8 @@ bool try_set_member_access_types_finish_enum_def(
                     break;
                 case UAST_GET_MEMB_DEF_EXPR: {
                     Tast_expr* new_expr = NULL;
+                    //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, cast_to));
+                    log(LOG_DEBUG, FMT"\n", uast_expr_print(new_expr_));
                     if (!try_set_expr_types(&new_expr, new_expr_ , true)) {
                         return false;
                     }
