@@ -8,12 +8,12 @@
 #define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args_count, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args_count, min_args, max_args)
 
-static void msg_invalid_count_generic_args_internal(
+void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Pos pos_def,
     Pos pos_gen_args,
-    Ulang_type_vec gen_args,
+    size_t gen_args_count,
     size_t min_args,
     size_t max_args
 );

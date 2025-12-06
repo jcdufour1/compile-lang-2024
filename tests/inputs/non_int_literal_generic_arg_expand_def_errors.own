@@ -18,6 +18,9 @@ type Struct struct {
 fn thing5(<struct1 ''Struct>)() {
 }
 
+fn thing6(<num ''Token>)() {
+}
+
 type Token enum {
     num i32
 }
@@ -30,6 +33,7 @@ fn main() i32 {
     thing4(<{6}>)()
     thing5(<{6, 4.5}>)()
     thing5(<{}>)()
+    thing6(<{5}>)()
     let incorrect_token Token(<{5}>)
 
     return 0

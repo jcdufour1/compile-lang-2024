@@ -42,7 +42,7 @@ static void msg_undefined_type_internal(
 #define msg_undefined_type(pos, lang_type) \
     msg_undefined_type_internal(__FILE__, __LINE__,  pos, lang_type)
 
-static void msg_invalid_count_generic_args_internal(
+void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Pos pos_def,
@@ -304,7 +304,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
             msg_invalid_count_generic_args(
                 pos_def,
                 ulang_type_get_pos(lang_type),
-                new_name.gen_args,
+                new_name.gen_args.info.count,
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
@@ -647,7 +647,7 @@ static bool resolve_generics_serialize_function_decl(
                 msg_invalid_count_generic_args(
                     old_decl->pos,
                     pos_gen_args,
-                    gen_args,
+                    gen_args.info.count,
                     old_decl->generics.info.count,
                     old_decl->generics.info.count
                 );
@@ -673,7 +673,7 @@ static bool resolve_generics_serialize_function_decl(
         msg_invalid_count_generic_args(
             old_decl->pos,
             pos_gen_args,
-            gen_args,
+            gen_args.info.count,
             old_decl->generics.info.count,
             old_decl->generics.info.count
         );
@@ -747,7 +747,7 @@ bool resolve_generics_function_def_call(
 
     if (def->decl->generics.info.count != gen_args.info.count) {
         if (!env.supress_type_inference_failures) {
-            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+            msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args.info.count, def->decl->generics.info.count, def->decl->generics.info.count);
         }
         return false;
     }

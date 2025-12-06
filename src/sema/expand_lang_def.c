@@ -65,6 +65,8 @@ static bool expand_def_ulang_type(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 );
@@ -239,6 +241,8 @@ static bool expand_def_ulang_type_array(
         is_rhs,
         item_type_rhs,
         false/*TODO*/,
+        (Pos) {0},
+        0,
         (Name) {0},
         0
     )) {
@@ -292,6 +296,8 @@ static bool expand_def_ulang_type_fn(
             gen_is_rhs,
             gen_rhs,
             false/*TODO*/,
+            (Pos) {0},
+            0,
             (Name) {0},
             0
         )) {
@@ -311,6 +317,8 @@ static bool expand_def_ulang_type_fn(
         rtn_is_rhs,
         rtn_rhs,
         false/*TODO*/,
+        (Pos) {0},
+        0,
         (Name) {0},
         0
     )) {
@@ -346,6 +354,8 @@ static bool expand_def_ulang_type_expr(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 ) {
@@ -356,20 +366,15 @@ static bool expand_def_ulang_type_expr(
             if (lang_type.expr->type == UAST_STRUCT_LITERAL) {
                 Uast_struct_literal* lit = uast_struct_literal_unwrap(lang_type.expr);
                 if (!is_parent_info) {
-                    todo();
-                    //msg_todo("", ulang_type.pos);
-                    //return poison;
+                    msg_todo("", lit->pos);
+                    return false;
                 }
+
                 Uast_def* parent_def = NULL;
                 if (!usymbol_lookup(&parent_def, parent_name)) {
-                    todo();
+                    msg_todo("", lit->pos);
+                    return false;
                 }
-                //if (parent_def->type != UAST_STRUCT_DEF) {
-                //    msg_todo("actual error message for this: def of this is not a struct", uast_def_get_pos(parent_def));
-                //    msg(DIAG_NOTE, ulang_type.pos, "\n");
-                //    return poison;
-                //}
-                log(LOG_DEBUG, FMT"\n", uast_def_print(parent_def));
 
                 assert(name_is_equal(parent_name, uast_def_get_name(parent_def)));
 
@@ -381,13 +386,11 @@ static bool expand_def_ulang_type_expr(
                         unwrap(usymbol_lookup(&struct_def, def_base.name));
                         msg_invalid_count_generic_args(
                             uast_def_get_pos(struct_def),
-                            lit->pos/*TODO*/,
-                            gen_args,
-                            min_args,
-                            max_args
-                        ); \
-                        //msg(DIAG_INVALID_TYPE, lit->pos, "too many generic arguments\n");
-                        //msg(DIAG_NOTE, uast_def_get_pos(struct_def), "generic parameters defined here\n");
+                            pos_parent_gen_args,
+                            count_parent_gen_args,
+                            def_base.generics.info.count,
+                            def_base.generics.info.count
+                        );
                         return false;
                     }
 
@@ -400,7 +403,6 @@ static bool expand_def_ulang_type_expr(
                 }
                 unwrap(gen_param);
 
-                // TODO: deduplicate below and similar above
                 if (!gen_param->is_expr) {
                     msg(
                         DIAG_INVALID_TYPE,
@@ -454,10 +456,9 @@ static bool expand_def_ulang_type_expr(
                 )));
             }
 
-            log(LOG_DEBUG, FMT"\n", uast_expr_print(lang_type.expr));
             *new_lang_type = ulang_type_expr_const_wrap(lang_type);
-        }
             return true;
+        }
         case EXPAND_EXPR_NEW_ULANG_TYPE:
             return true;
     }
@@ -478,6 +479,8 @@ static bool expand_def_ulang_type(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 ) {
@@ -523,6 +526,8 @@ static bool expand_def_ulang_type(
                 is_rhs,
                 rhs,
                 is_parent_info,
+                pos_parent_gen_args,
+                count_parent_gen_args,
                 parent_name,
                 parent_idx
             )) {
@@ -594,6 +599,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             false/*TODO*/,
             NULL,
             true,
+            dest_pos,
+            new_name->gen_args.info.count,
             base_name,
             idx
         ) && gen_arg_status;
@@ -850,6 +857,8 @@ static bool expand_def_variable_def(Uast_variable_def* def, bool is_rhs, Uast_ex
         is_rhs,
         rhs,
         false/*TODO*/,
+        (Pos) {0},
+        0,
         (Name) {0},
         0
     );
@@ -918,6 +927,8 @@ static bool expand_def_unary(Uast_unary* unary, bool is_rhs, Uast_expr* rhs) {
         is_rhs,
         rhs,
         false/*TODO*/,
+        (Pos) {0},
+        0,
         (Name) {0},
         0
     ) && status;
@@ -1545,6 +1556,8 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
         false,
         NULL,
         false/*TODO*/,
+        (Pos) {0},
+        0,
         (Name) {0},
         0
     ) && status;
