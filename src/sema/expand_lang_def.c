@@ -10,6 +10,7 @@
 #include <ast_msg.h>
 #include <pos_util.h>
 #include <ulang_type_is_equal.h>
+#include <resolve_generics.h>
 
 // TODO: consider if def definition has pointer_depth > 0
 
@@ -376,18 +377,20 @@ static bool expand_def_ulang_type_expr(
                 Uast_generic_param* gen_param = NULL;
                 if (try_uast_def_get_struct_def_base(&def_base, parent_def)) {
                     if (parent_idx >= def_base.generics.info.count) {
-                        msg_invalid_count_generic_args(def_base->pos, );
-                        //msg(
-                        //    DIAG_INVALID_TYPE,
-                        //    lit->pos,
-                        //    "struct literal assigned to non-struct generic parameter\n"
-                        //);
-                        //msg(
-                        //    DIAG_NOTE,
-                        //    gen_param->pos,
-                        //    "generic parameter defined here as a type (not a constant expression)\n"
-                        //);
+                        Uast_def* struct_def = NULL;
+                        unwrap(usymbol_lookup(&struct_def, def_base.name));
+                        msg_invalid_count_generic_args(
+                            uast_def_get_pos(struct_def),
+                            lit->pos/*TODO*/,
+                            gen_args,
+                            min_args,
+                            max_args
+                        ); \
+                        //msg(DIAG_INVALID_TYPE, lit->pos, "too many generic arguments\n");
+                        //msg(DIAG_NOTE, uast_def_get_pos(struct_def), "generic parameters defined here\n");
+                        return false;
                     }
+
                     gen_param = vec_at(def_base.generics, parent_idx);
                 } else if (parent_def->type == UAST_FUNCTION_DEF) {
                     Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);

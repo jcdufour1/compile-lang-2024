@@ -14,9 +14,6 @@
 
 static bool is_in_struct_base_def;
 
-#define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args, min_args, max_args) \
-    msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
-
 // TODO: move this function and macro to better place
 static void msg_undefined_type_internal(
     const char* file,
@@ -50,7 +47,7 @@ static void msg_invalid_count_generic_args_internal(
     int line,
     Pos pos_def,
     Pos pos_gen_args,
-    Ulang_type_vec gen_args,
+    size_t gen_args_count,
     size_t min_args,
     size_t max_args
 ) {
@@ -59,7 +56,7 @@ static void msg_invalid_count_generic_args_internal(
     }
 
     String message = {0};
-    string_extend_size_t(&a_temp, &message, gen_args.info.count);
+    string_extend_size_t(&a_temp, &message, gen_args_count);
     string_extend_cstr(&a_temp, &message, " generic arguments are passed");
     // TODO: print base type (eg. `Token`)
     string_extend_cstr(&a_temp, &message, ", but ");
