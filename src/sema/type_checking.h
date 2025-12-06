@@ -102,7 +102,8 @@ bool try_set_tuple_assignment_types(
 
 bool try_set_struct_literal_member_types_simplify(
     Uast_expr_vec* membs,
-    Uast_variable_def_vec memb_defs
+    Uast_variable_def_vec memb_defs,
+    Pos pos
 );
 
 bool try_set_struct_literal_types(

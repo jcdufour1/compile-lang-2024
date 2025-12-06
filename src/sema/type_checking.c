@@ -1242,10 +1242,15 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
 
 bool try_set_struct_literal_member_types_simplify(
     Uast_expr_vec* membs,
-    Uast_variable_def_vec memb_defs
+    Uast_variable_def_vec memb_defs,
+    Pos pos
 ) {
+    if (membs->info.count != memb_defs.info.count) {
+        msg_invalid_count_struct_literal_args(*membs, memb_defs.info.count, memb_defs.info.count, pos, false);
+        return false;
+    }
+
     for (size_t idx = 0; idx < membs->info.count; idx++) {
-        // TODO: print error message here for membs having too many args
         log(LOG_DEBUG, "%zu\n", idx);
         Uast_variable_def* memb_def = vec_at(memb_defs, idx);
         log(LOG_DEBUG, FMT"\n", uast_variable_def_print(memb_def));

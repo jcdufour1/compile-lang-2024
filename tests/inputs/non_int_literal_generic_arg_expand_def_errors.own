@@ -1,0 +1,36 @@
+
+fn thing1(<num ''i32>)() {
+}
+
+fn thing2(<num ''fn()void>)() {
+}
+
+fn thing3(<NumT>)() {
+}
+
+fn thing4(<num ''NonExistant>)() {
+}
+
+type Struct struct {
+    num i32
+}
+
+fn thing5(<struct1 ''Struct>)() {
+}
+
+type Token enum {
+    num i32
+}
+
+fn main() i32 {
+    let token Token = .num(7)
+    thing1(<{6}>)()
+    thing2(<{6}>)()
+    thing3(<{6}>)()
+    thing4(<{6}>)()
+    thing5(<{6, 4.5}>)()
+    thing5(<{}>)()
+    let incorrect_token Token(<{5}>)
+
+    return 0
+}
