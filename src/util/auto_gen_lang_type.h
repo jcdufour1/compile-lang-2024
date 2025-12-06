@@ -166,8 +166,8 @@ static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     return lang_type;
 }
 
-static Lang_type_type lang_type_gen_int(const char* prefix) {
-    const char* base_name = "int";
+static Lang_type_type lang_type_gen_int_lit(const char* prefix) {
+    const char* base_name = "int_lit";
     Lang_type_type lit = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&lit.members, "int64_t", "data");
@@ -220,7 +220,7 @@ static Lang_type_type lang_type_gen_lit(const char* prefix) {
     const char* base_name = "lit";
     Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int(base_name)); // TODO: rename lang_type_int to lang_type_gen_int
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int_lit(base_name)); // TODO: rename lang_type_int_lit to lang_type_gen_int
                                                                             //   and ulang_type_int_lit to ulang_type_gen_int?
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string_lit(base_name));

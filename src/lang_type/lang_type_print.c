@@ -5,7 +5,7 @@
 
 static void extend_lang_type_lit_tag_to_string(String* buf, Lang_type_lit lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_INT:
+        case LANG_TYPE_INT_LIT:
             string_extend_cstr(&a_temp, buf, "int");
             return;
         case LANG_TYPE_STRUCT_LIT:
@@ -139,8 +139,8 @@ Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
 
 static void extend_lang_type_lit_to_string(String* string, Lang_type_lit lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_INT:
-            string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
+        case LANG_TYPE_INT_LIT:
+            string_extend_int64_t(&a_temp, string, lang_type_int_lit_const_unwrap(lang_type).data);
             return;
         case LANG_TYPE_FLOAT_LIT:
             string_extend_double(&a_temp, string, lang_type_float_lit_const_unwrap(lang_type).data);
