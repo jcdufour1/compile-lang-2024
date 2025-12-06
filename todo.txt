@@ -122,7 +122,7 @@ for generics:
 - make basic "did you mean" (just symbols initially)
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - document or make functions for uast_def_get_ulang_type
-- expected success case for nested struct literals used in generic arg
+- expected failure tests for non-int generic arg const expressions
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
 - test case for def alias used within struct literal generic arg
@@ -134,16 +134,14 @@ for generics:
     --float8.69999999999999929
     --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
     >)`
+- make recursion depth O(1) for importing n modules deep
 - make max and min "functions" using _Generic
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
     if Token in general is undefined
 - expected failure case for generic parameter having the same name as top level function
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
-- expected failure tests for non-int generic arg const expressions
 - enable -Wenum-switch?
-- make recursion depth O(1) for importing n modules deep
-- use -fsanitize-undefined?
 
 
 # roadmap to try to get bootstrap compiler done:
