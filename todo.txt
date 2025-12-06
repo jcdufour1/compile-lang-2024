@@ -125,6 +125,14 @@ for generics:
 - expected success case for nested struct literals used in generic arg
 - use _Generic to make printing more concise?
 - use _Generic to make wrapping more concise?
+- make this error message better (and make expected failure case):
+    tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
+    --float8.69999999999999929
+    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
+    >)`, but the corresponding parameter `token` is of type `Token3(<struct_literal
+    --float8.69999999999999929
+    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
+    >)`
 - make max and min "functions" using _Generic
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
@@ -135,6 +143,7 @@ for generics:
 - enable -Wenum-switch?
 - make recursion depth O(1) for importing n modules deep
 - use -fsanitize-undefined?
+
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features

@@ -85,8 +85,6 @@ static inline Ulang_type_const_expr ulang_type_const_expr_clone(
     bool use_new_scope,
     Scope_id new_scope
 ) {
-    (void) use_new_scope;
-    (void) new_scope;
     switch (lang_type.type) {
         case ULANG_TYPE_INT:
             return ulang_type_int_const_wrap(ulang_type_int_clone(ulang_type_int_const_unwrap(lang_type)));

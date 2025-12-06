@@ -72,7 +72,14 @@ static bool uast_literal_is_equal(const Uast_literal* a, const Uast_literal* b) 
     unreachable("");
 }
 
+#define local_todo(expr) \
+    msg_todo( \
+        "this type of expression in struct literal in this situation", \
+        uast_expr_get_pos(expr) \
+    )
+
 // TODO: move this function elsewhere?
+// TODO: if default arguments are implemented for struct literals, this function could fail
 static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uast_struct_literal* b) {
     if (a->members.info.count != b->members.info.count) {
         return false;
@@ -86,53 +93,71 @@ static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uas
 
         switch (curr_a->type) {
             case UAST_IF_ELSE_CHAIN:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_BLOCK:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_SWITCH:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_UNKNOWN:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_OPERATOR:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_SYMBOL:
-                todo();
+                return name_is_equal(uast_symbol_unwrap(curr_a)->name, uast_symbol_unwrap(curr_b)->name);
             case UAST_MEMBER_ACCESS:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_INDEX:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_LITERAL:
                 if (!uast_literal_is_equal(uast_literal_unwrap(curr_a), uast_literal_unwrap(curr_b))) {
                     return false;
                 }
                 continue;
             case UAST_FUNCTION_CALL:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_STRUCT_LITERAL:
                 if (!uast_struct_literal_is_equal(uast_struct_literal_unwrap(curr_a), uast_struct_literal_unwrap(curr_b))) {
                     return false;
                 }
                 continue;
             case UAST_ARRAY_LITERAL:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_TUPLE:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_MACRO:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_ENUM_ACCESS:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_ENUM_GET_TAG:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_ORELSE:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_FN:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_QUESTION_MARK:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_UNDERSCORE:
-                todo();
+                local_todo(curr_a);
+                return false;
             case UAST_EXPR_REMOVED:
-                todo();
+                local_todo(curr_a);
+                return false;
         }
         unreachable("");
     }
@@ -172,7 +197,6 @@ bool uast_expr_is_equal(const Uast_expr* a, const Uast_expr* b) {
         return false;
     }
     return uast_expr_is_equal(unary_a->child, unary_b->child);
-    todo();
 }
 
 bool ulang_type_struct_lit_is_equal(Ulang_type_struct_lit a, Ulang_type_struct_lit b) {

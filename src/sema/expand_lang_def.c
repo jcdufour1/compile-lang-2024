@@ -1002,10 +1002,6 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
         );
         switch (status) {
             case EXPAND_NAME_NORMAL:
-                log(LOG_DEBUG, FMT"\n", uast_member_access_print(access));
-                if (strv_is_equal(access->member_name->name.base, sv("print_float"))) {
-                    //__asm__("int3");
-                }
                 *new_expr = uast_member_access_wrap(access);
                 return EXPAND_EXPR_NEW_EXPR;
             case EXPAND_NAME_NEW_EXPR:
@@ -1102,115 +1098,15 @@ static bool expand_def_question_mark(Uast_question_mark* mark, bool is_rhs, Uast
 }
 
 static bool expand_def_struct_def_base(Ustruct_def_base* base, Pos dest_pos) {
-    if (strv_is_equal(base->name.base, sv("Slice"))) {
-        log(LOG_DEBUG, FMT"\n", ustruct_def_base_print(*base));
-        //__asm__("int3");
-        //todo();
-    }
-    //if (strv_is_equal(base->name.base, sv("Slice"))) {
-    //    //todo();
-    //    Uast_def* def = NULL;
-    //    unwrap(usymbol_lookup(&def, base->name));
-    //    Uast_struct_def* struct_def = uast_struct_def_unwrap(def);
-    //    unwrap(!strv_is_equal(ulang_type_regular_const_unwrap(vec_at(struct_def->base.members, 1)->lang_type).atom.str.base, sv("usize")));
-    //}
     if (!expand_def_generic_param_vec(&base->generics) || !expand_def_variable_def_vec(&base->members)) {
         assert(env.error_count > 0);
         return false;
     }
-    if (strv_is_equal(base->name.base, sv("Slice"))) {
-        Uast_def* def = NULL;
-        unwrap(usymbol_lookup(&def, base->name));
-        Uast_struct_def* struct_def = uast_struct_def_unwrap(def);
-        unwrap(!strv_is_equal(ulang_type_regular_const_unwrap(vec_at(struct_def->base.members, 1)->lang_type).atom.str.base, sv("usize")));
-    }
-    if (strv_is_equal(base->name.base, sv("Slice"))) {
-        log(LOG_DEBUG, FMT"\n", ustruct_def_base_print(*base));
-        if (strv_is_equal(ulang_type_regular_const_unwrap(vec_at(base->members, 1)->lang_type).atom.str.base, sv("usize"))) {
-            unreachable("");
-        }
-        //__asm__("int3");
-    }
+
     Uast_expr* new_expr = NULL;
     Ulang_type new_lang_type = {0};
     switch (expand_def_name(&new_lang_type, &new_expr, &base->name, dest_pos)) {
-        case EXPAND_NAME_NORMAL: {
-#           ifndef NDEBUG
-                vec_foreach(idx, Uast_variable_def*, memb, base->members) {
-                    switch (memb->lang_type.type) {
-                        case ULANG_TYPE_TUPLE:
-                            todo();
-                        case ULANG_TYPE_FN:
-                            // TODO: consider if Ulang_type_fn should be checked similar to Ulang_type_regular
-                            break;
-                        case ULANG_TYPE_REGULAR: {
-                            Ulang_type_regular reg = ulang_type_regular_const_unwrap(memb->lang_type);
-                            Uast_def* reg_def = NULL;
-                            Name reg_name = {0};
-                            if (!name_from_uname(&reg_name, reg.atom.str, reg.pos)) {
-                                msg_todo("", reg.pos);
-                                todo();
-                            }
-                            if (!usymbol_lookup(&reg_def, reg_name)) {
-                                break;
-                            }
-
-                            switch (reg_def->type) {
-                                case UAST_LABEL:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_VOID_DEF:
-                                    break;
-                                case UAST_POISON_DEF:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_IMPORT_PATH:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_MOD_ALIAS:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_GENERIC_PARAM:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_FUNCTION_DEF:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_VARIABLE_DEF:
-                                    msg_todo("", reg.pos);
-                                    break;
-                                case UAST_STRUCT_DEF:
-                                    break;
-                                case UAST_RAW_UNION_DEF:
-                                    break;
-                                case UAST_ENUM_DEF:
-                                    break;
-                                case UAST_LANG_DEF:
-                                    break;
-                                case UAST_PRIMITIVE_DEF:
-                                    break;
-                                case UAST_FUNCTION_DECL:
-                                    break;
-                                case UAST_BUILTIN_DEF:
-                                    unreachable("");
-                                    break;
-                            }
-                        }
-                        break;
-                        case ULANG_TYPE_ARRAY:
-                            todo();
-                            // TODO: consider if Ulang_type_array should be checked similar to Ulang_type_regular
-                            break;
-                        case ULANG_TYPE_EXPR:
-                            todo();
-                        case ULANG_TYPE_CONST_EXPR:
-                            todo();
-                        case ULANG_TYPE_REMOVED:
-                            todo();
-                    }
-                }
-#           endif // NDEBUG
-            }
+        case EXPAND_NAME_NORMAL:
             return true;
         case EXPAND_NAME_NEW_EXPR:
             // TODO
@@ -1540,16 +1436,6 @@ static bool expand_def_function_params(Uast_function_params* params) {
 static bool expand_def_function_decl(Uast_function_decl* def) {
     bool status = expand_def_generic_param_vec(&def->generics);
     status = expand_def_function_params(def->params) && status;
-    if (strv_is_equal(def->name.base, sv("own_argv"))) {
-        //log(LOG_ERROR, "\n");
-        //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, def->return_type));
-        //todo();
-        //__asm__("int3");
-    }
-    log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, def->return_type));
-    //if (strv_is_equal(def->name.base, sv("own_argv"))) {
-    //    __asm__("int3");
-    //}
     status = expand_def_ulang_type(
         &def->return_type,
         def->pos,
@@ -1561,10 +1447,6 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
         (Name) {0},
         0
     ) && status;
-    //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, def->return_type));
-    //if (strv_is_equal(def->name.base, sv("own_argv"))) {
-    //    __asm__("int3");
-    //}
     return status;
 }
 

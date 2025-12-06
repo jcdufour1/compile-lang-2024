@@ -1,4 +1,4 @@
-compile::stdout 39
+compile::stdout 41
 8
 8
 903
@@ -11,11 +11,13 @@ compile::stdout 39
 8.700000
 8.700000
 8.700000
+bye
 8.700000
 8.700000
 8.700000
 8.700000
 8.700000
+bye
 hello
 hello
 hello

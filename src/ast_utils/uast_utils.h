@@ -190,7 +190,6 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
     Strv member_name,
     Pos dest_pos
 ) {
-    (void) new_expr;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(base->members, idx);
         if (strv_is_equal(curr->name.base, member_name)) {
@@ -211,19 +210,16 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                 case ULANG_TYPE_INT: {
                     Ulang_type_int lit = ulang_type_int_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
-                    log(LOG_DEBUG, "thing 1\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FLOAT_LIT: {
                     Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(dest_pos, lit.data)));
-                    log(LOG_DEBUG, "thing 2\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRING_LIT: {
                     Ulang_type_string_lit lit = ulang_type_string_lit_const_unwrap(const_expr);
                     *new_expr = uast_literal_wrap(uast_string_wrap(uast_string_new(dest_pos, lit.data)));
-                    log(LOG_DEBUG, "thing 3\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_STRUCT_LIT: {
@@ -236,14 +232,11 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
                         UNARY_UNSAFE_CAST,
                         gen_param->expr_lang_type
                     )));
-                    log(LOG_DEBUG, FMT"\n", uast_expr_print(*new_expr));
-                    log(LOG_DEBUG, "thing 4\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
                 case ULANG_TYPE_FN_LIT: {
                     Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(const_expr);
                     *new_expr = uast_symbol_wrap(uast_symbol_new(lit.pos, lit.name));
-                    log(LOG_DEBUG, "thing 5\n");
                     return UAST_GET_MEMB_DEF_EXPR;
                 }
             }

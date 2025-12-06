@@ -123,7 +123,14 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
         case UAST_LITERAL:
             return serialize_ulang_type_expr_lit_literal(mod_path, uast_literal_const_unwrap(expr));
         case UAST_SYMBOL:
-            todo();
+            // TODO: make helper function for name_new or return Strv from functions instead of Name
+            return name_new(
+                MOD_PATH_ARRAYS,
+                serialize_name(uast_symbol_const_unwrap(expr)->name),
+                (Ulang_type_vec) {0},
+                SCOPE_TOP_LEVEL,
+                (Attrs) {0}
+            );
         case UAST_STRUCT_LITERAL:
             return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(expr));
         case UAST_ARRAY_LITERAL:
