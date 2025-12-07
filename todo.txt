@@ -137,11 +137,9 @@ for generics:
     --float8.69999999999999929
     --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
     >)`
+- make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - make recursion depth O(1) for importing n modules deep
 - make max and min "functions" using _Generic
-- make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
-- error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
-    if Token in general is undefined
 
 
 # roadmap to try to get bootstrap compiler done:

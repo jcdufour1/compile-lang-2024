@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "token.h"
 #include "assert.h"
+#include <local_math.h>
 
 typedef struct {
     const Token* tokens;
