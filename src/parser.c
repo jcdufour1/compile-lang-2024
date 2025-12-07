@@ -3292,9 +3292,165 @@ static PARSE_EXPR_STATUS parse_right_unary(
             *result = uast_block_wrap(result_);
             return PARSE_EXPR_OK;
         }
+        case TOKEN_NONTYPE:
+            fallthrough;
+        case TOKEN_SINGLE_PLUS:
+            fallthrough;
+        case TOKEN_SINGLE_MINUS:
+            fallthrough;
+        case TOKEN_ASTERISK:
+            fallthrough;
+        case TOKEN_MODULO:
+            fallthrough;
+        case TOKEN_SLASH:
+            fallthrough;
+        case TOKEN_LESS_THAN:
+            fallthrough;
+        case TOKEN_LESS_OR_EQUAL:
+            fallthrough;
+        case TOKEN_GREATER_THAN:
+            fallthrough;
+        case TOKEN_GREATER_OR_EQUAL:
+            fallthrough;
+        case TOKEN_DOUBLE_EQUAL:
+            fallthrough;
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            fallthrough;
+        case TOKEN_BITWISE_AND:
+            fallthrough;
+        case TOKEN_BITWISE_OR:
+            fallthrough;
+        case TOKEN_BITWISE_XOR:
+            fallthrough;
+        case TOKEN_LOGICAL_AND:
+            fallthrough;
+        case TOKEN_LOGICAL_OR:
+            fallthrough;
+        case TOKEN_SHIFT_LEFT:
+            fallthrough;
+        case TOKEN_SHIFT_RIGHT:
+            fallthrough;
+        case TOKEN_LOGICAL_NOT:
+            fallthrough;
+        case TOKEN_BITWISE_NOT:
+            fallthrough;
+        case TOKEN_UNSAFE_CAST:
+            fallthrough;
+        case TOKEN_STRING_LITERAL:
+            fallthrough;
+        case TOKEN_INT_LITERAL:
+            fallthrough;
+        case TOKEN_FLOAT_LITERAL:
+            fallthrough;
+        case TOKEN_VOID:
+            fallthrough;
+        case TOKEN_CHAR_LITERAL:
+            fallthrough;
+        case TOKEN_OPEN_PAR:
+            fallthrough;
+        case TOKEN_OPEN_CURLY_BRACE:
+            fallthrough;
+        case TOKEN_OPEN_SQ_BRACKET:
+            fallthrough;
+        case TOKEN_OPEN_GENERIC:
+            fallthrough;
+        case TOKEN_CLOSE_PAR:
+            fallthrough;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            fallthrough;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            fallthrough;
+        case TOKEN_CLOSE_GENERIC:
+            fallthrough;
+        case TOKEN_ENUM:
+            fallthrough;
+        case TOKEN_SYMBOL:
+            fallthrough;
+        case TOKEN_DOUBLE_QUOTE:
+            fallthrough;
+        case TOKEN_NEW_LINE:
+            fallthrough;
+        case TOKEN_COMMA:
+            fallthrough;
+        case TOKEN_COLON:
+            fallthrough;
+        case TOKEN_SINGLE_EQUAL:
+            fallthrough;
+        case TOKEN_SINGLE_DOT:
+            fallthrough;
+        case TOKEN_DOUBLE_DOT:
+            fallthrough;
+        case TOKEN_TRIPLE_DOT:
+            fallthrough;
+        case TOKEN_EOF:
+            fallthrough;
+        case TOKEN_ASSIGN_BY_BIN:
+            fallthrough;
+        case TOKEN_MACRO:
+            fallthrough;
+        case TOKEN_DEFER:
+            fallthrough;
+        case TOKEN_DOUBLE_TICK:
+            fallthrough;
+        case TOKEN_ONE_LINE_BLOCK_START:
+            fallthrough;
+        case TOKEN_UNDERSCORE:
+            fallthrough;
+        case TOKEN_FN:
+            fallthrough;
+        case TOKEN_FOR:
+            fallthrough;
+        case TOKEN_IF:
+            fallthrough;
+        case TOKEN_SWITCH:
+            fallthrough;
+        case TOKEN_CASE:
+            fallthrough;
+        case TOKEN_DEFAULT:
+            fallthrough;
+        case TOKEN_ELSE:
+            fallthrough;
+        case TOKEN_RETURN:
+            fallthrough;
+        case TOKEN_EXTERN:
+            fallthrough;
+        case TOKEN_STRUCT:
+            fallthrough;
+        case TOKEN_LET:
+            fallthrough;
+        case TOKEN_IN:
+            fallthrough;
+        case TOKEN_BREAK:
+            fallthrough;
+        case TOKEN_YIELD:
+            fallthrough;
+        case TOKEN_CONTINUE:
+            fallthrough;
+        case TOKEN_RAW_UNION:
+            fallthrough;
+        case TOKEN_TYPE_DEF:
+            fallthrough;
+        case TOKEN_GENERIC_TYPE:
+            fallthrough;
+        case TOKEN_IMPORT:
+            fallthrough;
+        case TOKEN_DEF:
+            fallthrough;
+        case TOKEN_SIZEOF:
+            fallthrough;
+        case TOKEN_COUNTOF:
+            fallthrough;
+        case TOKEN_USING:
+            fallthrough;
+        case TOKEN_COMMENT:
+            fallthrough;
+        case TOKEN_COUNT:
+            msg_todo("", oper.pos);
     }
     unreachable("");
 }
+
+#pragma GCC diagnostic ignored "-Wswitch-enum"
 
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
@@ -3440,6 +3596,8 @@ static PARSE_EXPR_STATUS parse_unary(
     return PARSE_EXPR_OK;
 }
 
+#pragma GCC diagnostic warning "-Wswitch-enum"
+
 static PARSE_STATUS parse_expr_index(
     Uast_expr** result,
     Uast_expr* lhs,
@@ -3488,7 +3646,43 @@ static PARSE_STATUS parse_expr_generic(
         case UAST_MEMBER_ACCESS:
             sym = uast_member_access_unwrap(lhs)->member_name;
             break;
-        default:
+        case UAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case UAST_BLOCK:
+            fallthrough;
+        case UAST_SWITCH:
+            fallthrough;
+        case UAST_UNKNOWN:
+            fallthrough;
+        case UAST_OPERATOR:
+            fallthrough;
+        case UAST_INDEX:
+            fallthrough;
+        case UAST_LITERAL:
+            fallthrough;
+        case UAST_FUNCTION_CALL:
+            fallthrough;
+        case UAST_STRUCT_LITERAL:
+            fallthrough;
+        case UAST_ARRAY_LITERAL:
+            fallthrough;
+        case UAST_TUPLE:
+            fallthrough;
+        case UAST_MACRO:
+            fallthrough;
+        case UAST_ENUM_ACCESS:
+            fallthrough;
+        case UAST_ENUM_GET_TAG:
+            fallthrough;
+        case UAST_ORELSE:
+            fallthrough;
+        case UAST_FN:
+            fallthrough;
+        case UAST_QUESTION_MARK:
+            fallthrough;
+        case UAST_UNDERSCORE:
+            fallthrough;
+        case UAST_EXPR_REMOVED:
             msg_todo("", uast_expr_get_pos(lhs));
             return PARSE_ERROR;
     }

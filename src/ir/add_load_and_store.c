@@ -224,6 +224,10 @@ static void load_block_stmts(
             is_rtning_name = util_literal_name_new_prefix(sv("is_rtning_top_level"));
             break;
         }
+        case DEFER_PARENT_OF_NONE:
+            msg_todo("", tast_variable_def_get_pos(local_rtn_def));
+            is_rtning_name = util_literal_name_new_prefix(sv("is_rtning_top_level"));
+            break;
         default:
             unreachable("");
     }
@@ -260,6 +264,10 @@ static void load_block_stmts(
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_top_level"));
                 break;
             }
+            case DEFER_PARENT_OF_NONE:
+                msg_todo("", lang_type_get_pos(lang_type));
+                *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_top_level"));
+                break;
             default:
                 unreachable("");
         }
@@ -289,6 +297,10 @@ static void load_block_stmts(
             is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_top_level"));
             break;
         }
+        case DEFER_PARENT_OF_NONE:
+            msg_todo("", lang_type_get_pos(lang_type));
+            is_yielding_name = util_literal_name_new_prefix(sv("is_yielding_top_level"));
+            break;
         default:
             unreachable("");
     }
@@ -317,6 +329,10 @@ static void load_block_stmts(
             is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_top_level"));
             break;
         }
+        case DEFER_PARENT_OF_NONE:
+            msg_todo("", lang_type_get_pos(lang_type));
+            is_cont2ing_name = util_literal_name_new_prefix(sv("is_cont2ing_top_level"));
+            break;
         default:
             todo();
     }
@@ -385,6 +401,11 @@ static void load_block_stmts(
             }
             return;
         }
+        case DEFER_PARENT_OF_NONE:
+            msg_todo("", lang_type_get_pos(lang_type));
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
+            break;
         default:
             todo();
     }
@@ -438,6 +459,9 @@ static void load_block_stmts(
         case DEFER_PARENT_OF_TOP_LEVEL: {
             unreachable("");
         }
+        case DEFER_PARENT_OF_NONE:
+            msg_todo("", lang_type_get_pos(lang_type));
+            break;
         default:
             todo();
     }
@@ -737,6 +761,10 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
         case LANG_TYPE_FN:
             return ir_lang_type_fn_const_wrap(rm_tuple_lang_type_fn(lang_type_fn_const_unwrap(lang_type), lang_type_pos));
+        case LANG_TYPE_LIT:
+            unreachable("");
+        case LANG_TYPE_REMOVED:
+            todo();
         default:
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
@@ -1378,6 +1406,42 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             if_true_type = BINARY_DOUBLE_EQUAL;
             if_false_val = 1;
             break;
+        case BINARY_SINGLE_EQUAL:
+            unreachable("");
+        case BINARY_SUB:
+            unreachable("");
+        case BINARY_ADD:
+            unreachable("");
+        case BINARY_MULTIPLY:
+            unreachable("");
+        case BINARY_DIVIDE:
+            unreachable("");
+        case BINARY_MODULO:
+            unreachable("");
+        case BINARY_LESS_THAN:
+            unreachable("");
+        case BINARY_LESS_OR_EQUAL:
+            unreachable("");
+        case BINARY_GREATER_OR_EQUAL:
+            unreachable("");
+        case BINARY_GREATER_THAN:
+            unreachable("");
+        case BINARY_DOUBLE_EQUAL:
+            unreachable("");
+        case BINARY_NOT_EQUAL:
+            unreachable("");
+        case BINARY_BITWISE_XOR:
+            unreachable("");
+        case BINARY_BITWISE_AND:
+            unreachable("");
+        case BINARY_BITWISE_OR:
+            unreachable("");
+        case BINARY_SHIFT_LEFT:
+            unreachable("");
+        case BINARY_SHIFT_RIGHT:
+            unreachable("");
+        case BINARY_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }
@@ -1515,8 +1579,22 @@ static Ir_name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
                         return load_expr(new_block, old_unary->child);
                     }
                     break;
-                default:
+                case LANG_TYPE_PRIMITIVE:
                     break;
+                case LANG_TYPE_TUPLE:
+                    break;
+                case LANG_TYPE_VOID:
+                    break;
+                case LANG_TYPE_FN:
+                    break;
+                case LANG_TYPE_ARRAY:
+                    break;
+                case LANG_TYPE_LIT:
+                    break;
+                case LANG_TYPE_REMOVED:
+                    break;
+                default:
+                    unreachable("");
             }
 
             Ir_name new_child = load_expr(new_block, old_unary->child);
@@ -1576,6 +1654,20 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
             struct_index = 0;
             break;
         }
+        case TAST_LABEL:
+            unreachable("");
+        case TAST_IMPORT_PATH:
+            unreachable("");
+        case TAST_FUNCTION_DEF:
+            unreachable("");
+        case TAST_VARIABLE_DEF:
+            unreachable("");
+        case TAST_ENUM_DEF:
+            unreachable("");
+        case TAST_PRIMITIVE_DEF:
+            unreachable("");
+        case TAST_FUNCTION_DECL:
+            unreachable("");
         default:
             unreachable("");
     }
@@ -1956,6 +2048,20 @@ static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
         case TAST_FUNCTION_DECL:
             fun_decl = tast_function_decl_unwrap(fun_def_);
             break;
+        case TAST_LABEL:
+            unreachable("");
+        case TAST_IMPORT_PATH:
+            unreachable("");
+        case TAST_VARIABLE_DEF:
+            unreachable("");
+        case TAST_STRUCT_DEF:
+            unreachable("");
+        case TAST_RAW_UNION_DEF:
+            unreachable("");
+        case TAST_ENUM_DEF:
+            unreachable("");
+        case TAST_PRIMITIVE_DEF:
+            unreachable("");
         default:
             unreachable("");
     }
@@ -2426,6 +2532,21 @@ static Ir_name load_ptr_deref(Ir_block* new_block, Tast_unary* old_unary) {
                 break;
             }
             return load_ptr_expr(new_block, old_unary->child);
+        case LANG_TYPE_ENUM:
+            fallthrough;
+        case LANG_TYPE_TUPLE:
+            fallthrough;
+        case LANG_TYPE_VOID:
+            fallthrough;
+        case LANG_TYPE_FN:
+            fallthrough;
+        case LANG_TYPE_ARRAY:
+            fallthrough;
+        case LANG_TYPE_LIT:
+            fallthrough;
+        case LANG_TYPE_REMOVED:
+            msg_todo("defererencing this type", lang_type_get_pos(old_unary->lang_type));
+            return util_literal_ir_name_new_poison();
         default:
             todo();
     }
@@ -2463,11 +2584,22 @@ static Ir_name load_ptr_unary(Ir_block* new_block, Tast_unary* old_unary) {
         case UNARY_DEREF:
             return load_ptr_deref(new_block, old_unary);
         case UNARY_REFER:
-            unreachable("");
+            fallthrough;
+        case UNARY_UNSAFE_CAST:
+            fallthrough;
+        case UNARY_LOGICAL_NOT:
+            fallthrough;
+        case UNARY_SIZEOF:
+            fallthrough;
+        case UNARY_COUNTOF:
+            fallthrough;
+        case UNARY_COUNT:
+            msg_todo("", old_unary->pos);
+            return util_literal_ir_name_new_poison();
         default:
             todo();
     }
-    todo();
+    unreachable("");
 }
 
 static Ir_name load_ptr_operator(Ir_block* new_block, Tast_operator* old_oper) {
