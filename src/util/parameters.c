@@ -265,7 +265,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 109, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 110, "exhaustive handling of expected fail types");
 // TODO: use ".str = ", etc.? for readability?
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
@@ -287,6 +287,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"parser-expected", DIAG_PARSER_EXPECTED, LOG_ERROR, true, false},
     {"redefinition-of-symbol", DIAG_REDEFINITION_SYMBOL, LOG_ERROR, true, false},
     {"invalid-struct-member-in-literal", DIAG_INVALID_MEMBER_IN_LITERAL, LOG_ERROR, true, false},
+    {"invalid-member-access-callee", DIAG_INVALID_MEMBER_ACCESS_CALLEE, LOG_ERROR, true, false},
     {"invalid-member-access", DIAG_INVALID_MEMBER_ACCESS, LOG_ERROR, true, false},
     {"missing-return-in-fun", DIAG_MISSING_RETURN_IN_FUN, LOG_ERROR, true, false},
     {"missing-return-in-defer", DIAG_MISSING_RETURN_IN_DEFER, LOG_ERROR, true, false},
@@ -465,6 +466,8 @@ static void parse_file_option(int* argc, char*** argv) {
             stop_after_set_if_none(STOP_AFTER_BIN);
             vec_append(&a_main, &params.upper_s_files, curr_opt);
             break;
+        case FILE_TYPE_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }
@@ -807,6 +810,8 @@ static void parse_long_option(int* argc, char*** argv) {
                     curr.action(curr_opt);
                     return;
                 }
+                case ARG_COUNT:
+                    unreachable("");
                 default:
                     unreachable("");
             }

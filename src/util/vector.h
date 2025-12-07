@@ -60,7 +60,10 @@ typedef struct {
 #define vec_extend(arena, dest, src) \
     do { \
         vec_reserve(arena, dest, (src)->info.count); \
-        memmove((dest)->buf + (dest)->info.count, (src)->buf, sizeof((dest)->buf[0])*(src)->info.count); \
+        if (sizeof((dest)->buf[0])*(src)->info.count > 0) { \
+            unwrap(dest); \
+            memmove((dest)->buf + (dest)->info.count, (src)->buf, sizeof((dest)->buf[0])*(src)->info.count); \
+        } \
         (dest)->info.count += (src)->info.count; \
     } while(0)
 

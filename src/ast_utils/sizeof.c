@@ -160,9 +160,19 @@ uint64_t sizeof_def(const Tast_def* def) {
             return sizeof_struct_def_base(&tast_enum_def_const_unwrap(def)->base, true);
         case TAST_RAW_UNION_DEF:
             return sizeof_struct_def_base(&tast_raw_union_def_const_unwrap(def)->base, true);
-        default:
-            unreachable("");
+        case TAST_LABEL:
+            fallthrough;
+        case TAST_IMPORT_PATH:
+            fallthrough;
+        case TAST_FUNCTION_DEF:
+            fallthrough;
+        case TAST_PRIMITIVE_DEF:
+            fallthrough;
+        case TAST_FUNCTION_DECL:
+            msg_todo("", tast_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
 uint64_t alignof_def(const Tast_def* def) {
@@ -175,9 +185,19 @@ uint64_t alignof_def(const Tast_def* def) {
             return alignof_struct_def_base(&tast_enum_def_const_unwrap(def)->base);
         case TAST_RAW_UNION_DEF:
             return alignof_struct_def_base(&tast_raw_union_def_const_unwrap(def)->base);
-        default:
-            unreachable("");
+        case TAST_LABEL:
+            fallthrough;
+        case TAST_IMPORT_PATH:
+            fallthrough;
+        case TAST_FUNCTION_DEF:
+            fallthrough;
+        case TAST_PRIMITIVE_DEF:
+            fallthrough;
+        case TAST_FUNCTION_DECL:
+            msg_todo("", tast_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
 uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
@@ -214,24 +234,18 @@ uint64_t alignof_struct_def_base(const Struct_def_base* base) {
     return max_align;
 }
 
-uint64_t sizeof_struct_expr(const Tast_expr* struct_literal_or_def) {
-    switch (struct_literal_or_def->type) {
-        case TAST_STRUCT_LITERAL:
-            return sizeof_struct_literal(tast_struct_literal_const_unwrap(struct_literal_or_def));
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
     (void) env;
     switch (expr->type) {
         case IR_LITERAL:
             return sizeof_ir_lang_type(ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
-        default:
-            unreachable("");
+        case IR_OPERATOR:
+            fallthrough;
+        case IR_FUNCTION_CALL:
+            msg_todo("", ir_expr_get_pos(expr));
+            return 0;
     }
+    unreachable("");
 }
 
 static uint64_t ir_sizeof_def(const Ir_def* def) {
@@ -239,9 +253,21 @@ static uint64_t ir_sizeof_def(const Ir_def* def) {
     switch (def->type) {
         case TAST_VARIABLE_DEF:
             return sizeof_ir_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
-        default:
-            unreachable("");
+        case IR_FUNCTION_DEF:
+            fallthrough;
+        case IR_VARIABLE_DEF:
+            fallthrough;
+        case IR_STRUCT_DEF:
+            fallthrough;
+        case IR_FUNCTION_DECL:
+            fallthrough;
+        case IR_LABEL:
+            fallthrough;
+        case IR_LITERAL_DEF:
+            msg_todo("", ir_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
 uint64_t ir_sizeof_item(const Ir* item) {
@@ -251,9 +277,35 @@ uint64_t ir_sizeof_item(const Ir* item) {
             return ir_sizeof_expr(ir_expr_const_unwrap(item));
         case TAST_DEF:
             return ir_sizeof_def(ir_def_const_unwrap(item));
-        default:
-            unreachable("");
+        case IR_BLOCK:
+            fallthrough;
+        case IR_LOAD_ELEMENT_PTR:
+            fallthrough;
+        case IR_ARRAY_ACCESS:
+            fallthrough;
+        case IR_FUNCTION_PARAMS:
+            fallthrough;
+        case IR_DEF:
+            fallthrough;
+        case IR_RETURN:
+            fallthrough;
+        case IR_COND_GOTO:
+            fallthrough;
+        case IR_ALLOCA:
+            fallthrough;
+        case IR_LOAD_ANOTHER_IR:
+            fallthrough;
+        case IR_STORE_ANOTHER_IR:
+            fallthrough;
+        case IR_IMPORT_PATH:
+            fallthrough;
+        case IR_STRUCT_MEMB_DEF:
+            fallthrough;
+        case IR_REMOVED:
+            msg_todo("", ir_get_pos(item));
+            return 0;
     }
+    unreachable("");
 }
 
 // TODO: update or remove this function

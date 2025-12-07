@@ -703,6 +703,12 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
                 break;
             case IR_REMOVED:
                 break;
+            case IR_IMPORT_PATH:
+                unreachable("");
+            case IR_STRUCT_MEMB_DEF:
+                unreachable("");
+            case IR_FUNCTION_PARAMS:
+                unreachable("");
             default:
                 log(LOG_ERROR, FMT"\n", string_print(strs->output));
                 ir_printf(stmt);
@@ -814,6 +820,8 @@ void emit_c_from_tree(void) {
             case OPT_LEVEL_O2:
                 vec_append(&a_pass, &cmd, sv("-O2"));
                 break;
+            case OPT_LEVEL_COUNT:
+                unreachable("");
             default:
                 unreachable("");
         }
@@ -821,7 +829,7 @@ void emit_c_from_tree(void) {
         vec_append(&a_pass, &cmd, sv("-g"));
 
         // output step
-        static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states (not all are explicitly handled)");
+        static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states");
         switch (params.stop_after) {
             case STOP_AFTER_RUN:
                 break;
@@ -833,6 +841,14 @@ void emit_c_from_tree(void) {
             case STOP_AFTER_OBJ:
                 vec_append(&a_pass, &cmd, sv("-c"));
                 break;
+            case STOP_AFTER_NONE:
+                unreachable("");
+            case STOP_AFTER_IR:
+                unreachable("");
+            case STOP_AFTER_BACKEND_IR:
+                unreachable("");
+            case STOP_AFTER_COUNT:
+                unreachable("");
             default:
                 unreachable("");
         }

@@ -19,8 +19,19 @@ type Token struct {
     inner Token
 }
 
+type Arr2 struct {
+    item Arr[3]
+}
+
+type Arr struct {
+    item Arr2[3]
+}
+
 fn main() i32 {
     let token Token
     let token2 Token2
+
+    let arr Arr
+
     return 0
 }

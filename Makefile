@@ -7,8 +7,8 @@ CC_COMPILER ?= cc
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
 # TODO: enable -Wswitch-enum?
 C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
-			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion \
-			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
+			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
+			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address \
 			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \
@@ -34,7 +34,8 @@ BUILD_DIR_RELEASE ?= ./build/release/
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
-    C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
+    #C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
+    C_FLAGS += -fsanitize=undefined -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else

@@ -6,6 +6,8 @@
 #include <strv.h>
 #include <msg.h>
 
+// TODO: move these functions and macros to ast_msg?
+
 // TODO: msg_todo should accept only Strv for simplicity?
 #define msg_todo(feature, pos) \
     msg_todo_internal(__FILE__, __LINE__, sv(feature), pos);

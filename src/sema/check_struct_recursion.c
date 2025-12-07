@@ -90,7 +90,38 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
         case UAST_LABEL:
             todo();
         case UAST_BUILTIN_DEF:
-            todo();
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static bool check_struct_rec_internal_ulang_type(Ulang_type lang_type, Name_vec rec_stack) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_REGULAR: {
+            Ulang_type_regular reg = ulang_type_regular_const_unwrap(lang_type);
+            if (!check_struct_rec_internal_lang_type_reg(reg, rec_stack)) {
+                return false;
+            }
+            return true;
+        }
+        case ULANG_TYPE_FN:
+            // ULANG_TYPE_FN is always a pointer
+            assert(ulang_type_fn_const_unwrap(lang_type).pointer_depth > 0);
+            return true;
+        case ULANG_TYPE_TUPLE:
+            msg_todo("", ulang_type_get_pos(lang_type));
+            return false;
+        case ULANG_TYPE_ARRAY: {
+            Ulang_type_array arr = ulang_type_array_const_unwrap(lang_type);
+            check_struct_rec_internal_ulang_type(*arr.item_type, rec_stack);
+            return true;
+        }
+        case ULANG_TYPE_EXPR:
+            return true;
+        case ULANG_TYPE_LIT:
+            return true;
+        case ULANG_TYPE_REMOVED:
+            return true;
     }
     unreachable("");
 }
@@ -100,22 +131,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack)
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(base.members, idx);
-        switch (curr->lang_type.type) {
-            case ULANG_TYPE_REGULAR: {
-                Ulang_type_regular reg = ulang_type_regular_const_unwrap(curr->lang_type);
-                if (!check_struct_rec_internal_lang_type_reg(reg, rec_stack)) {
-                    return false;
-                }
-                break;
-            }
-            case ULANG_TYPE_FN:
-                // ULANG_TYPE_FN is always a pointer
-                break;
-            case ULANG_TYPE_TUPLE:
-                todo();
-            default:
-                todo(); // TODO: remove this default case
-        }
+        check_struct_rec_internal_ulang_type(curr->lang_type, rec_stack);
     }
 
     return true;

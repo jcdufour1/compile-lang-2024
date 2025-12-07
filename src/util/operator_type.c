@@ -1,5 +1,7 @@
 #include <operator_type.h>
 
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types; only binary operators need to be explicitly handled here");
     switch (type) {
@@ -46,3 +48,5 @@ BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
     }
     unreachable("");
 }
+
+#pragma GCC diagnostic warning "-Wswitch-enum"

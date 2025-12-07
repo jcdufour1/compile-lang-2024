@@ -949,25 +949,21 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     }
 
     Uast_def* callee_def = NULL;
-    switch (access->callee->type) {
-        case UAST_SYMBOL: {
-            Uast_symbol* sym = uast_symbol_unwrap(access->callee);
-            Ulang_type_vec old_gen_args = sym->name.gen_args;
-            memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
-            if (!usymbol_lookup(&callee_def, sym->name)) {
-                sym->name.gen_args = old_gen_args;
-                *new_expr = uast_member_access_wrap(access);
-                return EXPAND_EXPR_NEW_EXPR;
-            }
-            sym->name.gen_args = old_gen_args;
-            break;
-        }
-        default:
-            *new_expr = uast_member_access_wrap(access);
-            return EXPAND_EXPR_NEW_EXPR;
+    if (access->callee->type != UAST_SYMBOL) {
+        *new_expr = uast_member_access_wrap(access);
+        return EXPAND_EXPR_NEW_EXPR;
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
+    Ulang_type_vec old_gen_args = sym->name.gen_args;
+    memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
+    if (!usymbol_lookup(&callee_def, sym->name)) {
+        sym->name.gen_args = old_gen_args;
+        *new_expr = uast_member_access_wrap(access);
+        return EXPAND_EXPR_NEW_EXPR;
+    }
+    sym->name.gen_args = old_gen_args;
+
     if (callee_def->type == UAST_MOD_ALIAS) {
         Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_TOP_LEVEL);
         Name name = {0};

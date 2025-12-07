@@ -761,6 +761,18 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 );
                 break;
             }
+            case TAST_RAW_UNION_LIT:
+                fallthrough;
+            case TAST_ENUM_TAG_LIT:
+                fallthrough;
+            case TAST_VOID:
+                fallthrough;
+            case TAST_FUNCTION_LIT:
+                fallthrough;
+            case TAST_STRING:
+                msg_todo("", tast_literal_get_pos(lhs_lit));
+                msg_todo("", tast_literal_get_pos(rhs_lit));
+                return false;
             default:
                 unreachable("");
         }
@@ -858,6 +870,10 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 )));
                 break;
             }
+            case BINARY_SINGLE_EQUAL:
+                unreachable("this should have been handled elsewhere");
+            case BINARY_COUNT:
+                fallthrough;
             default:
                 unreachable(FMT, binary_type_print(oper_token_type));
         }
@@ -1360,6 +1376,19 @@ bool try_set_struct_literal_types(
                 assign_pos, "struct literal cannot be assigned to primitive type `"FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
             );
+            return false;
+        case LANG_TYPE_VOID:
+            fallthrough;
+        case LANG_TYPE_FN:
+            fallthrough;
+        case LANG_TYPE_ARRAY:
+            fallthrough;
+        case LANG_TYPE_LIT:
+            fallthrough;
+        case LANG_TYPE_REMOVED:
+            fallthrough;
+        case LANG_TYPE_TUPLE:
+            msg_todo("actual error message for assigning struct literal to invalid type", assign_pos);
             return false;
         default:
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
@@ -2188,8 +2217,29 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
             );
             *is_fun_callback = true;
             return FUN_MIDDLE_NORMAL;
-        default:
-            unreachable("");
+        case TAST_BLOCK:
+            fallthrough;
+        case TAST_MODULE_ALIAS:
+            fallthrough;
+        case TAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case TAST_ASSIGNMENT:
+            fallthrough;
+        case TAST_OPERATOR:
+            fallthrough;
+        case TAST_INDEX:
+            fallthrough;
+        case TAST_FUNCTION_CALL:
+            fallthrough;
+        case TAST_STRUCT_LITERAL:
+            fallthrough;
+        case TAST_TUPLE:
+            fallthrough;
+        case TAST_ENUM_GET_TAG:
+            fallthrough;
+        case TAST_ENUM_ACCESS:
+            msg_todo("", tast_expr_get_pos(new_callee));
+            return FUN_MIDDLE_ERROR;
     }
     unreachable("");
 }
@@ -3249,6 +3299,8 @@ bool try_set_member_access_types_finish_generic_struct(
         case UAST_GET_MEMB_DEF_NONE:
             msg_invalid_member(def_base.name, access);
             return false;
+        case UAST_GET_MEMB_DEF_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }
@@ -3306,6 +3358,8 @@ bool try_set_member_access_types_finish_enum_def(
                 case UAST_GET_MEMB_DEF_NONE:
                     msg_invalid_member(enum_def->base.name, access);
                     return false;
+                case UAST_GET_MEMB_DEF_COUNT:
+                    unreachable("");
                 default:
                     unreachable("");
             }
@@ -3354,6 +3408,8 @@ bool try_set_member_access_types_finish_enum_def(
                 case UAST_GET_MEMB_DEF_NONE:
                     msg_invalid_member(enum_def->base.name, access);
                     return false;
+                case UAST_GET_MEMB_DEF_COUNT:
+                    unreachable("");
                 default:
                     unreachable("");
             }
@@ -3541,6 +3597,34 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
 
             return try_set_member_access_types_finish(new_tast, struct_def, access, new_callee);
         }
+        case TAST_ENUM_ACCESS:
+            msg_todo("\n", access->pos);
+            return false;
+        case TAST_INDEX:
+            msg_todo("\n", access->pos);
+            return false;
+        case TAST_TUPLE:
+            msg_todo("member access with tuple callee\n", access->pos);
+            return false;
+        case TAST_BLOCK:
+            fallthrough;
+        case TAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case TAST_ASSIGNMENT:
+            fallthrough;
+        case TAST_LITERAL:
+            fallthrough;
+        case TAST_ENUM_CALLEE:
+            fallthrough;
+        case TAST_ENUM_CASE:
+            fallthrough;
+        case TAST_ENUM_GET_TAG:
+            msg(
+                DIAG_INVALID_MEMBER_ACCESS_CALLEE,
+                uast_expr_get_pos(access->callee),
+                "invalid member access callee\n"
+            );
+            return false;
         default:
             unreachable(FMT, tast_expr_print(new_callee));
     }
@@ -3696,14 +3780,38 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
         case TAST_FUNCTION_CALL:
             new_child = tast_condition_get_default_child(new_child_);
             break;
+        case TAST_MODULE_ALIAS:
+            fallthrough;
+        case TAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case TAST_ASSIGNMENT:
+            fallthrough;
+        case TAST_SYMBOL:
+            fallthrough;
+        case TAST_MEMBER_ACCESS:
+            fallthrough;
+        case TAST_INDEX:
+            fallthrough;
+        case TAST_STRUCT_LITERAL:
+            fallthrough;
+        case TAST_TUPLE:
+            fallthrough;
+        case TAST_ENUM_CALLEE:
+            fallthrough;
+        case TAST_ENUM_CASE:
+            fallthrough;
+        case TAST_ENUM_GET_TAG:
+            fallthrough;
+        case TAST_ENUM_ACCESS:
+            fallthrough;
+        case TAST_BLOCK:
+            msg_todo("", tast_expr_get_pos(new_child_));
+            return false;
         default:
             unreachable("");
     }
 
-    *new_cond = tast_condition_new(
-        cond->pos,
-        new_child
-    );
+    *new_cond = tast_condition_new(cond->pos, new_child);
     return true;
 }
 
@@ -4351,13 +4459,10 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
         todo();
     }
     Ustruct_def_base enum_def = {0};
-    switch (enum_def_->type) {
-        case UAST_ENUM_DEF:
-            enum_def = uast_enum_def_unwrap(enum_def_)->base;
-            break;
-        default:
-            todo();
+    if (enum_def_->type != UAST_ENUM_DEF) {
+        msg_todo("switch statement with this type", uast_def_get_pos(enum_def_));
     }
+    enum_def = uast_enum_def_unwrap(enum_def_)->base;
     unwrap(enum_def.members.info.count > 0);
     exhaustive_data.max_data = enum_def.members.info.count - 1;
 
@@ -4370,6 +4475,8 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
 
     return exhaustive_data;
 }
+
+#pragma GCC diagnostic ignored "-Wswitch-enum"
 
 static bool check_for_exhaustiveness_inner(
     Exhaustive_data* exhaustive_data,
@@ -4416,10 +4523,12 @@ static bool check_for_exhaustiveness_inner(
             return true;
         }
         default:
-            todo();
+            unreachable("");
     }
     unreachable("");
 }
+
+#pragma GCC diagnostic warning "-Wswitch-enum"
 
 // TODO: fix indentation in this function
 static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos pos_switch) {
@@ -4437,13 +4546,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                 Uast_def* enum_def_ = NULL;
                 unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
                 Ustruct_def_base enum_def = {0};
-                switch (enum_def_->type) {
-                    case UAST_ENUM_DEF:
-                        enum_def = uast_enum_def_unwrap(enum_def_)->base;
-                        break;
-                    default:
-                        todo();
-                }
+                enum_def = uast_enum_def_unwrap(enum_def_)->base;
 
                 if (status == true) {
                     string_extend_cstr(&a_main, &string, "some cases are not covered: ");
@@ -4514,13 +4617,10 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
-    switch (tast_expr_get_lang_type(new_operand_typed).type) {
-        case LANG_TYPE_ENUM:
-            break;
-        default:
-            msg_todo("switch on type that is not enum", oper_var->pos);
-            status = false;
-            goto error;
+    if (tast_expr_get_lang_type(new_operand_typed).type != LANG_TYPE_ENUM) {
+        msg_todo("switch on type that is not enum", oper_var->pos);
+        status = false;
+        goto error;
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
@@ -4533,16 +4633,11 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
 
         Uast_expr* operand = NULL;
 
-        switch (tast_expr_get_lang_type(new_operand_typed).type) {
-            case LANG_TYPE_ENUM:
-                operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
-                    oper_var->pos,
-                    uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name))
-                ));
-                break;
-            default:
-                unreachable("this should have been caught earlier");
-        }
+        assert(tast_expr_get_lang_type(new_operand_typed).type == LANG_TYPE_ENUM && "not implemented");
+        operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
+            oper_var->pos,
+            uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name))
+        ));
 
         if (old_case->is_default) {
             assert(
@@ -4875,6 +4970,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 goto error;
             case STMT_OK:
                 break;
+            case STMT_NO_STMT:
+                unreachable("statement should be returned when type checking return");
             default:
                 todo();
         }
