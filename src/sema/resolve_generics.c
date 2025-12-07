@@ -423,7 +423,7 @@ static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang
             if (env.silent_generic_resol_errors) {
                 return false;
             }
-            log(LOG_ERROR, FMT"\n", uast_def_print(before_res));
+            log(LOG_ERROR, FMT"\n", uast_print(before_res));
             log(LOG_ERROR, "%d\n", uast_def_get_pos(before_res).line);
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
@@ -451,7 +451,7 @@ static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang
             msg_todo("", ulang_type_get_pos(lang_type));
             return false;
         case UAST_BUILTIN_DEF:
-            log(LOG_FATAL, FMT"\n", uast_def_print(before_res));
+            log(LOG_FATAL, FMT"\n", uast_print(before_res));
             msg(DIAG_NOTE, uast_def_get_pos(before_res), "\n");
             unreachable(
                 "this should have been removed in expand_lang_def "
@@ -532,7 +532,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_LANG_DEF:
             unreachable("");
         case UAST_PRIMITIVE_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(before_res));
+            log(LOG_DEBUG, FMT"\n", uast_print(before_res));
             unreachable("");
         case UAST_FUNCTION_DECL:
             unreachable("");

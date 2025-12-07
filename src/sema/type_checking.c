@@ -536,7 +536,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
             return false;
         case UAST_LANG_DEF:
             log(LOG_DEBUG, FMT"\n", uast_print(sym_untyped));
-            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
+            log(LOG_DEBUG, FMT"\n", uast_print(sym_def));
             unreachable("lang def alias should have been expanded already");
     }
     unreachable("");
@@ -1177,8 +1177,8 @@ bool try_set_tuple_assignment_types(
             DIAG_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
             "tuple `"FMT"` cannot be assigned to `"FMT"`; "
             "tuple `"FMT"` has %zu elements, but type `"FMT"` has %zu elements\n",
-            uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
-            uast_tuple_print(tuple), tuple->members.info.count,
+            uast_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
+            uast_print(tuple), tuple->members.info.count,
             lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
             lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count
         );

@@ -1,6 +1,6 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= cc
+CC_COMPILER ?= clang
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
@@ -34,8 +34,8 @@ BUILD_DIR_RELEASE ?= ./build/release/
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
-    #C_FLAGS += -fsanitize=address -fno-omit-frame-pointer
-    C_FLAGS += -fsanitize=undefined -fno-omit-frame-pointer
+    #C_FLAGS += -fsanitize=address -fno-sanitize-recover=address -fno-omit-frame-pointer
+    C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
