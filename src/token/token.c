@@ -444,6 +444,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');
             break;
+        case TOKEN_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }

@@ -2229,8 +2229,40 @@ static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* token
         case UAST_SYMBOL:
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
-        default:
-            unreachable(FMT"\n", uast_expr_print(cond_child));
+        case UAST_IF_ELSE_CHAIN:
+            fallthrough;
+        case UAST_BLOCK:
+            fallthrough;
+        case UAST_SWITCH:
+            fallthrough;
+        case UAST_UNKNOWN:
+            fallthrough;
+        case UAST_MEMBER_ACCESS:
+            fallthrough;
+        case UAST_INDEX:
+            fallthrough;
+        case UAST_STRUCT_LITERAL:
+            fallthrough;
+        case UAST_ARRAY_LITERAL:
+            fallthrough;
+        case UAST_TUPLE:
+            fallthrough;
+        case UAST_MACRO:
+            fallthrough;
+        case UAST_ENUM_ACCESS:
+            fallthrough;
+        case UAST_ENUM_GET_TAG:
+            fallthrough;
+        case UAST_ORELSE:
+            fallthrough;
+        case UAST_FN:
+            fallthrough;
+        case UAST_QUESTION_MARK:
+            fallthrough;
+        case UAST_UNDERSCORE:
+            fallthrough;
+        case UAST_EXPR_REMOVED:
+            msg_todo("", uast_expr_get_pos(cond_child));
     }
 
     *result = uast_condition_new(uast_expr_get_pos(cond_child), cond_oper);
@@ -3260,8 +3292,6 @@ static PARSE_EXPR_STATUS parse_right_unary(
             *result = uast_block_wrap(result_);
             return PARSE_EXPR_OK;
         }
-        default:
-            unreachable("");
     }
     unreachable("");
 }

@@ -4,8 +4,11 @@
 #include <token.h>
 #include <operator_type.h>
 
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only binary tokens are handled)");
+
     switch (token_type) {
         case TOKEN_DOUBLE_EQUAL:
             return BINARY_DOUBLE_EQUAL;
@@ -75,5 +78,7 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
     }
     unreachable("");
 }
+
+#pragma GCC diagnostic warning "-Wswitch-enum"
 
 #endif // TOKEN_TYPE_TO_OPERATOR_TYPE

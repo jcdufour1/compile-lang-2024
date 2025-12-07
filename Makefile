@@ -7,8 +7,8 @@ CC_COMPILER ?= cc
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
 # TODO: enable -Wswitch-enum?
 C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
-			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion \
-			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function \
+			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
+			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address \
 			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \

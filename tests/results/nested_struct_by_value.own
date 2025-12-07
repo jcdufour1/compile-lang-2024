@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 67
+compile::stderr 97
 tests/inputs/nested_struct_by_value.own:3:11:[1;31merror[0;39m:`Token2` recursively includes itself without indirection; consider storing `Token2` by pointer here instead of by value
      2 |     id i32
      3 |     inner Token2
@@ -68,6 +68,36 @@ tests/inputs/nested_struct_by_value.own:17:6:[1;34mnote[0;39m:`Token` contains
     17 | type Token struct {
        |      ^
     18 |     id i32
+tests/inputs/nested_struct_by_value.own:23:10:[1;31merror[0;39m:`Arr` recursively includes itself without indirection; consider storing `Arr` by pointer here instead of by value
+    22 | type Arr2 struct {
+    23 |     item Arr[3]
+       |          ^
+    24 | }
+tests/inputs/nested_struct_by_value.own:26:6:[1;34mnote[0;39m:`Arr` contains `Arr2`
+    25 | 
+    26 | type Arr struct {
+       |      ^
+    27 |     item Arr2[3]
+tests/inputs/nested_struct_by_value.own:22:6:[1;34mnote[0;39m:`Arr2` contains `Arr`
+    21 | 
+    22 | type Arr2 struct {
+       |      ^
+    23 |     item Arr[3]
+tests/inputs/nested_struct_by_value.own:27:10:[1;31merror[0;39m:`Arr2` recursively includes itself without indirection; consider storing `Arr2` by pointer here instead of by value
+    26 | type Arr struct {
+    27 |     item Arr2[3]
+       |          ^
+    28 | }
+tests/inputs/nested_struct_by_value.own:22:6:[1;34mnote[0;39m:`Arr2` contains `Arr`
+    21 | 
+    22 | type Arr2 struct {
+       |      ^
+    23 |     item Arr[3]
+tests/inputs/nested_struct_by_value.own:26:6:[1;34mnote[0;39m:`Arr` contains `Arr2`
+    25 | 
+    26 | type Arr struct {
+       |      ^
+    27 |     item Arr2[3]
 
 compile::return_code 1
 

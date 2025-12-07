@@ -76,6 +76,8 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     return ulang_type_fn_const_wrap(fn);
 }
 
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 // will print error on failure
 bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
@@ -116,18 +118,22 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
             break;
         }
         default:
-            unreachable("");
+            msg_todo("", pos);
     }
 
     unwrap(*new_lit);
     return true;
 }
 
+#pragma GCC diagnostic warning "-Wswitch-enum"
+
 Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
     Uast_expr* lit = NULL;
     unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
     return lit;
 }
+
+#pragma GCC diagnostic ignored "-Wswitch-enum"
 
 Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Uast_expr* new_lit = NULL;
@@ -152,11 +158,13 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
             break;
         }
         default:
-            unreachable("");
+            msg_todo("", pos);
     }
 
     return new_lit;
 }
+
+#pragma GCC diagnostic warning "-Wswitch-enum"
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
     Uast_literal* lit = uast_float_wrap(uast_float_new(pos, value));

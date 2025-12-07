@@ -149,8 +149,17 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         case LANG_TYPE_VOID:
             *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
             return true;
-        default:
-            unreachable("");
+        case LANG_TYPE_TUPLE:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_ARRAY:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_FN:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_LIT:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_REMOVED:
+            msg_soft_todo("", ulang_type_get_pos(resolved));
+            return false;
     }
     unreachable("");
 }

@@ -209,18 +209,12 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            Name base_name = name;
-            base_name.gen_args = (Ulang_type_vec) {0};
             string_extend_strv(
                 arena,
                 &buf,
                 serialize_name_symbol_table(
                     &a_main,
-                    serialize_ulang_type(
-                        name.mod_path,
-                        vec_at(name.gen_args, idx),
-                        false
-                    )
+                    serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)
                 )
             );
         }

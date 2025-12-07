@@ -35,6 +35,8 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_int_liternal(Ulang_type* r
                     break;
                 case EXPR_TO_ULANG_TYPE_ERROR:
                     return EXPR_TO_ULANG_TYPE_ERROR;
+                case EXPR_TO_ULANG_TYPE_COUNT:
+                    unreachable("");
                 default:
                     unreachable("");
             }
@@ -76,6 +78,8 @@ static EXPR_TO_ULANG_TYPE uast_operator_to_ulang_type_int_liternal(Ulang_type* r
                     return EXPR_TO_ULANG_TYPE_PTR_DEPTH;
                 case EXPR_TO_ULANG_TYPE_ERROR:
                     return EXPR_TO_ULANG_TYPE_ERROR;
+                case EXPR_TO_ULANG_TYPE_COUNT:
+                    unreachable("");
                 default:
                     unreachable("");
             }
@@ -321,6 +325,8 @@ bool uast_expr_to_ulang_type(Ulang_type* result, const Uast_expr* expr) {
             return false;
         case EXPR_TO_ULANG_TYPE_ERROR:
             return false;
+        case EXPR_TO_ULANG_TYPE_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }
