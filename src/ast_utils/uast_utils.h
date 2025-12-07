@@ -20,8 +20,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
-#define uast_print(root) strv_print(uast_print_internal(root, 0))
-
 #define uast_printf(uast) \
     do { \
         log(LOG_NOTE, FMT"\n", uast_print(uast)); \

@@ -515,7 +515,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
             return true;
         }
         case UAST_IMPORT_PATH:
-            log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
+            log(LOG_DEBUG, FMT"\n", uast_print(sym_def));
             unreachable("");
         case UAST_MOD_ALIAS: {
             Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path);
@@ -535,7 +535,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
         case UAST_POISON_DEF:
             return false;
         case UAST_LANG_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_symbol_print(sym_untyped));
+            log(LOG_DEBUG, FMT"\n", uast_print(sym_untyped));
             log(LOG_DEBUG, FMT"\n", uast_def_print(sym_def));
             unreachable("lang def alias should have been expanded already");
     }
