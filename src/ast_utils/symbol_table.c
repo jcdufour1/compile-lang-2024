@@ -30,7 +30,7 @@ static size_t sym_tbl_calculate_idx(Strv key, size_t capacity) {
 
 typedef bool(*Symbol_add_fn)(void* tast_to_add);
 
-typedef Generic_symbol_table*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
+typedef void*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
 bool generic_symbol_lookup(void** result, Strv key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
@@ -71,7 +71,7 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     size_t tast_size = sizeof(Generic_symbol_table_tast);
 
     bool should_move_elements = false;
-    Usymbol_table_tast* new_table_tasts;
+    Usymbol_table_tast* new_table_tasts = NULL;
 
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         ((Generic_symbol_table*)sym_table)->capacity = SYM_TBL_DEFAULT_CAPACITY;
@@ -131,7 +131,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
         goto error;
     }
 
-    Ir* dummy;
+    Ir* dummy = NULL;
     assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
 error:
@@ -250,7 +250,7 @@ bool symbol_add(Tast_def* item) {
     return generic_symbol_add(
         serialize_name_symbol_table(&a_main, name),
         item,
-        (Get_tbl_from_collection_fn)sym_get_tbl_from_collection,
+        sym_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -262,11 +262,11 @@ void sym_tbl_update(Scope_id scope_id, Tast_def* item) {
 void symbol_update(Tast_def* item) {
     (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(tast_def_get_name(item)), item, sym_get_tbl_from_collection);
 }
 
 bool symbol_lookup(Tast_def** result, Name key) {
-    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(&a_temp, key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
+    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(&a_temp, key), sym_get_tbl_from_collection, key.scope_id);
 }
 
 //
@@ -299,7 +299,7 @@ bool usymbol_add(Uast_def* item) {
     return generic_symbol_add(
         serialize_name_symbol_table(&a_main, name),
         item,
-        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        usym_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -321,7 +321,7 @@ bool expand_again_add(Arena* arena, Uast_def* item) {
     return generic_symbol_add(
         serialize_name_symbol_table(arena, name),
         item,
-        (Get_tbl_from_collection_fn)expand_get_tbl_from_collection,
+        expand_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -330,7 +330,7 @@ bool expand_again_lookup(Uast_def** result, Name name) {
     return generic_symbol_lookup(
         (void**)result,
         serialize_name_symbol_table(&a_temp, name),
-        (Get_tbl_from_collection_fn)expand_get_tbl_from_collection,
+        expand_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -421,7 +421,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     return generic_symbol_lookup(
         (void**)result,
         serialize_name_symbol_table(&a_temp, key),
-        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        usym_get_tbl_from_collection,
         key.scope_id
     );
 }
@@ -451,7 +451,7 @@ bool ir_add(Ir* item) {
     return generic_symbol_add(
         serialize_ir_name_symbol_table(&a_main, name),
         item,
-        (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
+        ir_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -483,7 +483,7 @@ void usymbol_update(Uast_def* item) {
     generic_symbol_update(
         serialize_name_symbol_table(&a_main, name),
         item,
-        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        usym_get_tbl_from_collection,
         name.scope_id
     );
 }
@@ -491,7 +491,7 @@ void usymbol_update(Uast_def* item) {
 void ir_update(Ir* item) {
     (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(ir_get_name(item)), item, (Get_tbl_from_collection_fn)ir_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(ir_get_name(item)), item, ir_get_tbl_from_collection);
 }
 
 bool ir_tbl_lookup(Ir** result, Name key) {
@@ -502,7 +502,7 @@ bool ir_lookup(Ir** result, Ir_name key) {
     return generic_symbol_lookup(
         (void**)result,
         serialize_ir_name_symbol_table(&a_temp, key),
-        (Get_tbl_from_collection_fn)ir_get_tbl_from_collection,
+        ir_get_tbl_from_collection,
         key.scope_id
     );
 }
