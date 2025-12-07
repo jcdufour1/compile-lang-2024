@@ -86,10 +86,15 @@ __attribute__((format (printf, 5, 6)));
         abort(); \
     } while (0)
 
-#  define fallthrough \
+#define fallthrough \
     do { \
     } while(0); \
     __attribute__((fallthrough));
+
+// suppress warnings for variable declaration after label (and allow pre-c23 compilers)
+#define do_nothing() \
+    do { \
+    } while(0)
 
 // TODO
 //static inline Strv bool_print(bool condition) {
@@ -114,6 +119,7 @@ __attribute__((format (printf, 5, 6)));
 // TODO: remove max and min macros because of the side effect issues?
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+// TODO: define local_abs using _Generic
 #define local_abs(num) ((num) < 0 ? -(num) : (num))
 
 #define INLINE static inline __attribute__((always_inline))

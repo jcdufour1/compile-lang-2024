@@ -117,7 +117,9 @@ for generics:
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
 - remove PrintFormatArg and PrintFormat from std/runtime.own?
+- float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - remove Lang_type_atom and Ulang_type_atom
+- expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable
 - make basic "did you mean" (just symbols initially)
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
@@ -140,9 +142,6 @@ for generics:
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - error should say "type Token is not defined" instead of "type Token(<i32>) is not defined" 
     if Token in general is undefined
-- expected failure case for generic parameter having the same name as top level function
-- float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
-- enable -Wenum-switch?
 
 
 # roadmap to try to get bootstrap compiler done:

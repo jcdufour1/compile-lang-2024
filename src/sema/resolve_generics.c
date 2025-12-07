@@ -22,11 +22,34 @@ static void msg_undefined_type_internal(
     Ulang_type lang_type
 ) {
     if (!env.silent_generic_resol_errors) {
+        if (lang_type.type == ULANG_TYPE_REGULAR) {
+            Uast_def* dummy = NULL;
+            Name base_name = {0};
+            if (name_from_uname(&base_name, ulang_type_regular_const_unwrap(lang_type).atom.str, pos)) {
+                base_name.gen_args = (Ulang_type_vec) {0};
+                if (!usymbol_lookup(&dummy, base_name)) {
+                    msg_internal(
+                        file, line,
+                        DIAG_UNDEFINED_TYPE,
+                        pos,
+                        "type `"FMT"` is not defined\n",
+                        name_print(NAME_MSG, base_name)
+                    );
+                    goto end;
+                }
+            }
+        }
+
         msg_internal(
-            file, line, DIAG_UNDEFINED_TYPE, pos,
-            "type `"FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+            file, line,
+            DIAG_UNDEFINED_TYPE,
+            pos,
+            "type `"FMT"` is not defined\n",
+            ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
         );
 
+end:
+        do_nothing();
         // TODO: add name member to all ulang_types so that poison can be added for all of them?
         Name name = {0};
         if (lang_type.type == ULANG_TYPE_REGULAR && name_from_uname(
