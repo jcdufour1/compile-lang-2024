@@ -927,9 +927,9 @@ void uast_gen_uast_wrap(Uast_type uast) {
 static void uast_gen_print_overloading(Uast_type_vec types) {
     String function = {0};
 
-    string_extend_cstr(&gen_a, &function, "#define uast_print(uast) strv_print(uast_print_internal_(uast, 0))\n");
+    string_extend_cstr(&gen_a, &function, "#define uast_print(uast) strv_print(uast_print_overload(uast, 0))\n");
 
-    string_extend_cstr(&gen_a, &function, "#define uast_print_internal_(uast, indent) _Generic ((uast), \\\n");
+    string_extend_cstr(&gen_a, &function, "#define uast_print_overload(uast, indent) _Generic ((uast), \\\n");
 
     vec_foreach(idx, Uast_type, type, types) {
         string_extend_cstr(&gen_a, &function, "    ");
