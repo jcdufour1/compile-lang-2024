@@ -1343,7 +1343,11 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 unreachable("");
         }
 
+        const Tast_expr* expr = new_rhs;
         vec_append(&a_main, new_membs, new_rhs);
+        log(LOG_DEBUG, FMT"\n", tast_print(expr));
+        log(LOG_DEBUG, FMT"\n", tast_print(new_rhs));
+        todo();
     }
 
     return true;

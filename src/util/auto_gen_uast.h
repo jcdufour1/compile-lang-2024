@@ -936,6 +936,12 @@ static void uast_gen_print_overloading(Uast_type_vec types) {
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "*: ");
         extend_uast_name_lower(&function, type.name);
+        string_extend_f(&gen_a, &function, "_print_internal, \\\n");
+
+        string_extend_cstr(&gen_a, &function, "    const ");
+        extend_uast_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "*: ");
+        extend_uast_name_lower(&function, type.name);
         string_extend_f(&gen_a, &function, "_print_internal%s \\\n", idx + 1 < types.info.count ? "," : "");
     }
 

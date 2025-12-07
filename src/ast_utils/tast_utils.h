@@ -179,13 +179,6 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 Strv tast_print_internal(const Tast* tast, Indent indent);
 
-#define tast_print(root) strv_print(tast_print_internal(root, 0))
-
-#define tast_printf(tast) \
-    do { \
-        log(LOG_NOTE, FMT"\n", tast_print(tast)); \
-    } while (0);
-
 static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operator) {
     if (operator->type == TAST_UNARY) {
         return tast_unary_const_unwrap(operator)->lang_type;
