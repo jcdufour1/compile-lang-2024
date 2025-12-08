@@ -139,6 +139,7 @@ for generics:
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - make recursion depth O(1) for importing n modules deep
 - use _Generic to make printing more concise?
+- in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 
 
 # roadmap to try to get bootstrap compiler done:

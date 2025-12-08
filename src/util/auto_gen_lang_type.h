@@ -765,6 +765,46 @@ static void lang_type_gen_print_overloading(Lang_type_type_vec types) {
     gen_gen(FMT"\n", string_print(function));
 }
 
+static void lang_type_gen_wrap_overloading(Lang_type_type_vec types) {
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "#define lang_type_wrap(lang_type) lang_type_wrap_overload(lang_type)\n");
+
+    string_extend_cstr(&gen_a, &function, "#define lang_type_wrap_overload(lang_type) _Generic ((lang_type), \\\n");
+
+    Lang_type_type_vec new_vec = {0};
+
+    {
+        vec_foreach(idx, Lang_type_type, type, types) {
+            if (!type.name.is_topmost) {
+                vec_append(&gen_a, &new_vec, type);
+            }
+        }
+    }
+
+    {
+        vec_foreach(idx, Lang_type_type, type, new_vec) {
+            assert(!type.name.is_topmost);
+
+            //string_extend_cstr(&gen_a, &function, "    const ");
+            //extend_lang_type_name_first_upper(&function, type.name);
+            //string_extend_cstr(&gen_a, &function, "*: ");
+            //extend_lang_type_name_lower(&function, type.name);
+            //string_extend_f(&gen_a, &function, "_const_wrap, \\\n");
+
+            string_extend_cstr(&gen_a, &function, "    ");
+            extend_lang_type_name_first_upper(&function, type.name);
+            string_extend_cstr(&gen_a, &function, ": ");
+            extend_lang_type_name_lower(&function, type.name);
+            string_extend_f(&gen_a, &function, "_const_wrap%s \\\n", idx + 1 < new_vec.info.count ? "," : "");
+        }
+    }
+
+    string_extend_cstr(&gen_a, &function, ") (lang_type)\n");
+
+    gen_gen(FMT"\n", string_print(function));
+}
+
 static void lang_type_get_type_vec_internal(Lang_type_type_vec* type_vec, Lang_type_type lang_type) {
     for (size_t idx = 0; idx < lang_type.sub_types.info.count; idx++) {
         lang_type_get_type_vec_internal(type_vec, vec_at(lang_type.sub_types, idx));
@@ -826,9 +866,9 @@ static void gen_lang_type(const char* file_path, bool implementation) {
     lang_type_gen_print_forward_decl(lang_type);
     if (implementation) {
         gen_lang_type_new_define(lang_type);
-    } else {
-        lang_type_gen_print_overloading(type_vec);
     }
+    //lang_type_gen_print_overloading(type_vec);
+    lang_type_gen_wrap_overloading(type_vec);
     gen_lang_type_get_pos(lang_type, implementation, false);
     gen_lang_type_get_pos(lang_type, implementation, true);
 
