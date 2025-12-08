@@ -28,13 +28,13 @@ static void extend_ir_lang_type_name_upper(String* output, Ir_lang_type_name nam
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
-        extend_strv_upper(output, name.parent);
+        strv_extend_upper(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "IR_LANG_TYPE");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -42,13 +42,13 @@ static void extend_ir_lang_type_name_lower(String* output, Ir_lang_type_name nam
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir_lang_type"))) {
-        extend_strv_lower(output, name.parent);
+        strv_extend_lower(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ir_lang_type");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -62,7 +62,7 @@ static void extend_ir_lang_type_name_first_upper(String* output, Ir_lang_type_na
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -77,7 +77,7 @@ static void extend_parent_ir_lang_type_name_upper(String* output, Ir_lang_type_n
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -93,7 +93,7 @@ static void extend_parent_ir_lang_type_name_lower(String* output, Ir_lang_type_n
 
     string_extend_cstr(&gen_a, output, "ir_lang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static void extend_parent_ir_lang_type_name_first_upper(String* output, Ir_lang_type_name name) {
@@ -108,7 +108,7 @@ static void extend_parent_ir_lang_type_name_first_upper(String* output, Ir_lang_
 
     string_extend_cstr(&gen_a, output, "Ir_lang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static Ir_lang_type_name ir_lang_type_name_new(const char* parent, const char* base, bool is_topmost) {
@@ -349,7 +349,7 @@ static void ir_lang_type_gen_internal_unwrap(Ir_lang_type_type type, bool is_con
         string_extend_cstr(&gen_a, &function, "*");
     }
     string_extend_cstr(&gen_a, &function, " ir_lang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -410,7 +410,7 @@ static void ir_lang_type_gen_internal_wrap(Ir_lang_type_type type, bool is_const
         string_extend_cstr(&gen_a, &function, "* ");
     }
     string_extend_cstr(&gen_a, &function, " ir_lang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -524,9 +524,9 @@ static void ir_lang_type_gen_new_internal(Ir_lang_type_type type, bool implement
             Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
         }
 
         string_extend_cstr(&gen_a, &function, "};\n");

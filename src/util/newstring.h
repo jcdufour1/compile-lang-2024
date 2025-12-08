@@ -187,6 +187,12 @@ static inline void strv_extend_lower(Arena* arena, String* string, Strv strv) {
     }
 }
 
+static inline Strv strv_lower_print_internal(Arena* arena, Strv strv) {
+    String buf = {0};
+    strv_extend_lower(arena, &buf, strv);
+    return string_to_strv(buf);
+}
+
 static inline Strv strv_upper_print_internal(Arena* arena, Strv strv) {
     String buf = {0};
     strv_extend_upper(arena, &buf, strv);
@@ -199,11 +205,14 @@ static inline Strv strv_first_upper_print_internal(Arena* arena, Strv strv) {
     return string_to_strv(buf);
 }
 
-static inline Strv strv_lower_print_internal(Arena* arena, Strv strv) {
-    String buf = {0};
-    strv_extend_lower(arena, &buf, strv);
-    return string_to_strv(buf);
-}
+#define strv_lower_print(arena, strv) \
+    strv_print(strv_lower_print_internal(arena, strv))
+
+#define strv_first_upper_print(arena, strv) \
+    strv_print(strv_first_upper_print_internal(arena, strv))
+
+#define strv_upper_print(arena, strv) \
+    strv_print(strv_upper_print_internal(arena, strv))
 
 __attribute__((format (printf, 3, 4)))
 void string_extend_f(Arena* arena, String* string, const char* format, ...);

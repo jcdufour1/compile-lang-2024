@@ -3626,7 +3626,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             );
             return false;
         default:
-            unreachable(FMT, tast_expr_print(new_callee));
+            unreachable(FMT, tast_print(new_callee));
     }
     unreachable("");
 }

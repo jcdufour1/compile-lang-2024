@@ -69,7 +69,7 @@ static void extend_uast_name_first_upper(String* output, Uast_name name) {
     extend_strv_first_upper(output, name.type);
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        strv_extend_first_upper(&gen_a, output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -260,7 +260,6 @@ static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Uast_##lower* uast__unwrap##lower(Uast* uast) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
@@ -318,7 +317,7 @@ static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_parent_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* uast_");
+    string_extend_f(&gen_a, &function, "* "FMT"_", strv_lower_print(&gen_a, type.name.type));
     strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
@@ -357,7 +356,7 @@ static void uast_gen_print_overloading(Uast_type_vec types) {
 
     Strv uast_str = vec_at(types, 0).name.type;
 
-    string_extend_f(&gen_a, &function, "#define "FMT"_print(uast) strv_print("FMT"uast_print_overload(uast, 0))\n", strv_print(uast_str), strv_print(uast_str));
+    string_extend_f(&gen_a, &function, "#define "FMT"_print(uast) strv_print("FMT"_print_overload(uast, 0))\n", strv_print(uast_str), strv_print(uast_str));
 
     string_extend_f(&gen_a, &function, "#define "FMT"_print_overload(uast, indent) _Generic ((uast), \\\n", strv_print(uast_str));
 
@@ -543,17 +542,10 @@ static void uast_gen_internal_get_pos(Uast_type type, bool implementation, bool 
 
                 string_extend_f(&gen_a, &function, "            return "FMT"_", strv_print(type.name.type));
                 strv_extend_lower(&gen_a, &function, curr.name.base);
-                if (is_ref) {
-                    string_extend_cstr(&gen_a, &function, "_get_pos_ref(uast_");
-                } else {
-                    string_extend_cstr(&gen_a, &function, "_get_pos(uast_");
-                }
+                string_extend_f(&gen_a, &function, "_get_pos%s(", is_ref ? "_ref" : "");
+                string_extend_f(&gen_a, &function, FMT"_", strv_lower_print(&gen_a, type.name.type));
                 strv_extend_lower(&gen_a, &function, curr.name.base);
-                if (is_ref) {
-                    string_extend_cstr(&gen_a, &function, "_unwrap(uast));\n");
-                } else {
-                    string_extend_cstr(&gen_a, &function, "_const_unwrap(uast));\n");
-                }
+                string_extend_f(&gen_a, &function, "%s_unwrap(uast));\n", is_ref ? "" : "_const");
 
                 string_extend_cstr(&gen_a, &function, "        break;\n");
             }
@@ -663,10 +655,10 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         uast_gen_uast_unwrap(uast);
         uast_gen_uast_wrap(uast);
 
-        gen_gen("%s\n", "static inline "FMT"* "FMT"_new(void) {");
-        gen_gen("%s\n", "    "FMT"* new_"FMT" = arena_alloc(&a_main, sizeof(*new_"FMT"));");
-        gen_gen("%s\n", "    return new_"FMT";");
-        gen_gen("%s\n", "}");
+        gen_gen("static inline "FMT"* "FMT"_new(void) {", strv_first_upper_print(&gen_a, uast.name.type), strv_lower_print(&gen_a, uast.name.type));
+        gen_gen("    "FMT"* new_uast = arena_alloc(&a_main, sizeof(*new_uast));", strv_first_upper_print(&gen_a, uast.name.type));
+        gen_gen("    return new_uast;");
+        gen_gen("}");
     }
 
     if (implementation) {
