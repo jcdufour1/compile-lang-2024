@@ -220,7 +220,7 @@ size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Ir_name memb_name)
             return idx;
         }
     }
-    log(LOG_DEBUG, FMT"\n", ir_struct_def_print(def));
+    log(LOG_DEBUG, FMT"\n", ir_print(def));
     unreachable(FMT, ir_name_print(NAME_MSG, memb_name));
 }
 

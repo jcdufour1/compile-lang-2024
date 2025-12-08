@@ -199,7 +199,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     //}
     Tast_struct_def* inner_def = tast_struct_def_new(
         pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()}
+        ((Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()})
     );
     sym_tbl_add(tast_struct_def_wrap(inner_def));
 
@@ -236,7 +236,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     )));
     Tast_struct_def* new_src_def = tast_struct_def_new(
         pos,
-        (Struct_def_base) {.members = (Tast_variable_def_vec) {0}, .name = util_literal_name_new()}
+        ((Struct_def_base) {.members = (Tast_variable_def_vec) {0}, .name = util_literal_name_new()})
     );
     sym_tbl_add(tast_struct_def_wrap(new_src_def));
 

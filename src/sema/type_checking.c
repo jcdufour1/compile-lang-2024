@@ -1480,7 +1480,7 @@ bool try_set_array_literal_types(
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()}
+        ((Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()})
     );
     sym_tbl_add(tast_struct_def_wrap(inner_def));
 
@@ -1996,10 +1996,10 @@ bool try_set_function_call_builtin_types(
         Tast_expr_vec membs = {0};
         vec_append(&a_main, &membs, tast_operator_wrap(tast_unary_wrap(tast_unary_new(
             new_arr_pos,
-            tast_symbol_wrap(tast_symbol_new(new_arr_pos, (Sym_typed_base) {
+            tast_symbol_wrap(tast_symbol_new(new_arr_pos, ((Sym_typed_base) {
                 .lang_type = lang_type_array_const_wrap(array),
                 .name = tast_expr_get_name(new_arr)
-            })),
+            }))),
             UNARY_REFER,
             lang_type_array_const_wrap(array_ptr)
         ))));

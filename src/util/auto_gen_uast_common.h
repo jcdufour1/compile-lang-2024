@@ -237,6 +237,10 @@ static void uast_gen_uast_struct(Uast_type uast) {
         extend_struct_member(&output, vec_at(uast.members, idx));
     }
 
+    string_extend_f(&gen_a, &output, "#  ifndef NDEBUG\n");
+    extend_struct_member(&output, (Member) {.name = sv("loc"), .type = sv("Loc")});
+    string_extend_f(&gen_a, &output, "#  endif // NDEBUG\n");
+
     if (uast.sub_types.info.count < 1) {
         extend_struct_member(&output, (Member) {
             .type = sv("Pos"), .name = sv("pos")
@@ -385,24 +389,29 @@ static void uast_gen_print_forward_decl(Uast_type type) {
         uast_gen_print_forward_decl(vec_at(type.sub_types, idx));
     }
  
-    if (type.name.is_topmost) {
-        return;
-    }
- 
     String function = {0};
  
-    string_extend_cstr(&gen_a, &function, "Strv ");
-    extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(const ");
-    extend_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* uast, Indent indent);");
+    if (type.name.is_topmost) {
+        string_extend_f(&gen_a, &function, "Strv "FMT, strv_lower_print(&gen_a, type.name.type));
+        string_extend_cstr(&gen_a, &function, "_print_internal(const ");
+        extend_uast_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* uast, Indent indent);");
+    } else {
+        string_extend_cstr(&gen_a, &function, "Strv ");
+        extend_uast_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_print_internal(const ");
+        extend_uast_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* uast, Indent indent);");
+    }
  
     gen_gen(FMT"\n", string_print(function));
 
     //gen_gen("#define uast_print(uast) strv_print(uast_print_internal(uast, 0))\n");
 }
 
+// TODO: remove this function
 static void uast_gen_new_internal(Uast_type type, bool implementation) {
+    return;
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         uast_gen_new_internal(vec_at(type.sub_types, idx), implementation);
     }
@@ -417,7 +426,7 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
     extend_uast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* ");
     extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_new(");
+    string_extend_cstr(&gen_a, &function, "_new_internal(");
 
     if (type.sub_types.info.count > 0) {
         string_extend_cstr(&gen_a, &function, "void");
@@ -484,6 +493,152 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
 
     gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
+
+static void uast_gen_new_macro(Uast_type type, bool implementation) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        uast_gen_new_macro(vec_at(type.sub_types, idx), implementation);
+    }
+
+    if (type.name.is_topmost) {
+        return;
+    }
+
+    String function = {0};
+
+    if (!implementation) {
+        string_extend_cstr(&gen_a, &function, "#define ");
+        extend_uast_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new(");
+        if (type.sub_types.info.count > 0) {
+            string_extend_cstr(&gen_a, &function, "void");
+        } else {
+            string_extend_cstr(&gen_a, &function, "pos");
+        }
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
+            Member curr = vec_at(type.members, idx);
+
+            string_extend_cstr(&gen_a, &function, " ");
+            string_extend_strv(&gen_a, &function, curr.name);
+        }
+        string_extend_cstr(&gen_a, &function, ") ");
+        extend_uast_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new_internal(");
+        if (type.sub_types.info.count > 0) {
+            string_extend_cstr(&gen_a, &function, "void");
+        } else {
+            string_extend_cstr(&gen_a, &function, "pos, loc_new()");
+        }
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
+            Member curr = vec_at(type.members, idx);
+
+            string_extend_cstr(&gen_a, &function, " ");
+            string_extend_strv(&gen_a, &function, curr.name);
+        }
+        string_extend_cstr(&gen_a, &function, ")\n");
+    }
+
+    string_extend_cstr(&gen_a, &function, "static inline ");
+    extend_uast_name_first_upper(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "* ");
+    extend_uast_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_new_internal(");
+
+    if (type.sub_types.info.count > 0) {
+        string_extend_cstr(&gen_a, &function, "void");
+    } else {
+        string_extend_cstr(&gen_a, &function, "Pos pos, Loc loc");
+    }
+    for (size_t idx = 0; idx < type.members.info.count; idx++) {
+        if (idx < type.members.info.count) {
+            string_extend_cstr(&gen_a, &function, ", ");
+        }
+
+        Member curr = vec_at(type.members, idx);
+
+        string_extend_strv(&gen_a, &function, curr.type);
+        string_extend_cstr(&gen_a, &function, " ");
+        string_extend_strv(&gen_a, &function, curr.name);
+    }
+
+    string_extend_cstr(&gen_a, &function, ")");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        string_extend_cstr(&gen_a, &function, "    ");
+        extend_parent_uast_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* base_uast = ");
+        extend_parent_uast_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new();\n");
+
+        string_extend_cstr(&gen_a, &function, "    base_uast->type = ");
+        extend_uast_name_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ";\n");
+
+        if (type.sub_types.info.count < 1) {
+            string_extend_f(&gen_a, &function, "    "FMT"_", strv_lower_print(&gen_a, type.name.type));
+            strv_extend_lower(&gen_a, &function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_uast)->pos = pos;\n");
+
+            string_extend_cstr(&gen_a, &function, "    (void) loc;\n");
+            string_extend_cstr(&gen_a, &function, "#ifndef NDEBUG\n");
+            string_extend_f(&gen_a, &function, "    "FMT"_", strv_lower_print(&gen_a, type.name.type));
+            strv_extend_lower(&gen_a, &function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_uast)->loc = loc;\n");
+            string_extend_cstr(&gen_a, &function, "#endif // NDEBUG\n");
+        }
+
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            Member curr = vec_at(type.members, idx);
+
+            string_extend_f(&gen_a, &function, "    "FMT"_", strv_lower_print(&gen_a, type.name.type));
+            strv_extend_lower(&gen_a, &function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_uast)->");
+            strv_extend_lower(&gen_a, &function, curr.name);
+            string_extend_cstr(&gen_a, &function, " = ");
+            strv_extend_lower(&gen_a, &function, curr.name);
+            string_extend_cstr(&gen_a, &function, ";\n");
+        }
+
+        string_extend_f(&gen_a, &function, "    return "FMT"_", strv_lower_print(&gen_a, type.name.type));
+        strv_extend_lower(&gen_a, &function, type.name.base);
+        string_extend_cstr(&gen_a, &function, "_unwrap(base_uast);\n");
+
+        string_extend_cstr(&gen_a, &function, "}");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+}
+
+//static void uast_gen_new_macro(Uast_type type, bool implementation) {
+//    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+//        uast_gen_new_macro(vec_at(type.sub_types, idx), implementation);
+//    }
+//
+//    if (type.name.is_topmost) {
+//        return;
+//    }
+//
+//    String function = {0};
+//
+//    string_extend_f(&gen_a, &function, "#define "FMT"_new(", strv_lower_print(&gen_a, type.name.type));
+//
+//    log(LOG_DEBUG, FMT"\n", string_print(function));
+//    todo();
+//
+//    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+//}
 
 static void uast_gen_internal_get_pos(Uast_type type, bool implementation, bool is_ref) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
@@ -628,11 +783,13 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
 
     gen_gen("/* autogenerated */\n");
 
+
     if (implementation) {
         gen_gen("#ifndef "FMT"_H\n", string_print(normal_include_guard));
         gen_gen("#define "FMT"_H\n", string_print(normal_include_guard));
 
         gen_gen("#include <"FMT"_hand_written.h>\n", uast_lower_print(uast.name));
+        gen_gen("#include <"FMT"_forward_decl.h>\n", uast_lower_print(uast.name));
         gen_gen("#include <symbol_table_struct.h>\n");
         gen_gen("#include <symbol_table.h>\n");
         gen_gen("#include <token.h>\n");
@@ -641,12 +798,46 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("#ifndef "FMT"_FORWARD_DECLARATION_H\n", string_print(normal_include_guard));
         gen_gen("#define "FMT"_FORWARD_DECLARATION_H\n", string_print(normal_include_guard));
         gen_gen("#include <vecs.h>\n");
+        gen_gen("#include <operator_type.h>\n");
+        gen_gen("#include <ir_operator_type.h>\n");
+        gen_gen("#include <cfg.h>\n");
+        gen_gen("#include <loc.h>\n");
+        gen_gen("#include <lang_type.h>\n");
+
+        gen_gen("struct Tast_enum_tag_lit_;\n");
+        gen_gen("typedef struct Tast_enum_tag_lit_ Tast_enum_tag_lit;\n");
     }
 
     uast_gen_uast_forward_decl(uast);
 
+
     if (!implementation) {
         gen_uast_vecs(uast);
+        if (strv_is_equal(uast.name.type, sv("uast"))) {
+            gen_gen("typedef struct {\n");
+                gen_gen("Uast_generic_param_vec generics;\n");
+                gen_gen("Uast_variable_def_vec members;\n");
+                gen_gen("Name name;\n");
+            gen_gen("} Ustruct_def_base;\n");
+        } else if (strv_is_equal(uast.name.type, sv("tast"))) {
+            gen_gen("typedef struct {\n");
+                gen_gen("Lang_type lang_type;\n");
+                gen_gen("Name name;\n");
+            gen_gen("} Sym_typed_base;\n");
+
+            gen_gen("typedef struct {\n");
+                gen_gen("Tast_variable_def_vec members;\n");
+                gen_gen("Name name;\n");
+            gen_gen("} Struct_def_base;\n");
+            gen_gen("#include <ir_lang_type.h>\n");
+        } else if (strv_is_equal(uast.name.type, sv("ir"))) {
+            gen_gen("typedef struct {\n");
+                gen_gen("Ir_struct_memb_def_vec members;\n");
+                gen_gen("Ir_name name;\n");
+            gen_gen("} Ir_struct_def_base;\n");
+        } else {
+            unreachable("uncovered type");
+        }
     }
 
     if (implementation) {
@@ -655,15 +846,17 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         uast_gen_uast_unwrap(uast);
         uast_gen_uast_wrap(uast);
 
-        gen_gen("static inline "FMT"* "FMT"_new(void) {", strv_first_upper_print(&gen_a, uast.name.type), strv_lower_print(&gen_a, uast.name.type));
-        gen_gen("    "FMT"* new_uast = arena_alloc(&a_main, sizeof(*new_uast));", strv_first_upper_print(&gen_a, uast.name.type));
-        gen_gen("    return new_uast;");
-        gen_gen("}");
+        gen_gen("static inline "FMT"* "FMT"_new(void) {\n", strv_first_upper_print(&gen_a, uast.name.type), strv_lower_print(&gen_a, uast.name.type));
+        gen_gen("    "FMT"* new_uast = arena_alloc(&a_main, sizeof(*new_uast));\n", strv_first_upper_print(&gen_a, uast.name.type));
+        gen_gen("    return new_uast;\n");
+        gen_gen("}\n");
     }
 
     if (implementation) {
         gen_uast_new_forward_decl(uast);
+    } else {
     }
+    uast_gen_new_macro(uast, implementation);
     uast_gen_print_forward_decl(uast);
     if (!implementation) {
         uast_gen_print_overloading(type_vec);

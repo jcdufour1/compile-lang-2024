@@ -3921,7 +3921,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
         vec_append(
             &a_pass,
             &using_params,
-            uast_using_new((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: avoid hardcoding path */} /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
+            uast_using_new(((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: avoid hardcoding path */}) /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );
     }
     if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {

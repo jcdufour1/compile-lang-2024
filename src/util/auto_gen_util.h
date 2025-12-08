@@ -18,6 +18,7 @@
 FILE* global_output = NULL;
 Arena gen_a = {0};
 
+// TODO: make CLOSE_FILE lowercase (for consistancy)
 #define CLOSE_FILE(file) \
     do { \
         if (file) { \
@@ -65,8 +66,8 @@ static void gen_gen_internal(FILE* output, const char* file, int line, const cha
     va_list args;
     va_start(args, format);
 
+    fprintf(output, "\n\n/* %s:%d: */\n", file, line);
     vfprintf(output, format, args);
-    //fprintf(output, "    /* %s:%d: */", file, line);
 
     va_end(args);
 }
@@ -99,4 +100,13 @@ static void append_member(Members* members, const char* type, const char* name) 
     };
     vec_append(&gen_a, members, member);
 }
+
+static Strv loc_print_internal(const char* file, int line) {
+    String buf = {0};
+    string_extend_f(&gen_a, &buf, "/* %s:%d */", file, line);
+    return string_to_strv(buf);
+}
+
+#define loc_print() strv_print(loc_print_internal(file, line))
+
 #endif // AUTO_GEN_UTIL_H

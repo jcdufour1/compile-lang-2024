@@ -122,6 +122,7 @@ for generics:
 - expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable
 - make basic "did you mean" (just symbols initially)
+- see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - document or make functions for uast_def_get_ulang_type
 - test with both -fsanitize=address and -fsanitize=undefined in ci?
@@ -140,6 +141,7 @@ for generics:
 - make recursion depth O(1) for importing n modules deep
 - use _Generic to make printing more concise?
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
+- rename newstring.h to local_string.h
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -184,7 +186,11 @@ continue(<thing>)
 - write documentation
 - documentation should note that using can emulate inheritance in structs (I also need expected
     success test case for that)
-- use libclang to get extern c definitions automatically
+- use libclang to get extern c declarations automatically
+- use libclang for help with c abi (so that i can actually use llvm?)
+- use libclang to get size of c types (and use size of c types stored locally in project as fallback)
+- use c89 for the c backend instead of c99 for better compatibility
+- stop using todo macro in main branch
 
 
 

@@ -162,7 +162,7 @@ static Ir_name load_assignment_internal(const char* file, int line, Ir_block* ne
 static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variable_def* def) {
     return tast_symbol_new(
         pos,
-        (Sym_typed_base) {.lang_type = def->lang_type, .name = def->name}
+        ((Sym_typed_base) {.lang_type = def->lang_type, .name = def->name})
     );
 }
 
@@ -235,9 +235,9 @@ static void load_block_stmts(
     Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(), false, is_rtning_name);
     Tast_assignment* is_rtn_assign = tast_assignment_new(
         pos,
-        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = is_rtning->lang_type, .name = is_rtning->name
-        })),
+        }))),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
@@ -343,18 +343,18 @@ static void load_block_stmts(
     Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
     Tast_assignment* is_yield_assign = tast_assignment_new(
         pos,
-        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = is_yielding->lang_type, .name = is_yielding->name
-        })),
+        }))),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
     Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(), false, is_cont2ing_name);
     Tast_assignment* is_cont2_assign = tast_assignment_new(
         pos,
-        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = is_cont2ing->lang_type, .name = is_cont2ing->name
-        })),
+        }))),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
     );
 
@@ -363,10 +363,10 @@ static void load_block_stmts(
     if (lang_type.type == LANG_TYPE_VOID) {
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
-        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = lang_type,
             .name = local_rtn_def->name
-        }));
+        })));
     }
     Tast_defer* defer = NULL;
     Tast_variable_def* old_rtn_def = NULL;
@@ -578,10 +578,10 @@ static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_ve
         return cached_def;
     }
 
-    Tast_struct_def* new_def = tast_struct_def_new(pos, (Struct_def_base) {
+    Tast_struct_def* new_def = tast_struct_def_new(pos, ((Struct_def_base) {
         .members = membs,
         .name = util_literal_name_new_prefix(enum_name.base)
-    });
+    }));
     unwrap(struct_to_struct_add(new_def, enum_name));
     load_struct_def(new_def);
     return new_def;
@@ -1014,10 +1014,10 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         unwrap(def_name.base.count > 0);
 
-        Tast_symbol* new_sym = tast_symbol_new(old_call->pos, (Sym_typed_base) {
+        Tast_symbol* new_sym = tast_symbol_new(old_call->pos, ((Sym_typed_base) {
            .name = def_name,
            .lang_type = old_call->lang_type
-        });
+        }));
 
         Ir_name result = load_expr(new_block, tast_symbol_wrap(new_sym));
         return result;
@@ -1879,10 +1879,10 @@ static Ir_name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
                 return load_void(new_block_block->pos);
             } else {
                 // TODO: clone symbol instead of using tast_symbol_new to compress code here
-                return load_symbol(new_block, tast_symbol_new(new_block_block->pos, (Sym_typed_base) {
+                return load_symbol(new_block, tast_symbol_new(new_block_block->pos, ((Sym_typed_base) {
                     .lang_type = tast_lang_type_from_name(yield_dest),
                     .name = yield_dest
-                }));
+                })));
             }
             unreachable("");
         }
@@ -2173,10 +2173,10 @@ static void load_struct_def(Tast_struct_def* old_def) {
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy, old_def->base.name)) {
-        Tast_struct_def* new_def = tast_struct_def_new(old_def->pos, (Struct_def_base) {
+        Tast_struct_def* new_def = tast_struct_def_new(old_def->pos, ((Struct_def_base) {
             .members = old_def->base.members, 
             .name = old_def->base.name
-        });
+        }));
         unwrap(sym_tbl_add(tast_struct_def_wrap(new_def)));
         load_struct_def(new_def);
     }
@@ -2238,10 +2238,10 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool 
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
             if_statement->pos,
-            tast_symbol_wrap(tast_symbol_new(if_statement->pos, (Sym_typed_base) {
+            tast_symbol_wrap(tast_symbol_new(if_statement->pos, ((Sym_typed_base) {
                 .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
                 .name = defered_collections.is_rtning
-            })),
+            }))),
             tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()
@@ -2470,10 +2470,10 @@ static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
     if (old_break->do_break_expr) {
         load_assignment(new_block, tast_assignment_new(
             old_break->pos,
-            tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
+            tast_symbol_wrap(tast_symbol_new(old_break->pos, ((Sym_typed_base) {
                 .lang_type = tast_expr_get_lang_type(old_break->break_expr),
                 .name = ir_name_to_name(load_break_symbol_name)
-            })),
+            }))),
             old_break->break_expr
         ));
     }
@@ -2495,10 +2495,10 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy, old_def->base.name)) {
-        Tast_raw_union_def* new_def = tast_raw_union_def_new(old_def->pos, (Struct_def_base) {
+        Tast_raw_union_def* new_def = tast_raw_union_def_new(old_def->pos, ((Struct_def_base) {
             .members = old_def->base.members, 
             .name = old_def->base.name
-        });
+        }));
         unwrap(sym_tbl_add(tast_raw_union_def_wrap(new_def)));
         load_raw_union_def(new_def);
     }
@@ -2721,10 +2721,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                     .lang_type = lang_type_new_u1(),
                     .name = ir_name_to_name(get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx)))
-                })),
+                }))),
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1()))) // TODO: call helper functions for making some of these literals
             );
             load_assignment(new_block, is_brk_assign_aux);
@@ -2746,10 +2746,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                         .lang_type = yield_expr_type,
                         .name = break_name
-                    })),
+                    }))),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
                 if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID) {
@@ -2761,10 +2761,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         } else {
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                     .lang_type = lang_type_new_u1(),
                     .name = ir_name_to_name(vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding)
-                })),
+                }))),
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
             );
             load_assignment(new_block, is_brk_assign_aux);
@@ -2811,9 +2811,9 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
                 Tast_assignment* rtn_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                         .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
-                    })),
+                    }))),
                     rtn->child
                 );
                 load_assignment(new_block, rtn_assign);
@@ -2821,10 +2821,10 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 
             Tast_assignment* is_rtn_assign = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                     .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
                     .name = defered_collections.is_rtning
-                })),
+                }))),
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
             );
             load_assignment(new_block, is_rtn_assign);
@@ -2861,10 +2861,10 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
                         .lang_type = tast_lang_type_from_name(ir_name_to_name(coll->break_name)),
                         .name = ir_name_to_name(coll->break_name)
-                    })),
+                    }))),
                     tast_yield_unwrap(old_stmt)->yield_expr
                 );
                 load_assignment(new_block, new_assign);
@@ -2931,10 +2931,10 @@ static void load_single_is_rtn_check_internal(const char* file, int line, Ir_blo
         // if this condition evaluates to true, we are not returning right now
         tast_binary_wrap(tast_binary_new(
             new_block->pos,
-            tast_symbol_wrap(tast_symbol_new(new_block->pos, (Sym_typed_base) {
+            tast_symbol_wrap(tast_symbol_new(new_block->pos, ((Sym_typed_base) {
                 .lang_type = lang_type_new_u1(),
                 .name = ir_name_to_name(sym_name)
-            })),
+            }))),
             tast_literal_wrap(tast_int_wrap(tast_int_new(new_block->pos, 0, lang_type_new_u1()))),
             BINARY_DOUBLE_EQUAL,
             lang_type_new_u1()

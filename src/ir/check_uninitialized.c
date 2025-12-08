@@ -286,7 +286,7 @@ static void check_unit_dest(const Ir_name dest) {
 }
 
 // returns true if the label was found
-// TODO: move this function elsewhere, since this function may be useful for other passes?
+// TODO: move this function elsewhere, since this function may be useful for other passes? (or remove this function)
 static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
     for (size_t idx = 0; idx < block_children.info.count; idx++) {
         // TODO: find a way to avoid O(n) time for finding new block idx 

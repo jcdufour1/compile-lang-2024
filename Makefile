@@ -1,6 +1,6 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= clang
+CC_COMPILER ?= cc
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
@@ -116,6 +116,7 @@ all: build
 run: build
 	time ${BUILD_DIR}/main ${ARGS_PROGRAM} -lm
 
+# TODO: add -pg flag automatically depending on env variable passed to Makefile? (this will require rebuilding everything if ENV var changes)
 # NOTE: for gprof, add "-pg" to release build options, and do not set BUILD to 0
 gprof: run
 	gprof ${BUILD_DIR}/main gmon.out > report.txt
@@ -322,4 +323,7 @@ ${BUILD_DIR}/util/cfg.o: ${DEP_COMMON} src/util/cfg.c
 
 ${BUILD_DIR}/util/newstring.o: ${DEP_COMMON} src/util/newstring.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/newstring.o src/util/newstring.c
+
+# TODO: implement make clean
+# make clean:
 
