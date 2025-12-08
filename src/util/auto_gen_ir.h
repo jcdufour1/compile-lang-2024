@@ -29,13 +29,13 @@ static void extend_ir_name_upper(String* output, Ir_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
-        extend_strv_upper(output, name.parent);
+        strv_extend_upper(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "IR");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -43,13 +43,13 @@ static void extend_ir_name_lower(String* output, Ir_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ir"))) {
-        extend_strv_lower(output, name.parent);
+        strv_extend_lower(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ir");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -63,7 +63,7 @@ static void extend_ir_name_first_upper(String* output, Ir_name name) {
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -78,7 +78,7 @@ static void extend_parent_ir_name_upper(String* output, Ir_name name) {
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -94,7 +94,7 @@ static void extend_parent_ir_name_lower(String* output, Ir_name name) {
 
     string_extend_cstr(&gen_a, output, "ir");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static void extend_parent_ir_name_first_upper(String* output, Ir_name name) {
@@ -109,7 +109,7 @@ static void extend_parent_ir_name_first_upper(String* output, Ir_name name) {
 
     string_extend_cstr(&gen_a, output, "Ir");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static Ir_name ir_name_new(const char* parent, const char* base, bool is_topmost) {
@@ -616,7 +616,7 @@ static void ir_gen_internal_unwrap(Ir_type type, bool is_const) {
     }
     extend_ir_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* ir_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -661,7 +661,7 @@ static void ir_gen_internal_wrap(Ir_type type, bool is_const) {
     }
     extend_parent_ir_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* ir_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -811,13 +811,13 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
 
         if (type.sub_types.info.count < 1) {
             string_extend_cstr(&gen_a, &function, "    ir_");
-            extend_strv_lower(&function, type.name.base);
+            strv_extend_lower(&gen_a, &function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_ir)->pos = pos;\n");
 
             string_extend_cstr(&gen_a, &function, "    (void) loc;\n");
             string_extend_cstr(&gen_a, &function, "#ifndef NDEBUG\n");
             string_extend_cstr(&gen_a, &function, "    ir_");
-            extend_strv_lower(&function, type.name.base);
+            strv_extend_lower(&gen_a, &function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_ir)->loc = loc;\n");
             string_extend_cstr(&gen_a, &function, "#endif // NDEBUG\n");
         }
@@ -826,16 +826,16 @@ static void ir_gen_new_internal(Ir_type type, bool implementation) {
             Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, "    ir_");
-            extend_strv_lower(&function, type.name.base);
+            strv_extend_lower(&gen_a, &function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_ir)->");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
             string_extend_cstr(&gen_a, &function, ";\n");
         }
 
         string_extend_cstr(&gen_a, &function, "    return ir_");
-        extend_strv_lower(&function, type.name.base);
+        strv_extend_lower(&gen_a, &function, type.name.base);
         string_extend_cstr(&gen_a, &function, "_unwrap(base_ir);\n");
 
         string_extend_cstr(&gen_a, &function, "}");
@@ -860,7 +860,7 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, "    ir_get_pos(const Ir* ir)");
     } else {
         string_extend_cstr(&gen_a, &function, "    ir_");
-        extend_strv_lower(&function, type.name.base);
+        strv_extend_lower(&gen_a, &function, type.name.base);
         string_extend_cstr(&gen_a, &function, "_get_pos(const ");
         extend_ir_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "* ir)");
@@ -882,9 +882,9 @@ static void ir_gen_internal_get_pos(Ir_type type, bool implementation) {
 
 
                 string_extend_cstr(&gen_a, &function, "            return ir_");
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 string_extend_cstr(&gen_a, &function, "_get_pos(ir_");
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 string_extend_cstr(&gen_a, &function, "_const_unwrap(ir));\n");
 
                 string_extend_cstr(&gen_a, &function, "        break;\n");

@@ -74,18 +74,6 @@ static void gen_gen_internal(FILE* output, const char* file, int line, const cha
 #define gen_gen(...) \
     gen_gen_internal(global_output, __FILE__, __LINE__, __VA_ARGS__)
 
-static void extend_strv_upper(String* output, Strv name) {
-    for (size_t idx = 0; idx < name.count; idx++) {
-        vec_append(&gen_a, output, toupper(strv_at(name, idx)));
-    }
-}
-
-static void extend_strv_lower(String* output, Strv name) {
-    for (size_t idx = 0; idx < name.count; idx++) {
-        vec_append(&gen_a, output, tolower(strv_at(name, idx)));
-    }
-}
-
 static void extend_strv_first_upper(String* output, Strv name) {
     if (name.count < 1) {
         return;

@@ -5,7 +5,7 @@ CC_COMPILER ?= clang
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
-# TODO: enable -Wswitch-enum?
+# TODO: make warnings variable, and use same warnings for autogen as regular compolation
 C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
 			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address \

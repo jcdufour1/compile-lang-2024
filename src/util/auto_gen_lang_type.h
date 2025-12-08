@@ -28,13 +28,13 @@ static void extend_lang_type_name_upper(String* output, Lang_type_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("lang_type"))) {
-        extend_strv_upper(output, name.parent);
+        strv_extend_upper(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "LANG_TYPE");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -42,13 +42,13 @@ static void extend_lang_type_name_lower(String* output, Lang_type_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("lang_type"))) {
-        extend_strv_lower(output, name.parent);
+        strv_extend_lower(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "lang_type");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -62,7 +62,7 @@ static void extend_lang_type_name_first_upper(String* output, Lang_type_name nam
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -77,7 +77,7 @@ static void extend_parent_lang_type_name_upper(String* output, Lang_type_name na
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -93,7 +93,7 @@ static void extend_parent_lang_type_name_lower(String* output, Lang_type_name na
 
     string_extend_cstr(&gen_a, output, "lang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_name name) {
@@ -108,7 +108,7 @@ static void extend_parent_lang_type_name_first_upper(String* output, Lang_type_n
 
     string_extend_cstr(&gen_a, output, "Lang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static Lang_type_name lang_type_name_new(const char* parent, const char* base, bool is_topmost) {
@@ -454,7 +454,7 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
         string_extend_cstr(&gen_a, &function, "*");
     }
     string_extend_cstr(&gen_a, &function, " lang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -515,7 +515,7 @@ static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
     }
     string_extend_cstr(&gen_a, &function, " lang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -629,9 +629,9 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
             Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
         }
 
         string_extend_cstr(&gen_a, &function, "};\n");
@@ -657,7 +657,7 @@ static void gen_lang_type_get_pos(Lang_type_type type, bool implementation, bool
     }
 
     string_extend_cstr(&gen_a, &function, "    lang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_ref) {
         string_extend_f(&gen_a, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
     } else {
@@ -686,13 +686,13 @@ static void gen_lang_type_get_pos(Lang_type_type type, bool implementation, bool
 
 
                 string_extend_cstr(&gen_a, &function, "            return lang_type_");
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_cstr(&gen_a, &function, "_get_pos_ref(lang_type_");
                 } else {
                     string_extend_cstr(&gen_a, &function, "_get_pos(lang_type_");
                 }
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_cstr(&gen_a, &function, "_unwrap(lang_type));\n");
                 } else {

@@ -28,13 +28,13 @@ static void extend_ulang_type_name_upper(String* output, Ulang_type_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ulang_type"))) {
-        extend_strv_upper(output, name.parent);
+        strv_extend_upper(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ULANG_TYPE");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -42,13 +42,13 @@ static void extend_ulang_type_name_lower(String* output, Ulang_type_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, sv("ulang_type"))) {
-        extend_strv_lower(output, name.parent);
+        strv_extend_lower(&gen_a, output, name.parent);
     } else {
         string_extend_cstr(&gen_a, output, "ulang_type");
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -62,7 +62,7 @@ static void extend_ulang_type_name_first_upper(String* output, Ulang_type_name n
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
+        strv_extend_lower(&gen_a, output, name.base);
     }
 }
 
@@ -77,7 +77,7 @@ static void extend_parent_ulang_type_name_upper(String* output, Ulang_type_name 
     }
     if (name.base.count > 0) {
         string_extend_cstr(&gen_a, output, "_");
-        extend_strv_upper(output, name.base);
+        strv_extend_upper(&gen_a, output, name.base);
     }
 }
 
@@ -93,7 +93,7 @@ static void extend_parent_ulang_type_name_lower(String* output, Ulang_type_name 
 
     string_extend_cstr(&gen_a, output, "ulang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static void extend_parent_ulang_type_name_first_upper(String* output, Ulang_type_name name) {
@@ -108,7 +108,7 @@ static void extend_parent_ulang_type_name_first_upper(String* output, Ulang_type
 
     string_extend_cstr(&gen_a, output, "Ulang_type");
     string_extend_cstr(&gen_a, output, "_");
-    extend_strv_lower(output, name.parent);
+    strv_extend_lower(&gen_a, output, name.parent);
 }
 
 static Ulang_type_name ulang_type_name_new(const char* parent, const char* base, bool is_topmost) {
@@ -473,7 +473,7 @@ static void ulang_type_gen_internal_unwrap(Ulang_type_type type, bool is_const) 
         string_extend_cstr(&gen_a, &function, "*");
     }
     string_extend_cstr(&gen_a, &function, " ulang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -534,7 +534,7 @@ static void ulang_type_gen_internal_wrap(Ulang_type_type type, bool is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
     }
     string_extend_cstr(&gen_a, &function, " ulang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
@@ -648,9 +648,9 @@ static void ulang_type_gen_new_internal(Ulang_type_type type, bool implementatio
             Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
-            extend_strv_lower(&function, curr.name);
+            strv_extend_lower(&gen_a, &function, curr.name);
         }
 
         string_extend_cstr(&gen_a, &function, "};\n");
@@ -685,7 +685,7 @@ static void gen_ulang_type_get_pos(Ulang_type_type type, bool implementation, bo
     }
 
     string_extend_cstr(&gen_a, &function, "    ulang_type_");
-    extend_strv_lower(&function, type.name.base);
+    strv_extend_lower(&gen_a, &function, type.name.base);
     if (is_ref) {
         string_extend_f(&gen_a, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
     } else {
@@ -714,13 +714,13 @@ static void gen_ulang_type_get_pos(Ulang_type_type type, bool implementation, bo
 
 
                 string_extend_cstr(&gen_a, &function, "            return ulang_type_");
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_cstr(&gen_a, &function, "_get_pos_ref(ulang_type_");
                 } else {
                     string_extend_cstr(&gen_a, &function, "_get_pos(ulang_type_");
                 }
-                extend_strv_lower(&function, curr.name.base);
+                strv_extend_lower(&gen_a, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_cstr(&gen_a, &function, "_unwrap(ulang_type));\n");
                 } else {
