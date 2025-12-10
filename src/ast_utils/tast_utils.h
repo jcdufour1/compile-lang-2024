@@ -179,13 +179,6 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 Strv tast_print_internal(const Tast* tast, Indent indent);
 
-#define tast_print(root) strv_print(tast_print_internal(root, 0))
-
-#define tast_printf(tast) \
-    do { \
-        log(LOG_NOTE, FMT"\n", tast_print(tast)); \
-    } while (0);
-
 static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operator) {
     if (operator->type == TAST_UNARY) {
         return tast_unary_const_unwrap(operator)->lang_type;
@@ -222,7 +215,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_STRING:
             return tast_string_get_lang_type(tast_string_const_unwrap(lit));
         case TAST_VOID:
-            return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
+            return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit), 0));
         case TAST_ENUM_TAG_LIT:
             return tast_enum_tag_lit_const_unwrap(lit)->lang_type;
         case TAST_ENUM_LIT:
@@ -237,7 +230,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
 
 static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chain* if_else) {
     if (if_else->tasts.info.count < 1) {
-        return lang_type_void_const_wrap(lang_type_void_new(if_else->pos));
+        return lang_type_void_const_wrap(lang_type_void_new(if_else->pos, 0));
     }
     return vec_at(if_else->tasts, 0)->yield_type;
 }
@@ -275,7 +268,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
         case TAST_MODULE_ALIAS:
-            return lang_type_void_const_wrap(lang_type_void_new(tast_expr_get_pos(expr)));
+            return lang_type_void_const_wrap(lang_type_void_new(tast_expr_get_pos(expr), 0));
     }
     unreachable("");
 }
@@ -330,7 +323,7 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             if (tast_actual_break_const_unwrap(stmt)->do_break_expr) {
                 return tast_expr_get_lang_type(tast_actual_break_const_unwrap(stmt)->break_expr);
             }
-            return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+            return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_YIELD:

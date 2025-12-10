@@ -30,7 +30,8 @@ static inline Lang_type lang_type_new_char(void) {
 }
 
 static inline Lang_type lang_type_new_void(void) {
-    return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    // TODO: don't use POS_BUILTIN?
+    return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
 }
 
 static inline Lang_type lang_type_new_slice(Pos pos, Ulang_type item_type, int16_t pointer_depth) {

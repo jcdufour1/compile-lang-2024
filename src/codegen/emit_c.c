@@ -7,7 +7,6 @@
 #include <ir_lang_type.h>
 #include <ir_lang_type_after.h>
 #include <codegen_common.h>
-#include <ir_lang_type_get_pos.h>
 #include <ir_lang_type_print.h>
 #include <sizeof.h>
 #include <strv_vec.h>
@@ -90,7 +89,7 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
             }
             return;
         case IR_LANG_TYPE_VOID:
-            ir_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_lang_type_get_pos(ir_lang_type)));
+            ir_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_lang_type_get_pos(ir_lang_type), 0));
             string_extend_strv(&a_pass, output, sv("void"));
             return;
         case IR_LANG_TYPE_PRIMITIVE:

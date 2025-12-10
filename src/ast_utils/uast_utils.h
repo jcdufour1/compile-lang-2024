@@ -20,8 +20,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
-#define uast_print(root) strv_print(uast_print_internal(root, 0))
-
 #define uast_printf(uast) \
     do { \
         log(LOG_NOTE, FMT"\n", uast_print(uast)); \
@@ -82,7 +80,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_PRIMITIVE_DEF:
             return lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_const_unwrap(def)->lang_type);
         case UAST_VOID_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)));
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:

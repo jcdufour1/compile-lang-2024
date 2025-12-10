@@ -24,7 +24,7 @@ Ir_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
         case IR_STRING:
             return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 8, 1)));
         case IR_VOID:
-            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit)));
+            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit), 0));
         case IR_FUNCTION_NAME:
             return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), params.sizeof_usize, 1)));
     }
@@ -220,7 +220,7 @@ size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Ir_name memb_name)
             return idx;
         }
     }
-    log(LOG_DEBUG, FMT"\n", ir_struct_def_print(def));
+    log(LOG_DEBUG, FMT"\n", ir_print(def));
     unreachable(FMT, ir_name_print(NAME_MSG, memb_name));
 }
 

@@ -5,6 +5,7 @@
 #include <tast_forward_decl.h>
 #include <ir_forward_decl.h>
 #include <ulang_type.h>
+#include <msg.h>
 
 typedef struct {
     Vec_base info;

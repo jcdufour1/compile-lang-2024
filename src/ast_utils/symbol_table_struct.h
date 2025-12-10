@@ -10,6 +10,7 @@ typedef enum {
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
 #include <ir_forward_decl.h>
+#include <name.h>
 
 
 typedef struct {

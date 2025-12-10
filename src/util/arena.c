@@ -2,6 +2,7 @@
 #include <util.h>
 #include <assert.h>
 #include <stddef.h>
+#include <local_math.h>
 
 // TODO: use mmap instead of malloc, etc.
 
