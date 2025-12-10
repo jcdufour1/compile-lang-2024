@@ -71,31 +71,14 @@ __attribute__((format (printf, 5, 6)));
     log_internal(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_file_new(log_level, file, line, ...) \
-    log_internal(log_level, file, line, 0, __VA_ARGS__)
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \
+        log_internal(log_level, file, line, 0, __VA_ARGS__); \
+    }
 
-#define log_pre_internal(log_level, ...) \
+#define log(log_level, ...) \
     if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \
         log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__); \
     }
-
-static_assert(LOG_COUNT == 9, "exhausive handling of log levels (log never not explicitly handled here)");
-#define log_trace(...) \
-    log_pre_internal(LOG_TRACE, __VA_ARGS__)
-#define log_debug(...) \
-    log_pre_internal(LOG_DEBUG, __VA_ARGS__)
-#define log_verbose(...) \
-    log_pre_internal(LOG_VERBOSE, __VA_ARGS__)
-#define log_info(...) \
-    log_pre_internal(LOG_INFO, __VA_ARGS__)
-#define log_note(...) \
-    log_pre_internal(LOG_NOTE, __VA_ARGS__)
-#define log_warning(...) \
-    log_pre_internal(LOG_WARNING, __VA_ARGS__)
-#define log_error(...) \
-    log_pre_internal(LOG_ERROR, __VA_ARGS__)
-#define log_fetal(...) \
-    log_pre_internal(LOG_FETAL, __VA_ARGS__)
-
 
 #define todo() \
     do { \

@@ -55,9 +55,7 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
-        } \
+        sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_temp);\
