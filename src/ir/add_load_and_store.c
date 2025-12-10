@@ -681,10 +681,12 @@ static Ir_lang_type_fn rm_tuple_lang_type_fn(Lang_type_fn lang_type, Pos lang_ty
         vec_append(&a_main, &params, rm_tuple_lang_type(vec_at(lang_type.params.lang_types, idx), lang_type_pos));
     }
 
+    // TODO: c backend should actually handle function pointer depth other than 1?
     return ir_lang_type_fn_new(
         lang_type_pos,
-        ir_lang_type_tuple_new(lang_type_pos, params),
-        new_rtn_type
+        ir_lang_type_tuple_new(lang_type_pos, params, 0),
+        new_rtn_type,
+        lang_type.pointer_depth
     );
 }
 
@@ -705,7 +707,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
             Lang_type_atom atom = {0};
             if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, lang_type)) {
-                return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
+                return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos, 0));
             }
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
@@ -758,7 +760,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             ));
         }
         case LANG_TYPE_VOID:
-            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos));
+            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos, 0));
         case LANG_TYPE_FN:
             return ir_lang_type_fn_const_wrap(rm_tuple_lang_type_fn(lang_type_fn_const_unwrap(lang_type), lang_type_pos));
         case LANG_TYPE_LIT:
@@ -988,7 +990,7 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
         
         vec_append(&a_main, &new_args, name_to_ir_name(def_name));
         load_variable_def(new_block, def);
-        fun_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(POS_BUILTIN));
+        fun_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(POS_BUILTIN, 0));
         //unreachable(FMT, tast_function_call_print(old_call));
     }
 

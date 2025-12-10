@@ -348,8 +348,10 @@ static void gen_ulang_type_common(const char* file_path, bool implementation, Ua
         gen_gen("#ifndef "FMT"_H\n", strv_upper_print(&gen_a, ulang_type.name.type));
         gen_gen("#define "FMT"_H\n", strv_upper_print(&gen_a, ulang_type.name.type));
 
+        // TODO: add static assert here?
         gen_gen("#include <ulang_type_hand_written.h>\n");
         gen_gen("#include <lang_type_hand_written.h>\n");
+        gen_gen("#include <ir_lang_type_hand_written.h>\n");
     } else {
         gen_gen("#ifndef "FMT"_FORWARD_DECL_H\n", strv_upper_print(&gen_a, ulang_type.name.type));
         gen_gen("#define "FMT"_FORWARD_DECL_H\n", strv_upper_print(&gen_a, ulang_type.name.type));

@@ -33,7 +33,7 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 
 uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
-    if (ir_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
+    if (ir_lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;
     }
 
