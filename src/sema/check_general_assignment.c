@@ -17,7 +17,7 @@ static bool do_implicit_convertions_primitive(
     Lang_type_primitive src_type = lang_type_primitive_const_unwrap(src_type_);
 
     if (!implicit_pointer_depth) {
-        if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src_type) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
+        if (lang_type_primitive_get_pointer_depth(src_type) != lang_type_primitive_get_pointer_depth(dest)) {
             return false;
         }
     }
@@ -396,7 +396,7 @@ CHECK_ASSIGN_STATUS check_general_assignment(
         if (check_env->parent_of == PARENT_OF_ASSIGN_RHS) {
             check_env->break_type = check_env->lhs_lang_type;
         } else {
-            check_env->break_type = lang_type_void_const_wrap(lang_type_void_new(pos));
+            check_env->break_type = lang_type_void_const_wrap(lang_type_void_new(pos, 0));
         }
 
         if (!try_set_expr_types_internal(new_src, src, false, (Lang_type) {0}, true, true)) {

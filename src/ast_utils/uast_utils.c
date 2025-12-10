@@ -45,7 +45,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
         case UAST_BUILTIN_DEF:
             unreachable("");
         case UAST_VOID_DEF:
-            *result = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+            *result = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
             return true;
         case UAST_LABEL:
             unreachable("");

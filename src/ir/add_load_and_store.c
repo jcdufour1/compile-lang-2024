@@ -929,7 +929,7 @@ static Ir_function_params* do_function_def_alloca(
         );
         Ir_variable_def* param = load_variable_def_clone(new_def);
         do_function_def_alloca_param(new_params, new_block, param);
-        *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+        *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
         struct_rtn_name_parent_function = vec_at(new_params->params, 0)->name_self;
     } else {
         *new_rtn_type = rtn_type;
@@ -1482,10 +1482,10 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->pos,
             if_true_stmts,
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new())
         ),
-        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
     );
 
     Tast_if* if_false = tast_if_new(
@@ -1502,10 +1502,10 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->pos,
             if_false_stmts,
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new())
         ),
-        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
     );
 
     Tast_if_vec ifs = {0};
@@ -2438,7 +2438,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         &yield_name,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
-        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
+        lang_type_void_const_wrap(lang_type_void_new(pos, 0)),
         false
     );
     add_label(new_block, after_inner_block, pos);

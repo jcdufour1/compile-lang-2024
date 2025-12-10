@@ -80,7 +80,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_PRIMITIVE_DEF:
             return lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_const_unwrap(def)->lang_type);
         case UAST_VOID_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)));
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:

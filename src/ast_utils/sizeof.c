@@ -14,7 +14,7 @@ static uint64_t bit_width_to_bytes(uint64_t bit_width) {
 }
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
-    if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
+    if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;
     }
 

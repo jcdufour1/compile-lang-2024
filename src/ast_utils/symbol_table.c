@@ -411,7 +411,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
         );
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);

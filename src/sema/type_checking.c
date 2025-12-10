@@ -102,7 +102,7 @@ static int64_t bit_width_needed_float(double num) {
 static Tast_expr* tast_auto_deref_to_n(Tast_expr* expr, int16_t n) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > n) {
-        unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))));
+        unwrap(try_set_unary_types_finish(&expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))));
         unwrap(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
@@ -747,7 +747,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->enum_lang_type)));
                 if (!ulang_type_is_equal(
                     vec_at(uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
-                    lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
+                    lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos, 0)))
                 )) {
                     // overloaded binary operators not defined for non-void inner types of enum
                     msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
@@ -1223,7 +1223,7 @@ bool try_set_tuple_assignment_types(
         vec_append(&a_main, &new_lang_type, tast_expr_get_lang_type(new_memb));
     }
 
-    *new_tast = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(lang_type_tuple_const_unwrap(dest_lang_type).pos, new_lang_type));
+    *new_tast = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(lang_type_tuple_const_unwrap(dest_lang_type).pos, new_lang_type, 0));
     return true;
 }
 
@@ -3235,7 +3235,7 @@ bool try_set_tuple_types(Tast_tuple** new_tuple, Uast_tuple* tuple) {
     if (tuple->members.info.count > 0) {
         pos = lang_type_get_pos(vec_at(new_lang_type, 0));
     }
-    *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(pos, new_lang_type));
+    *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(pos, new_lang_type, 0));
     return true;
 }
 
@@ -4614,7 +4614,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         check_env.break_type = check_env.lhs_lang_type;
     } else if (check_env.parent_of == PARENT_OF_ORELSE) {
     } else {
-        check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
+        check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos, 0));
     }
 
     if (tast_expr_get_lang_type(new_operand_typed).type != LANG_TYPE_ENUM) {
@@ -4982,7 +4982,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
 error:
     check_env.dummy_int = 0; // allow pre-c23 compilers
-    Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
     assert(yield_type.type == LANG_TYPE_VOID);
     yield_type = check_env.break_type;
     // TODO: remove below if else
@@ -5132,8 +5132,8 @@ end:
 
 void try_set_types(void) {
     check_env.expr_is_actually_used_as_expr = true;
-    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN));
-    check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+    check_env.lhs_lang_type = lang_type_removed_const_wrap(lang_type_removed_new(POS_BUILTIN, 0));
+    check_env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
 
     // TODO: this def iteration should be abstracted to a separate function? (try_set_block_types has similar)
     {

@@ -50,7 +50,7 @@ static inline bool try_lang_type_from_ulang_type_tuple(
         }
         vec_append(&a_main, &new_lang_types, new_child);
     }
-    *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types);
+    *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types, lang_type.pointer_depth);
     return true;
 }
 
@@ -69,7 +69,7 @@ static inline bool try_lang_type_from_ulang_type_fn(
         assert(env.error_count > 0);
         return false;
     }
-    *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type);
+    *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type, lang_type.pointer_depth);
     return true;
 }
 
@@ -101,7 +101,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
     } else if (strv_is_equal(atom.str.base, sv("void"))) {
-        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, lang_type.atom.pointer_depth));
     } else if (strv_is_equal(atom.str.base, sv("opaque"))) {
         return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, atom.pointer_depth)));
     } else {
@@ -147,7 +147,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
             return true;
         case LANG_TYPE_VOID:
-            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos, lang_type.atom.pointer_depth));
             return true;
         case LANG_TYPE_TUPLE:
             unreachable("this is not possible with Lang_type_regular");

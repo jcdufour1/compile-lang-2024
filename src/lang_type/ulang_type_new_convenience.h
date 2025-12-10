@@ -38,7 +38,7 @@ static inline Ulang_type ulang_type_new_slice(Pos pos, Ulang_type item_type, int
 }
 
 static inline Ulang_type ulang_type_new_void(Pos pos) {
-    return lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(pos)));
+    return lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(pos, 0)));
 }
 
 static inline Ulang_type ulang_type_new_optional(Pos pos, Ulang_type inner_type) {
