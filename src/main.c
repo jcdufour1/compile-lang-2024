@@ -43,7 +43,7 @@ static void add_builtin_defs(void) {
     add_builtin_def(sv("usize"));
 }
 
-#define do_pass_ex(pass_fn, sym_log_fn, sym_log_dest) \
+#define do_pass(pass_fn, sym_log_fn, sym_log_dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
@@ -63,10 +63,6 @@ static void add_builtin_defs(void) {
         arena_reset(&a_temp);\
         arena_reset(&a_pass);\
     } while (0)
-
-// TODO: remove this macro, just use do_pass_ex?
-#define do_pass(pass_fn, sym_log_fn) \
-    do_pass_ex(pass_fn, sym_log_fn, stderr)
 
 #define do_pass_status(pass_fn, sym_log_fn, dest) \
     do { \
@@ -112,15 +108,15 @@ void compile_file_to_ir(void) {
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level, stderr);
-    do_pass_ex(expand_using, usymbol_log_level, stderr);
-    do_pass_ex(expand_def, usymbol_log_level, stderr);
-    do_pass(try_set_types, symbol_log_level);
-    do_pass(add_load_and_store, ir_log_level);
+    do_pass(expand_using, usymbol_log_level, stderr);
+    do_pass(expand_def, usymbol_log_level, stderr);
+    do_pass(try_set_types, symbol_log_level, stderr);
+    do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
-    do_pass(construct_cfgs, ir_log_level);
-    do_pass(remove_void_assigns, ir_log_level);
-    do_pass(check_uninitialized, ir_log_level);
+    do_pass(construct_cfgs, ir_log_level, stderr);
+    do_pass(remove_void_assigns, ir_log_level, stderr);
+    do_pass(check_uninitialized, ir_log_level, stderr);
 }
 
 NEVER_RETURN void do_passes(void) {
@@ -166,7 +162,7 @@ NEVER_RETURN void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                do_pass(emit_c_from_tree, ir_log_level);
+                do_pass(emit_c_from_tree, ir_log_level, stderr);
                 break;
             default:
                 unreachable("");

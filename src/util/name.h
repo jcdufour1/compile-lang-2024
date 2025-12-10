@@ -19,6 +19,7 @@ typedef enum {
 
 // TODO: nodes should store Name_id (which would contain size_t) instead of Name?
 //   lookup table should store actual name struct associated with Name_id
+//  TODO: Name and Ir_name may be too large to pass by value without affecting performance
 typedef struct {
     Strv mod_path;
     Strv base;

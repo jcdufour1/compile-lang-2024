@@ -20,7 +20,7 @@ C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			       	 -I src/lang_type/ \
 			       	 -I src/ir \
 			       	 -I src/ast_utils/ \
-			     -fno-strict-aliasing -flto \
+			     -fno-strict-aliasing \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
@@ -40,7 +40,7 @@ ifeq ($(DEBUG), 1)
 	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_COMMON}
-	C_FLAGS += -DNDEBUG -O2
+	C_FLAGS += -DNDEBUG -O2 # -flto 
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
