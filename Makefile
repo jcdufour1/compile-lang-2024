@@ -20,13 +20,13 @@ C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			       	 -I src/lang_type/ \
 			       	 -I src/ir \
 			       	 -I src/ast_utils/ \
-			     -fno-strict-aliasing \
+			     -fno-strict-aliasing -flto \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
-			     -fsanitize=address -fno-omit-frame-pointer 
+			     -fsanitize=address -fno-omit-frame-pointer
 
 BUILD_DIR_DEBUG ?= ./build/debug/
 BUILD_DIR_RELEASE ?= ./build/release/

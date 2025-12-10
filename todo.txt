@@ -142,6 +142,9 @@ for generics:
 - use _Generic to make printing more concise?
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - rename newstring.h to local_string.h
+- add prefix to symbols when emitting backend IR (start with underscore and uppercase letter, etc.) to prevent collisions
+- positional args (regular args) after degignated args) should print error or actually work property
+    (and test case should be implemented)
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -208,7 +211,7 @@ continue(<thing>)
       }
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
-- when generics are mature, use them to associate custom allocators with things
+- use generics to associate custom allocators with things?
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend
