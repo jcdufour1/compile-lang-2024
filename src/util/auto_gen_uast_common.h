@@ -4,256 +4,6 @@
 #include <auto_gen_util.h>
 #include <newstring.h>
 
-struct Uast_type_;
-typedef struct Uast_type_ Uast_type;
-
-typedef struct {
-    Vec_base info;
-    Uast_type* buf;
-} Uast_type_vec;
-
-typedef struct {
-    bool is_topmost;
-    Strv parent; // TODO: remove?
-    Strv base;
-    Strv type; // eg. uast, tast, ir
-} Uast_name;
-
-typedef struct Uast_type_ {
-    Uast_name name;
-    Members members;
-    Uast_type_vec sub_types;
-} Uast_type;
-
-static void extend_uast_name_upper(String* output, Uast_name name) {
-    unwrap(name.parent.count > 0);
-
-    strv_extend_upper(&gen_a, output, name.type);
-    if (name.base.count > 0) {
-        string_extend_cstr(&gen_a, output, "_");
-        strv_extend_upper(&gen_a, output, name.base);
-    }
-}
-
-static Strv uast_upper_print_internal(Uast_name name) {
-    String buf = {0};
-    extend_uast_name_upper(&buf, name);
-    return string_to_strv(buf);
-}
-
-#define uast_upper_print(name) \
-    strv_print(uast_upper_print_internal(name))
-
-static void extend_uast_name_lower(String* output, Uast_name name) {
-    unwrap(name.parent.count > 0);
-
-    strv_extend_lower(&gen_a, output, name.type);
-    if (name.base.count > 0) {
-        string_extend_cstr(&gen_a, output, "_");
-        strv_extend_lower(&gen_a, output, name.base);
-    }
-}
-
-static Strv uast_lower_print_internal(Uast_name name) {
-    String buf = {0};
-    extend_uast_name_lower(&buf, name);
-    return string_to_strv(buf);
-}
-
-#define uast_lower_print(name) \
-    strv_print(uast_lower_print_internal(name))
-
-static void extend_uast_name_first_upper(String* output, Uast_name name) {
-    unwrap(name.parent.count > 0);
-
-    extend_strv_first_upper(output, name.type);
-    if (name.base.count > 0) {
-        string_extend_cstr(&gen_a, output, "_");
-        strv_extend_lower(&gen_a, output, name.base);
-    }
-}
-
-static Strv uast_first_upper_print_internal(Uast_name name) {
-    String buf = {0};
-    extend_uast_name_first_upper(&buf, name);
-    return string_to_strv(buf);
-}
-
-#define uast_first_upper_print(name) \
-    strv_print(uast_first_upper_print_internal(name))
-
-static void extend_parent_uast_name_upper(String* output, Uast_name name) {
-    todo();
-    unwrap(name.parent.count > 0);
-
-    if (strv_is_equal(name.parent, sv("uast"))) {
-        unreachable("");
-    } else {
-        string_extend_cstr(&gen_a, output, "UAST");
-    }
-    if (name.base.count > 0) {
-        string_extend_cstr(&gen_a, output, "_");
-        strv_extend_upper(&gen_a, output, name.base);
-    }
-}
-
-static void extend_parent_uast_name_lower(String* output, Uast_name name) {
-    unwrap(name.parent.count > 0);
-
-    if (strv_is_equal(name.parent, name.type)) {
-        strv_extend_lower(&gen_a, output, name.type);
-        return;
-    }
-
-    unwrap(name.base.count > 0);
-
-    strv_extend_lower(&gen_a, output, name.type);
-    string_extend_cstr(&gen_a, output, "_");
-    strv_extend_lower(&gen_a, output, name.parent);
-}
-
-static void extend_parent_uast_name_first_upper(String* output, Uast_name name) {
-    unwrap(name.parent.count > 0);
-
-    if (strv_is_equal(name.parent, name.type)) {
-        extend_strv_first_upper(output, name.type);
-        return;
-    }
-
-    unwrap(name.base.count > 0);
-
-    extend_strv_first_upper(output, name.type);
-    string_extend_cstr(&gen_a, output, "_");
-    strv_extend_lower(&gen_a, output, name.parent);
-}
-
-static Uast_name uast_name_new(const char* parent, const char* base, bool is_topmost, const char* type /* eg. uast, tast*/) {
-    // TODO: assert that cstrs passed here are all lowercase?
-    return (Uast_name) {.parent = sv(parent), .base = sv(base), .is_topmost = is_topmost, .type = sv(type)};
-}
-
-static void uast_gen_uast_forward_decl(Uast_type uast) {
-    String output = {0};
-
-    for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_forward_decl(vec_at(uast.sub_types, idx));
-    }
-
-    string_extend_cstr(&gen_a, &output, "struct ");
-    extend_uast_name_first_upper(&output, uast.name);
-    string_extend_cstr(&gen_a, &output, "_;\n");
-
-    string_extend_cstr(&gen_a, &output, "typedef struct ");
-    extend_uast_name_first_upper(&output, uast.name);
-    string_extend_cstr(&gen_a, &output, "_ ");
-    extend_uast_name_first_upper(&output, uast.name);
-    string_extend_cstr(&gen_a, &output, ";\n");
-
-    gen_gen(FMT"\n", string_print(output));
-}
-
-static void uast_gen_uast_struct_as(String* output, Uast_type uast) {
-    string_extend_cstr(&gen_a, output, "typedef union ");
-    extend_uast_name_first_upper(output, uast.name);
-    string_extend_cstr(&gen_a, output, "_as");
-    string_extend_cstr(&gen_a, output, "_ ");
-    string_extend_cstr(&gen_a, output, "{\n");
-
-    for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(uast.sub_types, idx);
-        string_extend_cstr(&gen_a, output, "    ");
-        extend_uast_name_first_upper(output, curr.name);
-        string_extend_cstr(&gen_a, output, " ");
-        extend_uast_name_lower(output, curr.name);
-        string_extend_cstr(&gen_a, output, ";\n");
-    }
-
-    string_extend_cstr(&gen_a, output, "}");
-    extend_uast_name_first_upper(output, uast.name);
-    string_extend_cstr(&gen_a, output, "_as");
-    string_extend_cstr(&gen_a, output, ";\n");
-
-}
-
-static void uast_gen_uast_struct_enum(String* output, Uast_type uast) {
-    string_extend_cstr(&gen_a, output, "typedef enum ");
-    extend_uast_name_upper(output, uast.name);
-    string_extend_cstr(&gen_a, output, "_TYPE");
-    string_extend_cstr(&gen_a, output, "_ ");
-    string_extend_cstr(&gen_a, output, "{\n");
-
-    for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(uast.sub_types, idx);
-        string_extend_cstr(&gen_a, output, "    ");
-        extend_uast_name_upper(output, curr.name);
-        string_extend_cstr(&gen_a, output, ",\n");
-    }
-
-    string_extend_cstr(&gen_a, output, "}");
-    extend_uast_name_upper(output, uast.name);
-    string_extend_cstr(&gen_a, output, "_TYPE");
-    string_extend_cstr(&gen_a, output, ";\n");
-
-}
-
-static void uast_gen_uast_struct(Uast_type uast) {
-    String output = {0};
-
-    for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_struct(vec_at(uast.sub_types, idx));
-    }
-
-    if (uast.sub_types.info.count > 0) {
-        uast_gen_uast_struct_as(&output, uast);
-        uast_gen_uast_struct_enum(&output, uast);
-    }
-
-    string_extend_cstr(&gen_a, &output, "typedef struct ");
-    extend_uast_name_first_upper(&output, uast.name);
-    string_extend_cstr(&gen_a, &output, "_ ");
-    string_extend_cstr(&gen_a, &output, "{\n");
-
-    if (uast.sub_types.info.count > 0) {
-        String as_member_type = {0};
-        extend_uast_name_first_upper(&as_member_type, uast.name);
-        string_extend_cstr(&gen_a, &as_member_type, "_as");
-
-        String as_member_name = {0};
-        string_extend_cstr(&gen_a, &as_member_name, "as");
-
-        extend_struct_member(&output, (Member) {.type = string_to_strv(as_member_type), .name = string_to_strv(as_member_name)});
-
-        String enum_member_type = {0};
-        extend_uast_name_upper(&enum_member_type, uast.name);
-        string_extend_cstr(&gen_a, &enum_member_type, "_TYPE");
-
-        String enum_member_name = {0};
-        string_extend_cstr(&gen_a, &enum_member_name, "type");
-
-        extend_struct_member(&output, (Member) {.type = string_to_strv(enum_member_type), .name = string_to_strv(enum_member_name)});
-    }
-
-    for (size_t idx = 0; idx < uast.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(uast.members, idx));
-    }
-
-    string_extend_f(&gen_a, &output, "#  ifndef NDEBUG\n");
-    extend_struct_member(&output, (Member) {.name = sv("loc"), .type = sv("Loc")});
-    string_extend_f(&gen_a, &output, "#  endif // NDEBUG\n");
-
-    if (uast.sub_types.info.count < 1) {
-        extend_struct_member(&output, (Member) {
-            .type = sv("Pos"), .name = sv("pos")
-        });
-    }
-
-    string_extend_cstr(&gen_a, &output, "}");
-    extend_uast_name_first_upper(&output, uast.name);
-    string_extend_cstr(&gen_a, &output, ";\n");
-
-    gen_gen(FMT"\n", string_print(output));
-}
-
 static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         uast_gen_internal_unwrap(vec_at(type.sub_types, idx), is_const);
@@ -384,9 +134,9 @@ static void uast_gen_print_overloading(Uast_type_vec types) {
 }
 
 // TODO: deduplicate these functions (use same function for Ir and Uast)
-static void uast_gen_print_forward_decl(Uast_type type) {
+static void uast_gen_print_forward_decl_internal(const char* file, int line, Uast_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_print_forward_decl(vec_at(type.sub_types, idx));
+        uast_gen_print_forward_decl_internal(file, line, vec_at(type.sub_types, idx));
     }
  
     String function = {0};
@@ -404,10 +154,12 @@ static void uast_gen_print_forward_decl(Uast_type type) {
         string_extend_cstr(&gen_a, &function, "* uast, Indent indent);");
     }
  
-    gen_gen(FMT"\n", string_print(function));
+    gen_gen_internal(global_output, file, line, FMT"\n", string_print(function));
 
     //gen_gen("#define uast_print(uast) strv_print(uast_print_internal(uast, 0))\n");
 }
+
+#define uast_gen_print_forward_decl(type) uast_gen_print_forward_decl_internal(__FILE__, __LINE__, type)
 
 // TODO: remove this function
 static void uast_gen_new_internal(Uast_type type, bool implementation) {
@@ -750,20 +502,6 @@ static void gen_uast_vecs(Uast_type uast) {
     string_extend_cstr(&gen_a, &item_name, "*");
 
     gen_vec_from_strv(string_to_strv(vec_name), string_to_strv(item_name));
-}
-
-static void uast_get_type_vec_internal(Uast_type_vec* type_vec, Uast_type uast) {
-    for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_get_type_vec_internal(type_vec, vec_at(uast.sub_types, idx));
-    }
-
-    vec_append(&gen_a, type_vec, uast);
-}
-
-static Uast_type_vec uast_get_type_vec(Uast_type uast) {
-    Uast_type_vec type_vec = {0};
-    uast_get_type_vec_internal(&type_vec, uast);
-    return type_vec;
 }
 
 static void gen_uasts_common(const char* file_path, bool implementation, Uast_type uast) {
