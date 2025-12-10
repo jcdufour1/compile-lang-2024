@@ -29,6 +29,9 @@ static inline const char* get_log_level_str(LOG_LEVEL log_level) {
             return LOG_RED"error"LOG_NORMAL;
         case LOG_FATAL:
             return LOG_RED"fatal error"LOG_NORMAL;
+        case LOG_COUNT:
+            fprintf(stderr, "unreachable: uncovered log_level\n");
+            abort();
     }
     fprintf(stderr, "unreachable: uncovered log_level\n");
     abort();

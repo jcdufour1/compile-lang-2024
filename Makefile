@@ -152,6 +152,7 @@ test_quick: run
 	./a.out ; echo $$?
 
 # auto_gen and util
+# TODO: reduce duplication in Makefile?
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c src/util/newstring.c
 
