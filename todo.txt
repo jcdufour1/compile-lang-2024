@@ -127,6 +127,7 @@ for generics:
 - document or make functions for uast_def_get_ulang_type
 - test with both -fsanitize=address and -fsanitize=undefined in ci?
 - expected failure tests for non-int generic arg const expressions
+- make test case for passing args after --run and using argv in program
 - use _Generic to make wrapping more concise?
 - test case for def alias used within struct literal generic arg
 - make this error message better (and make expected failure case):

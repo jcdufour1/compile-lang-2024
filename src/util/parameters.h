@@ -69,7 +69,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 27
+#define PARAMETERS_COUNT 28
 typedef struct {
     Target_triplet target_triplet;
     uint32_t sizeof_usize; 
@@ -86,6 +86,7 @@ typedef struct {
     Strv_vec object_files;
     Strv_vec lower_s_files;
     Strv_vec upper_s_files;
+    Strv_vec run_args;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     STOP_AFTER stop_after : 4;

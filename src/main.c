@@ -123,7 +123,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 28,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -168,7 +168,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 28,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -179,6 +179,7 @@ NEVER_RETURN void do_passes(void) {
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
         vec_append(&a_temp, &cmd, string_to_strv(output_path));
+        vec_extend(&a_temp, &cmd, &params.run_args);
         print_all_defered_msgs();
         arena_free_a_main();
         int status = subprocess_call(cmd);

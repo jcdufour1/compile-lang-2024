@@ -233,6 +233,7 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
+// TODO: consume_arg should accept printf style format for msg_if_missing?
 static Strv consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     if (*argc < 1) {
         msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, FMT"\n", strv_print(msg_if_missing));
@@ -428,7 +429,7 @@ static void parse_file_option(int* argc, char*** argv) {
     Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 28,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -493,7 +494,8 @@ typedef void(*Long_option_action)(Strv curr_opt);
 
 typedef enum {
     ARG_NONE,
-    ARG_REGULAR,
+    ARG_SINGLE,
+    ARG_REMAINING_RUN_ONLY,
 
     // for static asserts
     ARG_COUNT,
@@ -561,10 +563,9 @@ static void long_option_dump_dot(Strv curr_opt) {
     //params.dump_dot = true;
 }
 
-static void long_option_run(Strv curr_opt) {
-    (void) curr_opt;
+static void long_option_run(int* argc, char *** argv) {
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 28,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -581,6 +582,10 @@ static void long_option_run(Strv curr_opt) {
         local_exit(EXIT_CODE_FAIL);
     }
     params.stop_after = STOP_AFTER_RUN;
+
+    while (*argc > 0) {
+        vec_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")));
+    }
 }
 
 static void long_option_lower_o(Strv curr_opt) {
@@ -720,24 +725,28 @@ static void long_option_max_errors(Strv curr_opt) {
     params.max_errors = result;
 }
 
+static void long_option_dummy(Strv curr_opt) {
+    (void) curr_opt;
+}
+
 static_assert(
-    PARAMETERS_COUNT == 27,
+    PARAMETERS_COUNT == 28,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
     {"help", "display usage", long_option_help, ARG_NONE},
-    {"l", "library name to link", long_option_l, ARG_REGULAR},
-    {"backend", "c or llvm", long_option_backend, ARG_REGULAR},
+    {"l", "library name to link", long_option_l, ARG_SINGLE},
+    {"backend", "c or llvm", long_option_backend, ARG_SINGLE},
     {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, ARG_NONE},
     {"dump-ir", "stop compiling after IR file(s) have been generated", long_option_dump_ir, ARG_NONE},
     {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, ARG_NONE},
     {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, ARG_NONE},
     {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, ARG_NONE},
     {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, ARG_NONE},
-    {"o", "output file path", long_option_lower_o, ARG_REGULAR},
+    {"o", "output file path", long_option_lower_o, ARG_SINGLE},
     {"O0", "disable most optimizations", long_option_upper_o0, ARG_NONE},
     {"O2", "enable optimizations", long_option_upper_o2, ARG_NONE},
-    {"error", "TODO", long_option_error, ARG_REGULAR},
+    {"error", "TODO", long_option_error, ARG_SINGLE},
     {
         "print-immediately",
         "print errors immediately. This is intended for debugging. "
@@ -749,19 +758,19 @@ Long_option_pair long_options[] = {
         "build-dir",
         "directory to store build artifacts (default is `.own`)",
         long_option_build_dir,
-        ARG_REGULAR
+        ARG_SINGLE
     },
     {
         "target-triplet",
         " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
         long_option_target_triplet,
-        ARG_REGULAR
+        ARG_SINGLE
     },
     {
         "path-c-compiler",
         "specify the c compiler to use to compile program",
         long_option_path_c_compiler,
-        ARG_REGULAR
+        ARG_SINGLE
     },
     {"no-prelude", "disable the prelude (std::prelude)", long_option_no_prelude, ARG_NONE},
     {
@@ -770,17 +779,17 @@ Long_option_pair long_options[] = {
           "\"FETAL\", \"ERROR\", \"WARNING\", \"NOTE\", \"INFO\", \"VERBOSE\", \"DEBUG\", or \"TRACE\" ("
           "eg. \"set-log-level=NOTE\" will suppress messages that are less important than \"NOTE\")",
         long_option_log_level,
-        ARG_REGULAR
+        ARG_SINGLE
     },
     {
         "max-errors",
         " COUNT where COUNT is the maximum number of errors that should be printed"
           "(eg. \"max-errors=20\" will print a maximum of 20 errors)",
         long_option_max_errors,
-        ARG_REGULAR
+        ARG_SINGLE
     },
 
-    {"run", "n/a", long_option_run, ARG_NONE},
+    {"run", "n/a", long_option_dummy, ARG_REMAINING_RUN_ONLY},
 };
 
 static void parse_long_option(int* argc, char*** argv) {
@@ -790,7 +799,7 @@ static void parse_long_option(int* argc, char*** argv) {
         Long_option_pair curr = array_at(long_options, idx);
         if (strv_starts_with(curr_opt, sv(curr.text))) {
             strv_consume_count(&curr_opt, sv(curr.text).count);
-            static_assert(ARG_COUNT == 2, "exhausive handling of arg types");
+            static_assert(ARG_COUNT == 3, "exhausive handling of arg types");
             switch (curr.arg_type) {
                 case ARG_NONE:
                     if (curr_opt.count > 0) {
@@ -799,8 +808,9 @@ static void parse_long_option(int* argc, char*** argv) {
                     }
                     curr.action(curr_opt);
                     return;
-                case ARG_REGULAR: {
+                case ARG_SINGLE: {
                     String buf = {0};
+                    // TODO: use format in consume_arg.msg_if_missing instead of using local buf
                     string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
                     string_extend_strv(&a_temp, &buf, sv(curr.text));
                     string_extend_strv(&a_temp, &buf, sv("`\n"));
@@ -810,6 +820,11 @@ static void parse_long_option(int* argc, char*** argv) {
                     curr.action(curr_opt);
                     return;
                 }
+                case ARG_REMAINING_RUN_ONLY:
+                    assert(0 == strcmp(curr.text, "run") && "ARG_REMAINING_RUN_ONLY must only be used for run");
+                    long_option_run(argc, argv);
+                    assert(*argc == 0 && "not all args were consumed in long_option_run");
+                    return;
                 case ARG_COUNT:
                     unreachable("");
                 default:
@@ -823,7 +838,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 27,
+    PARAMETERS_COUNT == 28,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(void) {
@@ -892,7 +907,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 28,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (

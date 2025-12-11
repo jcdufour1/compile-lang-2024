@@ -170,4 +170,6 @@ typedef size_t Scope_id;
 
 #define FMT "%.*s"
 
+#define PATH_SEPARATOR '/'
+
 #endif // UTIL_H
