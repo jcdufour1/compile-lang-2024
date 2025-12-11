@@ -885,12 +885,12 @@ static void set_params_to_defaults(int argc, char** argv) {
 }
 
 static void print_usage(Pos pos_help) {
-    log(LOG_DEBUG, "%d\n", params_log_level);
-    msg(DIAG_INFO, pos_help, "usage:\n");
-    msg(DIAG_INFO, pos_help, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
-    msg(DIAG_INFO, pos_help, "\n");
-
     String buf = {0};
+
+    string_extend_f(&a_temp, &buf, "\n\nusage:\n");
+    string_extend_f(&a_temp, &buf, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
+    string_extend_f(&a_temp, &buf, "\n");
+
     string_extend_cstr(&a_temp, &buf, "options:\n");
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
