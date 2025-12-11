@@ -211,7 +211,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     );
 
     Ulang_type gen_arg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.gen_args, 0);
-    Lang_type unary_lang_type = lang_type_new_print_format_arg(gen_arg);
+    Lang_type unary_lang_type = lang_type_new_print_format_arg(pos, gen_arg);
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
 
     Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
@@ -223,9 +223,9 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
 
     Tast_expr_vec new_slice_membs = {0};
     vec_append(&a_main, &new_slice_membs, ptr);
-    vec_append(&a_main, &new_slice_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, (int64_t)new_inner_membs.info.count, lang_type_new_usize()))));
+    vec_append(&a_main, &new_slice_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, (int64_t)new_inner_membs.info.count, lang_type_new_usize(pos)))));
 
-    Lang_type outer_type = lang_type_new_slice(pos, lang_type_to_ulang_type(lang_type_new_print_format_arg(gen_arg)), 0/*TODO*/);
+    Lang_type outer_type = lang_type_new_slice(pos, lang_type_to_ulang_type(lang_type_new_print_format_arg(pos, gen_arg)), 0/*TODO*/);
     Tast_expr_vec new_membs = {0};
     vec_append(&a_main, &new_membs, tast_literal_wrap(tast_string_wrap(tast_string_new(pos, string_to_strv(new_buf), false))));
     vec_append(&a_main, &new_membs, tast_struct_literal_wrap(tast_struct_literal_new(
@@ -251,7 +251,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
         pos,
         new_membs,
         new_src_def->base.name,
-        lang_type_new_print_format(gen_arg)
+        lang_type_new_print_format(pos, gen_arg)
     ));
 
     msg_todo("formatting", tast_expr_get_pos(*new_src))

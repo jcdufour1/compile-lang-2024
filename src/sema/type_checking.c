@@ -832,7 +832,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     new_lhs,
                     new_rhs,
                     oper_token_type,
-                    lang_type_new_u1()
+                    lang_type_new_u1(oper_pos)
                 )));
                 break;
             case BINARY_LOGICAL_OR:
@@ -856,17 +856,17 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                         tast_literal_wrap(new_lit_lhs),
                         new_lhs,
                         BINARY_NOT_EQUAL,
-                        lang_type_new_u1()
+                        lang_type_new_u1(tast_expr_get_pos(new_lhs))
                     ))),
                     tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                         tast_expr_get_pos(new_rhs),
                         tast_literal_wrap(new_lit_rhs),
                         new_rhs,
                         BINARY_NOT_EQUAL,
-                        lang_type_new_u1()
+                        lang_type_new_u1(tast_expr_get_pos(new_rhs))
                     ))),
                     oper_token_type,
-                    lang_type_new_u1()
+                    lang_type_new_u1(oper_pos)
                 )));
                 break;
             }
@@ -1054,7 +1054,7 @@ bool try_set_unary_types_finish(
                 unary_pos,
                 new_child,
                 unary_token_type,
-                lang_type_new_usize()
+                lang_type_new_usize(unary_pos)
             )));
             return true;
         case UNARY_COUNTOF: {
@@ -1082,7 +1082,7 @@ bool try_set_unary_types_finish(
             *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
                 unary_pos,
                 (int64_t)base.members.info.count,
-                lang_type_new_usize()
+                lang_type_new_usize(unary_pos)
             )));
             return true;
         }
@@ -1511,7 +1511,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         (int64_t)new_membs.info.count,
-        lang_type_new_usize()
+        lang_type_new_usize(new_inner_lit->pos)
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
@@ -2006,7 +2006,7 @@ bool try_set_function_call_builtin_types(
         vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
             new_arr_pos,
             array.count,
-            lang_type_new_usize()
+            lang_type_new_usize(new_arr_pos)
         ))));
 
         Ulang_type_vec new_gen_args = {0};
@@ -2143,7 +2143,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
                     unreachable("");
             }
 
-            enum_callee->tag->lang_type = lang_type_new_usize();
+            enum_callee->tag->lang_type = lang_type_new_usize(enum_callee->pos);
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 enum_callee->pos,
@@ -3436,7 +3436,7 @@ bool try_set_member_access_types_finish_enum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_new_usize();
+            new_callee->tag->lang_type = lang_type_new_usize(new_callee->pos);
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 new_callee->pos,
@@ -3530,7 +3530,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 *new_tast = tast_expr_wrap(tast_literal_wrap(tast_int_wrap(tast_int_new(
                     access->pos,
                     array.count,
-                    lang_type_new_usize()
+                    lang_type_new_usize(access->pos)
                 ))));
                 return true;
             }
@@ -3647,7 +3647,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             new_inner_index,
             tast_expr_get_pos(new_inner_index),
             UNARY_UNSAFE_CAST,
-            lang_type_new_usize()
+            lang_type_new_usize(tast_expr_get_pos(new_inner_index))
         ));
     } else {
         msg_todo("index type larger than usize", tast_expr_get_pos(new_inner_index));

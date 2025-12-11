@@ -232,13 +232,13 @@ static void load_block_stmts(
             unreachable("");
     }
 
-    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(), false, is_rtning_name);
+    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name);
     Tast_assignment* is_rtn_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = is_rtning->lang_type, .name = is_rtning->name
         }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
     );
 
     if (lang_type.type != LANG_TYPE_VOID) {
@@ -340,22 +340,23 @@ static void load_block_stmts(
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
     assert(break_expr->name.base.count > 0);
 
-    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(), false, is_yielding_name);
+    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name);
     Tast_assignment* is_yield_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-            .lang_type = is_yielding->lang_type, .name = is_yielding->name
+            .lang_type = is_yielding->lang_type,
+            .name = is_yielding->name
         }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
     );
 
-    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(), false, is_cont2ing_name);
+    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name);
     Tast_assignment* is_cont2_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = is_cont2ing->lang_type, .name = is_cont2ing->name
         }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
     );
 
     Tast_expr* rtn_val = {0};
@@ -592,7 +593,7 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
     unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
     Tast_variable_def_vec members = {0};
 
-    Lang_type tag_lang_type = lang_type_new_usize();
+    Lang_type tag_lang_type = lang_type_new_usize(lang_type_pos);
     size_t largest_idx = struct_def_base_get_idx_largest_member(tast_enum_def_unwrap(lang_type_def_)->base);
     if (vec_at(tast_enum_def_unwrap(lang_type_def_)->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
         return rm_tuple_lang_type(tag_lang_type, lang_type_pos);
@@ -1067,7 +1068,7 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
         Tast_variable_def* index_var = tast_variable_def_new(
             tast_expr_get_pos(vec_at(old_lit->members, idx)), 
-            lang_type_new_usize(),
+            lang_type_new_usize(lang_type_get_pos(old_lit->lang_type)),
             false,
             util_literal_name_new()
         );
@@ -1180,9 +1181,9 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
         tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
             old_lit->pos,
             name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
-            lang_type_new_usize()
+            lang_type_new_usize(POS_BUILTIN/*TODO*/)
         ))),
-        lang_type_new_usize()
+        lang_type_new_usize(POS_BUILTIN/*TODO*/)
     )));
 
     return load_struct_literal(new_block, tast_struct_literal_new(
@@ -1450,7 +1451,7 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
 
     Tast_variable_def* new_var = tast_variable_def_new(
         old_bin->pos,
-        lang_type_new_u1(),
+        lang_type_new_u1(old_bin->pos),
         false,
         util_literal_name_new()
     );
@@ -1477,7 +1478,7 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->lhs,
             util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
             if_true_type,
-            lang_type_new_u1()
+            lang_type_new_u1(old_bin->pos)
         ))),
         // TODO: load inner expr in block, and update new symbol
         tast_block_new(
@@ -1497,7 +1498,7 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
             util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos),
             BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
+            lang_type_new_u1(old_bin->pos)
         ))),
         // TODO: load inner expr in block, and update new symbol
         tast_block_new(
@@ -1568,7 +1569,7 @@ static Ir_name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
             uint32_t size = sizeof_ir_lang_type(rm_tuple_lang_type(
                 tast_expr_get_lang_type(old_unary->child), old_unary->pos
             ));
-            return load_int(tast_int_new(old_unary->pos, size, lang_type_new_usize()));
+            return load_int(tast_int_new(old_unary->pos, size, lang_type_new_usize(old_unary->pos)));
         }
         case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {
@@ -1752,7 +1753,7 @@ static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old
 
     Ir_load_element_ptr* new_tag = ir_load_element_ptr_new(
         old_access->pos,
-        rm_tuple_lang_type(lang_type_new_usize(), POS_BUILTIN),
+        rm_tuple_lang_type(lang_type_new_usize(old_access->pos), old_access->pos),
         0,
         new_enum,
         util_literal_ir_name_new()
@@ -1767,7 +1768,7 @@ static Ir_name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_acc
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
         load_ptr_enum_get_tag(new_block, old_access),
-        rm_tuple_lang_type(lang_type_new_usize(), POS_BUILTIN),
+        rm_tuple_lang_type(lang_type_new_usize(old_access->pos), POS_BUILTIN),
         util_literal_ir_name_new()
     );
     unwrap(ir_add(ir_load_another_ir_wrap(new_load)));
@@ -1991,7 +1992,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     ));
     Tast_variable_def* var_def_thing = tast_variable_def_new(
         new_fun_def->body->pos,
-        lang_type_new_u1(),
+        lang_type_new_u1(new_fun_def->body->pos),
         false,
         name_new(
             MOD_PATH_BUILTIN,
@@ -2005,7 +2006,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     load_assignment(new_fun_def->body, tast_assignment_new(
         old_fun_def->body->pos,
         tast_symbol_wrap(tast_symbol_new_from_variable_def(old_fun_def->body->pos, var_def_thing)),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(old_fun_def->body->pos, 0, lang_type_new_u1())))
+        tast_literal_wrap(tast_int_wrap(tast_int_new(old_fun_def->body->pos, 0, lang_type_new_u1(old_fun_def->body->pos))))
     ));
 
     Lang_type new_lang_type = {0};
@@ -2244,9 +2245,9 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool 
                 .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
                 .name = defered_collections.is_rtning
             }))),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, lang_type_new_u1()))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, lang_type_new_u1(if_statement->pos)))),
             BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
+            lang_type_new_u1(if_statement->pos)
         )),
         new_block,
         after_is_rtn,
@@ -2510,7 +2511,7 @@ static void load_import_path(Tast_import_path* old_import) {
     Name yield_name = util_literal_name_new();
     unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
         old_import->pos,
-        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void(), true),
+        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void(old_import->pos), true),
         old_import->mod_path
     ))));
 }
@@ -2724,10 +2725,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
                 tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                    .lang_type = lang_type_new_u1(),
+                    .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
                     .name = ir_name_to_name(get_is_brking_or_conting(vec_at_ref(&defered_collections.coll_stack, idx)))
                 }))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1()))) // TODO: call helper functions for making some of these literals
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt))))) // TODO: call helper functions for making some of these literals
             );
             load_assignment(new_block, is_brk_assign_aux);
 
@@ -2764,10 +2765,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             Tast_assignment* is_brk_assign_aux = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
                 tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                    .lang_type = lang_type_new_u1(),
+                    .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
                     .name = ir_name_to_name(vec_at_ref(&defered_collections.coll_stack, idx)->is_yielding)
                 }))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt)))))
             );
             load_assignment(new_block, is_brk_assign_aux);
         }
@@ -2827,7 +2828,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                     .lang_type = tast_lang_type_from_name(defered_collections.is_rtning),
                     .name = defered_collections.is_rtning
                 }))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1())))
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt)))))
             );
             load_assignment(new_block, is_rtn_assign);
 
@@ -2934,12 +2935,12 @@ static void load_single_is_rtn_check_internal(const char* file, int line, Ir_blo
         tast_binary_wrap(tast_binary_new(
             new_block->pos,
             tast_symbol_wrap(tast_symbol_new(new_block->pos, ((Sym_typed_base) {
-                .lang_type = lang_type_new_u1(),
+                .lang_type = lang_type_new_u1(new_block->pos),
                 .name = ir_name_to_name(sym_name)
             }))),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(new_block->pos, 0, lang_type_new_u1()))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(new_block->pos, 0, lang_type_new_u1(new_block->pos)))),
             BINARY_DOUBLE_EQUAL,
-            lang_type_new_u1()
+            lang_type_new_u1(new_block->pos)
         )),
         new_block,
         otherwise,
