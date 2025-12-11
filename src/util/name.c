@@ -158,9 +158,6 @@ void serialize_strv(String* buf, Strv strv) {
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
-// TODO: this function will sometimes serialize into string, and then extend that string into
-//   another. avoid that, because serialize_name_symbol_table is one of the most expensive functions
-//   of the compiler
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
     String buf = {0};
 

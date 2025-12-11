@@ -49,7 +49,7 @@ static void gen_all_vecs(const char* file_path) {
 
     gen_gen("#endif // VECS_SKDJFKLJFDS_H\n");
 
-    CLOSE_FILE(global_output);
+    close_file(global_output);
 }
 
 #endif // AUTO_GEN_VECS_H

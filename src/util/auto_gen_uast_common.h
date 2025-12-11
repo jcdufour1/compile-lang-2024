@@ -700,7 +700,7 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("#endif // "FMT"_FORWARD_DECLARATION_H\n", string_print(normal_include_guard));
     }
 
-    CLOSE_FILE(global_output);
+    close_file(global_output);
 }
 
 #endif // AUTO_GEN_UAST_COMMON_H

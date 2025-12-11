@@ -109,8 +109,7 @@ static Uast_type lang_type_gen_lit(const char* prefix) {
     const char* base_name = "lit";
     Uast_type lang_type = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int_lit(base_name)); // TODO: rename lang_type_int_lit to lang_type_gen_int
-                                                                            //   and ulang_type_int_lit to ulang_type_gen_int?
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string_lit(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));

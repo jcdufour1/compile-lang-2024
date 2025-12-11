@@ -18,8 +18,7 @@
 FILE* global_output = NULL;
 Arena gen_a = {0};
 
-// TODO: make CLOSE_FILE lowercase (for consistancy)
-#define CLOSE_FILE(file) \
+#define close_file(file) \
     do { \
         if (file) { \
             fprintf(file, "\n"); \

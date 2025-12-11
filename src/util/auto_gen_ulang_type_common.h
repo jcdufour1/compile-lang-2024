@@ -410,7 +410,7 @@ static void gen_ulang_type_common(const char* file_path, bool implementation, Ua
         gen_gen("#endif // "FMT"_FORWARD_DECL_H\n", strv_upper_print(&gen_a, ulang_type.name.type));
     }
 
-    CLOSE_FILE(global_output);
+    close_file(global_output);
 }
 
 #endif // AUTO_GEN_ULANG_TYPE_COMMON_H

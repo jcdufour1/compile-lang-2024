@@ -203,7 +203,7 @@ static Uast_type ulang_type_gen_lit(const char* prefix) {
     const char* base_name = "lit";
     Uast_type ulang_type = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name)); // TODO: rename int to int_lit for consistancy?
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_float_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_string_lit(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_struct_lit(base_name));
@@ -343,34 +343,6 @@ static void ulang_type_gen_ulang_type_struct(Uast_type ulang_type) {
     string_extend_cstr(&gen_a, &output, ";\n");
 
     gen_gen(FMT"\n", string_print(output));
-}
-
-// TODO: deduplicate these functions (use same function for Ir and Ulang_type)
-static void ulang_type_gen_print_forward_decl(Uast_type type) {
-    return;
-    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ulang_type_gen_print_forward_decl(vec_at(type.sub_types, idx));
-    }
-
-    if (type.name.is_topmost) {
-        return;
-    }
-
-    String function = {0};
-
-    string_extend_cstr(&gen_a, &function, "#define ");
-    extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(ulang_type) strv_print(");
-    extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(ulang_type, 0))\n");
-
-    string_extend_cstr(&gen_a, &function, "Strv ");
-    extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(const ");
-    extend_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* ulang_type, Indent indent);");
-
-    gen_gen(FMT"\n", string_print(function));
 }
 
 static void gen_ulang_type_new_forward_decl(Uast_type ulang_type) {
