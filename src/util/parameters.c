@@ -26,30 +26,30 @@ typedef struct {
     unsigned int sizeof_ptr_non_fn;
 } Arch_row;
 static Arch_row arch_table[] = {
-    {ARCH_X86_64, "x86_64", 64, 64},
+    {.arch = ARCH_X86_64, .arch_cstr = "x86_64", .sizeof_usize = 64, .sizeof_ptr_non_fn = 64},
 };
 
 static struct {
     TARGET_VENDOR vendor;
     const char* vendor_cstr;
 } vendor_table[] = {
-    {VENDOR_UNKNOWN, "unknown"},
-    {VENDOR_PC, "pc"},
+    {.vendor = VENDOR_UNKNOWN, .vendor_cstr = "unknown"},
+    {.vendor = VENDOR_PC, .vendor_cstr = "pc"},
 };
 
 static struct {
     TARGET_OS os;
     const char* os_cstr;
 } os_table[] = {
-    {OS_LINUX, "linux"},
-    {OS_WINDOWS, "windows"},
+    {.os = OS_LINUX, .os_cstr = "linux"},
+    {.os = OS_WINDOWS, .os_cstr = "windows"},
 };
 
 static struct {
     TARGET_ABI abi;
     const char* abi_cstr;
 } abi_table[] = {
-    {ABI_GNU, "gnu"},
+    {.abi = ABI_GNU, .abi_cstr = "gnu"},
 };
 
 static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
