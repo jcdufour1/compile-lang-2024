@@ -550,13 +550,16 @@ static void gen_thing(Uast_type uast) {
         strv_print(sym_text)
     );
     gen_gen(
-        "#define "FMT"_log_level(dest, log_level, scope_id) "FMT"_level_log_internal(dest, log_level, __FILE__, __LINE__, vec_at(env.symbol_tables, scope_id)."FMT"_table, 0);\n",
+        "#define "FMT"_log_level(dest, log_level, scope_id) \\\n"
+        "    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \\\n"
+        "        "FMT"_level_log_internal(dest, log_level, __FILE__, __LINE__, vec_at(env.symbol_tables, scope_id)."FMT"_table, 0); \\\n"
+        "    }\n",
         strv_print(sym_text),
         strv_print(sym_text),
         strv_print(sym_text)
     );
     gen_gen(
-        "static inline void "FMT"_level_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, "FMT"_table level, Indent indent) {\n",
+        "static void "FMT"_level_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, "FMT"_table level, Indent indent) {\n",
         strv_print(sym_text),
         strv_first_upper_print(&gen_a, sym_text)
     );
@@ -565,7 +568,7 @@ static void gen_thing(Uast_type uast) {
         gen_gen("    log_internal_ex(dest, log_level, file, line, indent + INDENT_WIDTH, \"\\n\"FMT\"\\n\", string_print(buf));\n");
     gen_gen("}\n");
 
-    gen_gen("static inline void "FMT"_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, Scope_id scope_id) {\n", strv_print(sym_text));
+    gen_gen("static void "FMT"_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, Scope_id scope_id) {\n", strv_print(sym_text));
     gen_gen("    log_internal(log_level, file, line, 0, \"----start "FMT" table----\\n\");\n", strv_print(sym_text));
     gen_gen("    Scope_id curr_scope = scope_id;\n");
     gen_gen("    size_t idx = 0;\n");
