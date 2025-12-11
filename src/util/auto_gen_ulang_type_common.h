@@ -92,7 +92,6 @@ static void ulang_type_gen_internal_wrap(Uast_type type, bool is_const) {
     }
     string_extend_cstr(&gen_a, &function, " ulang_type) {\n");
 
-    //    return &ulang_type->as._##lower; 
     extend_parent_uast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, " new_ulang_type = {0};\n");
     string_extend_cstr(&gen_a, &function, "    new_ulang_type.type = ");
@@ -105,9 +104,13 @@ static void ulang_type_gen_internal_wrap(Uast_type type, bool is_const) {
     if (!is_const) {
         todo();
     }
+
+    string_extend_f(&gen_a, &function, "    #ifndef NDEBUG\n");
+    string_extend_f(&gen_a, &function, "        new_ulang_type.loc = ulang_type.loc;\n");
+    string_extend_f(&gen_a, &function, "    #endif // NDEBUG\n");
+
     string_extend_cstr(&gen_a, &function, "    return new_ulang_type;\n");
 
-    //} 
     string_extend_cstr(&gen_a, &function, "}");
 
     gen_gen(FMT"\n", strv_print(string_to_strv(function)));
