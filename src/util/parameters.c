@@ -245,10 +245,15 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 // TODO: consume_arg should accept printf style format for msg_if_missing?
 static Arg consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
-    static size_t curr_col = 0;
+    static uint32_t curr_col = 0;
 
     if (*argc < 1) {
-        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN/*TODO*/, FMT"\n", strv_print(msg_if_missing));
+        msg(
+            DIAG_MISSING_COMMAND_LINE_ARG,
+            (Pos) {.file_path = MOD_PATH_COMMAND_LINE, .line = 0, .column = curr_col, .expanded_from = NULL},
+            FMT"\n",
+            strv_print(msg_if_missing)
+        );
         local_exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -271,7 +276,7 @@ static Arg consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
         return new_arg;
     }
 
-    return consume_arg(argc, argv, sv("stray - or -- is not permitted"));
+    return consume_arg(argc, argv, sv("stray `-` or `--` is not allowed"));
 }
 
 typedef struct {
@@ -451,7 +456,7 @@ static void parse_file_option(int* argc, char*** argv) {
     assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
-        PARAMETERS_COUNT == 31,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -519,7 +524,7 @@ static void set_backend(BACKEND backend) {
     unreachable("");
 }
 
-typedef void(*Long_option_action)(Arg curr_opt);
+typedef void(*Long_option_action)(Pos pos_self, Arg curr_opt);
 
 typedef enum {
     ARG_NONE,
@@ -537,16 +542,19 @@ typedef struct {
     LONG_OPTION_ARG_TYPE arg_type; // TODO: instead of bool, use enum to specify whether `=` is used, etc.
 } Long_option_pair;
 
-static void long_option_help(Arg curr_opt) {
-    print_usage(curr_opt.pos);
+static void long_option_help(Pos pos_self, Arg curr_opt) {
+    (void) curr_opt;
+    print_usage(pos_self);
     local_exit(EXIT_CODE_SUCCESS);
 }
 
-static void long_option_l(Arg curr_opt) {
+static void long_option_l(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     vec_append(&a_main, &params.l_flags, curr_opt.text);
 }
 
-static void long_option_backend(Arg curr_opt) {
+static void long_option_backend(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv backend = curr_opt.text;
 
     if (strv_is_equal(backend, sv("c"))) {
@@ -559,52 +567,57 @@ static void long_option_backend(Arg curr_opt) {
     }
 }
 
-static void long_option_all_errors_fetal(Arg curr_opt) {
+static void long_option_all_errors_fetal(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.all_errors_fatal = true;
 }
 
-static void long_option_dump_backend_ir(Arg curr_opt) {
+static void long_option_dump_backend_ir(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
-static void long_option_dump_ir(Arg curr_opt) {
+static void long_option_dump_ir(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.stop_after = STOP_AFTER_IR;
 }
 
-static void long_option_upper_s(Arg curr_opt) {
+static void long_option_upper_s(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.stop_after = STOP_AFTER_UPPER_S;
 }
 
-static void long_option_upper_c(Arg curr_opt) {
+static void long_option_upper_c(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.stop_after = STOP_AFTER_OBJ;
 }
 
-static void long_option_dump_dot(Arg curr_opt) {
+static void long_option_dump_dot(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     msg_todo("dump_dot", curr_opt.pos);
-    (void) curr_opt;
     //params.stop_after = STOP_AFTER_IR;
     //params.dump_dot = true;
 }
 
-static void long_option_run(int* argc, char *** argv) {
+static void long_option_run(Pos pos_self, int* argc, char *** argv) {
     static_assert(
-        PARAMETERS_COUNT == 31,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_NONE) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN/*TODO*/, "file to be compiled must be specified prior to `--run` argument\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, pos_self, "file to be compiled must be specified prior to `--run` argument\n");
         local_exit(EXIT_CODE_FAIL);
     }
     if (!is_compiling()) {
         msg(
             DIAG_CMD_OPT_INVALID_OPTION,
-            POS_BUILTIN/*TODO*/,
+            pos_self,
             "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
         );
         local_exit(EXIT_CODE_FAIL);
@@ -616,22 +629,26 @@ static void long_option_run(int* argc, char *** argv) {
     }
 }
 
-static void long_option_lower_o(Arg curr_opt) {
+static void long_option_lower_o(Pos pos_self, Arg curr_opt) {
     params.is_output_file_path = true;
     params.output_file_path = curr_opt.text;
+    params.pos_lower_o = pos_self;
 }
 
-static void long_option_upper_o0(Arg curr_opt) {
+static void long_option_upper_o0(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O0;
 }
 
-static void long_option_upper_o2(Arg curr_opt) {
+static void long_option_upper_o2(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O2;
 }
 
-static void long_option_error(Arg curr_opt) {
+static void long_option_error(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv error = curr_opt.text;
 
     DIAG_TYPE type = {0};
@@ -647,14 +664,16 @@ static void long_option_error(Arg curr_opt) {
     params.error_opts_changed = true;
 }
 
-static void long_option_path_c_compiler(Arg curr_opt) {
+static void long_option_path_c_compiler(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv cc = curr_opt.text;
 
     params.path_c_compiler = cc;
     params.is_path_c_compiler = true;
 }
 
-static void long_option_target_triplet(Arg curr_opt) {
+static void long_option_target_triplet(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv cc = curr_opt.text;
 
     Strv temp[4] = {0};
@@ -703,22 +722,26 @@ static void long_option_target_triplet(Arg curr_opt) {
     }
 }
 
-static void long_option_print_immediately(Arg curr_opt) {
+static void long_option_print_immediately(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.print_immediately = true;
 }
 
-static void long_option_build_dir(Arg curr_opt) {
+static void long_option_build_dir(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.build_dir = curr_opt.text;
 }
 
-static void long_option_no_prelude(Arg curr_opt) {
+static void long_option_no_prelude(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
     params.do_prelude = false;
 }
 
-static void long_option_log_level(Arg curr_opt) {
+static void long_option_log_level(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv log_level = curr_opt.text;
 
     if (strv_is_equal(log_level, sv("FETAL"))) {
@@ -743,7 +766,8 @@ static void long_option_log_level(Arg curr_opt) {
     }
 }
 
-static void long_option_max_errors(Arg curr_opt) {
+static void long_option_max_errors(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     Strv max_errors = curr_opt.text;
     int64_t result = 0;
     if (!try_strv_to_int64_t(&result, curr_opt.pos, max_errors)) {
@@ -753,12 +777,13 @@ static void long_option_max_errors(Arg curr_opt) {
     params.max_errors = result;
 }
 
-static void long_option_dummy(Arg curr_opt) {
+static void long_option_dummy(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
     (void) curr_opt;
 }
 
 static_assert(
-    PARAMETERS_COUNT == 31,
+    PARAMETERS_COUNT == 32,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -822,6 +847,7 @@ Long_option_pair long_options[] = {
 
 static void parse_long_option(int* argc, char*** argv) {
     Arg curr_arg = consume_arg(argc, argv, sv("arg expected"));
+    Pos pos_self = curr_arg.pos;
 
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
@@ -834,23 +860,22 @@ static void parse_long_option(int* argc, char*** argv) {
                         msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_arg.pos, "expected no arg for `%s`\n", curr.text);
                         local_exit(EXIT_CODE_FAIL);
                     }
-                    curr.action(curr_arg);
+                    curr.action(pos_self, curr_arg);
                     return;
                 case ARG_SINGLE: {
                     String buf = {0};
                     // TODO: use format in consume_arg.msg_if_missing instead of using local buf
                     string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
                     string_extend_strv(&a_temp, &buf, sv(curr.text));
-                    string_extend_strv(&a_temp, &buf, sv("`\n"));
                     if (curr_arg.text.count < 1) {
                         curr_arg = consume_arg(argc, argv, string_to_strv(buf));
                     }
-                    curr.action(curr_arg);
+                    curr.action(pos_self, curr_arg);
                     return;
                 }
                 case ARG_REMAINING_RUN_ONLY:
                     assert(0 == strcmp(curr.text, "run") && "ARG_REMAINING_RUN_ONLY must only be used for run");
-                    long_option_run(argc, argv);
+                    long_option_run(pos_self, argc, argv);
                     assert(*argc == 0 && "not all args were consumed in long_option_run");
                     return;
                 case ARG_COUNT:
@@ -866,7 +891,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 31,
+    PARAMETERS_COUNT == 32,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(int argc, char** argv) {
@@ -939,7 +964,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 31,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -1007,7 +1032,7 @@ void parse_args(int argc, char** argv) {
         ) {
             msg(
                 DIAG_INVALID_O_CMD_OPT,
-                POS_BUILTIN/*TODO*/,
+                params.pos_lower_o,
                 "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n"
             );
             local_exit(EXIT_CODE_FAIL);

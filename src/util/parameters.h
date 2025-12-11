@@ -69,7 +69,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 31
+#define PARAMETERS_COUNT 32
 typedef struct {
     Target_triplet target_triplet;
     uint32_t sizeof_usize; 
@@ -102,6 +102,7 @@ typedef struct {
     uint32_t max_errors;
     int argc;
     char** argv;
+    Pos pos_lower_o;
 } Parameters;
 
 #define stop_after_print(stop_after) strv_print(stop_after_print_internal(stop_after))
