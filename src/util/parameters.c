@@ -243,7 +243,7 @@ static Arg consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     static size_t curr_col = 0;
 
     if (*argc < 1) {
-        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, FMT"\n", strv_print(msg_if_missing));
+        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN/*TODO*/, FMT"\n", strv_print(msg_if_missing));
         local_exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -450,9 +450,6 @@ static void parse_file_option(int* argc, char*** argv) {
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
-        //// TODO: print what user command line option caused this, etc.
-        //msg_todo("executable file passed on the command line", POS_BUILTIN);
-        //local_exit(EXIT_CODE_FAIL);
 
     FILE_TYPE file_type = 0;
     Strv err_text = {0};
@@ -463,7 +460,7 @@ static void parse_file_option(int* argc, char*** argv) {
     switch (file_type) {
         case FILE_TYPE_OWN:
             if (is_compiling()) {
-                msg_todo("multiple .own files specified on the command line", POS_BUILTIN);
+                msg_todo("multiple .own files specified on the command line", curr_opt.pos);
                 local_exit(EXIT_CODE_FAIL);
             }
             stop_after_set_if_none(STOP_AFTER_BIN);
@@ -553,7 +550,7 @@ static void long_option_backend(Strv curr_opt) {
     } else if (strv_is_equal(backend, sv("llvm"))) {
         set_backend(BACKEND_LLVM);
     } else {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
         local_exit(EXIT_CODE_FAIL);
     }
 }
@@ -584,7 +581,7 @@ static void long_option_upper_c(Strv curr_opt) {
 }
 
 static void long_option_dump_dot(Strv curr_opt) {
-    msg_todo("dump_dot", POS_BUILTIN);
+    msg_todo("dump_dot", curr_opt);
     (void) curr_opt;
     //params.stop_after = STOP_AFTER_IR;
     //params.dump_dot = true;
@@ -597,13 +594,13 @@ static void long_option_run(int* argc, char *** argv) {
         "(not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_NONE) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "file to be compiled must be specified prior to `--run` argument\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN/*TODO*/, "file to be compiled must be specified prior to `--run` argument\n");
         local_exit(EXIT_CODE_FAIL);
     }
     if (!is_compiling()) {
         msg(
             DIAG_CMD_OPT_INVALID_OPTION,
-            POS_BUILTIN,
+            POS_BUILTIN/*TODO*/,
             "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
         );
         local_exit(EXIT_CODE_FAIL);
@@ -637,7 +634,7 @@ static void long_option_error(Strv curr_opt) {
     size_t idx = 0;
     if (!expect_fail_type_from_strv(&idx, &type, error)) {
         msg(
-            DIAG_INVALID_FAIL_TYPE, POS_BUILTIN,
+            DIAG_INVALID_FAIL_TYPE, curr_opt.pos,
             "invalid fail type `"FMT"`\n", strv_print(error)
         );
         local_exit(EXIT_CODE_FAIL);
@@ -666,7 +663,7 @@ static void long_option_target_triplet(Strv curr_opt) {
             }
             msg(
                 DIAG_CMD_OPT_INVALID_SYNTAX,
-                POS_BUILTIN,
+                curr_opt.pos,
                 "target triplet has only %zu substrings, but 4 was expected\n",
                 count_substrings
             );
@@ -676,28 +673,28 @@ static void long_option_target_triplet(Strv curr_opt) {
     }
     Strv dummy = {0};
     if (strv_try_consume_until(&dummy, &cc, '-')) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "target triplet has too many substrings (4 was expected)\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_opt.pos, "target triplet has too many substrings (4 was expected)\n");
         local_exit(EXIT_CODE_FAIL);
     }
     temp[3] = cc;
 
     if (!try_target_arch_from_strv(&params.target_triplet.arch, temp[0])) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported architecture `"FMT"`\n", strv_print(temp[0]));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "unsupported architecture `"FMT"`\n", strv_print(temp[0]));
         local_exit(EXIT_CODE_FAIL);
     }
 
     if (!try_target_vendor_from_strv(&params.target_triplet.vendor, temp[1])) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported vendor `"FMT"`\n", strv_print(temp[1]));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "unsupported vendor `"FMT"`\n", strv_print(temp[1]));
         local_exit(EXIT_CODE_FAIL);
     }
 
     if (!try_target_os_from_strv(&params.target_triplet.os, temp[2])) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported operating system `"FMT"`\n", strv_print(temp[2]));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "unsupported operating system `"FMT"`\n", strv_print(temp[2]));
         local_exit(EXIT_CODE_FAIL);
     }
 
     if (!try_target_abi_from_strv(&params.target_triplet.abi, temp[3])) {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp[3]));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "unsupported abi (application binary interface, a.k.a. environment type) `"FMT"`\n", strv_print(temp[3]));
         local_exit(EXIT_CODE_FAIL);
     }
 }
@@ -737,7 +734,7 @@ static void long_option_log_level(Strv curr_opt) {
     } else if (strv_is_equal(log_level, sv("TRACE"))) {
         params_log_level = LOG_TRACE;
     } else {
-        msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
+        msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "log level `"FMT"` is not a supported log level\n", strv_print(log_level));
         local_exit(EXIT_CODE_FAIL);
     }
 }
@@ -745,8 +742,8 @@ static void long_option_log_level(Strv curr_opt) {
 static void long_option_max_errors(Strv curr_opt) {
     Strv max_errors = curr_opt;
     int64_t result = 0;
-    if (!try_strv_to_int64_t(&result, POS_BUILTIN, max_errors)) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected number after `max-errors=`\n");
+    if (!try_strv_to_int64_t(&result, curr_opt.pos, max_errors)) {
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_opt.pos, "expected number after `max-errors=`\n");
         local_exit(EXIT_CODE_FAIL);
     }
     params.max_errors = result;
@@ -830,7 +827,7 @@ static void parse_long_option(int* argc, char*** argv) {
             switch (curr.arg_type) {
                 case ARG_NONE:
                     if (curr_opt.count > 0) {
-                        msg(DIAG_CMD_OPT_INVALID_SYNTAX, POS_BUILTIN, "expected no arg for `%s`\n", curr.text);
+                        msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_opt.pos, "expected no arg for `%s`\n", curr.text);
                         local_exit(EXIT_CODE_FAIL);
                     }
                     curr.action(curr_opt);
@@ -860,7 +857,7 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     }
 
-    msg(DIAG_CMD_OPT_INVALID_OPTION, POS_BUILTIN, "invalid option: "FMT"\n", strv_print(curr_opt));
+    msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "invalid option: "FMT"\n", strv_print(curr_opt));
     local_exit(EXIT_CODE_FAIL);
 }
 
@@ -883,11 +880,11 @@ static void set_params_to_defaults(int argc, char** argv) {
 #endif // NDEBUG
 }
 
-static void print_usage(void) {
+static void print_usage(Pos pos_help) {
     log(LOG_DEBUG, "%d\n", params_log_level);
-    msg(DIAG_INFO, POS_BUILTIN, "usage:\n");
-    msg(DIAG_INFO, POS_BUILTIN, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
-    msg(DIAG_INFO, POS_BUILTIN, "\n");
+    msg(DIAG_INFO, pos_help, "usage:\n");
+    msg(DIAG_INFO, pos_help, "    "FMT" <files> [options] [--run [subprocess arguments]]\n", strv_print(compiler_exe_name));
+    msg(DIAG_INFO, pos_help, "\n");
 
     String buf = {0};
     string_extend_cstr(&a_temp, &buf, "options:\n");
@@ -901,7 +898,7 @@ static void print_usage(void) {
             string_extend_cstr(&a_temp, &buf, "\n\n");
         }
     }
-    msg(DIAG_INFO, POS_BUILTIN, FMT, string_print(buf));
+    msg(DIAG_INFO, pos_help, FMT, string_print(buf));
 }
 
 void parse_args(int argc, char** argv) {
@@ -926,7 +923,8 @@ void parse_args(int argc, char** argv) {
 #   endif // NDEBUG
 
     // consume compiler executable name
-    compiler_exe_name = consume_arg(&argc, &argv, sv("internal error")).text;
+    Arg first_arg = consume_arg(&argc, &argv, sv("internal error"));
+    compiler_exe_name = first_arg.text;
 
     while (argc > 0) {
         if (is_short_option(argv) || is_long_option(argv)) {
@@ -949,7 +947,7 @@ void parse_args(int argc, char** argv) {
         params.upper_s_files.info.count == 0
     ) {
         print_usage();
-        msg(DIAG_NO_INPUT_FILES, POS_BUILTIN, "no input files were provided\n");
+        msg(DIAG_NO_INPUT_FILES, first_arg.pos, "no input files were provided\n");
         local_exit(EXIT_CODE_FAIL);
     }
 
@@ -1005,7 +1003,7 @@ void parse_args(int argc, char** argv) {
         ) {
             msg(
                 DIAG_INVALID_O_CMD_OPT,
-                POS_BUILTIN,
+                POS_BUILTIN/*TODO*/,
                 "-o <file path> option cannot be used when compiling multiple files to an intermediate step\n"
             );
             local_exit(EXIT_CODE_FAIL);

@@ -109,7 +109,7 @@ for generics:
 - do_test.py should have confirmation before update
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
-- append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
+- consider case of --runafds, etc.
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
 - in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
@@ -128,7 +128,6 @@ for generics:
 - test with both -fsanitize=address and -fsanitize=undefined in ci?
 - expected failure tests for non-int generic arg const expressions
 - make test case for passing args after --run and using argv in program
-- use _Generic to make wrapping more concise?
 - test case for def alias used within struct literal generic arg
 - make this error message better (and make expected failure case):
     tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
