@@ -7,10 +7,23 @@
 #include <file.h>
 
 static void show_location_error(Pos pos) {
-    Strv* file_con_ = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
-    Strv file_con = *file_con_;
-    unwrap(pos.line > 0);
+    Strv file_con = {0};
+    if (strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
+        // TODO: cache this string (in case error happens in command line args multiple times)?
+        String buf = {0};
+        for (int idx = 0; idx < params.argc; idx++) {
+            if (idx > 0) {
+                string_extend_cstr(&a_leak, &buf, " ");
+            }
+            string_extend_cstr(&a_leak, &buf, params.argv[idx]);
+        }
+        file_con = string_to_strv(buf);
+    } else {
+        Strv* file_con_ = NULL;
+        unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
+        file_con = *file_con_;
+        unwrap(pos.line > 0);
+    }
 
     if (pos.line > 1) {
         uint32_t line = 1;
@@ -35,7 +48,7 @@ static void show_location_error(Pos pos) {
     size_t count_curr = 0;
     {
         Strv temp_file_text = file_con;
-        while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+        while (temp_file_text.count > 0 && strv_front(temp_file_text) != '\n') {
             count_curr++;
             strv_consume(&temp_file_text);
         }
@@ -126,7 +139,7 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
 
 void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_msg) {
     fprintf(stderr, FMT, strv_print(actual_msg));
-    if (pos.line > 0) {
+    if (pos.line > 0 || strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
         show_location_error(pos);
     }
 
@@ -143,7 +156,7 @@ void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_
             get_log_level_str(LOG_NOTE)
         );
         fprintf(stderr, "in expansion of def\n");
-        if (exp_from->line > 0) {
+        if (exp_from->line > 0 || strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
             show_location_error(*exp_from);
         }
 
@@ -236,7 +249,11 @@ void msg_internal(
 
         String actual_buf = {0};
         if (pos.line < 1) {
-            snprintf(temp_buf.buf, temp_buf.info.count, "%s:", get_log_level_str(log_level));
+            if (strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
+                snprintf(temp_buf.buf, temp_buf.info.count, "<command line>:%s:", get_log_level_str(log_level));
+            } else {
+                snprintf(temp_buf.buf, temp_buf.info.count, "%s:", get_log_level_str(log_level));
+            }
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
 
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);

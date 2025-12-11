@@ -1,6 +1,6 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= cc
+CC_COMPILER ?= clang
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)

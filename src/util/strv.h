@@ -20,6 +20,7 @@ static inline char strv_at(Strv strv, size_t index) {
     return strv.str[index];
 }
 
+// TODO: rename to strv_first
 static inline char strv_front(Strv strv) {
     return strv_at(strv, 0);
 }

@@ -253,6 +253,7 @@ static Arg consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     }
     (*argv)++;
     (*argc)--;
+    curr_col++;
 
     if (curr_arg[0]) {
         Arg new_arg = {.text = sv(curr_arg), .pos = {
@@ -445,7 +446,7 @@ static void parse_file_option(int* argc, char*** argv) {
     assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
-        PARAMETERS_COUNT == 28,
+        PARAMETERS_COUNT == 31,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -591,7 +592,7 @@ static void long_option_dump_dot(Strv curr_opt) {
 
 static void long_option_run(int* argc, char *** argv) {
     static_assert(
-        PARAMETERS_COUNT == 28,
+        PARAMETERS_COUNT == 31,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -756,7 +757,7 @@ static void long_option_dummy(Strv curr_opt) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 28,
+    PARAMETERS_COUNT == 31,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 Long_option_pair long_options[] = {
@@ -864,15 +865,18 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 28,
+    PARAMETERS_COUNT == 31,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
-static void set_params_to_defaults(void) {
+static void set_params_to_defaults(int argc, char** argv) {
     set_backend(BACKEND_C);
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
     params.max_errors = 30;
     params.build_dir = sv(".own");
+
+    params.argc = argc;
+    params.argv = argv;
 
 #ifdef NDEBUG
     params_log_level = LOG_INFO;
@@ -901,7 +905,7 @@ static void print_usage(void) {
 }
 
 void parse_args(int argc, char** argv) {
-    set_params_to_defaults();
+    set_params_to_defaults(argc, argv);
     expect_fail_str_to_curr_log_level_init();
 
 #   ifndef NDEBUG
@@ -933,7 +937,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 28,
+        PARAMETERS_COUNT == 31,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
