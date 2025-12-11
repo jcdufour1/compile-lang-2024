@@ -174,4 +174,6 @@ typedef size_t Scope_id;
 
 #define MOD_PATH_COMMAND_LINE sv("std/does_not_exist/cmd")
 
+#define DEFAULT_BUILD_DIR "own_build"
+
 #endif // UTIL_H

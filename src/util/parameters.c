@@ -808,7 +808,7 @@ Long_option_pair long_options[] = {
     },
     {
         "build-dir",
-        "directory to store build artifacts (default is `.own`)",
+        "directory to store build artifacts (default is `"DEFAULT_BUILD_DIR"`)",
         long_option_build_dir,
         ARG_SINGLE
     },
@@ -898,7 +898,7 @@ static void set_params_to_defaults(int argc, char** argv) {
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
     params.max_errors = 30;
-    params.build_dir = sv(".own");
+    params.build_dir = sv(DEFAULT_BUILD_DIR);
 
     params.argc = argc;
     params.argv = argv;
