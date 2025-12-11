@@ -2,7 +2,7 @@
 #define PARAMETERS_H
 
 #include <util.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <diag_type.h>
 #include <strv_vec.h>
 

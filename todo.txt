@@ -143,9 +143,9 @@ for generics:
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - rename newstring.h to local_string.h
 - add prefix to symbols when emitting backend IR (start with underscore and uppercase letter, etc.) to prevent collisions
-- positional args (regular args) after degignated args) should print error or actually work property
+- positional args (regular args) after designated args) should print error or actually work property
     (and test case should be implemented)
-- fix uninitialized warning
+- fix uninitialized warning with gcc
 - todo should call local_exit?
 
 

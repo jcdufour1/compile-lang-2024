@@ -2,7 +2,7 @@
 #define LANG_TYPE_PRINT_H
 
 #include <env.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <strv.h>
 #include <lang_type_mode.h>
 #include <lang_type.h>

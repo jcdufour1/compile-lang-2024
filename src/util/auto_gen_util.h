@@ -9,7 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <arena.h>
 #include <log_internal.h>
 #include <string_vec.h>

@@ -1,12 +1,11 @@
 
-#include "util.h"
-#include "newstring.h"
-#include "parameters.h"
+#include <util.h>
+#include <local_string.h>
+#include <parameters.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <msg.h>
 #include <file.h>
-#include <newstring.h>
 #include <msg_todo.h>
 #include <env.h>
 #include <time.h>

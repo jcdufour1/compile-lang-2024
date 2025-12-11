@@ -3,7 +3,7 @@
 
 #include <ulang_type.h>
 #include <tast_hand_written.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <tast.h>
 #include <tast_utils.h>
 

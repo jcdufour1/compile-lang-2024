@@ -2,7 +2,7 @@
 #define AUTO_GEN_UAST_COMMON_H
 
 #include <auto_gen_util.h>
-#include <newstring.h>
+#include <local_string.h>
 
 static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {

@@ -1,8 +1,8 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include "util.h"
-#include "newstring.h"
+#include <util.h>
+#include <local_string.h>
 
 typedef enum {
     FILE_TYPE_OWN,

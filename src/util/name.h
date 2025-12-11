@@ -2,7 +2,7 @@
 #define NAME_H
 
 #include <ulang_type_forward_decl.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <attrs.h>
 
 typedef enum {

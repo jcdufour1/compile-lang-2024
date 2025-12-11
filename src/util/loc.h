@@ -2,7 +2,7 @@
 #define LOC_H
 
 #include <strv_struct.h>
-#include <newstring.h>
+#include <local_string.h>
 
 typedef struct {
     const char* file;

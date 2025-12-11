@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <assert.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <tast.h>
 #include <parameters.h>
 #include <file.h>

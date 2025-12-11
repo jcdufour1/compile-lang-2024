@@ -3,7 +3,7 @@
 #define SYMBOL_TABLE_H
 
 #include "strv.h"
-#include <newstring.h>
+#include <local_string.h>
 #include "symbol_table_struct.h"
 #include <do_passes.h>
 #include <uast_forward_decl.h>

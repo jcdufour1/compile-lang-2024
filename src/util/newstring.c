@@ -1,4 +1,4 @@
-#include <newstring.h>
+#include <local_string.h>
 
 #ifdef IN_AUTOGEN
     static Arena fake_a_leak = {0};
