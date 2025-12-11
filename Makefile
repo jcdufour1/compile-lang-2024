@@ -1,7 +1,5 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= clang
-
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
@@ -31,6 +29,14 @@ C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
 
 BUILD_DIR_DEBUG ?= ./build/debug/
 BUILD_DIR_RELEASE ?= ./build/release/
+
+ifndef CC_COMPILER
+	ifeq (, $(shell which clang))
+		CC_COMPILER = cc
+	else
+		CC_COMPILER = clang
+	endif
+endif
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
