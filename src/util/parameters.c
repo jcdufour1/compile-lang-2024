@@ -538,7 +538,7 @@ typedef struct {
     const char* text;
     const char* description;
     Long_option_action action;
-    LONG_OPTION_ARG_TYPE arg_type; // TODO: instead of bool, use enum to specify whether `=` is used, etc.
+    LONG_OPTION_ARG_TYPE arg_type;
 } Long_option_pair;
 
 static void long_option_help(Pos pos_self, Arg curr_opt) {
@@ -785,63 +785,67 @@ static_assert(
     PARAMETERS_COUNT == 32,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
+    const char* text;
+    const char* description;
+    Long_option_action action;
+    LONG_OPTION_ARG_TYPE arg_type;
 Long_option_pair long_options[] = {
-    {"help", "display usage", long_option_help, ARG_NONE},
-    {"l", "library name to link", long_option_l, ARG_SINGLE},
-    {"backend", "c or llvm", long_option_backend, ARG_SINGLE},
-    {"all-errors-fetal", "stop immediately after an error occurs", long_option_all_errors_fetal, ARG_NONE},
-    {"dump-ir", "stop compiling after IR file(s) have been generated", long_option_dump_ir, ARG_NONE},
-    {"dump-backend-ir", "stop compiling after .c file(s) or .ll file(s) have been generated", long_option_dump_backend_ir, ARG_NONE},
-    {"S", "stop compiling after assembly file(s) have been generated", long_option_upper_s, ARG_NONE},
-    {"c", "stop compiling after object file(s) have been generated", long_option_upper_c, ARG_NONE},
-    {"dump-dot", "stop compiling after IR file(s) have been generated, and dump .dot file(s)", long_option_dump_dot, ARG_NONE},
-    {"o", "output file path", long_option_lower_o, ARG_SINGLE},
-    {"O0", "disable most optimizations", long_option_upper_o0, ARG_NONE},
-    {"O2", "enable optimizations", long_option_upper_o2, ARG_NONE},
-    {"error", "TODO", long_option_error, ARG_SINGLE},
+    {.text = "help", .description = "display usage", .action = long_option_help, .arg_type = ARG_NONE},
+    {.text = "l", .description = "library name to link", .action = long_option_l, .arg_type = ARG_SINGLE},
+    {.text = "backend", .description = "c or llvm", .action = long_option_backend, .arg_type = ARG_SINGLE},
+    {.text = "all-errors-fetal", .description = "stop immediately after an error occurs", .action = long_option_all_errors_fetal, .arg_type = ARG_NONE},
+    {.text = "dump-ir", .description = "stop compiling after IR file(s) have been generated", .action = long_option_dump_ir, .arg_type = ARG_NONE},
+    {.text = "dump-backend-ir", .description = "stop compiling after .c file(s) or .ll file(s) have been generated", .action = long_option_dump_backend_ir, .arg_type = ARG_NONE},
+    {.text = "S", .description = "stop compiling after assembly file(s) have been generated", .action = long_option_upper_s, .arg_type = ARG_NONE},
+    {.text = "c", .description = "stop compiling after object file(s) have been generated", .action = long_option_upper_c, .arg_type = ARG_NONE},
+    {.text = "dump-dot", .description = "stop compiling after IR file(s) have been generated, and dump .dot file(s)", .action = long_option_dump_dot, .arg_type = ARG_NONE},
+    {.text = "o", .description = "output file path", .action = long_option_lower_o, .arg_type = ARG_SINGLE},
+    {.text = "O0", .description = "disable most optimizations", .action = long_option_upper_o0, .arg_type = ARG_NONE},
+    {.text = "O2", .description = "enable optimizations", .action = long_option_upper_o2, .arg_type = ARG_NONE},
+    {.text = "error", .description = "TODO", .action = long_option_error, .arg_type = ARG_SINGLE},
     {
-        "print-immediately",
-        "print errors immediately. This is intended for debugging the compiler. "
+        .text = "print-immediately",
+        .description = "print errors immediately. This is intended for debugging the compiler. "
         "This option will cause the error order to be unstable and seemingly random",
-        long_option_print_immediately,
-        ARG_NONE
+        .action = long_option_print_immediately,
+        .arg_type = ARG_NONE
     },
     {
-        "build-dir",
-        "directory to store build artifacts (default is `"DEFAULT_BUILD_DIR"`)",
-        long_option_build_dir,
-        ARG_SINGLE
+        .text = "build-dir",
+        .description = "directory to store build artifacts (default is `"DEFAULT_BUILD_DIR"`)",
+        .action = long_option_build_dir,
+        .arg_type = ARG_SINGLE
     },
     {
-        "target-triplet",
-        " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet x86_64-unknown-linux-gnu\"",
-        long_option_target_triplet,
-        ARG_SINGLE
+        .text = "target-triplet",
+        .description = " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet x86_64-unknown-linux-gnu\"",
+        .action = long_option_target_triplet,
+        .arg_type = ARG_SINGLE
     },
     {
-        "path-c-compiler",
-        "specify the c compiler to use to compile program",
-        long_option_path_c_compiler,
-        ARG_SINGLE
+        .text = "path-c-compiler",
+        .description = "specify the c compiler to use to compile program",
+        .action = long_option_path_c_compiler,
+        .arg_type = ARG_SINGLE
     },
-    {"no-prelude", "disable the prelude (std::prelude)", long_option_no_prelude, ARG_NONE},
+    {.text = "no-prelude", .description = "disable the prelude (std::prelude)", .action = long_option_no_prelude, .arg_type = ARG_NONE},
     {
-        "set-log-level",
-        " OPT where OPT is "
+        .text = "set-log-level",
+        .description = " OPT where OPT is "
           "\"FETAL\", \"ERROR\", \"WARNING\", \"NOTE\", \"INFO\", \"VERBOSE\", \"DEBUG\", or \"TRACE\" ("
           "eg. \"set-log-level NOTE\" will suppress messages that are less important than \"NOTE\")",
-        long_option_log_level,
-        ARG_SINGLE
+        .action = long_option_log_level,
+        .arg_type = ARG_SINGLE
     },
     {
-        "max-errors",
-        " COUNT where COUNT is the maximum number of errors that should be printed"
+        .text = "max-errors",
+        .description = " COUNT where COUNT is the maximum number of errors that should be printed"
         "(eg. \"max-errors 20\" will print a maximum of 20 errors)",
-        long_option_max_errors,
-        ARG_SINGLE
+        .action = long_option_max_errors,
+        .arg_type = ARG_SINGLE
     },
 
-    {"run", "n/a", long_option_dummy, ARG_REMAINING_RUN_ONLY},
+    {.text = "run", .description = "n/a", .action = long_option_dummy, .arg_type = ARG_REMAINING_RUN_ONLY},
 };
 
 static void parse_long_option(int* argc, char*** argv) {
