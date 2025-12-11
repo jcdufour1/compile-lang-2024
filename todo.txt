@@ -147,6 +147,7 @@ for generics:
 - positional args (regular args) after degignated args) should print error or actually work property
     (and test case should be implemented)
 - fix uninitialized warning
+- todo should call local_exit?
 
 
 # roadmap to try to get bootstrap compiler done:

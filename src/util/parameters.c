@@ -5,6 +5,11 @@
 #include <util.h>
 #include <str_and_num_utils.h>
 
+typedef struct {
+    Strv text;
+    Pos pos;
+} Arg;
+
 static Strv compiler_exe_name;
 
 static void print_usage(void);
@@ -234,7 +239,9 @@ static bool is_short_option(char** argv) {
 
 // this function will exclude - or -- part of arg if present
 // TODO: consume_arg should accept printf style format for msg_if_missing?
-static Strv consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
+static Arg consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
+    static size_t curr_col = 0;
+
     if (*argc < 1) {
         msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, FMT"\n", strv_print(msg_if_missing));
         local_exit(EXIT_CODE_FAIL);
@@ -242,12 +249,20 @@ static Strv consume_arg(int* argc, char*** argv, Strv msg_if_missing) {
     const char* curr_arg = argv[0][0];
     while (curr_arg[0] && curr_arg[0] == '-') {
         curr_arg++;
+        curr_col++;
     }
     (*argv)++;
     (*argc)--;
 
     if (curr_arg[0]) {
-        return sv(curr_arg);
+        Arg new_arg = {.text = sv(curr_arg), .pos = {
+            .file_path = MOD_PATH_COMMAND_LINE,
+            .line = 0,
+            .column = curr_col,
+            .expanded_from = NULL
+        }};
+        curr_col += strlen(curr_arg);
+        return new_arg;
     }
 
     return consume_arg(argc, argv, sv("stray - or -- is not permitted"));
@@ -426,7 +441,8 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 }
 
 static void parse_file_option(int* argc, char*** argv) {
-    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
+    Arg curr_opt = consume_arg(argc, argv, sv("arg expected"));
+    assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
         PARAMETERS_COUNT == 28,
@@ -439,8 +455,8 @@ static void parse_file_option(int* argc, char*** argv) {
 
     FILE_TYPE file_type = 0;
     Strv err_text = {0};
-    if (!get_file_type(&file_type, &err_text, curr_opt)) {
-        msg_todo_strv(err_text, POS_BUILTIN);
+    if (!get_file_type(&file_type, &err_text, curr_opt.text)) {
+        msg_todo_strv(err_text, curr_opt.pos);
         local_exit(EXIT_CODE_FAIL);
     }
     switch (file_type) {
@@ -451,31 +467,31 @@ static void parse_file_option(int* argc, char*** argv) {
             }
             stop_after_set_if_none(STOP_AFTER_BIN);
             params.compile_own = true;
-            params.input_file_path = curr_opt;
+            params.input_file_path = curr_opt.text;
             break;
         case FILE_TYPE_STATIC_LIB:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.static_libs, curr_opt);
+            vec_append(&a_main, &params.static_libs, curr_opt.text);
             break;
         case FILE_TYPE_DYNAMIC_LIB:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.dynamic_libs, curr_opt);
+            vec_append(&a_main, &params.dynamic_libs, curr_opt.text);
             break;
         case FILE_TYPE_C:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.c_input_files, curr_opt);
+            vec_append(&a_main, &params.c_input_files, curr_opt.text);
             break;
         case FILE_TYPE_OBJECT:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.object_files, curr_opt);
+            vec_append(&a_main, &params.object_files, curr_opt.text);
             break;
         case FILE_TYPE_LOWER_S:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.lower_s_files, curr_opt);
+            vec_append(&a_main, &params.lower_s_files, curr_opt.text);
             break;
         case FILE_TYPE_UPPER_S:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.upper_s_files, curr_opt);
+            vec_append(&a_main, &params.upper_s_files, curr_opt.text);
             break;
         case FILE_TYPE_COUNT:
             unreachable("");
@@ -594,7 +610,7 @@ static void long_option_run(int* argc, char *** argv) {
     params.stop_after = STOP_AFTER_RUN;
 
     while (*argc > 0) {
-        vec_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")));
+        vec_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")).text);
     }
 }
 
@@ -803,7 +819,7 @@ Long_option_pair long_options[] = {
 };
 
 static void parse_long_option(int* argc, char*** argv) {
-    Strv curr_opt = consume_arg(argc, argv, sv("arg expected"));
+    Strv curr_opt = consume_arg(argc, argv, sv("arg expected")).text;
 
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
@@ -825,7 +841,7 @@ static void parse_long_option(int* argc, char*** argv) {
                     string_extend_strv(&a_temp, &buf, sv(curr.text));
                     string_extend_strv(&a_temp, &buf, sv("`\n"));
                     if (curr_opt.count < 1) {
-                        curr_opt = consume_arg(argc, argv, string_to_strv(buf));
+                        curr_opt = consume_arg(argc, argv, string_to_strv(buf)).text;
                     }
                     curr.action(curr_opt);
                     return;
@@ -906,7 +922,7 @@ void parse_args(int argc, char** argv) {
 #   endif // NDEBUG
 
     // consume compiler executable name
-    compiler_exe_name = consume_arg(&argc, &argv, sv("internal error"));
+    compiler_exe_name = consume_arg(&argc, &argv, sv("internal error")).text;
 
     while (argc > 0) {
         if (is_short_option(argv) || is_long_option(argv)) {

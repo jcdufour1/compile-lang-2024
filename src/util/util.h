@@ -172,4 +172,6 @@ typedef size_t Scope_id;
 
 #define PATH_SEPARATOR '/'
 
+#define MOD_PATH_COMMAND_LINE sv("std/does_not_exist/cmd")
+
 #endif // UTIL_H
