@@ -11,6 +11,7 @@
 #include <ulang_type_serialize.h>
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
+#include <ast_msg.h>
 
 // TODO: remove this forward decl when possible
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);

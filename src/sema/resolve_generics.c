@@ -6,7 +6,6 @@
 #include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
-#include <msg_todo.h>
 #include <symbol_iter.h>
 #include <uast_expr_to_ulang_type.h>
 #include <check_gen_constraints.h>

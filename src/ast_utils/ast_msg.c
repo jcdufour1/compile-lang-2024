@@ -60,3 +60,29 @@ void msg_struct_literal_assigned_to_non_struct_gen_param_internal(
         "non-struct generic parameter type defined here\n"
     );
 }
+
+void msg_todo_internal(const char* file, int line, Strv feature, Pos pos) {
+    msg_internal(
+        file, line, DIAG_NOT_YET_IMPLEMENTED, pos, 
+        "language feature `"FMT"` not yet implemented (may or may not be implemented in the future)\n",
+        strv_print(feature)
+    );
+}
+
+void msg_soft_todo_internal(const char* file, int line, Strv feature, Pos pos) {
+    (void) file;
+    (void) line;
+    (void) feature;
+    (void) pos;
+
+#   ifndef NDEBUG
+
+        msg_internal(
+            file, line, DIAG_SOFT_NOT_YET_IMPLEMENTED, pos, 
+            "soft todo: language feature `"FMT"` not yet implemented (may or may not be implemented in the future)\n",
+            strv_print(feature)
+        );
+
+#   endif // NDEBUG
+}
+

@@ -13,6 +13,7 @@
 #include <subprocess.h>
 #include <file.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 static void emit_c_extend_name(String* output, Ir_name name) {
 #   ifndef NDEBUG

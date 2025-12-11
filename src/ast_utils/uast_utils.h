@@ -9,6 +9,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
 #include <uast_clone.h>
+#include <ast_msg.h>
 
 // TODO: figure out where to put these things
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);

@@ -1,7 +1,6 @@
 #ifndef IR_LANG_TYPE_AFTER_H
 #define IR_LANG_TYPE_AFTER_H
 
-#include <msg_todo.h>
 #include <ir_lang_type_hand_written.h>
 #include <ir_lang_type.h>
 

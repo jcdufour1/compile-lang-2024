@@ -1,5 +1,6 @@
 #include <ir_lang_type_after.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive ir_lang_type) {
     switch (ir_lang_type.type) {

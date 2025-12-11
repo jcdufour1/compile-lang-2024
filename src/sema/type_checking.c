@@ -8,7 +8,6 @@
 #include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>
 #include <ulang_type.h>
-#include <msg_todo.h>
 #include <token_type_to_operator_type.h>
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
