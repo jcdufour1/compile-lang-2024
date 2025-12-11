@@ -10,9 +10,14 @@ typedef struct {
     Pos pos;
 } Arg;
 
+static void arg_consume_count(Arg* arg, size_t count) {
+    strv_consume_count(&arg->text, count);
+    arg->pos.column += count;
+}
+
 static Strv compiler_exe_name;
 
-static void print_usage(void);
+static void print_usage(Pos pos);
 
 typedef struct {
     TARGET_ARCH arch;
@@ -514,7 +519,7 @@ static void set_backend(BACKEND backend) {
     unreachable("");
 }
 
-typedef void(*Long_option_action)(Strv curr_opt);
+typedef void(*Long_option_action)(Arg curr_opt);
 
 typedef enum {
     ARG_NONE,
@@ -532,18 +537,17 @@ typedef struct {
     LONG_OPTION_ARG_TYPE arg_type; // TODO: instead of bool, use enum to specify whether `=` is used, etc.
 } Long_option_pair;
 
-static void long_option_help(Strv curr_opt) {
-    (void) curr_opt;
-    print_usage();
+static void long_option_help(Arg curr_opt) {
+    print_usage(curr_opt.pos);
     local_exit(EXIT_CODE_SUCCESS);
 }
 
-static void long_option_l(Strv curr_opt) {
-    vec_append(&a_main, &params.l_flags, curr_opt);
+static void long_option_l(Arg curr_opt) {
+    vec_append(&a_main, &params.l_flags, curr_opt.text);
 }
 
-static void long_option_backend(Strv curr_opt) {
-    Strv backend = curr_opt;
+static void long_option_backend(Arg curr_opt) {
+    Strv backend = curr_opt.text;
 
     if (strv_is_equal(backend, sv("c"))) {
         set_backend(BACKEND_C);
@@ -555,33 +559,33 @@ static void long_option_backend(Strv curr_opt) {
     }
 }
 
-static void long_option_all_errors_fetal(Strv curr_opt) {
+static void long_option_all_errors_fetal(Arg curr_opt) {
     (void) curr_opt;
     params.all_errors_fatal = true;
 }
 
-static void long_option_dump_backend_ir(Strv curr_opt) {
+static void long_option_dump_backend_ir(Arg curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
-static void long_option_dump_ir(Strv curr_opt) {
+static void long_option_dump_ir(Arg curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_IR;
 }
 
-static void long_option_upper_s(Strv curr_opt) {
+static void long_option_upper_s(Arg curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_UPPER_S;
 }
 
-static void long_option_upper_c(Strv curr_opt) {
+static void long_option_upper_c(Arg curr_opt) {
     (void) curr_opt;
     params.stop_after = STOP_AFTER_OBJ;
 }
 
-static void long_option_dump_dot(Strv curr_opt) {
-    msg_todo("dump_dot", curr_opt);
+static void long_option_dump_dot(Arg curr_opt) {
+    msg_todo("dump_dot", curr_opt.pos);
     (void) curr_opt;
     //params.stop_after = STOP_AFTER_IR;
     //params.dump_dot = true;
@@ -612,23 +616,23 @@ static void long_option_run(int* argc, char *** argv) {
     }
 }
 
-static void long_option_lower_o(Strv curr_opt) {
+static void long_option_lower_o(Arg curr_opt) {
     params.is_output_file_path = true;
-    params.output_file_path = curr_opt;
+    params.output_file_path = curr_opt.text;
 }
 
-static void long_option_upper_o0(Strv curr_opt) {
+static void long_option_upper_o0(Arg curr_opt) {
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O0;
 }
 
-static void long_option_upper_o2(Strv curr_opt) {
+static void long_option_upper_o2(Arg curr_opt) {
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O2;
 }
 
-static void long_option_error(Strv curr_opt) {
-    Strv error = curr_opt;
+static void long_option_error(Arg curr_opt) {
+    Strv error = curr_opt.text;
 
     DIAG_TYPE type = {0};
     size_t idx = 0;
@@ -643,15 +647,15 @@ static void long_option_error(Strv curr_opt) {
     params.error_opts_changed = true;
 }
 
-static void long_option_path_c_compiler(Strv curr_opt) {
-    Strv cc = curr_opt;
+static void long_option_path_c_compiler(Arg curr_opt) {
+    Strv cc = curr_opt.text;
 
     params.path_c_compiler = cc;
     params.is_path_c_compiler = true;
 }
 
-static void long_option_target_triplet(Strv curr_opt) {
-    Strv cc = curr_opt;
+static void long_option_target_triplet(Arg curr_opt) {
+    Strv cc = curr_opt.text;
 
     Strv temp[4] = {0};
 
@@ -699,23 +703,23 @@ static void long_option_target_triplet(Strv curr_opt) {
     }
 }
 
-static void long_option_print_immediately(Strv curr_opt) {
+static void long_option_print_immediately(Arg curr_opt) {
     (void) curr_opt;
     params.print_immediately = true;
 }
 
-static void long_option_build_dir(Strv curr_opt) {
+static void long_option_build_dir(Arg curr_opt) {
     (void) curr_opt;
-    params.build_dir = curr_opt;
+    params.build_dir = curr_opt.text;
 }
 
-static void long_option_no_prelude(Strv curr_opt) {
+static void long_option_no_prelude(Arg curr_opt) {
     (void) curr_opt;
     params.do_prelude = false;
 }
 
-static void long_option_log_level(Strv curr_opt) {
-    Strv log_level = curr_opt;
+static void long_option_log_level(Arg curr_opt) {
+    Strv log_level = curr_opt.text;
 
     if (strv_is_equal(log_level, sv("FETAL"))) {
         params_log_level = LOG_FATAL;
@@ -739,8 +743,8 @@ static void long_option_log_level(Strv curr_opt) {
     }
 }
 
-static void long_option_max_errors(Strv curr_opt) {
-    Strv max_errors = curr_opt;
+static void long_option_max_errors(Arg curr_opt) {
+    Strv max_errors = curr_opt.text;
     int64_t result = 0;
     if (!try_strv_to_int64_t(&result, curr_opt.pos, max_errors)) {
         msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_opt.pos, "expected number after `max-errors=`\n");
@@ -749,7 +753,7 @@ static void long_option_max_errors(Strv curr_opt) {
     params.max_errors = result;
 }
 
-static void long_option_dummy(Strv curr_opt) {
+static void long_option_dummy(Arg curr_opt) {
     (void) curr_opt;
 }
 
@@ -817,20 +821,20 @@ Long_option_pair long_options[] = {
 };
 
 static void parse_long_option(int* argc, char*** argv) {
-    Strv curr_opt = consume_arg(argc, argv, sv("arg expected")).text;
+    Arg curr_arg = consume_arg(argc, argv, sv("arg expected"));
 
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
-        if (strv_starts_with(curr_opt, sv(curr.text))) {
-            strv_consume_count(&curr_opt, sv(curr.text).count);
+        if (strv_starts_with(curr_arg.text, sv(curr.text))) {
+            arg_consume_count(&curr_arg, sv(curr.text).count);
             static_assert(ARG_COUNT == 3, "exhausive handling of arg types");
             switch (curr.arg_type) {
                 case ARG_NONE:
-                    if (curr_opt.count > 0) {
-                        msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_opt.pos, "expected no arg for `%s`\n", curr.text);
+                    if (curr_arg.text.count > 0) {
+                        msg(DIAG_CMD_OPT_INVALID_SYNTAX, curr_arg.pos, "expected no arg for `%s`\n", curr.text);
                         local_exit(EXIT_CODE_FAIL);
                     }
-                    curr.action(curr_opt);
+                    curr.action(curr_arg);
                     return;
                 case ARG_SINGLE: {
                     String buf = {0};
@@ -838,10 +842,10 @@ static void parse_long_option(int* argc, char*** argv) {
                     string_extend_strv(&a_temp, &buf, sv("argument expected after `"));
                     string_extend_strv(&a_temp, &buf, sv(curr.text));
                     string_extend_strv(&a_temp, &buf, sv("`\n"));
-                    if (curr_opt.count < 1) {
-                        curr_opt = consume_arg(argc, argv, string_to_strv(buf)).text;
+                    if (curr_arg.text.count < 1) {
+                        curr_arg = consume_arg(argc, argv, string_to_strv(buf));
                     }
-                    curr.action(curr_opt);
+                    curr.action(curr_arg);
                     return;
                 }
                 case ARG_REMAINING_RUN_ONLY:
@@ -857,7 +861,7 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     }
 
-    msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "invalid option: "FMT"\n", strv_print(curr_opt));
+    msg(DIAG_CMD_OPT_INVALID_OPTION, curr_arg.pos, "invalid option: "FMT"\n", strv_print(curr_arg.text));
     local_exit(EXIT_CODE_FAIL);
 }
 
@@ -946,7 +950,7 @@ void parse_args(int argc, char** argv) {
         params.lower_s_files.info.count == 0 &&
         params.upper_s_files.info.count == 0
     ) {
-        print_usage();
+        print_usage(first_arg.pos);
         msg(DIAG_NO_INPUT_FILES, first_arg.pos, "no input files were provided\n");
         local_exit(EXIT_CODE_FAIL);
     }
