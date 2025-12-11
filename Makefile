@@ -5,10 +5,11 @@ CC_COMPILER ?= cc
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 # TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
-# TODO: make warnings variable, and use same warnings for autogen as regular compolation
-C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
-			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
-			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address \
+C_WARNINGS = -Werror=incompatible-pointer-types \
+			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
+			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
+
+C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \
@@ -23,7 +24,7 @@ C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			     -fno-strict-aliasing \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
-C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
 			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			     -fsanitize=address -fno-omit-frame-pointer
