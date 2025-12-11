@@ -33,7 +33,7 @@ typedef enum {
 typedef enum {
     EXIT_CODE_SUCCESS = 0,
     EXIT_CODE_FAIL,
-    EXIT_CODE_EXPECTED_FAIL,
+    EXIT_CODE_EXPECTED_FAIL, // TODO: remove EXIT_CODE_EXPECTED_FAIL
 } EXIT_CODE;
 
 typedef uint32_t Indent;

@@ -95,26 +95,23 @@ File_type_pair file_type_pairs[] = {
     {"S", FILE_TYPE_UPPER_S},
 };
 
-FILE_TYPE get_file_type(Strv file_path) {
+bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path) {
     Strv ext = {0};
     if (!get_file_extension(&ext, file_path)) {
-        // TODO: print what user command line option caused this, etc.
-        msg_todo("executable file passed on the command line", POS_BUILTIN);
-        local_exit(EXIT_CODE_FAIL);
+        *err_text = sv("executable file passed on the command line");
+        return false;
     }
 
     for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
         File_type_pair curr = file_type_pairs[idx];
         if (strv_is_equal(sv(curr.text), ext)) {
-            return curr.type;
+            *result = curr.type;
+            return true;
         }
     }
 
-    String buf = {0};
-    string_extend_strv(&a_main, &buf, sv("file with extension ."));
-    string_extend_strv(&a_main, &buf, ext);
-    msg_todo_strv(string_to_strv(buf), POS_BUILTIN);
-    local_exit(EXIT_CODE_FAIL);
+    *err_text = strv_from_f(&a_temp, "file with extension ."FMT, strv_print(ext));
+    return false;
 }
 
 void file_extend_strv(FILE* file, Strv strv) {

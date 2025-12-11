@@ -433,7 +433,17 @@ static void parse_file_option(int* argc, char*** argv) {
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
-    switch (get_file_type(curr_opt)) {
+        //// TODO: print what user command line option caused this, etc.
+        //msg_todo("executable file passed on the command line", POS_BUILTIN);
+        //local_exit(EXIT_CODE_FAIL);
+
+    FILE_TYPE file_type = 0;
+    Strv err_text = {0};
+    if (!get_file_type(&file_type, &err_text, curr_opt)) {
+        msg_todo_strv(err_text, POS_BUILTIN);
+        local_exit(EXIT_CODE_FAIL);
+    }
+    switch (file_type) {
         case FILE_TYPE_OWN:
             if (is_compiling()) {
                 msg_todo("multiple .own files specified on the command line", POS_BUILTIN);

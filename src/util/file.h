@@ -23,7 +23,7 @@ bool read_file(Strv* result, Strv input_file_name);
 
 bool get_file_extension(Strv* extension, Strv file_path);
 
-FILE_TYPE get_file_type(Strv file_path);
+bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path);
 
 void file_extend_strv(FILE* file, Strv strv);
 
