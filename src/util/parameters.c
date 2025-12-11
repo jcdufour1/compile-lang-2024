@@ -801,7 +801,7 @@ Long_option_pair long_options[] = {
     {"error", "TODO", long_option_error, ARG_SINGLE},
     {
         "print-immediately",
-        "print errors immediately. This is intended for debugging. "
+        "print errors immediately. This is intended for debugging the compiler. "
         "This option will cause the error order to be unstable and seemingly random",
         long_option_print_immediately,
         ARG_NONE
@@ -814,7 +814,7 @@ Long_option_pair long_options[] = {
     },
     {
         "target-triplet",
-        " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet=x86_64-unknown-linux-gnu\"",
+        " ARCH-VENDOR-OS-ABI    (eg. \"target-triplet x86_64-unknown-linux-gnu\"",
         long_option_target_triplet,
         ARG_SINGLE
     },
@@ -829,14 +829,14 @@ Long_option_pair long_options[] = {
         "set-log-level",
         " OPT where OPT is "
           "\"FETAL\", \"ERROR\", \"WARNING\", \"NOTE\", \"INFO\", \"VERBOSE\", \"DEBUG\", or \"TRACE\" ("
-          "eg. \"set-log-level=NOTE\" will suppress messages that are less important than \"NOTE\")",
+          "eg. \"set-log-level NOTE\" will suppress messages that are less important than \"NOTE\")",
         long_option_log_level,
         ARG_SINGLE
     },
     {
         "max-errors",
         " COUNT where COUNT is the maximum number of errors that should be printed"
-          "(eg. \"max-errors=20\" will print a maximum of 20 errors)",
+        "(eg. \"max-errors 20\" will print a maximum of 20 errors)",
         long_option_max_errors,
         ARG_SINGLE
     },
@@ -919,13 +919,12 @@ static void print_usage(Pos pos_help) {
     for (size_t idx = 0; idx < array_count(long_options); idx++) {
         Long_option_pair curr = array_at(long_options, idx);
         if (!strv_is_equal(sv(curr.text), sv("run"))) {
-            string_extend_cstr(&a_temp, &buf, "    -");
-            string_extend_cstr(&a_temp, &buf, curr.text);
-            string_extend_cstr(&a_temp, &buf, "\n        ");
-            string_extend_cstr(&a_temp, &buf, curr.description);
-            string_extend_cstr(&a_temp, &buf, "\n\n");
+            string_extend_f(&a_temp, &buf, "    -%s\n", curr.text);
+            string_extend_f(&a_temp, &buf, "        %s\n\n", curr.description);
         }
     }
+
+    string_extend_cstr(&a_temp, &buf, "\n\n");
     msg(DIAG_INFO, pos_help, FMT, string_print(buf));
 }
 
