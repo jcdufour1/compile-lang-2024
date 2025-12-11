@@ -1,19 +1,19 @@
 #include <check_gen_constraints.h>
 
-bool check_gen_constraints(Uast_generic_param_vec gen_params, Ulang_type_vec gen_args) {
+bool check_gen_constraints(Uast_generic_param_vec gen_params, Ulang_type_vec a_genrgs) {
     return true;
     (void) gen_params;
-    (void) gen_args;
-    vec_foreach(idx, Ulang_type, gen_arg, gen_args) {
-        (void) gen_arg;
+    (void) a_genrgs;
+    vec_foreach(idx, Ulang_type, a_genrg, a_genrgs) {
+        (void) a_genrg;
         Uast_generic_param* gen_param = vec_at(gen_params, idx);
 
         if (!gen_param->is_expr) {
             continue;
         }
 
-        //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, gen_arg));
-        //log(LOG_DEBUG, "%u\n", gen_arg.type);
+        //log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, a_genrg));
+        //log(LOG_DEBUG, "%u\n", a_genrg.type);
 
         //todo();
     }

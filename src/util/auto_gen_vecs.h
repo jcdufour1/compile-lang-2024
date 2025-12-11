@@ -7,14 +7,14 @@
 static void gen_vec_from_strv(Strv vec_name, Strv item_name) {
     String function = {0};
 
-    string_extend_cstr(&gen_a, &function, "typedef struct {\n");
-    string_extend_cstr(&gen_a, &function, "    Vec_base info;\n");
-    string_extend_cstr(&gen_a, &function, "    ");
+    string_extend_cstr(&a_gen, &function, "typedef struct {\n");
+    string_extend_cstr(&a_gen, &function, "    Vec_base info;\n");
+    string_extend_cstr(&a_gen, &function, "    ");
     extend_strv_first_upper(&function, item_name);
-    string_extend_cstr(&gen_a, &function, "* buf;\n");
-    string_extend_cstr(&gen_a, &function, "} ");
+    string_extend_cstr(&a_gen, &function, "* buf;\n");
+    string_extend_cstr(&a_gen, &function, "} ");
     extend_strv_first_upper(&function, vec_name);
-    string_extend_cstr(&gen_a, &function, ";\n");
+    string_extend_cstr(&a_gen, &function, ";\n");
 
     gen_gen(FMT"\n", string_print(function));
 }
@@ -23,12 +23,12 @@ static void gen_vec_from_cstr(const char* vec_name, const char* item_name) {
     gen_vec_from_strv(sv(vec_name), sv(item_name));
 }
 
-static void gen_all_vecs_internal(void) {
+static void a_genll_vecs_internal(void) {
     gen_vec_from_cstr("Tast_vec", "Tast*");
     gen_vec_from_cstr("Uast_vec", "Uast*");
 }
 
-static void gen_all_vecs(const char* file_path) {
+static void a_genll_vecs(const char* file_path) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
         fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
@@ -45,7 +45,7 @@ static void gen_all_vecs(const char* file_path) {
     gen_gen("#include <tast_forward_decl.h>\n");
     gen_gen("#include <ir_forward_decl.h>\n");
 
-    //gen_all_vecs_internal();
+    //a_genll_vecs_internal();
 
     gen_gen("#endif // VECS_SKDJFKLJFDS_H\n");
 

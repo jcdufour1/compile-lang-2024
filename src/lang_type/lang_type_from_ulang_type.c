@@ -124,7 +124,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope, (Attrs) {0});
+            *new_name = name_new(alias->mod_path, name.base, name.a_genrgs, alias->mod_path_scope, (Attrs) {0});
             return true;
         }
         case UAST_POISON_DEF:

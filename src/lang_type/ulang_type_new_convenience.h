@@ -26,8 +26,8 @@ static inline Ulang_type ulang_type_new_char(void) {
     return ulang_type_new_int_x(sv("u8"));
 }
 
-static inline Ulang_type_vec ulang_type_gen_args_char_new(void) {
-    return env.gen_args_char;
+static inline Ulang_type_vec ulang_type_a_genrgs_char_new(void) {
+    return env.a_genrgs_char;
 }
 
 // TODO: remove this forward decl?

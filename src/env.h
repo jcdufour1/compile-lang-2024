@@ -39,7 +39,7 @@ typedef struct Env_ {
 
     Strv mod_path_main_fn;
 
-    Ulang_type_vec gen_args_char;
+    Ulang_type_vec a_genrgs_char;
 
     Defered_msg_vec defered_msgs;
 

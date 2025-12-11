@@ -7,15 +7,15 @@
 #include <ulang_type_is_equal.h>
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
+    return (Name) {.mod_path = mod_path, .base = base, .a_genrgs = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
 }
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id, Attrs attrs) {
+    return (Name) {.mod_path = mod_path, .base = base, .a_genrgs = a_genrgs, .scope_id = scope_id, .attrs = attrs};
 }
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id, attrs));
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id, Attrs attrs) {
+    return name_to_ir_name(name_new(mod_path, base, a_genrgs, scope_id, attrs));
 }
 
 // this function will convert `io.i32` to `i32`, etc.
@@ -23,26 +23,26 @@ static Uname uname_normalize(Uname name) {
     // TODO: this function could cause collisions
     //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
     Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
+    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.a_genrgs, name.scope_id, (Attrs) {0});
     if (usymbol_lookup(&dummy, possible_new)) {
         return name_to_uname(possible_new);
     }
     return name;
 }
 
-static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
     assert(base.count > 0);
-    return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+    return (Uname) {.mod_alias = mod_alias, .base = base, .a_genrgs = a_genrgs, .scope_id = scope_id};
 }
 
 Uname name_to_uname(Name name) {
     if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
     } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
     } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
+        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
     }
 
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
@@ -51,7 +51,7 @@ Uname name_to_uname(Name name) {
         unwrap(usymbol_lookup(&dummy, alias_name));
 #   endif // NDEBUG
 
-    return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
+    return uname_new_internal(alias_name, name.base, name.a_genrgs, name.scope_id);
 }
 
 Name ir_name_to_name(Ir_name name) {
@@ -114,9 +114,9 @@ Ir_name name_to_ir_name(Name name) {
     return ir_name;
 }
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
-    return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
+    return uname_normalize(uname_new_internal(mod_alias, base, a_genrgs, scope_id));
 }
 
 void extend_name_ir(String* buf, Name name) {
@@ -199,11 +199,11 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
 
     string_extend_strv(arena, &buf, name.base);
 
-    if (name.gen_args.info.count > 0) {
+    if (name.a_genrgs.info.count > 0) {
         string_extend_cstr(arena, &buf, "____");
-        string_extend_size_t(arena, &buf, name.gen_args.info.count);
+        string_extend_size_t(arena, &buf, name.a_genrgs.info.count);
         string_extend_cstr(arena, &buf, "_");
-        for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+        for (size_t idx = 0; idx < name.a_genrgs.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
             string_extend_strv(
@@ -211,7 +211,7 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
                 &buf,
                 serialize_name_symbol_table(
                     &a_main,
-                    serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)
+                    serialize_ulang_type(name.mod_path, vec_at(name.a_genrgs, idx), false)
                 )
             );
         }
@@ -311,16 +311,16 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         }
     }
     string_extend_strv(&a_temp, buf, name.base);
-    if (name.gen_args.info.count > 0) {
+    if (name.a_genrgs.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
     }
-    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+    for (size_t idx = 0; idx < name.a_genrgs.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.a_genrgs, idx)));
     }
-    if (name.gen_args.info.count > 0) {
+    if (name.a_genrgs.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
     }
     if (name.attrs > 0) {
@@ -347,16 +347,16 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         string_extend_cstr(&a_temp, buf, ".");
     }
     string_extend_strv(&a_temp, buf, name.base);
-    if (name.gen_args.info.count > 0) {
+    if (name.a_genrgs.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
     }
-    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+    for (size_t idx = 0; idx < name.a_genrgs.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.a_genrgs, idx)));
     }
-    if (name.gen_args.info.count > 0) {
+    if (name.a_genrgs.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
     }
 }
@@ -402,12 +402,12 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope, (Attrs) {0});
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.a_genrgs, use_new_scope, new_scope), scope, (Attrs) {0});
 }
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.a_genrgs, use_new_scope, new_scope), scope);
 }
 
 bool ir_name_is_equal(Ir_name a, Ir_name b) {
@@ -420,11 +420,11 @@ bool name_is_equal(Name a, Name b) {
         return false;
     }
 
-    if (a.gen_args.info.count != b.gen_args.info.count) {
+    if (a.a_genrgs.info.count != b.a_genrgs.info.count) {
         return false;
     }
-    for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(a.gen_args, idx), vec_at(b.gen_args, idx))) {
+    for (size_t idx = 0; idx < a.a_genrgs.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(a.a_genrgs, idx), vec_at(b.a_genrgs, idx))) {
             return false;
         }
     }

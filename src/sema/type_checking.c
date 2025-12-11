@@ -351,7 +351,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
-        memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
+        memset(&base_name.a_genrgs, 0, sizeof(base_name.a_genrgs));
         if (!usymbol_lookup(&sym_def, base_name)) {
             msg_undefined_symbol(sym_untyped->name, sym_untyped->pos);
             return false;
@@ -423,7 +423,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                 }
 
                 vec_foreach(gen_idx, Uast_generic_param*, gen_param, fun_def->decl->generics) {
-                    if (gen_idx < sym_untyped->name.gen_args.info.count) {
+                    if (gen_idx < sym_untyped->name.a_genrgs.info.count) {
                         continue;
                     }
 
@@ -446,7 +446,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                             gen_param->name,
                             sym_untyped->pos
                         )) {
-                            vec_append(&a_main, &sym_untyped->name.gen_args, infered);
+                            vec_append(&a_main, &sym_untyped->name.a_genrgs, infered);
                             did_infer = true;
                         }
                         env.supress_type_inference_failures = old_supress_type_infer;
@@ -472,7 +472,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                 }
             }
 
-            if (!resolve_generics_function_def_call(&new_lang_type, &new_name, fun_def, sym_untyped->name.gen_args, sym_untyped->pos)) {
+            if (!resolve_generics_function_def_call(&new_lang_type, &new_name, fun_def, sym_untyped->name.a_genrgs, sym_untyped->pos)) {
                 return false;
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
@@ -494,7 +494,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
             fallthrough;
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
-            if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args, sym_untyped->pos)) {
+            if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.a_genrgs, sym_untyped->pos)) {
                 if (!env.supress_type_inference_failures) {
                     usymbol_update(uast_poison_def_wrap(uast_poison_def_new(
                         uast_def_get_pos(sym_def),
@@ -1417,14 +1417,14 @@ bool try_set_array_literal_types(
     Pos assign_pos
 ) {
     (void) assign_pos;
-    Ulang_type gen_arg_ = {0};
-    Lang_type gen_arg = {0};
-    if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
-        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_)) {
+    Ulang_type a_genrg_ = {0};
+    Lang_type a_genrg = {0};
+    if (lang_type_is_slice(&a_genrg_, dest_lang_type)) {
+        if (!try_lang_type_from_ulang_type(&a_genrg, a_genrg_)) {
             return false;
         }
     } else if (dest_lang_type.type == LANG_TYPE_ARRAY) {
-        gen_arg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
+        a_genrg = *lang_type_array_const_unwrap(dest_lang_type).item_type;
         Lang_type_array array = lang_type_array_const_unwrap(dest_lang_type);
         size_t count = (size_t)array.count;
         if (count != lit->members.info.count) {
@@ -1444,7 +1444,7 @@ bool try_set_array_literal_types(
         switch (check_general_assignment(
              &check_env,
              &new_rhs,
-             gen_arg,
+             a_genrg,
              rhs,
              uast_expr_get_pos(rhs)
         )) {
@@ -1456,7 +1456,7 @@ bool try_set_array_literal_types(
                     uast_expr_get_pos(rhs),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
+                    lang_type_print(LANG_TYPE_MODE_MSG, a_genrg)
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:
@@ -1472,7 +1472,7 @@ bool try_set_array_literal_types(
     for (size_t idx = 0; idx < new_membs.info.count; idx++) {
         vec_append(&a_main, &inner_def_membs, tast_variable_def_new(
             lit->pos,
-            gen_arg,
+            a_genrg,
             false,
             util_literal_name_new()
         ));
@@ -1490,7 +1490,7 @@ bool try_set_array_literal_types(
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
 
-    Lang_type unary_lang_type = gen_arg;
+    Lang_type unary_lang_type = a_genrg;
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
     Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
         new_inner_lit->pos,
@@ -2008,15 +2008,15 @@ bool try_set_function_call_builtin_types(
             lang_type_new_usize(new_arr_pos)
         ))));
 
-        Ulang_type_vec new_gen_args = {0};
-        vec_append(&a_main, &new_gen_args, item_type);
+        Ulang_type_vec new_a_genrgs = {0};
+        vec_append(&a_main, &new_a_genrgs, item_type);
         
         *new_call = tast_struct_literal_wrap(tast_struct_literal_new(
             fun_call->pos,
             membs,
             util_literal_name_new(),
             lang_type_struct_const_wrap(lang_type_struct_new(array.pos, lang_type_atom_new(
-                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL, (Attrs) {0}),
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_a_genrgs, SCOPE_TOP_LEVEL, (Attrs) {0}),
                 0
             )))
         ));
@@ -2663,7 +2663,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     bool status = true;
 
     Name sym_name_plain = *sym_name;
-    sym_name_plain.gen_args = (Ulang_type_vec) {0};
+    sym_name_plain.a_genrgs = (Ulang_type_vec) {0};
     Uast_def* fun_decl_temp_ = NULL;
     if (!usymbol_lookup(&fun_decl_temp_, sym_name_plain)) {
         Tast_expr* dummy = NULL;
@@ -2736,19 +2736,19 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &new_args_set, false);
     }
 
-    size_t amt_gen_args_needed = fun_decl_temp->generics.info.count;
+    size_t amt_a_genrgs_needed = fun_decl_temp->generics.info.count;
 
-    Bool_vec new_gen_args_set = {0};
-    vec_reserve(&a_main, &new_gen_args_set, amt_args_needed);
-    while (new_gen_args_set.info.count < sym_name->gen_args.info.count) {
-        vec_append(&a_main, &new_gen_args_set, true);
+    Bool_vec new_a_genrgs_set = {0};
+    vec_reserve(&a_main, &new_a_genrgs_set, amt_args_needed);
+    while (new_a_genrgs_set.info.count < sym_name->a_genrgs.info.count) {
+        vec_append(&a_main, &new_a_genrgs_set, true);
     }
-    while (new_gen_args_set.info.count < amt_gen_args_needed) {
-        vec_append(&a_main, &new_gen_args_set, false);
+    while (new_a_genrgs_set.info.count < amt_a_genrgs_needed) {
+        vec_append(&a_main, &new_a_genrgs_set, false);
     }
 
-    while (sym_name->gen_args.info.count < fun_decl_temp->generics.info.count) {
-        vec_append(&a_main, &sym_name->gen_args, ulang_type_removed_const_wrap(ulang_type_removed_new(fun_call->pos, 0)));
+    while (sym_name->a_genrgs.info.count < fun_decl_temp->generics.info.count) {
+        vec_append(&a_main, &sym_name->a_genrgs, ulang_type_removed_const_wrap(ulang_type_removed_new(fun_call->pos, 0)));
     }
 
     // TODO: deduplicate this with below for loop?
@@ -2866,12 +2866,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     {
-        vec_foreach_ref(idx, Ulang_type, gen_arg, sym_name->gen_args) {
+        vec_foreach_ref(idx, Ulang_type, a_genrg, sym_name->a_genrgs) {
             Ulang_type inner = {0};
-            if (!ulang_type_remove_expr(&inner, *gen_arg)) {
+            if (!ulang_type_remove_expr(&inner, *a_genrg)) {
                 status = false;
             }
-            *gen_arg = inner;
+            *a_genrg = inner;
         }
     }
     if (status == false) {
@@ -2902,7 +2902,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     Uast_generic_param_vec gen_params = fun_decl_temp->generics;
     for (size_t gen_idx = 0; status && gen_idx < gen_params.info.count; gen_idx++) {
-        if (!vec_at(new_gen_args_set, gen_idx)) {
+        if (!vec_at(new_a_genrgs_set, gen_idx)) {
             Name param_name = vec_at(gen_params, gen_idx)->name;
             if (strv_is_equal(MOD_PATH_BUILTIN, param_name.mod_path)) {
                 size_t min_args = params->params.info.count;
@@ -2921,7 +2921,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     uint32_t old_error_count = env.error_count;
                     if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx), true)) {
                         if (infer_generic_type(
-                            vec_at_ref(&sym_name->gen_args, gen_idx),
+                            vec_at_ref(&sym_name->a_genrgs, gen_idx),
                             lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
                             arg_to_infer_from->type == TAST_LITERAL,
                             vec_at(params->params, param_idx)->base->lang_type,
@@ -3304,7 +3304,7 @@ bool try_set_member_access_types_finish_generic_struct(
             unreachable("");
     }
 
-    if (access->member_name->name.gen_args.info.count > 0) {
+    if (access->member_name->name.a_genrgs.info.count > 0) {
         // TODO
         todo();
     }
@@ -3514,7 +3514,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
         case TAST_SYMBOL: {
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
             if (sym->base.lang_type.type == LANG_TYPE_ARRAY) {
-                if (access->member_name->name.gen_args.info.count > 0) {
+                if (access->member_name->name.a_genrgs.info.count > 0) {
                     // TODO
                     msg_todo("", access->pos);
                     return false;
@@ -3574,7 +3574,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
                 tast_module_alias_unwrap(new_callee)->mod_path,
                 access->member_name->name.base,
-                access->member_name->name.gen_args,
+                access->member_name->name.a_genrgs,
                 access->member_name->name.scope_id
             , (Attrs) {0}));
             Tast_expr* new_expr = NULL;
@@ -3665,8 +3665,8 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         vec_append(&a_main, &args, callee);
         vec_append(&a_main, &args, index->index);
 
-        Ulang_type_vec gen_args = {0};
-        vec_append(&a_main, &gen_args, slice_item_type);
+        Ulang_type_vec a_genrgs = {0};
+        vec_append(&a_main, &a_genrgs, slice_item_type);
 
         Uast_function_call* call = uast_function_call_new(
             index->pos,
@@ -3674,7 +3674,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
-                gen_args,
+                a_genrgs,
                 SCOPE_TOP_LEVEL,
                 (Attrs) {0}
             ))),
@@ -3706,15 +3706,15 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             lang_type_get_pointer_depth(tast_expr_get_lang_type(new_callee))
         );
         vec_append(&a_main, &arr_slice_args, callee);
-        Ulang_type_vec gen_args = {0};
-        vec_append(&a_main, &gen_args, lang_type_to_ulang_type(*array.item_type));
+        Ulang_type_vec a_genrgs = {0};
+        vec_append(&a_main, &a_genrgs, lang_type_to_ulang_type(*array.item_type));
         Uast_function_call* arr_slice_call = uast_function_call_new(
             index->pos,
             arr_slice_args,
             uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
                 MOD_PATH_RUNTIME,
                 sv("static_array_slice"),
-                gen_args,
+                a_genrgs,
                 SCOPE_TOP_LEVEL,
                 (Attrs) {0}
             ))),
@@ -3730,7 +3730,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             uast_symbol_wrap(uast_symbol_new(POS_BUILTIN, name_new(
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
-                gen_args,
+                a_genrgs,
                 SCOPE_TOP_LEVEL,
                 (Attrs) {0}
             ))),
@@ -4120,7 +4120,7 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
     }
     Lang_type_enum lang_enum = lang_type_enum_const_unwrap(lang_type);
     Name enum_name = lang_enum.atom.str;
-    enum_name.gen_args.info.count = 0;
+    enum_name.a_genrgs.info.count = 0;
         
     return name_is_equal(
         enum_name,
@@ -4153,7 +4153,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         
         if (!try_lang_type_from_ulang_type(
             &yield_type,
-            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.a_genrgs, 0)
         )) {
             return false;
         }
@@ -4163,7 +4163,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
         if (!try_lang_type_from_ulang_type(
             &yield_type,
-            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.a_genrgs, 0)
         )) {
             return false;
         }
@@ -4355,7 +4355,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             return false;
         }
 
-        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.gen_args, 1);
+        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.a_genrgs, 1);
         Lang_type src_error_type = {0};
         if (!try_lang_type_from_ulang_type(&src_error_type, src_uerror_type)) {
             return false;
@@ -4367,7 +4367,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         );
         unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
 
-        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).atom.str.gen_args, 1);
+        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).atom.str.a_genrgs, 1);
         Lang_type dest_error_type = {0};
         if (!try_lang_type_from_ulang_type(&dest_error_type, dest_uerror_type)) {
             return false;

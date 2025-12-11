@@ -22,7 +22,7 @@
 
 static void add_primitives(void) {
     unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
-    vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
+    vec_append(&a_main, &env.a_genrgs_char, ulang_type_new_char());
 }
 
 static void add_builtin_def(Strv name) {

@@ -44,8 +44,8 @@ static Uast_type ir_gen_binary(void) {
 static Uast_type ir_gen_operator(void) {
     Uast_type operator = {.name = uast_name_new("expr", "operator", false, "ir")};
 
-    vec_append(&gen_a, &operator.sub_types, ir_gen_unary());
-    vec_append(&gen_a, &operator.sub_types, ir_gen_binary());
+    vec_append(&a_gen, &operator.sub_types, ir_gen_unary());
+    vec_append(&a_gen, &operator.sub_types, ir_gen_binary());
 
     return operator;
 }
@@ -99,11 +99,11 @@ static Uast_type ir_gen_void(void) {
 static Uast_type ir_gen_literal(void) {
     Uast_type lit = {.name = uast_name_new("expr", "literal", false, "ir")};
 
-    vec_append(&gen_a, &lit.sub_types, ir_gen_int());
-    vec_append(&gen_a, &lit.sub_types, ir_gen_float());
-    vec_append(&gen_a, &lit.sub_types, ir_gen_string());
-    vec_append(&gen_a, &lit.sub_types, ir_gen_void());
-    vec_append(&gen_a, &lit.sub_types, ir_gen_function_name());
+    vec_append(&a_gen, &lit.sub_types, ir_gen_int());
+    vec_append(&a_gen, &lit.sub_types, ir_gen_float());
+    vec_append(&a_gen, &lit.sub_types, ir_gen_string());
+    vec_append(&a_gen, &lit.sub_types, ir_gen_void());
+    vec_append(&a_gen, &lit.sub_types, ir_gen_function_name());
 
     return lit;
 }
@@ -122,9 +122,9 @@ static Uast_type ir_gen_function_call(void) {
 static Uast_type ir_gen_expr(void) {
     Uast_type expr = {.name = uast_name_new("ir", "expr", false, "ir")};
 
-    vec_append(&gen_a, &expr.sub_types, ir_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, ir_gen_literal());
-    vec_append(&gen_a, &expr.sub_types, ir_gen_function_call());
+    vec_append(&a_gen, &expr.sub_types, ir_gen_operator());
+    vec_append(&a_gen, &expr.sub_types, ir_gen_literal());
+    vec_append(&a_gen, &expr.sub_types, ir_gen_function_call());
 
     return expr;
 }
@@ -206,8 +206,8 @@ static Uast_type ir_gen_struct_lit_def(void) {
 static Uast_type ir_gen_literal_def(void) {
     Uast_type def = {.name = uast_name_new("def", "literal_def", false, "ir")};
 
-    vec_append(&gen_a, &def.sub_types, ir_gen_string_def());
-    vec_append(&gen_a, &def.sub_types, ir_gen_struct_lit_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_string_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_struct_lit_def());
 
     return def;
 }
@@ -215,13 +215,13 @@ static Uast_type ir_gen_literal_def(void) {
 static Uast_type ir_gen_def(void) {
     Uast_type def = {.name = uast_name_new("ir", "def", false, "ir")};
 
-    vec_append(&gen_a, &def.sub_types, ir_gen_function_def());
-    vec_append(&gen_a, &def.sub_types, ir_gen_variable_def());
-    vec_append(&gen_a, &def.sub_types, ir_gen_struct_def());
-    vec_append(&gen_a, &def.sub_types, ir_gen_primitive_def());
-    vec_append(&gen_a, &def.sub_types, ir_gen_function_decl());
-    vec_append(&gen_a, &def.sub_types, ir_gen_label());
-    vec_append(&gen_a, &def.sub_types, ir_gen_literal_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_function_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_variable_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_struct_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_primitive_def());
+    vec_append(&a_gen, &def.sub_types, ir_gen_function_decl());
+    vec_append(&a_gen, &def.sub_types, ir_gen_label());
+    vec_append(&a_gen, &def.sub_types, ir_gen_literal_def());
 
     return def;
 }
@@ -237,7 +237,7 @@ static Uast_type ir_gen_load_element_ptr(void) {
     return load;
 }
 
-static Uast_type ir_gen_array_access(void) {
+static Uast_type ir_a_genrray_access(void) {
     Uast_type load = {.name = uast_name_new("ir", "array_access", false, "ir")};
 
     append_member(&load.members, "Ir_lang_type", "lang_type");
@@ -287,7 +287,7 @@ static Uast_type ir_gen_cond_goto(void) {
     return cond_goto;
 }
 
-static Uast_type ir_gen_alloca(void) {
+static Uast_type ir_a_genlloca(void) {
     Uast_type lang_alloca = {.name = uast_name_new("ir", "alloca", false, "ir")};
 
     append_member(&lang_alloca.members, "Ir_lang_type", "lang_type");
@@ -346,26 +346,26 @@ static Uast_type ir_gen_struct_memb_def(void) {
 static Uast_type ir_gen_ir(void) {
     Uast_type ir = {.name = uast_name_new("ir", "", true, "ir")};
 
-    vec_append(&gen_a, &ir.sub_types, ir_gen_block());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_expr());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_load_element_ptr());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_array_access());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_function_params());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_def());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_return());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_goto());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_cond_goto());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_alloca());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_load_another_ir());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_store_another_ir());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_import_path());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_struct_memb_def());
-    vec_append(&gen_a, &ir.sub_types, ir_gen_removed());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_block());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_expr());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_load_element_ptr());
+    vec_append(&a_gen, &ir.sub_types, ir_a_genrray_access());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_function_params());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_def());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_return());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_goto());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_cond_goto());
+    vec_append(&a_gen, &ir.sub_types, ir_a_genlloca());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_load_another_ir());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_store_another_ir());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_import_path());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_struct_memb_def());
+    vec_append(&a_gen, &ir.sub_types, ir_gen_removed());
 
     return ir;
 }
 
-static void gen_all_irs(const char* file_path, bool implementation) {
+static void a_genll_irs(const char* file_path, bool implementation) {
     Uast_type tast = ir_gen_ir();
     unwrap(tast.name.type.count > 0);
     gen_uasts_common(file_path, implementation, tast);

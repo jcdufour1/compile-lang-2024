@@ -106,7 +106,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     }
 
     if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
+        if (temp.a_genrgs.info.count > 0) {
             todo();
         }
     }

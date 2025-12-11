@@ -1191,7 +1191,7 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
         membs,
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}), 0
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_a_genrgs_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}), 0
         )))
     ));
 }

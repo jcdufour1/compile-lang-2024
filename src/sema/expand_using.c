@@ -24,7 +24,7 @@ static void expand_using_using(Uast_using* using) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
         Name lang_type_name = {0};
         name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
-        vec_reset(&lang_type_name.gen_args);
+        vec_reset(&lang_type_name.a_genrgs);
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
         if (struct_def_->type != UAST_STRUCT_DEF) {

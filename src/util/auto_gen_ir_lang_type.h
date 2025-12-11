@@ -47,10 +47,10 @@ static Uast_type ir_lang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Uast_type ir_lang_type = {.name = uast_name_new(prefix, base_name, false, "ir_lang_type")};
 
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_signed_int(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_unsigned_int(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_float(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_opaque(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_signed_int(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_unsigned_int(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_float(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_opaque(base_name));
 
     return ir_lang_type;
 }
@@ -98,11 +98,11 @@ static Uast_type ir_lang_type_gen_ir_lang_type(void) {
     const char* base_name = "ir_lang_type";
     Uast_type ir_lang_type = {.name = uast_name_new(base_name, "", true, "ir_lang_type")};
 
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_primitive(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_struct(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_tuple(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_void(base_name));
-    vec_append(&gen_a, &ir_lang_type.sub_types, ir_lang_type_gen_fn(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_primitive(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_struct(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_tuple(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_void(base_name));
+    vec_append(&a_gen, &ir_lang_type.sub_types, ir_lang_type_gen_fn(base_name));
 
     return ir_lang_type;
 }

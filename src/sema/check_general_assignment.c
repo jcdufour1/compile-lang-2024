@@ -108,7 +108,7 @@ static bool should_convert_src_to_cstr(Lang_type dest, Tast_expr** new_src) {
     return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
         MOD_PATH_RUNTIME,
         sv("Slice"),
-        ulang_type_gen_args_char_new(),
+        ulang_type_a_genrgs_char_new(),
         SCOPE_TOP_LEVEL,
         (Attrs) {0}
     ));
@@ -119,7 +119,7 @@ static bool should_convert_src_to_print_format(Lang_type dest, Tast_expr** new_s
         return false;
     }
     Name dest_name = lang_type_struct_const_unwrap(dest).atom.str;
-    dest_name.gen_args.info.count = 0;
+    dest_name.a_genrgs.info.count = 0;
 
     if (!strv_is_equal(dest_name.mod_path, MOD_PATH_RUNTIME)) {
         return false;
@@ -132,7 +132,7 @@ static bool should_convert_src_to_print_format(Lang_type dest, Tast_expr** new_s
     return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
         MOD_PATH_RUNTIME,
         sv("Slice"),
-        ulang_type_gen_args_char_new(),
+        ulang_type_a_genrgs_char_new(),
         SCOPE_TOP_LEVEL,
         (Attrs) {0}
     ));
@@ -164,7 +164,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     //    switch (check_general_assignment(
     //         &check_env,
     //         &new_rhs,
-    //         gen_arg,
+    //         a_genrg,
     //         rhs,
     //         uast_expr_get_pos(rhs)
     //    )) {
@@ -176,7 +176,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     //                uast_expr_get_pos(rhs),
     //                "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
     //                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-    //                lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
+    //                lang_type_print(LANG_TYPE_MODE_MSG, a_genrg)
     //            );
     //            return false;
     //        case CHECK_ASSIGN_ERROR:
@@ -192,7 +192,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     //for (size_t idx = 0; idx < new_membs.info.count; idx++) {
     //    vec_append(&a_main, &inner_def_membs, tast_variable_def_new(
     //        lit->pos,
-    //        gen_arg,
+    //        a_genrg,
     //        false,
     //        util_literal_name_new()
     //    ));
@@ -210,8 +210,8 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
         lang_type_struct_const_wrap(lang_type_struct_new(pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
 
-    Ulang_type gen_arg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.gen_args, 0);
-    Lang_type unary_lang_type = lang_type_new_print_format_arg(pos, gen_arg);
+    Ulang_type a_genrg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.a_genrgs, 0);
+    Lang_type unary_lang_type = lang_type_new_print_format_arg(pos, a_genrg);
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
 
     Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
@@ -225,7 +225,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
     vec_append(&a_main, &new_slice_membs, ptr);
     vec_append(&a_main, &new_slice_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(pos, (int64_t)new_inner_membs.info.count, lang_type_new_usize(pos)))));
 
-    Lang_type outer_type = lang_type_new_slice(pos, lang_type_to_ulang_type(lang_type_new_print_format_arg(pos, gen_arg)), 0/*TODO*/);
+    Lang_type outer_type = lang_type_new_slice(pos, lang_type_to_ulang_type(lang_type_new_print_format_arg(pos, a_genrg)), 0/*TODO*/);
     Tast_expr_vec new_membs = {0};
     vec_append(&a_main, &new_membs, tast_literal_wrap(tast_string_wrap(tast_string_new(pos, string_to_strv(new_buf), false))));
     vec_append(&a_main, &new_membs, tast_struct_literal_wrap(tast_struct_literal_new(
@@ -251,7 +251,7 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
         pos,
         new_membs,
         new_src_def->base.name,
-        lang_type_new_print_format(pos, gen_arg)
+        lang_type_new_print_format(pos, a_genrg)
     ));
 
     msg_todo("formatting", tast_expr_get_pos(*new_src))

@@ -70,7 +70,7 @@ void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_
     }
 
     if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
+        if (temp.a_genrgs.info.count > 0) {
             todo();
         }
     }
