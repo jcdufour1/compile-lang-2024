@@ -508,7 +508,7 @@ static void gen_uast_vecs(Uast_type uast) {
 static void gen_thing(Uast_type uast) {
     Strv sym_text = {0};
     if (strv_is_equal(uast.name.type, sv("uast"))) {
-        gen_gen("void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {\n");
+        gen_gen("static void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
         gen_gen("        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
@@ -519,7 +519,7 @@ static void gen_thing(Uast_type uast) {
 
         sym_text = sv("usymbol");
     } else if (strv_is_equal(uast.name.type, sv("tast"))) {
-        gen_gen("void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {\n");
+        gen_gen("static void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
         gen_gen("        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
@@ -530,7 +530,7 @@ static void gen_thing(Uast_type uast) {
 
         sym_text = sv("symbol");
     } else if (strv_is_equal(uast.name.type, sv("ir"))) {
-        gen_gen("void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {\n");
+        gen_gen("static void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
         gen_gen("        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");

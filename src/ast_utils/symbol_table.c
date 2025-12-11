@@ -439,11 +439,11 @@ bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* item) {
     Ir_name name = ir_get_name(item);
-    return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
+    return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->ir_table, item);
 }
 
 void* ir_get_tbl_from_collection(Symbol_collection* collection) {
-    return &collection->alloca_table;
+    return &collection->ir_table;
 }
 
 bool ir_add(Ir* item) {
@@ -779,15 +779,6 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 //
 // not generic
 //
-
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, indent));
-        }
-    }
-}
 
 void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {

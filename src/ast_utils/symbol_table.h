@@ -13,8 +13,6 @@
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
 
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent);
-
 void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, Indent indent, const char* file_path, int line);
 
 #define usymbol_log_table(log_level, sym_table) \
@@ -40,7 +38,6 @@ bool usymbol_add(Uast_def* tast_of_symbol);
 
 void usymbol_update(Uast_def* tast_of_symbol);
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent);
 void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Indent indent, const char* file_path, int line);
 
 #define symbol_log_table(log_level, sym_table) \
@@ -66,7 +63,6 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent);
 void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
