@@ -3755,10 +3755,11 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         return true;
     }
 
-    msg_todo(
-        "actual error message for this situation "
-        "(note: it is possible that `[` and `]` were used on a type that does not support it)",
-        index->pos
+    msg(
+        DIAG_INVALID_INDEX_CALLEE,
+        index->pos,
+        "type `"FMT"` is not a valid callee to `[`\n",
+        lang_type_print(LANG_TYPE_MODE_MSG, callee_lang_type)
     );
     return false;
 }

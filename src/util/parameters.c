@@ -292,7 +292,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 110, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 111, "exhaustive handling of expected fail types");
 // TODO: use ".str = ", etc.? for readability?
 static const Expect_fail_pair expect_fail_pair[] = {
     {"info", DIAG_INFO, LOG_INFO, false, false},
@@ -405,6 +405,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"assignment-used-as-expression", DIAG_ASSIGNMENT_USED_AS_EXPRESSION, LOG_ERROR, true, false},
     {"if-let-invalid_syntax", DIAG_IF_LET_INVALID_SYNTAX, LOG_ERROR, true, false},
     {"static-array-count-not-infered", DIAG_STATIC_ARRAY_COUNT_NOT_INFERED, LOG_ERROR, true, false},
+    {"invalid-index-callee", DIAG_INVALID_INDEX_CALLEE, LOG_ERROR, true, false},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
