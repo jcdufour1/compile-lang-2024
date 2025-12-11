@@ -79,7 +79,7 @@ static void extend_strv_first_upper(String* output, Strv name) {
     if (name.count < 1) {
         return;
     }
-    vec_append(&gen_a, output, toupper(strv_front(name)));
+    vec_append(&gen_a, output, toupper(strv_first(name)));
     for (size_t idx = 1; idx < name.count; idx++) {
         vec_append(&gen_a, output, tolower(strv_at(name, idx)));
     }

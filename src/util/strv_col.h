@@ -27,7 +27,7 @@ static inline void strv_col_advance_pos(Pos* pos, char ch) {
 }
 
 static inline char strv_col_front(Strv_col strv) {
-    return strv_front(strv.base);
+    return strv_first(strv.base);
 }
 
 static inline char strv_col_consume(Pos* pos, Strv_col* strv) {

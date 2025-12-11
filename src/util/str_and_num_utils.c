@@ -221,7 +221,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             );
             return false;
         }
-        *result = strv_front(strv);
+        *result = strv_first(strv);
         return true;
     }
 

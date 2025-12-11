@@ -33,7 +33,7 @@ static void show_location_error(Pos pos) {
         size_t count_prev = 0;
         {
             Strv temp_file_text = file_con;
-            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+            while (file_con.count > 0 && strv_first(temp_file_text) != '\n') {
                 count_prev++;
                 strv_consume(&temp_file_text);
             }
@@ -48,7 +48,7 @@ static void show_location_error(Pos pos) {
     size_t count_curr = 0;
     {
         Strv temp_file_text = file_con;
-        while (temp_file_text.count > 0 && strv_front(temp_file_text) != '\n') {
+        while (temp_file_text.count > 0 && strv_first(temp_file_text) != '\n') {
             count_curr++;
             strv_consume(&temp_file_text);
         }
@@ -67,7 +67,7 @@ static void show_location_error(Pos pos) {
         size_t count_next = 0;
         {
             Strv temp_file_text = file_con;
-            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+            while (file_con.count > 0 && strv_first(temp_file_text) != '\n') {
                 count_next++;
                 strv_consume(&temp_file_text);
             }

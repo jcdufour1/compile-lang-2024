@@ -141,7 +141,6 @@ for generics:
 - make recursion depth O(1) for importing n modules deep
 - use _Generic to make printing more concise?
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
-- rename newstring.h to local_string.h
 - add prefix to symbols when emitting backend IR (start with underscore and uppercase letter, etc.) to prevent collisions
 - positional args (regular args) after designated args) should print error or actually work property
     (and test case should be implemented)
