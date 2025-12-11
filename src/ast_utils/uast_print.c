@@ -241,7 +241,7 @@ Strv uast_block_print_internal(const Uast_block* block, Indent indent) {
     symbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-    alloca_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
+    ir_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Strv arg_text = uast_stmt_print_internal(vec_at(block->children, idx), indent + INDENT_WIDTH);

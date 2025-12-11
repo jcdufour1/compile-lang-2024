@@ -20,7 +20,7 @@ void symbol_table_clone(Scope_id old_scope, Scope_id new_scope) {
 
 void alloca_table_clone(Scope_id old_scope, Scope_id new_scope) {
     (void) new_scope;
-    unwrap(vec_at_ref(&env.symbol_tables, old_scope)->alloca_table.count == 0 && "not implemented; possibly should never be");
+    unwrap(vec_at_ref(&env.symbol_tables, old_scope)->ir_table.count == 0 && "not implemented; possibly should never be");
 }
 
 

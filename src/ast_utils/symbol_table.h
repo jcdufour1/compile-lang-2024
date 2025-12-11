@@ -66,8 +66,8 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent);
-void alloca_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
+void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent);
+void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
     do { \

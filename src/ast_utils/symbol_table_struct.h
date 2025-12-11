@@ -236,7 +236,7 @@ typedef struct {
 typedef struct {
     Usymbol_table usymbol_table;
     Symbol_table symbol_table;
-    Ir_table alloca_table;
+    Ir_table ir_table;
     Expand_again_table expand_again_table;
 } Symbol_collection;
 

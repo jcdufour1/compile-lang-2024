@@ -800,24 +800,6 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, Indent 
     }
 }
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, indent));
-        }
-    }
-}
-
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, indent));
-        }
-    }
-}
-
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = env.symbol_tables.info.count;
     vec_append(&a_main, &env.symbol_tables, (Symbol_collection) {0});

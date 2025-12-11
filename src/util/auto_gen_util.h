@@ -66,7 +66,7 @@ static void gen_gen_internal(FILE* output, const char* file, int line, const cha
     va_list args;
     va_start(args, format);
 
-    fprintf(output, "\n\n/* %s:%d: */\n", file, line);
+    fprintf(output, "\n/* %s:%d: */\n", file, line);
     vfprintf(output, format, args);
 
     va_end(args);
