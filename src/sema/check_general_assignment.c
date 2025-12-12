@@ -105,7 +105,7 @@ static bool should_convert_src_to_cstr(Lang_type dest, Tast_expr** new_src) {
     if (src_type.type != LANG_TYPE_STRUCT) {
         return false;
     }
-    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).name, name_new(
         MOD_PATH_RUNTIME,
         sv("Slice"),
         ulang_type_a_genrgs_char_new(),
@@ -118,7 +118,7 @@ static bool should_convert_src_to_print_format(Lang_type dest, Tast_expr** new_s
     if (dest.type != LANG_TYPE_STRUCT) {
         return false;
     }
-    Name dest_name = lang_type_struct_const_unwrap(dest).atom.str;
+    Name dest_name = lang_type_struct_const_unwrap(dest).name;
     dest_name.a_genrgs.info.count = 0;
 
     if (!strv_is_equal(dest_name.mod_path, MOD_PATH_RUNTIME)) {
@@ -129,7 +129,7 @@ static bool should_convert_src_to_print_format(Lang_type dest, Tast_expr** new_s
     }
 
     Lang_type src_type = tast_expr_get_lang_type(*new_src);
-    return name_is_equal(lang_type_struct_const_unwrap(src_type).atom.str, name_new(
+    return name_is_equal(lang_type_struct_const_unwrap(src_type).name, name_new(
         MOD_PATH_RUNTIME,
         sv("Slice"),
         ulang_type_a_genrgs_char_new(),
@@ -207,10 +207,10 @@ static bool do_src_to_print_format_conversions(Tast_expr** new_src, Tast_expr* s
         pos,
         new_inner_membs,
         util_literal_name_new(),
-        lang_type_struct_const_wrap(lang_type_struct_new(pos, lang_type_atom_new(inner_def->base.name, 0)))
+        lang_type_struct_const_wrap(lang_type_struct_new(pos, inner_def->base.name, 0))
     );
 
-    Ulang_type a_genrg = vec_at(lang_type_struct_const_unwrap(dest).atom.str.a_genrgs, 0);
+    Ulang_type a_genrg = vec_at(lang_type_struct_const_unwrap(dest).name.a_genrgs, 0);
     Lang_type unary_lang_type = lang_type_new_print_format_arg(pos, a_genrg);
     lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
 

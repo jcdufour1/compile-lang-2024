@@ -547,7 +547,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
     };
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     sym_tbl_add(tast_struct_def_wrap(struct_def));
-    return lang_type_struct_new(lang_type_pos, lang_type_atom_new(base.name, 0));
+    return lang_type_struct_new(lang_type_pos, base.name, 0);
 }
 
 // note: will not clone everything
@@ -590,7 +590,7 @@ static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_ve
 
 static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type_pos) {
     Tast_def* lang_type_def_ = NULL; 
-    unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
+    unwrap(symbol_lookup(&lang_type_def_, lang_type.name));
     Tast_variable_def_vec members = {0};
 
     Lang_type tag_lang_type = lang_type_new_usize(lang_type_pos);
@@ -613,7 +613,8 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
         lang_type_pos,
         lang_type_raw_union_const_wrap(lang_type_raw_union_new(
             item_type_def->pos,
-            lang_type_atom_new(item_type_def->base.name, 0)
+            item_type_def->base.name,
+            0
         )),
         false,
         util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_item"))

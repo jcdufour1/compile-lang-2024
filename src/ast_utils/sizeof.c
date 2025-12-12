@@ -54,25 +54,24 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                return false;
+            }
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case LANG_TYPE_ARRAY: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
+            todo();
+            //Tast_def* def = NULL;
+            //unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            //return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
@@ -95,25 +94,24 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE:
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                return false;
+            }
+            unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
         }
         case LANG_TYPE_ARRAY: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
+            todo();
+            //Tast_def* def = NULL;
+            //unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            //return alignof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
@@ -201,9 +199,10 @@ uint64_t alignof_def(const Tast_def* def) {
 }
 
 uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
-    Tast_def* def_ = NULL;
-    unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
-    return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
+    todo();
+    //Tast_def* def_ = NULL;
+    //unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
+    //return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {

@@ -225,12 +225,12 @@ static void gen_ulang_type_set_ptr_depth_common(Uast_type ulang_type, Strv op_st
         string_extend_cstr(&a_gen, &function, "    unreachable(\"\");\n");
     } else {
         // TODO: if Lang_type_atom is not removed, put static assert system here
-        if (
+        if (!strv_is_equal(ulang_type.name.type, sv("lang_type")) && (
             strv_is_equal(ulang_type.name.base, sv("regular")) || 
             strv_is_equal(ulang_type.name.base, sv("struct")) || 
             strv_is_equal(ulang_type.name.base, sv("raw_union")) || 
             strv_is_equal(ulang_type.name.base, sv("enum"))
-        ) {
+        )) { 
             if (is_get) {
                 string_extend_f(&a_gen, &function, "return ulang_type.atom.pointer_depth;;\n");
             } else {

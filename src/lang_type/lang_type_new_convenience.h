@@ -33,10 +33,17 @@ static inline Lang_type lang_type_new_void(Pos pos) {
 static inline Lang_type lang_type_new_slice(Pos pos, Ulang_type item_type, int16_t pointer_depth) {
     Ulang_type_vec a_genrgs = {0};
     vec_append(&a_main, &a_genrgs, item_type);
-    return lang_type_struct_const_wrap(lang_type_struct_new(pos, lang_type_atom_new(
-        name_new(MOD_PATH_RUNTIME, sv("Slice"), a_genrgs, SCOPE_TOP_LEVEL, (Attrs) {0}),
+    return lang_type_struct_const_wrap(lang_type_struct_new(
+        pos,
+        name_new(
+            MOD_PATH_RUNTIME,
+            sv("Slice"),
+            a_genrgs,
+            SCOPE_TOP_LEVEL,
+            (Attrs) {0}
+        ),
         pointer_depth
-    )));
+    ));
 }
 
 static inline Lang_type lang_type_new_print_format(Pos pos, Ulang_type a_genrg) {
@@ -44,16 +51,14 @@ static inline Lang_type lang_type_new_print_format(Pos pos, Ulang_type a_genrg) 
     vec_append(&a_main, &a_genrgs, a_genrg);
     return lang_type_struct_const_wrap(lang_type_struct_new(
         pos,
-        lang_type_atom_new(
-            name_new(
-                MOD_PATH_RUNTIME,
-                sv("PrintFormat"),
-                a_genrgs,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
-            ),
-            0
-        )
+        name_new(
+            MOD_PATH_RUNTIME,
+            sv("PrintFormat"),
+            a_genrgs,
+            SCOPE_TOP_LEVEL,
+            (Attrs) {0}
+        ),
+        0
     ));
 }
 
@@ -62,16 +67,14 @@ static inline Lang_type lang_type_new_print_format_arg(Pos pos, Ulang_type a_gen
     vec_append(&a_main, &a_genrgs, a_genrg);
     return lang_type_struct_const_wrap(lang_type_struct_new(
         pos,
-        lang_type_atom_new(
-            name_new(
-                MOD_PATH_RUNTIME,
-                sv("PrintFormatArg"),
-                a_genrgs,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
-            ),
-            0
-        )
+        name_new(
+            MOD_PATH_RUNTIME,
+            sv("PrintFormatArg"),
+            a_genrgs,
+            SCOPE_TOP_LEVEL,
+            (Attrs) {0}
+        ),
+        0
     ));
 }
 
@@ -80,16 +83,14 @@ static inline Lang_type lang_type_new_optional(Pos pos, Ulang_type inner_type) {
     vec_append(&a_main, &a_genrgs, inner_type);
     return lang_type_struct_const_wrap(lang_type_struct_new(
         pos,
-        lang_type_atom_new(
-            name_new(
-                MOD_PATH_RUNTIME,
-                sv("Optional"),
-                a_genrgs,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
-            ),
-            0
-        )
+        name_new(
+            MOD_PATH_RUNTIME,
+            sv("Optional"),
+            a_genrgs,
+            SCOPE_TOP_LEVEL,
+            (Attrs) {0}
+        ),
+        0
     ));
 }
 

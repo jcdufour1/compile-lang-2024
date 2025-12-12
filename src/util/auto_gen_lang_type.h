@@ -153,7 +153,8 @@ static Uast_type lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -162,7 +163,8 @@ static Uast_type lang_type_gen_raw_union(const char* prefix) {
     const char* base_name = "raw_union";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -171,7 +173,8 @@ static Uast_type lang_type_gen_enum(const char* prefix) {
     const char* base_name = "enum";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

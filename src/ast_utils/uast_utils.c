@@ -185,17 +185,18 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
 Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_idx) {
     String buf = {0};
 
-    Uast_def* enum_def_ = NULL;
-    unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_def_lang_type)));
-    Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
+    //Uast_def* enum_def_ = NULL;
+    todo();
+    //unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_def_lang_type)));
+    //Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;
 
-    string_extend_f(
-        &a_temp,
-        &buf,
-        FMT"."FMT,
-        strv_print(lang_type_print_internal(LANG_TYPE_MODE_MSG, enum_def_lang_type)),
-        strv_print(name_print_internal(NAME_MSG, false, vec_at(enum_def.members, memb_idx)->name))
-    );
+    //string_extend_f(
+    //    &a_temp,
+    //    &buf,
+    //    FMT"."FMT,
+    //    strv_print(lang_type_print_internal(LANG_TYPE_MODE_MSG, enum_def_lang_type)),
+    //    strv_print(name_print_internal(NAME_MSG, false, vec_at(enum_def.members, memb_idx)->name))
+    //);
 
     return string_to_strv(buf);
 }

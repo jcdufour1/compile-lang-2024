@@ -75,43 +75,6 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
     return string_to_strv(buf);
 }
 
-void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
-    Name temp = atom.str;
-
-    if (atom.str.base.count > 1) {
-        switch (mode) {
-            case LANG_TYPE_MODE_LOG:
-                extend_name(NAME_LOG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_MSG:
-                extend_name(NAME_MSG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_C:
-                extend_name(NAME_EMIT_C, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_name(NAME_EMIT_IR, string, atom.str);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        unreachable("");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_temp, string, '*');
-    }
-
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.a_genrgs.info.count > 0) {
-            todo();
-        }
-    }
-}
-
 Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     String buf = {0};
     extend_lang_type_to_string(&buf, mode, lang_type);
@@ -128,12 +91,6 @@ Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
         default:
             unreachable("");
     }
-    return string_to_strv(buf);
-}
-
-Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
-    String buf = {0};
-    extend_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
 }
 
@@ -230,18 +187,20 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             //   be used everywhere
             fallthrough;
         case LANG_TYPE_VOID: {
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            goto end;
+            todo();
+            //Lang_type_atom atom = {0};
+            //unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
+            //extend_lang_type_atom(string, mode, atom);
+            //goto end;
         }
         case LANG_TYPE_PRIMITIVE: {
-            Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            unwrap(base.count >= 1);
-            goto end;
+            todo();
+            //Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
+            //Lang_type_atom atom = {0};
+            //unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
+            //extend_lang_type_atom(string, mode, atom);
+            //unwrap(base.count >= 1);
+            //goto end;
         }
         case LANG_TYPE_REMOVED:
             goto end;

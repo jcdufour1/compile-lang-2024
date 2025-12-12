@@ -282,16 +282,18 @@ bool usymbol_add(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    }
+    // TODO: factor these nested if-else checks (for is primitive type) into seperate function?
+    todo();
+    //if (lang_type_name_is_signed(lang_type_name_new(prim_key, 0))) {
+    //    msg_todo("", uast_def_get_pos(item));
+    //    return false;
+    //} else if (lang_type_name_is_unsigned(lang_type_name_new(prim_key, 0))) {
+    //    msg_todo("", uast_def_get_pos(item));
+    //    return false;
+    //} else if (lang_type_name_is_float(lang_type_name_new(prim_key, 0))) {
+    //    msg_todo("", uast_def_get_pos(item));
+    //    return false;
+    //}
 #endif // NDEBUG
 
     assert(item);
@@ -361,7 +363,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     Name prim_key = key;
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+    if (lang_type_name_is_signed(prim_key)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -372,7 +374,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_is_unsigned(prim_key)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -383,7 +385,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_is_float(prim_key)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -466,13 +468,13 @@ void usymbol_update(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+    if (lang_type_name_is_signed(prim_key)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_is_unsigned(prim_key)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_is_float(prim_key)) {
         msg_todo("", uast_def_get_pos(item));
         return;
     }

@@ -10,6 +10,7 @@ Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .a_genrgs = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
 }
 
+// TODO: replace genrgs in src with gen_args
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id, Attrs attrs) {
     return (Name) {.mod_path = mod_path, .base = base, .a_genrgs = a_genrgs, .scope_id = scope_id, .attrs = attrs};
 }
@@ -37,11 +38,11 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec a_genr
 }
 
 Uname name_to_uname(Name name) {
-    if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
+    if (lang_type_name_is_signed(name), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
+    } else if (lang_type_name_is_unsigned(name), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
-    } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
+    } else if (lang_type_name_is_float(name), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
     }
 
