@@ -633,10 +633,6 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
     return rm_tuple_lang_type(tast_struct_def_get_lang_type(struct_def), lang_type_pos);
 }
 
-static Ir_lang_type_atom rm_tuple_lang_type_atom(Lang_type_atom atom) {
-    return ir_lang_type_atom_new(name_to_ir_name(atom.str), atom.pointer_depth);
-}
-
 static Ir_lang_type_primitive rm_tuple_lang_type_primitive(Lang_type_primitive lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SIGNED_INT: {
@@ -699,7 +695,9 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
-            unwrap(symbol_lookup(&lang_type_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(symbol_lookup(&lang_type_def_, name));
 
             sym_tbl_add(lang_type_def_);
 
@@ -707,13 +705,9 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             Tast_def* new_def = NULL;
             unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
-            Lang_type_atom atom = {0};
-            if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, lang_type)) {
-                return ir_lang_type_void_const_wrap(ir_lang_type_void_new(lang_type_pos, 0));
-            }
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(atom)
+                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_raw_union_const_unwrap(lang_type).pointer_depth)
             ));
         }
         case LANG_TYPE_TUPLE:
@@ -721,9 +715,11 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_PRIMITIVE:
             return ir_lang_type_primitive_const_wrap(rm_tuple_lang_type_primitive(lang_type_primitive_const_unwrap(lang_type), lang_type_pos));
         case LANG_TYPE_STRUCT: {
+            Name name = {0};
+            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                rm_tuple_lang_type_atom(lang_type_struct_const_unwrap(lang_type).atom)
+                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_raw_union_const_unwrap(lang_type).pointer_depth)
             ));
         }
         case LANG_TYPE_ARRAY: {
@@ -1191,9 +1187,11 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
         old_lit->pos,
         membs,
         util_literal_name_new(),
-        lang_type_struct_const_wrap(lang_type_struct_new(old_lit->pos, lang_type_atom_new(
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_a_genrgs_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}), 0
-        )))
+        lang_type_struct_const_wrap(lang_type_struct_new(
+            old_lit->pos, 
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_a_genrgs_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+            0
+        ))
     ));
 }
 
@@ -1247,38 +1245,39 @@ static Ir_name load_function_lit(Tast_function_lit* old_lit) {
 }
 
 static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
-    Tast_def* enum_def_ = NULL;
-    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)));
-    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
-    
-    size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
-    if (vec_at(enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
-        // inner lang_type is always void for this enum, so we will just use number instead of tagged enum
-        return load_enum_tag_lit(old_lit->tag);
-    }
+    //Tast_def* enum_def_ = NULL;
+    todo();
+    //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)));
+    //Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
+    //
+    //size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
+    //if (vec_at(enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+    //    // inner lang_type is always void for this enum, so we will just use number instead of tagged enum
+    //    return load_enum_tag_lit(old_lit->tag);
+    //}
 
-    Lang_type new_lang_type = old_lit->enum_lang_type;
+    //Lang_type new_lang_type = old_lit->enum_lang_type;
 
-    Tast_raw_union_def* item_def = get_raw_union_def_from_enum_def(enum_def);
+    //Tast_raw_union_def* item_def = get_raw_union_def_from_enum_def(enum_def);
 
-    Tast_expr_vec members = {0};
-    vec_append(&a_main, &members, tast_literal_wrap(tast_enum_tag_lit_wrap(old_lit->tag)));
-    vec_append(&a_main, &members, tast_literal_wrap(tast_raw_union_lit_wrap(
-        tast_raw_union_lit_new(
-            old_lit->pos,
-            old_lit->tag,
-            tast_raw_union_def_get_lang_type(item_def),
-            old_lit->item
-        )
-    )));
+    //Tast_expr_vec members = {0};
+    //vec_append(&a_main, &members, tast_literal_wrap(tast_enum_tag_lit_wrap(old_lit->tag)));
+    //vec_append(&a_main, &members, tast_literal_wrap(tast_raw_union_lit_wrap(
+    //    tast_raw_union_lit_new(
+    //        old_lit->pos,
+    //        old_lit->tag,
+    //        tast_raw_union_def_get_lang_type(item_def),
+    //        old_lit->item
+    //    )
+    //)));
 
-    // this is an actual tagged enum
-    return load_struct_literal(new_block, tast_struct_literal_new(
-        old_lit->pos,
-        members,
-        util_literal_name_new(),
-        new_lang_type
-    ));
+    //// this is an actual tagged enum
+    //return load_struct_literal(new_block, tast_struct_literal_new(
+    //    old_lit->pos,
+    //    members,
+    //    util_literal_name_new(),
+    //    new_lang_type
+    //));
 }
 
 static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
@@ -1742,27 +1741,28 @@ static Ir_name load_index(Ir_block* new_block, Tast_index* old_index) {
 
 static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access) {
     Tast_def* enum_def_ = NULL;
-    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
-    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
-    Ir_name new_enum = load_ptr_expr(new_block, old_access->callee);
-    
-    size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
-    if (vec_at(enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
-        // all enum inner types are void; new_enum will actually just be a number
-        return new_enum;
-    }
+    todo();
+    //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
+    //Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
+    //Ir_name new_enum = load_ptr_expr(new_block, old_access->callee);
+    //
+    //size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
+    //if (vec_at(enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+    //    // all enum inner types are void; new_enum will actually just be a number
+    //    return new_enum;
+    //}
 
-    Ir_load_element_ptr* new_tag = ir_load_element_ptr_new(
-        old_access->pos,
-        rm_tuple_lang_type(lang_type_new_usize(old_access->pos), old_access->pos),
-        0,
-        new_enum,
-        util_literal_ir_name_new()
-    );
-    unwrap(ir_add(ir_load_element_ptr_wrap(new_tag)));
-    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_tag));
+    //Ir_load_element_ptr* new_tag = ir_load_element_ptr_new(
+    //    old_access->pos,
+    //    rm_tuple_lang_type(lang_type_new_usize(old_access->pos), old_access->pos),
+    //    0,
+    //    new_enum,
+    //    util_literal_ir_name_new()
+    //);
+    //unwrap(ir_add(ir_load_element_ptr_wrap(new_tag)));
+    //vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_tag));
 
-    return new_tag->name_self;
+    //return new_tag->name_self;
 }
 
 static Ir_name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access) {
@@ -1780,32 +1780,33 @@ static Ir_name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_acc
 
 static Ir_name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_access) {
     Tast_def* enum_def_ = NULL;
-    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
-    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
-    Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
-    Tast_raw_union_def* union_def = get_raw_union_def_from_enum_def(enum_def);
-    
-    Ir_load_element_ptr* new_union = ir_load_element_ptr_new(
-        old_access->pos,
-        ir_lang_type_pointer_depth_inc(rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos)),
-        1,
-        new_callee,
-        util_literal_ir_name_new()
-    );
-    unwrap(ir_add(ir_load_element_ptr_wrap(new_union)));
-    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_union));
+    todo();
+    //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
+    //Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
+    //Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
+    //Tast_raw_union_def* union_def = get_raw_union_def_from_enum_def(enum_def);
+    //
+    //Ir_load_element_ptr* new_union = ir_load_element_ptr_new(
+    //    old_access->pos,
+    //    ir_lang_type_pointer_depth_inc(rm_tuple_lang_type(tast_raw_union_def_get_lang_type(union_def), union_def->pos)),
+    //    1,
+    //    new_callee,
+    //    util_literal_ir_name_new()
+    //);
+    //unwrap(ir_add(ir_load_element_ptr_wrap(new_union)));
+    //vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_union));
 
-    Ir_load_element_ptr* new_item = ir_load_element_ptr_new(
-        old_access->pos,
-        rm_tuple_lang_type(old_access->lang_type, old_access->pos),
-        0,
-        new_union->name_self,
-        util_literal_ir_name_new()
-    );
-    unwrap(ir_add(ir_load_element_ptr_wrap(new_item)));
-    vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_item));
+    //Ir_load_element_ptr* new_item = ir_load_element_ptr_new(
+    //    old_access->pos,
+    //    rm_tuple_lang_type(old_access->lang_type, old_access->pos),
+    //    0,
+    //    new_union->name_self,
+    //    util_literal_ir_name_new()
+    //);
+    //unwrap(ir_add(ir_load_element_ptr_wrap(new_item)));
+    //vec_append(&a_main, &new_block->children, ir_load_element_ptr_wrap(new_item));
 
-    return new_item->name_self;
+    //return new_item->name_self;
 }
 
 static Ir_name load_enum_access(Ir_block* new_block, Tast_enum_access* old_access) {
