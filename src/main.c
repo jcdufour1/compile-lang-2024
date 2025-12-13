@@ -85,6 +85,7 @@ static void add_builtin_defs(void) {
         arena_reset(&a_pass);\
     } while (0)
 
+// TODO: make this static?
 void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
@@ -93,16 +94,18 @@ void compile_file_to_ir(void) {
 
     symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
-    add_primitives();
-    add_builtin_defs();
-
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
         SCOPE_TOP_LEVEL
     );
+
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+
+    add_primitives();
+    add_builtin_defs();
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level, stderr);

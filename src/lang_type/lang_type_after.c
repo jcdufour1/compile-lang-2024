@@ -1,12 +1,45 @@
 #include <lang_type_after.h>
 #include <lang_type_print.h>
 
+Name lang_type_primitive_get_name(const Lang_type_primitive lang_type) {
+    Strv new_base = {0};
+    switch (lang_type.type) {
+        case LANG_TYPE_SIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            new_base = strv_from_f(&a_main, "i%"PRIu32, lang_type_signed_int_const_unwrap(lang_type).bit_width);
+            break;
+        }
+        case LANG_TYPE_FLOAT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            new_base = strv_from_f(&a_main, "f%"PRIu32, lang_type_float_const_unwrap(lang_type).bit_width);
+            break;
+        }
+        case LANG_TYPE_UNSIGNED_INT:
+            // TODO: use hashtable, etc. to reduce allocations
+            new_base = strv_from_f(&a_main, "u%"PRIu32, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
+            break;
+        case LANG_TYPE_OPAQUE: {
+            new_base = sv("opaque");
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
+    assert(new_base.count > 0);
+    Name new_name = name_new(MOD_PATH_BUILTIN, new_base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    assert(!strv_is_equal(new_name.base, sv("void")));
+    assert(new_name.base.count > 0);
+    return new_name;
+}
+
 bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) {
     (void) mode;
 
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
-            return false;
+            *result = lang_type_primitive_get_name(lang_type_primitive_const_unwrap(lang_type));
+            return true;
         case LANG_TYPE_STRUCT:
             *result = lang_type_struct_const_unwrap(lang_type).name;
             return true;
@@ -19,7 +52,8 @@ bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) 
         case LANG_TYPE_TUPLE:
             todo();
         case LANG_TYPE_VOID:
-            todo();
+            *result = name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return true;
         case LANG_TYPE_FN:
             todo();
         case LANG_TYPE_ARRAY:

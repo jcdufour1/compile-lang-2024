@@ -223,15 +223,16 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             fallthrough;
         case LANG_TYPE_RAW_UNION:
             fallthrough;
-        case LANG_TYPE_ENUM:
-            todo();
-            //return ulang_type_regular_const_wrap(ulang_type_regular_new(
-            //    lang_type_get_pos(lang_type),
-            //    ulang_type_atom_new(
-            //        name_to_uname(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)),
-            //        lang_type_get_pointer_depth(lang_type)
-            //    )
-            //));
+        case LANG_TYPE_ENUM: {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                todo();
+            }
+            return ulang_type_regular_const_wrap(ulang_type_regular_new(
+                lang_type_get_pos(lang_type),
+                ulang_type_atom_new(name_to_uname(name), lang_type_get_pointer_depth(lang_type))
+            ));
+        }
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
             Ulang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));

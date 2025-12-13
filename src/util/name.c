@@ -49,7 +49,10 @@ Uname name_to_uname(Name name) {
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 #   ifndef NDEBUG
         Uast_def* dummy = NULL;
-        unwrap(usymbol_lookup(&dummy, alias_name));
+        if (!usymbol_lookup(&dummy, alias_name)) {
+            log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
+            unreachable("");
+        }
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.a_genrgs, name.scope_id);
@@ -69,7 +72,7 @@ Name ir_name_to_name(Ir_name name) {
     return result->name_regular;
 }
 
-// TODO: Attrs should be stored in hash tables instead if in Name and Ir_name?
+// TODO: Attrs should be stored in hash tables instead of in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
@@ -83,6 +86,7 @@ Ir_name name_to_ir_name(Name name) {
     }
 
     if (name.scope_id == SCOPE_TOP_LEVEL) {
+        // TODO: remove if statement below
         if (strv_is_equal(name.base, sv("num"))) {
             todo();
         }
@@ -117,7 +121,8 @@ Ir_name name_to_ir_name(Name name) {
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
-    return uname_normalize(uname_new_internal(mod_alias, base, a_genrgs, scope_id));
+    //return uname_normalize(uname_new_internal(mod_alias, base, a_genrgs, scope_id));
+    return uname_new_internal(mod_alias, base, a_genrgs, scope_id);
 }
 
 void extend_name_ir(String* buf, Name name) {
