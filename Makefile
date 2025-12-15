@@ -48,7 +48,7 @@ ifeq ($(DEBUG), 1)
 	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_COMMON}
-	C_FLAGS += -DNDEBUG -O2 # -flto 
+	C_FLAGS += -DNDEBUG -O2 -pg # -flto 
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
@@ -117,7 +117,7 @@ DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level=VERBOSE
+ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level VERBOSE
 
 all: build
 

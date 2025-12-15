@@ -131,9 +131,6 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
             for (size_t idx = 0; idx < ((Generic_symbol_table*)sym_table)->capacity; idx++) {
                 Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[idx];
                 size_t dummy = {0};
-                if (strv_contains(&dummy, query, sv("Slice"))) {
-                    todo();
-                }
                 assert(!strv_is_equal(curr_tast->key, query));
             }
 
