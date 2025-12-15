@@ -11,9 +11,9 @@
 #include <sys/wait.h>
 #include <msg.h>
 #include <errno.h>
-#include <msg_todo.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <file.h>
+#include <ast_msg.h>
 
 Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
     String cmd_str = {0};
@@ -29,8 +29,6 @@ Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
 
 // returns return code
 int subprocess_call(Strv_vec cmd) {
-    Arena a_temp = {0};
-
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
@@ -58,7 +56,6 @@ int subprocess_call(Strv_vec cmd) {
     wait(&wstatus);
 
     if (WIFEXITED(wstatus)) {
-        arena_free(&a_temp);
         return WEXITSTATUS(wstatus);
     } else if (WIFSIGNALED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was killed by signal %d\n", WTERMSIG(wstatus));

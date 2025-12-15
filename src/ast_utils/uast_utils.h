@@ -9,6 +9,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
 #include <uast_clone.h>
+#include <ast_msg.h>
 
 // TODO: figure out where to put these things
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
@@ -75,12 +76,23 @@ static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang
     unreachable("");
 }
 
+static inline Name uast_primitive_def_get_name(const Uast_primitive_def* def) {
+    // TODO: store Lang_type_primitive in Uast_prmitive_def instead of Lang_type?
+    if (def->lang_type.type != LANG_TYPE_PRIMITIVE) {
+        msg_todo("", def->pos);
+        return util_literal_name_new_poison();
+    }
+    Lang_type_primitive lang_type = lang_type_primitive_const_unwrap(def->lang_type);
+
+    return lang_type_primitive_get_name(lang_type);
+}
+
 static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_const_unwrap(def)->lang_type);
+            return uast_primitive_def_get_name(uast_primitive_def_const_unwrap(def));
         case UAST_VOID_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)));
+            return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:

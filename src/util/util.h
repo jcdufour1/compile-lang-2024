@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <strv_struct.h>
 #include <diag_type.h>
+#include <assert.h>
 
 typedef enum {
     LOG_NEVER = 0,
@@ -20,6 +21,9 @@ typedef enum {
     LOG_WARNING,
     LOG_ERROR,
     LOG_FATAL,
+
+    // for static asserts
+    LOG_COUNT,
 } LOG_LEVEL;
 
 #ifndef MIN_LOG_LEVEL
@@ -29,7 +33,7 @@ typedef enum {
 typedef enum {
     EXIT_CODE_SUCCESS = 0,
     EXIT_CODE_FAIL,
-    EXIT_CODE_EXPECTED_FAIL,
+    EXIT_CODE_EXPECTED_FAIL, // TODO: remove EXIT_CODE_EXPECTED_FAIL
 } EXIT_CODE;
 
 typedef uint32_t Indent;
@@ -67,10 +71,14 @@ __attribute__((format (printf, 5, 6)));
     log_internal(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_file_new(log_level, file, line, ...) \
-    log_internal(log_level, file, line, 0, __VA_ARGS__)
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \
+        log_internal(log_level, file, line, 0, __VA_ARGS__); \
+    }
 
 #define log(log_level, ...) \
-    log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \
+        log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__); \
+    }
 
 #define todo() \
     do { \
@@ -161,5 +169,11 @@ typedef size_t Scope_id;
 #define BUILTIN_DEFS_COUNT 4
 
 #define FMT "%.*s"
+
+#define PATH_SEPARATOR '/'
+
+#define MOD_PATH_COMMAND_LINE sv("std/does_not_exist/cmd")
+
+#define DEFAULT_BUILD_DIR "own_build"
 
 #endif // UTIL_H

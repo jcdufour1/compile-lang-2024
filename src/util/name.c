@@ -10,6 +10,7 @@ Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
 }
 
+// TODO: replace genrgs in src with gen_args
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
 }
@@ -19,13 +20,26 @@ Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id 
 }
 
 // this function will convert `io.i32` to `i32`, etc.
-static Uname uname_normalize(Uname name) {
+// TODO: remove this function?
+static Uname uname_normalize_old(Uname name) {
     // TODO: this function could cause collisions
     //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
     Uast_def* dummy = NULL;
     Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
     if (usymbol_lookup(&dummy, possible_new)) {
         return name_to_uname(possible_new);
+    }
+    return name;
+}
+
+// this function will convert `io.i32` to `i32`, etc.
+static Uname uname_normalize(Uname name) {
+    if (
+        lang_type_name_base_is_signed(name.base) ||
+        lang_type_name_base_is_unsigned(name.base) ||
+        lang_type_name_base_is_float(name.base)
+    ) {
+        name.mod_alias = MOD_ALIAS_BUILTIN;
     }
     return name;
 }
@@ -37,18 +51,21 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
-    if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
+    if (lang_type_name_base_is_signed(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
+    } else if (lang_type_name_base_is_unsigned(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
+    } else if (lang_type_name_base_is_float(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 #   ifndef NDEBUG
         Uast_def* dummy = NULL;
-        unwrap(usymbol_lookup(&dummy, alias_name));
+        if (!usymbol_lookup(&dummy, alias_name)) {
+            log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
+            unreachable("");
+        }
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
@@ -68,7 +85,7 @@ Name ir_name_to_name(Ir_name name) {
     return result->name_regular;
 }
 
-// TODO: Attrs should be stored in hash tables instead if in Name and Ir_name?
+// TODO: Attrs should be stored in hash tables instead of in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
@@ -82,9 +99,6 @@ Ir_name name_to_ir_name(Name name) {
     }
 
     if (name.scope_id == SCOPE_TOP_LEVEL) {
-        if (strv_is_equal(name.base, sv("num"))) {
-            todo();
-        }
         Ir_name ir_name = *(Ir_name*)&name;
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
@@ -158,10 +172,17 @@ void serialize_strv(String* buf, Strv strv) {
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
-// TODO: this function will sometimes serialize into string, and then extend that string into
-//   another. avoid that, because serialize_name_symbol_table is one of the most expensive functions
-//   of the compiler
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
+    if (
+        lang_type_name_base_is_signed(name.base) ||
+        lang_type_name_base_is_unsigned(name.base) ||
+        lang_type_name_base_is_float(name.base)
+    ) {
+        name.mod_path = MOD_PATH_BUILTIN;
+    }
+
     String buf = {0};
 
     String new_mod_path = {0};
@@ -446,5 +467,23 @@ bool uname_is_equal(Uname a, Uname b) {
         todo();
         return false;
     }
+
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
+    if (
+        lang_type_name_base_is_signed(new_a.base) ||
+        lang_type_name_base_is_unsigned(new_a.base) ||
+        lang_type_name_base_is_float(new_a.base)
+    ) {
+        new_a.mod_path = MOD_PATH_BUILTIN;
+    }
+    if (
+        lang_type_name_base_is_signed(new_b.base) ||
+        lang_type_name_base_is_unsigned(new_b.base) ||
+        lang_type_name_base_is_float(new_b.base)
+    ) {
+        new_b.mod_path = MOD_PATH_BUILTIN;
+    }
+
     return name_is_equal(new_a, new_b);
 }

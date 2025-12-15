@@ -1,7 +1,3 @@
-#
-, operator (like in "vec_at" macro)
-should := be assignment operator?
-
 
 
 # generics
@@ -109,7 +105,7 @@ for generics:
 - do_test.py should have confirmation before update
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
-- append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
+- consider case of --runafds, etc.
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
 - in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
@@ -122,12 +118,13 @@ for generics:
 - expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable
 - make basic "did you mean" (just symbols initially)
+- make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - document or make functions for uast_def_get_ulang_type
 - test with both -fsanitize=address and -fsanitize=undefined in ci?
 - expected failure tests for non-int generic arg const expressions
-- use _Generic to make wrapping more concise?
+- make test case for passing args after --run and using argv in program
 - test case for def alias used within struct literal generic arg
 - make this error message better (and make expected failure case):
     tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
@@ -141,11 +138,18 @@ for generics:
 - make recursion depth O(1) for importing n modules deep
 - use _Generic to make printing more concise?
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
-- rename newstring.h to local_string.h
+- add prefix to symbols when emitting backend IR (start with underscore and uppercase letter, etc.) to prevent collisions
+- positional args (regular args) after designated args) should print error or actually work property
+    (and test case should be implemented)
+- fix uninitialized warning with gcc (could be gcc bug?)
+- todo should call local_exit?
+- use odin style syntax for variable defs, etc.?
+- make function "lang_type_name_base_is_num" and use to reduce redundancy
 
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- tuples
 - tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
 - orelse, !!, ??, etc.
@@ -208,7 +212,7 @@ continue(<thing>)
       }
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
-- when generics are mature, use them to associate custom allocators with things
+- use generics to associate custom allocators with things?
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend

@@ -2,7 +2,7 @@
 #define PARAMETERS_H
 
 #include <util.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <diag_type.h>
 #include <strv_vec.h>
 
@@ -69,7 +69,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 27
+#define PARAMETERS_COUNT 32
 typedef struct {
     Target_triplet target_triplet;
     uint32_t sizeof_usize; 
@@ -86,6 +86,7 @@ typedef struct {
     Strv_vec object_files;
     Strv_vec lower_s_files;
     Strv_vec upper_s_files;
+    Strv_vec run_args;
     Expect_fail_type_vec diag_types;
     OPT_LEVEL opt_level : 4;
     STOP_AFTER stop_after : 4;
@@ -99,6 +100,9 @@ typedef struct {
     bool is_output_file_path : 1;
     Backend_info backend_info;
     uint32_t max_errors;
+    int argc;
+    char** argv;
+    Pos pos_lower_o;
 } Parameters;
 
 #define stop_after_print(stop_after) strv_print(stop_after_print_internal(stop_after))

@@ -8,7 +8,6 @@
 #include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>
 #include <ulang_type.h>
-#include <msg_todo.h>
 #include <token_type_to_operator_type.h>
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
@@ -738,20 +737,22 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             case TAST_ENUM_LIT: {
                 Tast_enum_lit* lhs = tast_enum_lit_unwrap(lhs_lit);
                 Tast_enum_lit* rhs = tast_enum_lit_unwrap(rhs_lit);
-                if (!lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type)) {
-                    // binary operators with mismatched enum types
-                    return false;
-                }
+                unwrap(lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type) && "this should have already been caught");
 
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->enum_lang_type)));
+                Name name = {0};
+                if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lhs->enum_lang_type)) {
+                    msg_todo("", lhs->pos);
+                    return false;
+                }
+                unwrap(usymbol_lookup(&enum_def_, name));
                 if (!ulang_type_is_equal(
                     vec_at(uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
                     lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos, 0)))
                 )) {
                     // overloaded binary operators not defined for non-void inner types of enum
                     msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
-                    todo();
+                    return false;
                 }
                 literal = precalulate_enum_lit(
                     tast_enum_lit_const_unwrap(lhs_lit),
@@ -832,7 +833,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     new_lhs,
                     new_rhs,
                     oper_token_type,
-                    lang_type_new_u1()
+                    lang_type_new_u1(oper_pos)
                 )));
                 break;
             case BINARY_LOGICAL_OR:
@@ -856,17 +857,17 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                         tast_literal_wrap(new_lit_lhs),
                         new_lhs,
                         BINARY_NOT_EQUAL,
-                        lang_type_new_u1()
+                        lang_type_new_u1(tast_expr_get_pos(new_lhs))
                     ))),
                     tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                         tast_expr_get_pos(new_rhs),
                         tast_literal_wrap(new_lit_rhs),
                         new_rhs,
                         BINARY_NOT_EQUAL,
-                        lang_type_new_u1()
+                        lang_type_new_u1(tast_expr_get_pos(new_rhs))
                     ))),
                     oper_token_type,
-                    lang_type_new_u1()
+                    lang_type_new_u1(oper_pos)
                 )));
                 break;
             }
@@ -1054,12 +1055,12 @@ bool try_set_unary_types_finish(
                 unary_pos,
                 new_child,
                 unary_token_type,
-                lang_type_new_usize()
+                lang_type_new_usize(unary_pos)
             )));
             return true;
         case UNARY_COUNTOF: {
-            Lang_type_atom atom = {0};
-            if (!try_lang_type_get_atom(&atom, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
                 msg(
                     DIAG_INVALID_COUNTOF, unary_pos,
                     "type `"FMT"` is not a valid operand to `countof`\n",
@@ -1068,7 +1069,7 @@ bool try_set_unary_types_finish(
                 return false;
             }
             Uast_def* def = {0};
-            unwrap(usymbol_lookup(&def, atom.str));
+            unwrap(usymbol_lookup(&def, name));
 
             Ustruct_def_base base = {0};
             if (!try_uast_def_get_struct_def_base(&base, def)) {
@@ -1082,13 +1083,20 @@ bool try_set_unary_types_finish(
             *new_tast = tast_literal_wrap(tast_int_wrap(tast_int_new(
                 unary_pos,
                 (int64_t)base.members.info.count,
-                lang_type_new_usize()
+                lang_type_new_usize(unary_pos)
             )));
             return true;
         }
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
-            assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
+
+            // TODO: these unwraps may not work when cast_to is a function pointer
+#           ifndef NDEBUG
+                Name name = {0};
+                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, cast_to));
+                unwrap(name.base.count > 0);
+#           endif // NDEBUG
+
             if (lang_type_is_equal(cast_to, tast_expr_get_lang_type(new_child))) {
                 *new_tast = new_child;
                 return true;
@@ -1394,7 +1402,7 @@ bool try_set_struct_literal_types(
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     }
     Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).name));
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_membs = {0};
@@ -1417,6 +1425,7 @@ bool try_set_array_literal_types(
     Uast_array_literal* lit,
     Pos assign_pos
 ) {
+    (void) new_tast;
     (void) assign_pos;
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
@@ -1488,7 +1497,7 @@ bool try_set_array_literal_types(
         lit->pos,
         new_membs,
         util_literal_name_new(),
-        lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
+        lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, inner_def->base.name, 0))
     );
 
     Lang_type unary_lang_type = gen_arg;
@@ -1511,7 +1520,7 @@ bool try_set_array_literal_types(
     vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         (int64_t)new_membs.info.count,
-        lang_type_new_usize()
+        lang_type_new_usize(new_inner_lit->pos)
     ))));
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
@@ -1529,6 +1538,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
     bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
     check_env.expr_is_actually_used_as_expr = expr_is_actually_used_as_expr;
 
+    // TODO: remove gotos in this switch
     switch (uast->type) {
         case UAST_BLOCK: {
             Tast_block* new_for = NULL;
@@ -1571,15 +1581,23 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                     "infered callee is non-enum type `"FMT"`; only enum types can be infered here\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, check_env.lhs_lang_type)
                 );
+                // TODO: print note for location of enum def
+                // TODO: make function to print note of def, put in src/ast_utils/ast_utils.h?
                 status = false;
                 goto end;
             }
 
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)) {
+                msg_todo("", lang_type_get_pos(check_env.lhs_lang_type));
+                status = false;
+                goto end;
+            }
             status = try_set_symbol_types(
                 new_tast,
                 uast_symbol_new(
                     uast_expr_get_pos(uast),
-                    lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)
+                    name
                 ),
                 is_from_check_assign
             );
@@ -1747,6 +1765,8 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             status = false;
             goto end;
         }
+        default:
+            unreachable("");
     }
     unreachable("");
 
@@ -2006,7 +2026,7 @@ bool try_set_function_call_builtin_types(
         vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
             new_arr_pos,
             array.count,
-            lang_type_new_usize()
+            lang_type_new_usize(new_arr_pos)
         ))));
 
         Ulang_type_vec new_gen_args = {0};
@@ -2016,10 +2036,11 @@ bool try_set_function_call_builtin_types(
             fun_call->pos,
             membs,
             util_literal_name_new(),
-            lang_type_struct_const_wrap(lang_type_struct_new(array.pos, lang_type_atom_new(
+            lang_type_struct_const_wrap(lang_type_struct_new(
+                array.pos, 
                 name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL, (Attrs) {0}),
                 0
-            )))
+            ))
         ));
         return true;
     } else if (strv_is_equal(fun_base, sv("buf_at"))) {
@@ -2108,7 +2129,12 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
             Tast_enum_callee* enum_callee = tast_enum_callee_unwrap(new_callee);
 
             Uast_def* enum_def_ = NULL;
-            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)) {
+                msg_todo("", enum_callee->pos);
+                return FUN_MIDDLE_ERROR;
+            }
+            unwrap(usymbol_lookup(&enum_def_, name));
             Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
             Lang_type memb_lang_type = {0};
@@ -2143,7 +2169,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
                     unreachable("");
             }
 
-            enum_callee->tag->lang_type = lang_type_new_usize();
+            enum_callee->tag->lang_type = lang_type_new_usize(enum_callee->pos);
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 enum_callee->pos,
@@ -2533,7 +2559,6 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 );
             }
             status = false;
-        } else {
         }
     }
 
@@ -2633,7 +2658,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             return false;
         case UAST_UNKNOWN: {
             Uast_def* def = NULL;
-            unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.switch_lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.switch_lang_type)) {
+                msg_todo("", lang_type_get_pos(check_env.switch_lang_type));
+                return false;
+            }
+            unwrap(usymbol_lookup(&def, name));
             Uast_variable_def_vec membs = uast_enum_def_unwrap(def)->base.members;
             if (membs.info.count != 2) {
                 msg_todo("", fun_call->pos);
@@ -3378,7 +3408,7 @@ bool try_set_member_access_types_finish_enum_def(
             *new_tast = tast_expr_wrap(tast_enum_case_wrap(tast_enum_case_new(
                 access->pos,
                 new_tag,
-                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, lang_type_atom_new(enum_def->base.name, 0)))
+                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, enum_def->base.name, 0))
             )));
 
             return true;
@@ -3428,7 +3458,7 @@ bool try_set_member_access_types_finish_enum_def(
             Tast_enum_callee* new_callee = tast_enum_callee_new(
                 access->pos,
                 new_tag,
-                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, lang_type_atom_new(enum_def->base.name, 0)))
+                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, enum_def->base.name, 0))
             );
 
             if (new_tag->lang_type.type != LANG_TYPE_VOID) {
@@ -3436,7 +3466,7 @@ bool try_set_member_access_types_finish_enum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_new_usize();
+            new_callee->tag->lang_type = lang_type_new_usize(new_callee->pos);
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 new_callee->pos,
@@ -3474,9 +3504,16 @@ bool try_set_member_access_types_finish(
         }
         case UAST_ENUM_DEF:
             return try_set_member_access_types_finish_enum_def(new_tast, uast_enum_def_unwrap(lang_type_def), access, new_callee);
-        case UAST_PRIMITIVE_DEF:
-            msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
+        case UAST_PRIMITIVE_DEF: {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type)) {
+                msg_todo("", uast_def_get_pos(lang_type_def));
+                msg(DIAG_NOTE, access->pos, "\n");
+                return false;
+            }
+            msg_invalid_member(name, access);
             return false;
+        }
         case UAST_LABEL: {
             todo();
         }
@@ -3530,13 +3567,18 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 *new_tast = tast_expr_wrap(tast_literal_wrap(tast_int_wrap(tast_int_new(
                     access->pos,
                     array.count,
-                    lang_type_new_usize()
+                    lang_type_new_usize(access->pos)
                 ))));
                 return true;
             }
 
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
+            Name def_name = {0};
+            if (!lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, sym->base.lang_type)) {
+                msg_todo("", tast_expr_get_pos(new_callee));
+                return false;
+            }
+            if (!usymbol_lookup(&lang_type_def, def_name)) {
                 msg_todo("", tast_expr_get_pos(new_callee));
                 return false;
             }
@@ -3548,7 +3590,12 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_member_access* sym = tast_member_access_unwrap(new_callee);
 
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->lang_type))) {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, sym->lang_type)) {
+                msg_todo("", lang_type_get_pos(sym->lang_type));
+                return false;
+            }
+            if (!usymbol_lookup(&lang_type_def, name)) {
                 todo();
             }
 
@@ -3557,7 +3604,12 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
         case TAST_OPERATOR: {
             Tast_operator* sym = tast_operator_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym)))) {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym))) {
+                msg_todo("", tast_operator_get_pos(sym));
+                return false;
+            }
+            if (!usymbol_lookup(&lang_type_def, name)) {
                 todo();
             }
 
@@ -3567,7 +3619,12 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_function_call* call = tast_function_call_unwrap(new_callee);
             Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
             Uast_def* lang_type_def = NULL;
-            unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name =  {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                return false;
+            }
+            unwrap(usymbol_lookup(&lang_type_def, name));
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
@@ -3592,7 +3649,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_def* struct_def = NULL;
             unwrap(usymbol_lookup(
                 &struct_def,
-                lang_type_struct_const_unwrap(callee_lit->lang_type).atom.str
+                lang_type_struct_const_unwrap(callee_lit->lang_type).name
             ));
 
             return try_set_member_access_types_finish(new_tast, struct_def, access, new_callee);
@@ -3647,7 +3704,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
             new_inner_index,
             tast_expr_get_pos(new_inner_index),
             UNARY_UNSAFE_CAST,
-            lang_type_new_usize()
+            lang_type_new_usize(tast_expr_get_pos(new_inner_index))
         ));
     } else {
         msg_todo("index type larger than usize", tast_expr_get_pos(new_inner_index));
@@ -3755,10 +3812,11 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
         return true;
     }
 
-    msg_todo(
-        "actual error message for this situation "
-        "(note: it is possible that `[` and `]` were used on a type that does not support it)",
-        index->pos
+    msg(
+        DIAG_INVALID_INDEX_CALLEE,
+        index->pos,
+        "type `"FMT"` is not a valid callee to `[`\n",
+        lang_type_print(LANG_TYPE_MODE_MSG, callee_lang_type)
     );
     return false;
 }
@@ -4119,7 +4177,7 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
         return false;
     }
     Lang_type_enum lang_enum = lang_type_enum_const_unwrap(lang_type);
-    Name enum_name = lang_enum.atom.str;
+    Name enum_name = lang_enum.name;
     enum_name.gen_args.info.count = 0;
         
     return name_is_equal(
@@ -4153,7 +4211,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         
         if (!try_lang_type_from_ulang_type(
             &yield_type,
-            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).name.gen_args, 0)
         )) {
             return false;
         }
@@ -4163,7 +4221,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
 
         if (!try_lang_type_from_ulang_type(
             &yield_type,
-            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).atom.str.gen_args, 0)
+            vec_at(lang_type_enum_const_unwrap(to_unwrap_type).name.gen_args, 0)
         )) {
             return false;
         }
@@ -4355,7 +4413,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             return false;
         }
 
-        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).atom.str.gen_args, 1);
+        Ulang_type src_uerror_type = vec_at(lang_type_enum_const_unwrap(src_to_unwrap_type).name.gen_args, 1);
         Lang_type src_error_type = {0};
         if (!try_lang_type_from_ulang_type(&src_error_type, src_uerror_type)) {
             return false;
@@ -4367,7 +4425,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         );
         unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
 
-        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).atom.str.gen_args, 1);
+        Ulang_type dest_uerror_type = vec_at(lang_type_enum_const_unwrap(fn_rtn_type).name.gen_args, 1);
         Lang_type dest_error_type = {0};
         if (!try_lang_type_from_ulang_type(&dest_error_type, dest_uerror_type)) {
             return false;
@@ -4455,9 +4513,12 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
     Uast_def* enum_def_ = NULL;
-    if (!usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
-        todo();
-    }
+    Name name = {0};
+    unwrap(
+        lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type) &&
+        "this lang_type being undefined should have been caught earlier"
+    );
+    unwrap(usymbol_lookup(&enum_def_, name));
     Ustruct_def_base enum_def = {0};
     if (enum_def_->type != UAST_ENUM_DEF) {
         msg_todo("switch statement with this type", uast_def_get_pos(enum_def_));
@@ -4544,7 +4605,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
+                Name name = {0};
+                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type));
+                unwrap(usymbol_lookup(&enum_def_, name));
                 Ustruct_def_base enum_def = {0};
                 enum_def = uast_enum_def_unwrap(enum_def_)->base;
 

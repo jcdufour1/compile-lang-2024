@@ -10,10 +10,10 @@
 static const char* get_path(const char* build_dir, const char* file_name_in_dir) {
     String path = {0};
 
-    string_extend_cstr(&gen_a, &path, build_dir);
-    string_extend_cstr(&gen_a, &path, "/"); // TODO: do not hardcode this separator?
-    string_extend_cstr(&gen_a, &path, file_name_in_dir);
-    string_extend_cstr(&gen_a, &path, "\0");
+    string_extend_cstr(&a_gen, &path, build_dir);
+    string_extend_cstr(&a_gen, &path, "/"); // TODO: do not hardcode this separator?
+    string_extend_cstr(&a_gen, &path, file_name_in_dir);
+    string_extend_cstr(&a_gen, &path, "\0");
 
     return path.buf;
 }
@@ -32,23 +32,23 @@ int main(int argc, char** argv) {
     gen_ir_lang_type(get_path(argv[1], "ir_lang_type.h"), true);
     unwrap(!global_output);
 
-    gen_all_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
+    a_genll_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
     unwrap(!global_output);
-    gen_all_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
+    a_genll_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
     unwrap(!global_output);
-    gen_all_irs(get_path(argv[1], "ir_forward_decl.h"), false);
-    unwrap(!global_output);
-
-    gen_all_vecs(get_path(argv[1], "vecs.h"));
+    a_genll_irs(get_path(argv[1], "ir_forward_decl.h"), false);
     unwrap(!global_output);
 
-    gen_all_tasts(get_path(argv[1], "tast.h"), true);
+    a_genll_vecs(get_path(argv[1], "vecs.h"));
     unwrap(!global_output);
 
-    gen_all_uasts(get_path(argv[1], "uast.h"), true);
+    a_genll_tasts(get_path(argv[1], "tast.h"), true);
     unwrap(!global_output);
 
-    gen_all_irs(get_path(argv[1], "ir.h"), true);
+    a_genll_uasts(get_path(argv[1], "uast.h"), true);
+    unwrap(!global_output);
+
+    a_genll_irs(get_path(argv[1], "ir.h"), true);
     unwrap(!global_output);
 }
 

@@ -177,7 +177,7 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     }
 
     string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-    alloca_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).alloca_table, indent + 2*INDENT_WIDTH);
+    ir_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         string_extend_size_t(&a_temp, &buf, idx);

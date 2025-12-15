@@ -359,6 +359,7 @@ static bool get_mod_alias_from_path_token(
     }
 
     assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
+    // TODO: replace block in existing import path instead of making new import path?
     usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,

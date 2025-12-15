@@ -52,4 +52,17 @@ void msg_struct_literal_assigned_to_non_struct_gen_param_internal(
 #define msg_struct_literal_assigned_to_non_struct_gen_param(pos_struct_lit, pos_gen_param) \
     msg_struct_literal_assigned_to_non_struct_gen_param_internal(__FILE__, __LINE__, pos_struct_lit, pos_gen_param)
 
+#define msg_todo(feature, pos) \
+    msg_todo_internal(__FILE__, __LINE__, sv(feature), pos);
+
+#define msg_soft_todo(feature, pos) \
+    msg_soft_todo_internal(__FILE__, __LINE__, sv(feature), pos);
+
+#define msg_todo_strv(feature, pos) \
+    msg_todo_internal(__FILE__, __LINE__, feature, pos);
+
+void msg_todo_internal(const char* file, int line, Strv feature, Pos pos);
+
+void msg_soft_todo_internal(const char* file, int line, Strv feature, Pos pos);
+
 #endif // AST_MSG_H

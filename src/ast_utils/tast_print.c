@@ -1,4 +1,5 @@
 #include <tast.h>
+#include <uast.h>
 #include <ir_utils.h>
 #include <util.h>
 #include <lang_type_print.h>

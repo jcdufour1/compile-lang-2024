@@ -54,24 +54,28 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
@@ -95,24 +99,28 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE:
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
         }
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
         }
         case LANG_TYPE_VOID:
@@ -200,9 +208,14 @@ uint64_t alignof_def(const Tast_def* def) {
     unreachable("");
 }
 
-uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
+uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
     Tast_def* def_ = NULL;
-    unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
+    Name name = {0};
+    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lit->lang_type)) {
+        msg_todo("", lit->pos);
+        return 0;
+    }
+    unwrap(symbol_lookup(&def_, name));
     return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 

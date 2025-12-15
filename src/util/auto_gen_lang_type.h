@@ -47,10 +47,10 @@ static Uast_type lang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Uast_type lang_type = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_unsigned_int(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_opaque(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_unsigned_int(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_float(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_opaque(base_name));
 
     return lang_type;
 }
@@ -109,12 +109,11 @@ static Uast_type lang_type_gen_lit(const char* prefix) {
     const char* base_name = "lit";
     Uast_type lang_type = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_int_lit(base_name)); // TODO: rename lang_type_int_lit to lang_type_gen_int
-                                                                            //   and ulang_type_int_lit to ulang_type_gen_int?
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string_lit(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_int_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_float_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_string_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_struct_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_fn_lit(base_name));
 
     return lang_type;
 }
@@ -130,7 +129,7 @@ static Uast_type lang_type_gen_fn(const char* prefix) {
     return sym;
 }
 
-static Uast_type lang_type_gen_array(const char* prefix) {
+static Uast_type lang_type_a_genrray(const char* prefix) {
     const char* base_name = "array";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
@@ -154,7 +153,8 @@ static Uast_type lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -163,7 +163,8 @@ static Uast_type lang_type_gen_raw_union(const char* prefix) {
     const char* base_name = "raw_union";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -172,7 +173,8 @@ static Uast_type lang_type_gen_enum(const char* prefix) {
     const char* base_name = "enum";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&sym.members, "Lang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -201,16 +203,16 @@ static Uast_type lang_type_gen_lang_type(void) {
     const char* base_name = "lang_type";
     Uast_type lang_type = {.name = uast_name_new(base_name, "", true, "lang_type")};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_primitive(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_raw_union(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_enum(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_tuple(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_array(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_lit(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_removed(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_primitive(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_struct(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_raw_union(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_enum(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_tuple(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_void(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_fn(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_a_genrray(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_lit(base_name));
+    vec_append(&a_gen, &lang_type.sub_types, lang_type_gen_removed(base_name));
 
     return lang_type;
 }

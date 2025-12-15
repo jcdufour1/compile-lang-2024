@@ -1,8 +1,8 @@
 #ifndef STRING_VEC_H
 #define STRING_VEC_H
 
-#include "vector.h"
-#include "newstring.h"
+#include <vector.h>
+#include <local_string.h>
 
 typedef struct {
     Vec_base info;

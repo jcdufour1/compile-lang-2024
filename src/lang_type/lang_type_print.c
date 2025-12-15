@@ -2,6 +2,7 @@
 #include <lang_type_after.h>
 #include <ulang_type.h>
 #include <resolve_generics.h>
+#include <ast_msg.h>
 
 static void extend_lang_type_lit_tag_to_string(String* buf, Lang_type_lit lang_type) {
     switch (lang_type.type) {
@@ -75,43 +76,6 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
     return string_to_strv(buf);
 }
 
-void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
-    Name temp = atom.str;
-
-    if (atom.str.base.count > 1) {
-        switch (mode) {
-            case LANG_TYPE_MODE_LOG:
-                extend_name(NAME_LOG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_MSG:
-                extend_name(NAME_MSG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_C:
-                extend_name(NAME_EMIT_C, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_name(NAME_EMIT_IR, string, atom.str);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        unreachable("");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_temp, string, '*');
-    }
-
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
-            todo();
-        }
-    }
-}
-
 Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     String buf = {0};
     extend_lang_type_to_string(&buf, mode, lang_type);
@@ -128,12 +92,6 @@ Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
         default:
             unreachable("");
     }
-    return string_to_strv(buf);
-}
-
-Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
-    String buf = {0};
-    extend_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
 }
 
@@ -155,6 +113,20 @@ static void extend_lang_type_lit_to_string(String* string, Lang_type_lit lang_ty
         case LANG_TYPE_FN_LIT:
             extend_name(NAME_MSG, string, lang_type_fn_lit_const_unwrap(lang_type).name);
             return;
+    }
+    unreachable("");
+}
+
+static NAME_MODE lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
+    switch (mode) {
+        case LANG_TYPE_MODE_LOG:
+            return NAME_LOG;
+        case LANG_TYPE_MODE_MSG:
+            return NAME_MSG;
+        case LANG_TYPE_MODE_EMIT_LLVM:
+            return NAME_EMIT_C;
+        case LANG_TYPE_MODE_EMIT_C:
+            return NAME_EMIT_IR;
     }
     unreachable("");
 }
@@ -199,13 +171,19 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
             }
-            goto end;
+            break;
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
-            string_extend_cstr(&a_main, string, "fn");
+            string_extend_f(&a_main, string, "%sfn", fn.pointer_depth > 1 ? "(" : "");
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
-            goto end;
+            if (fn.pointer_depth > 1) {
+                vec_append(&a_temp, string, ')');
+            }
+            for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
+                vec_append(&a_temp, string, '*');
+            }
+            break;
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
@@ -216,42 +194,59 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
                 vec_append(&a_temp, string, '*');
             }
-            goto end;
+            break;
         }
         case LANG_TYPE_ENUM:
             fallthrough;
         case LANG_TYPE_RAW_UNION:
             fallthrough;
-        case LANG_TYPE_STRUCT:
+        case LANG_TYPE_STRUCT: {
             // TODO: uncomment below assert?
             //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
-            // TODO: figure out why __attribute__((fallthrough)); is needed in only this one place
-            //   when compiling with clang? Figure out if __attribute__((fallthrough)) should
-            //   be used everywhere
-            fallthrough;
+            Name name = {0};
+            if (!lang_type_get_name(&name, mode, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+                vec_append(&a_temp, string, '*');
+            }
+            break;
+        }
         case LANG_TYPE_VOID: {
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            goto end;
+            Name name = {0};
+            if (!lang_type_get_name(&name, mode, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            break;
         }
         case LANG_TYPE_PRIMITIVE: {
-            Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            unwrap(base.count >= 1);
-            goto end;
+            Name name = {0};
+            if (!lang_type_get_name(&name, mode, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+            assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
+            assert(name.base.count >= 1);
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+                vec_append(&a_temp, string, '*');
+            }
+            break;
         }
         case LANG_TYPE_REMOVED:
-            goto end;
+            break;
         case LANG_TYPE_LIT:
             extend_lang_type_lit_to_string(string, lang_type_lit_const_unwrap(lang_type));
-            goto end;
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
 
-end:
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&a_temp, string, '>');
     }

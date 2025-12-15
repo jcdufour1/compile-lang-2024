@@ -67,11 +67,23 @@ typedef struct {
         (dest)->info.count += (src)->info.count; \
     } while(0)
 
-#define vec_top(vector) \
+#define vec_first(vector) \
+    vec_at_ref((vector), 0)
+
+#define vec_first_ref(vector) \
+    vec_at_ref((vector), 0)
+
+#define vec_last(vector) \
     (unwrap((vector).info.count > 0 && "out of bounds"), vec_at((vector), (vector).info.count - 1))
 
-#define vec_top_ref(vector) \
+#define vec_top(vector) \
+    vec_last(vector)
+
+#define vec_last_ref(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), vec_at_ref((vector), (vector)->info.count - 1))
+
+#define vec_top_ref(vector) \
+    vec_last_ref(vector)
 
 #define vec_pop(vector) \
     (unwrap((vector)->info.count > 0 && "out of bounds"), (vector)->info.count--, (vector)->buf[((vector)->info.count)])

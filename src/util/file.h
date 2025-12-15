@@ -1,8 +1,8 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include "util.h"
-#include "newstring.h"
+#include <util.h>
+#include <local_string.h>
 
 typedef enum {
     FILE_TYPE_OWN,
@@ -23,7 +23,7 @@ bool read_file(Strv* result, Strv input_file_name);
 
 bool get_file_extension(Strv* extension, Strv file_path);
 
-FILE_TYPE get_file_type(Strv file_path);
+bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path);
 
 void file_extend_strv(FILE* file, Strv strv);
 

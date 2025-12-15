@@ -1,6 +1,6 @@
 
 #include <ir.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <do_passes.h>
 #include <symbol_table.h>
 #include <parameters.h>

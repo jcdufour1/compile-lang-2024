@@ -112,6 +112,7 @@ typedef enum {
     DIAG_IF_LET_INVALID_SYNTAX,
     DIAG_STATIC_ARRAY_COUNT_NOT_INFERED,
     DIAG_INVALID_MEMBER_ACCESS_CALLEE,
+    DIAG_INVALID_INDEX_CALLEE,
 
     // count of cases for static asserts
     DIAG_COUNT,

@@ -1,7 +1,7 @@
 #ifndef POS_UTIL_H
 #define POS_UTIL_H
 
-#include <newstring.h>
+#include <local_string.h>
 #include <util.h>
 #include <strv.h>
 

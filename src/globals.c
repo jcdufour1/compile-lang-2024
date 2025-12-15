@@ -16,5 +16,3 @@ Pos prev_pos = {0};
 
 Env env = {0};
 
-// TODO: make macro for convenience?
-char PATH_SEPARATOR = '/';

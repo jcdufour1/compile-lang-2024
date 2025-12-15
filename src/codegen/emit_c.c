@@ -13,6 +13,7 @@
 #include <subprocess.h>
 #include <file.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 static void emit_c_extend_name(String* output, Ir_name name) {
 #   ifndef NDEBUG
@@ -289,8 +290,6 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
         string_extend_cstr(&a_pass, &strs->output, " ");
         emit_c_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_pass, &strs->output, " = ");
-    } else {
-        //unwrap(!strv_cstr_is_equal(ir_lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Ir* callee = NULL;
@@ -779,7 +778,7 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 27,
+            PARAMETERS_COUNT == 32,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 

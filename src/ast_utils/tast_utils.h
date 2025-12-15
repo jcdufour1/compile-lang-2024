@@ -8,6 +8,7 @@
 #include <lang_type_print.h>
 #include <ulang_type_new_convenience.h>
 #include <ulang_type_is_equal.h>
+#include <ast_msg.h>
 
 // TODO: remove this forward declaration
 static inline Ulang_type ulang_type_new_int_x(Strv base);
@@ -73,13 +74,6 @@ static inline Ir_lang_type_vec ir_lang_type_vec_from_ir_lang_type(Ir_lang_type i
     return vec;
 }
 
-static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
-    if (a.pointer_depth != b.pointer_depth) {
-        return false;
-    }
-    return name_is_equal(a.str, b.str);
-}
-
 static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
     if (a.info.count != b.info.count) {
         return false;
@@ -126,6 +120,38 @@ static inline bool lang_type_lit_is_equal(Lang_type_lit a, Lang_type_lit b) {
     unreachable("");
 }
 
+static inline bool lang_type_primitive_is_equal(Lang_type_primitive a, Lang_type_primitive b) {
+    if (a.type != b.type) {
+        return false;
+    }
+    
+    switch (a.type) {
+        case LANG_TYPE_SIGNED_INT: {
+            Lang_type_signed_int a_signed = lang_type_signed_int_const_unwrap(a);
+            Lang_type_signed_int b_signed = lang_type_signed_int_const_unwrap(b);
+            return a_signed.bit_width == b_signed.bit_width && a_signed.pointer_depth == b_signed.pointer_depth;
+        }
+        case LANG_TYPE_UNSIGNED_INT: {
+            Lang_type_unsigned_int a_unsigned = lang_type_unsigned_int_const_unwrap(a);
+            Lang_type_unsigned_int b_unsigned = lang_type_unsigned_int_const_unwrap(b);
+            return a_unsigned.bit_width == b_unsigned.bit_width && a_unsigned.pointer_depth == b_unsigned.pointer_depth;
+        }
+        case LANG_TYPE_FLOAT: {
+            Lang_type_float a_float = lang_type_float_const_unwrap(a);
+            Lang_type_float b_float = lang_type_float_const_unwrap(b);
+            return a_float.bit_width == b_float.bit_width && a_float.pointer_depth == b_float.pointer_depth;
+        }
+        case LANG_TYPE_OPAQUE: {
+            Lang_type_opaque a_opaque = lang_type_opaque_const_unwrap(a);
+            Lang_type_opaque b_opaque = lang_type_opaque_const_unwrap(b);
+            return a_opaque.pointer_depth == b_opaque.pointer_depth;
+        }
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 // TOOD: move these lang_type functions
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     if (a.type != b.type) {
@@ -134,24 +160,24 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     
     switch (a.type) {
         case LANG_TYPE_PRIMITIVE:
-            fallthrough;
-        case LANG_TYPE_STRUCT:
-            fallthrough;
-        case LANG_TYPE_RAW_UNION:
-            fallthrough;
-        case LANG_TYPE_ENUM:
-            fallthrough;
-        case LANG_TYPE_VOID: {
-            Lang_type_atom atom_a = {0};
-            Lang_type_atom atom_b = {0};
-            if (!try_lang_type_get_atom(&atom_a, LANG_TYPE_MODE_LOG, a)) {
-                return false;
-            }
-            if (!try_lang_type_get_atom(&atom_b, LANG_TYPE_MODE_LOG, b)) {
-                return false;
-            }
-            return lang_type_atom_is_equal(atom_a, atom_b);
+            return lang_type_primitive_is_equal(lang_type_primitive_const_unwrap(a), lang_type_primitive_const_unwrap(b));
+        case LANG_TYPE_STRUCT: {
+            Lang_type_struct a_struct = lang_type_struct_const_unwrap(a);
+            Lang_type_struct b_struct = lang_type_struct_const_unwrap(b);
+            return name_is_equal(a_struct.name, b_struct.name) && a_struct.pointer_depth == b_struct.pointer_depth;
         }
+        case LANG_TYPE_RAW_UNION: {
+            Lang_type_raw_union a_raw_union = lang_type_raw_union_const_unwrap(a);
+            Lang_type_raw_union b_raw_union = lang_type_raw_union_const_unwrap(b);
+            return name_is_equal(a_raw_union.name, b_raw_union.name) && a_raw_union.pointer_depth == b_raw_union.pointer_depth;
+        }
+        case LANG_TYPE_ENUM: {
+            Lang_type_enum a_enum = lang_type_enum_const_unwrap(a);
+            Lang_type_enum b_enum = lang_type_enum_const_unwrap(b);
+            return name_is_equal(a_enum.name, b_enum.name) && a_enum.pointer_depth == b_enum.pointer_depth;
+        }
+        case LANG_TYPE_VOID:
+            return true;
         case LANG_TYPE_TUPLE:
             return lang_type_tuple_is_equal(lang_type_tuple_const_unwrap(a), lang_type_tuple_const_unwrap(b));
         case LANG_TYPE_FN:
@@ -165,6 +191,8 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             );
         case LANG_TYPE_REMOVED:
             return true;
+        default:
+            unreachable("");
     }
     unreachable("");
 }
@@ -193,16 +221,15 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
-            lang_type_atom_new(
-                name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
-                0
-            )
+            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
+            0
         ));
     }
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,
-        lang_type_atom_new(name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}), 0)
+        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+        0
     ));
 }
 
@@ -274,15 +301,15 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
 }
 
 static inline Lang_type tast_raw_union_def_get_lang_type(const Tast_raw_union_def* def) {
-    return lang_type_raw_union_const_wrap(lang_type_raw_union_new(def->pos, lang_type_atom_new(def->base.name, 0)));
+    return lang_type_raw_union_const_wrap(lang_type_raw_union_new(def->pos, def->base.name, 0));
 }
 
 static inline Lang_type tast_struct_def_get_lang_type(const Tast_struct_def* def) {
-    return lang_type_struct_const_wrap(lang_type_struct_new(def->pos, lang_type_atom_new(def->base.name, 0)));
+    return lang_type_struct_const_wrap(lang_type_struct_new(def->pos, def->base.name, 0));
 }
 
 static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
-    return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
+    return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, def->base.name, 0));
 }
 
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
@@ -380,8 +407,14 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
 
 static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
-        case TAST_PRIMITIVE_DEF:
-            return lang_type_get_str(LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type);
+        case TAST_PRIMITIVE_DEF: {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return util_literal_name_new_poison();
+            }
+            return name;
+        }
         case TAST_VARIABLE_DEF:
             return tast_variable_def_const_unwrap(def)->name;
         case TAST_STRUCT_DEF:

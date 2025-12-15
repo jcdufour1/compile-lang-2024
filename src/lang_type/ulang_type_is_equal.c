@@ -1,6 +1,7 @@
 #include <ulang_type_is_equal.h>
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
+#include <ast_msg.h>
 
 bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
     return uname_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;

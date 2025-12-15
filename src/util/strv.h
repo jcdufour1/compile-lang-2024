@@ -20,8 +20,13 @@ static inline char strv_at(Strv strv, size_t index) {
     return strv.str[index];
 }
 
-static inline char strv_front(Strv strv) {
+static inline char strv_first(Strv strv) {
     return strv_at(strv, 0);
+}
+
+static inline char strv_last(Strv strv) {
+    unwrap(strv.count > 0 && "out of bounds");
+    return strv_at(strv, strv.count - 1);
 }
 
 static inline Strv strv_consume_while(Strv* strv, bool (*should_continue)(char /* previous char */, char /* current char */)) {
@@ -71,7 +76,7 @@ static inline Strv strv_consume_count(Strv* strv, size_t count) {
 }
 
 static inline char strv_consume(Strv* strv) {
-    return strv_front(strv_consume_count(strv, 1));
+    return strv_first(strv_consume_count(strv, 1));
 }
 
 static inline bool strv_is_equal(Strv a, Strv b) {
@@ -94,7 +99,7 @@ static inline bool strv_try_consume(Strv* strv, char ch) {
     if (strv->count < 1) {
         return false;
     }
-    if (strv_front(*strv) == ch) {
+    if (strv_first(*strv) == ch) {
         strv_consume(strv);
         return true;
     }
@@ -112,6 +117,21 @@ static inline bool strv_try_consume_count(Strv* strv, char ch, size_t count) {
 
 static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
+}
+
+static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
+    if (needle.count > haystack.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < haystack.count - needle.count + 1; idx++) {
+        if (strv_starts_with(haystack, needle)) {
+            *index = idx;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 #define strv_print(strv) (int)((strv).count), (strv).str

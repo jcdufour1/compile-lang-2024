@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <assert.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <tast.h>
 #include <parameters.h>
 #include <file.h>
@@ -43,7 +43,7 @@ static void add_builtin_defs(void) {
     add_builtin_def(sv("usize"));
 }
 
-#define do_pass_ex(pass_fn, sym_log_fn, sym_log_dest) \
+#define do_pass(pass_fn, sym_log_fn, sym_log_dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
@@ -55,18 +55,12 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
-        } \
+        sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_temp);\
         arena_reset(&a_pass);\
     } while (0)
-
-// TODO: remove this macro, just use do_pass_ex?
-#define do_pass(pass_fn, sym_log_fn) \
-    do_pass_ex(pass_fn, sym_log_fn, stderr)
 
 #define do_pass_status(pass_fn, sym_log_fn, dest) \
     do { \
@@ -91,6 +85,7 @@ static void add_builtin_defs(void) {
         arena_reset(&a_pass);\
     } while (0)
 
+// TODO: make this static?
 void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
@@ -99,28 +94,30 @@ void compile_file_to_ir(void) {
 
     symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
-    add_primitives();
-    add_builtin_defs();
-
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
         SCOPE_TOP_LEVEL
     );
+
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
+
+    add_primitives();
+    add_builtin_defs();
 
     // generate ir from file(s)
     do_pass_status(parse, usymbol_log_level, stderr);
-    do_pass_ex(expand_using, usymbol_log_level, stderr);
-    do_pass_ex(expand_def, usymbol_log_level, stderr);
-    do_pass(try_set_types, symbol_log_level);
-    do_pass(add_load_and_store, ir_log_level);
+    do_pass(expand_using, usymbol_log_level, stderr);
+    do_pass(expand_def, usymbol_log_level, stderr);
+    do_pass(try_set_types, symbol_log_level, stderr);
+    do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
-    do_pass(construct_cfgs, ir_log_level);
-    do_pass(remove_void_assigns, ir_log_level);
-    do_pass(check_uninitialized, ir_log_level);
+    do_pass(construct_cfgs, ir_log_level, stderr);
+    do_pass(remove_void_assigns, ir_log_level, stderr);
+    do_pass(check_uninitialized, ir_log_level, stderr);
 }
 
 NEVER_RETURN void do_passes(void) {
@@ -129,7 +126,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -166,7 +163,7 @@ NEVER_RETURN void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                do_pass(emit_c_from_tree, ir_log_level);
+                do_pass(emit_c_from_tree, ir_log_level, stderr);
                 break;
             default:
                 unreachable("");
@@ -174,7 +171,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -185,6 +182,7 @@ NEVER_RETURN void do_passes(void) {
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
         vec_append(&a_temp, &cmd, string_to_strv(output_path));
+        vec_extend(&a_temp, &cmd, &params.run_args);
         print_all_defered_msgs();
         arena_free_a_main();
         int status = subprocess_call(cmd);
@@ -203,6 +201,13 @@ NEVER_RETURN void do_passes(void) {
 }
 
 int main(int argc, char** argv) {
+    size_t dummy = {0};
+    assert(strv_contains(&dummy, sv("th"), sv("t")));
+    assert(strv_contains(&dummy, sv("th"), sv("th")));
+    assert(!strv_contains(&dummy, sv("th"), sv("thi")));
+    assert(!strv_contains(&dummy, sv("th"), sv("ih")));
+    assert(!strv_contains(&dummy, sv("ih"), sv("eh")));
+
     parse_args(argc, argv);
     do_passes();
 }

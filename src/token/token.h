@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "strv.h"
-#include "newstring.h"
+#include <strv.h>
+#include <local_string.h>
 
 #define token_print(mode, token) strv_print(token_print_internal(&a_temp, mode, token))
 

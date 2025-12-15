@@ -1,14 +1,12 @@
 .PHONY: all setup build gdb test_quick clean
 
-CC_COMPILER ?= cc
-
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
-# TODO: decide if warnings should be enabled for not ininializing every struct member in Initializers
-# TODO: make warnings variable, and use same warnings for autogen as regular compolation
-C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
-			     -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
-			     -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address \
+C_WARNINGS = -Werror=incompatible-pointer-types \
+			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
+			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
+
+C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \
@@ -23,24 +21,34 @@ C_FLAGS_COMMON = -Werror=incompatible-pointer-types \
 			     -fno-strict-aliasing \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
-C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
 			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
-			     -fsanitize=address -fno-omit-frame-pointer 
+			     -fsanitize=address -fno-omit-frame-pointer
 
 BUILD_DIR_DEBUG ?= ./build/debug/
 BUILD_DIR_RELEASE ?= ./build/release/
+
+ifndef CC_COMPILER
+	ifeq (, $(shell which clang))
+		CC_COMPILER = cc
+	else
+		CC_COMPILER = clang
+	endif
+endif
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
     #C_FLAGS += -fsanitize=address -fno-sanitize-recover=address -fno-omit-frame-pointer
-    C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer
+    C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
+			   -fsanitize=address -fno-sanitize-recover=address \
+			   -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_COMMON}
-	C_FLAGS += -DNDEBUG -O2
+	C_FLAGS += -DNDEBUG -O2 # -flto 
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
@@ -109,7 +117,7 @@ DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level=VERBOSE
+ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level VERBOSE
 
 all: build
 
@@ -152,6 +160,7 @@ test_quick: run
 	./a.out ; echo $$?
 
 # auto_gen and util
+# TODO: reduce duplication in Makefile?
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c src/util/newstring.c
 

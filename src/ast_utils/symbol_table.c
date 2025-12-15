@@ -89,8 +89,28 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     }
 }
 
+static Strv sym_tbl_status_print_internal(SYM_TBL_STATUS status) {
+    switch (status) {
+        case SYM_TBL_NEVER_OCCUPIED:
+            return sv("never_occupied");
+        case SYM_TBL_PREVIOUSLY_OCCUPIED:
+            return sv("previously_occupied");
+        case SYM_TBL_OCCUPIED:
+            return sv("occupied");
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+#define sym_tbl_status_print(status) \
+    strv_print(sym_tbl_status_print_internal(status))
+
 // return false if symbol is not found
 bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Strv query) {
+    // TODO: replace (Generic_symbol_table*)sym_table) below with sym_tbl?
+    //const Generic_symbol_table* sym_tbl = sym_table;
+
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         return false;
     }
@@ -282,13 +302,14 @@ bool usymbol_add(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+    // TODO: factor these nested if-else checks (for is primitive type) into seperate function?
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
     }
@@ -361,7 +382,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     Name prim_key = key;
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -372,7 +393,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -383,7 +404,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -439,11 +460,11 @@ bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* item) {
     Ir_name name = ir_get_name(item);
-    return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
+    return ir_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->ir_table, item);
 }
 
 void* ir_get_tbl_from_collection(Symbol_collection* collection) {
-    return &collection->alloca_table;
+    return &collection->ir_table;
 }
 
 bool ir_add(Ir* item) {
@@ -466,13 +487,13 @@ void usymbol_update(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
     }
@@ -780,15 +801,6 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 // not generic
 //
 
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, indent));
-        }
-    }
-}
-
 void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
@@ -796,24 +808,6 @@ void init_extend_table_internal(String* buf, const Init_table sym_table, Indent 
             string_extend_cstr_indent(&a_temp, buf, "", indent*INDENT_WIDTH);
             extend_ir_name(NAME_LOG, buf, sym_tast->tast->name);
             string_extend_cstr(&a_temp, buf, "\n");
-        }
-    }
-}
-
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, indent));
-        }
-    }
-}
-
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, indent));
         }
     }
 }
