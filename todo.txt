@@ -144,6 +144,7 @@ for generics:
 - fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
+- make function "lang_type_name_base_is_num" and use to reduce redundancy
 
 
 # roadmap to try to get bootstrap compiler done:

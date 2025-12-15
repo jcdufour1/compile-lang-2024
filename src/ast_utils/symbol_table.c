@@ -128,11 +128,6 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
         }
 
         if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
-            for (size_t idx = 0; idx < ((Generic_symbol_table*)sym_table)->capacity; idx++) {
-                Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[idx];
-                assert(!strv_is_equal(curr_tast->key, query));
-            }
-
             return false;
         }
 
