@@ -1,7 +1,3 @@
-#
-, operator (like in "vec_at" macro)
-should := be assignment operator?
-
 
 
 # generics
@@ -146,10 +142,12 @@ for generics:
     (and test case should be implemented)
 - fix uninitialized warning with gcc
 - todo should call local_exit?
+- use odin style syntax for variable defs, etc.?
 
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- tuples
 - tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
 - orelse, !!, ??, etc.

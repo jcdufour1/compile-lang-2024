@@ -46,7 +46,11 @@ static inline void log_internal_ex(FILE* dest, LOG_LEVEL log_level, const char* 
             fprintf(dest, " ");
         }
         fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
-        vfprintf(dest, format, args);
+        if (vfprintf(dest, format, args) < 0) {
+            // TODO: consider if abort should be done here
+            fprintf(stderr, "unreachable: vfprintf failed. destination file stream may have been opened for reading instead of writing\n");
+            abort();
+        }
     }
 
     va_end(args);

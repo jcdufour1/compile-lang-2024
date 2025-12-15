@@ -119,6 +119,21 @@ static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
 }
 
+static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
+    if (needle.count > haystack.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < haystack.count - needle.count + 1; idx++) {
+        if (strv_starts_with(haystack, needle)) {
+            *index = idx;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #define strv_print(strv) (int)((strv).count), (strv).str
 
 #endif // STR_VIEW_H

@@ -79,21 +79,21 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
     assert(name.mod_path.count > 0);
 
-    if (lang_type_name_is_signed(name)) {
+    if (lang_type_name_base_is_signed(name.base)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
             lang_type.pos,
             strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
             ulang_type_regular_get_pointer_depth(lang_type)
         );
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
-    } else if (lang_type_name_is_unsigned(name)) {
+    } else if (lang_type_name_base_is_unsigned(name.base)) {
         Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(
             lang_type.pos,
             strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
             ulang_type_regular_get_pointer_depth(lang_type) 
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
-    } else if (lang_type_name_is_float(name)) {
+    } else if (lang_type_name_base_is_float(name.base)) {
         Lang_type_float new_float = lang_type_float_new(
             lang_type.pos,
             strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
@@ -112,6 +112,17 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
 }
 
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
+    if (
+        lang_type_name_base_is_signed(lang_type.atom.str.base) ||
+        lang_type_name_base_is_unsigned(lang_type.atom.str.base) ||
+        lang_type_name_base_is_float(lang_type.atom.str.base) ||
+        strv_is_equal(lang_type.atom.str.base, sv("void")) ||
+        strv_is_equal(lang_type.atom.str.base, sv("opaque"))
+    ) {
+        *new_lang_type = lang_type_from_ulang_type_regular_primitive(lang_type);
+        return true;
+    }
+
     (void) new_lang_type;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};

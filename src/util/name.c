@@ -20,13 +20,29 @@ Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec a_genrgs, Scope_id 
 }
 
 // this function will convert `io.i32` to `i32`, etc.
-static Uname uname_normalize(Uname name) {
+// TODO: remove this function?
+static Uname uname_normalize_old(Uname name) {
     // TODO: this function could cause collisions
     //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
     Uast_def* dummy = NULL;
     Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.a_genrgs, name.scope_id, (Attrs) {0});
     if (usymbol_lookup(&dummy, possible_new)) {
         return name_to_uname(possible_new);
+    }
+    return name;
+}
+
+// this function will convert `io.i32` to `i32`, etc.
+static Uname uname_normalize(Uname name) {
+    // TODO: this function could cause collisions
+    //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
+    
+    if (
+        lang_type_name_base_is_signed(name.base) ||
+        lang_type_name_base_is_unsigned(name.base) ||
+        lang_type_name_base_is_float(name.base)
+    ) {
+        name.mod_alias = MOD_ALIAS_BUILTIN;
     }
     return name;
 }
@@ -38,11 +54,11 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec a_genr
 }
 
 Uname name_to_uname(Name name) {
-    if (lang_type_name_is_signed(name), 0) {
+    if (lang_type_name_base_is_signed(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
-    } else if (lang_type_name_is_unsigned(name), 0) {
+    } else if (lang_type_name_base_is_unsigned(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
-    } else if (lang_type_name_is_float(name), 0) {
+    } else if (lang_type_name_base_is_float(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.a_genrgs, name.scope_id);
     }
 
@@ -121,8 +137,7 @@ Ir_name name_to_ir_name(Name name) {
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec a_genrgs, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
-    //return uname_normalize(uname_new_internal(mod_alias, base, a_genrgs, scope_id));
-    return uname_new_internal(mod_alias, base, a_genrgs, scope_id);
+    return uname_normalize(uname_new_internal(mod_alias, base, a_genrgs, scope_id));
 }
 
 void extend_name_ir(String* buf, Name name) {
@@ -165,6 +180,14 @@ void serialize_strv(String* buf, Strv strv) {
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
+    if (
+        lang_type_name_base_is_signed(name.base) ||
+        lang_type_name_base_is_unsigned(name.base) ||
+        lang_type_name_base_is_float(name.base)
+    ) {
+        name.mod_path = MOD_PATH_BUILTIN;
+    }
+
     String buf = {0};
 
     String new_mod_path = {0};

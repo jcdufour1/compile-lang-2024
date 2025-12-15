@@ -89,8 +89,28 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     }
 }
 
+static Strv sym_tbl_status_print_internal(SYM_TBL_STATUS status) {
+    switch (status) {
+        case SYM_TBL_NEVER_OCCUPIED:
+            return sv("never_occupied");
+        case SYM_TBL_PREVIOUSLY_OCCUPIED:
+            return sv("previously_occupied");
+        case SYM_TBL_OCCUPIED:
+            return sv("occupied");
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+#define sym_tbl_status_print(status) \
+    strv_print(sym_tbl_status_print_internal(status))
+
 // return false if symbol is not found
 bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Strv query) {
+    // TODO: replace (Generic_symbol_table*)sym_table) below with sym_tbl?
+    //const Generic_symbol_table* sym_tbl = sym_table;
+
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         return false;
     }
@@ -108,6 +128,15 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
         }
 
         if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
+            for (size_t idx = 0; idx < ((Generic_symbol_table*)sym_table)->capacity; idx++) {
+                Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[idx];
+                size_t dummy = {0};
+                if (strv_contains(&dummy, query, sv("Slice"))) {
+                    todo();
+                }
+                assert(!strv_is_equal(curr_tast->key, query));
+            }
+
             return false;
         }
 
@@ -283,13 +312,13 @@ bool usymbol_add(Uast_def* item) {
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
     // TODO: factor these nested if-else checks (for is primitive type) into seperate function?
-    if (lang_type_name_is_signed(prim_key)) {
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
-    } else if (lang_type_name_is_unsigned(prim_key)) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
-    } else if (lang_type_name_is_float(prim_key)) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
     }
@@ -362,7 +391,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     Name prim_key = key;
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_name_is_signed(prim_key)) {
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -373,7 +402,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_name_is_unsigned(prim_key)) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -384,7 +413,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         usym_tbl_add(uast_primitive_def_wrap(def));
         *result = uast_primitive_def_wrap(def);
         return true;
-    } else if (lang_type_name_is_float(prim_key)) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
@@ -467,13 +496,13 @@ void usymbol_update(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_name_is_signed(prim_key)) {
+    if (lang_type_name_base_is_signed(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_name_is_unsigned(prim_key)) {
+    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
-    } else if (lang_type_name_is_float(prim_key)) {
+    } else if (lang_type_name_base_is_float(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
     }

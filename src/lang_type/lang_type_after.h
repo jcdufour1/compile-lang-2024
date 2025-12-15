@@ -11,13 +11,13 @@ Name lang_type_primitive_get_name(const Lang_type_primitive lang_type);
 
 bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type);
 
-bool lang_type_name_is_signed(Name name);
+bool lang_type_name_base_is_signed(Strv name);
 
-bool lang_type_name_is_unsigned(Name name);
+bool lang_type_name_base_is_unsigned(Strv name);
 
-bool lang_type_name_is_float(Name name);
+bool lang_type_name_base_is_float(Strv name);
 
-bool lang_type_name_is_number(Name name);
+bool lang_type_name_base_is_number(Strv name);
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type);
 

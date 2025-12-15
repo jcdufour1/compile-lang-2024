@@ -719,7 +719,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_raw_union_const_unwrap(lang_type).pointer_depth)
+                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_struct_const_unwrap(lang_type).pointer_depth)
             ));
         }
         case LANG_TYPE_ARRAY: {
@@ -1118,6 +1118,11 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     load_variable_def(new_block, new_var);
 
     Tast_def* struct_def_ = NULL;
+    Name name = {0};
+    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type)) {
+        todo();
+    }
+    unwrap(symbol_lookup(&struct_def_, name));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)))));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
@@ -1245,6 +1250,8 @@ static Ir_name load_function_lit(Tast_function_lit* old_lit) {
 }
 
 static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
+    (void) new_block;
+    (void) old_lit;
     //Tast_def* enum_def_ = NULL;
     todo();
     //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)));
@@ -1741,6 +1748,9 @@ static Ir_name load_index(Ir_block* new_block, Tast_index* old_index) {
 
 static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_access) {
     Tast_def* enum_def_ = NULL;
+    (void) enum_def_;
+    (void) new_block;
+    (void) old_access;
     todo();
     //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
     //Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
@@ -1780,6 +1790,9 @@ static Ir_name load_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old_acc
 
 static Ir_name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_access) {
     Tast_def* enum_def_ = NULL;
+    (void) enum_def_;
+    (void) new_block;
+    (void) old_access;
     todo();
     //unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
     //Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);

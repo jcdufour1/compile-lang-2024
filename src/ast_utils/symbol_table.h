@@ -99,8 +99,6 @@ Symbol_table* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);
 
-const char* sym_tbl_status_print(SYM_TBL_STATUS status);
-
 bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key);
 
 // returns false if value has already been added to the table

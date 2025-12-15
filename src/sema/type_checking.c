@@ -1089,8 +1089,13 @@ bool try_set_unary_types_finish(
         }
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
-            todo();
-            //assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
+
+#           ifndef NDEBUG
+                Name name = {0};
+                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, cast_to));
+                unwrap(name.base.count > 0);
+#           endif // NDEBUG
+
             if (lang_type_is_equal(cast_to, tast_expr_get_lang_type(new_child))) {
                 *new_tast = new_child;
                 return true;
@@ -1396,8 +1401,7 @@ bool try_set_struct_literal_types(
             unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     }
     Uast_def* struct_def_ = NULL;
-    todo();
-    //unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).name));
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_membs = {0};
@@ -3550,11 +3554,15 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             }
 
             Uast_def* lang_type_def = NULL;
-            todo();
-            //if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
-            //    msg_todo("", tast_expr_get_pos(new_callee));
-            //    return false;
-            //}
+            Name def_name = {0};
+            if (!lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, sym->base.lang_type)) {
+                msg_todo("", tast_expr_get_pos(new_callee));
+                return false;
+            }
+            if (!usymbol_lookup(&lang_type_def, def_name)) {
+                msg_todo("", tast_expr_get_pos(new_callee));
+                return false;
+            }
 
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 

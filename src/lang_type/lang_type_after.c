@@ -117,16 +117,16 @@ bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) 
 //    unreachable("");
 //}
 
-static bool lang_type_name_is_number_finish(Name name, bool allow_decimal) {
+static bool lang_type_name_base_is_number_finish(Strv name_base, bool allow_decimal) {
     size_t idx = 0;
     bool decimal_enc = false;
-    for (idx = 1; idx < name.base.count; idx++) {
-        if (strv_at(name.base, idx) == '.') {
+    for (idx = 1; idx < name_base.count; idx++) {
+        if (strv_at(name_base, idx) == '.') {
             if (!allow_decimal || decimal_enc) {
                 return false;
             }
             decimal_enc = true;
-        } else if (!isdigit(strv_at(name.base, idx))) {
+        } else if (!isdigit(strv_at(name_base, idx))) {
             return false;
         }
     }
@@ -134,38 +134,38 @@ static bool lang_type_name_is_number_finish(Name name, bool allow_decimal) {
     return idx > 1;
 }
 
-bool lang_type_name_is_signed(Name name) {
-    if (name.base.count < 1) {
+bool lang_type_name_base_is_signed(Strv name_base) {
+    if (name_base.count < 1) {
         return false;
     }
-    if (strv_at(name.base, 0) != 'i') {
+    if (strv_at(name_base, 0) != 'i') {
         return false;
     }
-    return lang_type_name_is_number_finish(name, false);
+    return lang_type_name_base_is_number_finish(name_base, false);
 }
 
-bool lang_type_name_is_unsigned(Name name) {
-    if (name.base.count < 1) {
+bool lang_type_name_base_is_unsigned(Strv name_base) {
+    if (name_base.count < 1) {
         return false;
     }
-    if (strv_at(name.base, 0) != 'u') {
+    if (strv_at(name_base, 0) != 'u') {
         return false;
     }
-    return lang_type_name_is_number_finish(name, false);
+    return lang_type_name_base_is_number_finish(name_base, false);
 }
 
-bool lang_type_name_is_float(Name name) {
-    if (name.base.count < 1) {
+bool lang_type_name_base_is_float(Strv name_base) {
+    if (name_base.count < 1) {
         return false;
     }
-    if (strv_at(name.base, 0) != 'f') {
+    if (strv_at(name_base, 0) != 'f') {
         return false;
     }
-    return lang_type_name_is_number_finish(name, true);
+    return lang_type_name_base_is_number_finish(name_base, true);
 }
 
-bool lang_type_name_is_number(Name name) {
-    return lang_type_name_is_unsigned(name) || lang_type_name_is_signed(name);
+bool lang_type_name_base_is_number(Strv name_base) {
+    return lang_type_name_base_is_unsigned(name_base) || lang_type_name_base_is_signed(name_base);
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types

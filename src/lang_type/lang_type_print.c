@@ -218,6 +218,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
                 msg_todo("", lang_type_get_pos(lang_type));
                 break;
             }
+            assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
             assert(name.base.count >= 1);
             extend_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
