@@ -5,8 +5,8 @@
 #include <lang_type.h>
 #include <lang_type_after.h>
 
-static inline bool lang_type_is_slice(Ulang_type* a_genrg, Lang_type lang_type) {
-    (void) a_genrg;
+static inline bool lang_type_is_slice(Ulang_type* gen_arg, Lang_type lang_type) {
+    (void) gen_arg;
     if (lang_type.type != LANG_TYPE_STRUCT) {
         return false;
     }
@@ -14,8 +14,8 @@ static inline bool lang_type_is_slice(Ulang_type* a_genrg, Lang_type lang_type) 
     if (!strv_is_equal(lang_type_struct.name.mod_path, MOD_PATH_RUNTIME)) {
         return false;
     }
-    unwrap(lang_type_struct.name.a_genrgs.info.count == 1);
-    *a_genrg = vec_at(lang_type_struct.name.a_genrgs, 0);
+    unwrap(lang_type_struct.name.gen_args.info.count == 1);
+    *gen_arg = vec_at(lang_type_struct.name.gen_args, 0);
     return true;
 }
 

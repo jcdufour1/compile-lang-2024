@@ -210,12 +210,12 @@ static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
 
     vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            if (vec_at(base->name.a_genrgs, idx).type != ULANG_TYPE_LIT) {
+            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_LIT) {
                 msg_todo("non const expression here", dest_pos);
                 return UAST_GET_MEMB_DEF_NONE;
             }
 
-            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(vec_at(base->name.a_genrgs, idx));
+            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(vec_at(base->name.gen_args, idx));
             switch (const_expr.type) {
                 case ULANG_TYPE_INT_LIT: {
                     Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(const_expr);

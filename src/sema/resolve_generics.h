@@ -5,15 +5,15 @@
 #include <env.h>
 #include <uast.h>
 
-#define msg_invalid_count_generic_args(pos_def, pos_a_genrgs, a_genrgs_count, min_args, max_args) \
-    msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_a_genrgs, a_genrgs_count, min_args, max_args)
+#define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args_count, min_args, max_args) \
+    msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args_count, min_args, max_args)
 
 void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Pos pos_def,
-    Pos pos_a_genrgs,
-    size_t a_genrgs_count,
+    Pos pos_gen_args,
+    size_t gen_args_count,
     size_t min_args,
     size_t max_args
 );
@@ -26,8 +26,8 @@ bool resolve_generics_function_def_call(
     Lang_type_fn* rtn_type,
     Name* new_name,
     Uast_function_def* def,
-    Ulang_type_vec a_genrgs,
-    Pos pos_a_genrgs
+    Ulang_type_vec gen_args,
+    Pos pos_gen_args
 );
 
 bool resolve_generics_function_def_implementation(Name name);

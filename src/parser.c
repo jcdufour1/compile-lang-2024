@@ -1090,7 +1090,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
     }
 
     if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
-        if (PARSE_OK != parse_generics_args(&atom.str.a_genrgs, tokens, scope_id)) {
+        if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
             return false;
         }
     }
@@ -1784,7 +1784,7 @@ static PARSE_STATUS parse_for_range_internal(
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.a_genrgs, user_name.scope_id, (Attrs) {0})
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id, (Attrs) {0})
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
@@ -3688,7 +3688,7 @@ static PARSE_STATUS parse_expr_generic(
             return PARSE_ERROR;
     }
 
-    if (PARSE_OK != parse_generics_args(&sym->name.a_genrgs, tokens, scope_id)) {
+    if (PARSE_OK != parse_generics_args(&sym->name.gen_args, tokens, scope_id)) {
         return PARSE_ERROR;
     }
     *result = lhs;

@@ -231,7 +231,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
 
             Name memb_name = access->member_name->name;
 
-            Uname new_name = uname_new(uast_symbol_unwrap(access->callee)->name, memb_name.base, memb_name.a_genrgs, memb_name.scope_id);
+            Uname new_name = uname_new(uast_symbol_unwrap(access->callee)->name, memb_name.base, memb_name.gen_args, memb_name.scope_id);
             Ulang_type_regular reg = ulang_type_regular_new(access->pos, ulang_type_atom_new(new_name, 0));
             *result = ulang_type_regular_const_wrap(reg);
             return EXPR_TO_ULANG_TYPE_NORMAL;

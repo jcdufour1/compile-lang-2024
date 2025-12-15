@@ -228,7 +228,7 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,
-        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_a_genrgs_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
         0
     ));
 }

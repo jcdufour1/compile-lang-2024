@@ -4,6 +4,6 @@
 #include <util.h>
 #include <uast.h>
 
-bool check_gen_constraints(Uast_generic_param_vec gen_params, Ulang_type_vec a_genrgs);
+bool check_gen_constraints(Uast_generic_param_vec gen_params, Ulang_type_vec gen_args);
 
 #endif // CHECK_GEN_CONSTRAINTS_H

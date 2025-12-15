@@ -29,10 +29,10 @@ void ir_extend_name(String* output, Ir_name name) {
     if (ir_lookup(&result, name) && is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         name.scope_id = SCOPE_TOP_LEVEL;
-        assert(name.a_genrgs.info.count < 1 && "extern c generic function should not be allowed");
+        assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
     } else if (strv_is_equal(name.base, sv("main"))) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
-        assert(name.a_genrgs.info.count < 1 && "generic main function should not be allowed");
+        assert(name.gen_args.info.count < 1 && "generic main function should not be allowed");
         name.scope_id = SCOPE_TOP_LEVEL;
         name.base = sv(EXTERN_C_OWN_PREFIX"_actual_main");
     }

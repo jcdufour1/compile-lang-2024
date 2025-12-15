@@ -128,9 +128,9 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     // report error if generic args are invalid
-    vec_foreach(gen_idx, Ulang_type, a_genrg, lang_type.atom.str.a_genrgs) {
+    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
         Lang_type dummy = {0};
-        if (!try_lang_type_from_ulang_type(&dummy, a_genrg)) {
+        if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
             return false;
         }
     }

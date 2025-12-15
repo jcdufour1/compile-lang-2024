@@ -64,8 +64,8 @@ static bool expand_def_ulang_type(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
-    Pos pos_parent_a_genrgs,
-    size_t count_parent_a_genrgs,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 );
@@ -137,7 +137,7 @@ static bool expand_def_ulang_type_regular(
             Uname new_uname = uname_new(
                 uast_symbol_unwrap(access->callee)->name,
                 access->member_name->name.base,
-                lang_type.atom.str.a_genrgs,
+                lang_type.atom.str.gen_args,
                 SCOPE_TOP_LEVEL/*TODO*/
             );
             *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
@@ -353,8 +353,8 @@ static bool expand_def_ulang_type_expr(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
-    Pos pos_parent_a_genrgs,
-    size_t count_parent_a_genrgs,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 ) {
@@ -385,8 +385,8 @@ static bool expand_def_ulang_type_expr(
                         unwrap(usymbol_lookup(&struct_def, def_base.name));
                         msg_invalid_count_generic_args(
                             uast_def_get_pos(struct_def),
-                            pos_parent_a_genrgs,
-                            count_parent_a_genrgs,
+                            pos_parent_gen_args,
+                            count_parent_gen_args,
                             def_base.generics.info.count,
                             def_base.generics.info.count
                         );
@@ -480,8 +480,8 @@ static bool expand_def_ulang_type(
     bool is_rhs,
     Uast_expr* rhs,
     bool is_parent_info,
-    Pos pos_parent_a_genrgs,
-    size_t count_parent_a_genrgs,
+    Pos pos_parent_gen_args,
+    size_t count_parent_gen_args,
     Name parent_name,
     size_t parent_idx
 ) {
@@ -527,8 +527,8 @@ static bool expand_def_ulang_type(
                 is_rhs,
                 rhs,
                 is_parent_info,
-                pos_parent_a_genrgs,
-                count_parent_a_genrgs,
+                pos_parent_gen_args,
+                count_parent_gen_args,
                 parent_name,
                 parent_idx
             )) {
@@ -571,32 +571,32 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
 ) {
     Uast_def* def = NULL;
     *new_name = name;
-    memset(&new_name->a_genrgs, 0, sizeof(new_name->a_genrgs));
+    memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
     if (!usymbol_lookup(&def, *new_name)) {
-        new_name->a_genrgs = name.a_genrgs;
+        new_name->gen_args = name.gen_args;
         return EXPAND_NAME_NORMAL;
     }
 
-    new_name->a_genrgs = name.a_genrgs;
-    bool a_genrg_status = true;
+    new_name->gen_args = name.gen_args;
+    bool gen_arg_status = true;
     Name base_name = name;
-    base_name.a_genrgs = (Ulang_type_vec) {0};
-    for (size_t idx = 0; idx < new_name->a_genrgs.info.count; idx++) {
-        Ulang_type* curr = vec_at_ref(&new_name->a_genrgs, idx);
+    base_name.gen_args = (Ulang_type_vec) {0};
+    for (size_t idx = 0; idx < new_name->gen_args.info.count; idx++) {
+        Ulang_type* curr = vec_at_ref(&new_name->gen_args, idx);
         Pos curr_pos = ulang_type_get_pos(*curr);
-        a_genrg_status = expand_def_ulang_type(
+        gen_arg_status = expand_def_ulang_type(
             curr,
             curr_pos,
             false/*TODO*/,
             NULL,
             true,
             dest_pos,
-            new_name->a_genrgs.info.count,
+            new_name->gen_args.info.count,
             base_name,
             idx
-        ) && a_genrg_status;
+        ) && gen_arg_status;
     }
-    if (!a_genrg_status) {
+    if (!gen_arg_status) {
         return EXPAND_NAME_ERROR;
     }
 
@@ -665,8 +665,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);
-            if (access->member_name->name.a_genrgs.info.count > 0) {
-                if (name.a_genrgs.info.count > 0) {
+            if (access->member_name->name.gen_args.info.count > 0) {
+                if (name.gen_args.info.count > 0) {
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
@@ -712,8 +712,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         }
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
-            if (sym->name.a_genrgs.info.count > 0) {
-                if (name.a_genrgs.info.count > 0) {
+            if (sym->name.gen_args.info.count > 0) {
+                if (name.gen_args.info.count > 0) {
                     Pos temp_pos = uast_expr_get_pos(expr);
                     *uast_expr_get_pos_ref(expr) = dest_pos;
                     pos_expanded_from_append(uast_expr_get_pos_ref(expr), arena_dup(&a_main, &temp_pos));
@@ -954,17 +954,17 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
-    Ulang_type_vec old_a_genrgs = sym->name.a_genrgs;
-    memset(&sym->name.a_genrgs, 0, sizeof(sym->name.a_genrgs));
+    Ulang_type_vec old_gen_args = sym->name.gen_args;
+    memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
     if (!usymbol_lookup(&callee_def, sym->name)) {
-        sym->name.a_genrgs = old_a_genrgs;
+        sym->name.gen_args = old_gen_args;
         *new_expr = uast_member_access_wrap(access);
         return EXPAND_EXPR_NEW_EXPR;
     }
-    sym->name.a_genrgs = old_a_genrgs;
+    sym->name.gen_args = old_gen_args;
 
     if (callee_def->type == UAST_MOD_ALIAS) {
-        Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.a_genrgs, SCOPE_TOP_LEVEL);
+        Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_TOP_LEVEL);
         Name name = {0};
         if (!name_from_uname(&name, uname, access->pos)) {
             msg_todo("error message for this situation", access->pos);

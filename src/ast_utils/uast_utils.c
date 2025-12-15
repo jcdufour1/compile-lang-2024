@@ -53,9 +53,9 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
     unreachable("");
 }
 
-bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec a_genrgs, Pos pos) {
+bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec gen_args, Pos pos) {
     Uname base_name = name_to_uname(base.name);
-    base_name.a_genrgs = a_genrgs;
+    base_name.gen_args = gen_args;
     LANG_TYPE_TYPE type = {0};
     return resolve_generics_ulang_type_regular(
         &type,

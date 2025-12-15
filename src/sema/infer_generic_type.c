@@ -59,7 +59,7 @@ bool infer_generic_type(
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg);
             if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                if (reg.atom.str.a_genrgs.info.count > 0 || name_to_infer.a_genrgs.info.count > 0) {
+                if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
                     return false;
                 }
                 *infered = arg_to_infer_from;
@@ -77,16 +77,16 @@ bool infer_generic_type(
                 for (
                     size_t idx = 0;
                     idx < min(
-                        reg.atom.str.a_genrgs.info.count,
-                        ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.a_genrgs.info.count
+                        reg.atom.str.gen_args.info.count,
+                        ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args.info.count
                     );
                     idx++
                 ) {
                     if (infer_generic_type(
                         infered,
-                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.a_genrgs, idx),
+                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args, idx),
                         false,
-                        vec_at(reg.atom.str.a_genrgs, idx),
+                        vec_at(reg.atom.str.gen_args, idx),
                         name_to_infer,
                         pos_arg
                     )) {
