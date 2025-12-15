@@ -225,7 +225,6 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             break;
         }
         case LANG_TYPE_PRIMITIVE: {
-            //Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
             Name name = {0};
             if (!lang_type_get_name(&name, mode, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));

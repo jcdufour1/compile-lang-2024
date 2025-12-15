@@ -1252,9 +1252,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     (void) old_lit;
     Tast_def* enum_def_ = NULL;
     Name name = {0};
-    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)) {
-        return util_literal_ir_name_new_poison();
-    }
+    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->enum_lang_type));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     

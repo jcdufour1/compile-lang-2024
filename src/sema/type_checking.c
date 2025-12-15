@@ -1090,6 +1090,7 @@ bool try_set_unary_types_finish(
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
 
+            // TODO: these unwraps may not work when cast_to is a function pointer
 #           ifndef NDEBUG
                 Name name = {0};
                 unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, cast_to));
@@ -1588,6 +1589,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
 
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)) {
+                msg_todo("", lang_type_get_pos(check_env.lhs_lang_type));
                 status = false;
                 goto end;
             }
@@ -2129,6 +2131,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
             Uast_def* enum_def_ = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)) {
+                msg_todo("", enum_callee->pos);
                 return FUN_MIDDLE_ERROR;
             }
             unwrap(usymbol_lookup(&enum_def_, name));
@@ -2657,6 +2660,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             Uast_def* def = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.switch_lang_type)) {
+                msg_todo("", lang_type_get_pos(check_env.switch_lang_type));
                 return false;
             }
             unwrap(usymbol_lookup(&def, name));
@@ -3588,6 +3592,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_def* lang_type_def = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, sym->lang_type)) {
+                msg_todo("", sym->lang_type);
                 return false;
             }
             if (!usymbol_lookup(&lang_type_def, name)) {
@@ -3601,6 +3606,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_def* lang_type_def = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym))) {
+                msg_todo("", sym->pos);
                 return false;
             }
             if (!usymbol_lookup(&lang_type_def, name)) {
@@ -3615,6 +3621,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Uast_def* lang_type_def = NULL;
             Name name =  {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
                 return false;
             }
             unwrap(usymbol_lookup(&lang_type_def, name));

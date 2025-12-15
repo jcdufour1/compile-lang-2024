@@ -62,7 +62,8 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             Tast_def* def = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
-                return false;
+                msg_todo("", lang_type_get_pos(lang_type));
+                return 0;
             }
             unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
@@ -72,6 +73,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
+                return 0;
             }
             unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
@@ -105,7 +107,8 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
             Tast_def* def = NULL;
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
-                return false;
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
             }
             unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
@@ -115,6 +118,7 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
+                return 0;
             }
             unwrap(symbol_lookup(&def, name));
             return alignof_def(def);

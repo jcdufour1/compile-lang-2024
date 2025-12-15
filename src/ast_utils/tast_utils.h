@@ -74,13 +74,6 @@ static inline Ir_lang_type_vec ir_lang_type_vec_from_ir_lang_type(Ir_lang_type i
     return vec;
 }
 
-//static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
-//    if (a.pointer_depth != b.pointer_depth) {
-//        return false;
-//    }
-//    return name_is_equal(a.str, b.str);
-//}
-
 static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
     if (a.info.count != b.info.count) {
         return false;
@@ -171,19 +164,16 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
         case LANG_TYPE_STRUCT: {
             Lang_type_struct a_struct = lang_type_struct_const_unwrap(a);
             Lang_type_struct b_struct = lang_type_struct_const_unwrap(b);
-            log(LOG_DEBUG, FMT FMT"\n", name_print(NAME_LOG, a_struct.name), name_print(NAME_LOG, b_struct.name));
             return name_is_equal(a_struct.name, b_struct.name) && a_struct.pointer_depth == b_struct.pointer_depth;
         }
         case LANG_TYPE_RAW_UNION: {
             Lang_type_raw_union a_raw_union = lang_type_raw_union_const_unwrap(a);
             Lang_type_raw_union b_raw_union = lang_type_raw_union_const_unwrap(b);
-            log(LOG_DEBUG, FMT FMT"\n", name_print(NAME_LOG, a_raw_union.name), name_print(NAME_LOG, b_raw_union.name));
             return name_is_equal(a_raw_union.name, b_raw_union.name) && a_raw_union.pointer_depth == b_raw_union.pointer_depth;
         }
         case LANG_TYPE_ENUM: {
             Lang_type_enum a_enum = lang_type_enum_const_unwrap(a);
             Lang_type_enum b_enum = lang_type_enum_const_unwrap(b);
-            log(LOG_DEBUG, FMT FMT"\n", name_print(NAME_LOG, a_enum.name), name_print(NAME_LOG, b_enum.name));
             return name_is_equal(a_enum.name, b_enum.name) && a_enum.pointer_depth == b_enum.pointer_depth;
         }
         case LANG_TYPE_VOID:

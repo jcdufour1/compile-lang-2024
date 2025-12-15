@@ -13,9 +13,6 @@
 #include <ulang_type_remove_expr.h>
 #include <ast_msg.h>
 
-// TODO: remove this forward decl when possible
-//static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
-
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 // TODO: remove Pos parameter

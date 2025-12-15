@@ -87,16 +87,6 @@ static inline Name uast_primitive_def_get_name(const Uast_primitive_def* def) {
     return lang_type_primitive_get_name(lang_type);
 }
 
-// TODO: remove
-//static inline Name lang_type_get_str(LANG_TYPE_MODE mode, Lang_type lang_type) {
-//    Lang_type_atom atom = {0};
-//    if (!try_lang_type_get_atom(&atom, mode, lang_type)) {
-//        return util_literal_name_new();
-//    }
-//    return atom.str;
-//}
-
-
 static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
