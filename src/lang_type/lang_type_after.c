@@ -55,7 +55,8 @@ bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) 
             *result = name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
             return true;
         case LANG_TYPE_FN:
-            todo();
+            // TODO
+            return false;
         case LANG_TYPE_ARRAY:
             return false;
         case LANG_TYPE_LIT:

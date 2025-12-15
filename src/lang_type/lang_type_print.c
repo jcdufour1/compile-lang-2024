@@ -174,11 +174,14 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             break;
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
-            string_extend_cstr(&a_main, string, "fn");
+            string_extend_f(&a_main, string, "%sfn", fn.pointer_depth > 1 ? "(" : "");
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
-            if (fn.pointer_depth != 1) {
-                todo();
+            if (fn.pointer_depth > 1) {
+                vec_append(&a_temp, string, ')');
+            }
+            for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
+                vec_append(&a_temp, string, '*');
             }
             break;
         }
@@ -197,10 +200,20 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             fallthrough;
         case LANG_TYPE_RAW_UNION:
             fallthrough;
-        case LANG_TYPE_STRUCT:
+        case LANG_TYPE_STRUCT: {
             // TODO: uncomment below assert?
             //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
-            fallthrough;
+            Name name = {0};
+            if (!lang_type_get_name(&name, mode, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+                vec_append(&a_temp, string, '*');
+            }
+            break;
+        }
         case LANG_TYPE_VOID: {
             Name name = {0};
             if (!lang_type_get_name(&name, mode, lang_type)) {

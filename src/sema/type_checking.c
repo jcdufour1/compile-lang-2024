@@ -135,8 +135,8 @@ static void msg_invalid_function_arg_internal(
             DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
             "argument is of type `"FMT"`, "
             "but the corresponding parameter is of type `"FMT"`\n",
-            lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(argument)), 
-            lang_type_print(LANG_TYPE_MODE_LOG, param_lang_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
+            lang_type_print(LANG_TYPE_MODE_MSG, param_lang_type)
         );
         msg_internal(
             file, line,
@@ -1491,44 +1491,43 @@ bool try_set_array_literal_types(
     );
     sym_tbl_add(tast_struct_def_wrap(inner_def));
 
-    todo();
-    //Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
-    //    lit->pos,
-    //    new_membs,
-    //    util_literal_name_new(),
-    //    lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
-    //);
+    Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
+        lit->pos,
+        new_membs,
+        util_literal_name_new(),
+        lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, inner_def->base.name, 0))
+    );
 
-    //Lang_type unary_lang_type = a_genrg;
-    //lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
-    //Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-    //    new_inner_lit->pos,
-    //    tast_struct_literal_wrap(new_inner_lit),
-    //    UNARY_REFER,
-    //    unary_lang_type
-    //)));
+    Lang_type unary_lang_type = a_genrg;
+    lang_type_set_pointer_depth(&unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
+    Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        new_inner_lit->pos,
+        tast_struct_literal_wrap(new_inner_lit),
+        UNARY_REFER,
+        unary_lang_type
+    )));
 
-    //if (dest_lang_type.type == LANG_TYPE_ARRAY) {
-    //    new_inner_lit->lang_type = dest_lang_type;
-    //    *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_inner_lit));
-    //    return true;
-    //}
+    if (dest_lang_type.type == LANG_TYPE_ARRAY) {
+        new_inner_lit->lang_type = dest_lang_type;
+        *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_inner_lit));
+        return true;
+    }
 
-    //Tast_expr_vec new_lit_membs = {0};
-    //vec_append(&a_main, &new_lit_membs, ptr);
-    //vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
-    //    new_inner_lit->pos,
-    //    (int64_t)new_membs.info.count,
-    //    lang_type_new_usize(new_inner_lit->pos)
-    //))));
-    //Tast_struct_literal* new_lit = tast_struct_literal_new(
-    //    new_inner_lit->pos,
-    //    new_lit_membs,
-    //    util_literal_name_new(),
-    //    dest_lang_type
-    //);
-    //*new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
-    //return true;
+    Tast_expr_vec new_lit_membs = {0};
+    vec_append(&a_main, &new_lit_membs, ptr);
+    vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
+        new_inner_lit->pos,
+        (int64_t)new_membs.info.count,
+        lang_type_new_usize(new_inner_lit->pos)
+    ))));
+    Tast_struct_literal* new_lit = tast_struct_literal_new(
+        new_inner_lit->pos,
+        new_lit_membs,
+        util_literal_name_new(),
+        dest_lang_type
+    );
+    *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
+    return true;
 }
 
 bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign, bool expr_is_actually_used_as_expr) {
@@ -2654,27 +2653,30 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_UNKNOWN: {
-            todo();
-            //Uast_def* def = NULL;
-            //unwrap(usymbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, check_env.switch_lang_type)));
-            //Uast_variable_def_vec membs = uast_enum_def_unwrap(def)->base.members;
-            //if (membs.info.count != 2) {
-            //    msg_todo("", fun_call->pos);
-            //    return false;
-            //}
-            //return try_set_function_call_types(new_call, uast_function_call_new(
-            //    fun_call->pos,
-            //    fun_call->args,
-            //    uast_member_access_wrap(uast_member_access_new(
-            //        fun_call->pos,
-            //        uast_symbol_new(
-            //            fun_call->pos,
-            //            vec_at(membs, check_env.switch_prev_idx == 0 ? 1 : 0)->name
-            //        ),
-            //        uast_unknown_wrap(uast_unknown_new(fun_call->pos))
-            //    )),
-            //    false
-            //));
+            Uast_def* def = NULL;
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.switch_lang_type)) {
+                return false;
+            }
+            unwrap(usymbol_lookup(&def, name));
+            Uast_variable_def_vec membs = uast_enum_def_unwrap(def)->base.members;
+            if (membs.info.count != 2) {
+                msg_todo("", fun_call->pos);
+                return false;
+            }
+            return try_set_function_call_types(new_call, uast_function_call_new(
+                fun_call->pos,
+                fun_call->args,
+                uast_member_access_wrap(uast_member_access_new(
+                    fun_call->pos,
+                    uast_symbol_new(
+                        fun_call->pos,
+                        vec_at(membs, check_env.switch_prev_idx == 0 ? 1 : 0)->name
+                    ),
+                    uast_unknown_wrap(uast_unknown_new(fun_call->pos))
+                )),
+                false
+            ));
         }
         case UAST_ARRAY_LITERAL:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
@@ -3392,18 +3394,17 @@ bool try_set_member_access_types_finish_enum_def(
                 return false;
             }
 
-            //Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
-            //    access->pos,
-            //    (int64_t)uast_get_member_index(&enum_def->base, access->member_name->name.base),
-            //    memb_lang_type
-            //);
+            Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
+                access->pos,
+                (int64_t)uast_get_member_index(&enum_def->base, access->member_name->name.base),
+                memb_lang_type
+            );
 
-            todo();
-            //*new_tast = tast_expr_wrap(tast_enum_case_wrap(tast_enum_case_new(
-            //    access->pos,
-            //    new_tag,
-            //    lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, lang_type_atom_new(enum_def->base.name, 0)))
-            //)));
+            *new_tast = tast_expr_wrap(tast_enum_case_wrap(tast_enum_case_new(
+                access->pos,
+                new_tag,
+                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, enum_def->base.name, 0))
+            )));
 
             return true;
         }
@@ -3589,23 +3590,29 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
         case TAST_OPERATOR: {
-            todo();
-            //Tast_operator* sym = tast_operator_unwrap(new_callee);
-            //Uast_def* lang_type_def = NULL;
-            //if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym)))) {
-            //    todo();
-            //}
+            Tast_operator* sym = tast_operator_unwrap(new_callee);
+            Uast_def* lang_type_def = NULL;
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym))) {
+                return false;
+            }
+            if (!usymbol_lookup(&lang_type_def, name)) {
+                todo();
+            }
 
-            //return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
         case TAST_FUNCTION_CALL: {
-            todo();
-            //Tast_function_call* call = tast_function_call_unwrap(new_callee);
-            //Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
-            //Uast_def* lang_type_def = NULL;
-            //unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Tast_function_call* call = tast_function_call_unwrap(new_callee);
+            Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
+            Uast_def* lang_type_def = NULL;
+            Name name =  {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                return false;
+            }
+            unwrap(usymbol_lookup(&lang_type_def, name));
 
-            //return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
         }
         case TAST_MODULE_ALIAS: {
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
@@ -4491,27 +4498,29 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
-    todo();
-    //Uast_def* enum_def_ = NULL;
-    //if (!usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
-    //    todo();
-    //}
-    //Ustruct_def_base enum_def = {0};
-    //if (enum_def_->type != UAST_ENUM_DEF) {
-    //    msg_todo("switch statement with this type", uast_def_get_pos(enum_def_));
-    //}
-    //enum_def = uast_enum_def_unwrap(enum_def_)->base;
-    //unwrap(enum_def.members.info.count > 0);
-    //exhaustive_data.max_data = enum_def.members.info.count - 1;
+    Uast_def* enum_def_ = NULL;
+    Name name = {0};
+    unwrap(
+        lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type) &&
+        "this lang_type being undefined should have been caught earlier"
+    );
+    unwrap(usymbol_lookup(&enum_def_, name));
+    Ustruct_def_base enum_def = {0};
+    if (enum_def_->type != UAST_ENUM_DEF) {
+        msg_todo("switch statement with this type", uast_def_get_pos(enum_def_));
+    }
+    enum_def = uast_enum_def_unwrap(enum_def_)->base;
+    unwrap(enum_def.members.info.count > 0);
+    exhaustive_data.max_data = enum_def.members.info.count - 1;
 
-    //vec_reserve(&a_temp, &exhaustive_data.covered, exhaustive_data.max_data + 1);
-    //vec_reserve(&a_temp, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
-    //for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
-    //    vec_append(&a_temp, &exhaustive_data.covered, false);
-    //}
-    //unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
+    vec_reserve(&a_temp, &exhaustive_data.covered, exhaustive_data.max_data + 1);
+    vec_reserve(&a_temp, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
+    for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
+        vec_append(&a_temp, &exhaustive_data.covered, false);
+    }
+    unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
-    //return exhaustive_data;
+    return exhaustive_data;
 }
 
 #pragma GCC diagnostic ignored "-Wswitch-enum"
@@ -4582,22 +4591,23 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
-                todo();
-                //unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
-                //Ustruct_def_base enum_def = {0};
-                //enum_def = uast_enum_def_unwrap(enum_def_)->base;
+                Name name = {0};
+                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type));
+                unwrap(usymbol_lookup(&enum_def_, name));
+                Ustruct_def_base enum_def = {0};
+                enum_def = uast_enum_def_unwrap(enum_def_)->base;
 
-                //if (status == true) {
-                //    string_extend_cstr(&a_main, &string, "some cases are not covered: ");
-                //    status = false;
-                //} else {
-                //    string_extend_cstr(&a_main, &string, ", ");
-                //}
+                if (status == true) {
+                    string_extend_cstr(&a_main, &string, "some cases are not covered: ");
+                    status = false;
+                } else {
+                    string_extend_cstr(&a_main, &string, ", ");
+                }
 
-                //// TODO: make helper function to print member more easily
-                //extend_name(NAME_MSG, &string, enum_def.name);
-                //string_extend_cstr(&a_main, &string, ".");
-                //extend_name(NAME_MSG, &string, vec_at(enum_def.members, idx)->name);
+                // TODO: make helper function to print member more easily
+                extend_name(NAME_MSG, &string, enum_def.name);
+                string_extend_cstr(&a_main, &string, ".");
+                extend_name(NAME_MSG, &string, vec_at(enum_def.members, idx)->name);
             }
         }
 
