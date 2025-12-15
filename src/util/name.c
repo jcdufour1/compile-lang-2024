@@ -99,10 +99,6 @@ Ir_name name_to_ir_name(Name name) {
     }
 
     if (name.scope_id == SCOPE_TOP_LEVEL) {
-        // TODO: remove if statement below
-        if (strv_is_equal(name.base, sv("num"))) {
-            todo();
-        }
         Ir_name ir_name = *(Ir_name*)&name;
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));

@@ -8,6 +8,7 @@
 #include <lang_type_print.h>
 #include <ulang_type_new_convenience.h>
 #include <ulang_type_is_equal.h>
+#include <ast_msg.h>
 
 // TODO: remove this forward declaration
 static inline Ulang_type ulang_type_new_int_x(Strv base);
@@ -228,14 +229,11 @@ static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operato
 
 static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
-        todo();
-        //return lang_type_struct_const_wrap(lang_type_struct_new(
-        //    str->pos,
-        //    lang_type_atom_new(
-        //        name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
-        //        0
-        //    )
-        //));
+        return lang_type_struct_const_wrap(lang_type_struct_new(
+            str->pos,
+            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
+            0
+        ));
     }
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
@@ -419,9 +417,14 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
 
 static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
-        case TAST_PRIMITIVE_DEF:
-            todo();
-            //return lang_type_get_str(LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type);
+        case TAST_PRIMITIVE_DEF: {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return util_literal_name_new_poison();
+            }
+            return name;
+        }
         case TAST_VARIABLE_DEF:
             return tast_variable_def_const_unwrap(def)->name;
         case TAST_STRUCT_DEF:

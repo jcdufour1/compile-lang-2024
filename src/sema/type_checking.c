@@ -737,29 +737,30 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             case TAST_ENUM_LIT: {
                 Tast_enum_lit* lhs = tast_enum_lit_unwrap(lhs_lit);
                 Tast_enum_lit* rhs = tast_enum_lit_unwrap(rhs_lit);
-                if (!lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type)) {
-                    // binary operators with mismatched enum types
+                unwrap(lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type) && "this should have already been caught");
+
+                Uast_def* enum_def_ = NULL;
+                Name name = {0};
+                if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lhs->enum_lang_type)) {
+                    msg_todo("", lhs->pos);
                     return false;
                 }
-
-                //Uast_def* enum_def_ = NULL;
-                todo();
-                //unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->enum_lang_type)));
-                //if (!ulang_type_is_equal(
-                //    vec_at(uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
-                //    lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos, 0)))
-                //)) {
-                //    // overloaded binary operators not defined for non-void inner types of enum
-                //    msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
-                //    todo();
-                //}
-                //literal = precalulate_enum_lit(
-                //    tast_enum_lit_const_unwrap(lhs_lit),
-                //    tast_enum_lit_const_unwrap(rhs_lit),
-                //    oper_token_type,
-                //    oper_pos
-                //);
-                //break;
+                unwrap(usymbol_lookup(&enum_def_, name));
+                if (!ulang_type_is_equal(
+                    vec_at(uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
+                    lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos, 0)))
+                )) {
+                    // overloaded binary operators not defined for non-void inner types of enum
+                    msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
+                    return false;
+                }
+                literal = precalulate_enum_lit(
+                    tast_enum_lit_const_unwrap(lhs_lit),
+                    tast_enum_lit_const_unwrap(rhs_lit),
+                    oper_token_type,
+                    oper_pos
+                );
+                break;
             }
             case TAST_RAW_UNION_LIT:
                 fallthrough;
@@ -3499,10 +3500,16 @@ bool try_set_member_access_types_finish(
         }
         case UAST_ENUM_DEF:
             return try_set_member_access_types_finish_enum_def(new_tast, uast_enum_def_unwrap(lang_type_def), access, new_callee);
-        case UAST_PRIMITIVE_DEF:
-            todo();
-            //msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
+        case UAST_PRIMITIVE_DEF: {
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type)) {
+                msg_todo("", uast_def_get_pos(lang_type_def));
+                msg(DIAG_NOTE, access->pos, "\n");
+                return false;
+            }
+            msg_invalid_member(name, access);
             return false;
+        }
         case UAST_LABEL: {
             todo();
         }

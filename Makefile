@@ -48,7 +48,7 @@ ifeq ($(DEBUG), 1)
 	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_COMMON}
-	C_FLAGS += -DNDEBUG -O2 -pg # -flto 
+	C_FLAGS += -DNDEBUG -O2 # -flto 
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif

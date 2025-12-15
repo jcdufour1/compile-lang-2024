@@ -159,16 +159,6 @@ static void emit_c_function_def(Emit_c_strs* strs, const Ir_function_def* fun_de
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Ir_function_decl* decl) {
     emit_c_loc(&strs->output, ir_get_loc(decl), decl->pos);
-    //if (strv_is_equal(decl->name.base, sv("own_printf"))) {
-    //    vec_foreach(idx, Ir_variable_def*, param, decl->params->params) {
-    //        if (idx == 0) {
-    //            log(LOG_DEBUG, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(ir_lang_type_struct_const_unwrap(param->lang_type).atom.str.a_genrgs, 0)));
-    //        }
-    //        log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, param->lang_type));
-    //    }
-    //    log(LOG_DEBUG, FMT"\n", ir_print(decl));
-    //    todo();
-    //}
     emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_pass, &strs->forward_decls, ";\n");
 }

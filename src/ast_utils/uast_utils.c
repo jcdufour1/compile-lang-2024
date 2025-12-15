@@ -76,6 +76,7 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     return ulang_type_fn_const_wrap(fn);
 }
 
+// TODO: remove this pragma, and make below switch exhausive
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
 // will print error on failure
@@ -83,7 +84,7 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             int64_t raw = 0;
-            if (!try_strv_to_int64_t(&raw,  pos, value)) {
+            if (!try_strv_to_int64_t(&raw, pos, value)) {
                 return false;
             }
             Uast_int* literal = uast_int_new(pos, raw);
@@ -92,7 +93,7 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
         }
         case TOKEN_FLOAT_LITERAL: {
             double raw = 0;
-            if (!try_strv_to_double(&raw,  pos, value)) {
+            if (!try_strv_to_double(&raw, pos, value)) {
                 return false;
             }
             Uast_float* literal = uast_float_new(pos, raw);
@@ -125,6 +126,7 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
     return true;
 }
 
+// TODO: remove this pragma when removing pragma above above function
 #pragma GCC diagnostic warning "-Wswitch-enum"
 
 Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
@@ -133,6 +135,7 @@ Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_ty
     return lit;
 }
 
+// TODO: remove this pragma, and make below switch exhausive
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
 Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
@@ -164,6 +167,7 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
     return new_lit;
 }
 
+// TODO: remove this pragma when removing pragma above above function
 #pragma GCC diagnostic warning "-Wswitch-enum"
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
@@ -188,7 +192,8 @@ Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_id
     Uast_def* enum_def_ = NULL;
     Name name = {0};
     if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, enum_def_lang_type)) {
-        todo();
+        // TODO
+        return sv("<none>");
     }
     unwrap(usymbol_lookup(&enum_def_, name));
     Ustruct_def_base enum_def = uast_enum_def_unwrap(enum_def_)->base;

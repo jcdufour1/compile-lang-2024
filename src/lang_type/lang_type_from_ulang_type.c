@@ -226,7 +226,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_ENUM: {
             Name name = {0};
             if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
-                todo();
+                msg_todo("", lang_type_get_pos(lang_type));
+                return ulang_type_new_void(lang_type_get_pos(lang_type));
             }
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_get_pos(lang_type),

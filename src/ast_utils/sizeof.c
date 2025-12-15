@@ -68,10 +68,13 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             return sizeof_def(def);
         }
         case LANG_TYPE_ARRAY: {
-            todo();
-            //Tast_def* def = NULL;
-            //unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            //return sizeof_def(def);
+            Tast_def* def = NULL;
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+            }
+            unwrap(symbol_lookup(&def, name));
+            return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
@@ -108,10 +111,13 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
             return alignof_def(def);
         }
         case LANG_TYPE_ARRAY: {
-            todo();
-            //Tast_def* def = NULL;
-            //unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            //return alignof_def(def);
+            Tast_def* def = NULL;
+            Name name = {0};
+            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+            }
+            unwrap(symbol_lookup(&def, name));
+            return alignof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
@@ -198,11 +204,15 @@ uint64_t alignof_def(const Tast_def* def) {
     unreachable("");
 }
 
-uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
-    todo();
-    //Tast_def* def_ = NULL;
-    //unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
-    //return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
+uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
+    Tast_def* def_ = NULL;
+    Name name = {0};
+    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lit->lang_type)) {
+        msg_todo("", lit->pos);
+        return 0;
+    }
+    unwrap(symbol_lookup(&def_, name));
+    return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {

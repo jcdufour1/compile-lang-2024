@@ -33,6 +33,27 @@ Name lang_type_primitive_get_name(const Lang_type_primitive lang_type) {
     return new_name;
 }
 
+bool lang_type_literal_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type_lit lang_type) {
+    (void) mode;
+
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT:
+            return false;
+        case LANG_TYPE_FLOAT_LIT:
+            return false;
+        case LANG_TYPE_STRING_LIT:
+            return false;
+        case LANG_TYPE_STRUCT_LIT:
+            return false;
+        case LANG_TYPE_FN_LIT:
+            *result = lang_type_fn_lit_const_unwrap(lang_type).name;
+            return true;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) {
     (void) mode;
 
@@ -50,19 +71,18 @@ bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) 
             *result = lang_type_enum_const_unwrap(lang_type).name;
             return true;
         case LANG_TYPE_TUPLE:
-            todo();
+            return false;
         case LANG_TYPE_VOID:
             *result = name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
             return true;
         case LANG_TYPE_FN:
-            // TODO
             return false;
         case LANG_TYPE_ARRAY:
             return false;
         case LANG_TYPE_LIT:
-            todo();
+            return lang_type_literal_get_name(result, mode, lang_type_lit_const_unwrap(lang_type));
         case LANG_TYPE_REMOVED:
-            todo();
+            return false;
     }
     unreachable("");
 }
