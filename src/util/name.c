@@ -444,29 +444,19 @@ bool ir_name_is_equal(Ir_name a, Ir_name b) {
 }
 
 bool name_is_equal(Name a, Name b) {
-    if (!strv_is_equal(a.mod_path, b.mod_path)) {
-        log(LOG_DEBUG, FMT": thing 1\n", name_print(NAME_LOG, a));
-    }
-    if (!strv_is_equal(a.base, b.base)) {
-        log(LOG_DEBUG, FMT": thing 2\n", name_print(NAME_LOG, a));
-    }
-
     if (!strv_is_equal(a.mod_path, b.mod_path) || !strv_is_equal(a.base, b.base)) {
         return false;
     }
 
     if (a.a_genrgs.info.count != b.a_genrgs.info.count) {
-        log(LOG_DEBUG, FMT": thing 3\n", name_print(NAME_LOG, a));
         return false;
     }
     for (size_t idx = 0; idx < a.a_genrgs.info.count; idx++) {
         if (!ulang_type_is_equal(vec_at(a.a_genrgs, idx), vec_at(b.a_genrgs, idx))) {
-            log(LOG_DEBUG, FMT": thing 4\n", name_print(NAME_LOG, a));
             return false;
         }
     }
 
-    log(LOG_DEBUG, FMT": thing success\n", name_print(NAME_LOG, a));
     return true;
 }
 
@@ -499,6 +489,5 @@ bool uname_is_equal(Uname a, Uname b) {
         new_b.mod_path = MOD_PATH_BUILTIN;
     }
 
-    log(LOG_DEBUG, FMT" "FMT"\n", name_print(NAME_LOG, new_a), name_print(NAME_LOG, new_b));
     return name_is_equal(new_a, new_b);
 }
