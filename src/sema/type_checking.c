@@ -135,8 +135,8 @@ static void msg_invalid_function_arg_internal(
             DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
             "argument is of type `"FMT"`, "
             "but the corresponding parameter is of type `"FMT"`\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-            lang_type_print(LANG_TYPE_MODE_MSG, param_lang_type)
+            lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(argument)), 
+            lang_type_print(LANG_TYPE_MODE_LOG, param_lang_type)
         );
         msg_internal(
             file, line,
@@ -2264,6 +2264,10 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
         return false;
     }
 
+    if (new_callee->type == TAST_LITERAL && strv_is_equal(tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name.base, sv("printf"))) {
+        __asm__("int3");
+    }
+
     bool status = true;
 
     Name fun_name = {0};
@@ -2539,6 +2543,8 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     "argument to function parameter `"FMT"` was not specified\n",
                     name_print(NAME_MSG, param_name)
                 );
+                log(LOG_DEBUG, FMT"\n", tast_print(new_callee));
+                todo();
                 msg(
                     DIAG_NOTE,
                     vec_at(params->params, idx)->pos,
@@ -2547,7 +2553,6 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 );
             }
             status = false;
-        } else {
         }
     }
 

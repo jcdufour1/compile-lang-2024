@@ -118,6 +118,7 @@ for generics:
 - expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable
 - make basic "did you mean" (just symbols initially)
+- make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - set, get, and add pointer_depth functions should be auto generated for Lang_type and Ir_lang_type
 - document or make functions for uast_def_get_ulang_type
@@ -140,7 +141,7 @@ for generics:
 - add prefix to symbols when emitting backend IR (start with underscore and uppercase letter, etc.) to prevent collisions
 - positional args (regular args) after designated args) should print error or actually work property
     (and test case should be implemented)
-- fix uninitialized warning with gcc
+- fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 

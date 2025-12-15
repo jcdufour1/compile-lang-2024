@@ -34,9 +34,6 @@ static Uname uname_normalize_old(Uname name) {
 
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
-    // TODO: this function could cause collisions
-    //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
-    
     if (
         lang_type_name_base_is_signed(name.base) ||
         lang_type_name_base_is_unsigned(name.base) ||
@@ -180,6 +177,8 @@ void serialize_strv(String* buf, Strv strv) {
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
     if (
         lang_type_name_base_is_signed(name.base) ||
         lang_type_name_base_is_unsigned(name.base) ||
@@ -445,19 +444,29 @@ bool ir_name_is_equal(Ir_name a, Ir_name b) {
 }
 
 bool name_is_equal(Name a, Name b) {
+    if (!strv_is_equal(a.mod_path, b.mod_path)) {
+        log(LOG_DEBUG, FMT": thing 1\n", name_print(NAME_LOG, a));
+    }
+    if (!strv_is_equal(a.base, b.base)) {
+        log(LOG_DEBUG, FMT": thing 2\n", name_print(NAME_LOG, a));
+    }
+
     if (!strv_is_equal(a.mod_path, b.mod_path) || !strv_is_equal(a.base, b.base)) {
         return false;
     }
 
     if (a.a_genrgs.info.count != b.a_genrgs.info.count) {
+        log(LOG_DEBUG, FMT": thing 3\n", name_print(NAME_LOG, a));
         return false;
     }
     for (size_t idx = 0; idx < a.a_genrgs.info.count; idx++) {
         if (!ulang_type_is_equal(vec_at(a.a_genrgs, idx), vec_at(b.a_genrgs, idx))) {
+            log(LOG_DEBUG, FMT": thing 4\n", name_print(NAME_LOG, a));
             return false;
         }
     }
 
+    log(LOG_DEBUG, FMT": thing success\n", name_print(NAME_LOG, a));
     return true;
 }
 
@@ -472,5 +481,24 @@ bool uname_is_equal(Uname a, Uname b) {
         todo();
         return false;
     }
+
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
+    if (
+        lang_type_name_base_is_signed(new_a.base) ||
+        lang_type_name_base_is_unsigned(new_a.base) ||
+        lang_type_name_base_is_float(new_a.base)
+    ) {
+        new_a.mod_path = MOD_PATH_BUILTIN;
+    }
+    if (
+        lang_type_name_base_is_signed(new_b.base) ||
+        lang_type_name_base_is_unsigned(new_b.base) ||
+        lang_type_name_base_is_float(new_b.base)
+    ) {
+        new_b.mod_path = MOD_PATH_BUILTIN;
+    }
+
+    log(LOG_DEBUG, FMT" "FMT"\n", name_print(NAME_LOG, new_a), name_print(NAME_LOG, new_b));
     return name_is_equal(new_a, new_b);
 }
