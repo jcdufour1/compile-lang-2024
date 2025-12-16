@@ -125,13 +125,9 @@ bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir
         case IR_LANG_TYPE_PRIMITIVE:
             *result = ir_lang_type_primitive_get_name(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
             return true;
-        case IR_LANG_TYPE_STRUCT: {
-            todo();
-            //Ir_lang_type_atom atom = ir_lang_type_struct_const_unwrap(ir_lang_type).atom;
-            //assert(!strv_is_equal(atom.str.base, sv("void")));
-            //assert(atom.str.base.count > 0);
-            //return atom;
-        }
+        case IR_LANG_TYPE_STRUCT:
+            *result = ir_lang_type_struct_const_unwrap(ir_lang_type).name;
+            return true;
         case IR_LANG_TYPE_TUPLE: {
             unreachable("");
         }
