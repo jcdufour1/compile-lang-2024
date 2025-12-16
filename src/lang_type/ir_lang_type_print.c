@@ -39,42 +39,42 @@ Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
     return string_to_strv(buf);
 }
 
-void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_atom atom) {
-    Ir_name temp = atom.str;
-
-    if (atom.str.base.count > 1) {
-        switch (mode) {
-            case LANG_TYPE_MODE_LOG:
-                extend_ir_name(NAME_LOG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_MSG:
-                extend_ir_name(NAME_MSG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_C:
-                extend_ir_name(NAME_EMIT_C, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_ir_name(NAME_EMIT_IR, string, atom.str);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        string_extend_cstr(&a_temp, string, "void");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_temp, string, '*');
-    }
-
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
-            todo();
-        }
-    }
-}
+//void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_atom atom) {
+//    Ir_name temp = atom.str;
+//
+//    if (atom.str.base.count > 1) {
+//        switch (mode) {
+//            case LANG_TYPE_MODE_LOG:
+//                extend_ir_name(NAME_LOG, string, atom.str);
+//                break;
+//            case LANG_TYPE_MODE_MSG:
+//                extend_ir_name(NAME_MSG, string, atom.str);
+//                break;
+//            case LANG_TYPE_MODE_EMIT_C:
+//                extend_ir_name(NAME_EMIT_C, string, atom.str);
+//                break;
+//            case LANG_TYPE_MODE_EMIT_LLVM:
+//                extend_ir_name(NAME_EMIT_IR, string, atom.str);
+//                break;
+//            default:
+//                unreachable("");
+//        }
+//    } else {
+//        string_extend_cstr(&a_temp, string, "void");
+//    }
+//    if (atom.pointer_depth < 0) {
+//        todo();
+//    }
+//    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
+//        vec_append(&a_temp, string, '*');
+//    }
+//
+//    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
+//        if (temp.gen_args.info.count > 0) {
+//            todo();
+//        }
+//    }
+//}
 
 Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     String buf = {0};
@@ -95,11 +95,11 @@ Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type)
     return string_to_strv(buf);
 }
 
-Strv ir_lang_type_atom_print_internal(Ir_lang_type_atom atom, LANG_TYPE_MODE mode) {
-    String buf = {0};
-    extend_ir_lang_type_atom(&buf, mode, atom);
-    return string_to_strv(buf);
-}
+//Strv ir_lang_type_atom_print_internal(Ir_lang_type_atom atom, LANG_TYPE_MODE mode) {
+//    String buf = {0};
+//    extend_ir_lang_type_atom(&buf, mode, atom);
+//    return string_to_strv(buf);
+//}
 
 void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
@@ -121,6 +121,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             unreachable("");
     }
 
+    // TODO: remove gotos in below switch
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
@@ -145,12 +146,14 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         }
         case IR_LANG_TYPE_STRUCT:
-            unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
+            todo();
+            //unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
             fallthrough;
         case IR_LANG_TYPE_VOID:
             fallthrough;
         case IR_LANG_TYPE_PRIMITIVE:
-            extend_ir_lang_type_atom(string, mode, ir_lang_type_get_atom(mode, ir_lang_type));
+            todo();
+            //extend_ir_lang_type_atom(string, mode, ir_lang_type_get_atom(mode, ir_lang_type));
             goto end;
     }
     unreachable("");

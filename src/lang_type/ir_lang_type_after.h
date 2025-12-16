@@ -4,15 +4,17 @@
 #include <ir_lang_type_hand_written.h>
 #include <ir_lang_type.h>
 
-Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type);
+//Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type);
+//
+//Ir_lang_type_atom ir_lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type);
 
-Ir_lang_type_atom ir_lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type);
+//void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom);
 
-void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom);
+//static inline Ir_name ir_lang_type_get_str(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
+//    return ir_lang_type_get_atom(mode, ir_lang_type).str;
+//}
 
-static inline Ir_name ir_lang_type_get_str(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
-    return ir_lang_type_get_atom(mode, ir_lang_type).str;
-}
+bool ir_lang_type_get_name(Ir_name* result, Ir_lang_type ir_lang_type);
 
 static inline uint32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
     switch (ir_lang_type.type) {

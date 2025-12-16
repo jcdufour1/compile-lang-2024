@@ -19,12 +19,12 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
-static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_atom b) {
-    if (a.pointer_depth != b.pointer_depth) {
-        return false;
-    }
-    return ir_name_is_equal(a.str, b.str);
-}
+//static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_atom b) {
+//    if (a.pointer_depth != b.pointer_depth) {
+//        return false;
+//    }
+//    return ir_name_is_equal(a.str, b.str);
+//}
 
 static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {
     if (a.info.count != b.info.count) {
@@ -55,11 +55,11 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     
     switch (a.type) {
         case IR_LANG_TYPE_PRIMITIVE:
-            fallthrough;
+            todo();
         case IR_LANG_TYPE_STRUCT:
-            fallthrough;
+            todo();
         case IR_LANG_TYPE_VOID:
-            return ir_lang_type_atom_is_equal(ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, a), ir_lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
+            return true;
         case IR_LANG_TYPE_TUPLE:
             return ir_lang_type_tuple_is_equal(ir_lang_type_tuple_const_unwrap(a), ir_lang_type_tuple_const_unwrap(b));
         case IR_LANG_TYPE_FN:

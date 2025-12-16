@@ -52,7 +52,8 @@ Ir_lang_type ir_def_get_lang_type(const Ir_def* def) {
         case IR_FUNCTION_DECL:
             unreachable("");
         case IR_STRUCT_DEF:
-            return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(ir_def_get_pos(def), ir_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
+            todo();
+            //return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(ir_def_get_pos(def), ir_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
         case IR_PRIMITIVE_DEF:
             unreachable("");
         case IR_LABEL:
@@ -150,7 +151,8 @@ Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
 Ir_name ir_def_get_name(const Ir_def* def) {
     switch (def->type) {
         case IR_PRIMITIVE_DEF:
-            return ir_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
+            todo();
+            //return ir_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
