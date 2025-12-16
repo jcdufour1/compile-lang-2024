@@ -7,8 +7,14 @@
 #include <uast.h>
 #include <lang_type_new_convenience.h>
 #include <lang_type_from_ulang_type.h>
+#include <strv.h>
 
 static inline Ulang_type ulang_type_new_int_x(Strv base) {
+    assert(strv_at(base, 0) == 'u' || strv_at(base, 0) == 'i');
+    for (size_t idx = 1; idx < base.count; idx++) {
+        assert(isdigit(strv_at(base, idx)));
+    }
+
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
         POS_BUILTIN,
         uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),

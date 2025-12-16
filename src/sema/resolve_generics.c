@@ -531,7 +531,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_LANG_DEF:
             unreachable("");
         case UAST_PRIMITIVE_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_print(before_res));
+            log(LOG_FATAL, FMT"\n", uast_print(before_res));
             unreachable("");
         case UAST_FUNCTION_DECL:
             unreachable("");

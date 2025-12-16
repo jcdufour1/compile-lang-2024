@@ -3468,7 +3468,7 @@ static PARSE_EXPR_STATUS parse_unary(
 
     Uast_expr* child = NULL;
     // this is a placeholder type
-    Ulang_type unary_lang_type = ulang_type_new_int_x(sv("32"));
+    Ulang_type unary_lang_type = ulang_type_new_int_x(sv("i32"));
 
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
