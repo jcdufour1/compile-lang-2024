@@ -97,7 +97,7 @@ type Raw5 raw_union {
 }
 
 type Raw6 raw_union {
-    num1 i1
+    num1 u1
     num2 i3
 }
 
