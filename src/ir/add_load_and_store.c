@@ -1124,7 +1124,11 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     Tast_def* struct_def_ = NULL;
     Name name = {0};
     unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type));
+    // TODO: remove below statement (below statement seems to do nothing useful)?
     unwrap(symbol_lookup(&struct_def_, name));
+    Ir_name name_2 = {0};
+    unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
+    unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
@@ -1655,9 +1659,9 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
     unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
-    Ir_name def_name = {0};
-    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)));
-    unwrap(symbol_lookup(&def, ir_name_to_name(def_name)));
+    Ir_name name = {0};
+    unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)));
+    unwrap(symbol_lookup(&def, ir_name_to_name(name)));
 
     size_t struct_index = {0};
     switch (def->type) {

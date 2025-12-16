@@ -48,6 +48,35 @@ static inline bool ir_lang_type_fn_is_equal(Ir_lang_type_fn a, Ir_lang_type_fn b
     return ir_lang_type_tuple_is_equal(a.params, b.params) && ir_lang_type_is_equal(*a.return_type, *b.return_type);
 }
 
+static inline bool ir_lang_type_primitive_is_equal(Ir_lang_type_primitive a, Ir_lang_type_primitive b) {
+    if (a.type != b.type) {
+        return false;
+    }
+    
+    switch (a.type) {
+        case IR_LANG_TYPE_SIGNED_INT: {
+            Ir_lang_type_signed_int a_int = ir_lang_type_signed_int_const_unwrap(a);
+            Ir_lang_type_signed_int b_int = ir_lang_type_signed_int_const_unwrap(b);
+            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+        }
+        case IR_LANG_TYPE_UNSIGNED_INT: {
+            Ir_lang_type_unsigned_int a_int = ir_lang_type_unsigned_int_const_unwrap(a);
+            Ir_lang_type_unsigned_int b_int = ir_lang_type_unsigned_int_const_unwrap(b);
+            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+        }
+        case IR_LANG_TYPE_FLOAT: {
+            Ir_lang_type_float a_int = ir_lang_type_float_const_unwrap(a);
+            Ir_lang_type_float b_int = ir_lang_type_float_const_unwrap(b);
+            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+        }
+        case IR_LANG_TYPE_OPAQUE:
+            return ir_lang_type_opaque_const_unwrap(a).pointer_depth == ir_lang_type_opaque_const_unwrap(b).pointer_depth;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     if (a.type != b.type) {
         return false;
@@ -55,7 +84,10 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     
     switch (a.type) {
         case IR_LANG_TYPE_PRIMITIVE:
-            todo();
+            return ir_lang_type_primitive_is_equal(
+                ir_lang_type_primitive_const_unwrap(a),
+                ir_lang_type_primitive_const_unwrap(b)
+            );
         case IR_LANG_TYPE_STRUCT:
             todo();
         case IR_LANG_TYPE_VOID:
@@ -503,13 +535,16 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
+    log(LOG_DEBUG, "tast_get_member_index: start\n");
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }
+        log(LOG_DEBUG, FMT" "FMT"\n", tast_print(curr_member), strv_print(member_name));
     }
-    unreachable("member not found");
+    //log(LOG_DEBUG, FMT" "FMT"\n", name_print(
+    unreachable("member "FMT" of "FMT" not found", strv_print(member_name), name_print(NAME_LOG, struct_def->name));
 }
 
 static inline bool tast_operator_is_lvalue(const Tast_operator* oper) {
