@@ -3,13 +3,49 @@
 #include <ast_msg.h>
 #include <name.h>
 
+Ir_name ir_lang_type_primitive_get_name(Ir_lang_type_primitive ir_lang_type) {
+    Strv new_base = {0};
+    switch (ir_lang_type.type) {
+        case IR_LANG_TYPE_SIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "i%"PRIu32, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
+            break;
+        }
+        case IR_LANG_TYPE_FLOAT: {
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "f%"PRIu32, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
+            break;
+        }
+        case IR_LANG_TYPE_UNSIGNED_INT:
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "u%"PRIu32, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
+            break;
+        case IR_LANG_TYPE_OPAQUE: {
+            new_base = sv("opaque");
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
+    assert(new_base.count > 0);
+    Ir_name new_name = name_to_ir_name(name_new(
+        MOD_PATH_BUILTIN,
+        new_base,
+        (Ulang_type_vec) {0},
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+    assert(!strv_is_equal(new_name.base, sv("void")));
+    assert(new_name.base.count > 0);
+    return new_name;
+}
+
 bool ir_lang_type_get_name(Ir_name* result, Ir_lang_type ir_lang_type) {
     switch (ir_lang_type.type) {
-        case IR_LANG_TYPE_PRIMITIVE: {
-            todo();
-            //Ir_lang_type_atom atom = ir_lang_type_primitive_get_atom(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
-            //return atom;
-        }
+        case IR_LANG_TYPE_PRIMITIVE:
+            *result = ir_lang_type_primitive_get_name(ir_lang_type_primitive_const_unwrap(ir_lang_type));
+            return true;
         case IR_LANG_TYPE_STRUCT: {
             todo();
             //Ir_lang_type_atom atom = ir_lang_type_struct_const_unwrap(ir_lang_type).atom;
