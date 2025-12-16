@@ -1025,7 +1025,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t
     *lang_type_name = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
     assert(mod_alias.mod_path.count > 0);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        lang_type_ptr_depth++;
+        (*lang_type_ptr_depth)++;
     }
 
     return true;
