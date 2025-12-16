@@ -134,8 +134,12 @@ bool lang_type_name_base_is_float(Strv name_base) {
     return lang_type_name_base_is_number_finish(name_base, true);
 }
 
-bool lang_type_name_base_is_number(Strv name_base) {
+bool lang_type_name_base_is_int(Strv name_base) {
     return lang_type_name_base_is_unsigned(name_base) || lang_type_name_base_is_signed(name_base);
+}
+
+bool lang_type_name_base_is_number(Strv name_base) {
+    return lang_type_name_base_is_int(name_base) || lang_type_name_base_is_float(name_base);
 }
 
 static bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {

@@ -303,13 +303,7 @@ bool usymbol_add(Uast_def* item) {
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
     // TODO: factor these nested if-else checks (for is primitive type) into seperate function?
-    if (lang_type_name_base_is_signed(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    } else if (lang_type_name_base_is_float(prim_key.base)) {
+    if (lang_type_name_base_is_number(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return false;
     }
@@ -487,13 +481,7 @@ void usymbol_update(Uast_def* item) {
     Name prim_key = uast_def_get_name(item);
     prim_key.scope_id = 0;
     prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_name_base_is_signed(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return;
-    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return;
-    } else if (lang_type_name_base_is_float(prim_key.base)) {
+    if (lang_type_name_base_is_number(prim_key.base)) {
         msg_todo("", uast_def_get_pos(item));
         return;
     }
