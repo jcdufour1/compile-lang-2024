@@ -84,7 +84,6 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_is_equal.o \
-	 ${BUILD_DIR}/lang_type/ulang_type_after.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
 	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
@@ -264,9 +263,6 @@ ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type/
 
 ${BUILD_DIR}/lang_type/ulang_type_is_equal.o: ${DEP_COMMON} src/lang_type/ulang_type_is_equal.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_is_equal.o src/lang_type/ulang_type_is_equal.c
-
-${BUILD_DIR}/lang_type/ulang_type_after.o: ${DEP_COMMON} src/lang_type/ulang_type_after.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type/ulang_type_after.o src/lang_type/ulang_type_after.c
 
 ${BUILD_DIR}/ast_utils/tast_utils.o: ${DEP_COMMON} src/ast_utils/tast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/tast_utils.o src/ast_utils/tast_utils.c

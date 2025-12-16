@@ -24,31 +24,6 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     return string_to_strv(buf);
 }
 
-//void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_atom atom) {
-//    // TODO: remove?
-//    if (mode == LANG_TYPE_MODE_LOG) {
-//        vec_append(&a_temp, string, '<');
-//    }
-//
-//    if (atom.str.base.count > 1) {
-//        extend_uname(mode == LANG_TYPE_MODE_MSG ? UNAME_MSG : UNAME_LOG, string, atom.str);
-//    } else {
-//        string_extend_cstr(&a_temp, string, "<null>");
-//    }
-//    if (atom.pointer_depth < 0) {
-//        todo();
-//    }
-//    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-//        vec_append(&a_temp, string, '*');
-//    }
-//
-//    // TODO: remove?
-//    if (mode == LANG_TYPE_MODE_LOG) {
-//        vec_append(&a_temp, string, '>');
-//    }
-//    return;
-//}
-
 static void string_extend_ulang_type_lit(String* string, Ulang_type_lit lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_INT_LIT:

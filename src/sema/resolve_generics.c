@@ -3,7 +3,6 @@
 #include <ulang_type.h>
 #include <uast_clone.h>
 #include <uast_utils.h>
-#include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>

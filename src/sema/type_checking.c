@@ -13,7 +13,6 @@
 #include <lang_type_hand_written.h>
 #include <lang_type_print.h>
 #include <resolve_generics.h>
-#include <ulang_type_get_atom.h>
 #include <symbol_log.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>

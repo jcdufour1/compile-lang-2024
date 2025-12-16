@@ -1153,17 +1153,6 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
 }
 
 // require type to be parsed
-//static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-//    Pos pos = {0};
-//    if (parse_lang_type_struct_atom(&pos, lang_type, tokens, scope_id)) {
-//        return PARSE_OK;
-//    } else {
-//        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
-//        return PARSE_ERROR;
-//    }
-//}
-
-// require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id) {
     if (parse_lang_type_struct(lang_type, tokens, scope_id)) {
         return PARSE_OK;
