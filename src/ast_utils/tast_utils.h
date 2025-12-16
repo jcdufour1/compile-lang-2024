@@ -87,6 +87,8 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
             return a_struct.pointer_depth == b_struct.pointer_depth && ir_name_is_equal(a_struct.name, b_struct.name);
         }
         case IR_LANG_TYPE_VOID:
+            assert(ir_lang_type_void_const_unwrap(a).pointer_depth == 0);
+            assert(ir_lang_type_void_const_unwrap(b).pointer_depth == 0);
             return true;
         case IR_LANG_TYPE_TUPLE:
             return ir_lang_type_tuple_is_equal(ir_lang_type_tuple_const_unwrap(a), ir_lang_type_tuple_const_unwrap(b));
@@ -531,15 +533,14 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
-    log(LOG_DEBUG, "tast_get_member_index: start\n");
+    log(LOG_TRACE, "tast_get_member_index: start\n");
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast_variable_def* curr_member = vec_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }
-        log(LOG_DEBUG, FMT" "FMT"\n", tast_print(curr_member), strv_print(member_name));
+        log(LOG_TRACE, FMT" "FMT"\n", tast_print(curr_member), strv_print(member_name));
     }
-    //log(LOG_DEBUG, FMT" "FMT"\n", name_print(
     unreachable("member "FMT" of "FMT" not found", strv_print(member_name), name_print(NAME_LOG, struct_def->name));
 }
 

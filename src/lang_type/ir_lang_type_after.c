@@ -59,31 +59,25 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
         }
         case IR_LANG_TYPE_SIGNED_INT: {
             uint32_t bit_width = ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 1) {
-                new_base = sv("bool");
+            if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
+                new_base = strv_from_f(&a_main, "int%d_t", bit_width);
             } else {
-                if (bit_width == 1) {
-                    todo();
-                    // TODO: overflow may not happen correctly; maybe remove i1/u1 in earlier passes
-                    new_base = sv("bool");
-                } else if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
-                    new_base = strv_from_f(&a_main, "int%d_t", bit_width);
-                } else {
-                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 (for integers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
-                }
+                msg_todo(
+                    "bit widths other than 1, 8, 16, 32, or 64 (for integers) with the c backend",
+                    ir_lang_type_primitive_get_pos(ir_lang_type)
+                );
             }
             break;
         }
         case IR_LANG_TYPE_UNSIGNED_INT: {
-            // TODO: deduplicate this and above case?
-            // TODO: bit width of 1 here?
             uint32_t bit_width = ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 1) {
-                new_base = sv("bool");
-            } else if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
+            if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
                 new_base = strv_from_f(&a_main, "uint%d_t", bit_width);
             } else {
-                msg_todo("bit widths other than 1, 8, 16, 32, or 64 with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
+                msg_todo(
+                    "bit widths other than 1, 8, 16, 32, or 64 (for integers) with the c backend",
+                    ir_lang_type_primitive_get_pos(ir_lang_type)
+                );
             }
             break;
         }

@@ -479,33 +479,33 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child) {
             emit_c_expr_piece_expr(strs, ir_expr_unwrap(result));
             return;
         case IR_ARRAY_ACCESS:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_LOAD_ELEMENT_PTR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_STORE_ANOTHER_IR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_LOAD_ANOTHER_IR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_FUNCTION_PARAMS:
             unreachable("");
         case IR_DEF:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_RETURN:
             unreachable("");
         case IR_GOTO:
             unreachable("");
         case IR_ALLOCA:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_COND_GOTO:
             unreachable("");
         case IR_BLOCK:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_IMPORT_PATH:
             unreachable("");

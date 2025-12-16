@@ -153,11 +153,13 @@ Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
     unreachable("");
 }
 
-Ir_name ir_def_get_name(const Ir_def* def) {
+Ir_name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
     switch (def->type) {
-        case IR_PRIMITIVE_DEF:
-            todo();
-            //return ir_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
+        case IR_PRIMITIVE_DEF: {
+            Ir_name result = {0};
+            unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
+            return result;
+        }
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
@@ -174,10 +176,10 @@ Ir_name ir_def_get_name(const Ir_def* def) {
     unreachable("");
 }
 
-Ir_name ir_get_name(const Ir* ir) {
+Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
-            return ir_def_get_name(ir_def_const_unwrap(ir));
+            return ir_def_get_name(mode, ir_def_const_unwrap(ir));
         case IR_EXPR:
             return ir_expr_get_name(ir_expr_const_unwrap(ir));
         case IR_BLOCK:
