@@ -1124,8 +1124,6 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     Tast_def* struct_def_ = NULL;
     Name name = {0};
     unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type));
-    // TODO: remove below statement (below statement seems to do nothing useful)?
-    unwrap(symbol_lookup(&struct_def_, name));
     Ir_name name_2 = {0};
     unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));

@@ -19,13 +19,6 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
-//static inline bool ir_lang_type_atom_is_equal(Ir_lang_type_atom a, Ir_lang_type_atom b) {
-//    if (a.pointer_depth != b.pointer_depth) {
-//        return false;
-//    }
-//    return ir_name_is_equal(a.str, b.str);
-//}
-
 static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {
     if (a.info.count != b.info.count) {
         return false;
@@ -88,8 +81,11 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
                 ir_lang_type_primitive_const_unwrap(a),
                 ir_lang_type_primitive_const_unwrap(b)
             );
-        case IR_LANG_TYPE_STRUCT:
-            todo();
+        case IR_LANG_TYPE_STRUCT: {
+            Ir_lang_type_struct a_struct = ir_lang_type_struct_const_unwrap(a);
+            Ir_lang_type_struct b_struct = ir_lang_type_struct_const_unwrap(b);
+            return a_struct.pointer_depth == b_struct.pointer_depth && ir_name_is_equal(a_struct.name, b_struct.name);
+        }
         case IR_LANG_TYPE_VOID:
             return true;
         case IR_LANG_TYPE_TUPLE:
