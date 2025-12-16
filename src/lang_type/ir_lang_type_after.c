@@ -103,7 +103,6 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
         SCOPE_TOP_LEVEL,
         (Attrs) {0}
     ));
-    assert(!strv_is_equal(new_name.base, sv("void")));
     assert(new_name.base.count > 0);
     return new_name;
 }

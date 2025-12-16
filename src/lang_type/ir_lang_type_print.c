@@ -114,12 +114,15 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
-            string_extend_cstr(&a_main, string, "fn");
+            string_extend_f(&a_main, string, "%sfn", fn.pointer_depth > 1 ? "(" : "");
             extend_ir_lang_type_to_string(string, mode, ir_lang_type_tuple_const_wrap(fn.params));
             extend_ir_lang_type_to_string(string, mode, *fn.return_type);
-            assert(fn.pointer_depth > 0);
             if (fn.pointer_depth > 1) {
-                todo();
+                vec_append(&a_temp, string, ')');
+            }
+            assert(fn.pointer_depth > 0);
+            for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
+                vec_append(&a_temp, string, '*');
             }
             goto end;
         }
