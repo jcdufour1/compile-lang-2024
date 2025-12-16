@@ -172,7 +172,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         case IR_LANG_TYPE_VOID: {
             Ir_name name = {0};
-            if (!ir_lang_type_get_name(&name, ir_lang_type)) {
+            if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 break;
             }
@@ -182,11 +182,13 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
         }
         case IR_LANG_TYPE_PRIMITIVE: {
             Ir_name name = {0};
-            if (!ir_lang_type_get_name(&name, ir_lang_type)) {
+            if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 break;
             }
-            assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
+            if (mode == LANG_TYPE_MODE_LOG) {
+                assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
+            }
             assert(name.base.count >= 1);
             extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {

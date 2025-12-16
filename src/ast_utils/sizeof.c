@@ -146,7 +146,7 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
         case IR_LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             Ir_name name = {0};
-            unwrap(ir_lang_type_get_name(&name, lang_type));
+            unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
             unwrap(symbol_lookup(&def, ir_name_to_name(name)));
             return sizeof_def(def);
         }

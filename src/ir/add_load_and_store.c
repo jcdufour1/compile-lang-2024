@@ -1292,7 +1292,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
 static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
     Tast_def* union_def_ = NULL;
     Ir_name def_name = {0};
-    unwrap(ir_lang_type_get_name(&def_name, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)));
+    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)));
     unwrap(symbol_lookup(&union_def_, ir_name_to_name(def_name)));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
     Tast_variable_def* active_memb = vec_at(union_def->base.members, (size_t)old_lit->tag->data);
@@ -1656,7 +1656,7 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
 
     Tast_def* def = NULL;
     Ir_name def_name = {0};
-    unwrap(ir_lang_type_get_name(&def_name, lang_type_from_ir_name(new_callee)));
+    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)));
     unwrap(symbol_lookup(&def, ir_name_to_name(def_name)));
 
     size_t struct_index = {0};
