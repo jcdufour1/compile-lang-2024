@@ -84,8 +84,8 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
         case IR_LANG_TYPE_TUPLE:
             unreachable("");
         case IR_LANG_TYPE_STRUCT:
-            emit_c_extend_name(output, ir_lang_type_struct_const_unwrap(ir_lang_type).atom.str);
-            for (size_t idx = 0; idx < (size_t)ir_lang_type_struct_const_unwrap(ir_lang_type).atom.pointer_depth; idx++) {
+            emit_c_extend_name(output, ir_lang_type_struct_const_unwrap(ir_lang_type).name);
+            for (size_t idx = 0; idx < (size_t)ir_lang_type_struct_const_unwrap(ir_lang_type).pointer_depth; idx++) {
                 string_extend_cstr(&a_pass, output, "*");
             }
             return;
@@ -173,7 +173,8 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
         if (llvm_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
-            Ir_name ori_name = ir_lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(def->base.members, idx)->lang_type);
+            Ir_name ori_name = {0};
+            unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, vec_at(def->base.members, idx)->lang_type));
             Ir_name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -190,8 +191,9 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
             }
             ir_lang_type = ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 curr->pos,
-                ir_lang_type_atom_new(*struct_to_use, ir_lang_type_get_pointer_depth(curr->lang_type))
-            ));
+                *struct_to_use,
+                ir_lang_type_get_pointer_depth(curr->lang_type))
+            );
         } else {
             ir_lang_type = curr->lang_type;
         }
@@ -477,33 +479,33 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child) {
             emit_c_expr_piece_expr(strs, ir_expr_unwrap(result));
             return;
         case IR_ARRAY_ACCESS:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_LOAD_ELEMENT_PTR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_STORE_ANOTHER_IR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_LOAD_ANOTHER_IR:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_FUNCTION_PARAMS:
             unreachable("");
         case IR_DEF:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_RETURN:
             unreachable("");
         case IR_GOTO:
             unreachable("");
         case IR_ALLOCA:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_COND_GOTO:
             unreachable("");
         case IR_BLOCK:
-            emit_c_extend_name(&strs->output, ir_get_name(result));
+            emit_c_extend_name(&strs->output, ir_get_name(LANG_TYPE_MODE_EMIT_C, result));
             return;
         case IR_IMPORT_PATH:
             unreachable("");
@@ -610,7 +612,9 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     Ir* struct_def_ = NULL;
-    unwrap(ir_lookup(&struct_def_, ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_ir_name(load->ir_src))));
+    Ir_name def_name = {0};
+    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_EMIT_C, lang_type_from_ir_name(load->ir_src)));
+    unwrap(ir_lookup(&struct_def_, def_name));
 
     string_extend_cstr(&a_pass, &strs->output, "    void* ");
     emit_c_extend_name(&strs->output, load->name_self);

@@ -707,8 +707,9 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             unwrap(symbol_lookup(&new_def, tast_raw_union_def_unwrap(lang_type_def_)->base.name));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_raw_union_const_unwrap(lang_type).pointer_depth)
-            ));
+                name_to_ir_name(name),
+                lang_type_raw_union_const_unwrap(lang_type).pointer_depth)
+            );
         }
         case LANG_TYPE_TUPLE:
             return rm_tuple_lang_type(lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(lang_type_tuple_const_unwrap(lang_type), lang_type_pos)), lang_type_pos);
@@ -719,7 +720,8 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                ir_lang_type_atom_new(name_to_ir_name(name), lang_type_struct_const_unwrap(lang_type).pointer_depth)
+                name_to_ir_name(name),
+                lang_type_struct_const_unwrap(lang_type).pointer_depth
             ));
         }
         case LANG_TYPE_ARRAY: {
@@ -734,8 +736,9 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             if (ir_lookup(&array_def_, array_name)) {
                 return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                     lang_type_pos,
-                    ir_lang_type_atom_new(array_name, array.pointer_depth)
-                ));
+                    array_name,
+                    array.pointer_depth)
+                );
             }
 
             Ir_struct_memb_def_vec membs = {0};
@@ -754,7 +757,8 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
 
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
-                ir_lang_type_atom_new(array_name, array.pointer_depth)
+                array_name,
+                array.pointer_depth
             ));
         }
         case LANG_TYPE_VOID:
@@ -1120,8 +1124,9 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     Tast_def* struct_def_ = NULL;
     Name name = {0};
     unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type));
-    unwrap(symbol_lookup(&struct_def_, name));
-    unwrap(symbol_lookup(&struct_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)))));
+    Ir_name name_2 = {0};
+    unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
+    unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
@@ -1288,7 +1293,9 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
 
 static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
     Tast_def* union_def_ = NULL;
-    unwrap(symbol_lookup(&union_def_, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)))));
+    Ir_name def_name = {0};
+    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)));
+    unwrap(symbol_lookup(&union_def_, ir_name_to_name(def_name)));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
     Tast_variable_def* active_memb = vec_at(union_def->base.members, (size_t)old_lit->tag->data);
 
@@ -1352,10 +1359,10 @@ static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     }
     unwrap(var_def);
     if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
-        unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(lang_alloca))) > 0);
+        unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca))) > 0);
     }
 
-    return ir_get_name(lang_alloca);
+    return ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca);
 }
 
 static Ir_name load_ptr_enum_callee(Ir_block* new_block, Tast_enum_callee* old_callee) {
@@ -1650,7 +1657,9 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
     unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(new_callee)) > 0);
 
     Tast_def* def = NULL;
-    unwrap(symbol_lookup(&def, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)))));
+    Ir_name name = {0};
+    unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)));
+    unwrap(symbol_lookup(&def, ir_name_to_name(name)));
 
     size_t struct_index = {0};
     switch (def->type) {

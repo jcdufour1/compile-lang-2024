@@ -70,7 +70,8 @@ static Uast_type ir_lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ir_lang_type")};
 
-    append_member(&sym.members, "Ir_lang_type_atom", "atom");
+    append_member(&sym.members, "Ir_name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

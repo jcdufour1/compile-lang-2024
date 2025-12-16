@@ -145,6 +145,7 @@ for generics:
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 - make function "lang_type_name_base_is_num" and use to reduce redundancy
+- enable -Werror in ci
 
 
 # roadmap to try to get bootstrap compiler done:

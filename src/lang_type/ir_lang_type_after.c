@@ -1,231 +1,153 @@
 #include <ir_lang_type_after.h>
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
+#include <name.h>
 
-Ir_lang_type_atom ir_lang_type_primitive_get_atom_normal(Ir_lang_type_primitive ir_lang_type) {
+static Ir_name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_lang_type) {
+    Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_SIGNED_INT: {
-            // TODO: use hashtable, etc. to reduce allocations
-            String string = {0};
-            string_extend_cstr(&a_main, &string, "i");
-            string_extend_int64_t(&a_main, &string, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
-            Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
-            );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "i%"PRIu32, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
+            break;
         }
         case IR_LANG_TYPE_FLOAT: {
-            // TODO: use hashtable, etc. to reduce allocations
-            String string = {0};
-            string_extend_cstr(&a_main, &string, "f");
-            string_extend_int64_t(&a_main, &string, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
-            Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
-            );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "f%"PRIu32, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
+            break;
         }
-        case IR_LANG_TYPE_UNSIGNED_INT: {
-            // TODO: use hashtable, etc. to reduce allocations
-            String string = {0};
-            string_extend_cstr(&a_main, &string, "u");
-            string_extend_int64_t(&a_main, &string, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
-            Ir_lang_type_atom atom = ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_BUILTIN, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
-            );
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
+        case IR_LANG_TYPE_UNSIGNED_INT:
+            // TODO: use hashtable, etc. to reduce allocations?
+            new_base = strv_from_f(&a_main, "u%"PRIu32, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
+            break;
         case IR_LANG_TYPE_OPAQUE: {
-            return ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_BUILTIN, sv("opaque"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})),
-                ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
-            );
+            new_base = sv("opaque");
+            break;
         }
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    assert(new_base.count > 0);
+    Ir_name new_name = name_to_ir_name(name_new(
+        MOD_PATH_BUILTIN,
+        new_base,
+        (Ulang_type_vec) {0},
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+    assert(!strv_is_equal(new_name.base, sv("void")));
+    assert(new_name.base.count > 0);
+    return new_name;
 }
 
-Ir_lang_type_atom ir_lang_type_primitive_get_atom_c(Ir_lang_type_primitive ir_lang_type) {
+static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_type) {
+    Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_FLOAT: {
-            String string = {0};
             uint32_t bit_width = ir_lang_type_float_const_unwrap(ir_lang_type).bit_width;
             if (bit_width == 32) {
-                string_extend_cstr(&a_main, &string, "float");
+                new_base = sv("float");
             } else if (bit_width == 64) {
-                string_extend_cstr(&a_main, &string, "double");
+                new_base = sv("double");
             } else if (bit_width == 128) {
-                string_extend_cstr(&a_main, &string, "long double");
+                new_base = sv("long double");
             } else {
-                msg_todo("bit widths other than 32, 64, or 128 (for floating point numbers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
+                msg_todo(
+                    "bit widths other than 32, 64, or 128 (for floating point numbers) with the c backend",
+                    ir_lang_type_primitive_get_pos(ir_lang_type)
+                );
+                return util_literal_ir_name_new_poison();
             }
-            return ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_float_const_unwrap(ir_lang_type).pointer_depth
-            );
+            break;
         }
         case IR_LANG_TYPE_SIGNED_INT: {
-            String string = {0};
             uint32_t bit_width = ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 1) {
-                string_extend_cstr(&a_main, &string, "bool");
+            if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
+                new_base = strv_from_f(&a_main, "int%d_t", bit_width);
             } else {
-                string_extend_cstr(&a_main, &string, "int");
-                if (bit_width == 1) {
-                    // TODO: overflow may not happen correctly; maybe remove i1/u1 in earlier passes
-                    string_extend_cstr(&a_main, &string, "bool");
-                } else if (bit_width == 8) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 16) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 32) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 64) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else {
-                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 (for integers) with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
-                }
-                string_extend_cstr(&a_main, &string, "_t");
+                msg_todo(
+                    "bit widths other than 8, 16, 32, or 64 (for signed integers) with the c backend",
+                    ir_lang_type_primitive_get_pos(ir_lang_type)
+                );
+                return util_literal_ir_name_new_poison();
             }
-            return ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_signed_int_const_unwrap(ir_lang_type).pointer_depth
-            );
+            break;
         }
         case IR_LANG_TYPE_UNSIGNED_INT: {
-            // TODO: deduplicate this and above case?
-            // TODO: bit width of 1 here?
-            String string = {0};
             uint32_t bit_width = ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
             if (bit_width == 1) {
-                string_extend_cstr(&a_main, &string, "bool");
+                // TODO: overflow may not work correctly when using bool
+                new_base = sv("bool");
+            } else if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
+                new_base = strv_from_f(&a_main, "uint%d_t", bit_width);
             } else {
-                string_extend_cstr(&a_main, &string, "uint");
-                if (bit_width == 8) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 16) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 32) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else if (bit_width == 64) {
-                    string_extend_int64_t(&a_main, &string, bit_width);
-                } else {
-                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 with the c backend", ir_lang_type_primitive_get_pos(ir_lang_type));
-                }
-                string_extend_cstr(&a_main, &string, "_t");
+                msg_todo(
+                    "bit widths other than 1, 8, 16, 32, or 64 (for unsigned integers) with the c backend",
+                    ir_lang_type_primitive_get_pos(ir_lang_type)
+                );
+                return util_literal_ir_name_new_poison();
             }
-            return ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, string_to_strv(string), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).pointer_depth
-            );
+            break;
         }
         case IR_LANG_TYPE_OPAQUE:
-            return ir_lang_type_atom_new(
-                name_to_ir_name(name_new(MOD_PATH_EXTERN_C, sv("void"), (Ulang_type_vec) {0}, 0, (Attrs) {0})),
-                ir_lang_type_opaque_const_unwrap(ir_lang_type).pointer_depth
-            );
+            new_base = sv("void");
+            break;
     }
-    unreachable("");
+
+    assert(new_base.count > 0);
+    Ir_name new_name = name_to_ir_name(name_new(
+        MOD_PATH_EXTERN_C,
+        new_base,
+        (Ulang_type_vec) {0},
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    ));
+    assert(new_name.base.count > 0);
+    return new_name;
 }
 
-Ir_lang_type_atom ir_lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type) {
+Ir_name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type) {
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
-            return ir_lang_type_primitive_get_atom_normal(ir_lang_type);
+            return ir_lang_type_primitive_get_name_normal(ir_lang_type);
         case LANG_TYPE_MODE_MSG:
-            return ir_lang_type_primitive_get_atom_normal(ir_lang_type);
+            return ir_lang_type_primitive_get_name_normal(ir_lang_type);
         case LANG_TYPE_MODE_EMIT_LLVM:
-            return ir_lang_type_primitive_get_atom_normal(ir_lang_type);
+            todo();
         case LANG_TYPE_MODE_EMIT_C:
-            return ir_lang_type_primitive_get_atom_c(ir_lang_type);
+            return ir_lang_type_primitive_get_name_c(ir_lang_type);
     }
     unreachable("");
+
 }
 
-Ir_lang_type_atom ir_lang_type_get_atom(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
+bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     switch (ir_lang_type.type) {
-        case IR_LANG_TYPE_PRIMITIVE: {
-            Ir_lang_type_atom atom = ir_lang_type_primitive_get_atom(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
-            return atom;
-        }
-        case IR_LANG_TYPE_STRUCT: {
-            Ir_lang_type_atom atom = ir_lang_type_struct_const_unwrap(ir_lang_type).atom;
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            assert(atom.str.base.count > 0);
-            return atom;
-        }
+        case IR_LANG_TYPE_PRIMITIVE:
+            *result = ir_lang_type_primitive_get_name(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
+            return true;
+        case IR_LANG_TYPE_STRUCT:
+            *result = ir_lang_type_struct_const_unwrap(ir_lang_type).name;
+            return true;
         case IR_LANG_TYPE_TUPLE: {
-            unreachable("");
+            return false;
         }
         case IR_LANG_TYPE_FN: {
-            Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("", 1, 0);
-            assert(!strv_is_equal(atom.str.base, sv("void")));
-            return atom;
+            return false;
         }
         case IR_LANG_TYPE_VOID: {
-            Ir_lang_type_atom atom = ir_lang_type_atom_new_from_cstr("void", 0, SCOPE_TOP_LEVEL);
-            return atom;
+            *result = name_to_ir_name(name_new(
+                MOD_PATH_BUILTIN,
+                sv("void"),
+                (Ulang_type_vec) {0},
+                SCOPE_TOP_LEVEL,
+                (Attrs) {0}
+            ));
+            return true;
         }
-    }
-    unreachable("");
-}
-
-// TODO: remove this function?
-void ir_lang_type_primitive_set_atom(Ir_lang_type_primitive* ir_lang_type, Ir_lang_type_atom atom) {
-    switch (ir_lang_type->type) {
-        case IR_LANG_TYPE_SIGNED_INT:
-            ir_lang_type_signed_int_unwrap(ir_lang_type)->bit_width = strv_to_int64_t(
-                POS_BUILTIN,
-                strv_slice(atom.str.base, 1, atom.str.base.count - 1)
-            );
-            ir_lang_type_signed_int_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
-            return;
-        case IR_LANG_TYPE_UNSIGNED_INT:
-            ir_lang_type_unsigned_int_unwrap(ir_lang_type)->bit_width = strv_to_int64_t(
-                POS_BUILTIN,
-                strv_slice(atom.str.base, 1, atom.str.base.count - 1)
-            );
-            ir_lang_type_unsigned_int_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
-            return;
-        case IR_LANG_TYPE_FLOAT:
-            ir_lang_type_float_unwrap(ir_lang_type)->bit_width = strv_to_int64_t(
-                POS_BUILTIN,
-                strv_slice(atom.str.base, 1, atom.str.base.count - 1)
-            );
-            ir_lang_type_float_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
-            return;
-        case IR_LANG_TYPE_OPAQUE:
-            assert(strv_is_equal(atom.str.base, sv("opaque")));
-            ir_lang_type_opaque_unwrap(ir_lang_type)->pointer_depth = atom.pointer_depth;
-            return;
-    }
-    unreachable("");
-}
-
-void ir_lang_type_set_atom(Ir_lang_type* ir_lang_type, Ir_lang_type_atom atom) {
-    switch (ir_lang_type->type) {
-        case IR_LANG_TYPE_PRIMITIVE:
-            ir_lang_type_primitive_set_atom(ir_lang_type_primitive_unwrap(ir_lang_type), atom);
-            return;
-        case IR_LANG_TYPE_STRUCT:
-            ir_lang_type_struct_unwrap(ir_lang_type)->atom = atom;
-            return;
-        case IR_LANG_TYPE_TUPLE:
+        default:
             unreachable("");
-        case IR_LANG_TYPE_FN:
-            // TODO
-            return;
-        case IR_LANG_TYPE_VOID:
-            // TODO
-            return;
     }
     unreachable("");
 }
