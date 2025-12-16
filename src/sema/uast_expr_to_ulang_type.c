@@ -143,10 +143,8 @@ static EXPR_TO_ULANG_TYPE uast_symbol_to_ulang_type_int_liternal(Ulang_type* res
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
         sym->pos,
-        ulang_type_atom_new(
-            name_to_uname(sym->name),
-            0
-        )
+        name_to_uname(sym->name),
+        0
     ));
 
     return EXPR_TO_ULANG_TYPE_NORMAL;
@@ -232,7 +230,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
             Name memb_name = access->member_name->name;
 
             Uname new_name = uname_new(uast_symbol_unwrap(access->callee)->name, memb_name.base, memb_name.gen_args, memb_name.scope_id);
-            Ulang_type_regular reg = ulang_type_regular_new(access->pos, ulang_type_atom_new(new_name, 0));
+            Ulang_type_regular reg = ulang_type_regular_new(access->pos, new_name, 0);
             *result = ulang_type_regular_const_wrap(reg);
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }

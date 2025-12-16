@@ -1000,35 +1000,35 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    memset(lang_type, 0, sizeof(*lang_type));
-    Token lang_type_token = {0};
-    Name mod_alias = curr_mod_alias;
-
-    if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
-
-    if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        // TODO: mod_alias.mod = line below is a temporary hack.
-        //   fix the actual bug with curr_mod_alias to prevent the need for this hack
-        mod_alias.mod_path = curr_mod_path;
-        mod_alias.base = lang_type_token.text;
-        if (!consume_expect(&lang_type_token, tokens, "", TOKEN_SYMBOL)) {
-            return false;
-        }
-    }
-
-    *pos = lang_type_token.pos;
-
-    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
-    assert(mod_alias.mod_path.count > 0);
-    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        lang_type->pointer_depth++;
-    }
-
-    return true;
-}
+//static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
+//    memset(lang_type, 0, sizeof(*lang_type));
+//    Token lang_type_token = {0};
+//    Name mod_alias = curr_mod_alias;
+//
+//    if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+//        return false;
+//    }
+//
+//    if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+//        // TODO: mod_alias.mod = line below is a temporary hack.
+//        //   fix the actual bug with curr_mod_alias to prevent the need for this hack
+//        mod_alias.mod_path = curr_mod_path;
+//        mod_alias.base = lang_type_token.text;
+//        if (!consume_expect(&lang_type_token, tokens, "", TOKEN_SYMBOL)) {
+//            return false;
+//        }
+//    }
+//
+//    *pos = lang_type_token.pos;
+//
+//    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
+//    assert(mod_alias.mod_path.count > 0);
+//    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+//        lang_type->pointer_depth++;
+//    }
+//
+//    return true;
+//}
 
 // type will be parsed if possible
 static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens, Scope_id scope_id) {
@@ -1074,91 +1074,92 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return true;
     }
 
-    Ulang_type_atom atom = {0};
-    if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
-        Ulang_type_tuple new_tuple = {0};
-        if (!parse_lang_type_struct_tuple(&new_tuple, tokens, scope_id)) {
-            return false;
-        }
-        *lang_type = ulang_type_tuple_const_wrap(new_tuple);
-        return true;
-    }
+    todo();
+    //Ulang_type_atom atom = {0};
+    //if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
+    //    Ulang_type_tuple new_tuple = {0};
+    //    if (!parse_lang_type_struct_tuple(&new_tuple, tokens, scope_id)) {
+    //        return false;
+    //    }
+    //    *lang_type = ulang_type_tuple_const_wrap(new_tuple);
+    //    return true;
+    //}
 
-    Pos pos = {0};
-    if (!parse_lang_type_struct_atom(&pos, &atom, tokens, scope_id)) {
-        return false;
-    }
+    //Pos pos = {0};
+    //if (!parse_lang_type_struct_atom(&pos, &atom, tokens, scope_id)) {
+    //    return false;
+    //}
 
-    if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
-        if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
-            return false;
-        }
-    }
+    //if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
+    //    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
+    //        return false;
+    //    }
+    //}
 
-    *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(pos, atom));
+    //*lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(pos, atom));
 
-    Token open_sq_tk = {0};
-    if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK || tk_view_front(*tokens).type == TOKEN_QUESTION_MARK) {
-        while (1) {
-            if (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-                ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
-                continue;
-            }
+    //Token open_sq_tk = {0};
+    //if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK || tk_view_front(*tokens).type == TOKEN_QUESTION_MARK) {
+    //    while (1) {
+    //        if (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+    //            ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+    //            continue;
+    //        }
 
-            if (try_consume(&open_sq_tk, tokens, TOKEN_QUESTION_MARK)) {
-                *lang_type = ulang_type_new_optional(open_sq_tk.pos, *lang_type);
-                continue;
-            }
+    //        if (try_consume(&open_sq_tk, tokens, TOKEN_QUESTION_MARK)) {
+    //            *lang_type = ulang_type_new_optional(open_sq_tk.pos, *lang_type);
+    //            continue;
+    //        }
 
-            if (!try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-                break;
-            }
+    //        if (!try_consume(&open_sq_tk, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+    //            break;
+    //        }
 
-            if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
-                *lang_type = ulang_type_new_slice(pos, *lang_type, 0);
-                continue;
-            }
+    //        if (try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+    //            *lang_type = ulang_type_new_slice(pos, *lang_type, 0);
+    //            continue;
+    //        }
 
-            Uast_expr* count = NULL;
-            switch (parse_expr(&count, tokens, scope_id)) {
-                case PARSE_EXPR_OK:
-                    break;
-                case PARSE_EXPR_NONE:
-                    msg_expected_expr(*tokens, "after `[`");
-                    return false;
-                case PARSE_EXPR_ERROR:
-                    return false;
-            }
-            if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
-                return false;
-            }
+    //        Uast_expr* count = NULL;
+    //        switch (parse_expr(&count, tokens, scope_id)) {
+    //            case PARSE_EXPR_OK:
+    //                break;
+    //            case PARSE_EXPR_NONE:
+    //                msg_expected_expr(*tokens, "after `[`");
+    //                return false;
+    //            case PARSE_EXPR_ERROR:
+    //                return false;
+    //        }
+    //        if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_SQ_BRACKET)) {
+    //            return false;
+    //        }
 
-            *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(
-                open_sq_tk.pos,
-                arena_dup(&a_main, lang_type),
-                count,
-                0
-            ));
-        }
-    }
+    //        *lang_type = ulang_type_array_const_wrap(ulang_type_array_new(
+    //            open_sq_tk.pos,
+    //            arena_dup(&a_main, lang_type),
+    //            count,
+    //            0
+    //        ));
+    //    }
+    //}
 
-    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
-    }
+    //while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+    //    ulang_type_set_pointer_depth(lang_type, ulang_type_get_pointer_depth(*lang_type) + 1);
+    //}
 
-    return true;
+    //return true;
 }
 
 // require type to be parsed
-static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    Pos pos = {0};
-    if (parse_lang_type_struct_atom(&pos, lang_type, tokens, scope_id)) {
-        return PARSE_OK;
-    } else {
-        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
-        return PARSE_ERROR;
-    }
-}
+//static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
+//    Pos pos = {0};
+//    if (parse_lang_type_struct_atom(&pos, lang_type, tokens, scope_id)) {
+//        return PARSE_OK;
+//    } else {
+//        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+//        return PARSE_ERROR;
+//    }
+//}
 
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id) {
@@ -1279,10 +1280,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     Ulang_type rtn_type = {0};
     if (!parse_lang_type_struct(&rtn_type, tokens, fn_scope)) {
-        rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-            close_par_tk.pos,
-            ulang_type_atom_new_from_cstr("void", 0)
-        ));
+        rtn_type = ulang_type_new_void(tk_view_front(*tokens).pos);
     }
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope, (Attrs) {0}));
@@ -1437,9 +1435,8 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     Ustruct_def_base* base,
     Name name,
     Tk_view* tokens,
-    Ulang_type_atom lang_type
+    Uname lang_type_name // TODO: pass Ulang_type here instead of Uname
 ) {
-    (void) lang_type;
     base->name = name;
 
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
@@ -1461,7 +1458,9 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
 
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
-            ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type)),
+            ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type_name, 0)), 
+              // TODO: set member lang_type to lang_type_name instead of 
+              // ulang_type_regular_const_wrap(ulang_type_regular_new( when lang_type_name is changed to Ulang_type
             name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0, (Attrs) {0})
         );
 
@@ -1518,7 +1517,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
         name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
         tokens,
         false,
-        ulang_type_regular_const_wrap(ulang_type_regular_new(enum_tk.pos, ulang_type_atom_new_from_cstr("void", 0)))
+        ulang_type_new_void(tk_view_front(*tokens).pos)
     )) {
         return PARSE_ERROR;
     }
@@ -3468,18 +3467,7 @@ static PARSE_EXPR_STATUS parse_unary(
 
     Uast_expr* child = NULL;
     // this is a placeholder type
-    Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-        oper.pos,
-        ulang_type_atom_new(
-            uname_new(
-                MOD_ALIAS_BUILTIN,
-                sv("i32"),
-                (Ulang_type_vec) {0},
-                SCOPE_TOP_LEVEL
-            ),
-            0
-        )
-    ));
+    Ulang_type unary_lang_type = ulang_type_new_int_x(sv("32"));
 
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {

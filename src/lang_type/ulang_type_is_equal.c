@@ -3,12 +3,8 @@
 #include <ulang_type_remove_expr.h>
 #include <ast_msg.h>
 
-bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
-    return uname_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;
-}
-
 bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
-    return ulang_type_atom_is_equal(a.atom, b.atom);
+    return uname_is_equal(a.name, b.name) && a.pointer_depth == b.pointer_depth;
 }
 
 bool ulang_type_tuple_is_equal(Ulang_type_tuple a, Ulang_type_tuple b) {

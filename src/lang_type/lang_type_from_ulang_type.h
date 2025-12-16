@@ -68,7 +68,7 @@ static inline bool try_lang_type_from_ulang_type_fn(
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type) {
     Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
+    unwrap(name_from_uname(&name, lang_type.name, lang_type.pos));
     assert(name.mod_path.count > 0);
 
     if (lang_type_name_base_is_signed(name.base)) {
@@ -93,7 +93,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
     } else if (strv_is_equal(name.base, sv("void"))) {
-        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, lang_type.atom.pointer_depth));
+        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, lang_type.pointer_depth));
     } else if (strv_is_equal(name.base, sv("opaque"))) {
         return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, ulang_type_regular_get_pointer_depth(lang_type))));
     } else {
@@ -105,11 +105,11 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
 
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
     if (
-        lang_type_name_base_is_signed(lang_type.atom.str.base) ||
-        lang_type_name_base_is_unsigned(lang_type.atom.str.base) ||
-        lang_type_name_base_is_float(lang_type.atom.str.base) ||
-        strv_is_equal(lang_type.atom.str.base, sv("void")) ||
-        strv_is_equal(lang_type.atom.str.base, sv("opaque"))
+        lang_type_name_base_is_signed(lang_type.name.base) ||
+        lang_type_name_base_is_unsigned(lang_type.name.base) ||
+        lang_type_name_base_is_float(lang_type.name.base) ||
+        strv_is_equal(lang_type.name.base, sv("void")) ||
+        strv_is_equal(lang_type.name.base, sv("opaque"))
     ) {
         *new_lang_type = lang_type_from_ulang_type_regular_primitive(lang_type);
         return true;
@@ -123,7 +123,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     // report error if generic args are invalid
-    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
         Lang_type dummy = {0};
         if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
             return false;
@@ -131,12 +131,12 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     Name temp_name = {0};
-    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos)) {
+    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).name, lang_type.pos)) {
         return false;
     }
 
     //Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
-    int16_t temp_ptr_depth = ulang_type_regular_const_unwrap(resolved).atom.pointer_depth;
+    int16_t temp_ptr_depth = ulang_type_regular_const_unwrap(resolved).pointer_depth;
     switch (type) {
         case LANG_TYPE_STRUCT:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, temp_name, temp_ptr_depth));
@@ -151,7 +151,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
             return true;
         case LANG_TYPE_VOID:
-            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos, lang_type.atom.pointer_depth));
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos, lang_type.pointer_depth));
             return true;
         case LANG_TYPE_TUPLE:
             unreachable("this is not possible with Lang_type_regular");

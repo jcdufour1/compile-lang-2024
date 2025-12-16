@@ -29,6 +29,7 @@
 #include <lang_type_new_convenience.h>
 #include <ulang_type_is_equal.h>
 #include <ulang_type_remove_expr.h>
+#include <ulang_type_after.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -4832,9 +4833,15 @@ bool try_set_using_types(const Uast_using* using) {
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
         Name lang_type_name = {0};
+        Uname var_def_type_name = {0};
+        if (!ulang_type_get_uname(&var_def_type_name, var_def->lang_type)) {
+            msg_todo("", var_def->pos);
+            msg_todo("", using->pos);
+            return false;
+        }
         if (!name_from_uname(
             &lang_type_name,
-            ulang_type_get_atom(var_def->lang_type).str,
+            var_def_type_name,
             ulang_type_get_pos(var_def->lang_type)
         )) {
             return false;

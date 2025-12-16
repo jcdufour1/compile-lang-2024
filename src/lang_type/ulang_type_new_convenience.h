@@ -11,10 +11,8 @@
 static inline Ulang_type ulang_type_new_int_x(Strv base) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
         POS_BUILTIN,
-        (Ulang_type_atom) {
-            .str = uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-            .pointer_depth = 0
-        }
+        uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        0
     ));
 }
 
