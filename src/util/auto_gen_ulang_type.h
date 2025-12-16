@@ -90,7 +90,8 @@ static Uast_type ulang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    append_member(&sym.members, "Ulang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -99,7 +100,8 @@ static Uast_type ulang_type_gen_raw_union(const char* prefix) {
     const char* base_name = "raw_union";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    append_member(&sym.members, "Ulang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -108,7 +110,8 @@ static Uast_type ulang_type_gen_enum(const char* prefix) {
     const char* base_name = "enum";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    append_member(&sym.members, "Ulang_type_atom", "atom");
+    append_member(&sym.members, "Name", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -184,7 +187,8 @@ static Uast_type ulang_type_gen_regular(const char* prefix) {
     const char* base_name = "regular";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    append_member(&sym.members, "Ulang_type_atom", "atom");
+    append_member(&sym.members, "Uname", "name");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }

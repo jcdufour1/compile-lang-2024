@@ -60,7 +60,7 @@ bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, 
     return resolve_generics_ulang_type_regular(
         &type,
         result,
-        ulang_type_regular_new(pos, ulang_type_atom_new(base_name, 0))
+        ulang_type_regular_new(pos, base_name, 0)
     );
 }
 

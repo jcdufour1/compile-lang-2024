@@ -1,8 +1,8 @@
 #include <symbol_iter.h>
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
-#include <ulang_type_get_atom.h>
 #include <pos_util.h>
+#include <ulang_type_after.h>
 
 typedef enum {
     USING_STMT_KEEP,
@@ -22,8 +22,15 @@ static void expand_using_using(Uast_using* using) {
 
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
+        Uname lang_type_uname = {0};
+        if (!ulang_type_get_uname(&lang_type_uname, var_def->lang_type)) {
+            msg_todo("", using->pos);
+            return;
+        }
         Name lang_type_name = {0};
-        name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
+        if (!name_from_uname(&lang_type_name, lang_type_uname, ulang_type_get_pos(var_def->lang_type))) {
+            return;
+        }
         vec_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));

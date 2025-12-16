@@ -56,18 +56,18 @@ void generic_sub_lang_type_regular(
     // TODO: call generic_sub_name here?
     Name temp = {0};
 
-    unwrap(name_from_uname(&temp, lang_type.atom.str, lang_type.pos));
+    unwrap(name_from_uname(&temp, lang_type.name, lang_type.pos));
     if (name_is_equal(gen_param, temp)) {
-        *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.atom.str.scope_id);
+        *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.name.scope_id);
 
-        int16_t base_depth = lang_type.atom.pointer_depth;
+        int16_t base_depth = lang_type.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
         return;
     }
 
-    lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
-    Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
+    lang_type = ulang_type_regular_clone(lang_type, true, lang_type.name.scope_id);
+    Ulang_type_vec* gen_args = &lang_type.name.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(*gen_args, idx), gen_param, gen_arg);
     }
@@ -716,7 +716,7 @@ GEN_SUB_NAME_STATUS generic_sub_name(
         switch (gen_arg.type) {
             case ULANG_TYPE_REGULAR: {
                 Ulang_type_regular reg = ulang_type_regular_const_unwrap(gen_arg);
-                if (name_from_uname(name, reg.atom.str, reg.pos)) {
+                if (name_from_uname(name, reg.name, reg.pos)) {
                     return GEN_SUB_NAME_NORMAL;
                 }
                 return GEN_SUB_NAME_ERROR;

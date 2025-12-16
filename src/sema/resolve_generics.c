@@ -3,7 +3,6 @@
 #include <ulang_type.h>
 #include <uast_clone.h>
 #include <uast_utils.h>
-#include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
@@ -24,7 +23,7 @@ static void msg_undefined_type_internal(
         if (lang_type.type == ULANG_TYPE_REGULAR) {
             Uast_def* dummy = NULL;
             Name base_name = {0};
-            if (name_from_uname(&base_name, ulang_type_regular_const_unwrap(lang_type).atom.str, pos)) {
+            if (name_from_uname(&base_name, ulang_type_regular_const_unwrap(lang_type).name, pos)) {
                 base_name.gen_args = (Ulang_type_vec) {0};
                 if (!usymbol_lookup(&dummy, base_name)) {
                     msg_internal(
@@ -53,7 +52,7 @@ end:
         Name name = {0};
         if (lang_type.type == ULANG_TYPE_REGULAR && name_from_uname(
             &name,
-            ulang_type_regular_const_unwrap(lang_type).atom.str,
+            ulang_type_regular_const_unwrap(lang_type).name,
             pos
         )) {
             usymbol_add(uast_poison_def_wrap(uast_poison_def_new(pos, name)));
@@ -281,7 +280,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
     Obj_new obj_new
 ) {
     {
-        vec_foreach(idx, Ulang_type, gen_arg, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args) {
+        vec_foreach(idx, Ulang_type, gen_arg, ulang_type_regular_const_unwrap(lang_type).name.gen_args) {
             Lang_type dummy = {0};
             if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
                 return false;
@@ -292,7 +291,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
     Name new_name = name_new(
         old_base.name.mod_path,
         old_base.name.base,
-        ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args,
+        ulang_type_regular_const_unwrap(lang_type).name.gen_args,
         SCOPE_TOP_LEVEL /* TODO */,
         (Attrs) {0}
     );
@@ -334,9 +333,8 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
         ulang_type_get_pos(lang_type),
-        ulang_type_atom_new(
-            name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
-        )
+        name_to_uname(uast_def_get_struct_def_base(*after_res).name),
+        ulang_type_get_pointer_depth(lang_type)
     ));
 
     Tast_def* dummy = NULL;
@@ -464,7 +462,7 @@ static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang
 bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
-    if (!name_from_uname(&name_base, lang_type.atom.str, lang_type.pos)) {
+    if (!name_from_uname(&name_base, lang_type.name, lang_type.pos)) {
         return false;
     }
     assert(name_base.scope_id != SCOPE_NOT);
@@ -475,7 +473,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+    vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
         Ulang_type inner = {0};
         if (!ulang_type_remove_expr(&inner, *gen_arg)) {
             return false;
@@ -500,7 +498,8 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     Ulang_type lang_type = ulang_type_regular_const_wrap(
         ulang_type_regular_new(
             uast_def_get_pos(before_res),
-            ulang_type_atom_new(name_to_uname(name), 0)
+            name_to_uname(name),
+            0
         )
     );
 
@@ -531,7 +530,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_LANG_DEF:
             unreachable("");
         case UAST_PRIMITIVE_DEF:
-            log(LOG_DEBUG, FMT"\n", uast_print(before_res));
+            log(LOG_FATAL, FMT"\n", uast_print(before_res));
             unreachable("");
         case UAST_FUNCTION_DECL:
             unreachable("");

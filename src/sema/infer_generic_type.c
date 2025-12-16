@@ -58,12 +58,12 @@ bool infer_generic_type(
     switch (param_corres_to_arg.type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(param_corres_to_arg);
-            if (strv_is_equal(reg.atom.str.base, name_to_infer.base)) {
-                if (reg.atom.str.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
+            if (strv_is_equal(reg.name.base, name_to_infer.base)) {
+                if (reg.name.gen_args.info.count > 0 || name_to_infer.gen_args.info.count > 0) {
                     return false;
                 }
                 *infered = arg_to_infer_from;
-                int16_t new_ptr_depth = ulang_type_get_pointer_depth(*infered) - reg.atom.pointer_depth;
+                int16_t new_ptr_depth = ulang_type_get_pointer_depth(*infered) - reg.pointer_depth;
                 if (new_ptr_depth < 0) {
                     // TODO
                     msg_todo("error message for this situation", pos_arg);
@@ -77,16 +77,16 @@ bool infer_generic_type(
                 for (
                     size_t idx = 0;
                     idx < min(
-                        reg.atom.str.gen_args.info.count,
-                        ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args.info.count
+                        reg.name.gen_args.info.count,
+                        ulang_type_regular_const_unwrap(arg_to_infer_from).name.gen_args.info.count
                     );
                     idx++
                 ) {
                     if (infer_generic_type(
                         infered,
-                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).atom.str.gen_args, idx),
+                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).name.gen_args, idx),
                         false,
-                        vec_at(reg.atom.str.gen_args, idx),
+                        vec_at(reg.name.gen_args, idx),
                         name_to_infer,
                         pos_arg
                     )) {

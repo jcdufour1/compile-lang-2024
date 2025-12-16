@@ -8,9 +8,9 @@
 
 static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr);
 
-Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos) {
+Strv serialize_ulang_type_atom(Uname atom_name, int16_t atom_ptr_depth, bool include_scope, Pos pos) {
     Name temp = {0};
-    unwrap(name_from_uname(&temp, atom.str, pos));
+    unwrap(name_from_uname(&temp, atom_name, pos));
     Strv serialized = {0};
     if (include_scope) {
         serialized = serialize_name(temp);
@@ -19,7 +19,7 @@ Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos
     }
 
     String name = {0};
-    string_extend_int16_t(&a_main, &name, atom.pointer_depth);
+    string_extend_int16_t(&a_main, &name, atom_ptr_depth);
     string_extend_cstr(&a_main, &name, "_");
     string_extend_size_t(&a_main, &name, serialized.count);
     string_extend_cstr(&a_main, &name, "_");
@@ -244,7 +244,13 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
-    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom, include_scope, ulang_type.pos), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(
+        mod_path,
+        serialize_ulang_type_atom(ulang_type.name, ulang_type.pointer_depth, include_scope, ulang_type.pos),
+        (Ulang_type_vec) {0},
+        SCOPE_TOP_LEVEL,
+        (Attrs) {0}
+    );
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {

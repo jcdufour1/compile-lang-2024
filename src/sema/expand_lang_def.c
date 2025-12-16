@@ -104,7 +104,7 @@ static bool expand_def_ulang_type_regular(
 ) {
     Uast_expr* new_expr = NULL;
     Ulang_type result = {0};
-    switch (expand_def_uname(&result, &new_expr, &lang_type.atom.str, lang_type.pos, dest_pos)) {
+    switch (expand_def_uname(&result, &new_expr, &lang_type.name, lang_type.pos, dest_pos)) {
         case EXPAND_NAME_ERROR:
             return false;
         case EXPAND_NAME_NORMAL:
@@ -137,17 +137,18 @@ static bool expand_def_ulang_type_regular(
             Uname new_uname = uname_new(
                 uast_symbol_unwrap(access->callee)->name,
                 access->member_name->name.base,
-                lang_type.atom.str.gen_args,
+                lang_type.name.gen_args,
                 SCOPE_TOP_LEVEL/*TODO*/
             );
             *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type.pos,
-                ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth)
+                new_uname,
+                lang_type.pointer_depth
             ));
             return true;
         }
         case UAST_SYMBOL:
-            lang_type.atom.str = name_to_uname(uast_symbol_unwrap(new_expr)->name);
+            lang_type.name = name_to_uname(uast_symbol_unwrap(new_expr)->name);
             lang_type.pos.expanded_from = uast_symbol_unwrap(new_expr)->pos.expanded_from;
             *new_lang_type = ulang_type_regular_const_wrap(lang_type);
             return true;
@@ -167,7 +168,8 @@ static bool expand_def_ulang_type_regular(
                 &index_ulang_type,
                 ulang_type_regular_new(
                     uast_expr_get_pos(index->callee),
-                    ulang_type_atom_new(name_to_uname(uast_symbol_unwrap(index->callee)->name), 0)
+                    name_to_uname(uast_symbol_unwrap(index->callee)->name),
+                    0
                 ),
                 uast_expr_get_pos(index->callee)
             )) {
@@ -177,7 +179,7 @@ static bool expand_def_ulang_type_regular(
             *new_lang_type = ulang_type_new_slice(
                 index->pos,
                 index_ulang_type,
-                lang_type.atom.pointer_depth
+                lang_type.pointer_depth
             );
             return true;
         }
@@ -426,7 +428,7 @@ static bool expand_def_ulang_type_expr(
                     return false;
                 }
                 Name memb_def_name = {0};
-                if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).atom.str, lang_type.pos/*TODO*/)) {
+                if (!name_from_uname(&memb_def_name, ulang_type_regular_const_unwrap(memb_def_type).name, lang_type.pos/*TODO*/)) {
                     return false;
                 }
                 Uast_def* memb_def = NULL;
@@ -450,10 +452,11 @@ static bool expand_def_ulang_type_expr(
                     lit->pos,
                     lang_type.expr,
                     UNARY_UNSAFE_CAST,
-                    ulang_type_regular_const_wrap(ulang_type_regular_new(lit->pos, ulang_type_atom_new(
+                    ulang_type_regular_const_wrap(ulang_type_regular_new(
+                        lit->pos, 
                         name_to_uname(struct_def->base.name),
                         0
-                    )))
+                    ))
                 )));
             }
 
@@ -640,7 +643,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         case UAST_BUILTIN_DEF: {
             static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
             if (strv_is_equal(name.base, sv("usize"))) {
-                *new_lang_type = ulang_type_new_usize();
+                *new_lang_type = ulang_type_new_usize(uast_def_get_pos(def));
                 return EXPAND_NAME_NEW_ULANG_TYPE;
             } else if (strv_is_equal(name.base, sv("buf_at"))) {
                 return EXPAND_NAME_NORMAL;

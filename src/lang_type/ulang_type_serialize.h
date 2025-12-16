@@ -7,8 +7,6 @@
 #include <tast.h>
 #include <tast_utils.h>
 
-Strv serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope, Pos pos);
-
 Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool include_scope);
 
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope);

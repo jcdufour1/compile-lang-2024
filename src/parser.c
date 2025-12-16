@@ -16,6 +16,7 @@
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
+#include <pos_util.h>
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
@@ -1000,8 +1001,9 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    memset(lang_type, 0, sizeof(*lang_type));
+static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t* lang_type_ptr_depth, Tk_view* tokens, Scope_id scope_id) {
+    *lang_type_name = (Uname) {0};
+    *lang_type_ptr_depth = 0;
     Token lang_type_token = {0};
     Name mod_alias = curr_mod_alias;
 
@@ -1021,10 +1023,10 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
+    *lang_type_name = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
     assert(mod_alias.mod_path.count > 0);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        lang_type->pointer_depth++;
+        (*lang_type_ptr_depth)++;
     }
 
     return true;
@@ -1074,7 +1076,6 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return true;
     }
 
-    Ulang_type_atom atom = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
         Ulang_type_tuple new_tuple = {0};
         if (!parse_lang_type_struct_tuple(&new_tuple, tokens, scope_id)) {
@@ -1084,18 +1085,20 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return true;
     }
 
+    Uname atom_name = {0};
+    int16_t atom_ptr_depth = {0};
     Pos pos = {0};
-    if (!parse_lang_type_struct_atom(&pos, &atom, tokens, scope_id)) {
+    if (!parse_lang_type_struct_atom(&pos, &atom_name, &atom_ptr_depth, tokens, scope_id)) {
         return false;
     }
 
     if (try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
-        if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
+        if (PARSE_OK != parse_generics_args(&atom_name.gen_args, tokens, scope_id)) {
             return false;
         }
     }
 
-    *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(pos, atom));
+    *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(pos, atom_name, atom_ptr_depth));
 
     Token open_sq_tk = {0};
     if (tk_view_front(*tokens).type == TOKEN_OPEN_SQ_BRACKET || tk_view_front(*tokens).type == TOKEN_ASTERISK || tk_view_front(*tokens).type == TOKEN_QUESTION_MARK) {
@@ -1147,17 +1150,6 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
     }
 
     return true;
-}
-
-// require type to be parsed
-static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
-    Pos pos = {0};
-    if (parse_lang_type_struct_atom(&pos, lang_type, tokens, scope_id)) {
-        return PARSE_OK;
-    } else {
-        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
-        return PARSE_ERROR;
-    }
 }
 
 // require type to be parsed
@@ -1279,10 +1271,8 @@ static PARSE_STATUS parse_function_decl_common(
 
     Ulang_type rtn_type = {0};
     if (!parse_lang_type_struct(&rtn_type, tokens, fn_scope)) {
-        rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-            close_par_tk.pos,
-            ulang_type_atom_new_from_cstr("void", 0)
-        ));
+        rtn_type = ulang_type_new_void(tk_view_front(*tokens).pos);
+        assert(!pos_is_equal(ulang_type_get_pos(rtn_type), POS_BUILTIN));
     }
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope, (Attrs) {0}));
@@ -1437,9 +1427,8 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     Ustruct_def_base* base,
     Name name,
     Tk_view* tokens,
-    Ulang_type_atom lang_type
+    Uname lang_type_name // TODO: pass Ulang_type here instead of Uname
 ) {
-    (void) lang_type;
     base->name = name;
 
     if (!consume_expect(NULL, tokens, "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE)) {
@@ -1461,7 +1450,9 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
 
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
-            ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type)),
+            ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type_name, 0)), 
+              // TODO: set member lang_type to lang_type_name instead of 
+              // ulang_type_regular_const_wrap(ulang_type_regular_new( when lang_type_name is changed to Ulang_type
             name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0, (Attrs) {0})
         );
 
@@ -1518,7 +1509,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
         name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
         tokens,
         false,
-        ulang_type_regular_const_wrap(ulang_type_regular_new(enum_tk.pos, ulang_type_atom_new_from_cstr("void", 0)))
+        ulang_type_new_void(tk_view_front(*tokens).pos)
     )) {
         return PARSE_ERROR;
     }
@@ -3468,18 +3459,7 @@ static PARSE_EXPR_STATUS parse_unary(
 
     Uast_expr* child = NULL;
     // this is a placeholder type
-    Ulang_type unary_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-        oper.pos,
-        ulang_type_atom_new(
-            uname_new(
-                MOD_ALIAS_BUILTIN,
-                sv("i32"),
-                (Ulang_type_vec) {0},
-                SCOPE_TOP_LEVEL
-            ),
-            0
-        )
-    ));
+    Ulang_type unary_lang_type = ulang_type_new_int_x(tk_view_front(*tokens).pos/*TODO*/, sv("i32"));
 
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
@@ -3586,7 +3566,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 oper.pos,
                 child,
                 token_type_to_unary_type(oper.type),
-                ulang_type_new_usize()
+                ulang_type_new_usize(oper.pos)
             )));
             unwrap(*result);
             break;

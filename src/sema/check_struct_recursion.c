@@ -49,12 +49,12 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
 }
 
 static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack) {
-    if (lang_type.atom.pointer_depth > 0) {
+    if (lang_type.pointer_depth > 0) {
         return true;
     }
     Uast_def* def = {0};
     Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
+    unwrap(name_from_uname(&name, lang_type.name, lang_type.pos));
     if (!usymbol_lookup(&def, name)) {
         assert(env.error_count > 0 && "there is a bug somewhere");
         return false;

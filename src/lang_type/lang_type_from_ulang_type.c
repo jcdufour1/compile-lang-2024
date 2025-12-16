@@ -214,8 +214,9 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
-                POS_BUILTIN,
-                ulang_type_atom_new_from_cstr("void", 0)
+                lang_type_void_const_unwrap(lang_type).pos,
+                uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                0
             ));
         case LANG_TYPE_PRIMITIVE:
             fallthrough;
@@ -231,7 +232,8 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             }
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_get_pos(lang_type),
-                ulang_type_atom_new(name_to_uname(name), lang_type_get_pointer_depth(lang_type))
+                name_to_uname(name),
+                lang_type_get_pointer_depth(lang_type)
             ));
         }
         case LANG_TYPE_FN: {

@@ -11,7 +11,7 @@
 #include <ast_msg.h>
 
 // TODO: remove this forward declaration
-static inline Ulang_type ulang_type_new_int_x(Strv base);
+static inline Ulang_type ulang_type_new_int_x(Pos pos, Strv base);
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
