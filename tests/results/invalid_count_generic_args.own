@@ -6,10 +6,10 @@ tests/inputs/invalid_count_generic_args.own:9:12:[1;31merror[0;39m:returning `
      9 |     return result
        |            ^
     10 | }
-tests/inputs/invalid_count_generic_args.own:7:71:[1;34mnote[0;39m:function return type `void` defined here
+tests/inputs/invalid_count_generic_args.own:7:73:[1;34mnote[0;39m:function return type `void` defined here
      6 | 
      7 | fn add(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
-       |                                                                       ^
+       |                                                                         ^
      8 |     let result NumType = lhs + rhs
 tests/inputs/invalid_count_generic_args.own:13:12:[1;31merror[0;39m:generic arguments were not expected here
     12 | fn add_using_callback(lhs i32, rhs i32, add_fn fn()i32) i32 {

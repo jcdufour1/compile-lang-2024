@@ -16,6 +16,7 @@
 #include <ulang_type_clone.h>
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
+#include <pos_util.h>
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
@@ -1282,6 +1283,7 @@ static PARSE_STATUS parse_function_decl_common(
     Ulang_type rtn_type = {0};
     if (!parse_lang_type_struct(&rtn_type, tokens, fn_scope)) {
         rtn_type = ulang_type_new_void(tk_view_front(*tokens).pos);
+        assert(!pos_is_equal(ulang_type_get_pos(rtn_type), POS_BUILTIN));
     }
 
     *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope, (Attrs) {0}));
@@ -3468,7 +3470,7 @@ static PARSE_EXPR_STATUS parse_unary(
 
     Uast_expr* child = NULL;
     // this is a placeholder type
-    Ulang_type unary_lang_type = ulang_type_new_int_x(sv("i32"));
+    Ulang_type unary_lang_type = ulang_type_new_int_x(tk_view_front(*tokens).pos/*TODO*/, sv("i32"));
 
     static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
@@ -3575,7 +3577,7 @@ static PARSE_EXPR_STATUS parse_unary(
                 oper.pos,
                 child,
                 token_type_to_unary_type(oper.type),
-                ulang_type_new_usize()
+                ulang_type_new_usize(oper.pos)
             )));
             unwrap(*result);
             break;

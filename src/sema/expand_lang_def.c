@@ -643,7 +643,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
         case UAST_BUILTIN_DEF: {
             static_assert(BUILTIN_DEFS_COUNT == 4, "exhausive handling of builtin defs");
             if (strv_is_equal(name.base, sv("usize"))) {
-                *new_lang_type = ulang_type_new_usize();
+                *new_lang_type = ulang_type_new_usize(uast_def_get_pos(def));
                 return EXPAND_NAME_NEW_ULANG_TYPE;
             } else if (strv_is_equal(name.base, sv("buf_at"))) {
                 return EXPAND_NAME_NORMAL;
