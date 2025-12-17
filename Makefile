@@ -91,6 +91,7 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_is_equal.o \
 	 ${BUILD_DIR}/ast_utils/uast_clone.o \
+	 ${BUILD_DIR}/ast_utils/did_you_mean.o \
 	 ${BUILD_DIR}/ast_utils/ast_msg.o \
 	 ${BUILD_DIR}/ast_utils/symbol_collection_clone.o \
 	 ${BUILD_DIR}/sema/uast_expr_to_ulang_type.o \
@@ -287,6 +288,9 @@ ${BUILD_DIR}/ast_utils/ast_msg.o: ${DEP_COMMON} src/ast_utils/ast_msg.c
 
 ${BUILD_DIR}/ast_utils/uast_clone.o: ${DEP_COMMON} src/ast_utils/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/uast_clone.o src/ast_utils/uast_clone.c
+
+${BUILD_DIR}/ast_utils/did_you_mean.o: ${DEP_COMMON} src/ast_utils/did_you_mean.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ast_utils/did_you_mean.o src/ast_utils/did_you_mean.c
 
 ${BUILD_DIR}/ir/ir_utils.o: ${DEP_COMMON} src/ir/ir_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ir/ir_utils.o src/ir/ir_utils.c

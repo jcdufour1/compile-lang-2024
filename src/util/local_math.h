@@ -13,9 +13,14 @@ static inline size_t min_size_t(size_t a, size_t b) {
     return a < b ? a : b;
 }
 
+static inline uint32_t min_uint32_t(uint32_t a, uint32_t b) {
+    return a < b ? a : b;
+}
+
 #define min(a, b) _Generic ((a), \
         int: min_int, \
-        size_t: min_size_t \
+        size_t: min_size_t, \
+        uint32_t: min_uint32_t \
     ) (a, b)
 
 

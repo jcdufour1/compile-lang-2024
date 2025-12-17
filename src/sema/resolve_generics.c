@@ -9,6 +9,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <check_gen_constraints.h>
 #include <ulang_type_remove_expr.h>
+#include <did_you_mean.h>
 
 static bool is_in_struct_base_def;
 
@@ -30,8 +31,9 @@ static void msg_undefined_type_internal(
                         file, line,
                         DIAG_UNDEFINED_TYPE,
                         pos,
-                        "type `"FMT"` is not defined\n",
-                        name_print(NAME_MSG, base_name)
+                        "type `"FMT"` is not defined"FMT"\n",
+                        name_print(NAME_MSG, base_name),
+                        did_you_mean_symbol_print(base_name)
                     );
                     goto end;
                 }
