@@ -10,6 +10,8 @@ typedef struct {
 
 static Arena a_did_you_mean = {0};
 
+static Strv sym_mod_path = {0};
+
 uint32_t levenshtein_min(uint32_t a, uint32_t b, uint32_t c) {
     return min(a, min(b, c));
 }
@@ -65,14 +67,50 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
     return vec_at(prev, m);
 }
 
+typedef struct {
+    Name name;
+    uint32_t difference;
+} Candidate;
+
+typedef struct {
+    Vec_base info;
+    Candidate* buf;
+} Candidate_vec;
+
+static Candidate candidate_new(Name name, uint32_t difference) {
+    return (Candidate) {.name = name, .difference = difference};
+}
+
+int candidate_compare(const void* lhs_, const void* rhs_) {
+    const Candidate* lhs = lhs_;
+    const Candidate* rhs = rhs_;
+
+    if (lhs->difference < rhs->difference) {
+        return QSORT_LESS_THAN;
+    }
+    if (lhs->difference > rhs->difference) {
+        return QSORT_MORE_THAN;
+    }
+
+    bool lhs_is_local = strv_is_equal(lhs->name.mod_path, sym_mod_path);
+    bool rhs_is_local = strv_is_equal(rhs->name.mod_path, sym_mod_path);
+    if (lhs_is_local == rhs_is_local) {
+        assert(!strv_is_equal(lhs->name.base, rhs->name.base));
+        return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+    }
+    return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+}
+
 Strv did_you_mean_symbol_print_internal(Name sym_name) {
+    sym_mod_path = sym_name.mod_path;
+
     assert(levenshtein_distance(sv("na"), sv("a")) == 1);
     assert(levenshtein_distance(sv("na"), sv("n")) == 1);
     assert(levenshtein_distance(sv("a"), sv("na")) == 1);
     assert(levenshtein_distance(sv("n"), sv("na")) == 1);
     assert(levenshtein_distance(sv("na"), sv("na")) == 0);
 
-    Name_vec candidates = {0};
+    Candidate_vec candidates = {0};
 
     Scope_id curr_scope = sym_name.scope_id;
     while (1) {
@@ -116,8 +154,9 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
             }
 
             uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 3 : 1;
-            if (levenshtein_distance(curr_name.base, sym_name.base) <= max_difference) {
-                vec_append(&a_temp, &candidates, curr_name);
+            uint32_t result = levenshtein_distance(curr_name.base, sym_name.base);
+            if (result <= max_difference) {
+                vec_append(&a_temp, &candidates, candidate_new(curr_name, result));
             }
         }
 
@@ -131,13 +170,15 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
         return sv("");
     }
 
+    qsort(candidates.buf, candidates.info.count, sizeof(candidates.buf[0]), candidate_compare);
+
     String buf = {0};
     string_extend_cstr(&a_temp, &buf, "; did you mean:");
-    vec_foreach(idx, Name, candidate, candidates) {
+    vec_foreach(idx, Candidate, candidate, candidates) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, &buf, ",");
         }
-        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate));
+        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name));
     }
     return string_to_strv(buf);
 }

@@ -8,6 +8,7 @@
 #include <strv_struct.h>
 #include <ctype.h>
 #include <arena.h>
+#include <local_math.h>
 
 static inline Strv strv_slice(Strv strv, size_t start, size_t count) {
     unwrap(count <= strv.count && start + count <= strv.count && "out of bounds");
@@ -132,6 +133,11 @@ static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
     }
 
     return false;
+}
+
+// TODO: this function may give a different result than strcmp on cstrs
+static inline int strv_cmp(Strv lhs, Strv rhs) {
+    return strncmp(lhs.str, rhs.str, min(lhs.count, rhs.count));
 }
 
 #define strv_print(strv) (int)((strv).count), (strv).str

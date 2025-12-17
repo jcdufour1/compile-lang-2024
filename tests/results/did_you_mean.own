@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 20
+tests/inputs/did_you_mean.own:37:14:[1;31merror[0;39m:type `UndefinedType11` is not defined; did you mean: UndefinedType1_, UndefinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
+    36 | fn main() i32 {
+    37 |     let num1 UndefinedType11
+       |              ^
+    38 |     let num2 UndefinedType22
+tests/inputs/did_you_mean.own:38:14:[1;31merror[0;39m:type `UndefinedType22` is not defined; did you mean: UndefinedType1_, UndefinedType2__, UndefinedType4, Un_definedType33, Un_definedType3
+    37 |     let num1 UndefinedType11
+    38 |     let num2 UndefinedType22
+       |              ^
+    39 |     let num3 UndefinedType33
+tests/inputs/did_you_mean.own:39:14:[1;31merror[0;39m:type `UndefinedType33` is not defined; did you mean: Un_definedType33, Un_definedType3, UndefinedType1_, UndefinedType4, UndefinedType2__
+    38 |     let num2 UndefinedType22
+    39 |     let num3 UndefinedType33
+       |              ^
+    40 |     let num4 UndefinedType44
+tests/inputs/did_you_mean.own:40:14:[1;31merror[0;39m:type `UndefinedType44` is not defined; did you mean: UndefinedType4, U_ndefinedType44, UndefinedType1_, Un_d_efinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
+    39 |     let num3 UndefinedType33
+    40 |     let num4 UndefinedType44
+       |              ^
+    41 | 
+
+compile::return_code 1
+

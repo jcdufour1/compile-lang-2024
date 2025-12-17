@@ -95,10 +95,6 @@ static Defered_msg defered_msg_new(
     };
 }
 
-#define QSORT_LESS_THAN (-1)
-#define QSORT_EQUAL 0
-#define QSORT_MORE_THAN 1
-
 static int defered_msg_compare(const void* lhs_, const void* rhs_) {
     const Defered_msg* lhs = lhs_;
     const Defered_msg* rhs = rhs_;

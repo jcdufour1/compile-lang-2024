@@ -26,6 +26,10 @@ typedef enum {
     LOG_COUNT,
 } LOG_LEVEL;
 
+#define QSORT_LESS_THAN (-1)
+#define QSORT_EQUAL 0
+#define QSORT_MORE_THAN 1
+
 #ifndef MIN_LOG_LEVEL
 #define MIN_LOG_LEVEL LOG_TRACE
 #endif // CURR_LOG_LEVEL
