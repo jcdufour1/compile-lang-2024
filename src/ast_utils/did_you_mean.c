@@ -179,6 +179,7 @@ static bool local_is_struct_like(UAST_DEF_TYPE type) {
         case UAST_ENUM_DEF:
             return true;
         case UAST_LANG_DEF:
+            // TODO: return true if def expands to struct like?
             return false;
         case UAST_PRIMITIVE_DEF:
             return false;
@@ -221,6 +222,7 @@ static bool is_symbol(UAST_DEF_TYPE type) {
         case UAST_ENUM_DEF:
             return false;
         case UAST_LANG_DEF:
+            // TODO: return true if def expands to symbol?
             return false;
         case UAST_PRIMITIVE_DEF:
             return false;
