@@ -2,7 +2,7 @@ name: Github Actions Test
 run-name: Run Name
 on: [push]
 jobs:
-  Test1:
+  Explore-GitHub-Actions:
     runs-on: ubuntu-24.04
     steps:
       - name: checkout repo
@@ -11,4 +11,4 @@ jobs:
       - run: sudo apt update 
       - run: sudo apt install clang-20 python3 mypy
       - run: mypy do_test.py
-      - run: python3 do_test.py --test --path-c-compiler=clang-20 --makefile-cc-compiler=clang-20
+      - run: python3 do_test.py --test --path-c-compiler=clang-20 --makefile-cc-compiler=clang-20 --makefile-werror-all=1
