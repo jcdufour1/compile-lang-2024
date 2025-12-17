@@ -8,8 +8,6 @@ typedef struct {
     uint32_t* buf;
 } Uint32_t_vec;
 
-static Arena a_did_you_mean = {0};
-
 static Strv sym_mod_path = {0};
 
 uint32_t levenshtein_min(uint32_t a, uint32_t b, uint32_t c) {
@@ -28,13 +26,25 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
         return n;
     }
 
-    Uint32_t_vec prev = {0};
-    Uint32_t_vec curr = {0};
-    vec_reserve(&a_did_you_mean, &prev, m + 1);
-    vec_reserve(&a_did_you_mean, &curr, m + 1);
-    for (size_t idx = 0; idx < m + 1; idx++) {
-        vec_append(&a_did_you_mean, &prev, 0);
-        vec_append(&a_did_you_mean, &curr, 0);
+    static Uint32_t_vec prev = {0};
+    static Uint32_t_vec curr = {0};
+    vec_reserve(&a_leak, &prev, m + 1);
+    vec_reserve(&a_leak, &curr, m + 1);
+    {
+        vec_foreach_ref(idx, uint32_t, item, prev) {
+            *item = 0;
+        }
+    }
+    {
+        vec_foreach_ref(idx, uint32_t, item, curr) {
+            *item = 0;
+        }
+    }
+    while (prev.info.count < m + 1) {
+        vec_append(&a_leak, &prev, 0);
+    }
+    while (curr.info.count < m + 1) {
+        vec_append(&a_leak, &curr, 0);
     }
 
     {
@@ -64,9 +74,10 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
         curr = temp;
     }
 
-    // TODO: a_did_you_mean will not be explicitly freed at the end of the program (maybe it should be)
-    arena_reset(&a_did_you_mean);
-    return vec_at(prev, m);
+    uint32_t result = vec_at(prev, m);
+    vec_reset(&prev);
+    vec_reset(&curr);
+    return result;
 }
 
 typedef struct {
