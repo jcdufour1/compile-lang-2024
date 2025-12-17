@@ -152,6 +152,7 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
     }
 
     Ir* dummy = NULL;
+    (void) dummy;
     assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
 error:

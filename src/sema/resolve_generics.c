@@ -731,6 +731,7 @@ bool resolve_generics_function_def_call(
     }
     decl->name = name;
     Uast_function_decl* dummy = NULL;
+    (void) dummy;
     unwrap(function_decl_tbl_add(decl));
     assert(function_decl_tbl_lookup(&dummy, decl->name));
 
