@@ -2865,7 +2865,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         } else if (designated_was_enc) {
             msg(
-                DIAG_INVALID_MEMBER_ACCESS/*TODO*/,
+                DIAG_POSITIONAL_ARG_AFTER_DESIGNATED_ARG,
                 uast_expr_get_pos(corres_arg),
                 "positional argument cannot be used after designated arguments in function call\n"
             );

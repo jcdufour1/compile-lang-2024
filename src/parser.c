@@ -337,7 +337,6 @@ static bool get_mod_alias_from_path_token(
         assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
         curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     } else {
-        log(LOG_DEBUG, FMT"\n", strv_print(alias_tk.text));
         assert(curr_mod_path.count > 0);
         curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     }
@@ -3928,6 +3927,8 @@ error:
 }
 
 bool parse(void) {
+    bool status = true;
+
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
@@ -3946,7 +3947,7 @@ bool parse(void) {
         true,
         POS_BUILTIN
     )) {
-        todo();
+        status = false;
     }
 
     while (mod_paths_to_parse.info.count > 0) {
@@ -3957,18 +3958,14 @@ bool parse(void) {
         Name old_mod_alias = curr_mod_alias;
         curr_mod_alias = curr_mod.curr_mod_alias;
 
-        assert(curr_mod_path.count > 0);
-
         String file_path = {0};
         string_extend_strv(&a_main, &file_path, curr_mod.mod_path);
         string_extend_cstr(&a_main, &file_path, ".own");
-        Uast_block* block = NULL;
-        log(LOG_DEBUG, FMT"\n", strv_print(curr_mod_path));
         assert(curr_mod_path.count > 0);
+        Uast_block* block = NULL;
         if (!parse_file(&block, string_to_strv(file_path), curr_mod.import_pos)) {
-            todo();
-            //status = false;
-            //goto finish;
+            status = false;
+            goto loop_end;
         }
 
         assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
@@ -3978,11 +3975,13 @@ bool parse(void) {
             block,
             curr_mod.mod_path
         )));
+
+loop_end:
         curr_mod_path = old_mod_path;
         curr_mod_alias = old_mod_alias;
     }
 
-    return true;
+    return status;
 }
 
 static void parser_test_parse_expr(const char* input, int test) {
