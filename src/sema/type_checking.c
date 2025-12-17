@@ -2947,10 +2947,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 for (size_t param_idx = 0; status && param_idx < fun_call->args.info.count; param_idx++) {
                     Tast_expr* arg_to_infer_from = NULL;
 
+                    Uast_expr* corres_arg = vec_at(fun_call->args, param_idx);
+                    if (uast_expr_is_designator(corres_arg)) {
+                        corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
+                    }
+
                     bool old_supress_type_infer = env.supress_type_inference_failures;
                     env.supress_type_inference_failures = true;
                     uint32_t old_error_count = env.error_count;
-                    if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx), true)) {
+                    if (try_set_expr_types(&arg_to_infer_from, corres_arg, true)) {
                         if (infer_generic_type(
                             vec_at_ref(&sym_name->gen_args, gen_idx),
                             lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),
