@@ -1,0 +1,11 @@
+type io import = std.io
+
+type Token struct {
+    num i32
+}
+
+fn main() i32 {
+    io.print_int(.num = 8, "")
+    return 0
+}
+

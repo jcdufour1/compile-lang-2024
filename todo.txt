@@ -136,8 +136,6 @@ for generics:
 - make recursion depth O(1) for importing n modules deep
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
-- positional args (regular args) after designated args) should print error or actually work property
-    (and test case should be implemented)
 - fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?

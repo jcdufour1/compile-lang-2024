@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/fake_designated_arg.own:25:47:[1;31merror[0;39m:assignment cannot be used as an expression in this situation
+tests/inputs/fake_designated_arg.own:25:47:[1;31merror[0;39m:positional argument cannot be used after designated arguments in function call
     24 |     let file Str = ""
     25 |     arr_extend(&arr, [], .file = file, column = 8)
        |                                               ^
