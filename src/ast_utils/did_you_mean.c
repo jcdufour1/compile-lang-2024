@@ -213,7 +213,7 @@ Strv did_you_mean_type_print_internal(Name sym_name) {
 static bool is_symbol(UAST_DEF_TYPE type) {
     switch (type) {
         case UAST_LABEL:
-            return false;
+            return true;
         case UAST_VOID_DEF:
             return false;
         case UAST_POISON_DEF:
