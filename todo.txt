@@ -136,6 +136,7 @@ for generics:
 - fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
+- make vec_print function?
 
 
 # roadmap to try to get bootstrap compiler done:

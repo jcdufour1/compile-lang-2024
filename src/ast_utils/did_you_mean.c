@@ -15,70 +15,138 @@ uint32_t levenshtein_min(uint32_t a, uint32_t b, uint32_t c) {
 }
 
 uint32_t levenshtein_dist(Strv s, Strv t) {
-    size_t m = s.count + 1;
-    size_t n = t.count + 1;
+    log(LOG_DEBUG, "entering levenshtein_dist\n");
+    //if (t.count < s.count) {
+    //    Strv temp_strv = s;
+    //    s = t;
+    //    t = temp_strv;
+    //}
 
-    Uint32_t_vec v0 = {0};
-    Uint32_t_vec v1 = {0};
-    vec_reserve(&a_did_you_mean, &v0, n + 1);
-    vec_reserve(&a_did_you_mean, &v1, n + 1);
-    for (size_t idx = 0; idx < n + 1; idx++) {
-        vec_append(&a_did_you_mean, &v0, 0);
-        vec_append(&a_did_you_mean, &v1, 0);
+    size_t n = s.count;
+    size_t m = t.count;
+    if (n == 0) {
+        return m;
+    }
+    if (m == 0) {
+        return n;
     }
 
-    for (size_t idx = 0; idx < n; idx++) {
-        *vec_at_ref(&v0, idx) = idx;
+    Uint32_t_vec prev = {0};
+    Uint32_t_vec curr = {0};
+    vec_reserve(&a_did_you_mean, &prev, m + 1);
+    vec_reserve(&a_did_you_mean, &curr, m + 1);
+    for (size_t idx = 0; idx < m + 1; idx++) {
+        vec_append(&a_did_you_mean, &prev, 0);
+        vec_append(&a_did_you_mean, &curr, 0);
     }
 
-    for (size_t idx = 0; idx < m - 1; idx++) {
-        *vec_at_ref(&v1, 0) = idx + 1;
-
-        // TODO: < n - 1 or < n?
-        for (size_t j = 0; j < n - 1; j++) {
-            uint32_t deletion_cost = vec_at(v0, j + 1) + 1;
-            uint32_t insert_cost = vec_at(v1, j) + 1;
-            uint32_t substitution_cost = 0;
-            if (strv_at(s, idx) == strv_at(t, j)) {
-                substitution_cost = vec_at(v0, j);
-            } else {
-                substitution_cost = vec_at(v0, j) + 1;
-            }
-
-            log(LOG_DEBUG, "thing 76: %zu, n = %zu, m = %zu\n", j + 1, n, m);
-            *vec_at_ref(&v1, j + 1) = levenshtein_min(deletion_cost, insert_cost, substitution_cost);
+    {
+        vec_foreach_ref(idx, uint32_t, item, prev) {
+            *item = idx;
         }
-        
-        String buf = {0};
-        string_extend_f(&a_temp, &buf, "v0 = [");
-        {
-            vec_foreach(thing_idx, uint32_t, num, v0) {
-                if (thing_idx > 0) {
-                    string_extend_f(&a_temp, &buf, ", ");
+    }
+
+    //for (size_t idx = 0; idx < n; idx++) {
+    //    *vec_at_ref(&prev, idx) = idx;
+    //}
+
+    for (size_t s_idx = 1; s_idx < s.count + 1; s_idx++) {
+        *vec_at_ref(&curr, 0) = s_idx;
+
+        log(LOG_DEBUG, "s_idx = %zu\n", s_idx);
+        for (size_t t_idx = 1; t_idx < t.count + 1; t_idx++) {
+            {
+                String vecs = {0};
+                string_extend_f(&a_temp, &vecs, "s_idx = %zu, t_idx = %zu: prev = [", s_idx, t_idx);
+                {
+                    vec_foreach(idx_thing, uint32_t, item, prev) {
+                        if (idx_thing > 0) {
+                            string_extend_cstr(&a_temp, &vecs, ", ");
+                        }
+                        string_extend_f(&a_temp, &vecs, "%"PRIu32, item);
+                    }
                 }
-                string_extend_f(&a_temp, &buf, "%"PRIu32, num);
-            }
-        }
-        string_extend_f(&a_temp, &buf, "], v1 = [");
-        {
-            vec_foreach(thing_idx, uint32_t, num, v1) {
-                if (thing_idx > 0) {
-                    string_extend_f(&a_temp, &buf, ", ");
+                string_extend_cstr(&a_temp, &vecs, "]; curr = [");
+                {
+                    vec_foreach(idx_thing, uint32_t, item, curr) {
+                        if (idx_thing > 0) {
+                            string_extend_cstr(&a_temp, &vecs, ", ");
+                        }
+                        string_extend_f(&a_temp, &vecs, "%"PRIu32, item);
+                    }
                 }
-                string_extend_f(&a_temp, &buf, "%"PRIu32, num);
+                string_extend_cstr(&a_temp, &vecs, "]");
+                log(LOG_DEBUG, FMT"\n", string_print(vecs));
             }
-        }
-        string_extend_f(&a_temp, &buf, "]\n");
-        log(LOG_DEBUG, "at end of idx = %zu: "FMT"\n", idx, string_print(buf));
 
-        Uint32_t_vec temp = v0;
-        v0 = v1;
-        v1 = temp;
+            uint32_t difference_cost = 0;
+            if (strv_at(s, s_idx - 1) != strv_at(t, t_idx - 1)) {
+                difference_cost = 1;
+            }
+
+            //log(LOG_DEBUG, "t_idx = %zu\n", t_idx);
+            //log(LOG_DEBUG, "vec_at(prev, t_idx - 1) = %"PRIu32"\n", vec_at(prev, t_idx - 1));
+            //log(LOG_DEBUG, "curr[%zu] will == %"PRIu32"\n", t_idx, levenshtein_min(
+            //    vec_at(curr, t_idx - 1) + 1,
+            //    vec_at(prev, t_idx) + 1,
+            //    vec_at(prev, t_idx - 1) + difference_cost
+            //));
+            //log(LOG_DEBUG, "curr[t_idx] will == %"PRIu32"\n", levenshtein_min(
+            //    vec_at(curr, t_idx - 1) + 1,
+            //    vec_at(prev, t_idx) + 1,
+            //    vec_at(prev, t_idx - 1) + difference_cost
+            //));
+            //
+            log(LOG_DEBUG, "thing 1: %"PRIu32"; thing 2: %"PRIu32"; thing 3: %"PRIu32"\n", vec_at(curr, t_idx - 1) + 1, vec_at(prev, t_idx) + 1, vec_at(prev, t_idx - 1) + difference_cost);
+            log(LOG_DEBUG, "thing 3.5: %"PRIu32"\n", levenshtein_min(
+                vec_at(curr, t_idx - 1) + 1,
+                vec_at(prev, t_idx) + 1,
+                vec_at(prev, t_idx - 1) + difference_cost
+            ));
+
+            *vec_at_ref(&curr, t_idx) = levenshtein_min(
+                vec_at(curr, t_idx - 1) + 1,
+                vec_at(prev, t_idx) + 1,
+                vec_at(prev, t_idx - 1) + difference_cost
+            );
+
+            {
+                String vecs = {0};
+                string_extend_f(&a_temp, &vecs, "s_idx = %zu, t_idx = %zu: prev = [", s_idx, t_idx);
+                {
+                    vec_foreach(idx_thing, uint32_t, item, prev) {
+                        if (idx_thing > 0) {
+                            string_extend_cstr(&a_temp, &vecs, ", ");
+                        }
+                        string_extend_f(&a_temp, &vecs, "%"PRIu32, item);
+                    }
+                }
+                string_extend_cstr(&a_temp, &vecs, "]; curr = [");
+                {
+                    vec_foreach(idx_thing, uint32_t, item, curr) {
+                        if (idx_thing > 0) {
+                            string_extend_cstr(&a_temp, &vecs, ", ");
+                        }
+                        string_extend_f(&a_temp, &vecs, "%"PRIu32, item);
+                    }
+                }
+                string_extend_cstr(&a_temp, &vecs, "]");
+                log(LOG_DEBUG, FMT"\n", string_print(vecs));
+            }
+            log(LOG_DEBUG, "thing 4: %"PRIu32"\n", vec_at(curr, t_idx));
+        }
+
+        Uint32_t_vec temp = prev;
+        prev = curr;
+        curr = temp;
     }
 
 
-    todo();
-    return vec_at(v0, n);
+
+    log(LOG_DEBUG, FMT" "FMT"\n", strv_print(s), strv_print(t));
+    log(LOG_DEBUG, "m = %zu\n", m);
+    assert(vec_at(prev, m) > 0);
+    return vec_at(prev, m);
 }
 
 ///*uint32_t levenshtein_dist(char s[1..m], char t[1..n]) {*/
@@ -144,13 +212,16 @@ uint32_t levenshtein_dist_old(Strv lhs, Strv rhs) {
     Strv tail_rhs = strv_slice(rhs, 1, rhs.count - 1);
 
     if (strv_at(lhs, 0) == strv_at(rhs, 0)) {
-        return levenshtein_dist(tail_lhs, tail_rhs);
+        return levenshtein_dist_old(tail_lhs, tail_rhs);
     }
 
-    return 1 + min(levenshtein_dist(tail_lhs, rhs), min(levenshtein_dist(lhs, tail_rhs), levenshtein_dist(tail_lhs, tail_rhs)));
+    return 1 + min(levenshtein_dist_old(tail_lhs, rhs), min(levenshtein_dist_old(lhs, tail_rhs), levenshtein_dist_old(tail_lhs, tail_rhs)));
 }
 
 Strv did_you_mean_symbol_print_internal(Name sym_name) {
+    assert(levenshtein_dist(sv("na"), sv("a")) == 1);
+    assert(levenshtein_dist(sv("na"), sv("n")) == 1);
+
     Name_vec candidates = {0};
 
     Scope_id curr_scope = sym_name.scope_id;
