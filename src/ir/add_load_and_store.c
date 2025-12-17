@@ -2402,15 +2402,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
 
-    size_t for_count = 0;
-    for (size_t idx_ = defered_collections.coll_stack.info.count; idx_ > 0; idx_--) {
-        size_t idx = idx_ - 1;
-        if (vec_at(defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
-            for_count++;
-        }
-    }
     // TODO: remove some debug printing
-
 #ifdef NDEBUG
     String check_cond_ = (String) {0};
     String after_chk_ = (String) {0};

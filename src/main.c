@@ -202,6 +202,7 @@ NEVER_RETURN void do_passes(void) {
 
 int main(int argc, char** argv) {
     size_t dummy = {0};
+    (void) dummy;
     assert(strv_contains(&dummy, sv("th"), sv("t")));
     assert(strv_contains(&dummy, sv("th"), sv("th")));
     assert(!strv_contains(&dummy, sv("th"), sv("thi")));
