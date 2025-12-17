@@ -105,9 +105,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
 
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
     if (
-        lang_type_name_base_is_signed(lang_type.name.base) ||
-        lang_type_name_base_is_unsigned(lang_type.name.base) ||
-        lang_type_name_base_is_float(lang_type.name.base) ||
+        lang_type_name_base_is_number(lang_type.name.base) ||
         strv_is_equal(lang_type.name.base, sv("void")) ||
         strv_is_equal(lang_type.name.base, sv("opaque"))
     ) {

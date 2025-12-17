@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/positional_arg_after_designated_arg.own:8:28:[1;31merror[0;39m:positional argument cannot be used after designated arguments in function call
+     7 | fn main() i32 {
+     8 |     io.print_int(.num = 8, "")
+       |                            ^
+     9 |     return 0
+
+compile::return_code 1
+

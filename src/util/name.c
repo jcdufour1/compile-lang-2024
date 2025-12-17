@@ -34,11 +34,7 @@ static Uname uname_normalize_old(Uname name) {
 
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
-    if (
-        lang_type_name_base_is_signed(name.base) ||
-        lang_type_name_base_is_unsigned(name.base) ||
-        lang_type_name_base_is_float(name.base)
-    ) {
+    if (lang_type_name_base_is_number(name.base)) {
         name.mod_alias = MOD_ALIAS_BUILTIN;
     }
     return name;
@@ -51,21 +47,18 @@ static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_ar
 }
 
 Uname name_to_uname(Name name) {
-    if (lang_type_name_base_is_signed(name.base), 0) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_name_base_is_unsigned(name.base), 0) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_name_base_is_float(name.base), 0) {
+    if (lang_type_name_base_is_number(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 #   ifndef NDEBUG
-        Uast_def* dummy = NULL;
-        if (!usymbol_lookup(&dummy, alias_name)) {
-            log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
-            unreachable("");
-        }
+        // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
+        //Uast_def* dummy = NULL;
+        //if (!usymbol_lookup(&dummy, alias_name)) {
+        //    log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
+        //    unreachable("");
+        //}
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
@@ -175,11 +168,7 @@ void serialize_strv(String* buf, Strv strv) {
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
     // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
     //   if it is required to?
-    if (
-        lang_type_name_base_is_signed(name.base) ||
-        lang_type_name_base_is_unsigned(name.base) ||
-        lang_type_name_base_is_float(name.base)
-    ) {
+    if (lang_type_name_base_is_number(name.base)) {
         name.mod_path = MOD_PATH_BUILTIN;
     }
 
@@ -470,18 +459,10 @@ bool uname_is_equal(Uname a, Uname b) {
 
     // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
     //   if it is required to?
-    if (
-        lang_type_name_base_is_signed(new_a.base) ||
-        lang_type_name_base_is_unsigned(new_a.base) ||
-        lang_type_name_base_is_float(new_a.base)
-    ) {
+    if (lang_type_name_base_is_number(new_a.base)) {
         new_a.mod_path = MOD_PATH_BUILTIN;
     }
-    if (
-        lang_type_name_base_is_signed(new_b.base) ||
-        lang_type_name_base_is_unsigned(new_b.base) ||
-        lang_type_name_base_is_float(new_b.base)
-    ) {
+    if (lang_type_name_base_is_number(new_b.base)) {
         new_b.mod_path = MOD_PATH_BUILTIN;
     }
 

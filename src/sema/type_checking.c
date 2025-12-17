@@ -2782,6 +2782,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         vec_append(&a_main, &sym_name->gen_args, ulang_type_removed_const_wrap(ulang_type_removed_new(fun_call->pos, 0)));
     }
 
+    bool designated_was_enc = false;
     // TODO: deduplicate this with below for loop?
     for (size_t param_idx = 0; param_idx < min(fun_call->args.info.count, params->params.info.count); param_idx++) {
         size_t curr_arg_count = param_idx;
@@ -2805,6 +2806,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         }
 
         if (uast_expr_is_designator(corres_arg)) {
+            designated_was_enc = true;
             // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
             Uast_member_access* lhs = uast_member_access_unwrap(
                 uast_binary_unwrap(uast_operator_unwrap(corres_arg))->lhs // parser should catch invalid assignment
@@ -2861,6 +2863,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 status = false;
                 goto error;
             }
+        } else if (designated_was_enc) {
+            msg(
+                DIAG_POSITIONAL_ARG_AFTER_DESIGNATED_ARG,
+                uast_expr_get_pos(corres_arg),
+                "positional argument cannot be used after designated arguments in function call\n"
+            );
+            status = false;
+            goto error;
         }
 
         if (curr_arg_count <= new_args_set.info.count && vec_at(new_args_set, curr_arg_count)) {
@@ -2947,10 +2957,15 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 for (size_t param_idx = 0; status && param_idx < fun_call->args.info.count; param_idx++) {
                     Tast_expr* arg_to_infer_from = NULL;
 
+                    Uast_expr* corres_arg = vec_at(fun_call->args, param_idx);
+                    if (uast_expr_is_designator(corres_arg)) {
+                        corres_arg = uast_binary_unwrap(uast_operator_unwrap(corres_arg))->rhs;
+                    }
+
                     bool old_supress_type_infer = env.supress_type_inference_failures;
                     env.supress_type_inference_failures = true;
                     uint32_t old_error_count = env.error_count;
-                    if (try_set_expr_types(&arg_to_infer_from, vec_at(fun_call->args, param_idx), true)) {
+                    if (try_set_expr_types(&arg_to_infer_from, corres_arg, true)) {
                         if (infer_generic_type(
                             vec_at_ref(&sym_name->gen_args, gen_idx),
                             lang_type_to_ulang_type(tast_expr_get_lang_type(arg_to_infer_from)),

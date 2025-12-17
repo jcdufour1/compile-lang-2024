@@ -18,6 +18,19 @@
 #include <ast_msg.h>
 #include <pos_util.h>
 
+typedef struct {
+    Strv mod_path;
+    Pos import_pos;
+    Pos mod_path_pos;
+    Strv curr_mod_path;
+    Name curr_mod_alias;
+} Import_strv;
+
+typedef struct {
+    Vec_base info;
+    Import_strv* buf;
+} Import_strv_vec;
+
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
@@ -30,6 +43,7 @@ static Pos new_scope_name_pos;
 static Name default_brk_label = {0};
 
 static Uast_using_vec using_params = {0};
+static Import_strv_vec mod_paths_to_parse = {0};
 
 // TODO: use parent block for scope_ids instead of function calls everytime
 
@@ -315,7 +329,6 @@ static bool get_mod_alias_from_path_token(
     assert(mod_path.count > 0);
     assert(alias_tk.text.count > 0);
     Uast_def* prev_def = NULL;
-    String file_path = {0};
 
     Name old_mod_alias = curr_mod_alias;
     if (is_builtin_mod_path_alias) {
@@ -342,6 +355,13 @@ static bool get_mod_alias_from_path_token(
         NULL,
         mod_path
     ))));
+    vec_append(&a_pass, &mod_paths_to_parse, ((Import_strv) {
+        .mod_path = mod_path,
+        .import_pos = import_pos,
+        .mod_path_pos = mod_path_pos,
+        .curr_mod_path = curr_mod_path,
+        .curr_mod_alias = curr_mod_alias
+    }));
 
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
@@ -350,22 +370,6 @@ static bool get_mod_alias_from_path_token(
         mod_path,
         SCOPE_TOP_LEVEL
     ))));
-
-    string_extend_strv(&a_main, &file_path, mod_path);
-    string_extend_cstr(&a_main, &file_path, ".own");
-    Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), import_pos)) {
-        status = false;
-        goto finish;
-    }
-
-    assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
-    // TODO: replace block in existing import path instead of making new import path?
-    usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
-        mod_path_pos,
-        block,
-        mod_path
-    )));
 
 finish:
     curr_mod_path = old_mod_path;
@@ -3923,6 +3927,8 @@ error:
 }
 
 bool parse(void) {
+    bool status = true;
+
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
@@ -3932,7 +3938,7 @@ bool parse(void) {
     ))));
 
     Uast_mod_alias* dummy = NULL;
-    return get_mod_alias_from_path_token(
+    if (!get_mod_alias_from_path_token(
         &dummy,
         token_new(MOD_ALIAS_TOP_LEVEL.base, TOKEN_SYMBOL),
         POS_BUILTIN,
@@ -3940,7 +3946,42 @@ bool parse(void) {
         false,
         true,
         POS_BUILTIN
-    );
+    )) {
+        status = false;
+    }
+
+    while (mod_paths_to_parse.info.count > 0) {
+        Import_strv curr_mod = vec_pop(&mod_paths_to_parse);
+
+        Strv old_mod_path = curr_mod_path;
+        curr_mod_path = curr_mod.curr_mod_path;
+        Name old_mod_alias = curr_mod_alias;
+        curr_mod_alias = curr_mod.curr_mod_alias;
+
+        String file_path = {0};
+        string_extend_strv(&a_main, &file_path, curr_mod.mod_path);
+        string_extend_cstr(&a_main, &file_path, ".own");
+        assert(curr_mod_path.count > 0);
+        Uast_block* block = NULL;
+        if (!parse_file(&block, string_to_strv(file_path), curr_mod.import_pos)) {
+            status = false;
+            goto loop_end;
+        }
+
+        assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
+        // TODO: replace block in existing import path instead of making new import path?
+        usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
+            curr_mod.mod_path_pos,
+            block,
+            curr_mod.mod_path
+        )));
+
+loop_end:
+        curr_mod_path = old_mod_path;
+        curr_mod_alias = old_mod_alias;
+    }
+
+    return status;
 }
 
 static void parser_test_parse_expr(const char* input, int test) {
