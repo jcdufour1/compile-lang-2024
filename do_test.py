@@ -41,6 +41,7 @@ class Parameters:
     keep_going: bool
     path_c_compiler: Optional[str]
     makefile_cc_compiler: Optional[str]
+    makefile_werror_all: bool
     do_color: bool
     count_threads: int
     do_debug_internal: bool
@@ -224,6 +225,8 @@ def do_tests(do_debug: bool, params: Parameters):
     map_thing: Dict[str, str] = {"DEBUG": debug_env}
     if params.makefile_cc_compiler:
         map_thing["CC_COMPILER"] = params.makefile_cc_compiler
+    if params.makefile_werror_all:
+        map_thing["WERROR_ALL"] = "1" if params.makefile_werror_all else "0"
     process = subprocess.run(cmd, env=dict(os.environ | map_thing))
     if process.returncode != 0:
         print_error("compilation of " + debug_release_text + " failed")
@@ -349,6 +352,7 @@ def parse_args() -> Parameters:
     has_found_flag = False
     path_c_compiler: Optional[str] = None
     makefile_cc_compiler: Optional[str] = None
+    makefile_werror_all: bool = False
     do_color:bool = True
     do_release: Optional[bool] = True
     do_debug: Optional[bool] = True
@@ -378,6 +382,11 @@ def parse_args() -> Parameters:
             path_c_compiler = arg[len("--path-c-compiler="):]
         elif arg.startswith("--makefile-cc-compiler="):
             makefile_cc_compiler = arg[len("--makefile-cc-compiler="):]
+        elif arg.startswith("--makefile-werror-all="):
+            num_str: str = arg[len("--makefile-werror-all="):]
+            if len(num_str) != 1 or not num_str.isdigit() or (num_str[0] != '0' and num_str[0] != '1'):
+                print_error("invalid arg to \"--makefile-werror-all=\" (expected \"0\" or \"1\")")
+            makefile_werror_all = False if int(num_str) == 0 else True
         elif arg.startswith("--exclude="):
             to_exclude_raw = arg[len("--exclude="):]
             for idx, path in enumerate(to_exclude_raw.split(",")):
@@ -427,6 +436,7 @@ def parse_args() -> Parameters:
         keep_going,
         path_c_compiler,
         makefile_cc_compiler,
+        makefile_werror_all,
         do_color,
         count_threads,
         do_debug_actual,

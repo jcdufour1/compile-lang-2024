@@ -1,5 +1,7 @@
 .PHONY: all setup build gdb test_quick clean
 
+WERROR_ALL ?= 0
+
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 C_WARNINGS = -Werror=incompatible-pointer-types \
@@ -51,6 +53,10 @@ else
 	C_FLAGS += -DNDEBUG -O2 # -flto 
 	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
+endif
+
+ifeq ($(WERROR_ALL), 1)
+	C_FLAGS += -Werror
 endif
 
 OBJS=\
