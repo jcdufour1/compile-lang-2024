@@ -1,5 +1,5 @@
-//type io import = std.io
-type io import = tests.dummy_std.std_dummy_3
+
+type dummy import = tests.dummy_std.std_dummy_3
 
 type Token struct {
     num i32
@@ -39,7 +39,8 @@ fn main() i32 {
     let num3 UndefinedType33
     let num4 UndefinedType44
 
-    //io.print_num()
+    print_to()
+    dummy.print_num(8)
 
     return 0
 }

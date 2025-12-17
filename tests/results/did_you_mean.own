@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 20
+compile::stderr 30
 tests/inputs/did_you_mean.own:37:14:[1;31merror[0;39m:type `UndefinedType11` is not defined; did you mean: UndefinedType1_, UndefinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
     36 | fn main() i32 {
     37 |     let num1 UndefinedType11
@@ -21,6 +21,16 @@ tests/inputs/did_you_mean.own:40:14:[1;31merror[0;39m:type `UndefinedType44` i
     40 |     let num4 UndefinedType44
        |              ^
     41 | 
+tests/inputs/did_you_mean.own:42:5:[1;31merror[0;39m:symbol `print_to` is not defined; did you mean: print
+    41 | 
+    42 |     print_to()
+       |     ^
+    43 |     dummy.print_num(8)
+tests/inputs/did_you_mean.own:43:10:[1;31merror[0;39m:symbol `print_num` is not defined; did you mean: print_int, print_str
+    42 |     print_to()
+    43 |     dummy.print_num(8)
+       |          ^
+    44 | 
 
 compile::return_code 1
 

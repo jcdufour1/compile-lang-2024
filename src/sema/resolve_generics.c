@@ -33,7 +33,7 @@ static void msg_undefined_type_internal(
                         pos,
                         "type `"FMT"` is not defined"FMT"\n",
                         name_print(NAME_MSG, base_name),
-                        did_you_mean_symbol_print(base_name)
+                        did_you_mean_type_print(base_name)
                     );
                     goto end;
                 }

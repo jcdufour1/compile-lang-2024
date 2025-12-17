@@ -1,6 +1,7 @@
 #include <ast_msg.h>
 #include <msg.h>
 #include <uast_utils.h>
+#include <did_you_mean.h>
 
 // TODO: move more functions here
 
@@ -8,7 +9,9 @@ void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Po
     msg_internal(
         file, line,
         DIAG_UNDEFINED_SYMBOL, sym_pos,
-        "symbol `"FMT"` is not defined\n", name_print(NAME_MSG, sym_name)
+        "symbol `"FMT"` is not defined"FMT"\n",
+        name_print(NAME_MSG, sym_name),
+        did_you_mean_symbol_print(sym_name)
     );
 }
 

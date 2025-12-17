@@ -101,7 +101,9 @@ int candidate_compare(const void* lhs_, const void* rhs_) {
     return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
 }
 
-Strv did_you_mean_symbol_print_internal(Name sym_name) {
+typedef bool(*Is_correct_sym_type)(UAST_DEF_TYPE);
+
+static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_correct_sym_type_fn) {
     sym_mod_path = sym_name.mod_path;
 
     assert(levenshtein_distance(sv("na"), sv("a")) == 1);
@@ -118,39 +120,8 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
-            switch (curr->type) {
-                case UAST_LABEL:
-                    continue;
-                case UAST_VOID_DEF:
-                    continue;
-                case UAST_POISON_DEF:
-                    continue;
-                case UAST_IMPORT_PATH:
-                    continue;
-                case UAST_MOD_ALIAS:
-                    continue;
-                case UAST_GENERIC_PARAM:
-                    continue;
-                case UAST_FUNCTION_DEF:
-                    continue;
-                case UAST_VARIABLE_DEF:
-                    continue;
-                case UAST_STRUCT_DEF:
-                    break;
-                case UAST_RAW_UNION_DEF:
-                    break;
-                case UAST_ENUM_DEF:
-                    break;
-                case UAST_LANG_DEF:
-                    continue;
-                case UAST_PRIMITIVE_DEF:
-                    continue;
-                case UAST_FUNCTION_DECL:
-                    continue;
-                case UAST_BUILTIN_DEF:
-                    continue;
-                default:
-                    unreachable("");
+            if (!is_correct_sym_type_fn(curr->type)) {
+                continue;
             }
 
             uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 3 : 1;
@@ -181,4 +152,88 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
         string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name));
     }
     return string_to_strv(buf);
+}
+
+static bool local_is_struct_like(UAST_DEF_TYPE type) {
+    switch (type) {
+        case UAST_LABEL:
+            return false;
+        case UAST_VOID_DEF:
+            return false;
+        case UAST_POISON_DEF:
+            return false;
+        case UAST_IMPORT_PATH:
+            return false;
+        case UAST_MOD_ALIAS:
+            return false;
+        case UAST_GENERIC_PARAM:
+            return false;
+        case UAST_FUNCTION_DEF:
+            return false;
+        case UAST_VARIABLE_DEF:
+            return false;
+        case UAST_STRUCT_DEF:
+            return true;
+        case UAST_RAW_UNION_DEF:
+            return true;
+        case UAST_ENUM_DEF:
+            return true;
+        case UAST_LANG_DEF:
+            return false;
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_FUNCTION_DECL:
+            return false;
+        case UAST_BUILTIN_DEF:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+Strv did_you_mean_type_print_internal(Name sym_name) {
+    return did_you_mean_print_common(sym_name, local_is_struct_like);
+}
+
+static bool is_symbol(UAST_DEF_TYPE type) {
+    switch (type) {
+        case UAST_LABEL:
+            return false;
+        case UAST_VOID_DEF:
+            return false;
+        case UAST_POISON_DEF:
+            return false;
+        case UAST_IMPORT_PATH:
+            return false;
+        case UAST_MOD_ALIAS:
+            return true;
+        case UAST_GENERIC_PARAM:
+            return true;
+        case UAST_FUNCTION_DEF:
+            return true;
+        case UAST_VARIABLE_DEF:
+            return true;
+        case UAST_STRUCT_DEF:
+            return false;
+        case UAST_RAW_UNION_DEF:
+            return false;
+        case UAST_ENUM_DEF:
+            return false;
+        case UAST_LANG_DEF:
+            return false;
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_FUNCTION_DECL:
+            return true;
+        case UAST_BUILTIN_DEF:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+Strv did_you_mean_symbol_print_internal(Name sym_name) {
+    return did_you_mean_print_common(sym_name, is_symbol);
 }
