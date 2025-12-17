@@ -64,6 +64,8 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
         curr = temp;
     }
 
+    // TODO: a_did_you_mean will not be explicitly freed at the end of the program (maybe it should be)
+    arena_reset(&a_did_you_mean);
     return vec_at(prev, m);
 }
 
