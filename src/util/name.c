@@ -53,11 +53,12 @@ Uname name_to_uname(Name name) {
 
     Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
 #   ifndef NDEBUG
-        Uast_def* dummy = NULL;
-        if (!usymbol_lookup(&dummy, alias_name)) {
-            log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
-            unreachable("");
-        }
+        // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
+        //Uast_def* dummy = NULL;
+        //if (!usymbol_lookup(&dummy, alias_name)) {
+        //    log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
+        //    unreachable("");
+        //}
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
