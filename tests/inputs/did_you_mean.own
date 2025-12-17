@@ -1,0 +1,47 @@
+
+type dummy import = tests.dummy_std.std_dummy_3
+
+type Token struct {
+    num i32
+}
+
+type UndefinedType1_ struct {
+    num i32
+}
+
+type UndefinedType2__ struct {
+    num i32
+}
+
+type Un_definedType3 struct {
+    num i32
+}
+
+type Un_definedType33 struct {
+    num i32
+}
+
+type UndefinedType4 struct {
+    num i32
+}
+
+type Un_d_efinedType4 struct {
+    num i32
+}
+
+
+fn print() {
+}
+
+fn main() i32 {
+    let num1 UndefinedType11
+    let num2 UndefinedType22
+    let num3 UndefinedType33
+    let num4 UndefinedType44
+
+    print_to()
+    dummy.print_num(8)
+
+    return 0
+}
+
