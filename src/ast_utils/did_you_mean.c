@@ -30,7 +30,7 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
-            if (!strv_is_equal(curr_name.mod_path, sv("main"))) {
+            if (!strv_is_equal(curr_name.mod_path, sv("main")) || !strv_is_equal(curr_name.base, sv("UndefinedType1"))) {
                 continue;
             }
             if (levenshtein_dist(curr_name.base, sym_name.base) < 2) {
