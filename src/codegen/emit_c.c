@@ -173,7 +173,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         Ir_lang_type ir_lang_type = {0};
         if (ir_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
             Ir_name ori_name = {0};
-            unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, vec_at(def->base.members, idx)->lang_type));
+            unwrap(ir_lang_type_get_name(&ori_name, idx)->lang_type));
             Ir_name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -612,7 +612,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     Ir* struct_def_ = NULL;
     Ir_name def_name = {0};
-    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_EMIT_C, lang_type_from_ir_name(load->ir_src)));
+    unwrap(ir_lang_type_get_name(&def_name, lang_type_from_ir_name(load->ir_src)));
     unwrap(ir_lookup(&struct_def_, def_name));
 
     string_extend_cstr(&a_pass, &strs->output, "    void* ");
