@@ -565,7 +565,7 @@ static void gen_thing(Uast_type uast) {
     );
         gen_gen("    String buf = {0};\n");
         gen_gen("    "FMT"_extend_table_internal(&buf, level, indent);\n", strv_print(sym_text));
-        gen_gen("    log_internal_ex(dest, log_level, file, line, indent + INDENT_WIDTH, \"\\n\"FMT\"\\n\", string_print(buf));\n");
+        gen_gen("    log_internal_ex(dest, log_level, true, file, line, indent + INDENT_WIDTH, \"\\n\"FMT\"\\n\", string_print(buf));\n");
     gen_gen("}\n");
 
     gen_gen("static void "FMT"_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, Scope_id scope_id) {\n", strv_print(sym_text));
