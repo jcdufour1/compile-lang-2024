@@ -15,8 +15,6 @@
 Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
 #define ustruct_def_base_print(base) strv_print(ustruct_def_base_print_internal(base, 0))
 
-Strv uast_print_internal(const Uast* uast, Indent indent);
-
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);

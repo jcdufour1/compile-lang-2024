@@ -143,7 +143,7 @@ static void uast_gen_print_forward_decl_internal(const char* file, int line, Uas
  
     if (type.name.is_topmost) {
         string_extend_f(&a_gen, &function, "Strv "FMT, strv_lower_print(&a_gen, type.name.type));
-        string_extend_cstr(&a_gen, &function, "_print_internal(const ");
+        string_extend_f(&a_gen, &function, "_print_internal(%sconst ", strv_is_equal(type.name.type, sv("uast")) ? "UAST_MODE mode, " : "");
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&a_gen, &function, "* uast, Indent indent);");
     } else {
@@ -628,6 +628,11 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
 
         gen_gen("struct Tast_enum_tag_lit_;\n");
         gen_gen("typedef struct Tast_enum_tag_lit_ Tast_enum_tag_lit;\n");
+
+        gen_gen("typedef enum {\n");
+        gen_gen("    "FMT"_LOG,", uast_upper_print(uast.name));
+        gen_gen("    "FMT"_MSG,", uast_upper_print(uast.name));
+        gen_gen("} "FMT"_MODE;\n\n", uast_upper_print(uast.name));
 
         gen_gen("Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
     }

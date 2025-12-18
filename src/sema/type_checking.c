@@ -225,6 +225,7 @@ static void msg_invalid_count_struct_literal_args_internal(
         file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
         FMT, strv_print(string_to_strv(message))
     );
+    // TODO: print note for location of struct def?
 }
 
 #define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos, is_array) \
