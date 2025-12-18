@@ -41,6 +41,7 @@ static void string_extend_ulang_type_lit(String* string, Ulang_type_lit lang_typ
         case ULANG_TYPE_STRUCT_LIT:
             string_extend_cstr(&a_main, string, "struct ");
             string_extend_strv(&a_main, string, uast_expr_print_internal(
+                UAST_MSG,
                 ulang_type_struct_lit_const_unwrap(lang_type).expr,
                 0
             ));
@@ -60,7 +61,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             Ulang_type_array array = ulang_type_array_const_unwrap(lang_type);
             extend_ulang_type_to_string(string, mode, *array.item_type);
             string_extend_cstr(&a_temp, string, "[");
-            string_extend_strv(&a_temp, string, uast_expr_print_internal(array.count, 0));
+            string_extend_strv(&a_temp, string, uast_expr_print_internal(mode == LANG_TYPE_MODE_MSG ? UAST_MSG : UAST_LOG, array.count, 0));
             string_extend_cstr(&a_temp, string, "]");
             return;
         }
@@ -115,7 +116,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
         case ULANG_TYPE_EXPR: {
             string_extend_cstr(&a_main, string, "expr ");
             Ulang_type_expr expr = ulang_type_expr_const_unwrap(lang_type);
-            string_extend_strv(&a_main, string, uast_expr_print_internal(expr.expr, 0));
+            string_extend_strv(&a_main, string, uast_expr_print_internal(mode == LANG_TYPE_MODE_MSG ? UAST_MSG : UAST_LOG, expr.expr, 0));
             return;
         }
         case ULANG_TYPE_LIT: {

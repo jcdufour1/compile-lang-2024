@@ -107,8 +107,7 @@ static void extend_lang_type_lit_to_string(String* string, Lang_type_lit lang_ty
             serialize_strv_actual(string, lang_type_string_lit_const_unwrap(lang_type).data);
             return;
         case LANG_TYPE_STRUCT_LIT:
-            // TODO: this looks ugly
-            string_extend_strv(&a_temp, string, uast_expr_print_internal(lang_type_struct_lit_const_unwrap(lang_type).lit, 0));
+            string_extend_strv(&a_temp, string, uast_expr_print_internal(UAST_MSG, lang_type_struct_lit_const_unwrap(lang_type).lit, 0));
             return;
         case LANG_TYPE_FN_LIT:
             extend_name(NAME_MSG, string, lang_type_fn_lit_const_unwrap(lang_type).name);

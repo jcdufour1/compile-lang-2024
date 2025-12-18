@@ -121,21 +121,12 @@ for generics:
 - document or make functions for uast_def_get_ulang_type
 - make test case for passing args after --run and using argv in program
 - test case for def alias used within struct literal generic arg
-- make this error message better (and make expected failure case):
-    tests/inputs/non_int_literal_generic_arg.own:99:18:error0;39m:argument is of type `Token3(<struct_literal
-    --float8.69999999999999929
-    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
-    >)`, but the corresponding parameter `token` is of type `Token3(<struct_literal
-    --float8.69999999999999929
-    --symbol_untyped((;file_path:tests/inputs/non_int_literal_generic_arg.own;line:98;column:30 ))s259_tests/inputs/non_int_literal_generic_arg::print_bye
-    >)`
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
 - fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
-- make vec_print function?
 - name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
 
 
