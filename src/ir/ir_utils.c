@@ -157,7 +157,7 @@ Ir_name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
     switch (def->type) {
         case IR_PRIMITIVE_DEF: {
             Ir_name result = {0};
-            unwrap(ir_lang_type_get_name(&result, ir_primitive_def_const_unwrap(def)->lang_type));
+            unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
             return result;
         }
         case IR_VARIABLE_DEF:

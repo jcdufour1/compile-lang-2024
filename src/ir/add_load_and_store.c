@@ -1125,7 +1125,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     Name name = {0};
     unwrap(lang_type_get_name(&name, old_lit->lang_type));
     Ir_name name_2 = {0};
-    unwrap(ir_lang_type_get_name(&name_2, old_lit->pos)));
+    unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));
     Struct_def_base base = tast_def_get_struct_def_base(struct_def_);
 
@@ -1257,7 +1257,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     (void) old_lit;
     Tast_def* enum_def_ = NULL;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, old_lit->enum_lang_type));
+    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->enum_lang_type));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     
@@ -1294,7 +1294,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
 static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit) {
     Tast_def* union_def_ = NULL;
     Ir_name def_name = {0};
-    unwrap(ir_lang_type_get_name(&def_name, POS_BUILTIN)));
+    unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, POS_BUILTIN)));
     unwrap(symbol_lookup(&union_def_, ir_name_to_name(def_name)));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
     Tast_variable_def* active_memb = vec_at(union_def->base.members, (size_t)old_lit->tag->data);
@@ -1658,7 +1658,7 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
 
     Tast_def* def = NULL;
     Ir_name name = {0};
-    unwrap(ir_lang_type_get_name(&name, lang_type_from_ir_name(new_callee)));
+    unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type_from_ir_name(new_callee)));
     unwrap(symbol_lookup(&def, ir_name_to_name(name)));
 
     size_t struct_index = {0};
@@ -1760,7 +1760,7 @@ static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_enum = load_ptr_expr(new_block, old_access->callee);
@@ -1803,7 +1803,7 @@ static Ir_name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_a
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);

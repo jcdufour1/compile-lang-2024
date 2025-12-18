@@ -122,7 +122,7 @@ Ir_name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primit
 
 }
 
-bool ir_lang_type_get_name(Ir_name* result, Ir_lang_type ir_lang_type) {
+bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_PRIMITIVE:
             *result = ir_lang_type_primitive_get_name(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
