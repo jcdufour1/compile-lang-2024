@@ -1179,17 +1179,11 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
 
     Tast_expr_vec membs = {0};
     vec_append(&a_main, &membs, tast_literal_wrap(tast_string_wrap(old_lit)));
-    // TODO: calculate length of string at compile time instead of calling strlen at runtime
-    vec_append(&a_main, &membs, tast_function_call_wrap(tast_function_call_new(
+    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         old_lit->pos,
-        args,
-        tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
-            old_lit->pos,
-            name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
-            lang_type_new_usize(POS_BUILTIN/*TODO*/)
-        ))),
-        lang_type_new_usize(POS_BUILTIN/*TODO*/)
-    )));
+        (int64_t)old_lit->data.count,
+        lang_type_new_usize(old_lit->pos)
+    ))));
 
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,

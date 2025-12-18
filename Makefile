@@ -24,7 +24,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
-			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
+			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			     -fsanitize=address -fno-omit-frame-pointer
 
