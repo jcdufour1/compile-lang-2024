@@ -8,8 +8,6 @@
 #include <pos_util.h>
 #include <symbol_table.h>
 
-// TODO: remove "(void) mode" below and implement differences?
-
 static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
     string_extend_size_t(&a_temp, buf, scope_id);
@@ -325,7 +323,6 @@ Strv uast_enum_get_tag_print_internal(UAST_MODE mode, const Uast_enum_get_tag* a
 }
 
 Strv uast_unknown_print_internal(UAST_MODE mode, const Uast_unknown* unknown, Indent indent) {
-    (void) mode;
     (void) unknown;
     String buf = {0};
 
@@ -362,7 +359,6 @@ Strv uast_int_print_internal(UAST_MODE mode, const Uast_int* num, Indent indent)
 }
 
 Strv uast_float_print_internal(UAST_MODE mode, const Uast_float* num, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -615,7 +611,6 @@ Strv uast_defer_print_internal(UAST_MODE mode, const Uast_defer* defer, Indent i
 }
 
 Strv uast_using_print_internal(UAST_MODE mode, const Uast_using* using, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -670,7 +665,6 @@ Strv uast_yield_print_internal(UAST_MODE mode, const Uast_yield* yield, Indent i
 }
 
 Strv uast_continue_print_internal(UAST_MODE mode, const Uast_continue* cont, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -691,7 +685,6 @@ Strv uast_continue_print_internal(UAST_MODE mode, const Uast_continue* cont, Ind
 }
 
 Strv uast_stmt_removed_print_internal(UAST_MODE mode, const Uast_stmt_removed* removed, Indent indent) {
-    (void) mode;
     (void) removed;
     String buf = {0};
 
@@ -805,7 +798,6 @@ Strv uast_param_print_internal(UAST_MODE mode, const Uast_param* param, Indent i
 }
 
 Strv uast_label_print_internal(UAST_MODE mode, const Uast_label* label, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -829,7 +821,6 @@ Strv uast_label_print_internal(UAST_MODE mode, const Uast_label* label, Indent i
 }
 
 Strv uast_builtin_def_print_internal(UAST_MODE mode, const Uast_builtin_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -873,7 +864,6 @@ Strv uast_import_path_print_internal(UAST_MODE mode, const Uast_import_path* imp
 }
 
 Strv uast_mod_alias_print_internal(UAST_MODE mode, const Uast_mod_alias* alias, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -898,7 +888,6 @@ Strv uast_mod_alias_print_internal(UAST_MODE mode, const Uast_mod_alias* alias, 
 }
 
 Strv uast_generic_param_print_internal(UAST_MODE mode, const Uast_generic_param* param, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -925,7 +914,6 @@ Strv uast_generic_param_print_internal(UAST_MODE mode, const Uast_generic_param*
 }
 
 Strv uast_poison_def_print_internal(UAST_MODE mode, const Uast_poison_def* poison, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -967,7 +955,6 @@ Strv uast_lang_def_print_internal(UAST_MODE mode, const Uast_lang_def* def, Inde
 }
 
 Strv uast_void_def_print_internal(UAST_MODE mode, const Uast_void_def* def, Indent indent) {
-    (void) mode;
     (void) def;
     String buf = {0};
 
@@ -1005,7 +992,6 @@ Strv uast_return_print_internal(UAST_MODE mode, const Uast_return* lang_rtn, Ind
 }
 
 Strv uast_macro_print_internal(UAST_MODE mode, const Uast_macro* macro, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1025,7 +1011,6 @@ Strv uast_macro_print_internal(UAST_MODE mode, const Uast_macro* macro, Indent i
 }
 
 Strv uast_orelse_print_internal(UAST_MODE mode, const Uast_orelse* orelse, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1046,7 +1031,6 @@ Strv uast_orelse_print_internal(UAST_MODE mode, const Uast_orelse* orelse, Inden
 }
 
 Strv uast_fn_print_internal(UAST_MODE mode, const Uast_fn* fn, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1086,7 +1070,6 @@ Strv uast_question_mark_print_internal(UAST_MODE mode, const Uast_question_mark*
 
 Strv uast_underscore_print_internal(UAST_MODE mode, const Uast_underscore* underscore, Indent indent) {
     (void) underscore;
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1105,7 +1088,6 @@ Strv uast_underscore_print_internal(UAST_MODE mode, const Uast_underscore* under
 
 Strv uast_expr_removed_print_internal(UAST_MODE mode, const Uast_expr_removed* removed, Indent indent) {
     (void) removed;
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1208,7 +1190,6 @@ Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent) {
 }
 
 Strv uast_struct_def_print_internal(UAST_MODE mode, const Uast_struct_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1226,7 +1207,6 @@ Strv uast_struct_def_print_internal(UAST_MODE mode, const Uast_struct_def* def, 
 }
 
 Strv uast_raw_union_def_print_internal(UAST_MODE mode, const Uast_raw_union_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1244,7 +1224,6 @@ Strv uast_raw_union_def_print_internal(UAST_MODE mode, const Uast_raw_union_def*
 }
 
 Strv uast_enum_def_print_internal(UAST_MODE mode, const Uast_enum_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1262,7 +1241,6 @@ Strv uast_enum_def_print_internal(UAST_MODE mode, const Uast_enum_def* def, Inde
 }
 
 Strv uast_primitive_def_print_internal(UAST_MODE mode, const Uast_primitive_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
@@ -1284,7 +1262,6 @@ Strv uast_primitive_def_print_internal(UAST_MODE mode, const Uast_primitive_def*
 }
 
 Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* def, Indent indent) {
-    (void) mode;
     String buf = {0};
 
     switch (mode) {
