@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/struct_literal_msg_print.own:17:36:[1;31merror[0;39m:type `Container(<{9}>)` cannot be implicitly converted to `Container(<{8}>)`
+    16 | fn main() i32 {
+    17 |     let container Container(<{8}>) = container_new()
+       |                                    ^
+    18 | 
+
+compile::return_code 1
+
