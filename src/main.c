@@ -85,8 +85,7 @@ static void add_builtin_defs(void) {
         arena_reset(&a_pass);\
     } while (0)
 
-// TODO: make this static?
-void compile_file_to_ir(void) {
+static void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();

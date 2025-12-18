@@ -128,6 +128,31 @@ __attribute__((format (printf, 5, 6)));
 
 #define NEVER_RETURN __attribute__((noreturn))
 
+#define WSWITCH_ENUM_IGNORE_START \
+    _Pragma("GCC diagnostic ignored \"-Wswitch-enum\"")
+
+#define WIMPLICIT_FALLTHROUGH_IGNORE_START \
+    _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
+
+#define WSIGN_CONVERSION_IGNORE_START \
+    _Pragma("GCC diagnostic ignored \"-Wsign-conversion\"")
+
+#ifdef OWN_WERROR
+#   define WSWITCH_ENUM_IGNORE_END \
+        _Pragma("GCC diagnostic error \"-Wswitch-enum\"")
+#   define WIMPLICIT_FALLTHROUGH_IGNORE_END \
+        _Pragma("GCC diagnostic error \"-Wimplicit-fallthrough\"")
+#   define WSIGN_CONVERSION_IGNORE_END \
+        _Pragma("GCC diagnostic error \"-Wsign-conversion\"")
+#else
+#   define WSWITCH_ENUM_IGNORE_END \
+        _Pragma("GCC diagnostic warning \"-Wswitch-enum\"")
+#   define WIMPLICIT_FALLTHROUGH_IGNORE_END \
+        _Pragma("GCC diagnostic warning \"-Wimplicit-fallthrough\"")
+#   define WSIGN_CONVERSION_IGNORE_END \
+        _Pragma("GCC diagnostic warning \"-Wsign-conversion\"")
+#endif // OWN_WERROR
+
 static inline void unwrap_internal(bool cond, const char* cond_text, const char* file, int line) {
     if (!(cond)) {
         log_internal(LOG_FATAL, file, line, 0, "condition \"%s\" failed\n", cond_text);

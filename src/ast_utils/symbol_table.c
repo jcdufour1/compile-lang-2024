@@ -1,10 +1,11 @@
-#define STB_DS_IMPLEMENTATION
 
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include <util.h>
+WIMPLICIT_FALLTHROUGH_IGNORE_START
+WSIGN_CONVERSION_IGNORE_START
+#define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
-#pragma GCC diagnostic warning "-Wsign-conversion"
-#pragma GCC diagnostic warning "-Wimplicit-fallthrough"
+WIMPLICIT_FALLTHROUGH_IGNORE_END
+WSIGN_CONVERSION_IGNORE_END
 
 #include "symbol_table.h"
 #include "symbol_table_struct.h"

@@ -76,9 +76,6 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     return ulang_type_fn_const_wrap(fn);
 }
 
-// TODO: remove this pragma, and make below switch exhausive
-#pragma GCC diagnostic ignored "-Wswitch-enum"
-
 // will print error on failure
 bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
@@ -118,6 +115,154 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
             *new_lit = uast_literal_wrap(uast_int_wrap(uast_int_new(pos, raw)));
             break;
         }
+        case TOKEN_NONTYPE:
+            unreachable("");
+        case TOKEN_SINGLE_PLUS:
+            unreachable("");
+        case TOKEN_SINGLE_MINUS:
+            unreachable("");
+        case TOKEN_ASTERISK:
+            unreachable("");
+        case TOKEN_MODULO:
+            unreachable("");
+        case TOKEN_SLASH:
+            unreachable("");
+        case TOKEN_LESS_THAN:
+            unreachable("");
+        case TOKEN_LESS_OR_EQUAL:
+            unreachable("");
+        case TOKEN_GREATER_THAN:
+            unreachable("");
+        case TOKEN_GREATER_OR_EQUAL:
+            unreachable("");
+        case TOKEN_DOUBLE_EQUAL:
+            unreachable("");
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            unreachable("");
+        case TOKEN_BITWISE_AND:
+            unreachable("");
+        case TOKEN_BITWISE_OR:
+            unreachable("");
+        case TOKEN_BITWISE_XOR:
+            unreachable("");
+        case TOKEN_LOGICAL_AND:
+            unreachable("");
+        case TOKEN_LOGICAL_OR:
+            unreachable("");
+        case TOKEN_SHIFT_LEFT:
+            unreachable("");
+        case TOKEN_SHIFT_RIGHT:
+            unreachable("");
+        case TOKEN_LOGICAL_NOT:
+            unreachable("");
+        case TOKEN_BITWISE_NOT:
+            unreachable("");
+        case TOKEN_UNSAFE_CAST:
+            unreachable("");
+        case TOKEN_ORELSE:
+            unreachable("");
+        case TOKEN_QUESTION_MARK:
+            unreachable("");
+        case TOKEN_OPEN_PAR:
+            unreachable("");
+        case TOKEN_OPEN_CURLY_BRACE:
+            unreachable("");
+        case TOKEN_OPEN_SQ_BRACKET:
+            unreachable("");
+        case TOKEN_OPEN_GENERIC:
+            unreachable("");
+        case TOKEN_CLOSE_PAR:
+            unreachable("");
+        case TOKEN_CLOSE_CURLY_BRACE:
+            unreachable("");
+        case TOKEN_CLOSE_SQ_BRACKET:
+            unreachable("");
+        case TOKEN_CLOSE_GENERIC:
+            unreachable("");
+        case TOKEN_ENUM:
+            unreachable("");
+        case TOKEN_SYMBOL:
+            unreachable("");
+        case TOKEN_DOUBLE_QUOTE:
+            unreachable("");
+        case TOKEN_NEW_LINE:
+            unreachable("");
+        case TOKEN_COMMA:
+            unreachable("");
+        case TOKEN_COLON:
+            unreachable("");
+        case TOKEN_SINGLE_EQUAL:
+            unreachable("");
+        case TOKEN_SINGLE_DOT:
+            unreachable("");
+        case TOKEN_DOUBLE_DOT:
+            unreachable("");
+        case TOKEN_TRIPLE_DOT:
+            unreachable("");
+        case TOKEN_EOF:
+            unreachable("");
+        case TOKEN_ASSIGN_BY_BIN:
+            unreachable("");
+        case TOKEN_MACRO:
+            unreachable("");
+        case TOKEN_DEFER:
+            unreachable("");
+        case TOKEN_DOUBLE_TICK:
+            unreachable("");
+        case TOKEN_ONE_LINE_BLOCK_START:
+            unreachable("");
+        case TOKEN_UNDERSCORE:
+            unreachable("");
+        case TOKEN_FN:
+            unreachable("");
+        case TOKEN_FOR:
+            unreachable("");
+        case TOKEN_IF:
+            unreachable("");
+        case TOKEN_SWITCH:
+            unreachable("");
+        case TOKEN_CASE:
+            unreachable("");
+        case TOKEN_DEFAULT:
+            unreachable("");
+        case TOKEN_ELSE:
+            unreachable("");
+        case TOKEN_RETURN:
+            unreachable("");
+        case TOKEN_EXTERN:
+            unreachable("");
+        case TOKEN_STRUCT:
+            unreachable("");
+        case TOKEN_LET:
+            unreachable("");
+        case TOKEN_IN:
+            unreachable("");
+        case TOKEN_BREAK:
+            unreachable("");
+        case TOKEN_YIELD:
+            unreachable("");
+        case TOKEN_CONTINUE:
+            unreachable("");
+        case TOKEN_RAW_UNION:
+            unreachable("");
+        case TOKEN_TYPE_DEF:
+            unreachable("");
+        case TOKEN_GENERIC_TYPE:
+            unreachable("");
+        case TOKEN_IMPORT:
+            unreachable("");
+        case TOKEN_DEF:
+            unreachable("");
+        case TOKEN_SIZEOF:
+            unreachable("");
+        case TOKEN_COUNTOF:
+            unreachable("");
+        case TOKEN_USING:
+            unreachable("");
+        case TOKEN_COMMENT:
+            unreachable("");
+        case TOKEN_COUNT:
+            unreachable("");
         default:
             msg_todo("", pos);
     }
@@ -126,17 +271,11 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
     return true;
 }
 
-// TODO: remove this pragma when removing pragma above above function
-#pragma GCC diagnostic warning "-Wswitch-enum"
-
 Uast_expr* util_uast_literal_new_from_strv(const Strv value, TOKEN_TYPE token_type, Pos pos) {
     Uast_expr* lit = NULL;
     unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
     return lit;
 }
-
-// TODO: remove this pragma, and make below switch exhausive
-#pragma GCC diagnostic ignored "-Wswitch-enum"
 
 Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Uast_expr* new_lit = NULL;
@@ -146,6 +285,12 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
             Uast_int* literal = uast_int_new(pos, value);
             literal->data = value;
             new_lit = uast_literal_wrap(uast_int_wrap(literal));
+            break;
+        }
+        case TOKEN_FLOAT_LITERAL: {
+            Uast_float* literal = uast_float_new(pos, value);
+            literal->data = value;
+            new_lit = uast_literal_wrap(uast_float_wrap(literal));
             break;
         }
         case TOKEN_STRING_LITERAL:
@@ -160,15 +305,160 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
             new_lit = uast_literal_wrap(uast_int_wrap(uast_int_new(pos, value)));
             break;
         }
+        case TOKEN_NONTYPE:
+            unreachable("");
+        case TOKEN_SINGLE_PLUS:
+            unreachable("");
+        case TOKEN_SINGLE_MINUS:
+            unreachable("");
+        case TOKEN_ASTERISK:
+            unreachable("");
+        case TOKEN_MODULO:
+            unreachable("");
+        case TOKEN_SLASH:
+            unreachable("");
+        case TOKEN_LESS_THAN:
+            unreachable("");
+        case TOKEN_LESS_OR_EQUAL:
+            unreachable("");
+        case TOKEN_GREATER_THAN:
+            unreachable("");
+        case TOKEN_GREATER_OR_EQUAL:
+            unreachable("");
+        case TOKEN_DOUBLE_EQUAL:
+            unreachable("");
+        case TOKEN_LOGICAL_NOT_EQUAL:
+            unreachable("");
+        case TOKEN_BITWISE_AND:
+            unreachable("");
+        case TOKEN_BITWISE_OR:
+            unreachable("");
+        case TOKEN_BITWISE_XOR:
+            unreachable("");
+        case TOKEN_LOGICAL_AND:
+            unreachable("");
+        case TOKEN_LOGICAL_OR:
+            unreachable("");
+        case TOKEN_SHIFT_LEFT:
+            unreachable("");
+        case TOKEN_SHIFT_RIGHT:
+            unreachable("");
+        case TOKEN_LOGICAL_NOT:
+            unreachable("");
+        case TOKEN_BITWISE_NOT:
+            unreachable("");
+        case TOKEN_UNSAFE_CAST:
+            unreachable("");
+        case TOKEN_ORELSE:
+            unreachable("");
+        case TOKEN_QUESTION_MARK:
+            unreachable("");
+        case TOKEN_OPEN_PAR:
+            unreachable("");
+        case TOKEN_OPEN_CURLY_BRACE:
+            unreachable("");
+        case TOKEN_OPEN_SQ_BRACKET:
+            unreachable("");
+        case TOKEN_OPEN_GENERIC:
+            unreachable("");
+        case TOKEN_CLOSE_PAR:
+            unreachable("");
+        case TOKEN_CLOSE_CURLY_BRACE:
+            unreachable("");
+        case TOKEN_CLOSE_SQ_BRACKET:
+            unreachable("");
+        case TOKEN_CLOSE_GENERIC:
+            unreachable("");
+        case TOKEN_ENUM:
+            unreachable("");
+        case TOKEN_SYMBOL:
+            unreachable("");
+        case TOKEN_DOUBLE_QUOTE:
+            unreachable("");
+        case TOKEN_NEW_LINE:
+            unreachable("");
+        case TOKEN_COMMA:
+            unreachable("");
+        case TOKEN_COLON:
+            unreachable("");
+        case TOKEN_SINGLE_EQUAL:
+            unreachable("");
+        case TOKEN_SINGLE_DOT:
+            unreachable("");
+        case TOKEN_DOUBLE_DOT:
+            unreachable("");
+        case TOKEN_TRIPLE_DOT:
+            unreachable("");
+        case TOKEN_EOF:
+            unreachable("");
+        case TOKEN_ASSIGN_BY_BIN:
+            unreachable("");
+        case TOKEN_MACRO:
+            unreachable("");
+        case TOKEN_DEFER:
+            unreachable("");
+        case TOKEN_DOUBLE_TICK:
+            unreachable("");
+        case TOKEN_ONE_LINE_BLOCK_START:
+            unreachable("");
+        case TOKEN_UNDERSCORE:
+            unreachable("");
+        case TOKEN_FN:
+            unreachable("");
+        case TOKEN_FOR:
+            unreachable("");
+        case TOKEN_IF:
+            unreachable("");
+        case TOKEN_SWITCH:
+            unreachable("");
+        case TOKEN_CASE:
+            unreachable("");
+        case TOKEN_DEFAULT:
+            unreachable("");
+        case TOKEN_ELSE:
+            unreachable("");
+        case TOKEN_RETURN:
+            unreachable("");
+        case TOKEN_EXTERN:
+            unreachable("");
+        case TOKEN_STRUCT:
+            unreachable("");
+        case TOKEN_LET:
+            unreachable("");
+        case TOKEN_IN:
+            unreachable("");
+        case TOKEN_BREAK:
+            unreachable("");
+        case TOKEN_YIELD:
+            unreachable("");
+        case TOKEN_CONTINUE:
+            unreachable("");
+        case TOKEN_RAW_UNION:
+            unreachable("");
+        case TOKEN_TYPE_DEF:
+            unreachable("");
+        case TOKEN_GENERIC_TYPE:
+            unreachable("");
+        case TOKEN_IMPORT:
+            unreachable("");
+        case TOKEN_DEF:
+            unreachable("");
+        case TOKEN_SIZEOF:
+            unreachable("");
+        case TOKEN_COUNTOF:
+            unreachable("");
+        case TOKEN_USING:
+            unreachable("");
+        case TOKEN_COMMENT:
+            unreachable("");
+        case TOKEN_COUNT:
+            unreachable("");
         default:
             msg_todo("", pos);
     }
 
     return new_lit;
 }
-
-// TODO: remove this pragma when removing pragma above above function
-#pragma GCC diagnostic warning "-Wswitch-enum"
 
 Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
     Uast_literal* lit = uast_float_wrap(uast_float_new(pos, value));
