@@ -110,9 +110,18 @@ static void uast_gen_print_overloading(Uast_type_vec types) {
 
     Strv uast_str = vec_at(types, 0).name.type;
 
-    string_extend_f(&a_gen, &function, "#define "FMT"_print(uast) strv_print("FMT"_print_overload(uast, 0))\n", strv_print(uast_str), strv_print(uast_str));
+    Strv uast_mode = strv_is_equal(uast_str, sv("uast")) ? sv("uast_type, ") : sv("");
+    string_extend_f(
+        &a_gen,
+        &function,
+        "#define "FMT"_print("FMT"uast) strv_print("FMT"_print_overload("FMT"uast, 0))\n",
+        strv_print(uast_str),
+        strv_print(uast_mode),
+        strv_print(uast_str),
+        strv_print(uast_mode)
+    );
 
-    string_extend_f(&a_gen, &function, "#define "FMT"_print_overload(uast, indent) _Generic ((uast), \\\n", strv_print(uast_str));
+    string_extend_f(&a_gen, &function, "#define "FMT"_print_overload("FMT"uast, indent) _Generic ((uast), \\\n", strv_print(uast_str), strv_print(uast_mode));
 
     vec_foreach(idx, Uast_type, type, types) {
         string_extend_cstr(&a_gen, &function, "    ");
@@ -128,7 +137,7 @@ static void uast_gen_print_overloading(Uast_type_vec types) {
         string_extend_f(&a_gen, &function, "_print_internal%s \\\n", idx + 1 < types.info.count ? "," : "");
     }
 
-    string_extend_cstr(&a_gen, &function, ") (uast, indent)\n");
+    string_extend_f(&a_gen, &function, ") ("FMT"uast, indent)\n", strv_print(uast_mode));
 
     gen_gen(FMT"\n", string_print(function));
 }
@@ -149,7 +158,7 @@ static void uast_gen_print_forward_decl_internal(const char* file, int line, Uas
     } else {
         string_extend_cstr(&a_gen, &function, "Strv ");
         extend_uast_name_lower(&function, type.name);
-        string_extend_cstr(&a_gen, &function, "_print_internal(const ");
+        string_extend_f(&a_gen, &function, "_print_internal(%sconst ", strv_is_equal(type.name.type, sv("uast")) ? "UAST_MODE mode, " : "");
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&a_gen, &function, "* uast, Indent indent);");
     }
@@ -512,7 +521,7 @@ static void gen_thing(Uast_type uast) {
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
         gen_gen("        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
-        gen_gen("            string_extend_strv(&a_temp, buf, uast_def_print_internal(sym_tast->tast, indent));\n");
+        gen_gen("            string_extend_strv(&a_temp, buf, uast_def_print_internal(UAST_LOG, sym_tast->tast, indent));\n");
         gen_gen("        }\n");
         gen_gen("    }\n");
         gen_gen("}\n");
