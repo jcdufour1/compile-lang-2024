@@ -2,6 +2,7 @@
 #include <symbol_iter.h>
 #include <uast.h>
 #include <uast_utils.h>
+#include <misc_print_functions.h>
 
 typedef struct {
     Vec_base info;

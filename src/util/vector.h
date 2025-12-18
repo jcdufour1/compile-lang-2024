@@ -103,4 +103,16 @@ typedef struct {
         *vec_at_ref(vector, idx_rhs) = temp; \
     } while(0)
 
+#define vec_dump(log_level, vector, item_print_fn) \
+    { \
+        log(log_level, "["); \
+        for (size_t idx = 0; idx < (vector).info.count; idx++) { \
+            if (idx > 0) { \
+                log_internal_ex(stderr, log_level, false, "", 0, 0, ", "); \
+            } \
+            log_internal_ex(stderr, log_level, false, "", 0, 0, FMT, item_print_fn(vec_at(vector, idx))); \
+        } \
+        log_internal_ex(stderr, log_level, false, "", 0, 0, "]\n"); \
+    }
+
 #endif // VECTOR_H

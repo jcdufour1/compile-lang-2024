@@ -37,7 +37,15 @@ static inline const char* get_log_level_str(LOG_LEVEL log_level) {
     abort();
 }
 
-static inline void log_internal_ex(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
+static inline void log_internal_ex(
+    FILE* dest,
+    LOG_LEVEL log_level,
+    bool print_location,
+    const char* file,
+    int line,
+    Indent indent,
+    const char* format, ...
+) {
     va_list args;
     va_start(args, format);
 
@@ -45,7 +53,9 @@ static inline void log_internal_ex(FILE* dest, LOG_LEVEL log_level, const char* 
         for (Indent idx = 0; idx < indent; idx++) {
             fprintf(dest, " ");
         }
-        fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        if (print_location) {
+            fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        }
         if (vfprintf(dest, format, args) < 0) {
             // TODO: consider if abort should be done here
             fprintf(stderr, "unreachable: vfprintf failed. destination file stream may have been opened for reading instead of writing\n");
