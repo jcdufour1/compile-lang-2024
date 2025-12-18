@@ -56,7 +56,7 @@ else
 endif
 
 ifeq ($(WERROR_ALL), 1)
-	C_FLAGS += -Werror
+	C_FLAGS += -Werror -D OWN_WERROR
 endif
 
 OBJS=\

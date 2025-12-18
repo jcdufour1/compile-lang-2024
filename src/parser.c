@@ -3446,7 +3446,7 @@ static PARSE_EXPR_STATUS parse_right_unary(
     unreachable("");
 }
 
-#pragma GCC diagnostic ignored "-Wswitch-enum"
+WSWITCH_ENUM_IGNORE_START
 
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
@@ -3581,7 +3581,7 @@ static PARSE_EXPR_STATUS parse_unary(
     return PARSE_EXPR_OK;
 }
 
-#pragma GCC diagnostic warning "-Wswitch-enum"
+WSWITCH_ENUM_IGNORE_END
 
 static PARSE_STATUS parse_expr_index(
     Uast_expr** result,

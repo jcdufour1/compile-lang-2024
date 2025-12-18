@@ -4553,7 +4553,7 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     return exhaustive_data;
 }
 
-#pragma GCC diagnostic ignored "-Wswitch-enum"
+WSWITCH_ENUM_IGNORE_START
 
 static bool check_for_exhaustiveness_inner(
     Exhaustive_data* exhaustive_data,
@@ -4605,7 +4605,7 @@ static bool check_for_exhaustiveness_inner(
     unreachable("");
 }
 
-#pragma GCC diagnostic warning "-Wswitch-enum"
+WSWITCH_ENUM_IGNORE_END
 
 // TODO: fix indentation in this function
 static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos pos_switch) {
