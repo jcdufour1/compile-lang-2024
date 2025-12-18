@@ -112,7 +112,6 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
-- remove PrintFormatArg and PrintFormat from std/runtime.own?
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable

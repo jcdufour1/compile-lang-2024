@@ -89,8 +89,6 @@ fn print_int(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line 
 }
 
 type Print_buf_fn def = fn(BufT, u8)void
-type PrintFormatArg def = rt.PrintFormatArg
-type PrintFormat def = rt.PrintFormat
 
 fn print_i32(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
     let actual_item i32 = *unsafe_cast<i32*>item
@@ -145,5 +143,15 @@ fn print_internal(<BufT>)(format PrintFormat(<BufT>), print_buf_fn fn(BufT, u8)v
     }
 
     assert(arg_idx == format.args.count)
+}
+
+type PrintFormatArg struct(<BufT>) {
+    item opaque*
+    print_item_fn fn(BufT, fn(BufT, u8)void, opaque*)void
+}
+
+type PrintFormat struct(<BufT>) {
+    format Str
+    args PrintFormatArg(<BufT>)[]
 }
 

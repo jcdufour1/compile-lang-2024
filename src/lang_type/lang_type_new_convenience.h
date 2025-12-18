@@ -46,38 +46,6 @@ static inline Lang_type lang_type_new_slice(Pos pos, Ulang_type item_type, int16
     ));
 }
 
-static inline Lang_type lang_type_new_print_format(Pos pos, Ulang_type gen_arg) {
-    Ulang_type_vec gen_args = {0};
-    vec_append(&a_main, &gen_args, gen_arg);
-    return lang_type_struct_const_wrap(lang_type_struct_new(
-        pos,
-        name_new(
-            MOD_PATH_RUNTIME,
-            sv("PrintFormat"),
-            gen_args,
-            SCOPE_TOP_LEVEL,
-            (Attrs) {0}
-        ),
-        0
-    ));
-}
-
-static inline Lang_type lang_type_new_print_format_arg(Pos pos, Ulang_type gen_arg) {
-    Ulang_type_vec gen_args = {0};
-    vec_append(&a_main, &gen_args, gen_arg);
-    return lang_type_struct_const_wrap(lang_type_struct_new(
-        pos,
-        name_new(
-            MOD_PATH_RUNTIME,
-            sv("PrintFormatArg"),
-            gen_args,
-            SCOPE_TOP_LEVEL,
-            (Attrs) {0}
-        ),
-        0
-    ));
-}
-
 static inline Lang_type lang_type_new_optional(Pos pos, Ulang_type inner_type) {
     Ulang_type_vec gen_args = {0};
     vec_append(&a_main, &gen_args, inner_type);
