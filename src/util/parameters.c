@@ -359,7 +359,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "invalid-stmt-top-level", .type = DIAG_INVALID_STMT_TOP_LEVEL, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "invalid-function-callee", .type = DIAG_INVALID_FUNCTION_CALLEE, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "optional-args-for-variadic-args", .type = DIAG_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, .default_level = LOG_ERROR, .must_be_error = true},
-    {.str = "fail-invalid-fail-type", .type = DIAG_INVALID_FAIL_TYPE, .default_level = LOG_ERROR, .must_be_error = false},
+    {.str = "invalid-fail-type", .type = DIAG_INVALID_FAIL_TYPE, .default_level = LOG_ERROR, .must_be_error = false},
     {.str = "no-main-function", .type = DIAG_NO_MAIN_FUNCTION, .default_level = LOG_WARNING, .must_be_error = false},
     {.str = "struct-like-recursion", .type = DIAG_STRUCT_LIKE_RECURSION, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "child-process-failure", .type = DIAG_CHILD_PROCESS_FAILURE, .default_level = LOG_FATAL, .must_be_error = true},

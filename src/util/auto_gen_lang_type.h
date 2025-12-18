@@ -193,7 +193,6 @@ static Uast_type lang_type_gen_void(const char* prefix) {
     const char* base_name = "void";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    // TODO: assert that pointer_depth of void is zero somewhere (or remove pointer_depth member here)
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;

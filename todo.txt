@@ -126,6 +126,7 @@ for generics:
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 - name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
+- invalid member printing: add did you know for member with similar name in same struct like
 
 
 # roadmap to try to get bootstrap compiler done:
