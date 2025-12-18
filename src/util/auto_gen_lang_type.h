@@ -216,10 +216,10 @@ static Uast_type lang_type_gen_lang_type(void) {
     return lang_type;
 }
 
-static void gen_lang_type(const char* file_path, bool implementation) {
+static void gen_lang_type(const char* file_path) {
     Uast_type lang_type = lang_type_gen_lang_type();
     unwrap(lang_type.name.type.count > 0);
-    gen_ulang_type_common(file_path, implementation, lang_type);
+    gen_ulang_type_common(file_path, lang_type);
 }
 
 #endif // AUTO_GEN_LANG_TYPE_H
