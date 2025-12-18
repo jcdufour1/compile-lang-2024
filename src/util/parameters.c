@@ -604,7 +604,7 @@ static void long_option_dump_dot(Pos pos_self, Arg curr_opt) {
     //params.dump_dot = true;
 }
 
-static void long_option_run(Pos pos_self, int* argc, char *** argv) {
+static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
     static_assert(
         PARAMETERS_COUNT == 32,
         "exhausive handling of params for if statement below "
@@ -624,6 +624,9 @@ static void long_option_run(Pos pos_self, int* argc, char *** argv) {
     }
     params.stop_after = STOP_AFTER_RUN;
 
+    if (first_arg.count > 0) {
+        vec_append(&a_leak, &params.run_args, first_arg);
+    }
     while (*argc > 0) {
         vec_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")).text);
     }
@@ -879,7 +882,7 @@ static void parse_long_option(int* argc, char*** argv) {
                 }
                 case ARG_REMAINING_RUN_ONLY:
                     assert(0 == strcmp(curr.text, "run") && "ARG_REMAINING_RUN_ONLY must only be used for run");
-                    long_option_run(pos_self, argc, argv);
+                    long_option_run(pos_self, curr_arg.text, argc, argv);
                     assert(*argc == 0 && "not all args were consumed in long_option_run");
                     return;
                 case ARG_COUNT:
