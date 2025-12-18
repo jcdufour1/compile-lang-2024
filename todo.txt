@@ -105,14 +105,12 @@ for generics:
 - do_test.py should have confirmation before update
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
-- consider case of --runafds, etc.
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
 - in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
-- remove PrintFormatArg and PrintFormat from std/runtime.own?
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
 - make attribute to disable initialization check for a specific variable
@@ -177,7 +175,7 @@ continue(<thing>)
 - use libclang for help with c abi (so that i can actually use llvm?)
 - use libclang to get size of c types (and use size of c types stored locally in project as fallback)
 - use c89 for the c backend instead of c99 for better compatibility
-- stop using todo macro in main branch
+- stop using todo macro in main branch?
 
 
 
