@@ -141,7 +141,7 @@ static inline bool lang_type_lit_is_equal(Lang_type_lit a, Lang_type_lit b) {
         case LANG_TYPE_STRING_LIT:
             return strv_is_equal(lang_type_string_lit_const_unwrap(a).data, lang_type_string_lit_const_unwrap(b).data);
         case LANG_TYPE_STRUCT_LIT:
-            return uast_expr_is_equal(lang_type_struct_lit_const_unwrap(a).lit, lang_type_struct_lit_const_unwrap(b).lit);
+            return uast_expr_is_equal(lang_type_struct_lit_const_unwrap(a).data, lang_type_struct_lit_const_unwrap(b).data);
         case LANG_TYPE_FN_LIT:
             return name_is_equal(lang_type_fn_lit_const_unwrap(a).name, lang_type_fn_lit_const_unwrap(b).name);
         case LANG_TYPE_FLOAT_LIT:

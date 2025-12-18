@@ -20,19 +20,6 @@ Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id 
 }
 
 // this function will convert `io.i32` to `i32`, etc.
-// TODO: remove this function?
-static Uname uname_normalize_old(Uname name) {
-    // TODO: this function could cause collisions
-    //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
-    Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
-    if (usymbol_lookup(&dummy, possible_new)) {
-        return name_to_uname(possible_new);
-    }
-    return name;
-}
-
-// this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
     if (lang_type_name_base_is_number(name.base)) {
         name.mod_alias = MOD_ALIAS_BUILTIN;
@@ -236,33 +223,6 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
 Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
     return serialize_name_symbol_table(arena, *(Name*)&name);
-}
-
-Strv serialize_double(double num) {
-    String buf = {0};
-
-    String temp = {0};
-    string_extend_double(&a_temp, &temp, num);
-    size_t idx_decimal = 0;
-    bool did_find_dec = false;
-    vec_foreach(idx, char, curr, temp) {
-        idx_decimal = idx;
-        if (curr == '.') {
-            did_find_dec = true;
-            break;
-        }
-    }
-    unwrap(did_find_dec);
-
-    string_extend_f(
-        &a_main,
-        &buf,
-        FMT"_"FMT,
-        strv_print(string_slice(temp, 0, idx_decimal)),
-        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
-    );
-
-    return string_to_strv(buf);
 }
 
 Strv serialize_name(Name name) {

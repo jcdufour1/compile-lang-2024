@@ -130,6 +130,8 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
 
     Scope_id curr_scope = sym_name.scope_id;
     while (1) {
+        // TODO: consider if levenshtein_distance calculations should be cached 
+        //   in case multiple did you mean errors are printed
         Usymbol_iter iter = usym_tbl_iter_new(curr_scope);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {

@@ -3,7 +3,6 @@
 
 #include <str_and_num_utils.h>
 #include <parameters.h>
-#include <lang_type_mode.h>
 #include <lang_type_hand_written.h>
 #include <lang_type.h>
 

@@ -4,7 +4,6 @@
 #include <env.h>
 #include <local_string.h>
 #include <strv.h>
-#include <lang_type_mode.h>
 #include <ir_lang_type.h>
 
 #define ir_lang_type_print(mode, ir_lang_type) strv_print(ir_lang_type_print_internal((mode), (ir_lang_type)))

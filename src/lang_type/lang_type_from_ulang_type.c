@@ -163,7 +163,6 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
 Ulang_type lang_type_lit_to_ulang_type(Lang_type_lit lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_INT_LIT: {
-            // TODO: rename LANG_TYPE_INT_LIT to LANG_TYPE_INT_LIT_LIT
             Lang_type_int_lit lit = lang_type_int_lit_const_unwrap(lang_type);
             return ulang_type_lit_const_wrap(ulang_type_int_lit_const_wrap(ulang_type_int_lit_new(
                 lit.pos,
@@ -191,7 +190,7 @@ Ulang_type lang_type_lit_to_ulang_type(Lang_type_lit lang_type) {
             Lang_type_struct_lit lit = lang_type_struct_lit_const_unwrap(lang_type);
             return ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
                 lit.pos,
-                lit.lit, // TODO: change Lang_type_struct_lit.lit to Lang_type_struct_lit.data
+                lit.data,
                 lit.pointer_depth
             )));
         }

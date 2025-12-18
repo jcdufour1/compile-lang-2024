@@ -75,4 +75,6 @@ Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Str
 
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
 
+Strv serialize_double(double num);
+
 #endif // STR_AND_NUM_UTILS_H

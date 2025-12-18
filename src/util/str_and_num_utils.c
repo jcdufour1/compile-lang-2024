@@ -424,3 +424,31 @@ Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Str
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
     return name_to_ir_name(util_literal_name_new_prefix_scope_internal(file, line, debug_prefix, scope_id));
 }
+
+Strv serialize_double(double num) {
+    String buf = {0};
+
+    String temp = {0};
+    string_extend_double(&a_temp, &temp, num);
+    size_t idx_decimal = 0;
+    bool did_find_dec = false;
+    vec_foreach(idx, char, curr, temp) {
+        idx_decimal = idx;
+        if (curr == '.') {
+            did_find_dec = true;
+            break;
+        }
+    }
+    unwrap(did_find_dec);
+
+    string_extend_f(
+        &a_main,
+        &buf,
+        FMT"_"FMT,
+        strv_print(string_slice(temp, 0, idx_decimal)),
+        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
+    );
+
+    return string_to_strv(buf);
+}
+
