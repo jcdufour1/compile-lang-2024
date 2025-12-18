@@ -481,7 +481,7 @@ Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_id
 
     Uast_def* enum_def_ = NULL;
     Name name = {0};
-    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, enum_def_lang_type)) {
+    if (!lang_type_get_name(&name, enum_def_lang_type)) {
         // TODO
         return sv("<none>");
     }

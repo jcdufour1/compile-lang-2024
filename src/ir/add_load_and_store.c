@@ -696,7 +696,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
             Name name = {0};
-            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(lang_type_get_name(&name, lang_type));
             unwrap(symbol_lookup(&lang_type_def_, name));
 
             sym_tbl_add(lang_type_def_);
@@ -717,7 +717,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             return ir_lang_type_primitive_const_wrap(rm_tuple_lang_type_primitive(lang_type_primitive_const_unwrap(lang_type), lang_type_pos));
         case LANG_TYPE_STRUCT: {
             Name name = {0};
-            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(lang_type_get_name(&name, lang_type));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
                 name_to_ir_name(name),
@@ -1123,7 +1123,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
 
     Tast_def* struct_def_ = NULL;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type));
+    unwrap(lang_type_get_name(&name, old_lit->lang_type));
     Ir_name name_2 = {0};
     unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));

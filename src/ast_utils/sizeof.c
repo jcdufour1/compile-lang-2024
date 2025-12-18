@@ -61,7 +61,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 return 0;
             }
@@ -71,7 +71,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
                 return 0;
             }
@@ -106,7 +106,7 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
                 return 0;
             }
@@ -116,7 +116,7 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
                 return 0;
             }
@@ -213,7 +213,7 @@ uint64_t alignof_def(const Tast_def* def) {
 uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
     Tast_def* def_ = NULL;
     Name name = {0};
-    if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lit->lang_type)) {
+    if (!lang_type_get_name(&name, lit->lang_type)) {
         msg_todo("", lit->pos);
         return 0;
     }

@@ -33,9 +33,7 @@ Name lang_type_primitive_get_name(const Lang_type_primitive lang_type) {
     return new_name;
 }
 
-bool lang_type_literal_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type_lit lang_type) {
-    (void) mode;
-
+bool lang_type_literal_get_name(Name* result, Lang_type_lit lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_INT_LIT:
             return false;
@@ -54,9 +52,7 @@ bool lang_type_literal_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type_lit
     unreachable("");
 }
 
-bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) {
-    (void) mode;
-
+bool lang_type_get_name(Name* result, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             *result = lang_type_primitive_get_name(lang_type_primitive_const_unwrap(lang_type));
@@ -80,7 +76,7 @@ bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type) 
         case LANG_TYPE_ARRAY:
             return false;
         case LANG_TYPE_LIT:
-            return lang_type_literal_get_name(result, mode, lang_type_lit_const_unwrap(lang_type));
+            return lang_type_literal_get_name(result, lang_type_lit_const_unwrap(lang_type));
         case LANG_TYPE_REMOVED:
             return false;
     }

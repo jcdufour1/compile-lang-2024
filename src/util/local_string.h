@@ -164,13 +164,13 @@ static inline Strv string_slice(String string, size_t start, size_t count) {
 }
 
 // TODO: move these functions to newstring.h?
-static void strv_extend_upper(Arena* arena, String* string, Strv strv) {
+static void string_extend_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         vec_append(arena, string, toupper(strv_at(strv, idx)));
     }
 }
 
-static inline void strv_extend_first_upper(Arena* arena, String* string, Strv strv) {
+static inline void string_extend_first_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         if (idx == 0) {
             vec_append(arena, string, toupper(strv_at(strv, idx)));
@@ -180,28 +180,28 @@ static inline void strv_extend_first_upper(Arena* arena, String* string, Strv st
     }
 }
 
-// TODO: rename these 4 functions?
-static inline void strv_extend_lower(Arena* arena, String* string, Strv strv) {
+static inline void string_extend_lower(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         vec_append(arena, string, tolower(strv_at(strv, idx)));
     }
 }
 
+// TODO: rename these 3 below functions?
 static inline Strv strv_lower_print_internal(Arena* arena, Strv strv) {
     String buf = {0};
-    strv_extend_lower(arena, &buf, strv);
+    string_extend_lower(arena, &buf, strv);
     return string_to_strv(buf);
 }
 
 static inline Strv strv_upper_print_internal(Arena* arena, Strv strv) {
     String buf = {0};
-    strv_extend_upper(arena, &buf, strv);
+    string_extend_upper(arena, &buf, strv);
     return string_to_strv(buf);
 }
 
 static inline Strv strv_first_upper_print_internal(Arena* arena, Strv strv) {
     String buf = {0};
-    strv_extend_first_upper(arena, &buf, strv);
+    string_extend_first_upper(arena, &buf, strv);
     return string_to_strv(buf);
 }
 

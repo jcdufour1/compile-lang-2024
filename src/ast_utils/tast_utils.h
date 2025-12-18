@@ -439,7 +439,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF: {
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type)) {
+            if (!lang_type_get_name(&name, tast_primitive_def_const_unwrap(def)->lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
                 return util_literal_name_new_poison();
             }

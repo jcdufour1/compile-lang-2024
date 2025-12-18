@@ -151,10 +151,10 @@ static Uast_type_vec uast_get_type_vec(Uast_type uast) {
 static void extend_uast_name_upper(String* output, Uast_name name) {
     unwrap(name.parent.count > 0);
 
-    strv_extend_upper(&a_gen, output, name.type);
+    string_extend_upper(&a_gen, output, name.type);
     if (name.base.count > 0) {
         string_extend_cstr(&a_gen, output, "_");
-        strv_extend_upper(&a_gen, output, name.base);
+        string_extend_upper(&a_gen, output, name.base);
     }
 }
 
@@ -170,10 +170,10 @@ static Strv uast_upper_print_internal(Uast_name name) {
 static void extend_uast_name_lower(String* output, Uast_name name) {
     unwrap(name.parent.count > 0);
 
-    strv_extend_lower(&a_gen, output, name.type);
+    string_extend_lower(&a_gen, output, name.type);
     if (name.base.count > 0) {
         string_extend_cstr(&a_gen, output, "_");
-        strv_extend_lower(&a_gen, output, name.base);
+        string_extend_lower(&a_gen, output, name.base);
     }
 }
 
@@ -192,7 +192,7 @@ static void extend_uast_name_first_upper(String* output, Uast_name name) {
     extend_strv_first_upper(output, name.type);
     if (name.base.count > 0) {
         string_extend_cstr(&a_gen, output, "_");
-        strv_extend_lower(&a_gen, output, name.base);
+        string_extend_lower(&a_gen, output, name.base);
     }
 }
 
@@ -216,7 +216,7 @@ static void extend_parent_uast_name_upper(String* output, Uast_name name) {
     }
     if (name.base.count > 0) {
         string_extend_cstr(&a_gen, output, "_");
-        strv_extend_upper(&a_gen, output, name.base);
+        string_extend_upper(&a_gen, output, name.base);
     }
 }
 
@@ -224,15 +224,15 @@ static void extend_parent_uast_name_lower(String* output, Uast_name name) {
     unwrap(name.parent.count > 0);
 
     if (strv_is_equal(name.parent, name.type)) {
-        strv_extend_lower(&a_gen, output, name.type);
+        string_extend_lower(&a_gen, output, name.type);
         return;
     }
 
     unwrap(name.base.count > 0);
 
-    strv_extend_lower(&a_gen, output, name.type);
+    string_extend_lower(&a_gen, output, name.type);
     string_extend_cstr(&a_gen, output, "_");
-    strv_extend_lower(&a_gen, output, name.parent);
+    string_extend_lower(&a_gen, output, name.parent);
 }
 
 static void extend_parent_uast_name_first_upper(String* output, Uast_name name) {
@@ -247,7 +247,7 @@ static void extend_parent_uast_name_first_upper(String* output, Uast_name name) 
 
     extend_strv_first_upper(output, name.type);
     string_extend_cstr(&a_gen, output, "_");
-    strv_extend_lower(&a_gen, output, name.parent);
+    string_extend_lower(&a_gen, output, name.parent);
 }
 
 static void uast_gen_uast_forward_decl(Uast_type uast) {

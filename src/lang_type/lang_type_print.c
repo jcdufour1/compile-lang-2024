@@ -203,7 +203,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             // TODO: uncomment below assert?
             //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
             Name name = {0};
-            if (!lang_type_get_name(&name, mode, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 break;
             }
@@ -215,7 +215,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_VOID: {
             Name name = {0};
-            if (!lang_type_get_name(&name, mode, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 break;
             }
@@ -225,7 +225,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_PRIMITIVE: {
             Name name = {0};
-            if (!lang_type_get_name(&name, mode, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 break;
             }

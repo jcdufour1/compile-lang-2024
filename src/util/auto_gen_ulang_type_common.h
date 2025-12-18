@@ -20,7 +20,7 @@ static void ulang_type_gen_internal_unwrap(Uast_type type, bool is_const) {
         string_extend_cstr(&a_gen, &function, "*");
     }
     string_extend_f(&a_gen, &function, " "FMT"_", strv_lower_print(&a_gen, type.name.type));
-    strv_extend_lower(&a_gen, &function, type.name.base);
+    string_extend_lower(&a_gen, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&a_gen, &function, "_const");
     }
@@ -81,7 +81,7 @@ static void ulang_type_gen_internal_wrap(Uast_type type, bool is_const) {
         string_extend_cstr(&a_gen, &function, "* ");
     }
     string_extend_f(&a_gen, &function, " "FMT"_", strv_lower_print(&a_gen, type.name.type));
-    strv_extend_lower(&a_gen, &function, type.name.base);
+    string_extend_lower(&a_gen, &function, type.name.base);
     if (is_const) {
         string_extend_cstr(&a_gen, &function, "_const");
     }
@@ -171,9 +171,9 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
             Member curr = vec_at(type.members, idx);
 
             string_extend_cstr(&a_gen, &function, " .");
-            strv_extend_lower(&a_gen, &function, curr.name);
+            string_extend_lower(&a_gen, &function, curr.name);
             string_extend_cstr(&a_gen, &function, " = ");
-            strv_extend_lower(&a_gen, &function, curr.name);
+            string_extend_lower(&a_gen, &function, curr.name);
         }
 
         string_extend_cstr(&a_gen, &function, "};\n");
@@ -276,7 +276,7 @@ static void gen_ulang_type_get_pos(Uast_type type, bool implementation, bool is_
     }
 
     string_extend_f(&a_gen, &function, "    "FMT"_", strv_lower_print(&a_gen, type.name.type));
-    strv_extend_lower(&a_gen, &function, type.name.base);
+    string_extend_lower(&a_gen, &function, type.name.base);
     if (is_ref) {
         string_extend_f(&a_gen, &function, "%sget_pos_ref(", type.name.is_topmost ? "" : "_");
     } else {
@@ -305,13 +305,13 @@ static void gen_ulang_type_get_pos(Uast_type type, bool implementation, bool is_
 
 
                 string_extend_f(&a_gen, &function, "            return "FMT"_", strv_lower_print(&a_gen, type.name.type));
-                strv_extend_lower(&a_gen, &function, curr.name.base);
+                string_extend_lower(&a_gen, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_f(&a_gen, &function, "_get_pos_ref("FMT"_", strv_lower_print(&a_gen, type.name.type));
                 } else {
                     string_extend_f(&a_gen, &function, "_get_pos("FMT"_", strv_lower_print(&a_gen, type.name.type));
                 }
-                strv_extend_lower(&a_gen, &function, curr.name.base);
+                string_extend_lower(&a_gen, &function, curr.name.base);
                 if (is_ref) {
                     string_extend_cstr(&a_gen, &function, "_unwrap(ulang_type));\n");
                 } else {
@@ -334,7 +334,6 @@ static void gen_ulang_type_get_pos(Uast_type type, bool implementation, bool is_
     gen_gen(FMT"\n", strv_print(string_to_strv(function)));
 }
 
-// TODO: remove implementation paramter, or actually call gen_ulang_type_common with implementation == to both true and false
 static void gen_ulang_type_common(const char* file_path, Uast_type ulang_type) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
