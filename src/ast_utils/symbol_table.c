@@ -109,17 +109,16 @@ static Strv sym_tbl_status_print_internal(SYM_TBL_STATUS status) {
 
 // return false if symbol is not found
 bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Strv query) {
-    // TODO: replace (Generic_symbol_table*)sym_table) below with sym_tbl?
-    //const Generic_symbol_table* sym_tbl = sym_table;
+    const Generic_symbol_table* sym_tbl = sym_table;
 
-    if (((Generic_symbol_table*)sym_table)->capacity < 1) {
+    if (sym_tbl->capacity < 1) {
         return false;
     }
-    size_t curr_table_idx = sym_tbl_calculate_idx(query, ((Generic_symbol_table*)sym_table)->capacity);
+    size_t curr_table_idx = sym_tbl_calculate_idx(query, sym_tbl->capacity);
     size_t init_table_idx = curr_table_idx; 
 
     while (1) {
-        Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[curr_table_idx];
+        Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(sym_tbl->table_tasts))[curr_table_idx];
 
         if (curr_tast->status == SYM_TBL_OCCUPIED) {
             if (strv_is_equal(curr_tast->key, query)) {
@@ -132,7 +131,7 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
             return false;
         }
 
-        curr_table_idx = (curr_table_idx + 1) % ((Generic_symbol_table*)sym_table)->capacity;
+        curr_table_idx = (curr_table_idx + 1) % sym_tbl->capacity;
         if (curr_table_idx == init_table_idx) {
             return false;
         }

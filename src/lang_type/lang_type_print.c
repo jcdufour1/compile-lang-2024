@@ -150,11 +150,6 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             unreachable("");
     }
 
-    if (lang_type.type == LANG_TYPE_PRIMITIVE) {
-        // TODO: uncomment this?
-        //unwrap(!strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, sv("void")));
-    }
-
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
@@ -179,7 +174,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             if (fn.pointer_depth > 1) {
                 vec_append(&a_temp, string, ')');
             }
-            for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
+            for (int16_t idx = 1; idx < fn.pointer_depth; idx++) {
                 vec_append(&a_temp, string, '*');
             }
             break;
@@ -200,9 +195,8 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_RAW_UNION:
             fallthrough;
         case LANG_TYPE_STRUCT: {
-            // TODO: uncomment below assert?
-            //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
             Name name = {0};
+            assert(!strv_is_equal(name.base, sv("void")));
             if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 break;

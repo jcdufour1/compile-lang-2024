@@ -37,7 +37,6 @@ static Ir* rm_void_def(Ir_def* def) {
         case IR_VARIABLE_DEF:
             return rm_void_variable_def(ir_variable_def_unwrap(def));
         case IR_STRUCT_DEF:
-            // TODO
             return ir_def_wrap(def);
         case IR_PRIMITIVE_DEF:
             todo();
@@ -54,12 +53,10 @@ static Ir* rm_void_def(Ir_def* def) {
 static Ir* rm_void_expr(Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
-            // TODO
             return ir_expr_wrap(expr);
         case IR_LITERAL:
             return ir_expr_wrap(expr);
         case IR_FUNCTION_CALL:
-            // TODO
             return ir_expr_wrap(expr);
     }
     unreachable("");

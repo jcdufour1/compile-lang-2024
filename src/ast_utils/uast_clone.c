@@ -270,8 +270,8 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
         case UAST_VARIABLE_DEF: {
             // TODO: simplify
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def), use_new_scope, new_scope);
-            unwrap(uast_variable_def_const_unwrap(def) != new_def);
-            unwrap(def != uast_variable_def_wrap(new_def));
+            assert(uast_variable_def_const_unwrap(def) != new_def);
+            assert(def != uast_variable_def_wrap(new_def));
             return uast_variable_def_wrap(new_def);
         }
         case UAST_POISON_DEF:
