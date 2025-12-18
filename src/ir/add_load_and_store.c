@@ -1257,7 +1257,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     (void) old_lit;
     Tast_def* enum_def_ = NULL;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->enum_lang_type));
+    unwrap(lang_type_get_name(&name, old_lit->enum_lang_type));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     
@@ -1760,7 +1760,7 @@ static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_enum = load_ptr_expr(new_block, old_access->callee);
@@ -1803,7 +1803,7 @@ static Ir_name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_a
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
