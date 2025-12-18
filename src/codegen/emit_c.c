@@ -118,7 +118,6 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
     }
 }
 
-// TODO: remove IR_LANG_TYPE_TUPLE
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
     emit_c_loc(output, ir_get_loc(decl), decl->pos);
     switch (decl->return_type.type) {
@@ -131,7 +130,7 @@ static void emit_c_function_decl_internal(String* output, const Ir_function_decl
         case IR_LANG_TYPE_PRIMITIVE:
             break;
         case IR_LANG_TYPE_TUPLE:
-            todo();
+            unreachable("");
     }
     c_extend_type_call_str(output, decl->return_type, true, false);
     string_extend_cstr(&a_pass, output, " ");
