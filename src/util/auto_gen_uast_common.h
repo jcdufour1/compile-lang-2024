@@ -513,8 +513,7 @@ static void gen_uast_vecs(Uast_type uast) {
     gen_vec_from_strv(string_to_strv(vec_name), string_to_strv(item_name));
 }
 
-// TODO: rename this function
-static void gen_thing(Uast_type uast) {
+static void gen_symbol_table_log(Uast_type uast) {
     Strv sym_text = {0};
     if (strv_is_equal(uast.name.type, sv("uast"))) {
         gen_gen("static void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {\n");
@@ -692,7 +691,7 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
 
     if (implementation) {
         gen_uast_new_forward_decl(uast);
-        gen_thing(uast);
+        gen_symbol_table_log(uast);
     }
     uast_gen_new_macro(uast, implementation);
     uast_gen_print_forward_decl(uast);

@@ -813,13 +813,22 @@ void emit_c_from_tree(void) {
             vec_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
 #       endif // NDEBUG
 
-        static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
+        static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types");
         switch (params.opt_level) {
             case OPT_LEVEL_O0:
                 vec_append(&a_pass, &cmd, sv("-O0"));
                 break;
+            case OPT_LEVEL_OG:
+                vec_append(&a_pass, &cmd, sv("-Og"));
+                break;
+            case OPT_LEVEL_O1:
+                vec_append(&a_pass, &cmd, sv("-O1"));
+                break;
             case OPT_LEVEL_O2:
                 vec_append(&a_pass, &cmd, sv("-O2"));
+                break;
+            case OPT_LEVEL_OS:
+                vec_append(&a_pass, &cmd, sv("-Os"));
                 break;
             case OPT_LEVEL_COUNT:
                 unreachable("");

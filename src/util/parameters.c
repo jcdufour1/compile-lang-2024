@@ -644,10 +644,28 @@ static void long_option_upper_o0(Pos pos_self, Arg curr_opt) {
     params.opt_level = OPT_LEVEL_O0;
 }
 
+static void long_option_upper_og(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_OG;
+}
+
+static void long_option_upper_o1(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O1;
+}
+
 static void long_option_upper_o2(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O2;
+}
+
+static void long_option_upper_os(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_OS;
 }
 
 static void long_option_error(Pos pos_self, Arg curr_opt) {
@@ -785,6 +803,7 @@ static void long_option_dummy(Pos pos_self, Arg curr_opt) {
     (void) curr_opt;
 }
 
+static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types in params below");
 static_assert(
     PARAMETERS_COUNT == 32,
     "exhausive handling of params (not all parameters are explicitly handled)"
@@ -805,7 +824,10 @@ Long_option_pair long_options[] = {
     {.text = "dump-dot", .description = "stop compiling after IR file(s) have been generated, and dump .dot file(s)", .action = long_option_dump_dot, .arg_type = ARG_NONE},
     {.text = "o", .description = "output file path", .action = long_option_lower_o, .arg_type = ARG_SINGLE},
     {.text = "O0", .description = "disable most optimizations", .action = long_option_upper_o0, .arg_type = ARG_NONE},
+    {.text = "Og", .description = "enable only optimizations that do not affect debugging", .action = long_option_upper_og, .arg_type = ARG_NONE},
+    {.text = "O1", .description = "enable slight optimizations", .action = long_option_upper_o1, .arg_type = ARG_NONE},
     {.text = "O2", .description = "enable optimizations", .action = long_option_upper_o2, .arg_type = ARG_NONE},
+    {.text = "Os", .description = "enable O2 optimizations, except those that increase binary sizes", .action = long_option_upper_os, .arg_type = ARG_NONE},
     {.text = "error", .description = "TODO", .action = long_option_error, .arg_type = ARG_SINGLE},
     {
         .text = "print-immediately",
