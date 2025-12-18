@@ -897,7 +897,7 @@ static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def
 }
 
 static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param) {
-    if (params.backend_info.struct_rtn_through_param && llvm_is_struct_like(param->lang_type.type)) {
+    if (params.backend_info.struct_rtn_through_param && ir_is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;
         ir_add(ir_def_wrap(ir_variable_def_wrap(param)));
     } else {
@@ -1961,7 +1961,7 @@ static Ir_function_params* load_function_parameters(
 
         Ir* dummy = NULL;
 
-        bool is_struct = llvm_is_struct_like(param->lang_type.type);
+        bool is_struct = ir_is_struct_like(param->lang_type.type);
 
         if (!params.backend_info.struct_rtn_through_param || !is_struct) {
             unwrap(ir_add(ir_def_wrap(ir_variable_def_wrap(param))));
@@ -2098,7 +2098,7 @@ static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
     //unwrap(fun_decl->return_type->lang_type.info.count == 1);
     Ir_lang_type rtn_type = rm_tuple_lang_type(fun_decl->return_type, fun_decl->pos);
 
-    bool rtn_is_struct = llvm_is_struct_like(rtn_type.type);
+    bool rtn_is_struct = ir_is_struct_like(rtn_type.type);
 
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         Ir* dest_ = NULL;

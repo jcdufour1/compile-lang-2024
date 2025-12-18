@@ -171,7 +171,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         Ir_struct_memb_def* curr = vec_at(def->base.members, idx);
         string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
-        if (llvm_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
+        if (ir_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
             Ir_name ori_name = {0};
             unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, vec_at(def->base.members, idx)->lang_type));
             Ir_name* struct_to_use = NULL;
