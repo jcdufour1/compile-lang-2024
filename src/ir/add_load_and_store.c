@@ -872,7 +872,8 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) 
         rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
         old_var_def->is_variadic,
         util_literal_ir_name_new(),
-        name_to_ir_name(old_var_def->name)
+        name_to_ir_name(old_var_def->name),
+        old_var_def->attrs
     );
 }
 
@@ -1051,7 +1052,6 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
 
 // this function is needed for situations such as switching directly on enum
 static Ir_name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_call) {
-    todo(); // TODO: remove this function if not needed?
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
         old_call->lang_type,
