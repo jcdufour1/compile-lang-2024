@@ -452,3 +452,24 @@ Strv serialize_double(double num) {
     return string_to_strv(buf);
 }
 
+size_t strv_with_excapes_count_chars(Strv strv) {
+    size_t count = 0;
+    while (strv.count > 0) {
+        char curr = strv_consume(&strv);
+        if (curr == '\\') {
+            char next = strv_consume(&strv); // eg. n in \n, x in \x
+            if (next == 'x') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+            } else if (next == 'o') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+                strv_consume(&strv);
+            }
+        }
+
+        count++;
+    }
+
+    return count;
+}

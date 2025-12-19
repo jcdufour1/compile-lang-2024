@@ -49,6 +49,8 @@ size_t get_count_excape_seq(Strv strv);
 // \n excapes are actually stored as is in tokens and irs, but should be printed as \0a
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv);
 
+size_t strv_with_excapes_count_chars(Strv strv);
+
 static bool isdigit_no_underscore(char prev, char curr);
 
 bool try_strv_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Strv strv);

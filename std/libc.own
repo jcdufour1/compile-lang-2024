@@ -8,6 +8,7 @@ extern("c") fn fgetc(file opaque*) i32
 
 extern("c") fn isdigit(u8acter i32) i32
 extern("c") fn abort()
+extern("c") fn strlen(cstr u8*) u64
 extern("c") fn malloc(size u64) opaque*
 extern("c") fn realloc(ptr opaque*, size u64) opaque*
 extern("c") fn free(ptr opaque*)
@@ -21,7 +22,5 @@ extern("c") fn isspace(ch i32) i32
 
 extern("c") fn rand() i32
 extern("c") fn srand(seed i32)
-
-type strlen def = rt.strlen
 
 type EOF def = -1

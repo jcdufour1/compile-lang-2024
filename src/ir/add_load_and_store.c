@@ -1181,7 +1181,7 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
     vec_append(&a_main, &membs, tast_literal_wrap(tast_string_wrap(old_lit)));
     vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         old_lit->pos,
-        (int64_t)old_lit->data.count,
+        (int64_t)strv_with_excapes_count_chars(old_lit->data),
         lang_type_new_usize(old_lit->pos)
     ))));
 

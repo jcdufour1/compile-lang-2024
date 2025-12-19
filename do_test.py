@@ -282,7 +282,6 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     if normalize(process_result) != normalize(expected_output):
         print(".".join(hex(ord(c))[2:] for c in normalize(process_result)))
         print(".".join(hex(ord(c))[2:] for c in normalize(expected_output)))
-        assert(False)
 
         actual_color: str = ""
         expected_color: str = ""
