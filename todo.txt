@@ -130,6 +130,7 @@ for generics:
 - expected failure case for invalid string literal (eg. ending in unescaped backslash)
 - place auto_gen files in separate sub directory
 - store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
+- make attribute to suppress uninitialized error
 
 
 # roadmap to try to get bootstrap compiler done:
