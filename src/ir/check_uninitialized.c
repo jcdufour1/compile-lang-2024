@@ -125,6 +125,7 @@ static bool check_unit_is_struct(Ir_name name) {
 }
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
+    (void) loc;
     if (!print_errors_for_unit) {
         return;
     }
