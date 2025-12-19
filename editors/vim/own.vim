@@ -85,6 +85,8 @@ syn match ownCharLiteral display "\v'\\.'"
 syn match ownCharLiteral display "\v'\\x\x\x'"
 syn match ownCharLiteral display "\v'\\o\o\o\o'"
 
+syn match ownAttr display "@maybe_uninit"
+
 "
 " hi def links
 "
@@ -106,6 +108,7 @@ hi def link ownDelimiter      Delimiter
 hi def link ownOperator       Operator
 hi def link ownStructLike     Structure
 hi def link ownComment        Comment
+hi def link ownAttr           Special
 
 hi def link ownIntTypeError Error
 hi def link ownFloatTypeError Error
