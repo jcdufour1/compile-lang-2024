@@ -128,6 +128,7 @@ for generics:
 - name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
 - invalid member printing: add did you know for member with similar name in same struct like
 - expected failure case for invalid string literal (eg. ending in unescaped backslash)
+- store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -208,3 +209,4 @@ continue(<thing>)
 - function to set break point in source code (eg. `breakpoint`)
 - use own calling convention
     - types larger than 16 bytes should by passed by pointer?
+- array of structs and structs of array options

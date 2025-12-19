@@ -3,21 +3,21 @@ type libc import = std.libc
 type coll import = std.collections
 type util import = std.util
 
-extern("c") fn own_printf(format Str, args opaque...) i32
-extern("c") fn own_fprintf(file File, format Str, args opaque...) i32
-extern("c") fn own_stdout() opaque*
-extern("c") fn own_stderr() opaque*
-extern("c") fn own_stdin() opaque*
 extern("c") fn own_argv() Str[]
+
+type own_stdout def = rt.own_stdout
+type own_stderr def = rt.own_stderr
+type own_stdin def = rt.own_stdin
+
+type own_printf def = rt.own_printf
+type own_fprintf def = rt.own_fprintf
 
 type printf def = libc.printf
 type puts def = libc.puts
 type fopen def = libc.fopen
 type fputc def = libc.fputc
 
-type File struct {
-    file opaque*
-}
+type File def = rt.File
 
 fn stdout() File => return {own_stdout()}
 fn stderr() File => return {own_stderr()}

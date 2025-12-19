@@ -17,11 +17,11 @@ tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `put
      3 | using io
        | ^
      4 | 
-std/io.own:14:6:[1;34mnote[0;39m:in expansion of def
-    13 | type printf def = libc.printf
-    14 | type puts def = libc.puts
+std/io.own:16:6:[1;34mnote[0;39m:in expansion of def
+    15 | type printf def = libc.printf
+    16 | type puts def = libc.puts
        |      ^
-    15 | type fopen def = libc.fopen
+    17 | type fopen def = libc.fopen
 tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`puts` originally defined here
     11 | 
     12 | fn puts() i32 {

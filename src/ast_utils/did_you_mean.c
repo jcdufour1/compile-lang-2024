@@ -95,7 +95,40 @@ static Candidate candidate_new(Name name, uint32_t difference) {
     return (Candidate) {.name = name, .difference = difference};
 }
 
-int candidate_compare(const void* lhs_, const void* rhs_) {
+static int candidate_compare_gen_args(Ulang_type_vec lhs_gen_args, Ulang_type_vec rhs_gen_args);
+
+static int candidate_compare_gen_arg(Ulang_type lhs_gen_arg, Ulang_type rhs_gen_arg) {
+    if (lhs_gen_arg.type != rhs_gen_arg.type) {
+        return lhs_gen_arg.type > rhs_gen_arg.type ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+    }
+
+    if (lhs_gen_arg.type != ULANG_TYPE_REGULAR) {
+        return QSORT_EQUAL; // TODO
+    }
+    Ulang_type_regular lhs_reg = ulang_type_regular_const_unwrap(lhs_gen_arg);
+    Ulang_type_regular rhs_reg = ulang_type_regular_const_unwrap(rhs_gen_arg);
+
+    if (!strv_is_equal(lhs_reg.name.base, rhs_reg.name.base)) {
+        return strv_cmp(lhs_reg.name.base, rhs_reg.name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+    }
+    return candidate_compare_gen_args(lhs_reg.name.gen_args, rhs_reg.name.gen_args);
+}
+
+static int candidate_compare_gen_args(Ulang_type_vec lhs_gen_args, Ulang_type_vec rhs_gen_args) {
+    if (lhs_gen_args.info.count != rhs_gen_args.info.count) {
+        return lhs_gen_args.info.count < rhs_gen_args.info.count ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+    }
+
+    vec_foreach(idx, Ulang_type, lhs_gen_arg, lhs_gen_args) {
+        int result = candidate_compare_gen_arg(lhs_gen_arg, vec_at(rhs_gen_args, idx));
+        if (result != QSORT_EQUAL) {
+            return result;
+        }
+    }
+    return QSORT_EQUAL; // TODO
+}
+
+static int candidate_compare(const void* lhs_, const void* rhs_) {
     const Candidate* lhs = lhs_;
     const Candidate* rhs = rhs_;
 
@@ -109,8 +142,13 @@ int candidate_compare(const void* lhs_, const void* rhs_) {
     bool lhs_is_local = strv_is_equal(lhs->name.mod_path, sym_mod_path);
     bool rhs_is_local = strv_is_equal(rhs->name.mod_path, sym_mod_path);
     if (lhs_is_local == rhs_is_local) {
-        assert(!strv_is_equal(lhs->name.base, rhs->name.base));
-        return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+        if (!strv_is_equal(lhs->name.base, rhs->name.base)) {
+            return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+        }
+        if (!strv_is_equal(lhs->name.mod_path, rhs->name.mod_path)) {
+            return strv_cmp(lhs->name.mod_path, rhs->name.mod_path) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+        }
+        return candidate_compare_gen_args(lhs->name.gen_args, rhs->name.gen_args);
     }
     return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
 }
@@ -137,6 +175,9 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
             if (!is_correct_sym_type_fn(curr->type)) {
+                continue;
+            }
+            if (curr_name.gen_args.info.count > 0 && sym_name.gen_args.info.count == 0) {
                 continue;
             }
 
