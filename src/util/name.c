@@ -7,12 +7,12 @@
 #include <ulang_type_is_equal.h>
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id};
 }
 
 // TODO: replace genrgs in src with gen_args
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
 Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {

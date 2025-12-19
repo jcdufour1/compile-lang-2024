@@ -24,7 +24,6 @@ typedef struct {
     Strv base;
     Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
-    Attrs attrs;
 } Name;
 
 typedef struct {
@@ -32,7 +31,6 @@ typedef struct {
     Strv base;
     Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
-    Attrs attrs;
 } Ir_name;
 
 typedef struct {
@@ -58,7 +56,7 @@ typedef struct {
 
 Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 

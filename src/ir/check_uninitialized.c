@@ -130,9 +130,10 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         return;
     }
 
-    if (name.attrs & ATTR_ALLOW_UNINIT) {
-        return;
-    }
+    todo();
+    //if (name.attrs & ATTR_ALLOW_UNINIT) {
+    //    return;
+    //}
 
     Ir_name at_fun_start = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
@@ -172,7 +173,8 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", cfg_node_idx);
         log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
-        name.attrs |= ATTR_ALLOW_UNINIT;
+        todo();
+        //name.attrs |= ATTR_ALLOW_UNINIT;
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
