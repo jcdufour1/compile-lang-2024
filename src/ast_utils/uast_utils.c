@@ -263,6 +263,8 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
             unreachable("");
         case TOKEN_COUNT:
             unreachable("");
+        case TOKEN_AT_SIGN:
+            unreachable("");
         default:
             msg_todo("", pos);
     }
