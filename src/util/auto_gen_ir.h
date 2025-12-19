@@ -292,6 +292,7 @@ static Uast_type ir_gen_alloca(void) {
 
     append_member(&lang_alloca.members, "Ir_lang_type", "lang_type");
     append_member(&lang_alloca.members, "Ir_name", "name");
+    append_member(&lang_alloca.members, "Attrs", "attrs");
 
     return lang_alloca;
 }

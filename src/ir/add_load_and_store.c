@@ -825,11 +825,12 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
 static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def);
 
-static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
+static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def, bool is_raw_union) {
     Ir_alloca* lang_alloca = ir_alloca_new(
         var_def->pos,
         var_def->lang_type,
-        var_def->name_corr_param
+        var_def->name_corr_param,
+        is_raw_union ? ATTR_ALLOW_UNINIT : 0
     );
     ir_lang_type_set_pointer_depth(&lang_alloca->lang_type, ir_lang_type_get_pointer_depth(lang_alloca->lang_type) + 1);
     ir_add(ir_alloca_wrap(lang_alloca));
@@ -896,14 +897,14 @@ static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def
     );
 }
 
-static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param) {
+static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param, bool is_raw_union) {
     if (params.backend_info.struct_rtn_through_param && ir_is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;
         ir_add(ir_def_wrap(ir_variable_def_wrap(param)));
     } else {
         // TODO: try not to insert at the start of the dynamic array
         vec_insert(&a_main, &new_block->children, 1, ir_alloca_wrap(
-            add_load_and_store_alloca_new(param)
+            add_load_and_store_alloca_new(param, is_raw_union)
         ));
     }
 
@@ -932,7 +933,11 @@ static Ir_function_params* do_function_def_alloca(
             util_literal_name_new()
         );
         Ir_variable_def* param = load_variable_def_clone(new_def);
-        do_function_def_alloca_param(new_params, new_block, param);
+        bool is_raw_union = false;
+        if (rtn_lang_type.type == LANG_TYPE_RAW_UNION) {
+            is_raw_union = true;
+        }
+        do_function_def_alloca_param(new_params, new_block, param, is_raw_union);
         *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
         struct_rtn_name_parent_function = vec_at(new_params->params, 0)->name_self;
     } else {
@@ -941,7 +946,11 @@ static Ir_function_params* do_function_def_alloca(
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         Ir_variable_def* param = load_variable_def_clone(vec_at(old_params->params, idx));
-        do_function_def_alloca_param(new_params, new_block, param);
+        bool is_raw_union = false;
+        if (vec_at(old_params->params, idx)->lang_type.type == LANG_TYPE_RAW_UNION) {
+            is_raw_union = true;
+        }
+        do_function_def_alloca_param(new_params, new_block, param, is_raw_union);
     }
 
     return new_params;
@@ -1380,19 +1389,7 @@ static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
     Ir_name ptr = load_ptr_symbol(new_block, old_sym);
-    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-        todo();
-        //assert(ptr.attrs & ATTR_ALLOW_UNINIT);
-    }
-
     Ir_name load_name = util_literal_ir_name_new(); 
-    todo();
-    //load_name.attrs |= ptr.attrs;
-    //if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-    //    assert(load_name.attrs & ATTR_ALLOW_UNINIT);
-    //    assert(ptr.attrs & ATTR_ALLOW_UNINIT);
-    //}
-
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
         ptr,
@@ -1719,10 +1716,7 @@ static Ir_name load_ptr_index(Ir_block* new_block, Tast_index* old_index) {
 
 static Ir_name load_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Ir_name ptr = load_ptr_member_access(new_block, old_access);
-
     Ir_name new_load_name = util_literal_ir_name_new();
-    todo();
-    //new_load_name.attrs |= ptr.attrs;
 
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
@@ -2169,24 +2163,14 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
 
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        todo();
-        //old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
-    }
-
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        todo();
-        //assert(old_var_def->name.attrs & ATTR_ALLOW_UNINIT);
-    }
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        todo();
-        //assert(new_var_def->name_corr_param.attrs & ATTR_ALLOW_UNINIT);
-    }
 
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, new_var_def->name_self)) {
-        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
+        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new(
+            new_var_def,
+            old_var_def->lang_type.type == LANG_TYPE_RAW_UNION
+        ));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
         vec_insert(&a_main, &new_block->children, 1, lang_alloca);
     }
