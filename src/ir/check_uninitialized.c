@@ -125,15 +125,9 @@ static bool check_unit_is_struct(Ir_name name) {
 }
 
 static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
-    (void) loc;
     if (!print_errors_for_unit) {
         return;
     }
-
-    todo();
-    //if (name.attrs & ATTR_ALLOW_UNINIT) {
-    //    return;
-    //}
 
     Ir_name at_fun_start = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
@@ -172,8 +166,6 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", cfg_node_idx);
         log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
-        todo();
-        //name.attrs |= ATTR_ALLOW_UNINIT;
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
@@ -258,9 +250,12 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_LOAD_ELEMENT_PTR:
             fallthrough;
         case IR_ARRAY_ACCESS:
-            fallthrough;
-        case IR_ALLOCA:
             check_unit_src_internal_name(ir_get_name(LANG_TYPE_MODE_LOG, ir), pos, loc);
+            return;
+        case IR_ALLOCA:
+            if (!(ir_alloca_const_unwrap(ir)->attrs & ATTR_ALLOW_UNINIT)) {
+                check_unit_src_internal_name(ir_get_name(LANG_TYPE_MODE_LOG, ir), pos, loc);
+            }
             return;
         case IR_IMPORT_PATH:
             todo();
