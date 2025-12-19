@@ -197,7 +197,13 @@ static void load_block_stmts(
 
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
-        local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix(sv("rtn_val")));
+        local_rtn_def = tast_variable_def_new(
+            pos,
+            lang_type,
+            false,
+            util_literal_name_new_prefix(sv("rtn_val")),
+            (Attrs) {0} /* TODO */
+        );
     }
 
     Name is_rtning_name = {0};
@@ -232,7 +238,7 @@ static void load_block_stmts(
             unreachable("");
     }
 
-    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name);
+    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name, (Attrs) {0} /* TODO */);
     Tast_assignment* is_rtn_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -337,10 +343,10 @@ static void load_block_stmts(
             todo();
     }
 
-    Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name);
+    Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
     assert(break_expr->name.base.count > 0);
 
-    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name);
+    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name, (Attrs) {0} /* TODO */);
     Tast_assignment* is_yield_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -350,7 +356,7 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
     );
 
-    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name);
+    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name, (Attrs) {0} /* TODO */);
     Tast_assignment* is_cont2_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -536,7 +542,8 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
             lang_type_pos,
             vec_at(lang_type.lang_types, idx),
             false,
-            util_literal_name_new_prefix(sv("rm_tuple_lang_type_tuple"))
+            util_literal_name_new_prefix(sv("rm_tuple_lang_type_tuple")),
+            (Attrs) {0} /* TODO */
         );
         vec_append(&a_main, &members, memb);
     }
@@ -603,7 +610,8 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
         lang_type_pos,
         tag_lang_type,
         false,
-        util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_tag"))
+        util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_tag")),
+        (Attrs) {0} /* TODO */
     );
     vec_append(&a_main, &members, tag);
 
@@ -617,7 +625,8 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
             0
         )),
         false,
-        util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_item"))
+        util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_item")),
+        (Attrs) {0} /* TODO */
     );
     vec_append(&a_main, &members, item);
     
@@ -930,7 +939,8 @@ static Ir_function_params* do_function_def_alloca(
             old_params->pos,
             rtn_lang_type,
             false,
-            util_literal_name_new()
+            util_literal_name_new(),
+            (Attrs) {0} /* TODO */
         );
         Ir_variable_def* param = load_variable_def_clone(new_def);
         bool is_raw_union = false;
@@ -996,7 +1006,7 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
     Ir_lang_type fun_lang_type = rm_tuple_lang_type(old_call->lang_type, old_call->pos);
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         def_name = util_literal_name_new();
-        Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
+        Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name, (Attrs) {0} /* TODO */);
         unwrap(sym_tbl_add(tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, name_to_ir_name(def_name));
@@ -1041,11 +1051,13 @@ static Ir_name load_function_call(Ir_block* new_block, Tast_function_call* old_c
 
 // this function is needed for situations such as switching directly on enum
 static Ir_name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_call) {
+    todo(); // TODO: remove this function if not needed?
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
         old_call->lang_type,
         false,
-        util_literal_name_new()
+        util_literal_name_new(),
+        (Attrs) {0} /* TODO */
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -1065,7 +1077,8 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         old_lit->pos,
         old_lit->lang_type,
         false,
-        old_lit->name
+        old_lit->name,
+        (Attrs) {0} /* TODO */
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -1080,7 +1093,8 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
             tast_expr_get_pos(vec_at(old_lit->members, idx)), 
             lang_type_new_usize(lang_type_get_pos(old_lit->lang_type)),
             false,
-            util_literal_name_new()
+            util_literal_name_new(),
+            (Attrs) {0} /* TODO */
         );
         unwrap(symbol_add(tast_variable_def_wrap(index_var)));
         load_variable_def(new_block, index_var);
@@ -1125,7 +1139,8 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
         old_lit->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new()
+        util_literal_name_new(),
+        (Attrs) {0} /* TODO */
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -1306,7 +1321,8 @@ static Ir_name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_l
         union_def->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new()
+        util_literal_name_new(),
+        (Attrs) {0} /* TODO */
     );
     unwrap(symbol_add(tast_variable_def_wrap(new_var)));
     load_variable_def(new_block, new_var);
@@ -1459,7 +1475,8 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
         old_bin->pos,
         lang_type_new_u1(old_bin->pos),
         false,
-        util_literal_name_new()
+        util_literal_name_new(),
+        (Attrs) {0} /* TODO */
     );
     unwrap(sym_tbl_add(tast_variable_def_wrap(new_var)));
 
@@ -2015,7 +2032,8 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             sv("at_fun_start"),
             (Ulang_type_vec) {0},
             new_fun_def->body->scope_id
-        )
+        ),
+        (Attrs) {0} /* TODO */
     );
     unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
     load_variable_def(new_fun_def->body, var_def_thing);
@@ -2295,7 +2313,8 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
             (*new_block)->pos,
             tast_if_else_chain_get_lang_type(if_else),
             false,
-            util_literal_name_new_prefix(sv("yield_dest"))
+            util_literal_name_new_prefix(sv("yield_dest")),
+            (Attrs) {0} /* TODO */
         );
         unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
         load_variable_def(*new_block, yield_dest);
@@ -3010,7 +3029,8 @@ static Ir_block* load_block(
         old_block->pos,
         lang_type,
         false,
-        util_literal_name_new_prefix(sv("yield_dest"))
+        util_literal_name_new_prefix(sv("yield_dest")),
+        (Attrs) {0} /* TODO */
     );
     *yield_dest_name = yield_dest->name;
 

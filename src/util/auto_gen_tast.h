@@ -402,6 +402,7 @@ static Uast_type tast_gen_variable_def(const char* prefix) {
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Attrs", "attrs");
 
     return def;
 }

@@ -1485,7 +1485,8 @@ bool try_set_array_literal_types(
             lit->pos,
             gen_arg,
             false,
-            util_literal_name_new()
+            util_literal_name_new(),
+            (Attrs) {0} /* TODO */
         ));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
@@ -3926,7 +3927,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
+    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name, uast->attrs);
     if (add_to_sym_tbl && !check_env.is_in_struct_base_def) {
         symbol_add(tast_variable_def_wrap(*new_tast));
     }
@@ -4684,7 +4685,8 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         oper_var->pos,
         tast_expr_get_lang_type(new_operand_typed),
         false,
-        oper_var->name
+        oper_var->name,
+        oper_var->attrs
     )));
     Uast_assignment* oper_assign = uast_assignment_new(
         oper_var->pos,

@@ -131,6 +131,7 @@ for generics:
 - place auto_gen files in separate sub directory
 - store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
 - make attribute to suppress uninitialized error
+- rename uast_macro to uast_directive?
 
 
 # roadmap to try to get bootstrap compiler done:

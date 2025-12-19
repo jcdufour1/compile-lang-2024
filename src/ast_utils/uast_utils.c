@@ -455,6 +455,8 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
             unreachable("");
         case TOKEN_COUNT:
             unreachable("");
+        case TOKEN_AT_SIGN:
+            unreachable("");
         default:
             msg_todo("", pos);
     }
