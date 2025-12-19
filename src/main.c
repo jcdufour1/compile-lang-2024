@@ -30,8 +30,7 @@ static void add_builtin_def(Strv name) {
         MOD_PATH_RUNTIME,
         name,
         (Ulang_type_vec) {0},
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
+        SCOPE_TOP_LEVEL
     )))));
 }
 

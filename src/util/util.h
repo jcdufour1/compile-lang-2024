@@ -37,7 +37,6 @@ typedef enum {
 typedef enum {
     EXIT_CODE_SUCCESS = 0,
     EXIT_CODE_FAIL,
-    EXIT_CODE_EXPECTED_FAIL, // TODO: remove EXIT_CODE_EXPECTED_FAIL
 } EXIT_CODE;
 
 typedef uint32_t Indent;
@@ -188,9 +187,9 @@ typedef size_t Scope_id;
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
-#define MOD_ALIAS_BUILTIN (name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
-#define MOD_ALIAS_TOP_LEVEL (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
-#define MOD_ALIAS_PRELUDE (name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))
+#define MOD_ALIAS_BUILTIN name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_TOP_LEVEL name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_PRELUDE name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
 
 #define EXTERN_C_OWN_PREFIX "own"
 

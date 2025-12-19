@@ -19,13 +19,11 @@ typedef enum {
 
 // TODO: nodes should store Name_id (which would contain size_t) instead of Name?
 //   lookup table should store actual name struct associated with Name_id
-//  TODO: Name and Ir_name may be too large to pass by value without affecting performance
 typedef struct {
     Strv mod_path;
     Strv base;
     Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
-    Attrs attrs;
 } Name;
 
 typedef struct {
@@ -33,7 +31,6 @@ typedef struct {
     Strv base;
     Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
     Scope_id scope_id;
-    Attrs attrs;
 } Ir_name;
 
 typedef struct {
@@ -57,9 +54,9 @@ typedef struct {
     Scope_id scope_id;
 } Uname;
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
@@ -82,9 +79,6 @@ Strv serialize_name_symbol_table(Arena* arena, Name name);
 Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name);
 
 Strv serialize_name(Name name);
-
-// TODO: move this function?
-Strv serialize_double(double num);
 
 Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name);
 

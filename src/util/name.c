@@ -7,29 +7,16 @@
 #include <ulang_type_is_equal.h>
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id, .attrs = (Attrs) {0}};
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id};
 }
 
 // TODO: replace genrgs in src with gen_args
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id, attrs));
-}
-
-// this function will convert `io.i32` to `i32`, etc.
-// TODO: remove this function?
-static Uname uname_normalize_old(Uname name) {
-    // TODO: this function could cause collisions
-    //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
-    Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
-    if (usymbol_lookup(&dummy, possible_new)) {
-        return name_to_uname(possible_new);
-    }
-    return name;
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id));
 }
 
 // this function will convert `io.i32` to `i32`, etc.
@@ -51,7 +38,7 @@ Uname name_to_uname(Name name) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 #   ifndef NDEBUG
         // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
         //Uast_def* dummy = NULL;
@@ -87,7 +74,6 @@ Ir_name name_to_ir_name(Name name) {
 
     Name_to_ir_name_table_node* result = NULL;
     if (name_to_ir_name_lookup(&result, name)) {
-        result->ir_name.attrs |= name.attrs;
         return result->ir_name;
     }
 
@@ -96,7 +82,6 @@ Ir_name name_to_ir_name(Name name) {
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
         unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-        ir_name.attrs |= name.attrs;
         return ir_name;
     }
 
@@ -112,12 +97,10 @@ Ir_name name_to_ir_name(Name name) {
     Ir_name ir_name = *(Ir_name*)&ir_name_;
     static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
-    ir_name.attrs |= name.attrs;
     assert(ir_name.scope_id != SCOPE_TOP_LEVEL);
     assert(name.scope_id != SCOPE_TOP_LEVEL);
     unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
     unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-    ir_name.attrs |= name.attrs;
     return ir_name;
 }
 
@@ -238,33 +221,6 @@ Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
     return serialize_name_symbol_table(arena, *(Name*)&name);
 }
 
-Strv serialize_double(double num) {
-    String buf = {0};
-
-    String temp = {0};
-    string_extend_double(&a_temp, &temp, num);
-    size_t idx_decimal = 0;
-    bool did_find_dec = false;
-    vec_foreach(idx, char, curr, temp) {
-        idx_decimal = idx;
-        if (curr == '.') {
-            did_find_dec = true;
-            break;
-        }
-    }
-    unwrap(did_find_dec);
-
-    string_extend_f(
-        &a_main,
-        &buf,
-        FMT"_"FMT,
-        strv_print(string_slice(temp, 0, idx_decimal)),
-        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
-    );
-
-    return string_to_strv(buf);
-}
-
 Strv serialize_name(Name name) {
     String buf = {0};
 
@@ -335,11 +291,6 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
-    }
-    if (name.attrs > 0) {
-        string_extend_cstr(&a_temp, buf, "(*attrs:0x");
-        string_extend_hex_8_digits(&a_temp, buf, name.attrs);
-        string_extend_cstr(&a_temp, buf, "*)");
     }
 }
 
@@ -415,7 +366,7 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope, (Attrs) {0});
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {

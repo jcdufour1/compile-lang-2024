@@ -291,7 +291,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 112, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 114, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "info", .type = DIAG_INFO, .default_level = LOG_INFO, .must_be_error = false},
     {.str = "note", .type = DIAG_NOTE, .default_level = LOG_NOTE, .must_be_error = false},
@@ -359,7 +359,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "invalid-stmt-top-level", .type = DIAG_INVALID_STMT_TOP_LEVEL, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "invalid-function-callee", .type = DIAG_INVALID_FUNCTION_CALLEE, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "optional-args-for-variadic-args", .type = DIAG_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, .default_level = LOG_ERROR, .must_be_error = true},
-    {.str = "fail-invalid-fail-type", .type = DIAG_INVALID_FAIL_TYPE, .default_level = LOG_ERROR, .must_be_error = false},
+    {.str = "invalid-fail-type", .type = DIAG_INVALID_FAIL_TYPE, .default_level = LOG_ERROR, .must_be_error = false},
     {.str = "no-main-function", .type = DIAG_NO_MAIN_FUNCTION, .default_level = LOG_WARNING, .must_be_error = false},
     {.str = "struct-like-recursion", .type = DIAG_STRUCT_LIKE_RECURSION, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "child-process-failure", .type = DIAG_CHILD_PROCESS_FAILURE, .default_level = LOG_FATAL, .must_be_error = true},
@@ -405,6 +405,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "static-array-count-not-infered", .type = DIAG_STATIC_ARRAY_COUNT_NOT_INFERED, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "invalid-index-callee", .type = DIAG_INVALID_INDEX_CALLEE, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "positional-arg-after-designated-arg", .type = DIAG_POSITIONAL_ARG_AFTER_DESIGNATED_ARG, .default_level = LOG_ERROR, .must_be_error = true},
+    {.str = "got-type-but-expected-expr", .type = DIAG_GOT_TYPE_BUT_EXPECTED_EXPR, .default_level = LOG_ERROR, .must_be_error = true},
+    {.str = "got-expr-but-expected-type", .type = DIAG_GOT_EXPR_BUT_EXPECTED_TYPE, .default_level = LOG_ERROR, .must_be_error = true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
@@ -644,10 +646,28 @@ static void long_option_upper_o0(Pos pos_self, Arg curr_opt) {
     params.opt_level = OPT_LEVEL_O0;
 }
 
+static void long_option_upper_og(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_OG;
+}
+
+static void long_option_upper_o1(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_O1;
+}
+
 static void long_option_upper_o2(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
     (void) curr_opt;
     params.opt_level = OPT_LEVEL_O2;
+}
+
+static void long_option_upper_os(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.opt_level = OPT_LEVEL_OS;
 }
 
 static void long_option_error(Pos pos_self, Arg curr_opt) {
@@ -785,6 +805,7 @@ static void long_option_dummy(Pos pos_self, Arg curr_opt) {
     (void) curr_opt;
 }
 
+static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types in params below");
 static_assert(
     PARAMETERS_COUNT == 32,
     "exhausive handling of params (not all parameters are explicitly handled)"
@@ -805,7 +826,10 @@ Long_option_pair long_options[] = {
     {.text = "dump-dot", .description = "stop compiling after IR file(s) have been generated, and dump .dot file(s)", .action = long_option_dump_dot, .arg_type = ARG_NONE},
     {.text = "o", .description = "output file path", .action = long_option_lower_o, .arg_type = ARG_SINGLE},
     {.text = "O0", .description = "disable most optimizations", .action = long_option_upper_o0, .arg_type = ARG_NONE},
+    {.text = "Og", .description = "enable only optimizations that do not affect debugging", .action = long_option_upper_og, .arg_type = ARG_NONE},
+    {.text = "O1", .description = "enable slight optimizations", .action = long_option_upper_o1, .arg_type = ARG_NONE},
     {.text = "O2", .description = "enable optimizations", .action = long_option_upper_o2, .arg_type = ARG_NONE},
+    {.text = "Os", .description = "enable O2 optimizations, except those that increase binary sizes", .action = long_option_upper_os, .arg_type = ARG_NONE},
     {.text = "error", .description = "TODO", .action = long_option_error, .arg_type = ARG_SINGLE},
     {
         .text = "print-immediately",

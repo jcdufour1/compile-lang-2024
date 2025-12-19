@@ -108,8 +108,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
         name.mod_alias.mod_path,
         name.mod_alias.base,
         (Ulang_type_vec) {0},
-        name.mod_alias.scope_id,
-        (Attrs) {0}
+        name.mod_alias.scope_id
     );
 
     if (!usymbol_lookup(&alias_, alias_name)) {
@@ -124,7 +123,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
-            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope, (Attrs) {0});
+            *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
             return true;
         }
         case UAST_POISON_DEF:
@@ -163,7 +162,6 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
 Ulang_type lang_type_lit_to_ulang_type(Lang_type_lit lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_INT_LIT: {
-            // TODO: rename LANG_TYPE_INT_LIT to LANG_TYPE_INT_LIT_LIT
             Lang_type_int_lit lit = lang_type_int_lit_const_unwrap(lang_type);
             return ulang_type_lit_const_wrap(ulang_type_int_lit_const_wrap(ulang_type_int_lit_new(
                 lit.pos,
@@ -191,7 +189,7 @@ Ulang_type lang_type_lit_to_ulang_type(Lang_type_lit lang_type) {
             Lang_type_struct_lit lit = lang_type_struct_lit_const_unwrap(lang_type);
             return ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
                 lit.pos,
-                lit.lit, // TODO: change Lang_type_struct_lit.lit to Lang_type_struct_lit.data
+                lit.data,
                 lit.pointer_depth
             )));
         }
@@ -226,7 +224,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             fallthrough;
         case LANG_TYPE_ENUM: {
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 return ulang_type_new_void(lang_type_get_pos(lang_type));
             }

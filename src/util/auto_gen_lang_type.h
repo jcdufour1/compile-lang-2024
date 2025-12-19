@@ -89,7 +89,7 @@ static Uast_type lang_type_gen_struct_lit(const char* prefix) {
     const char* base_name = "struct_lit";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    append_member(&lit.members, "Uast_expr*", "lit");
+    append_member(&lit.members, "Uast_expr*", "data");
     append_member(&lit.members, "int16_t", "pointer_depth");
 
     return lit;
@@ -193,7 +193,6 @@ static Uast_type lang_type_gen_void(const char* prefix) {
     const char* base_name = "void";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "lang_type")};
 
-    // TODO: assert that pointer_depth of void is zero somewhere (or remove pointer_depth member here)
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -217,10 +216,10 @@ static Uast_type lang_type_gen_lang_type(void) {
     return lang_type;
 }
 
-static void gen_lang_type(const char* file_path, bool implementation) {
+static void gen_lang_type(const char* file_path) {
     Uast_type lang_type = lang_type_gen_lang_type();
     unwrap(lang_type.name.type.count > 0);
-    gen_ulang_type_common(file_path, implementation, lang_type);
+    gen_ulang_type_common(file_path, lang_type);
 }
 
 #endif // AUTO_GEN_LANG_TYPE_H

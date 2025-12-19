@@ -118,7 +118,6 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
     }
 }
 
-// TODO: remove IR_LANG_TYPE_TUPLE
 static void emit_c_function_decl_internal(String* output, const Ir_function_decl* decl) {
     emit_c_loc(output, ir_get_loc(decl), decl->pos);
     switch (decl->return_type.type) {
@@ -131,7 +130,7 @@ static void emit_c_function_decl_internal(String* output, const Ir_function_decl
         case IR_LANG_TYPE_PRIMITIVE:
             break;
         case IR_LANG_TYPE_TUPLE:
-            todo();
+            unreachable("");
     }
     c_extend_type_call_str(output, decl->return_type, true, false);
     string_extend_cstr(&a_pass, output, " ");
@@ -172,7 +171,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         Ir_struct_memb_def* curr = vec_at(def->base.members, idx);
         string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
-        if (llvm_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
+        if (ir_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
             Ir_name ori_name = {0};
             unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, vec_at(def->base.members, idx)->lang_type));
             Ir_name* struct_to_use = NULL;
@@ -814,13 +813,22 @@ void emit_c_from_tree(void) {
             vec_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
 #       endif // NDEBUG
 
-        static_assert(OPT_LEVEL_COUNT == 2, "exhausive handling of opt types");
+        static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types");
         switch (params.opt_level) {
             case OPT_LEVEL_O0:
                 vec_append(&a_pass, &cmd, sv("-O0"));
                 break;
+            case OPT_LEVEL_OG:
+                vec_append(&a_pass, &cmd, sv("-Og"));
+                break;
+            case OPT_LEVEL_O1:
+                vec_append(&a_pass, &cmd, sv("-O1"));
+                break;
             case OPT_LEVEL_O2:
                 vec_append(&a_pass, &cmd, sv("-O2"));
+                break;
+            case OPT_LEVEL_OS:
+                vec_append(&a_pass, &cmd, sv("-Os"));
                 break;
             case OPT_LEVEL_COUNT:
                 unreachable("");

@@ -7,7 +7,6 @@
 #include <strv.h>
 #include <vector.h>
 #include <name.h>
-#include <lang_type_mode.h>
 #include <parameters.h>
 
 struct Ir_lang_type_;

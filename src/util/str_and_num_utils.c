@@ -418,9 +418,58 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
-    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id, (Attrs) {0});
+    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id);
 }
 
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
     return name_to_ir_name(util_literal_name_new_prefix_scope_internal(file, line, debug_prefix, scope_id));
+}
+
+Strv serialize_double(double num) {
+    String buf = {0};
+
+    String temp = {0};
+    string_extend_double(&a_temp, &temp, num);
+    size_t idx_decimal = 0;
+    bool did_find_dec = false;
+    vec_foreach(idx, char, curr, temp) {
+        idx_decimal = idx;
+        if (curr == '.') {
+            did_find_dec = true;
+            break;
+        }
+    }
+    unwrap(did_find_dec);
+
+    string_extend_f(
+        &a_main,
+        &buf,
+        FMT"_"FMT,
+        strv_print(string_slice(temp, 0, idx_decimal)),
+        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
+    );
+
+    return string_to_strv(buf);
+}
+
+size_t strv_with_excapes_count_chars(Strv strv) {
+    size_t count = 0;
+    while (strv.count > 0) {
+        char curr = strv_consume(&strv);
+        if (curr == '\\') {
+            char next = strv_consume(&strv); // eg. n in \n, x in \x
+            if (next == 'x') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+            } else if (next == 'o') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+                strv_consume(&strv);
+            }
+        }
+
+        count++;
+    }
+
+    return count;
 }

@@ -140,6 +140,16 @@ static inline int strv_cmp(Strv lhs, Strv rhs) {
     return strncmp(lhs.str, rhs.str, min(lhs.count, rhs.count));
 }
 
+static inline size_t strv_strlen(Strv strv) {
+    size_t idx = 0;
+    for (idx = 0; idx < strv.count; idx++) {
+        if (!strv_at(strv, idx)) {
+            return idx;
+        }
+    }
+    return idx;
+}
+
 #define strv_print(strv) (int)((strv).count), (strv).str
 
 #endif // STR_VIEW_H

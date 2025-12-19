@@ -3,17 +3,14 @@
 
 #include <str_and_num_utils.h>
 #include <parameters.h>
-#include <lang_type_mode.h>
 #include <lang_type_hand_written.h>
 #include <lang_type.h>
 
 Name lang_type_primitive_get_name(const Lang_type_primitive lang_type);
 
-// TODO: remove mode parameter?
-bool lang_type_literal_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type_lit lang_type);
+bool lang_type_literal_get_name(Name* result, Lang_type_lit lang_type);
 
-// TODO: remove mode parameter?
-bool lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Lang_type lang_type);
+bool lang_type_get_name(Name* result, Lang_type lang_type);
 
 bool lang_type_name_base_is_signed(Strv name);
 

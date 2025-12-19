@@ -141,7 +141,7 @@ static inline bool lang_type_lit_is_equal(Lang_type_lit a, Lang_type_lit b) {
         case LANG_TYPE_STRING_LIT:
             return strv_is_equal(lang_type_string_lit_const_unwrap(a).data, lang_type_string_lit_const_unwrap(b).data);
         case LANG_TYPE_STRUCT_LIT:
-            return uast_expr_is_equal(lang_type_struct_lit_const_unwrap(a).lit, lang_type_struct_lit_const_unwrap(b).lit);
+            return uast_expr_is_equal(lang_type_struct_lit_const_unwrap(a).data, lang_type_struct_lit_const_unwrap(b).data);
         case LANG_TYPE_FN_LIT:
             return name_is_equal(lang_type_fn_lit_const_unwrap(a).name, lang_type_fn_lit_const_unwrap(b).name);
         case LANG_TYPE_FLOAT_LIT:
@@ -251,14 +251,14 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
-            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
+            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
             0
         ));
     }
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,
-        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
         0
     ));
 }
@@ -439,7 +439,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF: {
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type)) {
+            if (!lang_type_get_name(&name, tast_primitive_def_const_unwrap(def)->lang_type)) {
                 msg_todo("", tast_def_get_pos(def));
                 return util_literal_name_new_poison();
             }
@@ -458,7 +458,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
     }

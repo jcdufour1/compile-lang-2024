@@ -90,7 +90,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_PRIMITIVE_DEF:
             return uast_primitive_def_get_name(uast_primitive_def_const_unwrap(def));
         case UAST_VOID_DEF:
-            return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:
@@ -108,7 +108,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_OF_MOD_PATHS, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case UAST_MOD_ALIAS:
             return uast_mod_alias_const_unwrap(def)->name;
         case UAST_LANG_DEF:
@@ -190,72 +190,13 @@ typedef enum {
     UAST_GET_MEMB_DEF_COUNT,
 } UAST_GET_MEMB_DEF;
 
-// TODO: move this function to uast_utils.c file
-static inline UAST_GET_MEMB_DEF uast_try_get_member_def(
+UAST_GET_MEMB_DEF uast_try_get_member_def(
     Uast_expr** new_expr,
     Uast_variable_def** member_def,
     const Ustruct_def_base* base,
     Strv member_name,
     Pos dest_pos
-) {
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(base->members, idx);
-        if (strv_is_equal(curr->name.base, member_name)) {
-            *member_def = curr;
-            return UAST_GET_MEMB_DEF_NORMAL;
-        }
-    }
-
-    vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
-        if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_LIT) {
-                msg_todo("non const expression here", dest_pos);
-                return UAST_GET_MEMB_DEF_NONE;
-            }
-
-            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(vec_at(base->name.gen_args, idx));
-            switch (const_expr.type) {
-                case ULANG_TYPE_INT_LIT: {
-                    Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(const_expr);
-                    *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(dest_pos, lit.data)));
-                    return UAST_GET_MEMB_DEF_EXPR;
-                }
-                case ULANG_TYPE_FLOAT_LIT: {
-                    Ulang_type_float_lit lit = ulang_type_float_lit_const_unwrap(const_expr);
-                    *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(dest_pos, lit.data)));
-                    return UAST_GET_MEMB_DEF_EXPR;
-                }
-                case ULANG_TYPE_STRING_LIT: {
-                    Ulang_type_string_lit lit = ulang_type_string_lit_const_unwrap(const_expr);
-                    *new_expr = uast_literal_wrap(uast_string_wrap(uast_string_new(dest_pos, lit.data)));
-                    return UAST_GET_MEMB_DEF_EXPR;
-                }
-                case ULANG_TYPE_STRUCT_LIT: {
-                    Ulang_type_struct_lit lit = ulang_type_struct_lit_const_unwrap(const_expr);
-                    Uast_expr* inner = uast_expr_clone(lit.expr, false, 0, lit.pos); // clone
-                    unwrap(gen_param->is_expr);
-                    *new_expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
-                        lit.pos,
-                        inner,
-                        UNARY_UNSAFE_CAST,
-                        gen_param->expr_lang_type
-                    )));
-                    return UAST_GET_MEMB_DEF_EXPR;
-                }
-                case ULANG_TYPE_FN_LIT: {
-                    Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(const_expr);
-                    *new_expr = uast_symbol_wrap(uast_symbol_new(lit.pos, lit.name));
-                    return UAST_GET_MEMB_DEF_EXPR;
-                }
-            }
-
-            msg_todo("this type of expression in this situation", ulang_type_lit_get_pos(const_expr));
-            return UAST_GET_MEMB_DEF_NONE;
-        }
-    }
-
-    return UAST_GET_MEMB_DEF_NONE;
-}
+);
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {

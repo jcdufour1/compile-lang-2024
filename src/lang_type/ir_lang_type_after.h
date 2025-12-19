@@ -37,11 +37,10 @@ static inline Ir_lang_type ir_lang_type_new_u8(void) {
 }
 
 static inline Ir_lang_type ir_lang_type_new_usize(void) {
-    return ir_lang_type_new_ux(64 /* TODO: change based on target */);
+    return ir_lang_type_new_ux(params.sizeof_usize);
 }
 
-// TODO: rename to ir_lang_type_is_struct_like
-static inline bool llvm_is_struct_like(IR_LANG_TYPE_TYPE type) {
+static inline bool ir_is_struct_like(IR_LANG_TYPE_TYPE type) {
     switch (type) {
         case IR_LANG_TYPE_STRUCT:
             return true;

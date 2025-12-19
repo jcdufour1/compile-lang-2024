@@ -108,10 +108,10 @@ static Uast_type ir_lang_type_gen_ir_lang_type(void) {
     return ir_lang_type;
 }
 
-static void gen_ir_lang_type(const char* file_path, bool implementation) {
+static void gen_ir_lang_type(const char* file_path) {
     Uast_type ir_lang_type = ir_lang_type_gen_ir_lang_type();
     unwrap(ir_lang_type.name.type.count > 0);
-    gen_ulang_type_common(file_path, implementation, ir_lang_type);
+    gen_ulang_type_common(file_path, ir_lang_type);
 }
 
 #endif // AUTO_GEN_IR_LANG_TYPE_H

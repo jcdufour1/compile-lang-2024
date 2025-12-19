@@ -742,7 +742,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
                 Uast_def* enum_def_ = NULL;
                 Name name = {0};
-                if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lhs->enum_lang_type)) {
+                if (!lang_type_get_name(&name, lhs->enum_lang_type)) {
                     msg_todo("", lhs->pos);
                     return false;
                 }
@@ -1061,7 +1061,7 @@ bool try_set_unary_types_finish(
             return true;
         case UNARY_COUNTOF: {
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_child))) {
+            if (!lang_type_get_name(&name, tast_expr_get_lang_type(new_child))) {
                 msg(
                     DIAG_INVALID_COUNTOF, unary_pos,
                     "type `"FMT"` is not a valid operand to `countof`\n",
@@ -1094,7 +1094,7 @@ bool try_set_unary_types_finish(
             // TODO: these unwraps may not work when cast_to is a function pointer
 #           ifndef NDEBUG
                 Name name = {0};
-                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, cast_to));
+                unwrap(lang_type_get_name(&name, cast_to));
                 unwrap(name.base.count > 0);
 #           endif // NDEBUG
 
@@ -1589,7 +1589,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
             }
 
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.lhs_lang_type)) {
+            if (!lang_type_get_name(&name, check_env.lhs_lang_type)) {
                 msg_todo("", lang_type_get_pos(check_env.lhs_lang_type));
                 status = false;
                 goto end;
@@ -1874,7 +1874,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
             sym->name.base,
             (Ulang_type_vec) {0} /* TODO */,
             sym->name.scope_id
-        , (Attrs) {0})
+        )
     );
     if (!usymbol_add(uast_variable_def_wrap(new_def))) {
         // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -2039,7 +2039,7 @@ bool try_set_function_call_builtin_types(
             util_literal_name_new(),
             lang_type_struct_const_wrap(lang_type_struct_new(
                 array.pos, 
-                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL, (Attrs) {0}),
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL),
                 0
             ))
         ));
@@ -2131,7 +2131,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
 
             Uast_def* enum_def_ = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)) {
+            if (!lang_type_get_name(&name, enum_callee->enum_lang_type)) {
                 msg_todo("", enum_callee->pos);
                 return FUN_MIDDLE_ERROR;
             }
@@ -2660,7 +2660,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_UNKNOWN: {
             Uast_def* def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, check_env.switch_lang_type)) {
+            if (!lang_type_get_name(&name, check_env.switch_lang_type)) {
                 msg_todo("", lang_type_get_pos(check_env.switch_lang_type));
                 return false;
             }
@@ -3522,7 +3522,7 @@ bool try_set_member_access_types_finish(
             return try_set_member_access_types_finish_enum_def(new_tast, uast_enum_def_unwrap(lang_type_def), access, new_callee);
         case UAST_PRIMITIVE_DEF: {
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type)) {
+            if (!lang_type_get_name(&name, uast_primitive_def_unwrap(lang_type_def)->lang_type)) {
                 msg_todo("", uast_def_get_pos(lang_type_def));
                 msg(DIAG_NOTE, access->pos, "\n");
                 return false;
@@ -3590,7 +3590,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
 
             Uast_def* lang_type_def = NULL;
             Name def_name = {0};
-            if (!lang_type_get_name(&def_name, LANG_TYPE_MODE_LOG, sym->base.lang_type)) {
+            if (!lang_type_get_name(&def_name, sym->base.lang_type)) {
                 msg_todo("", tast_expr_get_pos(new_callee));
                 return false;
             }
@@ -3607,7 +3607,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
 
             Uast_def* lang_type_def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, sym->lang_type)) {
+            if (!lang_type_get_name(&name, sym->lang_type)) {
                 msg_todo("", lang_type_get_pos(sym->lang_type));
                 return false;
             }
@@ -3621,7 +3621,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_operator* sym = tast_operator_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
             Name name = {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym))) {
+            if (!lang_type_get_name(&name, tast_operator_get_lang_type(sym))) {
                 msg_todo("", tast_operator_get_pos(sym));
                 return false;
             }
@@ -3636,7 +3636,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
             Uast_def* lang_type_def = NULL;
             Name name =  {0};
-            if (!lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type)) {
+            if (!lang_type_get_name(&name, lang_type)) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 return false;
             }
@@ -3650,7 +3650,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.base,
                 access->member_name->name.gen_args,
                 access->member_name->name.scope_id
-            , (Attrs) {0}));
+            ));
             Tast_expr* new_expr = NULL;
             if (!try_set_symbol_types(&new_expr, sym, is_from_check_assign)) {
                 return false;
@@ -3749,8 +3749,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -3789,8 +3788,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("static_array_slice"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -3805,8 +3803,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -4198,7 +4195,7 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
         
     return name_is_equal(
         enum_name,
-        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     );
 }
 
@@ -4278,7 +4275,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
             uast_member_access_wrap(uast_member_access_new(
                 orelse->error_symbol->pos,
                 uast_symbol_new(orelse->pos, name_new(
-                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    sv("error"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
             )),
@@ -4317,7 +4317,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
             uast_member_access_wrap(uast_member_access_new(
                 orelse->pos,
                 uast_symbol_new(orelse->pos, name_new(
-                    MOD_PATH_RUNTIME, some_sv, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    some_sv,
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->pos))
             )),
@@ -4385,7 +4388,10 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         fun_rtn_expr = uast_member_access_wrap(uast_member_access_new(
             mark->pos,
             uast_symbol_new(mark->pos, name_new(
-                MOD_PATH_RUNTIME, sv("none"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                MOD_PATH_RUNTIME,
+                sv("none"),
+                (Ulang_type_vec) {0},
+                SCOPE_TOP_LEVEL
             )),
             uast_unknown_wrap(uast_unknown_new(mark->pos))
         ));
@@ -4401,7 +4407,10 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             uast_member_access_wrap(uast_member_access_new(
                 mark->pos,
                 uast_symbol_new(mark->pos, name_new(
-                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    sv("error"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(mark->pos))
             )),
@@ -4531,7 +4540,7 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     Uast_def* enum_def_ = NULL;
     Name name = {0};
     unwrap(
-        lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type) &&
+        lang_type_get_name(&name, exhaustive_data.oper_lang_type) &&
         "this lang_type being undefined should have been caught earlier"
     );
     unwrap(usymbol_lookup(&enum_def_, name));
@@ -4622,7 +4631,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
             if (!vec_at(exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
                 Name name = {0};
-                unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type));
+                unwrap(lang_type_get_name(&name, exhaustive_data.oper_lang_type));
                 unwrap(usymbol_lookup(&enum_def_, name));
                 Ustruct_def_base enum_def = {0};
                 enum_def = uast_enum_def_unwrap(enum_def_)->base;
@@ -5246,7 +5255,7 @@ void try_set_types(void) {
     }
 
     Uast_def* main_fn_ = NULL;
-    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             msg_todo(
                 "actual error message for symbol that is named `main` but is not a function",

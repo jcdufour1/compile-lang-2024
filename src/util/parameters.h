@@ -49,7 +49,10 @@ typedef struct {
 
 typedef enum {
     OPT_LEVEL_O0 = 0,
+    OPT_LEVEL_OG,
+    OPT_LEVEL_O1,
     OPT_LEVEL_O2,
+    OPT_LEVEL_OS,
 
     // count of opt levels for static_asserts
     OPT_LEVEL_COUNT,
@@ -72,8 +75,8 @@ typedef enum {
 #define PARAMETERS_COUNT 32
 typedef struct {
     Target_triplet target_triplet;
-    uint32_t sizeof_usize; 
-    uint32_t sizeof_ptr_non_fn; 
+    uint32_t sizeof_usize; // in bits
+    uint32_t sizeof_ptr_non_fn; // in bits
     char usize_size_ux[8]; // eg. "u64"
     Strv build_dir;
     Strv input_file_path;

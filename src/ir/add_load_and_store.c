@@ -696,7 +696,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
             Name name = {0};
-            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(lang_type_get_name(&name, lang_type));
             unwrap(symbol_lookup(&lang_type_def_, name));
 
             sym_tbl_add(lang_type_def_);
@@ -717,7 +717,7 @@ static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             return ir_lang_type_primitive_const_wrap(rm_tuple_lang_type_primitive(lang_type_primitive_const_unwrap(lang_type), lang_type_pos));
         case LANG_TYPE_STRUCT: {
             Name name = {0};
-            unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(lang_type_get_name(&name, lang_type));
             return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
                 lang_type_pos,
                 name_to_ir_name(name),
@@ -825,11 +825,12 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
 static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def);
 
-static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def) {
+static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def, bool is_raw_union) {
     Ir_alloca* lang_alloca = ir_alloca_new(
         var_def->pos,
         var_def->lang_type,
-        var_def->name_corr_param
+        var_def->name_corr_param,
+        is_raw_union ? ATTR_ALLOW_UNINIT : 0
     );
     ir_lang_type_set_pointer_depth(&lang_alloca->lang_type, ir_lang_type_get_pointer_depth(lang_alloca->lang_type) + 1);
     ir_add(ir_alloca_wrap(lang_alloca));
@@ -896,14 +897,14 @@ static Ir_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def
     );
 }
 
-static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param) {
-    if (params.backend_info.struct_rtn_through_param && llvm_is_struct_like(param->lang_type.type)) {
+static void do_function_def_alloca_param(Ir_function_params* new_params, Ir_block* new_block, Ir_variable_def* param, bool is_raw_union) {
+    if (params.backend_info.struct_rtn_through_param && ir_is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;
         ir_add(ir_def_wrap(ir_variable_def_wrap(param)));
     } else {
         // TODO: try not to insert at the start of the dynamic array
         vec_insert(&a_main, &new_block->children, 1, ir_alloca_wrap(
-            add_load_and_store_alloca_new(param)
+            add_load_and_store_alloca_new(param, is_raw_union)
         ));
     }
 
@@ -932,7 +933,11 @@ static Ir_function_params* do_function_def_alloca(
             util_literal_name_new()
         );
         Ir_variable_def* param = load_variable_def_clone(new_def);
-        do_function_def_alloca_param(new_params, new_block, param);
+        bool is_raw_union = false;
+        if (rtn_lang_type.type == LANG_TYPE_RAW_UNION) {
+            is_raw_union = true;
+        }
+        do_function_def_alloca_param(new_params, new_block, param, is_raw_union);
         *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
         struct_rtn_name_parent_function = vec_at(new_params->params, 0)->name_self;
     } else {
@@ -941,7 +946,11 @@ static Ir_function_params* do_function_def_alloca(
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         Ir_variable_def* param = load_variable_def_clone(vec_at(old_params->params, idx));
-        do_function_def_alloca_param(new_params, new_block, param);
+        bool is_raw_union = false;
+        if (vec_at(old_params->params, idx)->lang_type.type == LANG_TYPE_RAW_UNION) {
+            is_raw_union = true;
+        }
+        do_function_def_alloca_param(new_params, new_block, param, is_raw_union);
     }
 
     return new_params;
@@ -1123,7 +1132,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
 
     Tast_def* struct_def_ = NULL;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->lang_type));
+    unwrap(lang_type_get_name(&name, old_lit->lang_type));
     Ir_name name_2 = {0};
     unwrap(ir_lang_type_get_name(&name_2, LANG_TYPE_MODE_LOG, rm_tuple_lang_type(old_lit->lang_type, old_lit->pos)));
     unwrap(symbol_lookup(&struct_def_, ir_name_to_name(name_2)));
@@ -1179,17 +1188,11 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
 
     Tast_expr_vec membs = {0};
     vec_append(&a_main, &membs, tast_literal_wrap(tast_string_wrap(old_lit)));
-    // TODO: calculate length of string at compile time instead of calling strlen at runtime
-    vec_append(&a_main, &membs, tast_function_call_wrap(tast_function_call_new(
+    vec_append(&a_main, &membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         old_lit->pos,
-        args,
-        tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
-            old_lit->pos,
-            name_new(MOD_PATH_RUNTIME, sv("strlen"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}),
-            lang_type_new_usize(POS_BUILTIN/*TODO*/)
-        ))),
-        lang_type_new_usize(POS_BUILTIN/*TODO*/)
-    )));
+        (int64_t)strv_with_excapes_count_chars(old_lit->data),
+        lang_type_new_usize(old_lit->pos)
+    ))));
 
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
@@ -1197,7 +1200,7 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(
             old_lit->pos, 
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
             0
         ))
     ));
@@ -1257,7 +1260,7 @@ static Ir_name load_enum_lit(Ir_block* new_block, Tast_enum_lit* old_lit) {
     (void) old_lit;
     Tast_def* enum_def_ = NULL;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, old_lit->enum_lang_type));
+    unwrap(lang_type_get_name(&name, old_lit->enum_lang_type));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     
@@ -1386,17 +1389,7 @@ static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
     Ir_name ptr = load_ptr_symbol(new_block, old_sym);
-    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
-    }
-
     Ir_name load_name = util_literal_ir_name_new(); 
-    load_name.attrs |= ptr.attrs;
-    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(load_name.attrs & ATTR_ALLOW_UNINIT);
-        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
-    }
-
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
         ptr,
@@ -1723,9 +1716,7 @@ static Ir_name load_ptr_index(Ir_block* new_block, Tast_index* old_index) {
 
 static Ir_name load_member_access(Ir_block* new_block, Tast_member_access* old_access) {
     Ir_name ptr = load_ptr_member_access(new_block, old_access);
-
     Ir_name new_load_name = util_literal_ir_name_new();
-    new_load_name.attrs |= ptr.attrs;
 
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
@@ -1760,7 +1751,7 @@ static Ir_name load_ptr_enum_get_tag(Ir_block* new_block, Tast_enum_get_tag* old
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_enum = load_ptr_expr(new_block, old_access->callee);
@@ -1803,7 +1794,7 @@ static Ir_name load_ptr_enum_access(Ir_block* new_block, Tast_enum_access* old_a
     (void) new_block;
     (void) old_access;
     Name name = {0};
-    unwrap(lang_type_get_name(&name, LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee)));
+    unwrap(lang_type_get_name(&name, tast_expr_get_lang_type(old_access->callee)));
     unwrap(symbol_lookup(&enum_def_, name));
     Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Ir_name new_callee = load_ptr_expr(new_block, old_access->callee);
@@ -1961,7 +1952,7 @@ static Ir_function_params* load_function_parameters(
 
         Ir* dummy = NULL;
 
-        bool is_struct = llvm_is_struct_like(param->lang_type.type);
+        bool is_struct = ir_is_struct_like(param->lang_type.type);
 
         if (!params.backend_info.struct_rtn_through_param || !is_struct) {
             unwrap(ir_add(ir_def_wrap(ir_variable_def_wrap(param))));
@@ -2024,7 +2015,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             sv("at_fun_start"),
             (Ulang_type_vec) {0},
             new_fun_def->body->scope_id
-        , (Attrs) {0})
+        )
     );
     unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
     load_variable_def(new_fun_def->body, var_def_thing);
@@ -2098,7 +2089,7 @@ static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
     //unwrap(fun_decl->return_type->lang_type.info.count == 1);
     Ir_lang_type rtn_type = rm_tuple_lang_type(fun_decl->return_type, fun_decl->pos);
 
-    bool rtn_is_struct = llvm_is_struct_like(rtn_type.type);
+    bool rtn_is_struct = ir_is_struct_like(rtn_type.type);
 
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         Ir* dest_ = NULL;
@@ -2172,21 +2163,14 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
 
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
-    }
-
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(old_var_def->name.attrs & ATTR_ALLOW_UNINIT);
-    }
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
-    if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(new_var_def->name_corr_param.attrs & ATTR_ALLOW_UNINIT);
-    }
 
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, new_var_def->name_self)) {
-        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new(new_var_def));
+        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new(
+            new_var_def,
+            old_var_def->lang_type.type == LANG_TYPE_RAW_UNION
+        ));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
         vec_insert(&a_main, &new_block->children, 1, lang_alloca);
     }

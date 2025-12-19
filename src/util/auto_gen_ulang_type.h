@@ -410,10 +410,10 @@ static Uast_type_vec ulang_type_get_type_vec(Uast_type ulang_type) {
     return type_vec;
 }
 
-static void gen_ulang_type(const char* file_path, bool implementation) {
+static void gen_ulang_type(const char* file_path) {
     Uast_type ulang_type = ulang_type_gen_ulang_type();
     unwrap(ulang_type.name.type.count > 0);
-    gen_ulang_type_common(file_path, implementation, ulang_type);
+    gen_ulang_type_common(file_path, ulang_type);
 }
 
 

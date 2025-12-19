@@ -28,7 +28,7 @@ static void a_genll_vecs_internal(void) {
     gen_vec_from_cstr("Uast_vec", "Uast*");
 }
 
-static void a_genll_vecs(const char* file_path) {
+static void gen_all_vecs(const char* file_path) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
         fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
