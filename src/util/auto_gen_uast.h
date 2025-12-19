@@ -164,7 +164,7 @@ static Uast_type uast_gen_struct_literal(const char* prefix) {
     return lit;
 }
 
-static Uast_type uast_a_genrray_literal(const char* prefix) {
+static Uast_type uast_gen_array_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "array_literal", false, "uast")};
 
     append_member(&lit.members, "Uast_expr_vec", "members");
@@ -298,7 +298,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&a_gen, &expr.sub_types, uast_gen_literal(base_name));
     vec_append(&a_gen, &expr.sub_types, uast_gen_function_call(base_name));
     vec_append(&a_gen, &expr.sub_types, uast_gen_struct_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_a_genrray_literal(base_name));
+    vec_append(&a_gen, &expr.sub_types, uast_gen_array_literal(base_name));
     vec_append(&a_gen, &expr.sub_types, uast_gen_tuple(base_name));
     vec_append(&a_gen, &expr.sub_types, uast_gen_macro(base_name));
     vec_append(&a_gen, &expr.sub_types, uast_gen_enum_access(base_name));
@@ -510,7 +510,7 @@ static Uast_type uast_gen_continue(const char* prefix) {
     return cont;
 }
 
-static Uast_type uast_a_genssignment(const char* prefix) {
+static Uast_type uast_gen_assignment(const char* prefix) {
     Uast_type assign = {.name = uast_name_new(prefix, "assignment", false, "uast")};
 
     append_member(&assign.members, "Uast_expr*", "lhs");
@@ -576,7 +576,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&a_gen, &stmt.sub_types, uast_gen_for_with_cond(base_name));
     vec_append(&a_gen, &stmt.sub_types, uast_gen_yield(base_name));
     vec_append(&a_gen, &stmt.sub_types, uast_gen_continue(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_a_genssignment(base_name));
+    vec_append(&a_gen, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&a_gen, &stmt.sub_types, uast_gen_return(base_name));
     vec_append(&a_gen, &stmt.sub_types, uast_gen_stmt_removed(base_name));
 
@@ -599,7 +599,7 @@ static Uast_type uast_gen_uast(void) {
     return uast;
 }
 
-static void a_genll_uasts(const char* file_path, bool implementation) {
+static void gen_all_uasts(const char* file_path, bool implementation) {
     Uast_type uast = uast_gen_uast();
     unwrap(uast.name.type.count > 0);
     gen_uasts_common(file_path, implementation, uast);

@@ -293,7 +293,7 @@ static Uast_type tast_gen_enum_get_tag(const char* prefix) {
     return access;
 }
 
-static Uast_type tast_a_genssignment(const char* prefix) {
+static Uast_type tast_gen_assignment(const char* prefix) {
     const char* base_name = "assignment";
     Uast_type assign = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
@@ -339,7 +339,7 @@ static Uast_type tast_gen_expr(const char* prefix) {
     vec_append(&a_gen, &expr.sub_types, tast_gen_block(base_name));
     vec_append(&a_gen, &expr.sub_types, tast_gen_module_alias(base_name));
     vec_append(&a_gen, &expr.sub_types, tast_gen_if_else_chain(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_a_genssignment(base_name));
+    vec_append(&a_gen, &expr.sub_types, tast_gen_assignment(base_name));
     vec_append(&a_gen, &expr.sub_types, tast_gen_operator(base_name));
     vec_append(&a_gen, &expr.sub_types, tast_gen_symbol(base_name));
     vec_append(&a_gen, &expr.sub_types, tast_gen_member_access(base_name));
@@ -490,7 +490,7 @@ static Uast_type tast_gen_defer(const char* prefix) {
     return defer;
 }
 
-static Uast_type tast_a_genctual_break(const char* prefix) {
+static Uast_type tast_gen_actual_break(const char* prefix) {
     const char* base_name = "actual_break";
     Uast_type lang_break = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
@@ -549,7 +549,7 @@ static Uast_type tast_gen_stmt(const char* prefix) {
     vec_append(&a_gen, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&a_gen, &stmt.sub_types, tast_gen_for_with_cond(base_name));
     vec_append(&a_gen, &stmt.sub_types, tast_gen_return(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_a_genctual_break(base_name));
+    vec_append(&a_gen, &stmt.sub_types, tast_gen_actual_break(base_name));
     vec_append(&a_gen, &stmt.sub_types, tast_gen_yield(base_name));
     vec_append(&a_gen, &stmt.sub_types, tast_gen_continue(base_name));
     vec_append(&a_gen, &stmt.sub_types, tast_gen_def(base_name));
@@ -569,7 +569,7 @@ static Uast_type tast_gen_tast(void) {
     return tast;
 }
 
-static void a_genll_tasts(const char* file_path, bool implementation) {
+static void gen_all_tasts(const char* file_path, bool implementation) {
     Uast_type tast = tast_gen_tast();
     unwrap(tast.name.type.count > 0);
     gen_uasts_common(file_path, implementation, tast);

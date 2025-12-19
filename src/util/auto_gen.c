@@ -30,23 +30,23 @@ int main(int argc, char** argv) {
     gen_ir_lang_type(get_path(argv[1], "ir_lang_type.h"));
     unwrap(!global_output);
 
-    a_genll_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
+    gen_all_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
     unwrap(!global_output);
-    a_genll_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
+    gen_all_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
     unwrap(!global_output);
-    a_genll_irs(get_path(argv[1], "ir_forward_decl.h"), false);
-    unwrap(!global_output);
-
-    a_genll_vecs(get_path(argv[1], "vecs.h"));
+    gen_all_irs(get_path(argv[1], "ir_forward_decl.h"), false);
     unwrap(!global_output);
 
-    a_genll_tasts(get_path(argv[1], "tast.h"), true);
+    gen_all_vecs(get_path(argv[1], "vecs.h"));
     unwrap(!global_output);
 
-    a_genll_uasts(get_path(argv[1], "uast.h"), true);
+    gen_all_tasts(get_path(argv[1], "tast.h"), true);
     unwrap(!global_output);
 
-    a_genll_irs(get_path(argv[1], "ir.h"), true);
+    gen_all_uasts(get_path(argv[1], "uast.h"), true);
+    unwrap(!global_output);
+
+    gen_all_irs(get_path(argv[1], "ir.h"), true);
     unwrap(!global_output);
 }
 
