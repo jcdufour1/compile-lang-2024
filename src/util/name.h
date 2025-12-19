@@ -54,7 +54,7 @@ typedef struct {
     Scope_id scope_id;
 } Uname;
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs);
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
 

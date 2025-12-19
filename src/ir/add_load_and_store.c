@@ -1191,7 +1191,7 @@ static Ir_name load_string(Ir_block* new_block, Tast_string* old_lit) {
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(
             old_lit->pos, 
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL, (Attrs) {0}),
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
             0
         ))
     ));
@@ -1381,15 +1381,17 @@ static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
 
     Ir_name ptr = load_ptr_symbol(new_block, old_sym);
     if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
+        todo();
+        //assert(ptr.attrs & ATTR_ALLOW_UNINIT);
     }
 
     Ir_name load_name = util_literal_ir_name_new(); 
-    load_name.attrs |= ptr.attrs;
-    if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(load_name.attrs & ATTR_ALLOW_UNINIT);
-        assert(ptr.attrs & ATTR_ALLOW_UNINIT);
-    }
+    todo();
+    //load_name.attrs |= ptr.attrs;
+    //if (old_sym->base.lang_type.type == LANG_TYPE_RAW_UNION) {
+    //    assert(load_name.attrs & ATTR_ALLOW_UNINIT);
+    //    assert(ptr.attrs & ATTR_ALLOW_UNINIT);
+    //}
 
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         pos,
@@ -1719,7 +1721,8 @@ static Ir_name load_member_access(Ir_block* new_block, Tast_member_access* old_a
     Ir_name ptr = load_ptr_member_access(new_block, old_access);
 
     Ir_name new_load_name = util_literal_ir_name_new();
-    new_load_name.attrs |= ptr.attrs;
+    todo();
+    //new_load_name.attrs |= ptr.attrs;
 
     Ir_load_another_ir* new_load = ir_load_another_ir_new(
         old_access->pos,
@@ -2018,7 +2021,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             sv("at_fun_start"),
             (Ulang_type_vec) {0},
             new_fun_def->body->scope_id
-        , (Attrs) {0})
+        )
     );
     unwrap(symbol_add(tast_variable_def_wrap(var_def_thing)));
     load_variable_def(new_fun_def->body, var_def_thing);
@@ -2167,15 +2170,18 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
 
     if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
+        todo();
+        //old_var_def->name.attrs |= ATTR_ALLOW_UNINIT;
     }
 
     if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(old_var_def->name.attrs & ATTR_ALLOW_UNINIT);
+        todo();
+        //assert(old_var_def->name.attrs & ATTR_ALLOW_UNINIT);
     }
     Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
     if (old_var_def->lang_type.type == LANG_TYPE_RAW_UNION) {
-        assert(new_var_def->name_corr_param.attrs & ATTR_ALLOW_UNINIT);
+        todo();
+        //assert(new_var_def->name_corr_param.attrs & ATTR_ALLOW_UNINIT);
     }
 
     Ir* lang_alloca = NULL;

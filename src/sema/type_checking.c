@@ -1874,7 +1874,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
             sym->name.base,
             (Ulang_type_vec) {0} /* TODO */,
             sym->name.scope_id
-        , (Attrs) {0})
+        )
     );
     if (!usymbol_add(uast_variable_def_wrap(new_def))) {
         // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -2039,7 +2039,7 @@ bool try_set_function_call_builtin_types(
             util_literal_name_new(),
             lang_type_struct_const_wrap(lang_type_struct_new(
                 array.pos, 
-                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL, (Attrs) {0}),
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL),
                 0
             ))
         ));
@@ -3650,7 +3650,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
                 access->member_name->name.base,
                 access->member_name->name.gen_args,
                 access->member_name->name.scope_id
-            , (Attrs) {0}));
+            ));
             Tast_expr* new_expr = NULL;
             if (!try_set_symbol_types(&new_expr, sym, is_from_check_assign)) {
                 return false;
@@ -3749,8 +3749,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -3789,8 +3788,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("static_array_slice"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -3805,8 +3803,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             ))),
             false
         );
@@ -4198,7 +4195,7 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
         
     return name_is_equal(
         enum_name,
-        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     );
 }
 
@@ -4278,7 +4275,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
             uast_member_access_wrap(uast_member_access_new(
                 orelse->error_symbol->pos,
                 uast_symbol_new(orelse->pos, name_new(
-                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    sv("error"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
             )),
@@ -4317,7 +4317,10 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
             uast_member_access_wrap(uast_member_access_new(
                 orelse->pos,
                 uast_symbol_new(orelse->pos, name_new(
-                    MOD_PATH_RUNTIME, some_sv, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    some_sv,
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->pos))
             )),
@@ -4385,7 +4388,10 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         fun_rtn_expr = uast_member_access_wrap(uast_member_access_new(
             mark->pos,
             uast_symbol_new(mark->pos, name_new(
-                MOD_PATH_RUNTIME, sv("none"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                MOD_PATH_RUNTIME,
+                sv("none"),
+                (Ulang_type_vec) {0},
+                SCOPE_TOP_LEVEL
             )),
             uast_unknown_wrap(uast_unknown_new(mark->pos))
         ));
@@ -4401,7 +4407,10 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             uast_member_access_wrap(uast_member_access_new(
                 mark->pos,
                 uast_symbol_new(mark->pos, name_new(
-                    MOD_PATH_RUNTIME, sv("error"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}
+                    MOD_PATH_RUNTIME,
+                    sv("error"),
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
                 )),
                 uast_unknown_wrap(uast_unknown_new(mark->pos))
             )),
@@ -5246,7 +5255,7 @@ void try_set_types(void) {
     }
 
     Uast_def* main_fn_ = NULL;
-    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}))) {
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             msg_todo(
                 "actual error message for symbol that is named `main` but is not a function",

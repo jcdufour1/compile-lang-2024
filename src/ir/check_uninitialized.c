@@ -139,8 +139,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
         (Ulang_type_vec) {0},
-        name.scope_id,
-        (Attrs) {0}
+        name.scope_id
     ));
 
     Init_table_node* result = NULL;

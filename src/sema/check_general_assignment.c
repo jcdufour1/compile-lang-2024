@@ -109,8 +109,7 @@ static bool should_convert_src_to_cstr(Lang_type dest, Tast_expr** new_src) {
         MOD_PATH_RUNTIME,
         sv("Slice"),
         ulang_type_gen_args_char_new(),
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
+        SCOPE_TOP_LEVEL
     ));
 }
 

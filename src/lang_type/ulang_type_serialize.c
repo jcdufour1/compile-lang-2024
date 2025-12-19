@@ -4,7 +4,7 @@
 #include <uast_expr_to_ulang_type.h>
 #include <type_checking.h>
 
-#define poison name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0})
+#define poison name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
 
 static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr);
 
@@ -36,7 +36,7 @@ Name serialize_ulang_type_fn(Strv mod_path, Ulang_type_fn ulang_type, bool inclu
         *ulang_type.return_type,
         include_scope
     )));
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope) {
@@ -57,7 +57,7 @@ Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool
         include_scope
     )));
 
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_lit(Strv mod_path, Ulang_type_lit ulang_type) {
@@ -93,7 +93,7 @@ static Name serialize_ulang_type_expr_lit_struct_literal(Strv mod_path, const Ua
         );
     }
 
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 static Name serialize_ulang_type_expr_lit_literal(Strv mod_path, const Uast_literal* lit) {
@@ -104,13 +104,13 @@ static Name serialize_ulang_type_expr_lit_literal(Strv mod_path, const Uast_lite
     switch (lit->type) {
         case UAST_INT:
             string_extend_int64_t(&a_main, &name, uast_int_const_unwrap(lit)->data);
-            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case UAST_FLOAT:
             string_extend_strv(&a_main, &name, serialize_double(uast_float_const_unwrap(lit)->data));
-            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case UAST_STRING:
             serialize_strv_actual(&name, uast_string_const_unwrap(lit)->data);
-            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case UAST_VOID:
             msg_todo("void literal as generic argument", uast_literal_get_pos(lit));
             return poison;
@@ -128,8 +128,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
                 MOD_PATH_ARRAYS,
                 serialize_name(uast_symbol_const_unwrap(expr)->name),
                 (Ulang_type_vec) {0},
-                SCOPE_TOP_LEVEL,
-                (Attrs) {0}
+                SCOPE_TOP_LEVEL
             );
         case UAST_STRUCT_LITERAL:
             return serialize_ulang_type_expr_lit_struct_literal(mod_path, uast_struct_literal_const_unwrap(expr));
@@ -173,7 +172,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
                 "actual error message for non-literal found where literal was expected",
                 uast_expr_get_pos(expr)
             );
-            return name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            return name_new(MOD_PATH_ARRAYS, sv(""), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     }
     unreachable("");
 }
@@ -206,28 +205,28 @@ Name serialize_ulang_type_fn_lit(Ulang_type_fn_lit ulang_type) {
     string_extend_cstr(&a_main, &name, "_fn");
     string_extend_strv(&a_main, &name, serialize_name(ulang_type.name));
 
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_int_lit(Ulang_type_int_lit ulang_type) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "_");
     string_extend_int64_t(&a_main, &name, ulang_type.data);
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_float_lit(Ulang_type_float_lit ulang_type) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "_");
     string_extend_strv(&a_main, &name, serialize_double(ulang_type.data));
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_string_lit(Ulang_type_string_lit ulang_type) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "_");
     serialize_strv_actual(&name, ulang_type.data);
-    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_ARRAYS, string_to_strv(name), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
 }
 
 Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool include_scope) {
@@ -240,7 +239,7 @@ Name serialize_ulang_type_tuple(Strv mod_path, Ulang_type_tuple ulang_type, bool
             include_scope
         )));
     }
-    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0, (Attrs) {0});
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0);
 }
 
 Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, bool include_scope) {
@@ -248,17 +247,16 @@ Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, 
         mod_path,
         serialize_ulang_type_atom(ulang_type.name, ulang_type.pointer_depth, include_scope, ulang_type.pos),
         (Ulang_type_vec) {0},
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
+        SCOPE_TOP_LEVEL
     );
 }
 
 Name serialize_ulang_type_gen_param(Strv mod_path) {
-    return name_new(mod_path, sv("gen_param"), (Ulang_type_vec) {0}, 0, (Attrs) {0});
+    return name_new(mod_path, sv("gen_param"), (Ulang_type_vec) {0}, 0);
 }
 
 Name serialize_ulang_type_removed(Strv mod_path) {
-    return name_new(mod_path, sv("removed"), (Ulang_type_vec) {0}, 0, (Attrs) {0});
+    return name_new(mod_path, sv("removed"), (Ulang_type_vec) {0}, 0);
 }
 
 Strv serialize_ulang_type_vec(Strv mod_path, Ulang_type_vec vec, bool include_scope) {

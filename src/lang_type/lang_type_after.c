@@ -27,7 +27,7 @@ Name lang_type_primitive_get_name(const Lang_type_primitive lang_type) {
     }
 
     assert(new_base.count > 0);
-    Name new_name = name_new(MOD_PATH_BUILTIN, new_base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    Name new_name = name_new(MOD_PATH_BUILTIN, new_base, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
     assert(!strv_is_equal(new_name.base, sv("void")));
     assert(new_name.base.count > 0);
     return new_name;
@@ -69,7 +69,7 @@ bool lang_type_get_name(Name* result, Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             return false;
         case LANG_TYPE_VOID:
-            *result = name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+            *result = name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
             return true;
         case LANG_TYPE_FN:
             return false;
