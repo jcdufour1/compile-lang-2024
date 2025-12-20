@@ -133,14 +133,14 @@
 //        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
 //            todo();
 //        }
-//        vec_append(&a_main, output, ' ');
+//        darr_append(&a_main, output, ' ');
 //        extend_literal(output, literal);
 //    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(LANG_TYPE_MODE_LOG, ir_literal_get_lang_type(literal)))) {
 //        unwrap(ir_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
 //        if (lang_type_get_pointer_depth(ir_literal_get_lang_type(literal)) != 0) {
 //            todo();
 //        }
-//        vec_append(&a_main, output, ' ');
+//        darr_append(&a_main, output, ' ');
 //        extend_literal(output, literal);
 //    } else {
 //        unreachable(FMT"\n", ir_print(ir_expr_const_wrap(ir_literal_const_wrap(literal))));
@@ -158,7 +158,7 @@
 //
 //static void emit_function_params(String* output, const Ir_function_params* fun_params) {
 //    for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-//        const Ir_variable_def* curr_param = vec_at(fun_params->params, idx);
+//        const Ir_variable_def* curr_param = darr_at(fun_params->params, idx);
 //
 //        if (idx > 0) {
 //            string_extend_cstr(&a_main, output, ", ");
@@ -234,7 +234,7 @@
 //
 //static void emit_function_call_arguments(String* output, String* literals, const Ir_function_call* fun_call) {
 //    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-//        Name arg_name = vec_at(fun_call->args, idx);
+//        Name arg_name = darr_at(fun_call->args, idx);
 //        Ir* argument = NULL;
 //        unwrap(ir_lookup(&argument, arg_name));
 //
@@ -671,9 +671,9 @@
 //    string_extend_cstr(&a_main, output, " @");
 //    ir_extend_name(output, ir_get_name(ir_def_const_wrap(ir_function_def_const_wrap(fun_def))));
 //
-//    vec_append(&a_main, output, '(');
+//    darr_append(&a_main, output, '(');
 //    emit_function_params(output, fun_def->decl->params);
-//    vec_append(&a_main, output, ')');
+//    darr_append(&a_main, output, ')');
 //
 //    string_extend_cstr(&a_main, output, " {\n");
 //    emit_block(struct_defs, output, literals, fun_def->body);
@@ -742,9 +742,9 @@
 //    string_extend_cstr(&a_main, output, " @");
 //    // emit base of name only for extern("c")
 //    string_extend_strv(&a_main, output, fun_decl->name.base);
-//    vec_append(&a_main, output, '(');
+//    darr_append(&a_main, output, '(');
 //    emit_function_params(output, fun_decl->params);
-//    vec_append(&a_main, output, ')');
+//    darr_append(&a_main, output, ')');
 //    string_extend_cstr(&a_main, output, "\n");
 //}
 //
@@ -757,7 +757,7 @@
 //static void emit_goto(String* output, const Ir_goto* lang_goto) {
 //    string_extend_cstr(&a_main, output, "    br label %");
 //    ir_extend_name(output, lang_goto->label);
-//    vec_append(&a_main, output, '\n');
+//    darr_append(&a_main, output, '\n');
 //}
 //
 //static void emit_cond_goto(String* output, const Ir_cond_goto* cond_goto) {
@@ -767,7 +767,7 @@
 //    ir_extend_name(output, cond_goto->if_true);
 //    string_extend_cstr(&a_main, output, ", label %");
 //    ir_extend_name(output, cond_goto->if_false);
-//    vec_append(&a_main, output, '\n');
+//    darr_append(&a_main, output, '\n');
 //}
 //
 //static void emit_ir_struct_def_base(String* output, const Ir_struct_def_base* base) {
@@ -779,7 +779,7 @@
 //        if (!is_first) {
 //            string_extend_cstr(&a_main, output, ", ");
 //        }
-//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(vec_at(base->members, idx))), false);
+//        ir_extend_type_decl_str(output, ir_def_wrap(ir_variable_def_wrap(darr_at(base->members, idx))), false);
 //        is_first = false;
 //    }
 //
@@ -804,7 +804,7 @@
 //    ir_extend_name(output, load->ir_src);
 //    string_extend_cstr(&a_main, output, ", i32 0, i32 ");
 //    string_extend_size_t(&a_main, output, load->memb_idx);
-//    vec_append(&a_main, output, '\n');
+//    darr_append(&a_main, output, '\n');
 //}
 //
 //static void emit_array_access(String* output, const Ir_array_access* load) {
@@ -831,7 +831,7 @@
 //        emit_operator_operand(output, load->index);
 //    }
 //
-//    vec_append(&a_main, output, '\n');
+//    darr_append(&a_main, output, '\n');
 //}
 //
 //static void emit_expr(String* output, String* literals, const Ir_expr* expr) {
@@ -876,7 +876,7 @@
 //
 //static void emit_block(String* struct_defs, String* output, String* literals, const Ir_block* block) {
 //    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-//        const Ir* stmt = vec_at(block->children, idx);
+//        const Ir* stmt = darr_at(block->children, idx);
 //        switch (stmt->type) {
 //            case IR_EXPR:
 //                emit_expr(output, literals, ir_expr_const_unwrap(stmt));

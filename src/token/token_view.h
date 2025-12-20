@@ -67,7 +67,7 @@ static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, co
 
 static inline Strv tk_view_print_internal(Arena* arena, Tk_view tk_view) {
     String buf = {0};
-    vec_reset(&buf);
+    darr_reset(&buf);
 
     for (size_t idx = 0; idx < tk_view.count; idx++) {
         string_extend_strv(&a_temp, &buf, token_print_internal(arena, TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));

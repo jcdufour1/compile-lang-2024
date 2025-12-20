@@ -32,7 +32,7 @@ static Ir_name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_
     Ir_name new_name = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
         new_base,
-        (Ulang_type_vec) {0},
+        (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
     ));
     assert(!strv_is_equal(new_name.base, sv("void")));
@@ -98,7 +98,7 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
     Ir_name new_name = name_to_ir_name(name_new(
         MOD_PATH_EXTERN_C,
         new_base,
-        (Ulang_type_vec) {0},
+        (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
     ));
     assert(new_name.base.count > 0);
@@ -138,7 +138,7 @@ bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir
             *result = name_to_ir_name(name_new(
                 MOD_PATH_BUILTIN,
                 sv("void"),
-                (Ulang_type_vec) {0},
+                (Ulang_type_darr) {0},
                 SCOPE_TOP_LEVEL
             ));
             return true;

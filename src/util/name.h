@@ -22,26 +22,26 @@ typedef enum {
 typedef struct {
     Strv mod_path;
     Strv base;
-    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
+    Ulang_type_darr gen_args; // TODO: use Ulang_type_view instead of Ulang_type_darr?
     Scope_id scope_id;
 } Name;
 
 typedef struct {
     Strv mod_path;
     Strv base;
-    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
+    Ulang_type_darr gen_args; // TODO: use Ulang_type_view instead of Ulang_type_darr?
     Scope_id scope_id;
 } Ir_name;
 
 typedef struct {
     Vec_base info;
     Name* buf;
-} Name_vec;
+} Name_darr;
 
 typedef struct {
     Vec_base info;
     Ir_name* buf;
-} Ir_name_vec;
+} Ir_name_darr;
 
 // TODO: nodes should store Uname_id (which would contain size_t) instead of Uname?
 //   lookup table should store actual name struct associated with Uname_id
@@ -50,15 +50,15 @@ typedef struct {
 typedef struct {
     Name mod_alias;
     Strv base;
-    Ulang_type_vec gen_args; // TODO: use Ulang_type_view instead of Ulang_type_vec?
+    Ulang_type_darr gen_args; // TODO: use Ulang_type_view instead of Ulang_type_darr?
     Scope_id scope_id;
 } Uname;
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id);
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
+Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id);
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id);
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id);
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id);
 

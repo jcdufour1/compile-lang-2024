@@ -1,7 +1,7 @@
 #include <str_and_num_utils.h>
 #include <msg.h>
 #include <errno.h>
-#include <string_vec.h>
+#include <string_darr.h>
 #include <ast_msg.h>
 
 size_t get_count_excape_seq(Strv strv) {
@@ -24,7 +24,7 @@ void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
     while (strv.count > 0) {
         char front_char = strv_consume(&strv);
         if (front_char == '\\') {
-            vec_append(arena, string, '\\');
+            darr_append(arena, string, '\\');
             switch (strv_consume(&strv)) {
                 case 'n':
                     string_extend_hex_2_digits(arena, string, 0x0a);
@@ -33,7 +33,7 @@ void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
                     unreachable("");
             }
         } else {
-            vec_append(arena, string, front_char);
+            darr_append(arena, string, front_char);
         }
     }
 }
@@ -285,7 +285,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         default: {
             String buf = {0};
             string_extend_cstr(&a_main, &buf, "excape sequence `\\");
-            vec_append(&a_main, &buf, esc_char);
+            darr_append(&a_main, &buf, esc_char);
             string_extend_cstr(&a_main, &buf, "`");
             msg_todo_strv(string_to_strv(buf), pos);
             return false;
@@ -400,7 +400,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
     // TODO: use better solution for debugging
     //string_extend_cstr(&a_main, &var_name, "file____");
-    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Strv) {0}, (Ulang_type_vec) {0}, 0)));
+    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Strv) {0}, (Ulang_type_darr) {0}, 0)));
     //string_extend_cstr(&a_main, &var_name, "_");
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
@@ -418,7 +418,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
-    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id);
+    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_darr) {0}, scope_id);
 }
 
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
@@ -432,7 +432,7 @@ Strv serialize_double(double num) {
     string_extend_double(&a_temp, &temp, num);
     size_t idx_decimal = 0;
     bool did_find_dec = false;
-    vec_foreach(idx, char, curr, temp) {
+    darr_foreach(idx, char, curr, temp) {
         idx_decimal = idx;
         if (curr == '.') {
             did_find_dec = true;

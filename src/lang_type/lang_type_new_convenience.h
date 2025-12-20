@@ -31,8 +31,8 @@ static inline Lang_type lang_type_new_void(Pos pos) {
 }
 
 static inline Lang_type lang_type_new_slice(Pos pos, Ulang_type item_type, int16_t pointer_depth) {
-    Ulang_type_vec gen_args = {0};
-    vec_append(&a_main, &gen_args, item_type);
+    Ulang_type_darr gen_args = {0};
+    darr_append(&a_main, &gen_args, item_type);
     return lang_type_struct_const_wrap(lang_type_struct_new(
         pos,
         name_new(MOD_PATH_RUNTIME, sv("Slice"), gen_args, SCOPE_TOP_LEVEL),
@@ -41,8 +41,8 @@ static inline Lang_type lang_type_new_slice(Pos pos, Ulang_type item_type, int16
 }
 
 static inline Lang_type lang_type_new_optional(Pos pos, Ulang_type inner_type) {
-    Ulang_type_vec gen_args = {0};
-    vec_append(&a_main, &gen_args, inner_type);
+    Ulang_type_darr gen_args = {0};
+    darr_append(&a_main, &gen_args, inner_type);
     return lang_type_struct_const_wrap(lang_type_struct_new(
         pos,
         name_new(MOD_PATH_RUNTIME, sv("Optional"), gen_args, SCOPE_TOP_LEVEL),

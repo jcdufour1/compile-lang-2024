@@ -44,7 +44,7 @@ size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type(vec_at(base.members, idx)->lang_type);
+        uint64_t curr_size = sizeof_lang_type(darr_at(base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

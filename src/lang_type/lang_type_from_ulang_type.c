@@ -107,7 +107,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     Name alias_name = name_new(
         name.mod_alias.mod_path,
         name.mod_alias.base,
-        (Ulang_type_vec) {0},
+        (Ulang_type_darr) {0},
         name.mod_alias.scope_id
     );
 
@@ -213,7 +213,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_void_const_unwrap(lang_type).pos,
-                uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+                uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
                 0
             ));
         case LANG_TYPE_PRIMITIVE:

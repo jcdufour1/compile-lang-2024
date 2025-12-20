@@ -14,7 +14,7 @@ static inline Symbol_iter sym_tbl_iter_new_table(Symbol_table tbl) {
 }
 
 static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {
-    return sym_tbl_iter_new_table(vec_at_ref(&env.symbol_tables, scope_id)->symbol_table);
+    return sym_tbl_iter_new_table(darr_at_ref(&env.symbol_tables, scope_id)->symbol_table);
 }
 
 static inline bool sym_tbl_iter_next(Tast_def** result, Symbol_iter* iter) {
@@ -40,7 +40,7 @@ static inline Usymbol_iter usym_tbl_iter_new_table(Usymbol_table tbl) {
 }
 
 static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
-    return usym_tbl_iter_new_table(vec_at_ref(&env.symbol_tables, scope_id)->usymbol_table);
+    return usym_tbl_iter_new_table(darr_at_ref(&env.symbol_tables, scope_id)->usymbol_table);
 }
 
 
@@ -64,7 +64,7 @@ typedef struct {
 
 // TODO: rename Alloca_table to Ir_table, etc.
 static inline Alloca_iter ir_tbl_iter_new(Scope_id scope_id) {
-    return (Alloca_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->ir_table};
+    return (Alloca_iter) {.bucket_idx = 0, .tbl = darr_at_ref(&env.symbol_tables, scope_id)->ir_table};
 }
 
 static inline bool ir_tbl_iter_next(Ir** result, Alloca_iter* iter) {

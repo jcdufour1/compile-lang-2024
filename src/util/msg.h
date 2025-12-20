@@ -2,7 +2,7 @@
 #define MSG_H
 
 #include <util.h>
-#include <vector.h>
+#include <darr.h>
 
 #define msg(diag_type, pos, ...) \
     do { \
@@ -21,7 +21,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Defered_msg* buf;
-} Defered_msg_vec;
+} Defered_msg_darr;
 
 void print_all_defered_msgs(void);
 

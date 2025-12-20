@@ -25,7 +25,7 @@ void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
+Strv ir_lang_type_darr_print_internal(Ir_lang_type_darr types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -33,7 +33,7 @@ Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(types, idx));
+        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, darr_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
@@ -77,7 +77,7 @@ static NAME_MODE lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
 // TODO: add arena argument?
 void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '<');
+        darr_append(&a_temp, string, '<');
     }
 
     switch (mode) {
@@ -101,12 +101,12 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
-            Ir_lang_type_vec ir_lang_types = ir_lang_type_tuple_const_unwrap(ir_lang_type).ir_lang_types;
+            Ir_lang_type_darr ir_lang_types = ir_lang_type_tuple_const_unwrap(ir_lang_type).ir_lang_types;
             for (size_t idx = 0; idx < ir_lang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_ir_lang_type_to_string(string, mode, vec_at(ir_lang_types, idx));
+                extend_ir_lang_type_to_string(string, mode, darr_at(ir_lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
@@ -118,11 +118,11 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             extend_ir_lang_type_to_string(string, mode, ir_lang_type_tuple_const_wrap(fn.params));
             extend_ir_lang_type_to_string(string, mode, *fn.return_type);
             if (fn.pointer_depth > 1) {
-                vec_append(&a_temp, string, ')');
+                darr_append(&a_temp, string, ')');
             }
             assert(fn.pointer_depth > 0);
             for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             goto end;
         }
@@ -134,7 +134,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             }
             extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             goto end;
         }
@@ -160,7 +160,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             assert(name.base.count >= 1);
             extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
         }
             goto end;
@@ -169,7 +169,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
 
 end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '>');
+        darr_append(&a_temp, string, '>');
     }
 }
 

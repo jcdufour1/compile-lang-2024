@@ -4,7 +4,7 @@
 #include <string.h>
 #include <util.h>
 #include <strv.h>
-#include <vector.h>
+#include <darr.h>
 #include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -20,7 +20,7 @@ typedef struct {
 
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
-        vec_append(arena, str, *cstr);
+        darr_append(arena, str, *cstr);
     }
 }
 
@@ -91,7 +91,7 @@ static inline void string_extend_double(Arena* arena, String* str, double num) {
 static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     String string = {0};
     for (size_t idx = 0; cstr[idx]; idx++) {
-        vec_append(arena, &string, cstr[idx]);
+        darr_append(arena, &string, cstr[idx]);
     }
     return string;
 }
@@ -99,20 +99,20 @@ static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
 static inline String string_new_from_strv(Arena* arena, Strv strv) {
     String string = {0};
     for (size_t idx = 0; idx < strv.count; idx++) {
-        vec_append(arena, &string, strv_at(strv, idx));
+        darr_append(arena, &string, strv_at(strv, idx));
     }
     return string;
 }
 
 static inline void string_extend_strv(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
-        vec_append(arena, string, strv_at(strv, idx));
+        darr_append(arena, string, strv_at(strv, idx));
     }
 }
 
 static inline void string_extend_strv_indent(Arena* arena, String* string, Strv strv, Indent indent) {
     for (size_t idx = 0; idx < indent; idx++) {
-        vec_append(arena, string, '-');
+        darr_append(arena, string, '-');
     }
     string_extend_strv(arena, string, strv);
 }
@@ -129,9 +129,9 @@ static inline void string_extend_line(Arena* arena, String* string, uint32_t num
 }
 
 static inline void string_extend_strv_in_sym(Arena* arena, String* string, Strv strv, char opening_symbol, char closing_symbol) {
-    vec_append(arena, string, opening_symbol);
+    darr_append(arena, string, opening_symbol);
     string_extend_strv(arena, string, strv);
-    vec_append(arena, string, closing_symbol);
+    darr_append(arena, string, closing_symbol);
 }
 
 static inline void string_extend_strv_in_par(Arena* arena, String* string, Strv strv) {
@@ -166,23 +166,23 @@ static inline Strv string_slice(String string, size_t start, size_t count) {
 // TODO: move these functions to newstring.h?
 static void string_extend_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
-        vec_append(arena, string, toupper(strv_at(strv, idx)));
+        darr_append(arena, string, toupper(strv_at(strv, idx)));
     }
 }
 
 static inline void string_extend_first_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         if (idx == 0) {
-            vec_append(arena, string, toupper(strv_at(strv, idx)));
+            darr_append(arena, string, toupper(strv_at(strv, idx)));
         } else {
-            vec_append(arena, string, tolower(strv_at(strv, idx)));
+            darr_append(arena, string, tolower(strv_at(strv, idx)));
         }
     }
 }
 
 static inline void string_extend_lower(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
-        vec_append(arena, string, tolower(strv_at(strv, idx)));
+        darr_append(arena, string, tolower(strv_at(strv, idx)));
     }
 }
 

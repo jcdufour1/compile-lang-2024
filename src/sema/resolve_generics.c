@@ -25,7 +25,7 @@ static void msg_undefined_type_internal(
             Uast_def* dummy = NULL;
             Name base_name = {0};
             if (name_from_uname(&base_name, ulang_type_regular_const_unwrap(lang_type).name, pos)) {
-                base_name.gen_args = (Ulang_type_vec) {0};
+                base_name.gen_args = (Ulang_type_darr) {0};
                 if (!usymbol_lookup(&dummy, base_name)) {
                     msg_internal(
                         file, line,
@@ -108,8 +108,8 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
     }
 
     {
-        vec_foreach(curr_idx, Uast_generic_param*, curr, base->generics) {
-            vec_foreach(prev_idx, Uast_generic_param*, prev, base->generics) {
+        darr_foreach(curr_idx, Uast_generic_param*, curr, base->generics) {
+            darr_foreach(prev_idx, Uast_generic_param*, prev, base->generics) {
                 if (prev_idx >= curr_idx) {
                     continue;
                 }
@@ -135,13 +135,13 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
         }
     }
 
-    Tast_variable_def_vec new_members = {0};
+    Tast_variable_def_darr new_members = {0};
     {
         for (size_t idx = 0; idx < base->members.info.count; idx++) {
-            Uast_variable_def* curr = vec_at(base->members, idx);
+            Uast_variable_def* curr = darr_at(base->members, idx);
 
             for (size_t prev_idx = 0; prev_idx < idx; prev_idx++) {
-                if (name_is_equal(vec_at(base->members, prev_idx)->name, curr->name)) {
+                if (name_is_equal(darr_at(base->members, prev_idx)->name, curr->name)) {
                     if (env.silent_generic_resol_errors) {
                         return false;
                     }
@@ -152,7 +152,7 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
                         name_print(NAME_MSG, curr->name)
                     );
                     msg(
-                        DIAG_NOTE, vec_at(base->members, prev_idx)->pos,
+                        DIAG_NOTE, darr_at(base->members, prev_idx)->pos,
                         "member `"FMT"` previously defined here\n",
                         name_print(NAME_MSG, curr->name)
                     );
@@ -160,7 +160,7 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
                 }
             }
 
-            vec_foreach(gen_idx, Uast_generic_param*, gen_param, base->generics) {
+            darr_foreach(gen_idx, Uast_generic_param*, gen_param, base->generics) {
                 if (name_is_equal(gen_param->name, curr->name)) {
                     if (env.silent_generic_resol_errors) {
                         return false;
@@ -182,7 +182,7 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
 
             Tast_variable_def* new_memb = NULL;
             if (try_set_variable_def_types(&new_memb, curr, false, false)) {
-                vec_append(&a_main, &new_members, new_memb);
+                darr_append(&a_main, &new_members, new_memb);
             } else {
                 status = false;
             }
@@ -240,7 +240,7 @@ static bool try_set_enum_def_types(Uast_enum_def* after_res) {
 static void resolve_generics_serialize_struct_def_base(
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
-    Ulang_type_vec gen_args,
+    Ulang_type_darr gen_args,
     Name new_name
 ) {
     if (gen_args.info.count < 1) {
@@ -249,10 +249,10 @@ static void resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(old_base.members, idx_memb), false, 0));
+        darr_append(&a_main, &new_base->members, uast_variable_def_clone(darr_at(old_base.members, idx_memb), false, 0));
     }
 
-    vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+    darr_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
         Ulang_type inner = {0};
         // TODO: remove this unwrap?
         unwrap(ulang_type_remove_expr(&inner, *gen_arg));
@@ -260,8 +260,8 @@ static void resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
-        Name gen_def = vec_at(old_base.generics, idx_gen)->name;
-        generic_sub_struct_def_base(new_base, gen_def, vec_at(gen_args, idx_gen));
+        Name gen_def = darr_at(old_base.generics, idx_gen)->name;
+        generic_sub_struct_def_base(new_base, gen_def, darr_at(gen_args, idx_gen));
     }
 
     unwrap(old_base.members.info.count == new_base->members.info.count);
@@ -282,7 +282,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
     Obj_new obj_new
 ) {
     {
-        vec_foreach(idx, Ulang_type, gen_arg, ulang_type_regular_const_unwrap(lang_type).name.gen_args) {
+        darr_foreach(idx, Ulang_type, gen_arg, ulang_type_regular_const_unwrap(lang_type).name.gen_args) {
             Lang_type dummy = {0};
             if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
                 return false;
@@ -345,7 +345,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
     }
     if (struct_like_tbl_add(*after_res)) {
         usym_tbl_update(*after_res);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
+        darr_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
 }
@@ -474,7 +474,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
         return false;
     }
 
-    vec_foreach_ref(idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
+    darr_foreach_ref(idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
         Ulang_type inner = {0};
         if (!ulang_type_remove_expr(&inner, *gen_arg)) {
             return false;
@@ -585,7 +585,7 @@ static bool resolve_generics_serialize_function_decl(
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
     Uast_block* new_block,
-    Ulang_type_vec gen_args,
+    Ulang_type_darr gen_args,
     Pos pos_gen_args
 ) {
     memset(new_decl, 0, sizeof(*new_decl));
@@ -594,15 +594,15 @@ static bool resolve_generics_serialize_function_decl(
         return false;
     }
 
-    Uast_param_vec params = {0};
+    Uast_param_darr params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_clone(vec_at(old_decl->params->params, idx), true, new_block->scope_id));
+        darr_append(&a_main, &params, uast_param_clone(darr_at(old_decl->params->params, idx), true, new_block->scope_id));
     }
 
     Ulang_type new_rtn_type = old_decl->return_type;
 
     {
-        vec_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
+        darr_foreach_ref(idx_, Ulang_type, gen_arg, gen_args) {
             Ulang_type inner = {0};
             if (!ulang_type_remove_expr(&inner, *gen_arg)) {
                 return false;
@@ -613,7 +613,7 @@ static bool resolve_generics_serialize_function_decl(
 
     size_t args_covered = 0;
     {
-        vec_foreach(idx_arg, Ulang_type, gen_arg, gen_args) {
+        darr_foreach(idx_arg, Ulang_type, gen_arg, gen_args) {
             (void) gen_arg;
             args_covered++;
 
@@ -629,17 +629,17 @@ static bool resolve_generics_serialize_function_decl(
             }
 
             for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-                Name curr_arg = vec_at(old_decl->generics, idx_arg)->name;
+                Name curr_arg = darr_at(old_decl->generics, idx_arg)->name;
                 // TODO: same params are being replaced both here and in generic_sub_block?
                 generic_sub_param(
-                    vec_at(params, idx_fun_param),
+                    darr_at(params, idx_fun_param),
                     curr_arg,
-                    vec_at(gen_args, idx_arg)
+                    darr_at(gen_args, idx_arg)
                 );
             }
-            Name curr_gen = vec_at(old_decl->generics, idx_arg)->name;
-            generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(gen_args, idx_arg));
-            generic_sub_block(new_block, curr_gen, vec_at(gen_args, idx_arg));
+            Name curr_gen = darr_at(old_decl->generics, idx_arg)->name;
+            generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, darr_at(gen_args, idx_arg));
+            generic_sub_block(new_block, curr_gen, darr_at(gen_args, idx_arg));
         }
     }
 
@@ -656,7 +656,7 @@ static bool resolve_generics_serialize_function_decl(
 
     *new_decl = uast_function_decl_new(
         old_decl->pos,
-        (Uast_generic_param_vec) {0},
+        (Uast_generic_param_darr) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
         name_new(old_decl->name.mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id))
@@ -665,17 +665,17 @@ static bool resolve_generics_serialize_function_decl(
     return true;
 }
 
-static void name_normalize(Uast_generic_param_vec gen_params, Name* name) {
-    vec_foreach_ref(idx, Ulang_type, gen_arg, name->gen_args) {
+static void name_normalize(Uast_generic_param_darr gen_params, Name* name) {
+    darr_foreach_ref(idx, Ulang_type, gen_arg, name->gen_args) {
         if (gen_arg->type == ULANG_TYPE_LIT) {
             // TODO: rename ulang_type_lit to ulang_type_lit?
             Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(*gen_arg);
             if (const_expr.type == ULANG_TYPE_STRUCT_LIT) {
                 Ulang_type_struct_lit struct_lit = ulang_type_struct_lit_const_unwrap(const_expr);
-                unwrap(vec_at(gen_params, idx)->is_expr);
+                unwrap(darr_at(gen_params, idx)->is_expr);
                 *gen_arg = ulang_type_lit_const_wrap(ulang_type_struct_lit_const_wrap(ulang_type_struct_lit_new(
                     struct_lit.pos,
-                    uast_operator_wrap(uast_unary_wrap(uast_unary_new(struct_lit.pos, struct_lit.expr, UNARY_UNSAFE_CAST, vec_at(gen_params, idx)->expr_lang_type))),
+                    uast_operator_wrap(uast_unary_wrap(uast_unary_new(struct_lit.pos, struct_lit.expr, UNARY_UNSAFE_CAST, darr_at(gen_params, idx)->expr_lang_type))),
                     struct_lit.pointer_depth
                 )));
             }
@@ -688,20 +688,20 @@ bool resolve_generics_function_def_call(
     Lang_type_fn* type_res,
     Name* new_name,
     Uast_function_def* def,
-    Ulang_type_vec gen_args, // TODO: remove or refactor name?
+    Ulang_type_darr gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     name_normalize(def->decl->generics, &name);
-    Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
+    Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_darr) {0}, def->decl->name.scope_id);
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
     if (function_decl_tbl_lookup(&cached, name)) {
         // TODO: consider caching ulang_types
-        Ulang_type_vec ulang_types = {0};
+        Ulang_type_darr ulang_types = {0};
         for (size_t idx = 0; idx < cached->params->params.info.count; idx++) {
-            vec_append(&a_main, &ulang_types, vec_at(cached->params->params, idx)->base->lang_type);
+            darr_append(&a_main, &ulang_types, darr_at(cached->params->params, idx)->base->lang_type);
         }
 
         Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
@@ -730,11 +730,11 @@ bool resolve_generics_function_def_call(
     decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
         for (size_t idx_gen_param = 0; idx_gen_param < gen_args.info.count; idx_gen_param++) {
-            Name gen_param = vec_at(decl->generics, idx_gen_param)->name;
-            Ulang_type gen_arg = vec_at(gen_args, idx_gen_param);
+            Name gen_param = darr_at(decl->generics, idx_gen_param)->name;
+            Ulang_type gen_arg = darr_at(gen_args, idx_gen_param);
             generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
             for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
-                Uast_param* param = vec_at(decl->params->params, idx_param);
+                Uast_param* param = darr_at(decl->params->params, idx_param);
                 generic_sub_param(param, gen_param, gen_arg);
             }
         }
@@ -746,9 +746,9 @@ bool resolve_generics_function_def_call(
     assert(function_decl_tbl_lookup(&dummy, decl->name));
 
     // TODO: consider caching ulang_types
-    Ulang_type_vec ulang_types = {0};
+    Ulang_type_darr ulang_types = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &ulang_types, vec_at(decl->params->params, idx)->base->lang_type);
+        darr_append(&a_main, &ulang_types, darr_at(decl->params->params, idx)->base->lang_type);
     }
 
     Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
@@ -766,13 +766,13 @@ bool resolve_generics_function_def_call(
     *type_res = rtn_type_;
     *new_name = name;
 
-    vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
+    darr_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
 
     return true;
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
-    Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
+    Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_darr) {0}, name.scope_id);
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
     unwrap(

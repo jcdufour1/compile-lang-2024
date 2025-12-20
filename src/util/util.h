@@ -187,9 +187,9 @@ typedef size_t Scope_id;
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
-#define MOD_ALIAS_BUILTIN name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-#define MOD_ALIAS_TOP_LEVEL name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
-#define MOD_ALIAS_PRELUDE name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_BUILTIN name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_TOP_LEVEL name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_PRELUDE name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
 
 #define EXTERN_C_OWN_PREFIX "own"
 

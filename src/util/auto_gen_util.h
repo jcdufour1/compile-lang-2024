@@ -12,7 +12,7 @@
 #include <local_string.h>
 #include <arena.h>
 #include <log_internal.h>
-#include <string_vec.h>
+#include <string_darr.h>
 #include <util.h>
 
 FILE* global_output = NULL;
@@ -42,7 +42,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Symbol_tbl_type* buf;
-} Sym_tbl_type_vec;
+} Sym_tbl_type_darr;
 
 typedef struct {
     Strv name;
@@ -78,9 +78,9 @@ static void extend_strv_first_upper(String* output, Strv name) {
     if (name.count < 1) {
         return;
     }
-    vec_append(&a_gen, output, toupper(strv_first(name)));
+    darr_append(&a_gen, output, toupper(strv_first(name)));
     for (size_t idx = 1; idx < name.count; idx++) {
-        vec_append(&a_gen, output, tolower(strv_at(name, idx)));
+        darr_append(&a_gen, output, tolower(strv_at(name, idx)));
     }
 }
 
@@ -97,7 +97,7 @@ static void append_member(Members* members, const char* type, const char* name) 
         .type = sv(type),
         .name = sv(name)
     };
-    vec_append(&a_gen, members, member);
+    darr_append(&a_gen, members, member);
 }
 
 static Strv loc_print_internal(const char* file, int line) {
@@ -119,7 +119,7 @@ typedef struct Uast_type_ Uast_type;
 typedef struct {
     Vec_base info;
     Uast_type* buf;
-} Uast_type_vec;
+} Uast_type_darr;
 
 typedef struct {
     bool is_topmost;
@@ -131,21 +131,21 @@ typedef struct {
 typedef struct Uast_type_ {
     Uast_name name;
     Members members;
-    Uast_type_vec sub_types;
+    Uast_type_darr sub_types;
 } Uast_type;
 
-static void uast_get_type_vec_internal(Uast_type_vec* type_vec, Uast_type uast) {
+static void uast_get_type_darr_internal(Uast_type_darr* type_darr, Uast_type uast) {
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_get_type_vec_internal(type_vec, vec_at(uast.sub_types, idx));
+        uast_get_type_darr_internal(type_darr, darr_at(uast.sub_types, idx));
     }
 
-    vec_append(&a_gen, type_vec, uast);
+    darr_append(&a_gen, type_darr, uast);
 }
 
-static Uast_type_vec uast_get_type_vec(Uast_type uast) {
-    Uast_type_vec type_vec = {0};
-    uast_get_type_vec_internal(&type_vec, uast);
-    return type_vec;
+static Uast_type_darr uast_get_type_darr(Uast_type uast) {
+    Uast_type_darr type_darr = {0};
+    uast_get_type_darr_internal(&type_darr, uast);
+    return type_darr;
 }
 
 static void extend_uast_name_upper(String* output, Uast_name name) {
@@ -254,7 +254,7 @@ static void uast_gen_uast_forward_decl(Uast_type uast) {
     String output = {0};
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_forward_decl(vec_at(uast.sub_types, idx));
+        uast_gen_uast_forward_decl(darr_at(uast.sub_types, idx));
     }
 
     string_extend_cstr(&a_gen, &output, "struct ");
@@ -283,7 +283,7 @@ static void uast_gen_uast_struct_as(String* output, Uast_type uast) {
     string_extend_cstr(&a_gen, output, "{\n");
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(uast.sub_types, idx);
+        Uast_type curr = darr_at(uast.sub_types, idx);
         string_extend_cstr(&a_gen, output, "    ");
         extend_uast_name_first_upper(output, curr.name);
         string_extend_cstr(&a_gen, output, " ");
@@ -306,7 +306,7 @@ static void uast_gen_uast_struct_enum(String* output, Uast_type uast) {
     string_extend_cstr(&a_gen, output, "{\n");
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(uast.sub_types, idx);
+        Uast_type curr = darr_at(uast.sub_types, idx);
         string_extend_cstr(&a_gen, output, "    ");
         extend_uast_name_upper(output, curr.name);
         string_extend_cstr(&a_gen, output, ",\n");
@@ -323,7 +323,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
     String output = {0};
 
     for (size_t idx = 0; idx < uast.sub_types.info.count; idx++) {
-        uast_gen_uast_struct(vec_at(uast.sub_types, idx));
+        uast_gen_uast_struct(darr_at(uast.sub_types, idx));
     }
 
     if (uast.sub_types.info.count > 0) {
@@ -357,7 +357,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
     }
 
     for (size_t idx = 0; idx < uast.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(uast.members, idx));
+        extend_struct_member(&output, darr_at(uast.members, idx));
     }
 
     string_extend_f(&a_gen, &output, "#  ifndef NDEBUG\n");

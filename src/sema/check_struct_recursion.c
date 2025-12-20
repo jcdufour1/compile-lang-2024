@@ -10,11 +10,11 @@
 // TODO: consider using iterative approach to avoid stack overflow risk
 static Arena struct_like_rec_a = {0};
 
-static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack);
+static bool check_struct_rec_internal(Ustruct_def_base base, Name_darr rec_stack);
 
-static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang_type, Name name, Name_vec rec_stack) {
+static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang_type, Name name, Name_darr rec_stack) {
     for (size_t idx = 0; idx < rec_stack.info.count; idx++) {
-        if (name_is_equal(vec_at(rec_stack, idx), name)) {
+        if (name_is_equal(darr_at(rec_stack, idx), name)) {
             msg(
                 DIAG_STRUCT_LIKE_RECURSION, lang_type.pos,
                 "`"FMT"` recursively includes itself without indirection; consider "
@@ -25,7 +25,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
             Uast_def* prev = def;
             for (size_t idx_stk = idx + 1; idx_stk < rec_stack.info.count; idx_stk++) {
                 Uast_def* curr = NULL;
-                unwrap(usymbol_lookup(&curr, vec_at(rec_stack, idx_stk)));
+                unwrap(usymbol_lookup(&curr, darr_at(rec_stack, idx_stk)));
                 msg(
                     DIAG_NOTE, uast_def_get_pos(prev),
                     "`"FMT"` contains `"FMT"`\n",
@@ -48,7 +48,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
     return check_struct_rec_internal(uast_def_get_struct_def_base(def), rec_stack);
 }
 
-static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack) {
+static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_darr rec_stack) {
     if (lang_type.pointer_depth > 0) {
         return true;
     }
@@ -95,7 +95,7 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
     unreachable("");
 }
 
-static bool check_struct_rec_internal_ulang_type(Ulang_type lang_type, Name_vec rec_stack) {
+static bool check_struct_rec_internal_ulang_type(Ulang_type lang_type, Name_darr rec_stack) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular reg = ulang_type_regular_const_unwrap(lang_type);
@@ -126,11 +126,11 @@ static bool check_struct_rec_internal_ulang_type(Ulang_type lang_type, Name_vec 
     unreachable("");
 }
 
-static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack) {
-    vec_append(&struct_like_rec_a, &rec_stack, base.name);
+static bool check_struct_rec_internal(Ustruct_def_base base, Name_darr rec_stack) {
+    darr_append(&struct_like_rec_a, &rec_stack, base.name);
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(base.members, idx);
+        Uast_variable_def* curr = darr_at(base.members, idx);
         check_struct_rec_internal_ulang_type(curr->lang_type, rec_stack);
     }
 
@@ -138,7 +138,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_vec rec_stack)
 }
 
 bool check_struct_for_rec(const Uast_def* def) {
-    bool status = check_struct_rec_internal(uast_def_get_struct_def_base(def), (Name_vec) {0});
+    bool status = check_struct_rec_internal(uast_def_get_struct_def_base(def), (Name_darr) {0});
     arena_reset(&struct_like_rec_a);
     return status;
 }

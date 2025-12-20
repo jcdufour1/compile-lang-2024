@@ -31,7 +31,7 @@ static void expand_using_using(Uast_using* using) {
         if (!name_from_uname(&lang_type_name, lang_type_uname, ulang_type_get_pos(var_def->lang_type))) {
             return;
         }
-        vec_reset(&lang_type_name.gen_args);
+        darr_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
         if (struct_def_->type != UAST_STRUCT_DEF) {
@@ -51,7 +51,7 @@ static void expand_using_using(Uast_using* using) {
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
 
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-            Uast_variable_def* curr = vec_at(struct_def->base.members, idx);
+            Uast_variable_def* curr = darr_at(struct_def->base.members, idx);
             Name alias_name = using->sym_name;
             alias_name.mod_path = using->mod_path_to_put_defs;
             alias_name.base = curr->name.base;
@@ -156,7 +156,7 @@ static void expand_using_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Uast_stmt** curr = vec_at_ref(&block->children, idx);
+        Uast_stmt** curr = darr_at_ref(&block->children, idx);
         if (USING_STMT_DISCARD == expand_using_stmt(*curr)) {
             *curr = uast_stmt_removed_wrap(uast_stmt_removed_new(uast_stmt_get_pos(*curr)));
         }

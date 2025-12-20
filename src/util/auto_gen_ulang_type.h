@@ -47,10 +47,10 @@ static Uast_type ulang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Uast_type ulang_type = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_signed_int(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_unsigned_int(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_float(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_opaque(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_signed_int(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_unsigned_int(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_float(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_opaque(base_name));
 
     return ulang_type;
 }
@@ -120,7 +120,7 @@ static Uast_type ulang_type_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    append_member(&sym.members, "Ulang_type_vec", "ulang_types");
+    append_member(&sym.members, "Ulang_type_darr", "ulang_types");
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -207,11 +207,11 @@ static Uast_type ulang_type_gen_lit(const char* prefix) {
     const char* base_name = "lit";
     Uast_type ulang_type = {.name = uast_name_new(prefix, base_name, false, "ulang_type")};
 
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_float_lit(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_string_lit(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_struct_lit(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_fn_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_int_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_float_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_string_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_struct_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_fn_lit(base_name));
 
     return ulang_type;
 }
@@ -220,13 +220,13 @@ static Uast_type ulang_type_gen_ulang_type(void) {
     const char* base_name = "ulang_type";
     Uast_type ulang_type = {.name = uast_name_new(base_name, "", true, "ulang_type")};
 
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_tuple(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_fn(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_a_genrray(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_expr(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_lit(base_name));
-    vec_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_removed(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_tuple(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_fn(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_a_genrray(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_expr(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_lit(base_name));
+    darr_append(&a_gen, &ulang_type.sub_types, ulang_type_gen_removed(base_name));
 
     return ulang_type;
 }
@@ -235,7 +235,7 @@ static void ulang_type_gen_ulang_type_forward_decl(Uast_type ulang_type) {
     String output = {0};
 
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        ulang_type_gen_ulang_type_forward_decl(vec_at(ulang_type.sub_types, idx));
+        ulang_type_gen_ulang_type_forward_decl(darr_at(ulang_type.sub_types, idx));
     }
 
     string_extend_cstr(&a_gen, &output, "struct ");
@@ -259,7 +259,7 @@ static void ulang_type_gen_ulang_type_struct_as(String* output, Uast_type ulang_
     string_extend_cstr(&a_gen, output, "{\n");
 
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(ulang_type.sub_types, idx);
+        Uast_type curr = darr_at(ulang_type.sub_types, idx);
         string_extend_cstr(&a_gen, output, "    ");
         extend_uast_name_first_upper(output, curr.name);
         string_extend_cstr(&a_gen, output, " ");
@@ -282,7 +282,7 @@ static void ulang_type_gen_ulang_type_struct_enum(String* output, Uast_type ulan
     string_extend_cstr(&a_gen, output, "{\n");
 
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        Uast_type curr = vec_at(ulang_type.sub_types, idx);
+        Uast_type curr = darr_at(ulang_type.sub_types, idx);
         string_extend_cstr(&a_gen, output, "    ");
         extend_uast_name_upper(output, curr.name);
         string_extend_cstr(&a_gen, output, ",\n");
@@ -299,7 +299,7 @@ static void ulang_type_gen_ulang_type_struct(Uast_type ulang_type) {
     String output = {0};
 
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        ulang_type_gen_ulang_type_struct(vec_at(ulang_type.sub_types, idx));
+        ulang_type_gen_ulang_type_struct(darr_at(ulang_type.sub_types, idx));
     }
 
     if (ulang_type.sub_types.info.count > 0) {
@@ -333,7 +333,7 @@ static void ulang_type_gen_ulang_type_struct(Uast_type ulang_type) {
     }
 
     for (size_t idx = 0; idx < ulang_type.members.info.count; idx++) {
-        extend_struct_member(&output, vec_at(ulang_type.members, idx));
+        extend_struct_member(&output, darr_at(ulang_type.members, idx));
     }
 
     if (ulang_type.sub_types.info.count < 1) {
@@ -353,23 +353,23 @@ static void gen_ulang_type_new_forward_decl(Uast_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, false);
 }
 
-static void gen_ulang_type_vecs(Uast_type ulang_type) {
+static void gen_ulang_type_darrs(Uast_type ulang_type) {
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        gen_ulang_type_vecs(vec_at(ulang_type.sub_types, idx));
+        gen_ulang_type_darrs(darr_at(ulang_type.sub_types, idx));
     }
 
-    String vec_name = {0};
-    extend_uast_name_first_upper(&vec_name, ulang_type.name);
-    string_extend_cstr(&a_gen, &vec_name, "_vec");
+    String darr_name = {0};
+    extend_uast_name_first_upper(&darr_name, ulang_type.name);
+    string_extend_cstr(&a_gen, &darr_name, "_darr");
 
     String item_name = {0};
     extend_uast_name_first_upper(&item_name, ulang_type.name);
     string_extend_cstr(&a_gen, &item_name, "*");
 
-    gen_vec_from_strv(string_to_strv(vec_name), string_to_strv(item_name));
+    gen_darr_from_strv(string_to_strv(darr_name), string_to_strv(item_name));
 }
 
-static void ulang_type_gen_print_overloading(Uast_type_vec types) {
+static void ulang_type_gen_print_overloading(Uast_type_darr types) {
     return;
     String function = {0};
 
@@ -377,7 +377,7 @@ static void ulang_type_gen_print_overloading(Uast_type_vec types) {
 
     string_extend_cstr(&a_gen, &function, "#define ulang_type_print_overload(ulang_type, indent) _Generic ((ulang_type), \\\n");
 
-    vec_foreach(idx, Uast_type, type, types) {
+    darr_foreach(idx, Uast_type, type, types) {
         string_extend_cstr(&a_gen, &function, "    ");
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&a_gen, &function, "*: ");
@@ -396,18 +396,18 @@ static void ulang_type_gen_print_overloading(Uast_type_vec types) {
     gen_gen(FMT"\n", string_print(function));
 }
 
-static void ulang_type_get_type_vec_internal(Uast_type_vec* type_vec, Uast_type ulang_type) {
+static void ulang_type_get_type_darr_internal(Uast_type_darr* type_darr, Uast_type ulang_type) {
     for (size_t idx = 0; idx < ulang_type.sub_types.info.count; idx++) {
-        ulang_type_get_type_vec_internal(type_vec, vec_at(ulang_type.sub_types, idx));
+        ulang_type_get_type_darr_internal(type_darr, darr_at(ulang_type.sub_types, idx));
     }
 
-    vec_append(&a_gen, type_vec, ulang_type);
+    darr_append(&a_gen, type_darr, ulang_type);
 }
 
-static Uast_type_vec ulang_type_get_type_vec(Uast_type ulang_type) {
-    Uast_type_vec type_vec = {0};
-    ulang_type_get_type_vec_internal(&type_vec, ulang_type);
-    return type_vec;
+static Uast_type_darr ulang_type_get_type_darr(Uast_type ulang_type) {
+    Uast_type_darr type_darr = {0};
+    ulang_type_get_type_darr_internal(&type_darr, ulang_type);
+    return type_darr;
 }
 
 static void gen_ulang_type(const char* file_path) {

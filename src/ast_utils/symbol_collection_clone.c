@@ -15,12 +15,12 @@ void usymbol_table_clone(Scope_id old_scope, Scope_id new_scope) {
 
 void symbol_table_clone(Scope_id old_scope, Scope_id new_scope) {
     (void) new_scope;
-    unwrap(vec_at_ref(&env.symbol_tables, old_scope)->symbol_table.count == 0 && "not implemented; possibly should never be");
+    unwrap(darr_at_ref(&env.symbol_tables, old_scope)->symbol_table.count == 0 && "not implemented; possibly should never be");
 }
 
 void alloca_table_clone(Scope_id old_scope, Scope_id new_scope) {
     (void) new_scope;
-    unwrap(vec_at_ref(&env.symbol_tables, old_scope)->ir_table.count == 0 && "not implemented; possibly should never be");
+    unwrap(darr_at_ref(&env.symbol_tables, old_scope)->ir_table.count == 0 && "not implemented; possibly should never be");
 }
 
 

@@ -18,7 +18,7 @@ static void string_extend_f_va(Arena* arena, String* string, const char* format,
     count_needed++;
     if (count_needed > temp_buf.info.count) {
         while (temp_buf.info.count < count_needed) {
-            vec_append(&A_LEAK_THIS_FILE, &temp_buf, '\0');
+            darr_append(&A_LEAK_THIS_FILE, &temp_buf, '\0');
         }
     }
     vsnprintf(temp_buf.buf, count_needed, format, args2);

@@ -4,7 +4,7 @@
 #include <util.h>
 #include <local_string.h>
 #include <diag_type.h>
-#include <strv_vec.h>
+#include <strv_darr.h>
 
 typedef enum {
     ARCH_X86_64,
@@ -34,7 +34,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     DIAG_TYPE* buf;
-} Expect_fail_type_vec;
+} Expect_fail_type_darr;
 
 typedef enum {
     BACKEND_NONE = 0,
@@ -82,15 +82,15 @@ typedef struct {
     Strv input_file_path;
     Strv output_file_path;
     Strv path_c_compiler;
-    Strv_vec l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
-    Strv_vec static_libs;
-    Strv_vec dynamic_libs;
-    Strv_vec c_input_files;
-    Strv_vec object_files;
-    Strv_vec lower_s_files;
-    Strv_vec upper_s_files;
-    Strv_vec run_args;
-    Expect_fail_type_vec diag_types;
+    Strv_darr l_flags; // eg. if user passes `-l m -l raylib`, l_flags contains `[sv("m"), sv("raylib")]
+    Strv_darr static_libs;
+    Strv_darr dynamic_libs;
+    Strv_darr c_input_files;
+    Strv_darr object_files;
+    Strv_darr lower_s_files;
+    Strv_darr upper_s_files;
+    Strv_darr run_args;
+    Expect_fail_type_darr diag_types;
     OPT_LEVEL opt_level : 4;
     STOP_AFTER stop_after : 4;
     bool compile_own : 1;

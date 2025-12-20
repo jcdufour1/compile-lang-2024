@@ -9,7 +9,7 @@ Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent)  {
     indent += INDENT_WIDTH;
 
     string_extend_cstr_indent(&a_temp, &buf, "preds: [", indent);
-    vec_foreach(idx, size_t, pred, node.preds) {
+    darr_foreach(idx, size_t, pred, node.preds) {
         if (idx >= node.pred_backedge_start) {
             break;
         }
@@ -21,7 +21,7 @@ Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent)  {
     string_extend_cstr(&a_temp, &buf, "]\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "pred_backedges: [", indent);
-    vec_foreach(idx, size_t, pred_back, node.preds) {
+    darr_foreach(idx, size_t, pred_back, node.preds) {
         if (idx < node.pred_backedge_start) {
             continue;
         }
@@ -33,7 +33,7 @@ Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent)  {
     string_extend_cstr(&a_temp, &buf, "]\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "succs: [", indent);
-    vec_foreach(idx, size_t, succ, node.succs) {
+    darr_foreach(idx, size_t, succ, node.succs) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, &buf, ", ");
         }

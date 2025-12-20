@@ -482,27 +482,27 @@ static void parse_file_option(int* argc, char*** argv) {
             break;
         case FILE_TYPE_STATIC_LIB:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.static_libs, curr_opt.text);
+            darr_append(&a_main, &params.static_libs, curr_opt.text);
             break;
         case FILE_TYPE_DYNAMIC_LIB:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.dynamic_libs, curr_opt.text);
+            darr_append(&a_main, &params.dynamic_libs, curr_opt.text);
             break;
         case FILE_TYPE_C:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.c_input_files, curr_opt.text);
+            darr_append(&a_main, &params.c_input_files, curr_opt.text);
             break;
         case FILE_TYPE_OBJECT:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.object_files, curr_opt.text);
+            darr_append(&a_main, &params.object_files, curr_opt.text);
             break;
         case FILE_TYPE_LOWER_S:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.lower_s_files, curr_opt.text);
+            darr_append(&a_main, &params.lower_s_files, curr_opt.text);
             break;
         case FILE_TYPE_UPPER_S:
             stop_after_set_if_none(STOP_AFTER_BIN);
-            vec_append(&a_main, &params.upper_s_files, curr_opt.text);
+            darr_append(&a_main, &params.upper_s_files, curr_opt.text);
             break;
         case FILE_TYPE_COUNT:
             unreachable("");
@@ -553,7 +553,7 @@ static void long_option_help(Pos pos_self, Arg curr_opt) {
 
 static void long_option_l(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
-    vec_append(&a_main, &params.l_flags, curr_opt.text);
+    darr_append(&a_main, &params.l_flags, curr_opt.text);
 }
 
 static void long_option_backend(Pos pos_self, Arg curr_opt) {
@@ -628,10 +628,10 @@ static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** ar
     params.stop_after = STOP_AFTER_RUN;
 
     if (first_arg.count > 0) {
-        vec_append(&a_leak, &params.run_args, first_arg);
+        darr_append(&a_leak, &params.run_args, first_arg);
     }
     while (*argc > 0) {
-        vec_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")).text);
+        darr_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")).text);
     }
 }
 
@@ -1012,7 +1012,7 @@ void parse_args(int argc, char** argv) {
     }
 
     if (params.compile_own && (params.stop_after == STOP_AFTER_BIN || params.stop_after == STOP_AFTER_RUN)) {
-        vec_append(&a_main, &params.c_input_files, sv("std/util.c"));
+        darr_append(&a_main, &params.c_input_files, sv("std/util.c"));
     }
 
     // set default output file path

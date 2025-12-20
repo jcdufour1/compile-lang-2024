@@ -170,11 +170,11 @@ void print_all_defered_msgs(void) {
 
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
-    vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
+    darr_foreach(idx, Defered_msg, curr, env.defered_msgs) {
         msg_internal_actual_print(curr.file, curr.line, curr.pos_actual_msg, curr.actual_msg);
     }
 
-    vec_reset(&env.defered_msgs);
+    darr_reset(&env.defered_msgs);
 }
 
 __attribute__((format (printf, 5, 6)))
@@ -201,7 +201,7 @@ void msg_internal(
 
     Pos pos_for_sort = pos;
     if (log_level == LOG_NOTE && env.defered_msgs.info.count > 0) {
-        pos_for_sort = vec_top(env.defered_msgs).pos_for_sort;
+        pos_for_sort = darr_top(env.defered_msgs).pos_for_sort;
     }
 
     if (log_level >= LOG_ERROR) {
@@ -240,7 +240,7 @@ void msg_internal(
 
         static String temp_buf = {0};
         temp_buf.info.count = 0;
-        vec_reserve(&a_leak, &temp_buf, buf_cap_needed);
+        darr_reserve(&a_leak, &temp_buf, buf_cap_needed);
         temp_buf.info.count = buf_cap_needed;
 
         String actual_buf = {0};
@@ -265,7 +265,7 @@ void msg_internal(
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
         } else {
             size_t pos_in_defered_msgs = env.defered_msgs.info.count;
-            vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, pos_for_sort, string_to_strv(actual_buf), pos_in_defered_msgs));
+            darr_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, pos_for_sort, string_to_strv(actual_buf), pos_in_defered_msgs));
         }
     }
 

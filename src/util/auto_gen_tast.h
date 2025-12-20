@@ -9,7 +9,7 @@ static Uast_type tast_gen_block(const char* prefix) {
     const char* base_name = "block";
     Uast_type block = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&block.members, "Tast_stmt_vec", "children");
+    append_member(&block.members, "Tast_stmt_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Lang_type", "lang_type");
     append_member(&block.members, "Scope_id", "scope_id");
@@ -89,8 +89,8 @@ static Uast_type tast_gen_operator(const char* prefix) {
     const char* base_name = "operator";
     Uast_type operator = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    vec_append(&a_gen, &operator.sub_types, tast_gen_unary(base_name));
-    vec_append(&a_gen, &operator.sub_types, tast_gen_binary(base_name));
+    darr_append(&a_gen, &operator.sub_types, tast_gen_unary(base_name));
+    darr_append(&a_gen, &operator.sub_types, tast_gen_binary(base_name));
 
     return operator;
 }
@@ -209,14 +209,14 @@ static Uast_type tast_gen_literal(const char* prefix) {
     const char* base_name = "literal";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    vec_append(&a_gen, &lit.sub_types, tast_gen_function_lit(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_int(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_float(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_string(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_void(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_enum_tag_lit(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_enum_lit(base_name));
-    vec_append(&a_gen, &lit.sub_types, tast_gen_raw_union_lit(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_function_lit(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_int(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_float(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_string(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_void(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_enum_tag_lit(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_enum_lit(base_name));
+    darr_append(&a_gen, &lit.sub_types, tast_gen_raw_union_lit(base_name));
 
     return lit;
 }
@@ -225,7 +225,7 @@ static Uast_type tast_gen_function_call(const char* prefix) {
     const char* base_name = "function_call";
     Uast_type call = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&call.members, "Tast_expr_vec", "args");
+    append_member(&call.members, "Tast_expr_darr", "args");
     append_member(&call.members, "Tast_expr*", "callee");
     append_member(&call.members, "Lang_type", "lang_type");
 
@@ -236,7 +236,7 @@ static Uast_type tast_gen_struct_literal(const char* prefix) {
     const char* base_name = "struct_literal";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&lit.members, "Tast_expr_vec", "members");
+    append_member(&lit.members, "Tast_expr_darr", "members");
     append_member(&lit.members, "Name", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
 
@@ -247,7 +247,7 @@ static Uast_type tast_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&lit.members, "Tast_expr_vec", "members");
+    append_member(&lit.members, "Tast_expr_darr", "members");
     append_member(&lit.members, "Lang_type_tuple", "lang_type");
 
     return lit;
@@ -307,7 +307,7 @@ static Uast_type tast_gen_if_else_chain(const char* prefix) {
     const char* base_name = "if_else_chain";
     Uast_type chain = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&chain.members, "Tast_if_vec", "tasts");
+    append_member(&chain.members, "Tast_if_darr", "tasts");
     append_member(&chain.members, "bool", "is_switch");
 
     return chain;
@@ -336,22 +336,22 @@ static Uast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    vec_append(&a_gen, &expr.sub_types, tast_gen_block(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_module_alias(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_if_else_chain(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_assignment(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_operator(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_symbol(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_member_access(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_index(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_function_call(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_struct_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_tuple(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_enum_callee(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_enum_case(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_enum_get_tag(base_name));
-    vec_append(&a_gen, &expr.sub_types, tast_gen_enum_access(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_block(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_module_alias(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_if_else_chain(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_assignment(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_operator(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_symbol(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_member_access(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_index(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_literal(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_function_call(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_struct_literal(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_tuple(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_enum_callee(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_enum_case(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_enum_get_tag(base_name));
+    darr_append(&a_gen, &expr.sub_types, tast_gen_enum_access(base_name));
 
     return expr;
 }
@@ -449,16 +449,16 @@ static Uast_type tast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    vec_append(&a_gen, &def.sub_types, tast_gen_label(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_import_path(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_function_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_variable_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_struct_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_raw_union_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_enum_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_array_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_primitive_def(base_name));
-    vec_append(&a_gen, &def.sub_types, tast_gen_function_decl(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_label(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_import_path(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_function_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_variable_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_struct_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_raw_union_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_enum_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_array_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_primitive_def(base_name));
+    darr_append(&a_gen, &def.sub_types, tast_gen_function_decl(base_name));
 
     return def;
 }
@@ -467,7 +467,7 @@ static Uast_type tast_gen_function_params(const char* prefix) {
     const char* base_name = "function_params";
     Uast_type params = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    append_member(&params.members, "Tast_variable_def_vec", "params");
+    append_member(&params.members, "Tast_variable_def_darr", "params");
 
     return params;
 }
@@ -557,14 +557,14 @@ static Uast_type tast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false, "tast")};
 
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_defer(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_expr(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_for_with_cond(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_return(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_actual_break(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_yield(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_continue(base_name));
-    vec_append(&a_gen, &stmt.sub_types, tast_gen_def(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_defer(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_expr(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_for_with_cond(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_return(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_actual_break(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_yield(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_continue(base_name));
+    darr_append(&a_gen, &stmt.sub_types, tast_gen_def(base_name));
 
     return stmt;
 }
@@ -573,10 +573,10 @@ static Uast_type tast_gen_tast(void) {
     const char* base_name = "tast";
     Uast_type tast = {.name = uast_name_new(base_name, "", true, "tast")};
 
-    vec_append(&a_gen, &tast.sub_types, tast_gen_stmt(base_name));
-    vec_append(&a_gen, &tast.sub_types, tast_gen_function_params(base_name));
-    vec_append(&a_gen, &tast.sub_types, tast_gen_condition(base_name));
-    vec_append(&a_gen, &tast.sub_types, tast_gen_if(base_name));
+    darr_append(&a_gen, &tast.sub_types, tast_gen_stmt(base_name));
+    darr_append(&a_gen, &tast.sub_types, tast_gen_function_params(base_name));
+    darr_append(&a_gen, &tast.sub_types, tast_gen_condition(base_name));
+    darr_append(&a_gen, &tast.sub_types, tast_gen_if(base_name));
 
     return tast;
 }

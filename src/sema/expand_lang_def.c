@@ -34,7 +34,7 @@ static bool expand_def_block(Uast_block* block);
 
 static EXPAND_NAME_STATUS expand_def_uname(Ulang_type* new_lang_type, Uast_expr** new_expr, Uname* name, Pos pos, Pos dest_pos);
 
-static bool expand_def_expr_vec(Uast_expr_vec* exprs);
+static bool expand_def_expr_darr(Uast_expr_darr* exprs);
 
 static bool expand_def_expr_not_ulang_type(Uast_expr** new_expr, Uast_expr* expr, bool is_rhs, Uast_expr* rhs);
 
@@ -46,9 +46,9 @@ static EXPAND_EXPR_STATUS expand_def_expr(
     Uast_expr* rhs
 );
 
-static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
+static bool expand_def_generic_param_darr(Uast_generic_param_darr* params);
 
-static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
+static bool expand_def_variable_def_darr(Uast_variable_def_darr* defs);
 
 static EXPAND_NAME_STATUS expand_def_symbol(
     Ulang_type* new_lang_type,
@@ -288,11 +288,11 @@ static bool expand_def_ulang_type_fn(
         Uast_expr* gen_rhs = rhs;
         bool gen_is_rhs = is_rhs;
         if (is_rhs) {
-            msg_soft_todo("", ulang_type_get_pos(vec_at(lang_type.params.ulang_types, idx)));
+            msg_soft_todo("", ulang_type_get_pos(darr_at(lang_type.params.ulang_types, idx)));
             gen_is_rhs = false;
         }
         if (!expand_def_ulang_type(
-            vec_at_ref(&lang_type.params.ulang_types, idx),
+            darr_at_ref(&lang_type.params.ulang_types, idx),
             dest_pos,
             gen_is_rhs,
             gen_rhs,
@@ -340,7 +340,7 @@ static bool expand_def_ulang_type_tuple(
 
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
         todo();
-        //if (!expand_def_ulang_type(vec_at_ref(&lang_type.ulang_types, idx), dest_pos)) {
+        //if (!expand_def_ulang_type(darr_at_ref(&lang_type.ulang_types, idx), dest_pos)) {
         //    status = false;
         //}
     }
@@ -395,10 +395,10 @@ static bool expand_def_ulang_type_expr(
                         return false;
                     }
 
-                    gen_param = vec_at(def_base.generics, parent_idx);
+                    gen_param = darr_at(def_base.generics, parent_idx);
                 } else if (parent_def->type == UAST_FUNCTION_DEF) {
                     Uast_function_def* fun_def = uast_function_def_unwrap(parent_def);
-                    gen_param = vec_at(fun_def->decl->generics, parent_idx);
+                    gen_param = darr_at(fun_def->decl->generics, parent_idx);
                 } else {
                     msg_todo("", uast_def_get_pos(parent_def));
                     msg(DIAG_NOTE, lit->pos, "\n");
@@ -549,7 +549,7 @@ static bool expand_def_ulang_type(
 
 static void ulang_type_tuple_append_pos(Ulang_type_tuple* new_tuple, Ulang_type_tuple tuple, Pos new_pos) {
     Pos* new_pos_ptr = &new_pos;
-    vec_foreach_ref(idx, Ulang_type, curr, tuple.ulang_types) {
+    darr_foreach_ref(idx, Ulang_type, curr, tuple.ulang_types) {
         pos_expanded_from_append(ulang_type_get_pos_ref(curr), arena_dup(&a_main, new_pos_ptr));
     }
     *new_tuple = tuple;
@@ -583,9 +583,9 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
     new_name->gen_args = name.gen_args;
     bool gen_arg_status = true;
     Name base_name = name;
-    base_name.gen_args = (Ulang_type_vec) {0};
+    base_name.gen_args = (Ulang_type_darr) {0};
     for (size_t idx = 0; idx < new_name->gen_args.info.count; idx++) {
-        Ulang_type* curr = vec_at_ref(&new_name->gen_args, idx);
+        Ulang_type* curr = darr_at_ref(&new_name->gen_args, idx);
         Pos curr_pos = ulang_type_get_pos(*curr);
         gen_arg_status = expand_def_ulang_type(
             curr,
@@ -867,7 +867,7 @@ static bool expand_def_case(Uast_case* lang_case) {
 }
 
 static bool expand_def_function_call(Uast_function_call* call) {
-    bool status = expand_def_expr_vec(&call->args);
+    bool status = expand_def_expr_darr(&call->args);
     status = expand_def_expr_not_ulang_type(&call->callee, call->callee, false/*TODO*/, NULL) && status;
     call->pos.expanded_from = uast_expr_get_pos(call->callee).expanded_from;
     assert(!call->pos.expanded_from || !pos_is_equal(*call->pos.expanded_from, (Pos) {0}));
@@ -875,7 +875,7 @@ static bool expand_def_function_call(Uast_function_call* call) {
 }
 
 static bool expand_def_struct_literal(Uast_struct_literal* lit) {
-    return expand_def_expr_vec(&lit->members);
+    return expand_def_expr_darr(&lit->members);
 }
 
 static bool expand_def_orelse(Uast_orelse* orelse, bool is_rhs, Uast_expr* rhs) {
@@ -957,7 +957,7 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     }
 
     Uast_symbol* sym = uast_symbol_unwrap(access->callee);
-    Ulang_type_vec old_gen_args = sym->name.gen_args;
+    Ulang_type_darr old_gen_args = sym->name.gen_args;
     memset(&sym->name.gen_args, 0, sizeof(sym->name.gen_args));
     if (!usymbol_lookup(&callee_def, sym->name)) {
         sym->name.gen_args = old_gen_args;
@@ -1059,7 +1059,7 @@ bool expand_def_underscore(Uast_expr** new_expr, Uast_underscore* underscore, bo
 }
 
 static bool expand_def_array_literal(Uast_array_literal* lit) {
-    return expand_def_expr_vec(&lit->members);
+    return expand_def_expr_darr(&lit->members);
 }
 
 static bool expand_def_question_mark(Uast_question_mark* mark, bool is_rhs, Uast_expr* rhs) {
@@ -1084,7 +1084,7 @@ static bool expand_def_question_mark(Uast_question_mark* mark, bool is_rhs, Uast
 }
 
 static bool expand_def_struct_def_base(Ustruct_def_base* base, Pos dest_pos) {
-    if (!expand_def_generic_param_vec(&base->generics) || !expand_def_variable_def_vec(&base->members)) {
+    if (!expand_def_generic_param_darr(&base->generics) || !expand_def_variable_def_darr(&base->members)) {
         assert(env.error_count > 0);
         return false;
     }
@@ -1365,44 +1365,44 @@ static bool expand_def_param(Uast_param* param) {
     return status;
 }
 
-static bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
+static bool expand_def_generic_param_darr(Uast_generic_param_darr* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
-        status = expand_def_generic_param(vec_at(*params, idx)) && status;
+        status = expand_def_generic_param(darr_at(*params, idx)) && status;
     }
     return status;
 }
 
-static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
+static bool expand_def_variable_def_darr(Uast_variable_def_darr* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
-        status = expand_def_variable_def(vec_at(*defs, idx), false, NULL) && status;
+        status = expand_def_variable_def(darr_at(*defs, idx), false, NULL) && status;
     }
     return status;
 }
 
-static bool expand_def_expr_vec(Uast_expr_vec* exprs) {
+static bool expand_def_expr_darr(Uast_expr_darr* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
-        status = expand_def_expr_not_ulang_type(vec_at_ref(exprs, idx), vec_at(*exprs, idx), false/*TODO*/, NULL) && status;
+        status = expand_def_expr_not_ulang_type(darr_at_ref(exprs, idx), darr_at(*exprs, idx), false/*TODO*/, NULL) && status;
     }
     return status;
 }
 
-static bool expand_def_case_vec(Uast_case_vec* cases) {
+static bool expand_def_case_darr(Uast_case_darr* cases) {
     bool status = true;
     for (size_t idx = 0; idx < cases->info.count; idx++) {
-        if (!expand_def_case(vec_at(*cases, idx))) {
+        if (!expand_def_case(darr_at(*cases, idx))) {
             status = false;
         }
     }
     return status;
 }
 
-static bool expand_def_if_vec(Uast_if_vec* ifs) {
+static bool expand_def_if_darr(Uast_if_darr* ifs) {
     bool status = true;
     for (size_t idx = 0; idx < ifs->info.count; idx++) {
-        if (!expand_def_if(vec_at(*ifs, idx))) {
+        if (!expand_def_if(darr_at(*ifs, idx))) {
             status = false;
         }
     }
@@ -1412,7 +1412,7 @@ static bool expand_def_if_vec(Uast_if_vec* ifs) {
 static bool expand_def_function_params(Uast_function_params* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        if (!expand_def_param(vec_at(params->params, idx))) {
+        if (!expand_def_param(darr_at(params->params, idx))) {
             status = false;
         }
     }
@@ -1420,7 +1420,7 @@ static bool expand_def_function_params(Uast_function_params* params) {
 }
 
 static bool expand_def_function_decl(Uast_function_decl* def) {
-    bool status = expand_def_generic_param_vec(&def->generics);
+    bool status = expand_def_generic_param_darr(&def->generics);
     status = expand_def_function_params(def->params) && status;
     status = expand_def_ulang_type(
         &def->return_type,
@@ -1516,11 +1516,11 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
 
 static bool expand_def_switch(Uast_switch* lang_switch) {
     bool status = expand_def_expr_not_ulang_type(&lang_switch->operand, lang_switch->operand, false/*TODO*/, NULL);
-    return expand_def_case_vec(&lang_switch->cases) && status;
+    return expand_def_case_darr(&lang_switch->cases) && status;
 }
 
 static bool expand_def_if_else_chain(Uast_if_else_chain* if_else) {
-    return expand_def_if_vec(&if_else->uasts);
+    return expand_def_if_darr(&if_else->uasts);
 }
 
 static bool expand_def_block(Uast_block* block) {
@@ -1533,7 +1533,7 @@ static bool expand_def_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        status = expand_def_stmt(vec_at_ref(&block->children, idx), vec_at(block->children, idx)) && status;
+        status = expand_def_stmt(darr_at_ref(&block->children, idx), darr_at(block->children, idx)) && status;
     }
 
     return status;
