@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+tests/inputs/nested_functions_parse_errors.own:14:5:[1;31merror[0;39m:symbol `print_hello` is not defined
+    13 | fn aux() {
+    14 |     print_hello()
+       |     ^
+    15 | }
+
+compile::return_code 1
+
