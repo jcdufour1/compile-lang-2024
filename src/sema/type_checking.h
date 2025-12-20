@@ -124,7 +124,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal);
 
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call);
 
-bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro);
+bool try_set_directive_types(Tast_expr** new_call, Uast_directive* directive);
 
 bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access, bool is_from_check_assign);
 

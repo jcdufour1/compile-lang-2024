@@ -1635,8 +1635,8 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
         case UAST_FUNCTION_CALL:
             status = try_set_function_call_types(new_tast, uast_function_call_unwrap(uast));
             goto end;
-        case UAST_MACRO:
-            status = try_set_macro_types(new_tast, uast_macro_unwrap(uast));
+        case UAST_DIRECTIVE:
+            status = try_set_directive_types(new_tast, uast_directive_unwrap(uast));
             goto end;
         case UAST_TUPLE: {
             Tast_tuple* new_call = NULL;
@@ -2689,7 +2689,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case UAST_ARRAY_LITERAL:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
     }
@@ -3248,18 +3248,18 @@ error:
     return status;
 }
 
-bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
-    if (strv_is_equal(macro->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, false)));
+bool try_set_directive_types(Tast_expr** new_call, Uast_directive* directive) {
+    if (strv_is_equal(directive->name, sv("file"))) {
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(directive->pos, directive->value.file_path, false)));
         return true;
-    } else if (strv_is_equal(macro->name, sv("line"))) {
-        *new_call = util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos);
+    } else if (strv_is_equal(directive->name, sv("line"))) {
+        *new_call = util_tast_literal_new_from_int64_t(directive->value.line, TOKEN_INT_LITERAL, directive->pos);
         return true;
-    } else if (strv_is_equal(macro->name, sv("column"))) {
-        *new_call = util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos);
+    } else if (strv_is_equal(directive->name, sv("column"))) {
+        *new_call = util_tast_literal_new_from_int64_t(directive->value.column, TOKEN_INT_LITERAL, directive->pos);
         return true;
     } else {
-        msg_todo("language feature macro (other than `#file`, `#line`, `#column`)", macro->pos);
+        msg_todo("language feature '#' directive (other than `#file`, `#line`, `#column`)", directive->pos);
         return false;
     }
     unreachable("");

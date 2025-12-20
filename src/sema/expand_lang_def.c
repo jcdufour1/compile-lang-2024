@@ -206,7 +206,7 @@ static bool expand_def_ulang_type_regular(
             fallthrough;
         case UAST_TUPLE:
             fallthrough;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             fallthrough;
         case UAST_ENUM_ACCESS:
             fallthrough;
@@ -778,7 +778,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(
             fallthrough;
         case UAST_TUPLE:
             fallthrough;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             fallthrough;
         case UAST_ENUM_ACCESS:
             fallthrough;
@@ -1239,7 +1239,7 @@ static EXPAND_EXPR_STATUS expand_def_expr(
         case UAST_TUPLE:
             msg_todo("def expansion in this situation", uast_expr_get_pos(expr));
             return EXPAND_EXPR_ERROR;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             *new_expr = expr;
             return EXPAND_EXPR_NEW_EXPR;
         case UAST_ENUM_ACCESS:

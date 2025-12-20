@@ -306,7 +306,7 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
         case UAST_TUPLE:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
             return EXPR_TO_ULANG_TYPE_ERROR;
         case UAST_ENUM_ACCESS:

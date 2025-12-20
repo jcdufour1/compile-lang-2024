@@ -127,10 +127,10 @@ Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, bool use_new_scope, Scope_
     return uast_tuple_new(tuple->pos, uast_expr_darr_clone(tuple->members, use_new_scope, new_scope, dest_pos));
 }
 
-Uast_macro* uast_macro_clone(const Uast_macro* macro, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+Uast_directive* uast_directive_clone(const Uast_directive* directive, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     (void) new_scope;
     (void) use_new_scope;
-    return uast_macro_new(macro->pos, macro->name, dest_pos);
+    return uast_directive_new(directive->pos, directive->name, dest_pos);
 }
 
 Uast_operator* uast_operator_clone(const Uast_operator* oper, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -207,8 +207,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
     switch (expr->type) {
         case UAST_BLOCK:
             return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
-        case UAST_MACRO:
-            return uast_macro_wrap(uast_macro_clone(uast_macro_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_DIRECTIVE:
+            return uast_directive_wrap(uast_directive_clone(uast_directive_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_OPERATOR:
             return uast_operator_wrap(uast_operator_clone(uast_operator_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_SYMBOL:

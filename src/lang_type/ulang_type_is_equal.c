@@ -131,7 +131,7 @@ static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uas
             case UAST_TUPLE:
                 local_todo(curr_a);
                 return false;
-            case UAST_MACRO:
+            case UAST_DIRECTIVE:
                 local_todo(curr_a);
                 return false;
             case UAST_ENUM_ACCESS:
