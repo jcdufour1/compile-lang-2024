@@ -160,6 +160,7 @@ static inline bool try_uast_def_get_struct_def_base(Ustruct_def_base* result, co
     unreachable("");
 }
 
+// TODO: remove this function (use try_uast_def_get_struct_def_base instead)
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def) {
     Ustruct_def_base result = {0};
     unwrap(try_uast_def_get_struct_def_base(&result, def));

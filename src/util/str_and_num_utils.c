@@ -473,3 +473,70 @@ size_t strv_with_excapes_count_chars(Strv strv) {
 
     return count;
 }
+
+static bool local_is_octal_digit(char ch) {
+    return ch >= '0' && ch <= '7';
+}
+
+bool check_string_literal_is_valid(Strv lit_text, Pos pos) {
+    Pos curr_pos = pos;
+    while (lit_text.count > 0) {
+        char curr = strv_consume(&lit_text);
+        curr_pos.column++;
+        if (curr == '\\') {
+            assert(lit_text.count > 0 && "there is a bug elsewhere");
+            char next = strv_consume(&lit_text); // eg. n in \n, x in \x
+            if (next == 'x') {
+                if (lit_text.count < 2) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "expected two chars after `\\x` in string literal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char1 = strv_consume(&lit_text);
+                if (!isxdigit(char1)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\x` is not hex\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char2 = strv_consume(&lit_text);
+                if (!isxdigit(char2)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\x` is not hex\n");
+                    return false;
+                }
+                curr_pos.column++;
+            } else if (next == 'o') {
+                if (lit_text.count < 3) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "expected three chars after `\\o` in string literal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char1 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char1)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char2 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char2)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char3 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char3)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+            }
+        }
+    }
+
+    return true;
+}
+

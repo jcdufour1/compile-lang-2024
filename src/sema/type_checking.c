@@ -29,6 +29,7 @@
 #include <ulang_type_is_equal.h>
 #include <ulang_type_remove_expr.h>
 #include <ulang_type_after.h>
+#include <did_you_mean.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -3307,17 +3308,63 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
     return true;
 }
 
+static void msg_invalid_member_internal_2_not_base(
+    const char* file,
+    int line,
+    Name base_name, // TODO: give this parameter a more descriptive name
+    const Uast_member_access* access,
+    Uast_def* def
+) {
+    Strv sym_name = access->member_name->name.base;
+    msg_internal(
+        file, line,
+        DIAG_INVALID_MEMBER_ACCESS,
+        access->pos,
+        "`"FMT"` is not a member of `"FMT"`\n", 
+        strv_print(sym_name), name_print(NAME_MSG, base_name)
+    );
+    msg_internal(
+        file, line,
+        DIAG_NOTE,
+        uast_def_get_pos(def),
+        "`"FMT"` defined here\n",
+        name_print(NAME_MSG, uast_def_get_name(def))
+    );
+}
+
 static void msg_invalid_member_internal(
     const char* file,
     int line,
     Name base_name, // TODO: give this parameter a more descriptive name
     const Uast_member_access* access
 ) {
+    Strv sym_name = access->member_name->name.base;
+    Uast_def* def = {0};
+    unwrap(usymbol_lookup(&def, base_name));
+    Ustruct_def_base def_base = {0};
+    if (!try_uast_def_get_struct_def_base(&def_base, def)) {
+        msg_invalid_member_internal_2_not_base(file, line, base_name, access, def);
+        return;
+    }
+
+    Strv_darr candidates = {0};
+    darr_foreach(idx, Uast_variable_def*, memb, def_base.members) {
+        darr_append(&a_temp, &candidates, memb->name.base);
+    }
+
     msg_internal(
-        file, line, DIAG_INVALID_MEMBER_ACCESS,
+        file, line,
+        DIAG_INVALID_MEMBER_ACCESS,
         access->pos,
-        "`"FMT"` is not a member of `"FMT"`\n", 
-        strv_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
+        "`"FMT"` is not a member of `"FMT"`"FMT"\n", 
+        strv_print(sym_name), name_print(NAME_MSG, base_name), did_you_mean_strv_choice_print(sym_name, candidates)
+    );
+    msg_internal(
+        file, line,
+        DIAG_NOTE,
+        uast_def_get_pos(def),
+        "`"FMT"` defined here\n",
+        name_print(NAME_MSG, uast_def_get_name(def))
     );
 }
 

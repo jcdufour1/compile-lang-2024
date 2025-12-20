@@ -207,11 +207,13 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '"')) {
         token->type = TOKEN_STRING_LITERAL;
         Strv_col quote_str = {0};
+        Pos pos_start_lit = *pos;
+        pos_start_lit.column++;
         if (!strv_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
             msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
-            token->type = TOKEN_NONTYPE;
             return false;
         }
+        check_string_literal_is_valid(quote_str.base, pos_start_lit);
         unwrap(strv_col_try_consume(pos, file_text_rem, '"'));
         token->text = quote_str.base;
         return true;

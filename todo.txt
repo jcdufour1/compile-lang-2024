@@ -111,9 +111,9 @@ for generics:
      be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
+- allow struct literal designated args to be in any order
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
-- make attribute to disable initialization check for a specific variable
 - make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - document or make functions for uast_def_get_ulang_type
@@ -126,13 +126,6 @@ for generics:
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 - name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
-- invalid member printing: add did you know for member with similar name in same struct like
-- expected failure case for invalid string literal (eg. ending in unescaped backslash)
-- place auto_gen files in separate sub directory
-- store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
-- make attribute to suppress uninitialized error
-- rename uast_macro to uast_directive?
-- rename vec to darr?
 
 
 # roadmap to try to get bootstrap compiler done:

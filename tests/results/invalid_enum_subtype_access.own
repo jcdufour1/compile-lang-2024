@@ -1,11 +1,16 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/invalid_enum_subtype_access.own:9:43:[1;31merror[0;39m:`DOUBLE` is not a member of `Token_type`
+compile::stderr 10
+tests/inputs/invalid_enum_subtype_access.own:9:43:[1;31merror[0;39m:`DOUBLE` is not a member of `Token_type`; did you mean: NUM
      8 | fn main() i32 {
      9 |     let token_type Token_type = Token_type.DOUBLE
        |                                           ^
     10 |     return 0
+tests/inputs/invalid_enum_subtype_access.own:3:6:[1;34mnote[0;39m:`Token_type` defined here
+     2 | 
+     3 | type Token_type enum {
+       |      ^
+     4 |     NUM
 
 compile::return_code 1
 

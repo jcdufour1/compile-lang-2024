@@ -1,11 +1,16 @@
 compile::stdout 0
 
-compile::stderr 5
+compile::stderr 10
 tests/inputs/invalid_struct_memb.own:9:8:[1;31merror[0;39m:`numberakjfdjf` is not a member of `Div`
      8 |     let div: Div = {.numerator = 8, .denominator = 12}
      9 |     div.numberakjfdjf = 187;
        |        ^
     10 |     return 0
+tests/inputs/invalid_struct_memb.own:2:6:[1;34mnote[0;39m:`Div` defined here
+     1 | 
+     2 | type Div struct {
+       |      ^
+     3 |     numerator: i32
 
 compile::return_code 1
 

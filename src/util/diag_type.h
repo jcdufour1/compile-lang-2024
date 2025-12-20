@@ -117,6 +117,7 @@ typedef enum {
     DIAG_GOT_TYPE_BUT_EXPECTED_EXPR,
     DIAG_GOT_EXPR_BUT_EXPECTED_TYPE,
     DIAG_INVALID_ATTR,
+    DIAG_INVALID_STRING_LITERAL,
 
     // count of cases for static asserts
     DIAG_COUNT,
