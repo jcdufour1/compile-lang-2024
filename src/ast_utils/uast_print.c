@@ -991,17 +991,17 @@ Strv uast_return_print_internal(UAST_MODE mode, const Uast_return* lang_rtn, Ind
     return string_to_strv(buf);
 }
 
-Strv uast_macro_print_internal(UAST_MODE mode, const Uast_macro* macro, Indent indent) {
+Strv uast_directive_print_internal(UAST_MODE mode, const Uast_directive* directive, Indent indent) {
     String buf = {0};
 
     switch (mode) {
         case UAST_LOG:
-            string_extend_cstr_indent(&a_temp, &buf, "macro", indent);
-            string_extend_strv(&a_temp, &buf, macro->name);
+            string_extend_cstr_indent(&a_temp, &buf, "directive", indent);
+            string_extend_strv(&a_temp, &buf, directive->name);
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
-            msg_todo("", macro->pos);
+            msg_todo("", directive->pos);
             break;
         default:
             unreachable("");
@@ -1362,8 +1362,8 @@ Strv uast_expr_print_internal(UAST_MODE mode, const Uast_expr* expr, Indent inde
             return uast_switch_print_internal(mode, uast_switch_const_unwrap(expr), indent);
         case UAST_IF_ELSE_CHAIN:
             return uast_if_else_chain_print_internal(mode, uast_if_else_chain_const_unwrap(expr), indent);
-        case UAST_MACRO:
-            return uast_macro_print_internal(mode, uast_macro_const_unwrap(expr), indent);
+        case UAST_DIRECTIVE:
+            return uast_directive_print_internal(mode, uast_directive_const_unwrap(expr), indent);
         case UAST_ORELSE:
             return uast_orelse_print_internal(mode, uast_orelse_const_unwrap(expr), indent);
         case UAST_FN:

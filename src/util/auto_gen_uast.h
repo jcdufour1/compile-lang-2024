@@ -180,8 +180,8 @@ static Uast_type uast_gen_tuple(const char* prefix) {
     return lit;
 }
 
-static Uast_type uast_gen_macro(const char* prefix) {
-    Uast_type lit = {.name = uast_name_new(prefix, "macro", false, "uast")};
+static Uast_type uast_gen_directive(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "directive", false, "uast")};
 
     append_member(&lit.members, "Strv", "name");
     append_member(&lit.members, "Pos", "value");
@@ -300,7 +300,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     darr_append(&a_gen, &expr.sub_types, uast_gen_struct_literal(base_name));
     darr_append(&a_gen, &expr.sub_types, uast_gen_array_literal(base_name));
     darr_append(&a_gen, &expr.sub_types, uast_gen_tuple(base_name));
-    darr_append(&a_gen, &expr.sub_types, uast_gen_macro(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_directive(base_name));
     darr_append(&a_gen, &expr.sub_types, uast_gen_enum_access(base_name));
     darr_append(&a_gen, &expr.sub_types, uast_gen_enum_get_tag(base_name));
     darr_append(&a_gen, &expr.sub_types, uast_gen_orelse(base_name));

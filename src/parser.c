@@ -2296,7 +2296,7 @@ static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* token
             fallthrough;
         case UAST_TUPLE:
             fallthrough;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             fallthrough;
         case UAST_ENUM_ACCESS:
             fallthrough;
@@ -3095,7 +3095,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
     } else if (tk_view_front(*tokens).type == TOKEN_MACRO) {
         Pos pos = tk_view_front(*tokens).pos;
-        *result = uast_macro_wrap(uast_macro_new(pos, tk_view_front(*tokens).text, pos));
+        *result = uast_directive_wrap(uast_directive_new(pos, tk_view_front(*tokens).text, pos));
         consume(tokens);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens, scope_id));
@@ -3707,7 +3707,7 @@ static PARSE_STATUS parse_expr_generic(
             fallthrough;
         case UAST_TUPLE:
             fallthrough;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             fallthrough;
         case UAST_ENUM_ACCESS:
             fallthrough;

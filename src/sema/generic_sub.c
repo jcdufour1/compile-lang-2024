@@ -536,7 +536,7 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             *new_expr = expr;
             generic_sub_array_literal(uast_array_literal_unwrap(expr), gen_param, gen_arg);
             return;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             *new_expr = expr;
             return;
         case UAST_FN:

@@ -153,7 +153,7 @@ static Name serialize_ulang_type_expr_lit(Strv mod_path, const Uast_expr* expr) 
             fallthrough;
         case UAST_TUPLE:
             fallthrough;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             fallthrough;
         case UAST_ENUM_ACCESS:
             fallthrough;
