@@ -1,0 +1,17 @@
+fn do_thing(action fn()void) {
+    action()
+}
+
+fn main() i32 {
+    //let callback fn()void = fn()void {
+    //    io.print_str("hello")
+    //}
+    //do_thing(callback)
+
+    do_thing(fn(num i32)void {
+        io.print_str("hello")
+        io.print_num(num)
+    })
+
+    return 0
+}

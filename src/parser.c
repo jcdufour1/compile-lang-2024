@@ -32,20 +32,25 @@ typedef struct {
     Import_strv* buf;
 } Import_strv_darr;
 
-static Strv curr_mod_path; // mod_path of the file that is currently being parsed
-static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
+// TODO: make global variable for parse state
 
-static Token prev_token;
+typedef struct {
+    Strv curr_mod_path; // mod_path of the file that is currently being parsed
+    Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
-static Name new_scope_name;
-static Name new_scope_name_when_leaving_block;
-static Pos new_scope_name_pos;
+    Token prev_token;
 
-static Name default_brk_label = {0};
+    Name new_scope_name;
+    Name new_scope_name_when_leaving_block;
+    Pos new_scope_name_pos;
 
-static Uast_using_darr using_params = {0};
-static Import_strv_darr mod_paths_to_parse = {0};
+    Name default_brk_label = {0};
 
+    Uast_using_darr using_params = {0};
+    Import_strv_darr mod_paths_to_parse = {0};
+} Parse_state;
+
+static Parse_state parse_state;
 // TODO: use parent block for scope_ids instead of function calls everytime
 
 static bool can_end_stmt(Token token);
