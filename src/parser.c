@@ -1017,7 +1017,6 @@ static PARSE_STATUS parse_attrs(Attrs* result, Tk_view* tokens) {
 
     Token at_tk = {0};
     while (try_consume(&at_tk, tokens, TOKEN_AT_SIGN)) {
-        log_tokens(LOG_DEBUG, *tokens);
         Token sym_tk = {0};
         if (!consume_expect(&sym_tk, tokens, "(attribute name) after '@'", TOKEN_SYMBOL)) {
             return PARSE_ERROR;

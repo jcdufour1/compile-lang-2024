@@ -226,9 +226,10 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
     return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 
+// TODO: consider using int64_t instead of uint64_t for bit_width to reduce conversions between unsigned and signed
 uint64_t sizeof_array_def(const Tast_array_def* def) {
     uint64_t end_alignment = alignof_lang_type(def->item_type);
-    uint64_t total = sizeof_lang_type(def->item_type)*def->count;
+    uint64_t total = sizeof_lang_type(def->item_type)*(uint64_t)def->count;
 
     // TODO: use get_next_multiple function or similar function
     total += (end_alignment - total%end_alignment)%end_alignment;
