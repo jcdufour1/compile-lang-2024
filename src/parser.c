@@ -52,10 +52,11 @@ typedef struct {
 
 static Parse_state parse_state;
 
-static void parse_state_restore(Parse_state saved_point) {
+static Tk_view parse_state_restore(Parse_state saved_point, Tk_view saved_tk_view) {
     unwrap(0 == memcmp(&saved_point.using_params, &parse_state.using_params, sizeof(parse_state.using_params)));
     unwrap(0 == memcmp(&saved_point.mod_paths_to_parse, &parse_state.mod_paths_to_parse, sizeof(parse_state.mod_paths_to_parse)));
     parse_state = saved_point;
+    return saved_tk_view;
 }
 
 // TODO: use parent block for scope_ids instead of function calls everytime
@@ -1223,7 +1224,9 @@ static PARSE_STATUS parse_lang_type_struct_require_ex(Ulang_type* lang_type, Tk_
     if (parse_lang_type_struct_ex(lang_type, tokens, scope_id, print_error)) {
         return PARSE_OK;
     } else {
-        msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        if (print_error) {
+            msg_parser_expected(tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        }
         return PARSE_ERROR;
     }
 }
@@ -1314,9 +1317,15 @@ static PARSE_STATUS parse_function_decl_common(
     Tk_view* tokens,
     bool add_to_sym_table,
     Scope_id fn_scope,
-    Scope_id block_scope
+    Scope_id block_scope,
+    bool is_lambda
 ) {
-    Token name_token = consume(tokens);
+    Token name_token = {0};
+    if (is_lambda) {
+        name_token = (Token) {.text = util_literal_strv_new(), .type = TOKEN_SYMBOL, .pos = tk_view_front(*tokens).pos};
+    } else {
+        name_token = consume(tokens);
+    }
 
     Uast_generic_param_darr gen_params = {0};
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
@@ -1357,14 +1366,14 @@ static PARSE_STATUS parse_function_decl_common(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens) {
+static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda) {
     unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
     Scope_id fn_scope = SCOPE_TOP_LEVEL;
     Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
 
     Uast_function_decl* fun_decl = NULL;
-    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope)) {
+    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope, is_lambda)) {
         return PARSE_ERROR;
     }
     if (strv_is_equal(fun_decl->name.base, sv("main"))) {
@@ -2183,7 +2192,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */, false)) {
         goto error;
     }
     try_consume_newlines(tokens);
@@ -2789,7 +2798,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_def_wrap(uast_function_decl_wrap(fun_decl));
     } else if (starts_with_function_def(*tokens)) {
         Uast_function_def* fun_def;
-        if (PARSE_OK != parse_function_def(&fun_def, tokens)) {
+        if (PARSE_OK != parse_function_def(&fun_def, tokens, false)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_function_def_wrap(fun_def));
@@ -3873,15 +3882,36 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
     if (tk_view_front(*tokens).type == TOKEN_FN) {
         Parse_state saved_point = parse_state;
+        Tk_view saved_tk_view = *tokens;
+
         Ulang_type lang_type = {0};
-        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
-            return PARSE_EXPR_ERROR;
+        uint32_t prev_error_count = env.error_count;
+        (void) prev_error_count;
+        if (
+            PARSE_OK == parse_lang_type_struct_require_ex(&lang_type, tokens, scope_id, false) &&
+            !starts_with_block(*tokens)
+        ) {
+            *result = uast_fn_wrap(uast_fn_new(
+                ulang_type_get_pos(lang_type),
+                ulang_type_fn_const_unwrap(lang_type)
+            ));
+            return PARSE_EXPR_OK;
         }
-        *result = uast_fn_wrap(uast_fn_new(
-            ulang_type_get_pos(lang_type),
-            ulang_type_fn_const_unwrap(lang_type)
-        ));
-        return PARSE_EXPR_OK;
+        assert(
+            env.error_count == prev_error_count &&
+            "error count should not have been incremented in"
+            "parse_lang_type_struct_require_ex when print_error == false"
+        );
+
+        *tokens = parse_state_restore(saved_point, saved_tk_view);
+        Uast_function_def* fun_def = NULL;
+        if (PARSE_OK == parse_function_def(&fun_def, tokens, true)) {
+            *result = uast_symbol_wrap(uast_symbol_new(fun_def->pos, fun_def->decl->name));
+            return PARSE_EXPR_OK;
+        }
+
+        unwrap(PARSE_ERROR == parse_lang_type_struct_require_ex(&lang_type, tokens, scope_id, true));
+        return PARSE_EXPR_ERROR;
     }
 
     Uast_expr* lhs = NULL;
