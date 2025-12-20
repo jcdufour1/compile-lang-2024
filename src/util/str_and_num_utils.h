@@ -79,4 +79,6 @@ Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int lin
 
 Strv serialize_double(double num);
 
+bool check_string_literal_is_valid(Strv lit_text, Pos pos);
+
 #endif // STR_AND_NUM_UTILS_H

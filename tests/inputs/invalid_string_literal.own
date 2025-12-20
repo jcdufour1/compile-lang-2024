@@ -1,0 +1,13 @@
+
+fn main() i32 {
+    let str1 = "sdfasd\x"
+    let str2 = "sdfasd\x1"
+    let str3 = "sdfasd\x1g"
+    let str4 = "sdfasd\xg1"
+    let str5 = "sdfasd\o16"
+    let str6 = "sdfasd\o168"
+
+    let str100 = "sdfasd\x91\"
+
+    return 0
+}

@@ -291,7 +291,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-static_assert(DIAG_COUNT == 115, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 116, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "info", .type = DIAG_INFO, .default_level = LOG_INFO, .must_be_error = false},
     {.str = "note", .type = DIAG_NOTE, .default_level = LOG_NOTE, .must_be_error = false},
@@ -408,6 +408,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {.str = "got-type-but-expected-expr", .type = DIAG_GOT_TYPE_BUT_EXPECTED_EXPR, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "got-expr-but-expected-type", .type = DIAG_GOT_EXPR_BUT_EXPECTED_TYPE, .default_level = LOG_ERROR, .must_be_error = true},
     {.str = "invalid-attr", .type = DIAG_INVALID_ATTR, .default_level = LOG_ERROR, .must_be_error = true},
+    {.str = "invalid-string-literal", .type = DIAG_INVALID_STRING_LITERAL, .default_level = LOG_ERROR, .must_be_error = true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
