@@ -1437,8 +1437,13 @@ static bool expand_def_function_decl(Uast_function_decl* def) {
 }
 
 static bool expand_def_function_def(Uast_function_def* def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = def->decl->name.mod_path;
+
     bool status = expand_def_function_decl(def->decl);
     status = expand_def_block(def->body) && status;
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
     return status;
 }
 

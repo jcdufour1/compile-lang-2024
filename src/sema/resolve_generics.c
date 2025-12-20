@@ -505,6 +505,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
     );
 
     Uast_def* after_res = NULL;
+    // TODO: rename resolve_generics_ulang_type_int_liternal_struct_like?
     if (!resolve_generics_ulang_type_int_liternal_struct_like(
         &after_res,
         &dummy,
@@ -516,13 +517,20 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         return false;
     }
 
+    bool status = true;
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = name.mod_path;
+
     switch (before_res->type) {
         case UAST_STRUCT_DEF:
-            return try_set_struct_def_types(uast_struct_def_unwrap(after_res));
+            status = try_set_struct_def_types(uast_struct_def_unwrap(after_res));
+            break;
         case UAST_RAW_UNION_DEF:
-            return try_set_raw_union_def_types(uast_raw_union_def_unwrap(after_res));
+            status = try_set_raw_union_def_types(uast_raw_union_def_unwrap(after_res));
+            break;
         case UAST_ENUM_DEF:
-            return try_set_enum_def_types(uast_enum_def_unwrap(after_res));
+            status = try_set_enum_def_types(uast_enum_def_unwrap(after_res));
+            break;
         case UAST_POISON_DEF:
             unreachable("");
         case UAST_IMPORT_PATH:
@@ -551,7 +559,9 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         default:
             unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return status;
 }
 
 static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
@@ -784,7 +794,11 @@ bool resolve_generics_function_def_implementation(Name name) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, name)) {
         // we only need to type check this function
-        return resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
+        Strv old_mod_path_curr_file = env.mod_path_curr_file;
+        env.mod_path_curr_file = name.mod_path;
+        bool status = resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
+        env.mod_path_curr_file = old_mod_path_curr_file;
+        return status;
     } else {
         // we need to make new uast function implementation and then type check it
         unwrap(usymbol_lookup(&result, name_plain));
@@ -793,13 +807,22 @@ bool resolve_generics_function_def_implementation(Name name) {
         Uast_block* new_block = uast_block_clone(def->body, true, def->decl->name.scope_id, def->body->pos);
         assert(new_block != def->body);
 
+        Strv old_mod_path_curr_file = env.mod_path_curr_file;
+        env.mod_path_curr_file = name.mod_path;
         Uast_function_decl* new_decl = NULL;
-        if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos)) {
+        assert(env.mod_path_curr_file.count > 0);
+        bool status = resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos);
+        if (!status) {
+            env.mod_path_curr_file = old_mod_path_curr_file;
             return false;
         }
+        
         Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
         usym_tbl_add(uast_function_def_wrap(new_def));
-        return resolve_generics_set_function_def_types(new_def);
+        assert(env.mod_path_curr_file.count > 0);
+        status = resolve_generics_set_function_def_types(new_def);
+        env.mod_path_curr_file = old_mod_path_curr_file;
+        return status;
     }
     unreachable("");
 }

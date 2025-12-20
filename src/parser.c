@@ -4119,6 +4119,7 @@ bool parse(void) {
 
         Strv old_mod_path = parse_state.curr_mod_path;
         parse_state.curr_mod_path = curr_mod.curr_mod_path;
+        env.mod_path_curr_file = curr_mod.curr_mod_path;
         Name old_mod_alias = parse_state.curr_mod_alias;
         parse_state.curr_mod_alias = curr_mod.curr_mod_alias;
 
@@ -4142,6 +4143,7 @@ bool parse(void) {
 
 loop_end:
         parse_state.curr_mod_path = old_mod_path;
+        env.mod_path_curr_file = old_mod_path;
         parse_state.curr_mod_alias = old_mod_alias;
     }
 

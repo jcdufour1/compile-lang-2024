@@ -16,7 +16,7 @@ tests/inputs/did_you_mean.own:39:14:[1;31merror[0;39m:type `UndefinedType33` i
     39 |     let num3 UndefinedType33
        |              ^
     40 |     let num4 UndefinedType44
-tests/inputs/did_you_mean.own:40:14:[1;31merror[0;39m:type `UndefinedType44` is not defined; did you mean: UndefinedType4, U_ndefinedType44, UndefinedType1_, Un_d_efinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
+tests/inputs/did_you_mean.own:40:14:[1;31merror[0;39m:type `UndefinedType44` is not defined; did you mean: UndefinedType4, tests/dummy_std/std_dummy_3::U_ndefinedType44, UndefinedType1_, Un_d_efinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
     39 |     let num3 UndefinedType33
     40 |     let num4 UndefinedType44
        |              ^
@@ -26,7 +26,7 @@ tests/inputs/did_you_mean.own:42:5:[1;31merror[0;39m:symbol `print_to` is not 
     42 |     print_to()
        |     ^
     43 |     dummy.print_num(8)
-tests/inputs/did_you_mean.own:43:10:[1;31merror[0;39m:symbol `print_num` is not defined; did you mean: print_int, print_str
+tests/inputs/did_you_mean.own:43:10:[1;31merror[0;39m:symbol `tests/dummy_std/std_dummy_3::print_num` is not defined; did you mean: tests/dummy_std/std_dummy_3::print_int, tests/dummy_std/std_dummy_3::print_str
     42 |     print_to()
     43 |     dummy.print_num(8)
        |          ^

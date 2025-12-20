@@ -431,10 +431,15 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 }
 
 static void check_unit_function_def(const Ir_function_def* def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = def->decl->name.mod_path;
+
     unwrap(curr_cfg_node_area);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body);
+    
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {

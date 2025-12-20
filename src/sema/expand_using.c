@@ -164,41 +164,48 @@ static void expand_using_block(Uast_block* block) {
 }
 
 static void expand_using_def(Uast_def* def) {
+    // TODO: setting env.mod_path_curr_file on every Uast_def may be inefficient
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = uast_def_get_name(def).mod_path;
+
     switch (def->type) {
         case UAST_LABEL:
-            return;
+            break;
         case UAST_VOID_DEF:
-            return;
+            break;
         case UAST_POISON_DEF:
-            return;
+            break;
         case UAST_IMPORT_PATH:
             expand_using_block(uast_import_path_unwrap(def)->block);
-            return;
+            break;
         case UAST_MOD_ALIAS:
-            return;
+            break;
         case UAST_GENERIC_PARAM:
-            return;
+            break;
         case UAST_FUNCTION_DEF:
             expand_using_block(uast_function_def_unwrap(def)->body);
-            return;
+            break;
         case UAST_VARIABLE_DEF:
-            return;
+            break;
         case UAST_STRUCT_DEF:
-            return;
+            break;
         case UAST_RAW_UNION_DEF:
-            return;
+            break;
         case UAST_ENUM_DEF:
-            return;
+            break;
         case UAST_LANG_DEF:
-            return;
+            break;
         case UAST_PRIMITIVE_DEF:
-            return;
+            break;
         case UAST_FUNCTION_DECL:
-            return;
+            break;
         case UAST_BUILTIN_DEF:
-            return;
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 void expand_using(void) {

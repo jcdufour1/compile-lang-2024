@@ -3952,7 +3952,11 @@ bool try_set_label_def_types(Uast_label* tast) {
 }
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
-    return try_set_block_types(new_tast, tast->block, false, true);
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = tast->mod_path;
+    bool status = try_set_block_types(new_tast, tast->block, false, true);
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return status;
 }
 
 bool try_set_variable_def_types(
