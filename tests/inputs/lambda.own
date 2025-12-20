@@ -1,0 +1,27 @@
+type io import = std.io
+
+fn do_thing(action fn()void) {
+    action()
+}
+
+fn do_thing_2(action fn(i32)void) {
+    action(902)
+}
+
+fn main() i32 {
+    let callback fn()void = fn()void {
+        io.print_str("hello1")
+    }
+    do_thing(callback)
+
+    do_thing(fn()void {
+        io.print_str("hello2")
+    })
+
+    do_thing_2(fn(num i32)void {
+        io.print_str("hello3")
+        io.print_int(num)
+    })
+
+    return 0
+}
