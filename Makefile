@@ -14,6 +14,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
                      -I ${BUILD_DIR} \
 			       	 -I src/ \
 			       	 -I src/util/ \
+			       	 -I src/util/auto_gen/ \
 			       	 -I src/token \
 			       	 -I src/sema \
 			       	 -I src/codegen \
@@ -24,7 +25,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
-			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ \
+			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 			     -fsanitize=address -fno-omit-frame-pointer
 
@@ -116,10 +117,10 @@ OBJS=\
 	 ${BUILD_DIR}/ir/ir_graphvis.o \
 	 ${BUILD_DIR}/util/subprocess.o
 
-DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
+DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
-# DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen* ${BUILD_DIR}/ast_utils/tast.h
+# DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen/auto_gen* ${BUILD_DIR}/ast_utils/tast.h
 DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
@@ -168,8 +169,8 @@ test_quick: run
 
 # auto_gen and util
 # TODO: reduce duplication in Makefile?
-${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
-	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c src/util/newstring.c
+${BUILD_DIR}/auto_gen: src/util/auto_gen/auto_gen.c ${DEP_UTIL}
+	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
 
 ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
