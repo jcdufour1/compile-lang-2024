@@ -84,6 +84,11 @@ fn wrong7() i32 {
     return 0
 }
 
+fn wrong8() i32 {
+    let status i32
+    return status
+}
+
 fn main() i32 {
     wrong1()
     wrong2()
@@ -92,7 +97,13 @@ fn main() i32 {
     wrong5()
     wrong6()
     wrong7()
+    wrong8()
     right1()
-    let status i32
-    return status
+    right2()
+    return 0
+}
+
+fn right2() {
+    let num i32 @maybe_uninit
+    let num2 = num
 }

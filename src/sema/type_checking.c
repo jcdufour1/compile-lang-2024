@@ -1485,7 +1485,8 @@ bool try_set_array_literal_types(
             lit->pos,
             gen_arg,
             false,
-            util_literal_name_new()
+            util_literal_name_new(),
+            (Attrs) {0} /* TODO */
         ));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
@@ -1874,7 +1875,8 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
             sym->name.base,
             (Ulang_type_vec) {0} /* TODO */,
             sym->name.scope_id
-        )
+        ),
+        (Attrs) {0} // TODO
     );
     if (!usymbol_add(uast_variable_def_wrap(new_def))) {
         // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
@@ -1912,7 +1914,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
             lang_type.pos,
-            uast_variable_def_new(lang_type.pos, vec_at(lang_type.params.ulang_types, idx), util_literal_name_new()),
+            uast_variable_def_new(lang_type.pos, vec_at(lang_type.params.ulang_types, idx), util_literal_name_new(), (Attrs) {0} /* TODO */),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
@@ -3925,7 +3927,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
+    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name, uast->attrs);
     if (add_to_sym_tbl && !check_env.is_in_struct_base_def) {
         symbol_add(tast_variable_def_wrap(*new_tast));
     }
@@ -4446,7 +4448,8 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         Uast_variable_def* src_err_type_var_def = uast_variable_def_new(
             mark->pos,
             src_uerror_type,
-            util_literal_name_new()
+            util_literal_name_new(),
+            (Attrs) {0} // TODO
         );
         unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
 
@@ -4674,14 +4677,16 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     Uast_variable_def* oper_var = uast_variable_def_new(
         uast_expr_get_pos(oper),
         lang_type_to_ulang_type(tast_expr_get_lang_type(new_operand_typed)),
-        util_literal_name_new()
+        util_literal_name_new(),
+        (Attrs) {0} // TODO
     );
     unwrap(usymbol_add(uast_variable_def_wrap(oper_var)));
     symbol_add(tast_variable_def_wrap(tast_variable_def_new(
         oper_var->pos,
         tast_expr_get_lang_type(new_operand_typed),
         false,
-        oper_var->name
+        oper_var->name,
+        oper_var->attrs
     )));
     Uast_assignment* oper_assign = uast_assignment_new(
         oper_var->pos,

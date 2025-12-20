@@ -17,6 +17,7 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 #include <pos_util.h>
+#include <did_you_mean.h>
 
 typedef struct {
     Strv mod_path;
@@ -671,6 +672,8 @@ static bool can_end_stmt(Token token) {
         case TOKEN_UNDERSCORE:
             // TODO
             return false;
+        case TOKEN_AT_SIGN:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -680,6 +683,8 @@ static bool can_end_stmt(Token token) {
 static bool is_unary(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_AT_SIGN:
             return false;
         case TOKEN_SINGLE_PLUS:
             return false;
@@ -845,6 +850,8 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
             return false;
+        case TOKEN_AT_SIGN:
+            return false;
         case TOKEN_SINGLE_PLUS:
             return false;
         case TOKEN_SINGLE_MINUS:
@@ -1003,6 +1010,40 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
             unreachable("");
     }
     unreachable("");
+}
+
+static PARSE_STATUS parse_attrs(Attrs* result, Tk_view* tokens) {
+    *result = (Attrs) {0};
+
+    Token at_tk = {0};
+    while (try_consume(&at_tk, tokens, TOKEN_AT_SIGN)) {
+        Token sym_tk = {0};
+        if (!consume_expect(&sym_tk, tokens, "(attribute name) after '@'", TOKEN_SYMBOL)) {
+            return PARSE_ERROR;
+        }
+
+        Strv attr_name = sym_tk.text;
+
+        static_assert(ATTR_COUNT == 1, "exhausive handling of attributes in if-else");
+        if (strv_is_equal(attr_name, sv("maybe_uninit"))) {
+            *result |= ATTR_ALLOW_UNINIT;
+        } else {
+            Strv_vec candidates = {0};
+            static_assert(ATTR_COUNT == 1, "exhausive handling of appending possible attributes to candidates vec");
+            vec_append(&a_temp, &candidates, sv("maybe_uninit"));
+
+            msg(
+                DIAG_INVALID_ATTR,
+                sym_tk.pos,
+                "invalid attribute `"FMT"`"FMT"\n",
+                strv_print(attr_name),
+                did_you_mean_strv_choice_print(attr_name, candidates)
+            );
+            return PARSE_ERROR;
+        }
+    }
+
+    return PARSE_OK;
 }
 
 static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t* lang_type_ptr_depth, Tk_view* tokens, Scope_id scope_id) {
@@ -1451,12 +1492,18 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
             return PARSE_ERROR;
         }
 
+        Attrs attrs = {0};
+        if (PARSE_OK != parse_attrs(&attrs, tokens)) {
+            return PARSE_ERROR;
+        }
+
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type_name, 0)), 
               // TODO: set member lang_type to lang_type_name instead of 
               // ulang_type_regular_const_wrap(ulang_type_regular_new( when lang_type_name is changed to Ulang_type
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0)
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0),
+            attrs
         );
 
         vec_append(&a_main, &base->members, member);
@@ -1741,10 +1788,16 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
 
+        Attrs attrs = {0};
+        if (PARSE_OK != parse_attrs(&attrs, tokens)) {
+            return PARSE_ERROR;
+        }
+
         Uast_variable_def* var_def = uast_variable_def_new(
             name_token.pos,
             lang_type,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id),
+            attrs
         );
         *result = uast_variable_def_wrap(var_def);
 
@@ -1778,7 +1831,8 @@ static PARSE_STATUS parse_for_range_internal(
     Uast_variable_def* var_def_builtin = uast_variable_def_new(
         var_def_user->pos,
         ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id)
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id),
+        (Attrs) {0}
     );
     unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
@@ -3267,7 +3321,7 @@ static PARSE_EXPR_STATUS parse_right_unary(
     }
 
     Token oper = consume(tokens);
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only right unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
     switch (oper.type) {
         case TOKEN_ORELSE: {
             Uast_block* result_ = NULL;
@@ -3439,6 +3493,8 @@ static PARSE_EXPR_STATUS parse_right_unary(
             fallthrough;
         case TOKEN_COMMENT:
             fallthrough;
+        case TOKEN_AT_SIGN:
+            fallthrough;
         case TOKEN_COUNT:
             msg_todo("", oper.pos);
     }
@@ -3464,7 +3520,7 @@ static PARSE_EXPR_STATUS parse_unary(
     // this is a placeholder type
     Ulang_type unary_lang_type = ulang_type_new_int_x(tk_view_front(*tokens).pos/*TODO*/, sv("i32"));
 
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3519,7 +3575,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_vec args = {0};
@@ -3686,7 +3742,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 78, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 79, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

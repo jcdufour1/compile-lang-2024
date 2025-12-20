@@ -65,3 +65,9 @@ fn cstr_free(cstr u8*) {
 fn slice_from_cstr(cstr u8*) Str {
     return {cstr, strlen(cstr)}
 }
+
+fn zero(<ItemT>)() ItemT {
+    let item ItemT @maybe_uninit
+    libc.memset(unsafe_cast<opaque*>&item, 0, sizeof(item))
+    return item
+}

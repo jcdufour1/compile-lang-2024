@@ -5,7 +5,7 @@
 #include <operator_type.h>
 
 static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only binary tokens are handled)");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
 
     switch (token_type) {
         case TOKEN_DOUBLE_EQUAL:
@@ -166,6 +166,8 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
             unreachable("");
         case TOKEN_COUNT:
             unreachable("");
+        case TOKEN_AT_SIGN:
+            unreachable("");
         default:
             unreachable(FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }
@@ -173,7 +175,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
 }
 
 static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary tokens are handled)");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
 
     switch (token_type) {
         case TOKEN_UNSAFE_CAST:
@@ -333,6 +335,8 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
         case TOKEN_SINGLE_EQUAL:
             unreachable("");
         case TOKEN_NONTYPE:
+            unreachable("");
+        case TOKEN_AT_SIGN:
             unreachable("");
         default:
             unreachable(FMT, token_type_print(TOKEN_MODE_LOG, token_type));

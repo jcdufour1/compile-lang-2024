@@ -30,4 +30,8 @@ uint64_t sizeof_def(const Tast_def* def);
 
 uint64_t alignof_def(const Tast_def* def);
 
+uint64_t sizeof_array_def(const Tast_array_def* def);
+
+uint64_t alignof_array_def(const Tast_array_def* def);
+
 #endif // NEWSIZEOF_H

@@ -131,6 +131,8 @@ for generics:
 - place auto_gen files in separate sub directory
 - store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
 - make attribute to suppress uninitialized error
+- rename uast_macro to uast_directive?
+- rename vec to darr?
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -145,7 +147,7 @@ for generics:
 - global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
 - std function for manual zero initialization
-- safe cast (use "cast(<i64>)" to cast num to i64)?
+- safe cast (use "cast(<i64>)" to cast num to i64, or use go style casting (eg. "i64(num)")?
 - test for break in switch case 
 - distinct
 - pointer generic

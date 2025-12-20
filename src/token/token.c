@@ -160,6 +160,8 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("?");
         case TOKEN_UNDERSCORE:
             return sv("_");
+        case TOKEN_AT_SIGN:
+            return sv("@");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -324,6 +326,8 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("?");
         case TOKEN_UNDERSCORE:
             return sv("_");
+        case TOKEN_AT_SIGN:
+            return sv("@");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -346,7 +350,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -423,6 +427,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_ORELSE: fallthrough;
         case TOKEN_QUESTION_MARK: fallthrough;
         case TOKEN_UNDERSCORE: fallthrough;
+        case TOKEN_AT_SIGN: fallthrough;
         case TOKEN_USING:
             break;
         case TOKEN_MACRO: 

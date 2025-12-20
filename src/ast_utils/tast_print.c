@@ -444,6 +444,20 @@ Strv tast_label_print_internal(const Tast_label* label, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv tast_array_def_print_internal(const Tast_array_def* def, Indent indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "array_def", indent);
+    extend_pos(&buf, def->pos);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->item_type);
+    string_extend_cstr(&a_main, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "count:", indent);
+    string_extend_int64_t(&a_temp, &buf, def->count);
+    string_extend_cstr(&a_main, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv tast_defer_print_internal(const Tast_defer* defer, Indent indent) {
     String buf = {0};
 
@@ -606,6 +620,8 @@ Strv tast_def_print_internal(const Tast_def* def, Indent indent) {
             return tast_import_path_print_internal(tast_import_path_const_unwrap(def), indent);
         case TAST_LABEL:
             return tast_label_print_internal(tast_label_const_unwrap(def), indent);
+        case TAST_ARRAY_DEF:
+            return tast_array_def_print_internal(tast_array_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

@@ -36,11 +36,11 @@ tests/inputs/uninitialized.own:81:24:[1;31merror[0;39m:symbol `num` is used un
     81 |         let num2 i32 = num
        |                        ^
     82 |     }
-tests/inputs/uninitialized.own:97:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    96 |     let status i32
-    97 |     return status
+tests/inputs/uninitialized.own:89:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
+    88 |     let status i32
+    89 |     return status
        |            ^
-    98 | }
+    90 | }
 
 compile::return_code 1
 

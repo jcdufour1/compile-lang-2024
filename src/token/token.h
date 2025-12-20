@@ -79,6 +79,7 @@ typedef enum {
     TOKEN_DOUBLE_TICK,
     TOKEN_ONE_LINE_BLOCK_START,
     TOKEN_UNDERSCORE,
+    TOKEN_AT_SIGN,
 
     // keywords
     TOKEN_FN,
@@ -134,6 +135,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token);
 static inline bool token_is_literal(Token token) {
     switch (token.type) {
         case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_AT_SIGN:
             return false;
         case TOKEN_SINGLE_PLUS:
             return false;
@@ -300,6 +303,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
     switch (token.type) {
         case TOKEN_SINGLE_MINUS:
             return true;
+        case TOKEN_AT_SIGN:
+            return false;
         case TOKEN_SINGLE_PLUS:
             return true;
         case TOKEN_ASTERISK:
@@ -494,6 +499,8 @@ static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE 
 static inline bool token_is_binary(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_AT_SIGN:
             return false;
         case TOKEN_SINGLE_PLUS:
             return true;

@@ -44,7 +44,7 @@ size_t arena_get_total_capacity(const Arena* arena);
 size_t arena_get_total_usage(const Arena* arena);
 
 // arena_ndup
-static inline void* arena_dup_internal(Arena* arena, void* buf, size_t count) {
+static inline void* arena_dup_internal(Arena* arena, const void* buf, size_t count) {
     if (!buf) {
         return NULL;
     }

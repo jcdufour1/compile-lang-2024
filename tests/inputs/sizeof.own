@@ -101,9 +101,15 @@ type Raw6 raw_union {
     num2 i3
 }
 
+// TODO: duplicate members should not be allowed
 type Token enum {
     num i64
     num i64
+}
+
+type StrangeSize struct {
+    num1 u64
+    num2 u1
 }
 
 fn main() i32 {
@@ -157,6 +163,13 @@ fn main() i32 {
     io.printf("sizeof raw5 = %zu\n", sizeof raw5)
     let raw6 Raw6
     io.printf("sizeof raw6 = %zu\n", sizeof raw6)
+
+    let arr1 u8[12]
+    io.printf("sizeof arr1 = %zu\n", sizeof arr1)
+    let arr2 Div6[2]
+    io.printf("sizeof arr2 = %zu\n", sizeof arr2)
+    let arr3 StrangeSize[2]
+    io.printf("sizeof arr3 = %zu\n", sizeof arr3)
 
     return 0
 }

@@ -155,6 +155,7 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
         case IR_LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case IR_LANG_TYPE_FN:
+            // TODO
             todo();
     }
     unreachable(FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
@@ -162,6 +163,8 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
 
 uint64_t sizeof_def(const Tast_def* def) {
     switch (def->type) {
+        case TAST_ARRAY_DEF:
+            return sizeof_array_def(tast_array_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return sizeof_lang_type(tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
@@ -187,6 +190,8 @@ uint64_t sizeof_def(const Tast_def* def) {
 
 uint64_t alignof_def(const Tast_def* def) {
     switch (def->type) {
+        case TAST_ARRAY_DEF:
+            return alignof_array_def(tast_array_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return alignof_lang_type(tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
@@ -221,6 +226,16 @@ uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
     return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
 }
 
+// TODO: consider using int64_t instead of uint64_t for bit_width to reduce conversions between unsigned and signed
+uint64_t sizeof_array_def(const Tast_array_def* def) {
+    uint64_t end_alignment = alignof_lang_type(def->item_type);
+    uint64_t total = sizeof_lang_type(def->item_type)*(uint64_t)def->count;
+
+    // TODO: use get_next_multiple function or similar function
+    total += (end_alignment - total%end_alignment)%end_alignment;
+    return total;
+}
+
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
     uint64_t end_alignment = 0;
 
@@ -247,6 +262,10 @@ uint64_t alignof_struct_def_base(const Struct_def_base* base) {
         max_align = max(max_align, alignof_lang_type(vec_at(base->members, idx)->lang_type));
     }
     return max_align;
+}
+
+uint64_t alignof_array_def(const Tast_array_def* def) {
+    return alignof_lang_type(def->item_type);
 }
 
 static uint64_t ir_sizeof_expr(const Ir_expr* expr) {

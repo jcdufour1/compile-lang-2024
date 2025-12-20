@@ -361,6 +361,7 @@ static Uast_type uast_gen_variable_def(const char* prefix) {
 
     append_member(&def.members, "Ulang_type", "lang_type");
     append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Attrs", "attrs");
 
     return def;
 }

@@ -1,4 +1,4 @@
-compile::stdout 23
+compile::stdout 26
 sizeof nothing = 0
 sizeof num = 4
 sizeof(num) = 4
@@ -22,6 +22,9 @@ sizeof raw3 = 4
 sizeof raw4 = 4
 sizeof raw5 = 4
 sizeof raw6 = 1
+sizeof arr1 = 12
+sizeof arr2 = 48
+sizeof arr3 = 32
 
 compile::stderr 0
 

@@ -263,3 +263,49 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     }
     unreachable("");
 }
+
+bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type) {
+    Lang_type item_type = {0};
+    if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
+        return false;
+    }
+    
+    if (lang_type.count->type == UAST_UNDERSCORE) {
+        if (!env.silent_generic_resol_errors) {
+            msg(
+                DIAG_STATIC_ARRAY_COUNT_NOT_INFERED,
+                uast_expr_get_pos(lang_type.count),
+                "could not infer count of elements in the static array\n"
+            );
+        }
+        return false;
+    }
+
+    if (!try_lang_type_from_ulang_type_array_is_unsigned_int(lang_type.count)) {
+        if (!env.silent_generic_resol_errors) {
+            msg(
+                DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY,
+                uast_expr_get_pos(lang_type.count),
+                "count of statically sized array must be an integer literal\n"
+            );
+        }
+        return false;
+    }
+
+    int64_t count = uast_int_unwrap(uast_literal_unwrap(lang_type.count))->data;
+
+    *new_lang_type = lang_type_array_const_wrap(lang_type_array_new(
+        lang_type.pos,
+        arena_dup(&a_main, &item_type),
+        count,
+        0
+    ));
+
+    Tast_def* array_def_ = NULL;
+    if (!symbol_lookup(&array_def_, serialize_ulang_type_array(MOD_PATH_ARRAYS, lang_type, true))) {
+        unwrap(symbol_add(tast_array_def_wrap(tast_array_def_new(lang_type.pos, item_type, count))));
+    }
+
+    return true;
+}
+
