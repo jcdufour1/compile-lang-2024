@@ -9,6 +9,7 @@
 #include <ulang_type_new_convenience.h>
 #include <ulang_type_is_equal.h>
 #include <ast_msg.h>
+#include <ulang_type_serialize.h>
 
 // TODO: remove this forward declaration
 static inline Ulang_type ulang_type_new_int_x(Pos pos, Strv base);
@@ -342,6 +343,7 @@ static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
     return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, def->base.name, 0));
 }
 
+// TODO: this function should return bool instead of crashing
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
@@ -356,6 +358,15 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             return tast_struct_def_get_lang_type(tast_struct_def_const_unwrap(def));
         case TAST_ENUM_DEF:
             return tast_enum_def_get_lang_type(tast_enum_def_const_unwrap(def));
+        case TAST_ARRAY_DEF: {
+            const Tast_array_def* array_def = tast_array_def_const_unwrap(def);
+            return lang_type_array_const_wrap(lang_type_array_new(
+                array_def->pos,
+                arena_dup(&a_main, &array_def->item_type),
+                array_def->count,
+                0
+            ));
+        }
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT_PATH:
@@ -435,6 +446,8 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
     unreachable("");
 }
 
+Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope);
+
 static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF: {
@@ -461,6 +474,20 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
+        case TAST_ARRAY_DEF: {
+            const Tast_array_def* array_def = tast_array_def_const_unwrap(def);
+            Ulang_type item_type = lang_type_to_ulang_type(array_def->item_type);
+            return serialize_ulang_type_array(
+                MOD_PATH_ARRAYS,
+                ulang_type_array_new(
+                    array_def->pos,
+                    arena_dup(&a_main/*TODO: have arena arg to this function?*/, &item_type),
+                    uast_literal_wrap(uast_int_wrap(uast_int_new(array_def->pos, array_def->count))),
+                    0
+                ),
+                true
+            );
+        }
     }
     unreachable("");
 }
@@ -487,6 +514,7 @@ static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
     unreachable("");
 }
 
+// TODO: this function should return bool instead of crashing?
 static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
@@ -506,6 +534,8 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
         case TAST_IMPORT_PATH:
             todo();
         case TAST_LABEL:
+            unreachable("");
+        case TAST_ARRAY_DEF:
             unreachable("");
     }
     unreachable("");

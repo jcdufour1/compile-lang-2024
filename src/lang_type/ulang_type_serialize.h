@@ -27,4 +27,6 @@ Name serialize_ulang_type_lit(Strv mod_path, Ulang_type_lit ulang_type);
 
 Name serialize_ulang_type_fn_lit(Ulang_type_fn_lit ulang_type);
 
+Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope);
+
 #endif // ULANG_TYPE_SERIALIZE_H

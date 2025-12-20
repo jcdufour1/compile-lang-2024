@@ -1683,6 +1683,8 @@ static Ir_name load_ptr_member_access(Ir_block* new_block, Tast_member_access* o
             struct_index = 0;
             break;
         }
+        case TAST_ARRAY_DEF:
+            unreachable("");
         case TAST_LABEL:
             unreachable("");
         case TAST_IMPORT_PATH:
@@ -2086,6 +2088,8 @@ static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
         case TAST_FUNCTION_DECL:
             fun_decl = tast_function_decl_unwrap(fun_def_);
             break;
+        case TAST_ARRAY_DEF:
+            unreachable("");
         case TAST_LABEL:
             unreachable("");
         case TAST_IMPORT_PATH:
@@ -2712,6 +2716,8 @@ static void load_def(Ir_block* new_block, Tast_def* old_def) {
         case TAST_LABEL:
             load_label(new_block, tast_label_unwrap(old_def));
             return;
+        case TAST_ARRAY_DEF:
+            return;
     }
     unreachable("");
 }
@@ -2953,6 +2959,8 @@ static void load_def_out_of_line(Tast_def* old_def) {
             load_import_path(tast_import_path_unwrap(old_def));
             return;
         case TAST_LABEL:
+            return;
+        case TAST_ARRAY_DEF:
             return;
     }
     unreachable("");

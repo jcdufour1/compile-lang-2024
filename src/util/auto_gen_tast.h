@@ -416,6 +416,16 @@ static Uast_type tast_gen_enum_def(const char* prefix) {
     return def;
 }
 
+static Uast_type tast_gen_array_def(const char* prefix) {
+    const char* base_name = "array_def";
+    Uast_type def = {.name = uast_name_new(prefix, base_name, false, "tast")};
+
+    append_member(&def.members, "Lang_type", "item_type");
+    append_member(&def.members, "int64_t", "count");
+
+    return def;
+}
+
 static Uast_type tast_gen_primitive_def(const char* prefix) {
     const char* base_name = "primitive_def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false, "tast")};
@@ -446,6 +456,7 @@ static Uast_type tast_gen_def(const char* prefix) {
     vec_append(&a_gen, &def.sub_types, tast_gen_struct_def(base_name));
     vec_append(&a_gen, &def.sub_types, tast_gen_raw_union_def(base_name));
     vec_append(&a_gen, &def.sub_types, tast_gen_enum_def(base_name));
+    vec_append(&a_gen, &def.sub_types, tast_gen_array_def(base_name));
     vec_append(&a_gen, &def.sub_types, tast_gen_primitive_def(base_name));
     vec_append(&a_gen, &def.sub_types, tast_gen_function_decl(base_name));
 

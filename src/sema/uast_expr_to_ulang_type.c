@@ -247,6 +247,28 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
             //return EXPR_TO_ULANG_TYPE_NORMAL;
         case UAST_INDEX: {
             const Uast_index* index = uast_index_const_unwrap(expr);
+            if (index->index->type == UAST_LITERAL) {
+                const Uast_literal* inner_index_lit = uast_literal_const_unwrap(index->index);
+                if (inner_index_lit->type != UAST_INT) {
+                    msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
+                    return EXPR_TO_ULANG_TYPE_ERROR;
+                }
+
+                Ulang_type item_type = {0};
+                int16_t dummy = 0;
+                EXPR_TO_ULANG_TYPE status = uast_expr_to_ulang_type_int_liternal(&item_type, &dummy, index->callee);
+                if (status != EXPR_TO_ULANG_TYPE_NORMAL) {
+                    return status;
+                }
+                *result = ulang_type_array_const_wrap(ulang_type_array_new(
+                    index->pos,
+                    arena_dup(&a_main, &item_type),
+                    index->index,
+                    0 // TODO
+                ));
+                return EXPR_TO_ULANG_TYPE_NORMAL;
+            }
+
             if (index->index->type != UAST_EXPR_REMOVED) {
                 msg_todo("interpreting this expression as a type", uast_expr_get_pos(expr));
                 return EXPR_TO_ULANG_TYPE_ERROR;
