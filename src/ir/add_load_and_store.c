@@ -839,8 +839,9 @@ static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def, bool i
         var_def->pos,
         var_def->lang_type,
         var_def->name_corr_param,
-        is_raw_union ? ATTR_ALLOW_UNINIT : 0
+        var_def->attrs
     );
+    lang_alloca->attrs |= is_raw_union ? ATTR_ALLOW_UNINIT : 0;
     ir_lang_type_set_pointer_depth(&lang_alloca->lang_type, ir_lang_type_get_pointer_depth(lang_alloca->lang_type) + 1);
     ir_add(ir_alloca_wrap(lang_alloca));
     unwrap(lang_alloca);

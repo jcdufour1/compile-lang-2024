@@ -155,6 +155,25 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
 
 typedef bool(*Is_correct_sym_type)(UAST_DEF_TYPE);
 
+static Strv did_you_mean_print_common_finish(Candidate_vec candidates) {
+    if (candidates.info.count < 1) {
+        return sv("");
+    }
+
+    assert(candidates.info.count > 0 && candidates.buf && "qsort expected non-null pointer");
+    qsort(candidates.buf, candidates.info.count, sizeof(candidates.buf[0]), candidate_compare);
+
+    String buf = {0};
+    string_extend_cstr(&a_temp, &buf, "; did you mean:");
+    vec_foreach(idx, Candidate, candidate, candidates) {
+        if (idx > 0) {
+            string_extend_cstr(&a_temp, &buf, ",");
+        }
+        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name));
+    }
+    return string_to_strv(buf);
+}
+
 static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_correct_sym_type_fn) {
     sym_mod_path = sym_name.mod_path;
 
@@ -194,21 +213,8 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
 
-    if (candidates.info.count < 1) {
-        return sv("");
-    }
+    return did_you_mean_print_common_finish(candidates);
 
-    qsort(candidates.buf, candidates.info.count, sizeof(candidates.buf[0]), candidate_compare);
-
-    String buf = {0};
-    string_extend_cstr(&a_temp, &buf, "; did you mean:");
-    vec_foreach(idx, Candidate, candidate, candidates) {
-        if (idx > 0) {
-            string_extend_cstr(&a_temp, &buf, ",");
-        }
-        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name));
-    }
-    return string_to_strv(buf);
 }
 
 static bool local_is_struct_like(UAST_DEF_TYPE type) {
@@ -295,4 +301,24 @@ static bool is_symbol(UAST_DEF_TYPE type) {
 
 Strv did_you_mean_symbol_print_internal(Name sym_name) {
     return did_you_mean_print_common(sym_name, is_symbol);
+}
+
+Strv did_you_mean_strv_choice_print_internal(Strv sym_strv, Strv_vec candidates_strv) {
+    Candidate_vec candidates = {0};
+    vec_foreach(idx, Strv, curr_strv, candidates_strv) {
+        uint32_t difference = levenshtein_distance(sym_strv, curr_strv);
+        if (difference <= 5) {
+            vec_append(&a_temp, &candidates, candidate_new(
+                name_new(
+                    MOD_PATH_BUILTIN,
+                    curr_strv,
+                    (Ulang_type_vec) {0},
+                    SCOPE_TOP_LEVEL
+                ),
+                difference
+            ));
+        }
+    }
+
+    return did_you_mean_print_common_finish(candidates);
 }

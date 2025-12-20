@@ -443,6 +443,9 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '\n')) {
         token->type = TOKEN_NEW_LINE;
         return true;
+    } else if (strv_col_try_consume(pos, file_text_rem, '@')) {
+        token->type = TOKEN_AT_SIGN;
+        return true;
     } else {
         String buf = {0};
         string_extend_strv(&a_token, &buf, sv("unknown symbol: "));

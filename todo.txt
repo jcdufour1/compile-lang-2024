@@ -132,6 +132,7 @@ for generics:
 - store attributes in asts instead of in Name? also have different Attrs aliases for different ast types?
 - make attribute to suppress uninitialized error
 - rename uast_macro to uast_directive?
+- rename vec to darr?
 
 
 # roadmap to try to get bootstrap compiler done:

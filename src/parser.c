@@ -17,6 +17,7 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 #include <pos_util.h>
+#include <did_you_mean.h>
 
 typedef struct {
     Strv mod_path;
@@ -1012,11 +1013,38 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
 }
 
 static PARSE_STATUS parse_attrs(Attrs* result, Tk_view* tokens) {
+    *result = (Attrs) {0};
+
     Token at_tk = {0};
     while (try_consume(&at_tk, tokens, TOKEN_AT_SIGN)) {
-        todo();
+        log_tokens(LOG_DEBUG, *tokens);
+        Token sym_tk = {0};
+        if (!consume_expect(&sym_tk, tokens, "(attribute name) after '@'", TOKEN_SYMBOL)) {
+            return PARSE_ERROR;
+        }
+
+        Strv attr_name = sym_tk.text;
+
+        static_assert(ATTR_COUNT == 1, "exhausive handling of attributes in if-else");
+        if (strv_is_equal(attr_name, sv("maybe_uninit"))) {
+            *result |= ATTR_ALLOW_UNINIT;
+        } else {
+            Strv_vec candidates = {0};
+            static_assert(ATTR_COUNT == 1, "exhausive handling of appending possible attributes to candidates vec");
+            vec_append(&a_temp, &candidates, sv("maybe_uninit"));
+
+            msg(
+                DIAG_INVALID_ATTR,
+                sym_tk.pos,
+                "invalid attribute `"FMT"`"FMT"\n",
+                strv_print(attr_name),
+                did_you_mean_strv_choice_print(attr_name, candidates)
+            );
+            return PARSE_ERROR;
+        }
     }
-    todo();
+
+    return PARSE_OK;
 }
 
 static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t* lang_type_ptr_depth, Tk_view* tokens, Scope_id scope_id) {
@@ -1761,11 +1789,16 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
 
+        Attrs attrs = {0};
+        if (PARSE_OK != parse_attrs(&attrs, tokens)) {
+            return PARSE_ERROR;
+        }
+
         Uast_variable_def* var_def = uast_variable_def_new(
             name_token.pos,
             lang_type,
             name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id),
-            (Attrs) {0} // TODO
+            attrs
         );
         *result = uast_variable_def_wrap(var_def);
 
