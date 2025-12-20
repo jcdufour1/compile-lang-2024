@@ -126,7 +126,6 @@ for generics:
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 - name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
-- expected failure case for invalid string literal (eg. ending in unescaped backslash)
 
 
 # roadmap to try to get bootstrap compiler done:
