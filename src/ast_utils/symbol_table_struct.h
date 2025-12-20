@@ -28,7 +28,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     void** buf;
-} Generic_vec;
+} Generic_darr;
 
 
 typedef struct {
@@ -108,7 +108,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Init_table* buf;
-} Init_table_vec;
+} Init_table_darr;
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
 
@@ -133,7 +133,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Ir_name_to_name_table* buf;
-} Ir_name_to_name_table_vec;
+} Ir_name_to_name_table_darr;
 
 
 typedef struct {
@@ -157,7 +157,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Name_to_ir_name_table* buf;
-} Name_to_ir_name_table_vec;
+} Name_to_ir_name_table_darr;
 
 
 typedef struct {

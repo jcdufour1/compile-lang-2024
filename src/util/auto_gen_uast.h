@@ -26,7 +26,7 @@ static Uast_type uast_gen_mod_alias(const char* prefix) {
 static Uast_type uast_gen_block(const char* prefix) {
     Uast_type block = {.name = uast_name_new(prefix, "block", false, "uast")};
 
-    append_member(&block.members, "Uast_stmt_vec", "children");
+    append_member(&block.members, "Uast_stmt_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
 
@@ -57,8 +57,8 @@ static Uast_type uast_gen_operator(const char* prefix) {
     const char* base_name = "operator";
     Uast_type operator = {.name = uast_name_new(prefix, base_name, false, "uast")};
 
-    vec_append(&a_gen, &operator.sub_types, uast_gen_unary(base_name));
-    vec_append(&a_gen, &operator.sub_types, uast_gen_binary(base_name));
+    darr_append(&a_gen, &operator.sub_types, uast_gen_unary(base_name));
+    darr_append(&a_gen, &operator.sub_types, uast_gen_binary(base_name));
 
     return operator;
 }
@@ -81,7 +81,7 @@ static Uast_type uast_gen_switch(const char* prefix) {
     Uast_type lang_if = {.name = uast_name_new(prefix, "switch", false, "uast")};
 
     append_member(&lang_if.members, "Uast_expr*", "operand");
-    append_member(&lang_if.members, "Uast_case_vec", "cases");
+    append_member(&lang_if.members, "Uast_case_darr", "cases");
 
     return lang_if;
 }
@@ -138,10 +138,10 @@ static Uast_type uast_gen_literal(const char* prefix) {
     const char* base_name = "literal";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false, "uast")};
 
-    vec_append(&a_gen, &lit.sub_types, uast_gen_int(base_name));
-    vec_append(&a_gen, &lit.sub_types, uast_gen_float(base_name));
-    vec_append(&a_gen, &lit.sub_types, uast_gen_string(base_name));
-    vec_append(&a_gen, &lit.sub_types, uast_gen_void(base_name));
+    darr_append(&a_gen, &lit.sub_types, uast_gen_int(base_name));
+    darr_append(&a_gen, &lit.sub_types, uast_gen_float(base_name));
+    darr_append(&a_gen, &lit.sub_types, uast_gen_string(base_name));
+    darr_append(&a_gen, &lit.sub_types, uast_gen_void(base_name));
 
     return lit;
 }
@@ -149,7 +149,7 @@ static Uast_type uast_gen_literal(const char* prefix) {
 static Uast_type uast_gen_function_call(const char* prefix) {
     Uast_type call = {.name = uast_name_new(prefix, "function_call", false, "uast")};
 
-    append_member(&call.members, "Uast_expr_vec", "args");
+    append_member(&call.members, "Uast_expr_darr", "args");
     append_member(&call.members, "Uast_expr*", "callee");
     append_member(&call.members, "bool", "is_user_generated");
 
@@ -159,7 +159,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
 static Uast_type uast_gen_struct_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "struct_literal", false, "uast")};
 
-    append_member(&lit.members, "Uast_expr_vec", "members");
+    append_member(&lit.members, "Uast_expr_darr", "members");
 
     return lit;
 }
@@ -167,7 +167,7 @@ static Uast_type uast_gen_struct_literal(const char* prefix) {
 static Uast_type uast_gen_array_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "array_literal", false, "uast")};
 
-    append_member(&lit.members, "Uast_expr_vec", "members");
+    append_member(&lit.members, "Uast_expr_darr", "members");
 
     return lit;
 }
@@ -175,7 +175,7 @@ static Uast_type uast_gen_array_literal(const char* prefix) {
 static Uast_type uast_gen_tuple(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "tuple", false, "uast")};
 
-    append_member(&lit.members, "Uast_expr_vec", "members");
+    append_member(&lit.members, "Uast_expr_darr", "members");
 
     return lit;
 }
@@ -270,7 +270,7 @@ static Uast_type uast_gen_fn(const char* prefix) {
 static Uast_type uast_gen_if_else_chain(const char* prefix) {
     Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false, "uast")};
 
-    append_member(&chain.members, "Uast_if_vec", "uasts");
+    append_member(&chain.members, "Uast_if_darr", "uasts");
 
     return chain;
 }
@@ -287,27 +287,27 @@ static Uast_type uast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false, "uast")};
 
-    vec_append(&a_gen, &expr.sub_types, uast_gen_if_else_chain(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_block(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_switch(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_unknown(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_operator(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_symbol(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_member_access(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_index(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_function_call(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_struct_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_array_literal(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_tuple(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_macro(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_enum_access(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_enum_get_tag(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_orelse(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_fn(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_question_mark(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_underscore(base_name));
-    vec_append(&a_gen, &expr.sub_types, uast_gen_expr_removed(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_if_else_chain(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_block(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_switch(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_unknown(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_operator(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_symbol(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_member_access(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_index(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_literal(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_function_call(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_struct_literal(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_array_literal(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_tuple(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_macro(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_enum_access(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_enum_get_tag(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_orelse(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_fn(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_question_mark(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_underscore(base_name));
+    darr_append(&a_gen, &expr.sub_types, uast_gen_expr_removed(base_name));
 
     return expr;
 }
@@ -331,7 +331,7 @@ static Uast_type uast_gen_raw_union_def(const char* prefix) {
 static Uast_type uast_gen_function_decl(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "function_decl", false, "uast")};
 
-    append_member(&def.members, "Uast_generic_param_vec", "generics");
+    append_member(&def.members, "Uast_generic_param_darr", "generics");
     append_member(&def.members, "Uast_function_params*", "params");
     append_member(&def.members, "Ulang_type", "return_type");
     append_member(&def.members, "Name", "name");
@@ -430,21 +430,21 @@ static Uast_type uast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false, "uast")};
 
-    vec_append(&a_gen, &def.sub_types, uast_gen_label(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_void_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_poison_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_import_path(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_mod_alias(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_generic_param(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_function_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_variable_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_struct_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_raw_union_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_enum_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_lang_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_primitive_def(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_function_decl(base_name));
-    vec_append(&a_gen, &def.sub_types, uast_gen_builtin_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_label(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_void_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_poison_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_import_path(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_mod_alias(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_generic_param(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_function_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_variable_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_struct_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_raw_union_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_enum_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_lang_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_primitive_def(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_function_decl(base_name));
+    darr_append(&a_gen, &def.sub_types, uast_gen_builtin_def(base_name));
 
     return def;
 }
@@ -452,7 +452,7 @@ static Uast_type uast_gen_def(const char* prefix) {
 static Uast_type uast_gen_function_params(const char* prefix) {
     Uast_type params = {.name = uast_name_new(prefix, "function_params", false, "uast")};
 
-    append_member(&params.members, "Uast_param_vec", "params");
+    append_member(&params.members, "Uast_param_darr", "params");
 
     return params;
 }
@@ -570,16 +570,16 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false, "uast")};
 
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_defer(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_using(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_expr(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_def(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_for_with_cond(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_yield(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_continue(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_assignment(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_return(base_name));
-    vec_append(&a_gen, &stmt.sub_types, uast_gen_stmt_removed(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_defer(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_using(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_expr(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_def(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_for_with_cond(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_yield(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_continue(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_assignment(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_return(base_name));
+    darr_append(&a_gen, &stmt.sub_types, uast_gen_stmt_removed(base_name));
 
     return stmt;
 }
@@ -588,14 +588,14 @@ static Uast_type uast_gen_uast(void) {
     const char* base_name = "uast";
     Uast_type uast = {.name = uast_name_new("uast", "", true, "uast")};
 
-    vec_append(&a_gen, &uast.sub_types, uast_gen_stmt(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_function_params(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_for_lower_bound(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_for_upper_bound(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_condition(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_if(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_case(base_name));
-    vec_append(&a_gen, &uast.sub_types, uast_gen_param(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_stmt(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_function_params(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_for_lower_bound(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_for_upper_bound(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_condition(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_if(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_case(base_name));
+    darr_append(&a_gen, &uast.sub_types, uast_gen_param(base_name));
 
     return uast;
 }

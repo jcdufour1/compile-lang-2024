@@ -26,7 +26,7 @@ bool resolve_generics_function_def_call(
     Lang_type_fn* rtn_type,
     Name* new_name,
     Uast_function_def* def,
-    Ulang_type_vec gen_args,
+    Ulang_type_darr gen_args,
     Pos pos_gen_args
 );
 

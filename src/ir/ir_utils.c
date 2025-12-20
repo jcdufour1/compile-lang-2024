@@ -203,7 +203,7 @@ Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL));
+            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL));
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:
@@ -225,7 +225,7 @@ Ir* ir_from_ir_name(Ir_name name) {
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Ir_name memb_name) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        if (ir_name_is_equal(vec_at(def->base.members, idx)->name_self, memb_name)) {
+        if (ir_name_is_equal(darr_at(def->base.members, idx)->name_self, memb_name)) {
             return idx;
         }
     }

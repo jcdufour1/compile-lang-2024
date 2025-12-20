@@ -1,4 +1,4 @@
-#include <auto_gen_vecs.h>
+#include <auto_gen_darrs.h>
 #include <auto_gen_util.h>
 #include <auto_gen_tast.h>
 #include <auto_gen_uast.h>
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     gen_all_irs(get_path(argv[1], "ir_forward_decl.h"), false);
     unwrap(!global_output);
 
-    gen_all_vecs(get_path(argv[1], "vecs.h"));
+    gen_all_darrs(get_path(argv[1], "darrs.h"));
     unwrap(!global_output);
 
     gen_all_tasts(get_path(argv[1], "tast.h"), true);

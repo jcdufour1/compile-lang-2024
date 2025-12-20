@@ -34,8 +34,8 @@ typedef struct {
     
     bool break_in_case;
     
-    Uast_block_vec switch_case_defer_add_if_true;
-    Uast_stmt_vec switch_case_defer_add_enum_case_part;
+    Uast_block_darr switch_case_defer_add_if_true;
+    Uast_stmt_darr switch_case_defer_add_enum_case_part;
     
     Lang_type lhs_lang_type;
     
@@ -101,8 +101,8 @@ bool try_set_tuple_assignment_types(
 );
 
 bool try_set_struct_literal_member_types_simplify(
-    Uast_expr_vec* membs,
-    Uast_variable_def_vec memb_defs,
+    Uast_expr_darr* membs,
+    Uast_variable_def_darr memb_defs,
     Pos pos
 );
 

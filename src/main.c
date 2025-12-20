@@ -8,7 +8,7 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
-#include <strv_vec.h>
+#include <strv_darr.h>
 #include <subprocess.h>
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
@@ -22,14 +22,14 @@
 
 static void add_primitives(void) {
     unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
-    vec_append(&a_main, &env.gen_args_char, ulang_type_new_char(POS_BUILTIN));
+    darr_append(&a_main, &env.gen_args_char, ulang_type_new_char(POS_BUILTIN));
 }
 
 static void add_builtin_def(Strv name) {
     unwrap(usym_tbl_add(uast_builtin_def_wrap(uast_builtin_def_new(POS_BUILTIN, name_new(
         MOD_PATH_RUNTIME,
         name,
-        (Ulang_type_vec) {0},
+        (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
     )))));
 }
@@ -175,12 +175,12 @@ NEVER_RETURN void do_passes(void) {
 
     static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop_after states (not all are explicitly handled");
     if (params.stop_after == STOP_AFTER_RUN) {
-        Strv_vec cmd = {0};
+        Strv_darr cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
-        vec_append(&a_temp, &cmd, string_to_strv(output_path));
-        vec_extend(&a_temp, &cmd, &params.run_args);
+        darr_append(&a_temp, &cmd, string_to_strv(output_path));
+        darr_extend(&a_temp, &cmd, &params.run_args);
         print_all_defered_msgs();
         arena_free_a_main();
         int status = subprocess_call(cmd);

@@ -61,7 +61,7 @@ void extend_lang_type_tag_to_string(String* buf, Lang_type lang_type) {
     unreachable("");
 }
 
-Strv lang_type_vec_print_internal(Lang_type_vec types) {
+Strv lang_type_darr_print_internal(Lang_type_darr types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -69,7 +69,7 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, vec_at(types, idx));
+        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, darr_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
@@ -132,7 +132,7 @@ static NAME_MODE lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
 
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '<');
+        darr_append(&a_temp, string, '<');
     }
 
     switch (mode) {
@@ -155,12 +155,12 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
-            Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
+            Lang_type_darr lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
             for (size_t idx = 0; idx < lang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_lang_type_to_string(string, mode, vec_at(lang_types, idx));
+                extend_lang_type_to_string(string, mode, darr_at(lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
@@ -172,10 +172,10 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
             if (fn.pointer_depth > 1) {
-                vec_append(&a_temp, string, ')');
+                darr_append(&a_temp, string, ')');
             }
             for (int16_t idx = 1; idx < fn.pointer_depth; idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             break;
         }
@@ -186,7 +186,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             string_extend_int64_t(&a_temp, string, array.count);
             string_extend_cstr(&a_temp, string, "]");
             for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             break;
         }
@@ -203,7 +203,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             }
             extend_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             break;
         }
@@ -227,7 +227,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             assert(name.base.count >= 1);
             extend_name(lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
             break;
         }
@@ -241,7 +241,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
     }
 
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '>');
+        darr_append(&a_temp, string, '>');
     }
 }
 

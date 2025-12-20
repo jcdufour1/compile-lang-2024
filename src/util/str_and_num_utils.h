@@ -28,11 +28,11 @@ Name util_literal_name_new_prefix_scope_internal(
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
 static inline Name util_literal_name_new_poison(void) {
-    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 }
 
 static inline Ir_name util_literal_ir_name_new_poison(void) {
-    return ir_name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    return ir_name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 }
 
 #define util_literal_ir_name_new(ir_name_tables) \

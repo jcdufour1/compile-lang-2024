@@ -4,7 +4,7 @@
 #include <tast.h>
 #include <ir.h>
 #include <do_passes.h>
-#include <token_vec.h>
+#include <token_darr.h>
 #include <parameters.h>
 #include <token_view.h>
 

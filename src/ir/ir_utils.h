@@ -9,9 +9,9 @@
 #   define ir_get_loc(node) ((node)->loc)
 #endif // NDEBUG
 
-Strv lang_type_vec_print_internal(Ir_lang_type_vec types);
+Strv lang_type_darr_print_internal(Ir_lang_type_darr types);
 
-#define lang_type_vec_print(types) strv_print(lang_type_vec_print_internal((types), false))
+#define lang_type_darr_print(types) strv_print(lang_type_darr_print_internal((types), false))
 
 #define ir_printf(ir) \
     do { \

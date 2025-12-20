@@ -9,7 +9,7 @@
 #include <codegen_common.h>
 #include <ir_lang_type_print.h>
 #include <sizeof.h>
-#include <strv_vec.h>
+#include <strv_darr.h>
 #include <subprocess.h>
 #include <file.h>
 #include <str_and_num_utils.h>
@@ -73,7 +73,7 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
                 if (idx > 0) {
                     string_extend_cstr(&a_pass, output, ", ");
                 }
-                c_extend_type_call_str(output, vec_at(fn.params.ir_lang_types, idx), opaque_ptr, true);
+                c_extend_type_call_str(output, darr_at(fn.params.ir_lang_types, idx), opaque_ptr, true);
             }
             string_extend_cstr(&a_pass, output, ")");
             if (!is_from_fn) {
@@ -106,15 +106,15 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
             string_extend_cstr(&a_pass, output, ", ");
         }
 
-        if (vec_at(params->params, idx)->is_variadic) {
+        if (darr_at(params->params, idx)->is_variadic) {
             string_extend_cstr(&a_pass, output, "... ");
             unwrap(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
             return;
         }
 
-        c_extend_type_call_str(output, vec_at(params->params, idx)->lang_type, true, false);
+        c_extend_type_call_str(output, darr_at(params->params, idx)->lang_type, true, false);
         string_extend_cstr(&a_pass, output, " ");
-        emit_c_extend_name(output, vec_at(params->params, idx)->name_self);
+        emit_c_extend_name(output, darr_at(params->params, idx)->name_self);
     }
 }
 
@@ -136,7 +136,7 @@ static void emit_c_function_decl_internal(String* output, const Ir_function_decl
     string_extend_cstr(&a_pass, output, " ");
     emit_c_extend_name(output, decl->name);
 
-    vec_append(&a_pass, output, '(');
+    darr_append(&a_pass, output, '(');
     if (decl->params->params.info.count < 1) {
         string_extend_cstr(&a_pass, output, "void");
     } else {
@@ -168,12 +168,12 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
     string_extend_cstr(&a_pass, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        Ir_struct_memb_def* curr = vec_at(def->base.members, idx);
+        Ir_struct_memb_def* curr = darr_at(def->base.members, idx);
         string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
-        if (ir_is_struct_like(vec_at(def->base.members, idx)->lang_type.type)) {
+        if (ir_is_struct_like(darr_at(def->base.members, idx)->lang_type.type)) {
             Ir_name ori_name = {0};
-            unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, vec_at(def->base.members, idx)->lang_type));
+            unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, darr_at(def->base.members, idx)->lang_type));
             Ir_name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
@@ -311,7 +311,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Ir_function_call* fun_
             if (idx > 0) {
                 string_extend_cstr(&a_pass, &strs->output, ", ");
             }
-            emit_c_expr_piece(strs, vec_at(fun_call->args, idx));
+            emit_c_expr_piece(strs, darr_at(fun_call->args, idx));
         }
     }
     string_extend_cstr(&a_pass, &strs->output, ");\n");
@@ -624,7 +624,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr
     string_extend_cstr(&a_pass, &strs->output, ")");
     emit_c_extend_name(&strs->output, load->ir_src);
     string_extend_cstr(&a_pass, &strs->output, ")->");
-    emit_c_extend_name(&strs->output, vec_at(ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
+    emit_c_extend_name(&strs->output, darr_at(ir_struct_def_unwrap(ir_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
     string_extend_cstr(&a_pass, &strs->output, ");\n");
 }
 
@@ -667,7 +667,7 @@ static void emit_c_goto(Emit_c_strs* strs, const Ir_goto* lang_goto) {
 
 static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
     emit_c_loc(&strs->output, ir_get_loc(block), block->pos);
-    vec_foreach(idx, Ir*, stmt, block->children) {
+    darr_foreach(idx, Ir*, stmt, block->children) {
         switch (stmt->type) {
             case IR_EXPR:
                 emit_c_expr(strs, ir_expr_const_unwrap(stmt));
@@ -796,39 +796,39 @@ void emit_c_from_tree(void) {
             path_c_compiler = sv("cc");
         }
 
-        Strv_vec cmd = {0};
-        vec_append(&a_pass, &cmd, path_c_compiler);
-        vec_append(&a_pass, &cmd, sv("-std=c99"));
+        Strv_darr cmd = {0};
+        darr_append(&a_pass, &cmd, path_c_compiler);
+        darr_append(&a_pass, &cmd, sv("-std=c99"));
 
         // supress clang warnings
-        vec_append(&a_pass, &cmd, sv("-Wno-override-module"));
-        vec_append(&a_pass, &cmd, sv("-Wno-incompatible-library-redeclaration"));
-        vec_append(&a_pass, &cmd, sv("-Wno-builtin-requires-header"));
-        vec_append(&a_pass, &cmd, sv("-Wno-unknown-warning-option"));
+        darr_append(&a_pass, &cmd, sv("-Wno-override-module"));
+        darr_append(&a_pass, &cmd, sv("-Wno-incompatible-library-redeclaration"));
+        darr_append(&a_pass, &cmd, sv("-Wno-builtin-requires-header"));
+        darr_append(&a_pass, &cmd, sv("-Wno-unknown-warning-option"));
 
         // supress gcc warnings
-        vec_append(&a_pass, &cmd, sv("-Wno-builtin-declaration-mismatch"));
+        darr_append(&a_pass, &cmd, sv("-Wno-builtin-declaration-mismatch"));
 
 #       ifdef NDEBUG
-            vec_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
+            darr_append(&a_pass, &cmd, sv("-Wno-unused-command-line-argument"));
 #       endif // NDEBUG
 
         static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types");
         switch (params.opt_level) {
             case OPT_LEVEL_O0:
-                vec_append(&a_pass, &cmd, sv("-O0"));
+                darr_append(&a_pass, &cmd, sv("-O0"));
                 break;
             case OPT_LEVEL_OG:
-                vec_append(&a_pass, &cmd, sv("-Og"));
+                darr_append(&a_pass, &cmd, sv("-Og"));
                 break;
             case OPT_LEVEL_O1:
-                vec_append(&a_pass, &cmd, sv("-O1"));
+                darr_append(&a_pass, &cmd, sv("-O1"));
                 break;
             case OPT_LEVEL_O2:
-                vec_append(&a_pass, &cmd, sv("-O2"));
+                darr_append(&a_pass, &cmd, sv("-O2"));
                 break;
             case OPT_LEVEL_OS:
-                vec_append(&a_pass, &cmd, sv("-Os"));
+                darr_append(&a_pass, &cmd, sv("-Os"));
                 break;
             case OPT_LEVEL_COUNT:
                 unreachable("");
@@ -836,7 +836,7 @@ void emit_c_from_tree(void) {
                 unreachable("");
         }
 
-        vec_append(&a_pass, &cmd, sv("-g"));
+        darr_append(&a_pass, &cmd, sv("-g"));
 
         // output step
         static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states");
@@ -846,10 +846,10 @@ void emit_c_from_tree(void) {
             case STOP_AFTER_BIN:
                 break;
             case STOP_AFTER_UPPER_S:
-                vec_append(&a_pass, &cmd, sv("-S"));
+                darr_append(&a_pass, &cmd, sv("-S"));
                 break;
             case STOP_AFTER_OBJ:
-                vec_append(&a_pass, &cmd, sv("-c"));
+                darr_append(&a_pass, &cmd, sv("-c"));
                 break;
             case STOP_AFTER_NONE:
                 unreachable("");
@@ -864,25 +864,25 @@ void emit_c_from_tree(void) {
         }
 
         if (params.is_output_file_path) {
-            vec_append(&a_pass, &cmd, sv("-o"));
-            vec_append(&a_pass, &cmd, params.output_file_path);
+            darr_append(&a_pass, &cmd, sv("-o"));
+            darr_append(&a_pass, &cmd, params.output_file_path);
         }
 
         // .own file, compiled to .c
         if (params.compile_own) {
-            vec_append(&a_pass, &cmd, test_output);
+            darr_append(&a_pass, &cmd, test_output);
         }
 
         // non-.own files to build
-        vec_extend(&a_pass, &cmd, &params.static_libs);
-        vec_extend(&a_pass, &cmd, &params.c_input_files);
-        vec_extend(&a_pass, &cmd, &params.object_files);
-        vec_extend(&a_pass, &cmd, &params.lower_s_files);
-        vec_extend(&a_pass, &cmd, &params.upper_s_files);
-        vec_extend(&a_pass, &cmd, &params.dynamic_libs);
+        darr_extend(&a_pass, &cmd, &params.static_libs);
+        darr_extend(&a_pass, &cmd, &params.c_input_files);
+        darr_extend(&a_pass, &cmd, &params.object_files);
+        darr_extend(&a_pass, &cmd, &params.lower_s_files);
+        darr_extend(&a_pass, &cmd, &params.upper_s_files);
+        darr_extend(&a_pass, &cmd, &params.dynamic_libs);
         for (size_t idx = 0; idx < params.l_flags.info.count; idx++) {
-            vec_append(&a_pass, &cmd, sv("-l"));
-            vec_append(&a_pass, &cmd, vec_at(params.l_flags, idx));
+            darr_append(&a_pass, &cmd, sv("-l"));
+            darr_append(&a_pass, &cmd, darr_at(params.l_flags, idx));
         }
 
         int status = subprocess_call(cmd);

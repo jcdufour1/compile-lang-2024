@@ -5,12 +5,12 @@
 
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type, bool use_new_scope, Scope_id new_scope);
 
-static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec, bool use_new_scope, Scope_id new_scope) {
-    Ulang_type_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, ulang_type_clone(vec_at(vec, idx), use_new_scope, new_scope));
+static inline Ulang_type_darr ulang_type_darr_clone(Ulang_type_darr darr, bool use_new_scope, Scope_id new_scope) {
+    Ulang_type_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, ulang_type_clone(darr_at(darr, idx), use_new_scope, new_scope));
     }
-    return new_vec;
+    return new_darr;
 }
 
 static inline Ulang_type_expr ulang_type_expr_clone(Ulang_type_expr lang_type) {
@@ -60,7 +60,7 @@ static inline Ulang_type_fn_lit ulang_type_fn_lit_clone(
 static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type, bool use_new_scope, Scope_id new_scope) {
     return ulang_type_tuple_new(
         lang_type.pos,
-        ulang_type_vec_clone(lang_type.ulang_types, use_new_scope, new_scope),
+        ulang_type_darr_clone(lang_type.ulang_types, use_new_scope, new_scope),
         lang_type.pointer_depth
     );
 }

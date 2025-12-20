@@ -17,16 +17,16 @@ Strv ustruct_def_base_print_internal(Ustruct_def_base base, Indent indent);
 
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
-static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
+static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_darr generics, Pos pos);
 
 #define uast_printf(uast) \
     do { \
         log(LOG_NOTE, FMT"\n", uast_print(uast)); \
     } while (0);
 
-bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics, Pos dest_pos);
+bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_darr generics, Pos dest_pos);
 
-static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_vec generics, Pos dest_pos) {
+static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* stmt, Ulang_type_darr generics, Pos dest_pos) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
@@ -52,7 +52,7 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
     unreachable("");
 }
 
-static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang_type_vec generics, Pos dest_pos) {
+static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang_type_darr generics, Pos dest_pos) {
     switch (uast->type) {
         case UAST_STMT:
             return uast_stmt_get_lang_type(result,  uast_stmt_const_unwrap(uast), generics, dest_pos);
@@ -90,7 +90,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_PRIMITIVE_DEF:
             return uast_primitive_def_get_name(uast_primitive_def_const_unwrap(def));
         case UAST_VOID_DEF:
-            return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:
@@ -108,7 +108,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_OF_MOD_PATHS, uast_import_path_const_unwrap(def)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
         case UAST_MOD_ALIAS:
             return uast_mod_alias_const_unwrap(def)->name;
         case UAST_LANG_DEF:
@@ -166,7 +166,7 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     return result;
 }
 
-bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
+bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_darr generics, Pos pos);
 
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl);
 
@@ -200,7 +200,7 @@ UAST_GET_MEMB_DEF uast_try_get_member_def(
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Strv member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Uast_variable_def* curr_member = vec_at(struct_def->members, idx);
+        const Uast_variable_def* curr_member = darr_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }

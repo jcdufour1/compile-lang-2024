@@ -336,7 +336,7 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
 
 Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     String buf = {0};
-    vec_reset(&buf);
+    darr_reset(&buf);
 
     switch (mode) {
         case TOKEN_MODE_LOG:
@@ -353,9 +353,9 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
         case TOKEN_OPEN_PAR: fallthrough;
         case TOKEN_NONTYPE: fallthrough;
@@ -440,14 +440,14 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_CHAR_LITERAL: 
             fallthrough;
         case TOKEN_INT_LITERAL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
         case TOKEN_FLOAT_LITERAL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
         case TOKEN_COUNT:
             unreachable("");

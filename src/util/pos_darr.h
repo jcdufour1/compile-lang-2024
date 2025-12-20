@@ -5,7 +5,7 @@
 typedef struct {
     Pos* buf;
     Vec_base info;
-} Pos_vec;
+} Pos_darr;
 
 #endif // POS_VEC_H
 

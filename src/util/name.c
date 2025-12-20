@@ -7,15 +7,15 @@
 #include <ulang_type_is_equal.h>
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_vec) {0}, .scope_id = scope_id};
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_darr) {0}, .scope_id = scope_id};
 }
 
 // TODO: replace genrgs in src with gen_args
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id));
 }
 
@@ -27,7 +27,7 @@ static Uname uname_normalize(Uname name) {
     return name;
 }
 
-static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
     assert(base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
@@ -38,7 +38,7 @@ Uname name_to_uname(Name name) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 #   ifndef NDEBUG
         // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
         //Uast_def* dummy = NULL;
@@ -104,7 +104,7 @@ Ir_name name_to_ir_name(Name name) {
     return ir_name;
 }
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
     return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
 }
@@ -127,7 +127,7 @@ void serialize_strv_actual(String* buf, Strv strv) {
         char curr = strv.str[idx];
 
         if (isalnum(curr)) {
-            vec_append(&a_main, buf, curr);
+            darr_append(&a_main, buf, curr);
         } else if (curr == '_') {
             string_extend_cstr(&a_main, buf, "__");
         } else {
@@ -160,9 +160,9 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
     String new_mod_path = {0};
     for (size_t idx = 0; idx < name.mod_path.count; idx++) {
         if (strv_at(name.mod_path, idx) == '.') {
-            vec_append(arena, &new_mod_path, '_');
+            darr_append(arena, &new_mod_path, '_');
         } else {
-            vec_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
+            darr_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
         }
     }
     name.mod_path = string_to_strv(new_mod_path);
@@ -207,7 +207,7 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
                 &buf,
                 serialize_name_symbol_table(
                     &a_main,
-                    serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)
+                    serialize_ulang_type(name.mod_path, darr_at(name.gen_args, idx), false)
                 )
             );
         }
@@ -287,7 +287,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
@@ -318,7 +318,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
@@ -366,12 +366,12 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+    return name_new(name.mod_path, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+    return uname_new(name.mod_alias, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
 bool ir_name_is_equal(Ir_name a, Ir_name b) {
@@ -388,7 +388,7 @@ bool name_is_equal(Name a, Name b) {
         return false;
     }
     for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(a.gen_args, idx), vec_at(b.gen_args, idx))) {
+        if (!ulang_type_is_equal(darr_at(a.gen_args, idx), darr_at(b.gen_args, idx))) {
             return false;
         }
     }

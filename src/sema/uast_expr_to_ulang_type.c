@@ -156,7 +156,7 @@ static EXPR_TO_ULANG_TYPE uast_block_to_ulang_type_int_liternal(Ulang_type* resu
         return false;
     }
 
-    Uast_stmt* mark_ = vec_at(block->children, 0);
+    Uast_stmt* mark_ = darr_at(block->children, 0);
     if (mark_->type != UAST_EXPR || uast_expr_unwrap(mark_)->type != UAST_QUESTION_MARK) {
         msg_todo("interpreting this expression as a type", block->pos);
         return false;

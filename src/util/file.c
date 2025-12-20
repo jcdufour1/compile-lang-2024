@@ -29,7 +29,7 @@ bool read_file(Strv* result, Strv file_path) {
     size_t buf_size = 2024;
     size_t amount_read = 0;
     do {
-        vec_reserve(&a_main, &file_text, buf_size);
+        darr_reserve(&a_main, &file_text, buf_size);
         amount_read = fread(file_text.buf + file_text.info.count, 1, buf_size, file);
         file_text.info.count += amount_read;
     } while (amount_read > 0);
@@ -46,8 +46,8 @@ bool read_file(Strv* result, Strv file_path) {
 
     fclose(file);
 
-    if (file_text.info.count < 1 || vec_at(file_text, file_text.info.count - 1) != '\n') {
-        vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
+    if (file_text.info.count < 1 || darr_at(file_text, file_text.info.count - 1) != '\n') {
+        darr_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
     }
     *result = string_to_strv(file_text);
     return true;

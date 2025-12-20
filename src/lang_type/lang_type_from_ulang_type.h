@@ -30,24 +30,24 @@ static inline bool try_lang_type_from_ulang_type_fn(
     Ulang_type_fn lang_type
 );
 
-// TODO: figure out way to reduce duplicate vec allocations
+// TODO: figure out way to reduce duplicate darr allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
     Ulang_type_tuple lang_type
 ) {
-    Lang_type_vec new_lang_types = {0};
+    Lang_type_darr new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
         Lang_type new_child = {0};
-        if (!try_lang_type_from_ulang_type(&new_child, vec_at(lang_type.ulang_types, idx))) {
+        if (!try_lang_type_from_ulang_type(&new_child, darr_at(lang_type.ulang_types, idx))) {
             return false;
         }
-        vec_append(&a_main, &new_lang_types, new_child);
+        darr_append(&a_main, &new_lang_types, new_child);
     }
     *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types, lang_type.pointer_depth);
     return true;
 }
 
-// TODO: figure out way to reduce duplicate vec allocations
+// TODO: figure out way to reduce duplicate darr allocations
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
     Ulang_type_fn lang_type
@@ -121,7 +121,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     // report error if generic args are invalid
-    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
+    darr_foreach(gen_idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
         Lang_type dummy = {0};
         if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
             return false;
@@ -178,9 +178,9 @@ bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_ar
 
 static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
     // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
-    Ulang_type_vec new_types = {0};
+    Ulang_type_darr new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
+        darr_append(&a_main, &new_types, lang_type_to_ulang_type(darr_at(lang_type.lang_types, idx)));
     }
     // TODO: uncomment lang_type.pointer_depth below
     return ulang_type_tuple_new(lang_type.pos, new_types, /*lang_type.pointer_depth*/0);

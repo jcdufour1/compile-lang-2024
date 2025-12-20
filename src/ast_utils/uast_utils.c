@@ -2,7 +2,7 @@
 #include <str_and_num_utils.h>
 #include <lang_type_new_convenience.h>
 
-bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics, Pos dest_pos) {
+bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_darr generics, Pos dest_pos) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
@@ -53,7 +53,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
     unreachable("");
 }
 
-bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec gen_args, Pos pos) {
+bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_darr gen_args, Pos pos) {
     Uname base_name = name_to_uname(base.name);
     base_name.gen_args = gen_args;
     LANG_TYPE_TYPE type = {0};
@@ -65,9 +65,9 @@ bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, 
 }
 
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
-    Ulang_type_vec params = {0};
+    Ulang_type_darr params = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, vec_at(decl->params->params, idx)->base->lang_type);
+        darr_append(&a_main, &params, darr_at(decl->params->params, idx)->base->lang_type);
     }
 
     Ulang_type* return_type = arena_alloc(&a_main, sizeof(*return_type));
@@ -488,21 +488,21 @@ UAST_GET_MEMB_DEF uast_try_get_member_def(
     Pos dest_pos
 ) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(base->members, idx);
+        Uast_variable_def* curr = darr_at(base->members, idx);
         if (strv_is_equal(curr->name.base, member_name)) {
             *member_def = curr;
             return UAST_GET_MEMB_DEF_NORMAL;
         }
     }
 
-    vec_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
+    darr_foreach(idx, Uast_generic_param*, gen_param, base->generics) {
         if (gen_param->is_expr && strv_is_equal(member_name, gen_param->name.base)) {
-            if (vec_at(base->name.gen_args, idx).type != ULANG_TYPE_LIT) {
+            if (darr_at(base->name.gen_args, idx).type != ULANG_TYPE_LIT) {
                 msg_todo("non const expression here", dest_pos);
                 return UAST_GET_MEMB_DEF_NONE;
             }
 
-            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(vec_at(base->name.gen_args, idx));
+            Ulang_type_lit const_expr = ulang_type_lit_const_unwrap(darr_at(base->name.gen_args, idx));
             switch (const_expr.type) {
                 case ULANG_TYPE_INT_LIT: {
                     Ulang_type_int_lit lit = ulang_type_int_lit_const_unwrap(const_expr);
@@ -563,7 +563,7 @@ Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_id
         &buf,
         FMT"."FMT,
         strv_print(lang_type_print_internal(LANG_TYPE_MODE_MSG, enum_def_lang_type)),
-        strv_print(name_print_internal(NAME_MSG, false, vec_at(enum_def.members, memb_idx)->name))
+        strv_print(name_print_internal(NAME_MSG, false, darr_at(enum_def.members, memb_idx)->name))
     );
 
     return string_to_strv(buf);

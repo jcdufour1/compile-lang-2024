@@ -8,8 +8,8 @@ bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
 }
 
 bool ulang_type_tuple_is_equal(Ulang_type_tuple a, Ulang_type_tuple b) {
-    vec_foreach(idx, Ulang_type, curr, a.ulang_types) {
-        if (!ulang_type_is_equal(curr, vec_at(b.ulang_types, idx))) {
+    darr_foreach(idx, Ulang_type, curr, a.ulang_types) {
+        if (!ulang_type_is_equal(curr, darr_at(b.ulang_types, idx))) {
             return false;
         }
     }
@@ -82,8 +82,8 @@ static bool uast_struct_literal_is_equal(const Uast_struct_literal* a, const Uas
         return false;
     }
 
-    vec_foreach(idx, Uast_expr*, curr_a, a->members) {
-        Uast_expr* curr_b = vec_at(b->members, idx);
+    darr_foreach(idx, Uast_expr*, curr_a, a->members) {
+        Uast_expr* curr_b = darr_at(b->members, idx);
         if (curr_a->type != curr_b->type) {
             return false;
         }
@@ -266,13 +266,13 @@ bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
     unreachable("");
 }
 
-bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
+bool ulang_type_darr_is_equal(Ulang_type_darr a, Ulang_type_darr b) {
     if (a.info.count != b.info.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
+        if (!ulang_type_is_equal(darr_at(a, idx), darr_at(b, idx))) {
             return false;
         }
     }

@@ -1,11 +1,11 @@
 #ifndef BOOL_VEC_H
 #define BOOL_VEC_H
 
-#include <vector.h>
+#include <darr.h>
 
 typedef struct {
     Vec_base info;
     bool* buf;
-} Bool_vec;
+} Bool_darr;
 
 #endif // BOOL_VEC_H

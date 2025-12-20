@@ -20,13 +20,13 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b);
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
 
-static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_vec b) {
+static inline bool ir_lang_type_darr_is_equal(Ir_lang_type_darr a, Ir_lang_type_darr b) {
     if (a.info.count != b.info.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!ir_lang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
+        if (!ir_lang_type_is_equal(darr_at(a, idx), darr_at(b, idx))) {
             return false;
         }
     }
@@ -35,7 +35,7 @@ static inline bool ir_lang_type_vec_is_equal(Ir_lang_type_vec a, Ir_lang_type_ve
 }
 
 static inline bool ir_lang_type_tuple_is_equal(Ir_lang_type_tuple a, Ir_lang_type_tuple b) {
-    return ir_lang_type_vec_is_equal(a.ir_lang_types, b.ir_lang_types);
+    return ir_lang_type_darr_is_equal(a.ir_lang_types, b.ir_lang_types);
 }
 
 static inline bool ir_lang_type_fn_is_equal(Ir_lang_type_fn a, Ir_lang_type_fn b) {
@@ -99,19 +99,19 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
     unreachable("");
 }
 
-static inline Ir_lang_type_vec ir_lang_type_vec_from_ir_lang_type(Ir_lang_type ir_lang_type) {
-    Ir_lang_type_vec vec = {0};
-    vec_append(&a_main, &vec, ir_lang_type);
-    return vec;
+static inline Ir_lang_type_darr ir_lang_type_darr_from_ir_lang_type(Ir_lang_type ir_lang_type) {
+    Ir_lang_type_darr darr = {0};
+    darr_append(&a_main, &darr, ir_lang_type);
+    return darr;
 }
 
-static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
+static inline bool lang_type_darr_is_equal(Lang_type_darr a, Lang_type_darr b) {
     if (a.info.count != b.info.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < a.info.count; idx++) {
-        if (!lang_type_is_equal(vec_at(a, idx), vec_at(b, idx))) {
+        if (!lang_type_is_equal(darr_at(a, idx), darr_at(b, idx))) {
             return false;
         }
     }
@@ -120,7 +120,7 @@ static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
 }
 
 static inline bool lang_type_tuple_is_equal(Lang_type_tuple a, Lang_type_tuple b) {
-    return lang_type_vec_is_equal(a.lang_types, b.lang_types);
+    return lang_type_darr_is_equal(a.lang_types, b.lang_types);
 }
 
 static inline bool lang_type_fn_is_equal(Lang_type_fn a, Lang_type_fn b) {
@@ -228,10 +228,10 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     unreachable("");
 }
 
-static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
-    Lang_type_vec vec = {0};
-    vec_append(&a_main, &vec, lang_type);
-    return vec;
+static inline Lang_type_darr lang_type_darr_from_lang_type(Lang_type lang_type) {
+    Lang_type_darr darr = {0};
+    darr_append(&a_main, &darr, lang_type);
+    return darr;
 }
 
 Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
@@ -252,7 +252,7 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
-            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
             0
         ));
     }
@@ -290,7 +290,7 @@ static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chai
     if (if_else->tasts.info.count < 1) {
         return lang_type_void_const_wrap(lang_type_void_new(if_else->pos, 0));
     }
-    return vec_at(if_else->tasts, 0)->yield_type;
+    return darr_at(if_else->tasts, 0)->yield_type;
 }
 
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
@@ -471,7 +471,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
         case TAST_ARRAY_DEF: {
@@ -565,7 +565,7 @@ size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Strv member_name) {
     log(LOG_TRACE, "tast_get_member_index: start\n");
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Tast_variable_def* curr_member = vec_at(struct_def->members, idx);
+        const Tast_variable_def* curr_member = darr_at(struct_def->members, idx);
         if (strv_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }

@@ -7,7 +7,7 @@
 typedef struct {
     Vec_base info;
     uint32_t* buf;
-} Uint32_t_vec;
+} Uint32_t_darr;
 
 static Strv sym_mod_path = {0};
 
@@ -27,35 +27,35 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
         return n;
     }
 
-    static Uint32_t_vec prev = {0};
-    static Uint32_t_vec curr = {0};
-    vec_reserve(&a_leak, &prev, m + 1);
-    vec_reserve(&a_leak, &curr, m + 1);
+    static Uint32_t_darr prev = {0};
+    static Uint32_t_darr curr = {0};
+    darr_reserve(&a_leak, &prev, m + 1);
+    darr_reserve(&a_leak, &curr, m + 1);
     {
-        vec_foreach_ref(idx, uint32_t, item, prev) {
+        darr_foreach_ref(idx, uint32_t, item, prev) {
             *item = 0;
         }
     }
     {
-        vec_foreach_ref(idx, uint32_t, item, curr) {
+        darr_foreach_ref(idx, uint32_t, item, curr) {
             *item = 0;
         }
     }
     while (prev.info.count < m + 1) {
-        vec_append(&a_leak, &prev, 0);
+        darr_append(&a_leak, &prev, 0);
     }
     while (curr.info.count < m + 1) {
-        vec_append(&a_leak, &curr, 0);
+        darr_append(&a_leak, &curr, 0);
     }
 
     {
-        vec_foreach_ref(idx, uint32_t, item, prev) {
+        darr_foreach_ref(idx, uint32_t, item, prev) {
             *item = idx;
         }
     }
 
     for (size_t s_idx = 1; s_idx < s.count + 1; s_idx++) {
-        *vec_at_ref(&curr, 0) = s_idx;
+        *darr_at_ref(&curr, 0) = s_idx;
 
         for (size_t t_idx = 1; t_idx < t.count + 1; t_idx++) {
             uint32_t difference_cost = 0;
@@ -63,21 +63,21 @@ uint32_t levenshtein_distance(Strv s, Strv t) {
                 difference_cost = 1;
             }
 
-            *vec_at_ref(&curr, t_idx) = levenshtein_min(
-                vec_at(curr, t_idx - 1) + 1,
-                vec_at(prev, t_idx) + 1,
-                vec_at(prev, t_idx - 1) + difference_cost
+            *darr_at_ref(&curr, t_idx) = levenshtein_min(
+                darr_at(curr, t_idx - 1) + 1,
+                darr_at(prev, t_idx) + 1,
+                darr_at(prev, t_idx - 1) + difference_cost
             );
         }
 
-        Uint32_t_vec temp = prev;
+        Uint32_t_darr temp = prev;
         prev = curr;
         curr = temp;
     }
 
-    uint32_t result = vec_at(prev, m);
-    vec_reset(&prev);
-    vec_reset(&curr);
+    uint32_t result = darr_at(prev, m);
+    darr_reset(&prev);
+    darr_reset(&curr);
     return result;
 }
 
@@ -89,13 +89,13 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Candidate* buf;
-} Candidate_vec;
+} Candidate_darr;
 
 static Candidate candidate_new(Name name, uint32_t difference) {
     return (Candidate) {.name = name, .difference = difference};
 }
 
-static int candidate_compare_gen_args(Ulang_type_vec lhs_gen_args, Ulang_type_vec rhs_gen_args);
+static int candidate_compare_gen_args(Ulang_type_darr lhs_gen_args, Ulang_type_darr rhs_gen_args);
 
 static int candidate_compare_gen_arg(Ulang_type lhs_gen_arg, Ulang_type rhs_gen_arg) {
     if (lhs_gen_arg.type != rhs_gen_arg.type) {
@@ -114,13 +114,13 @@ static int candidate_compare_gen_arg(Ulang_type lhs_gen_arg, Ulang_type rhs_gen_
     return candidate_compare_gen_args(lhs_reg.name.gen_args, rhs_reg.name.gen_args);
 }
 
-static int candidate_compare_gen_args(Ulang_type_vec lhs_gen_args, Ulang_type_vec rhs_gen_args) {
+static int candidate_compare_gen_args(Ulang_type_darr lhs_gen_args, Ulang_type_darr rhs_gen_args) {
     if (lhs_gen_args.info.count != rhs_gen_args.info.count) {
         return lhs_gen_args.info.count < rhs_gen_args.info.count ? QSORT_LESS_THAN : QSORT_MORE_THAN;
     }
 
-    vec_foreach(idx, Ulang_type, lhs_gen_arg, lhs_gen_args) {
-        int result = candidate_compare_gen_arg(lhs_gen_arg, vec_at(rhs_gen_args, idx));
+    darr_foreach(idx, Ulang_type, lhs_gen_arg, lhs_gen_args) {
+        int result = candidate_compare_gen_arg(lhs_gen_arg, darr_at(rhs_gen_args, idx));
         if (result != QSORT_EQUAL) {
             return result;
         }
@@ -155,7 +155,7 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
 
 typedef bool(*Is_correct_sym_type)(UAST_DEF_TYPE);
 
-static Strv did_you_mean_print_common_finish(Candidate_vec candidates) {
+static Strv did_you_mean_print_common_finish(Candidate_darr candidates) {
     if (candidates.info.count < 1) {
         return sv("");
     }
@@ -165,7 +165,7 @@ static Strv did_you_mean_print_common_finish(Candidate_vec candidates) {
 
     String buf = {0};
     string_extend_cstr(&a_temp, &buf, "; did you mean:");
-    vec_foreach(idx, Candidate, candidate, candidates) {
+    darr_foreach(idx, Candidate, candidate, candidates) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, &buf, ",");
         }
@@ -183,7 +183,7 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
     assert(levenshtein_distance(sv("n"), sv("na")) == 1);
     assert(levenshtein_distance(sv("na"), sv("na")) == 0);
 
-    Candidate_vec candidates = {0};
+    Candidate_darr candidates = {0};
 
     Scope_id curr_scope = sym_name.scope_id;
     while (1) {
@@ -203,7 +203,7 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
             uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 3 : 1;
             uint32_t result = levenshtein_distance(curr_name.base, sym_name.base);
             if (result <= max_difference) {
-                vec_append(&a_temp, &candidates, candidate_new(curr_name, result));
+                darr_append(&a_temp, &candidates, candidate_new(curr_name, result));
             }
         }
 
@@ -303,16 +303,16 @@ Strv did_you_mean_symbol_print_internal(Name sym_name) {
     return did_you_mean_print_common(sym_name, is_symbol);
 }
 
-Strv did_you_mean_strv_choice_print_internal(Strv sym_strv, Strv_vec candidates_strv) {
-    Candidate_vec candidates = {0};
-    vec_foreach(idx, Strv, curr_strv, candidates_strv) {
+Strv did_you_mean_strv_choice_print_internal(Strv sym_strv, Strv_darr candidates_strv) {
+    Candidate_darr candidates = {0};
+    darr_foreach(idx, Strv, curr_strv, candidates_strv) {
         uint32_t difference = levenshtein_distance(sym_strv, curr_strv);
         if (difference <= 5) {
-            vec_append(&a_temp, &candidates, candidate_new(
+            darr_append(&a_temp, &candidates, candidate_new(
                 name_new(
                     MOD_PATH_BUILTIN,
                     curr_strv,
-                    (Ulang_type_vec) {0},
+                    (Ulang_type_darr) {0},
                     SCOPE_TOP_LEVEL
                 ),
                 difference

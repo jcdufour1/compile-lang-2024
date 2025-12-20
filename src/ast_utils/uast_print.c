@@ -162,7 +162,7 @@ Strv uast_function_call_print_internal(UAST_MODE mode, const Uast_function_call*
             string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mode, fun_call->callee, indent + INDENT_WIDTH));
 
             for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-                Strv arg_text = uast_expr_print_internal(mode, vec_at(fun_call->args, idx), indent + INDENT_WIDTH);
+                Strv arg_text = uast_expr_print_internal(mode, darr_at(fun_call->args, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
 
@@ -175,7 +175,7 @@ Strv uast_function_call_print_internal(UAST_MODE mode, const Uast_function_call*
                 if (idx > 0) {
                     string_extend_cstr(&a_temp, &buf, ", ");
                 }
-                Strv arg_text = uast_expr_print_internal(mode, vec_at(fun_call->args, idx), indent + INDENT_WIDTH);
+                Strv arg_text = uast_expr_print_internal(mode, darr_at(fun_call->args, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
             string_extend_cstr(&a_temp, &buf, ")");
@@ -196,7 +196,7 @@ Strv uast_struct_literal_print_internal(UAST_MODE mode, const Uast_struct_litera
             string_extend_cstr(&a_temp, &buf, "\n");
 
             for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-                Strv memb_text = uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH);
+                Strv memb_text = uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
 
@@ -208,7 +208,7 @@ Strv uast_struct_literal_print_internal(UAST_MODE mode, const Uast_struct_litera
                     &a_temp,
                     "%s"FMT,
                     idx > 0 ? ", " : "",
-                    strv_print(uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH))
+                    strv_print(uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH))
                 );
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
@@ -230,7 +230,7 @@ Strv uast_array_literal_print_internal(UAST_MODE mode, const Uast_array_literal*
             string_extend_cstr(&a_temp, &buf, "\n");
 
             for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-                Strv memb_text = uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH);
+                Strv memb_text = uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
 
@@ -241,7 +241,7 @@ Strv uast_array_literal_print_internal(UAST_MODE mode, const Uast_array_literal*
                 if (idx > 0) {
                     string_extend_cstr(&a_temp, &buf, ", ");
                 }
-                Strv memb_text = uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH);
+                Strv memb_text = uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
             string_extend_cstr(&a_temp, &buf, "]");
@@ -262,7 +262,7 @@ Strv uast_tuple_print_internal(UAST_MODE mode, const Uast_tuple* lit, Indent ind
             string_extend_cstr(&a_temp, &buf, "\n");
 
             for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-                Strv memb_text = uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH);
+                Strv memb_text = uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
 
@@ -273,7 +273,7 @@ Strv uast_tuple_print_internal(UAST_MODE mode, const Uast_tuple* lit, Indent ind
                 if (idx > 0) {
                     string_extend_cstr(&a_temp, &buf, ", ");
                 }
-                Strv memb_text = uast_expr_print_internal(mode, vec_at(lit->members, idx), indent + INDENT_WIDTH);
+                Strv memb_text = uast_expr_print_internal(mode, darr_at(lit->members, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, memb_text);
             }
             string_extend_cstr(&a_temp, &buf, ")");
@@ -431,16 +431,16 @@ Strv uast_block_print_internal(UAST_MODE mode, const Uast_block* block, Indent i
             string_extend_cstr(&a_temp, &buf, "\n");
 
             string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
-            usymbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
+            usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
             string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-            symbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
+            symbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
 
             string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-            ir_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
+            ir_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
             for (size_t idx = 0; idx < block->children.info.count; idx++) {
-                Strv arg_text = uast_stmt_print_internal(mode, vec_at(block->children, idx), indent + INDENT_WIDTH);
+                Strv arg_text = uast_stmt_print_internal(mode, darr_at(block->children, idx), indent + INDENT_WIDTH);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
 
@@ -463,7 +463,7 @@ Strv uast_function_params_print_internal(UAST_MODE mode, const Uast_function_par
             string_extend_cstr_indent(&a_temp, &buf, "function_params\n", indent);
             indent += INDENT_WIDTH;
             for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-                Strv arg_text = uast_param_print_internal(mode, vec_at(function_params->params, idx), indent);
+                Strv arg_text = uast_param_print_internal(mode, darr_at(function_params->params, idx), indent);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
             break;
@@ -473,7 +473,7 @@ Strv uast_function_params_print_internal(UAST_MODE mode, const Uast_function_par
                 if (idx > 0) {
                     string_extend_cstr(&a_temp, &buf, ", ");
                 }
-                Strv arg_text = uast_param_print_internal(mode, vec_at(function_params->params, idx), indent);
+                Strv arg_text = uast_param_print_internal(mode, darr_at(function_params->params, idx), indent);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
             string_extend_cstr(&a_temp, &buf, ")");
@@ -579,7 +579,7 @@ Strv uast_switch_print_internal(UAST_MODE mode, const Uast_switch* lang_switch, 
             string_extend_cstr_indent(&a_temp, &buf, "switch\n", indent);
             string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mode, lang_switch->operand, indent + INDENT_WIDTH));
             for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
-                string_extend_strv(&a_temp, &buf, uast_case_print_internal(mode, vec_at(lang_switch->cases, idx), indent + INDENT_WIDTH));
+                string_extend_strv(&a_temp, &buf, uast_case_print_internal(mode, darr_at(lang_switch->cases, idx), indent + INDENT_WIDTH));
             }
             break;
         case UAST_MSG:
@@ -1113,7 +1113,7 @@ Strv uast_if_else_chain_print_internal(UAST_MODE mode, const Uast_if_else_chain*
             string_extend_cstr_indent(&a_temp, &buf, "if_else_chain\n", indent);
             indent += INDENT_WIDTH;
             for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-                Strv arg_text = uast_if_print_internal(mode, vec_at(if_else->uasts, idx), indent);
+                Strv arg_text = uast_if_print_internal(mode, darr_at(if_else->uasts, idx), indent);
                 string_extend_strv(&a_temp, &buf, arg_text);
             }
             indent -= INDENT_WIDTH;
@@ -1178,7 +1178,7 @@ static void extend_ustruct_def_base(String* buf, const void* main_ptr, const cha
     string_extend_cstr(&a_temp, buf, " \n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = uast_variable_def_print_internal(UAST_LOG/*TODO*/, vec_at(base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = uast_variable_def_print_internal(UAST_LOG/*TODO*/, darr_at(base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, buf, memb_text);
     }
 }

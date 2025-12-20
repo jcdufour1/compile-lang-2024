@@ -30,7 +30,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Import_strv* buf;
-} Import_strv_vec;
+} Import_strv_darr;
 
 static Strv curr_mod_path; // mod_path of the file that is currently being parsed
 static Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
@@ -43,8 +43,8 @@ static Pos new_scope_name_pos;
 
 static Name default_brk_label = {0};
 
-static Uast_using_vec using_params = {0};
-static Import_strv_vec mod_paths_to_parse = {0};
+static Uast_using_darr using_params = {0};
+static Import_strv_darr mod_paths_to_parse = {0};
 
 // TODO: use parent block for scope_ids instead of function calls everytime
 
@@ -55,7 +55,7 @@ static PARSE_STATUS parse_block(
     Tk_view* tokens,
     bool is_top_level,
     Scope_id new_scope,
-    Uast_stmt_vec init_children
+    Uast_stmt_darr init_children
 );
 
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id);
@@ -90,9 +90,9 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
 
 static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 
-static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id);
+static PARSE_STATUS parse_generics_args(Ulang_type_darr* args, Tk_view* tokens, Scope_id scope_id);
 
-static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope);
+static PARSE_STATUS parse_generics_params(Uast_generic_param_darr* params, Tk_view* tokens, Scope_id block_scope);
 
 static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id);
 
@@ -336,10 +336,10 @@ static bool get_mod_alias_from_path_token(
         curr_mod_alias = util_literal_name_new();
     } else if (is_main_mod) {
         assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
-        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+        curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     } else {
         assert(curr_mod_path.count > 0);
-        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+        curr_mod_alias = name_new(curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
@@ -347,7 +347,7 @@ static bool get_mod_alias_from_path_token(
     Strv old_mod_path = curr_mod_path;
     curr_mod_path = mod_path;
 
-    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL))) {
         goto finish;
     }
 
@@ -356,7 +356,7 @@ static bool get_mod_alias_from_path_token(
         NULL,
         mod_path
     ))));
-    vec_append(&a_pass, &mod_paths_to_parse, ((Import_strv) {
+    darr_append(&a_pass, &mod_paths_to_parse, ((Import_strv) {
         .mod_path = mod_path,
         .import_pos = import_pos,
         .mod_path_pos = mod_path_pos,
@@ -364,7 +364,7 @@ static bool get_mod_alias_from_path_token(
         .curr_mod_alias = curr_mod_alias
     }));
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
         alias_name,
@@ -1028,9 +1028,9 @@ static PARSE_STATUS parse_attrs(Attrs* result, Tk_view* tokens) {
         if (strv_is_equal(attr_name, sv("maybe_uninit"))) {
             *result |= ATTR_ALLOW_UNINIT;
         } else {
-            Strv_vec candidates = {0};
-            static_assert(ATTR_COUNT == 1, "exhausive handling of appending possible attributes to candidates vec");
-            vec_append(&a_temp, &candidates, sv("maybe_uninit"));
+            Strv_darr candidates = {0};
+            static_assert(ATTR_COUNT == 1, "exhausive handling of appending possible attributes to candidates darr");
+            darr_append(&a_temp, &candidates, sv("maybe_uninit"));
 
             msg(
                 DIAG_INVALID_ATTR,
@@ -1068,7 +1068,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t
 
     *pos = lang_type_token.pos;
 
-    *lang_type_name = uname_new(mod_alias, lang_type_token.text, (Ulang_type_vec) {0}, scope_id);
+    *lang_type_name = uname_new(mod_alias, lang_type_token.text, (Ulang_type_darr) {0}, scope_id);
     assert(mod_alias.mod_path.count > 0);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         (*lang_type_ptr_depth)++;
@@ -1080,7 +1080,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t
 // type will be parsed if possible
 static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens, Scope_id scope_id) {
     Ulang_type inner = {0};
-    Ulang_type_vec types = {0};
+    Ulang_type_darr types = {0};
     bool is_comma = true;
 
     // TODO: make token naming more consistant
@@ -1091,7 +1091,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         if (!parse_lang_type_struct(&inner, tokens, scope_id)) {
             break;
         }
-        vec_append(&a_main, &types, inner);
+        darr_append(&a_main, &types, inner);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -1207,7 +1207,7 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     }
 }
 
-static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, Uast_generic_param_vec* gen_params /* TODO: remove gen_params */, bool add_to_sym_table, Scope_id scope_id) {
+static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, Uast_generic_param_darr* gen_params /* TODO: remove gen_params */, bool add_to_sym_table, Scope_id scope_id) {
     (void) gen_params;
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
@@ -1252,11 +1252,11 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_vec* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
-    Uast_param_vec params = {0};
+static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Uast_generic_param_darr* gen_params, bool add_to_sym_tbl, Scope_id scope_id) {
+    Uast_param_darr params = {0};
     assert(
         using_params.info.count == 0 &&
-        "this vector should have been emptied at the start of the previous block, "
+        "this darr should have been emptied at the start of the previous block, "
         "and should only be added to when parsing function arguments"
     );
 
@@ -1265,10 +1265,10 @@ static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_
     while (!done) {
         switch (parse_function_parameter(&param, tokens, gen_params, add_to_sym_tbl, scope_id)) {
             case PARSE_EXPR_OK:
-                vec_append(&a_main, &params, param);
+                darr_append(&a_main, &params, param);
                 break;
             case PARSE_EXPR_ERROR:
-                vec_reset(&using_params);
+                darr_reset(&using_params);
                 assert(using_params.info.count == 0);
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
@@ -1292,7 +1292,7 @@ static PARSE_STATUS parse_function_decl_common(
 ) {
     Token name_token = consume(tokens);
 
-    Uast_generic_param_vec gen_params = {0};
+    Uast_generic_param_darr gen_params = {0};
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&gen_params, tokens, block_scope);
     }
@@ -1319,7 +1319,7 @@ static PARSE_STATUS parse_function_decl_common(
         assert(!pos_is_equal(ulang_type_get_pos(rtn_type), POS_BUILTIN));
     }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope));
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(curr_mod_path, name_token.text, (Ulang_type_darr) {0}, fn_scope));
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
         assert(using_params.info.count == 0);
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
@@ -1346,7 +1346,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     }
 
     Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope, (Uast_stmt_vec) {0})) {
+    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope, (Uast_stmt_darr) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1355,7 +1355,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope) {
+static PARSE_STATUS parse_generics_params(Uast_generic_param_darr* params, Tk_view* tokens, Scope_id block_scope) {
     memset(params, 0, sizeof(*params));
     unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
 
@@ -1377,12 +1377,12 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
 
         Uast_generic_param* param = uast_generic_param_new(
             symbol.pos,
-            name_new(curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope),
+            name_new(curr_mod_path, symbol.text, (Ulang_type_darr) {0}, block_scope),
             is_expr,
             expr_lang_type
         );
 
-        vec_append(&a_main, params, param);
+        darr_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
@@ -1395,7 +1395,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_generics_args(Ulang_type_darr* args, Tk_view* tokens, Scope_id scope_id) {
     memset(args, 0, sizeof(*args));
 
     do {
@@ -1411,7 +1411,7 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, S
             default:
                 unreachable("");
         }
-        vec_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(uast_expr_get_pos(arg), arg, 0)));
+        darr_append(&a_main, args, ulang_type_expr_const_wrap(ulang_type_expr_new(uast_expr_get_pos(arg), arg, 0)));
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
@@ -1457,7 +1457,7 @@ static PARSE_STATUS parse_struct_def_base(
         } else {
             while (try_consume(NULL, tokens, TOKEN_COMMA) || try_consume_newlines(tokens));
         }
-        vec_append(&a_main, &base->members, member);
+        darr_append(&a_main, &base->members, member);
     }
 
     if (!consume_expect(NULL, tokens, "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE)) {
@@ -1502,11 +1502,11 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
             ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type_name, 0)), 
               // TODO: set member lang_type to lang_type_name instead of 
               // ulang_type_regular_const_wrap(ulang_type_regular_new( when lang_type_name is changed to Ulang_type
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0),
+            name_new(curr_mod_path, name_token.text, (Ulang_type_darr) {0}, 0),
             attrs
         );
 
-        vec_append(&a_main, &base->members, member);
+        darr_append(&a_main, &base->members, member);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
@@ -1521,7 +1521,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1537,7 +1537,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1556,7 +1556,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_def_base(
         &base,
-        name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        name_new(curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
         tokens,
         false,
         ulang_type_new_void(tk_view_front(*tokens).pos)
@@ -1599,7 +1599,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
 
     *def = uast_lang_def_new(
         name.pos,
-        name_new(curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        name_new(curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
         expr,
         false
     );
@@ -1632,7 +1632,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         if (!consume_expect(&path_tk, tokens, "after . in module path", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        vec_append(&a_main, &mod_path, PATH_SEPARATOR);
+        darr_append(&a_main, &mod_path, PATH_SEPARATOR);
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 
@@ -1760,7 +1760,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
 
         Uast_generic_param* var_def = uast_generic_param_new(
             name_token.pos,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id),
+            name_new(curr_mod_path, name_token.text, (Ulang_type_darr) {0}, scope_id),
             true,
             lang_type_expr
         );
@@ -1796,7 +1796,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         Uast_variable_def* var_def = uast_variable_def_new(
             name_token.pos,
             lang_type,
-            name_new(curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id),
+            name_new(curr_mod_path, name_token.text, (Ulang_type_darr) {0}, scope_id),
             attrs
         );
         *result = uast_variable_def_wrap(var_def);
@@ -1808,7 +1808,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
             // TODO: should the "is_using" if statement also be ran for other two cases (Type and '')?
             if (is_using) {
-                vec_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
+                darr_append(&a_pass, &using_params, uast_using_new(var_def->pos, var_def->name, var_def->name.mod_path));
             }
         } else if (is_using) {
             // TODO: should this msg_todo also be ran for other two cases (Type and '')?
@@ -1871,8 +1871,8 @@ static PARSE_STATUS parse_for_range_internal(
             BINARY_ADD
         )))
     );
-    Uast_stmt_vec init_children = {0};
-    vec_append(&a_main, &init_children, uast_assignment_wrap(increment));
+    Uast_stmt_darr init_children = {0};
+    darr_append(&a_main, &init_children, uast_assignment_wrap(increment));
 
     Uast_block* inner = NULL;
     if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope, util_literal_name_new()), init_children)) {
@@ -1884,14 +1884,14 @@ static PARSE_STATUS parse_for_range_internal(
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
         lower_bound
     );
-    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
+    darr_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
     Uast_assignment* user_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_user->name)),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name))
     );
-    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
+    darr_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1908,7 +1908,7 @@ static PARSE_STATUS parse_for_range_internal(
         util_literal_name_new_prefix(sv("todo_remove_in_src_parser")),
         true
     );
-    vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
+    darr_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
     *result = outer;
     return PARSE_OK;
@@ -1928,7 +1928,7 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
         default:
             unreachable("");
     }
-    return parse_block(&(*for_new)->body, tokens, false, block_scope, (Uast_stmt_vec) {0});
+    return parse_block(&(*for_new)->body, tokens, false, block_scope, (Uast_stmt_darr) {0});
 }
 
 static bool is_for_range(Tk_view tokens, Scope_id block_scope) {
@@ -1962,7 +1962,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
     
     if (is_for_range(*tokens, block_scope)) {
         PARSE_STATUS status = PARSE_OK;
-        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_darr) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, false, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
@@ -2009,7 +2009,7 @@ static PARSE_STATUS parse_break(Uast_yield** new_break, Tk_view* tokens, Scope_i
         if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_darr) {0}, scope_id);
     }
 
     Uast_expr* break_expr = NULL;
@@ -2040,7 +2040,7 @@ static PARSE_STATUS parse_yield(Uast_yield** new_yield, Tk_view* tokens, Scope_i
         if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_darr) {0}, scope_id);
     } else if (PARSE_OK != label_thing(&break_out_of, scope_id)) {
         return PARSE_ERROR;
     }
@@ -2073,7 +2073,7 @@ static PARSE_STATUS parse_continue(Uast_continue** new_cont, Tk_view* tokens, Sc
         if (!consume_expect(&token, tokens, "(scope name)", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id);
+        break_out_of = name_new(curr_mod_path, token.text, (Ulang_type_darr) {0}, scope_id);
     } else {
         if (default_brk_label.base.count < 1) {
             msg(
@@ -2094,7 +2094,7 @@ static PARSE_STATUS parse_label(Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(&sym_name, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(NULL, tokens, TOKEN_COLON));
     // scope will be updated when parsing the statement
-    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id);
+    Name label_name = name_new(curr_mod_path, sym_name.text, (Ulang_type_darr) {0}, scope_id);
 
     new_scope_name_pos = sym_name.pos;
     new_scope_name = label_name;
@@ -2110,7 +2110,7 @@ static PARSE_STATUS parse_using(Uast_using** using, Tk_view* tokens, Scope_id sc
         return PARSE_ERROR;
     }
 
-    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_vec) {0}, scope_id), curr_mod_path);
+    *using = uast_using_new(using_tk.pos, name_new(curr_mod_path, sym_name.text, (Ulang_type_darr) {0}, scope_id), curr_mod_path);
     return PARSE_OK;
 }
 
@@ -2182,19 +2182,19 @@ static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
     Token token = consume(tokens);
     unwrap(token.type == TOKEN_SYMBOL);
 
-    return uast_symbol_new(token.pos, name_new(curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id));
+    return uast_symbol_new(token.pos, name_new(curr_mod_path, token.text, (Ulang_type_darr) {0}, scope_id));
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
     bool is_first_time = true;
     bool prev_is_comma = false;
-    Uast_expr_vec args = {0};
+    Uast_expr_darr args = {0};
     while (is_first_time || prev_is_comma) {
         Uast_expr* arg;
         switch (parse_expr(&arg, tokens, scope_id)) {
             case PARSE_EXPR_OK:
                 unwrap(arg);
-                vec_append(&a_main, &args, arg);
+                darr_append(&a_main, &args, arg);
                 prev_is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
@@ -2338,7 +2338,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
     Tk_view* tokens,
     Scope_id grand_parent
 ) {
-    Uast_if_vec ifs = {0};
+    Uast_if_darr ifs = {0};
 
     Scope_id parent = symbol_collection_new(grand_parent, util_literal_name_new());
     // TODO: (maybe not): extract this if and block_new into separate function
@@ -2372,10 +2372,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
         );
         return PARSE_ERROR;
     }
-    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_vec) {0})) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_darr) {0})) {
         return PARSE_ERROR;
     }
-    vec_append(&a_main, &ifs, if_stmt);
+    darr_append(&a_main, &ifs, if_stmt);
 
     if_else_chain_consume_newline(tokens);
     bool has_appended_default = false;
@@ -2402,10 +2402,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
             );
         }
 
-        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_vec) {0})) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_darr) {0})) {
             return PARSE_ERROR;
         }
-        vec_append(&a_main, &ifs, if_stmt);
+        darr_append(&a_main, &ifs, if_stmt);
 
         if_else_chain_consume_newline(tokens);
     }
@@ -2418,16 +2418,16 @@ static PARSE_STATUS parse_if_else_chain_internal(
             )),
             uast_block_new(
                 if_stmt->pos,
-                (Uast_stmt_vec) {0},
+                (Uast_stmt_darr) {0},
                 if_stmt->pos,
                 symbol_collection_new(parent, util_literal_name_new())
             )
         );
-        vec_append(&a_main, &ifs, if_stmt);
+        darr_append(&a_main, &ifs, if_stmt);
     }
 
-    Uast_stmt_vec chain_ = {0};
-    vec_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
+    Uast_stmt_darr chain_ = {0};
+    darr_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
     *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent);
     return PARSE_OK;
 }
@@ -2467,7 +2467,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Uast_block* if_true = NULL;
-    if (PARSE_OK != parse_block(&if_true, tokens, false, if_true_scope, (Uast_stmt_vec) {0})) {
+    if (PARSE_OK != parse_block(&if_true, tokens, false, if_true_scope, (Uast_stmt_darr) {0})) {
         return PARSE_ERROR;
     }
 
@@ -2504,8 +2504,8 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
                 default:
                     unreachable("");
             }
-            Uast_expr_vec args = {0};
-            vec_append(&a_main, &args, arg);
+            Uast_expr_darr args = {0};
+            darr_append(&a_main, &args, arg);
             is_false_cond = uast_function_call_wrap(uast_function_call_new(
                 open_par_tk.pos,
                 args,
@@ -2518,7 +2518,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         }
 
         Uast_block* if_false_block = NULL;
-        if (PARSE_OK != parse_block(&if_false_block, tokens, false, if_false_scope, (Uast_stmt_vec) {0})) {
+        if (PARSE_OK != parse_block(&if_false_block, tokens, false, if_false_scope, (Uast_stmt_darr) {0})) {
             return PARSE_ERROR;
         }
         if_false = if_false_block;
@@ -2528,11 +2528,11 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
 
     if (!if_false) {
         // TODO: make function for making empty block, and call it here?
-        if_false = uast_block_new(if_token.pos, (Uast_stmt_vec) {0}, if_token.pos, if_false_scope);
+        if_false = uast_block_new(if_token.pos, (Uast_stmt_darr) {0}, if_token.pos, if_false_scope);
     }
 
 
-    Uast_case_vec cases = {0};
+    Uast_case_darr cases = {0};
 
     if (is_true_cond->type != UAST_MEMBER_ACCESS && is_true_cond->type != UAST_FUNCTION_CALL) {
         msg(
@@ -2550,7 +2550,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
         if_true,
         if_true_scope
     );
-    vec_append(&a_main, &cases, if_true_case);
+    darr_append(&a_main, &cases, if_true_case);
 
     Uast_case* if_false_case = NULL;
     if (is_false_cond) {
@@ -2570,7 +2570,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
             if_false_scope
         );
     }
-    vec_append(&a_main, &cases, if_false_case);
+    darr_append(&a_main, &cases, if_false_case);
 
     *lang_switch = uast_switch_new(if_token.pos, operand, cases);
     return PARSE_OK;
@@ -2634,7 +2634,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
     }
     try_consume_newlines(tokens);
 
-    Uast_case_vec cases = {0};
+    Uast_case_darr cases = {0};
 
     while (1) {
         Scope_id case_scope = symbol_collection_new(parent, util_literal_name_new());
@@ -2662,7 +2662,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
             break;
         }
         
-        switch (parse_block(&case_if_true, tokens, false, case_scope, (Uast_stmt_vec) {0})) {
+        switch (parse_block(&case_if_true, tokens, false, case_scope, (Uast_stmt_darr) {0})) {
             case PARSE_OK:
                 break;
             case PARSE_ERROR:
@@ -2678,11 +2678,11 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
             case_if_true,
             case_scope
         );
-        vec_append(&a_main, &cases, curr_case);
+        darr_append(&a_main, &cases, curr_case);
     }
 
-    Uast_stmt_vec chain_ = {0};
-    vec_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(
+    Uast_stmt_darr chain_ = {0};
+    darr_append(&a_main, &chain_, uast_yield_wrap(uast_yield_new(
         start_token.pos,
         true,
         uast_switch_wrap(uast_switch_new(start_token.pos, operand, cases)),
@@ -2798,7 +2798,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_continue_wrap(rtn_stmt);
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id, util_literal_name_new()), (Uast_stmt_vec) {0})) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id, util_literal_name_new()), (Uast_stmt_darr) {0})) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_expr_wrap(uast_block_wrap(block_def));
@@ -2863,7 +2863,7 @@ static PARSE_STATUS parse_block(
     Tk_view* tokens,
     bool is_top_level,
     Scope_id new_scope,
-    Uast_stmt_vec init_children
+    Uast_stmt_darr init_children
 ) {
     PARSE_STATUS status = PARSE_OK;
     bool is_one_line = false;
@@ -2896,7 +2896,7 @@ static PARSE_STATUS parse_block(
 
     // NOTE: this if statement should always run even if parse_block returns PARSE_ERROR
     while (using_params.info.count > 0) {
-        vec_append(&a_main, &(*block)->children, uast_using_wrap(vec_pop(&using_params)));
+        darr_append(&a_main, &(*block)->children, uast_using_wrap(darr_pop(&using_params)));
     }
     if (status != PARSE_OK) {
         goto end;
@@ -2938,7 +2938,7 @@ static PARSE_STATUS parse_block(
             break;
         }
         unwrap(!try_consume_newlines(tokens));
-        vec_append(&a_main, &(*block)->children, child);
+        darr_append(&a_main, &(*block)->children, child);
     } while (!is_one_line);
 
     Token block_end = {0};
@@ -2959,7 +2959,7 @@ end:
     return status;
 }
 
-static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_STATUS parse_struct_literal_members(Uast_expr_darr* members, Tk_view* tokens, Scope_id scope_id) {
     memset(members, 0, sizeof(*members));
 
     try_consume_newlines(tokens);
@@ -2980,7 +2980,7 @@ static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view
             default:
                 unreachable("");
         }
-        vec_append(&a_main, members, memb);
+        darr_append(&a_main, members, memb);
         try_consume_newlines(tokens);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
@@ -2994,7 +2994,7 @@ static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_vi
         return PARSE_ERROR;
     }
 
-    Uast_expr_vec members = {0};
+    Uast_expr_darr members = {0};
     PARSE_STATUS status = parse_struct_literal_members(&members, tokens, scope_id);
     if (status != PARSE_OK) {
         return status;
@@ -3030,7 +3030,7 @@ static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* t
         return PARSE_ERROR;
     }
     
-    Uast_expr_vec members = {0};
+    Uast_expr_darr members = {0};
     PARSE_STATUS status = parse_struct_literal_members(&members, tokens, scope_id);
     if (status != PARSE_OK) {
         return status;
@@ -3150,7 +3150,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
             oper.pos,
             uast_symbol_new(
                 memb_name.pos,
-                name_new(curr_mod_path, memb_name.text, (Ulang_type_vec) {0}, scope_id)
+                name_new(curr_mod_path, memb_name.text, (Ulang_type_darr) {0}, scope_id)
             ),
             lhs
         ));
@@ -3203,7 +3203,7 @@ static PARSE_EXPR_STATUS parse_high_presidence(
             oper.pos,
             uast_symbol_new(
                 memb_name.pos,
-                name_new(curr_mod_path, memb_name.text, (Ulang_type_vec) {0}, scope_id)
+                name_new(curr_mod_path, memb_name.text, (Ulang_type_darr) {0}, scope_id)
             ),
             uast_unknown_wrap(uast_unknown_new(oper.pos))
         ));
@@ -3249,7 +3249,7 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         tokens,
         false,
         if_error_scope,
-        (Uast_stmt_vec) {0}
+        (Uast_stmt_darr) {0}
     )) {
         return PARSE_EXPR_ERROR;
     }
@@ -3270,8 +3270,8 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         err_symbol
     );
 
-    Uast_stmt_vec block_children = {0};
-    vec_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));
+    Uast_stmt_darr block_children = {0};
+    darr_append(&a_main, &block_children, uast_expr_wrap(uast_orelse_wrap(orelse)));
     *result = uast_block_new(
         orelse->pos,
         block_children,
@@ -3295,8 +3295,8 @@ static PARSE_EXPR_STATUS parse_question_mark_finish(
     }
 
     Uast_question_mark* mark = uast_question_mark_new(pos, lhs, outer, break_out_of);
-    Uast_stmt_vec block_children = {0};
-    vec_append(&a_main, &block_children, uast_expr_wrap(uast_question_mark_wrap(mark)));
+    Uast_stmt_darr block_children = {0};
+    darr_append(&a_main, &block_children, uast_expr_wrap(uast_question_mark_wrap(mark)));
     *result = uast_block_new(
         mark->pos,
         block_children,
@@ -3578,15 +3578,15 @@ static PARSE_EXPR_STATUS parse_unary(
     static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
-            Uast_expr_vec args = {0};
-            vec_append(&a_main, &args, child);
+            Uast_expr_darr args = {0};
+            darr_append(&a_main, &args, child);
             *result = uast_function_call_wrap(uast_function_call_new(
                 oper.pos,
                 args,
                 uast_symbol_wrap(uast_symbol_new(oper.pos, name_new(
                     MOD_PATH_RUNTIME,
                     sv("bitwise_not"),
-                    (Ulang_type_vec) {0},
+                    (Ulang_type_darr) {0},
                     SCOPE_TOP_LEVEL
                 ))),
                 false
@@ -3958,13 +3958,13 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     }
     // NOTE: scope_id of block in the top level of the file should always be SCOPE_TOP_LEVEL, regardless of if it is the main module
     if (params.do_prelude) {
-        vec_append(
+        darr_append(
             &a_pass,
             &using_params,
             uast_using_new(((Pos) {.line = 0, .file_path = sv("std/runtime.own") /* TODO: avoid hardcoding path */}) /* TODO: change this to prelude_alias->pos */, prelude_alias->name, file_strip_extension(file_path))
         );
     }
-    if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_vec) {0})) {
+    if (PARSE_OK != parse_block(block, &tokens, true, new_scope, (Uast_stmt_darr) {0})) {
         status = false;
         goto error;
     }
@@ -3984,7 +3984,7 @@ error:
 bool parse(void) {
     bool status = true;
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
         alias_name,
@@ -4006,7 +4006,7 @@ bool parse(void) {
     }
 
     while (mod_paths_to_parse.info.count > 0) {
-        Import_strv curr_mod = vec_pop(&mod_paths_to_parse);
+        Import_strv curr_mod = darr_pop(&mod_paths_to_parse);
 
         Strv old_mod_path = curr_mod_path;
         curr_mod_path = curr_mod.curr_mod_path;
@@ -4047,7 +4047,7 @@ static void parser_test_parse_expr(const char* input, int test) {
     //Strv file_text = sv(input);
     //env.file_path_to_text = file_text;
 
-    //Token_vec tokens_ = {0};
+    //Token_darr tokens_ = {0};
     //unwrap(tokenize(&tokens_, & (Strv) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);
@@ -4070,7 +4070,7 @@ static void parser_test_parse_stmt(const char* input, int test) {
     //Strv file_text = sv(input);
     //env.file_text = file_text;
 
-    //Token_vec tokens_ = {0};
+    //Token_darr tokens_ = {0};
     //unwrap(tokenize(&tokens_, & (Strv) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);

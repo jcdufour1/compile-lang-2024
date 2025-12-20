@@ -18,10 +18,10 @@ static bool infer_generic_type_tuple(
     //log(LOG_DEBUG, "infer_generic_type_tuple: param_corres_to_arg: "FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_tuple_const_wrap(param_corres_to_arg)));
     //log(LOG_DEBUG, "infer_generic_type_tuple: name_to_infer: "FMT"\n", name_print(NAME_LOG, name_to_infer));
 
-    vec_foreach(idx, Ulang_type, curr, param_corres_to_arg.ulang_types) {
+    darr_foreach(idx, Ulang_type, curr, param_corres_to_arg.ulang_types) {
         if (infer_generic_type(
             infered,
-            vec_at(arg_to_infer_from.ulang_types, idx),
+            darr_at(arg_to_infer_from.ulang_types, idx),
             false,
             curr,
             name_to_infer,
@@ -84,9 +84,9 @@ bool infer_generic_type(
                 ) {
                     if (infer_generic_type(
                         infered,
-                        vec_at(ulang_type_regular_const_unwrap(arg_to_infer_from).name.gen_args, idx),
+                        darr_at(ulang_type_regular_const_unwrap(arg_to_infer_from).name.gen_args, idx),
                         false,
-                        vec_at(reg.name.gen_args, idx),
+                        darr_at(reg.name.gen_args, idx),
                         name_to_infer,
                         pos_arg
                     )) {

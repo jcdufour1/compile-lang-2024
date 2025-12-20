@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 
 #include <strv.h>
-#include <cstr_vec.h>
+#include <cstr_darr.h>
 #include <subprocess.h>
 #include <signal.h>
 #include <stdint.h>
@@ -15,20 +15,20 @@
 #include <file.h>
 #include <ast_msg.h>
 
-Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
+Strv cmd_to_strv(Arena* arena, Strv_darr cmd) {
     String cmd_str = {0};
     for (size_t idx = 0; idx < cmd.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(arena, &cmd_str, " ");
         }
         // TODO: consider arguments that contain spaces, etc.
-        string_extend_strv(arena, &cmd_str, vec_at(cmd, idx));
+        string_extend_strv(arena, &cmd_str, darr_at(cmd, idx));
     }
     return string_to_strv(cmd_str);
 }
 
 // returns return code
-int subprocess_call(Strv_vec cmd) {
+int subprocess_call(Strv_darr cmd) {
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
@@ -38,13 +38,13 @@ int subprocess_call(Strv_vec cmd) {
 
     if (pid == 0) {
         // child process
-        Cstr_vec cstrs = {0};
+        Cstr_darr cstrs = {0};
         for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            const char* curr = strv_dup(&a_temp, vec_at(cmd, idx));
-            vec_append(&a_temp, &cstrs, curr);
+            const char* curr = strv_dup(&a_temp, darr_at(cmd, idx));
+            darr_append(&a_temp, &cstrs, curr);
         }
-        vec_append(&a_temp, &cstrs, NULL);
-        execvpe(strv_dup(&a_temp, vec_at(cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
+        darr_append(&a_temp, &cstrs, NULL);
+        execvpe(strv_dup(&a_temp, darr_at(cmd, 0)), cstr_darr_to_c_cstr_darr(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));
         msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
