@@ -1,0 +1,15 @@
+type io import = std.io
+
+fn main() i32 {
+    fn print_hello() {
+        io.print_str("hello")
+    }
+
+    aux()
+
+    return 0
+}
+
+fn aux() {
+    print_hello()
+}

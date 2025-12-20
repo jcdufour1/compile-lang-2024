@@ -36,6 +36,7 @@ typedef struct {
 
 typedef struct {
     Strv curr_mod_path; // mod_path of the file that is currently being parsed
+    Scope_id scope_id_curr_mod_path; // top most level scope id of the file that is currently being parsed
     Name curr_mod_alias; // placeholder mod alias of the file that is currently being parsed
 
     Token prev_token;
@@ -1366,9 +1367,7 @@ static PARSE_STATUS parse_function_decl_common(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda) {
-    unwrap(try_consume(NULL, tokens, TOKEN_FN));
-
+static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda) {
     Scope_id fn_scope = SCOPE_TOP_LEVEL;
     Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
 
@@ -1387,6 +1386,52 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
 
     *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
     usymbol_update(uast_function_def_wrap(*fun_def));
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool is_lambda, Scope_id scope_id) {
+    Token fn_tk = {0};
+    unwrap(try_consume(&fn_tk, tokens, TOKEN_FN));
+
+    if (!is_lambda && scope_id != parse_state.scope_id_curr_mod_path) {
+        Token fun_name_tk = {0};
+        if (!try_consume(&fun_name_tk, tokens, TOKEN_SYMBOL)) {
+            return PARSE_ERROR;
+        }
+        Name fun_name = name_new(
+            parse_state.curr_mod_path,
+            fun_name_tk.text,
+            (Ulang_type_darr) {0},
+            scope_id
+        );
+        Uast_function_def* fun_def = NULL;
+        if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, true)) {
+            return PARSE_ERROR;
+        }
+
+        Uast_variable_def* var_def = uast_variable_def_new(
+            fn_tk.pos,
+            ulang_type_from_uast_function_decl(fun_def->decl),
+            fun_name,
+            (Attrs) {0}
+        );
+        if (!usymbol_add(uast_variable_def_wrap(var_def))) {
+            msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
+            return PARSE_ERROR;
+        }
+        *result = uast_assignment_wrap(uast_assignment_new(
+            fn_tk.pos,
+            uast_symbol_wrap(uast_symbol_new(var_def->pos, var_def->name)),
+            uast_symbol_wrap(uast_symbol_new(fn_tk.pos, fun_def->decl->name))
+        ));
+        return PARSE_OK;
+    }
+
+    Uast_function_def* fun_def = NULL;
+    if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, is_lambda)) {
+        return PARSE_ERROR;
+    }
+    *result = uast_def_wrap(uast_function_def_wrap(fun_def));
     return PARSE_OK;
 }
 
@@ -2797,11 +2842,9 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         }
         lhs = uast_def_wrap(uast_function_decl_wrap(fun_decl));
     } else if (starts_with_function_def(*tokens)) {
-        Uast_function_def* fun_def;
-        if (PARSE_OK != parse_function_def(&fun_def, tokens, false)) {
+        if (PARSE_OK != parse_function_def(&lhs, tokens, false, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_def_wrap(uast_function_def_wrap(fun_def));
     } else if (starts_with_return(*tokens)) {
         Uast_return* rtn_stmt = NULL;
         if (PARSE_OK != parse_return(&rtn_stmt, tokens, scope_id)) {
@@ -3904,8 +3947,14 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
         );
 
         *tokens = parse_state_restore(saved_point, saved_tk_view);
-        Uast_function_def* fun_def = NULL;
-        if (PARSE_OK == parse_function_def(&fun_def, tokens, true)) {
+        Uast_stmt* fun_def_ = NULL;
+        if (PARSE_OK == parse_function_def(&fun_def_, tokens, true, scope_id)) {
+            if (fun_def_->type != UAST_DEF || uast_def_unwrap(fun_def_)->type != UAST_FUNCTION_DEF) {
+                msg_todo("", uast_stmt_get_pos(fun_def_));
+                return PARSE_EXPR_ERROR;
+            }
+            Uast_function_def* fun_def = uast_function_def_unwrap(uast_def_unwrap(fun_def_));
+
             *result = uast_symbol_wrap(uast_symbol_new(fun_def->pos, fun_def->decl->name));
             return PARSE_EXPR_OK;
         }
@@ -3958,6 +4007,7 @@ static void parser_do_tests(void);
 
 static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     bool status = true;
+    Scope_id old_scope_id_curr_mod_path = parse_state.scope_id_curr_mod_path;
 
     if (strv_is_equal(MOD_PATH_BUILTIN, file_strip_extension(file_basename(file_path)))) {
         msg(DIAG_FILE_INVALID_NAME, POS_BUILTIN, "file path with basename `builtin.own` is not permitted\n");
@@ -3988,12 +4038,13 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
             false,
             POS_BUILTIN
         )) {
-            return false;
+            status = false;
+            goto error;
         }
     }
 
-
     Scope_id new_scope = symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
+    parse_state.scope_id_curr_mod_path = new_scope;
 
 #ifndef NDEBUG
     // TODO: reenable
@@ -4035,6 +4086,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     }
 
 error:
+    parse_state.scope_id_curr_mod_path = old_scope_id_curr_mod_path;
     return status;
 }
 
