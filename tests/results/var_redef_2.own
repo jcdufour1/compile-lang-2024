@@ -1,25 +1,25 @@
 compile::stdout 0
 
 compile::stderr 19
-tests/inputs/var_redef_2.own:13:13:[1;31merror[0;39m:closing `}` is unmatched
-    12 |                 printf("%d ", num3)
-    13 |             }
-       |             ^
-    14 |         }
-tests/inputs/var_redef_2.own:14:9:[1;31merror[0;39m:closing `}` is unmatched
-    13 |             }
-    14 |         }
+tests/inputs/var_redef_2.own:1:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
+       |                      ^
+     2 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
+tests/inputs/var_redef_2.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
+     2 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
+       |                        ^
+     3 | 
+tests/inputs/var_redef_2.own:9:17:[1;31merror[0;39m:redefinition of symbol `num1`
+     8 |         for num3: i32 in num2..9 {
+     9 |             let num1: i32 = 67
+       |                 ^
+    10 |             let num_temp: i32 = num3
+tests/inputs/var_redef_2.own:5:9:[1;34mnote[0;39m:`num1` originally defined here
+     4 | main :: fn() i32 {
+     5 |     let num1: i32
        |         ^
-    15 |         printf("\n")
-tests/inputs/var_redef_2.own:16:5:[1;31merror[0;39m:closing `}` is unmatched
-    15 |         printf("\n")
-    16 |     }
-       |     ^
-    17 | 
-tests/inputs/var_redef_2.own:19:1:[1;31merror[0;39m:closing `}` is unmatched
-    18 |     return 0
-    19 | }
-       | ^
+     6 | 
 
 compile::return_code 1
 

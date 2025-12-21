@@ -1,15 +1,11 @@
 compile::stdout 0
 
-compile::stderr 9
-tests/inputs/if_cond_undef_function.own:7:5:[1;31merror[0;39m:closing `}` is unmatched
-     6 |         puts("hello")
-     7 |     }
-       |     ^
-     8 | 
-tests/inputs/if_cond_undef_function.own:10:1:[1;31merror[0;39m:closing `}` is unmatched
-     9 |     return 0
-    10 | }
-       | ^
+compile::stderr 5
+tests/inputs/if_cond_undef_function.own:2:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | puts :: extern("c")  :: fn(str_to_print_2 u8*) 
+       |                      ^
+     3 | 
 
 compile::return_code 1
 

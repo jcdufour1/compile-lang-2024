@@ -1,10 +1,21 @@
 compile::stdout 0
 
-compile::stderr 4
-tests/inputs/def_with_fun_type_in_expr_error.own:10:1:[1;31merror[0;39m:closing `}` is unmatched
-     9 |     return 0
-    10 | }
-       | ^
+compile::stderr 15
+tests/inputs/def_with_fun_type_in_expr_error.own:3:35:[1;31merror[0;39m:type `ThingT` is not defined
+     2 | Print_buf_def :: def = fn(BufT, u8)void
+     3 | Print_buf_fn2 :: def = fn(u16, u8)ThingT
+       |                                   ^
+     4 | 
+tests/inputs/def_with_fun_type_in_expr_error.own:7:9:[1;34mnote[0;39m:in expansion of def
+     6 |     let fun Print_buf_fn
+     7 |     let fun2 Print_buf_fn2
+       |         ^
+     8 | 
+tests/inputs/def_with_fun_type_in_expr_error.own:6:13:[1;31merror[0;39m:type `Print_buf_fn` is not defined
+     5 | main :: fn() i32 {
+     6 |     let fun Print_buf_fn
+       |             ^
+     7 |     let fun2 Print_buf_fn2
 
 compile::return_code 1
 

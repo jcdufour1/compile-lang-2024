@@ -1,20 +1,11 @@
 compile::stdout 0
 
-compile::stderr 14
-tests/inputs/orelse_print_num_result_in_error_handling_block.own:16:5:[1;31merror[0;39m:closing `}` is unmatched
+compile::stderr 5
+tests/inputs/orelse_print_num_result_in_error_handling_block.own:14:22:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+    13 |     let num i32 = do_thing(TRUE) orelse {
+    14 |         io.print_int(num)
+       |                      ^
     15 |         return
-    16 |     }
-       |     ^
-    17 | }
-tests/inputs/orelse_print_num_result_in_error_handling_block.own:17:1:[1;31merror[0;39m:closing `}` is unmatched
-    16 |     }
-    17 | }
-       | ^
-    18 | 
-tests/inputs/orelse_print_num_result_in_error_handling_block.own:23:1:[1;31merror[0;39m:closing `}` is unmatched
-    22 |     return 0
-    23 | }
-       | ^
 
 compile::return_code 1
 

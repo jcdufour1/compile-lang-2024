@@ -1,20 +1,11 @@
 compile::stdout 0
 
-compile::stderr 14
-tests/inputs/duplicate_default.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
-     6 |     string
-     7 | }
-       | ^
-     8 | 
-tests/inputs/duplicate_default.own:14:5:[1;31merror[0;39m:closing `}` is unmatched
-    13 |         default: printf("unhandled token_type")
-    14 |     }
-       |     ^
-    15 |     return 0
-tests/inputs/duplicate_default.own:16:1:[1;31merror[0;39m:closing `}` is unmatched
-    15 |     return 0
-    16 | }
-       | ^
+compile::stderr 5
+tests/inputs/duplicate_default.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | printf :: extern("c")  :: fn(str_to_print u8*, args opaque...) i32
+       |                        ^
+     3 | 
 
 compile::return_code 1
 

@@ -1,5 +1,5 @@
 
-add_using_callback :: fn(add_fn :: fn(i32)i32) {
+add_using_callback :: fn(add_fn fn(i32)i32) {
 }
 
 add1 :: fn() i32 {

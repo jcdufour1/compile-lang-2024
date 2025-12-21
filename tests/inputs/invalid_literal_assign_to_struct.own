@@ -1,4 +1,4 @@
-extern("c") printf :: fn(str_to_print_2: u8*, args: opaque...) i32
+printf :: extern("c") fn(str_to_print_2: u8*, args: opaque...) i32
 
 Div :: struct {
     numerator: i32

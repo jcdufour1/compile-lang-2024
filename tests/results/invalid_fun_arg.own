@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 4
-tests/inputs/invalid_fun_arg.own:6:1:[1;31merror[0;39m:closing `}` is unmatched
-     5 |     return 0
-     6 | }
-       | ^
+tests/inputs/invalid_fun_arg.own:1:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
+       |                        ^
+     2 | 
 
 compile::return_code 1
 

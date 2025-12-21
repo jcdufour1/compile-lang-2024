@@ -1,5 +1,5 @@
 
-extern("c") puts :: fn(str_to_print_2 u8*) 
+puts :: extern("c")  :: fn(str_to_print_2 u8*) 
 
 main :: fn() i32 {
     if is_true() {

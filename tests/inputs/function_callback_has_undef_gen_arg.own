@@ -2,7 +2,7 @@
 callback :: fn(<ItemT>)() {
 }
 
-do_nothing :: fn(pretend_fn :: fn()void) {
+do_nothing :: fn(pretend_fn fn()void) {
 }
 
 main :: fn() i32 {

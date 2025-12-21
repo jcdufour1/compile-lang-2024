@@ -9,7 +9,7 @@ add :: fn(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
     return result
 }
 
-add_using_callback :: fn(lhs i32, rhs i32, add_fn :: fn()i32) i32 {
+add_using_callback :: fn(lhs i32, rhs i32, add_fn fn()i32) i32 {
     return add_fn(<i32>)()
 }
 

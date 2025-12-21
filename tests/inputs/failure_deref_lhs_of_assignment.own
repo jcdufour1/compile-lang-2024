@@ -1,5 +1,5 @@
 
-extern("c") printf :: fn(format_string u8*, args opaque...) i32
+printf :: extern("c")  :: fn(format_string u8*, args opaque...) i32
 
 main :: fn() i32 {
     let num i32 = 4

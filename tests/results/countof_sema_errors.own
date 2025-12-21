@@ -5,7 +5,7 @@ tests/inputs/countof_sema_errors.own:8:17:[1;31merror[0;39m:expected newline a
      7 | main :: fn() i32 {
      8 |     let add_fn :: fn(i32, i32)i32 = add
        |                 ^
-     9 |     io.printf("countof add_ :: fn= %zu\n", countof add_fn)
+     9 |     io.printf("countof add_fn= %zu\n", countof add_fn)
 
 compile::return_code 1
 

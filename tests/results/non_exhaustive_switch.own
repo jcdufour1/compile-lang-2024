@@ -1,36 +1,16 @@
 compile::stdout 0
 
-compile::stderr 30
-tests/inputs/non_exhaustive_switch.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
-     7 |     string
-     8 | }
-       | ^
-     9 | 
-tests/inputs/non_exhaustive_switch.own:14:1:[1;31merror[0;39m:closing `}` is unmatched
-    13 |     string_data u8*
-    14 | }
-       | ^
-    15 | 
-tests/inputs/non_exhaustive_switch.own:19:5:[1;31merror[0;39m:closing `}` is unmatched
-    18 |     case TokenType.number: printf("%d\n", token.number_data)
-    19 |     }
-       |     ^
-    20 | }
-tests/inputs/non_exhaustive_switch.own:20:1:[1;31merror[0;39m:closing `}` is unmatched
-    19 |     }
-    20 | }
-       | ^
-    21 | 
-tests/inputs/non_exhaustive_switch.own:35:5:[1;31merror[0;39m:closing `}` is unmatched
-    34 |         print_token_switch(token)
-    35 |     }
-       |     ^
-    36 |     return 0
-tests/inputs/non_exhaustive_switch.own:37:1:[1;31merror[0;39m:closing `}` is unmatched
-    36 |     return 0
-    37 | }
-       | ^
-    38 | 
+compile::stderr 10
+tests/inputs/non_exhaustive_switch.own:2:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | puts :: extern("c")  :: fn(str_to_print_2 u8*) 
+       |                      ^
+     3 | printf :: extern("c")  :: fn(str_to_print_2 u8*, args opaque...) i32
+tests/inputs/non_exhaustive_switch.own:3:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     2 | puts :: extern("c")  :: fn(str_to_print_2 u8*) 
+     3 | printf :: extern("c")  :: fn(str_to_print_2 u8*, args opaque...) i32
+       |                        ^
+     4 | 
 
 compile::return_code 1
 

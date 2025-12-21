@@ -1,6 +1,6 @@
 
-extern("c") puts :: fn(str_to_print_2 u8*) 
-extern("c") printf :: fn(str_to_print_2 u8*, args opaque...) i32
+puts :: extern("c")  :: fn(str_to_print_2 u8*) 
+printf :: extern("c")  :: fn(str_to_print_2 u8*, args opaque...) i32
 
 TokenType :: enum {
     number

@@ -1,10 +1,16 @@
 compile::stdout 0
 
-compile::stderr 4
-tests/inputs/var_def_no_name.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
+compile::stderr 10
+tests/inputs/var_def_no_name.own:2:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
+       |                      ^
+     3 | 
+tests/inputs/var_def_no_name.own:5:9:[1;31merror[0;39m:got token `:`, but expected `symbol` in variable definition
+     4 | main :: fn() i32 {
+     5 |     let : i32 = 9
+       |         ^
      6 |     return 0
-     7 | }
-       | ^
 
 compile::return_code 1
 

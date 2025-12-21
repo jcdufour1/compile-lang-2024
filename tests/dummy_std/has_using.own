@@ -2,6 +2,6 @@
 io :: import = std.io
 using io
 
-fn print() {
+print :: fn() {
     print_str("hello")
 }

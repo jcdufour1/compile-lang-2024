@@ -1,5 +1,5 @@
 
-extern("c") printf :: fn(str_to_print: u8*, args: opaque...) i32
+printf :: extern("c")  :: fn(str_to_print: u8*, args: opaque...) i32
 
 main :: fn() i32 {
     let num1: i32 = 87 + 12*

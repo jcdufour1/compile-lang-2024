@@ -1,14 +1,14 @@
-type U_ndefinedType44 struct {
+U_ndefinedType44 :: struct {
 }
 
-type U__ndefinedType44 struct {
+U__ndefinedType44 :: struct {
 }
 
-fn print_str(str Str, end Str = "\n") {
+print_str :: fn(str Str, end Str = "\n") {
 }
 
-fn print_float(<NumT>)(num NumT, end Str = "\n") {
+print_float :: fn(<NumT>)(num NumT, end Str = "\n") {
 }
 
-fn print_int(<NumT>)(num NumT, end Str = "\n", file Str = #file, line i32 = #line, column i32 = #column) {
+print_int :: fn(<NumT>)(num NumT, end Str = "\n", file Str = #file, line i32 = #line, column i32 = #column) {
 }

@@ -1,5 +1,5 @@
 
-Print_buf_def :: def = fn(BufT, u8)void
+Print_buf_fn :: def = fn(BufT, u8)void
 Print_buf_fn2 :: def = fn(u16, u8)ThingT
 
 main :: fn() i32 {

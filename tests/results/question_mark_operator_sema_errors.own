@@ -1,35 +1,11 @@
 compile::stdout 0
 
-compile::stderr 29
-tests/inputs/question_mark_operator_sema_errors.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
-     7 |     return .none
-     8 | }
-       | ^
-     9 | 
-tests/inputs/question_mark_operator_sema_errors.own:13:1:[1;31merror[0;39m:closing `}` is unmatched
-    12 |     return .error(27)
-    13 | }
-       | ^
-    14 | 
-tests/inputs/question_mark_operator_sema_errors.own:21:1:[1;31merror[0;39m:closing `}` is unmatched
-    20 |     printf("num = %d\n", num)
-    21 | }
-       | ^
-    22 | 
-tests/inputs/question_mark_operator_sema_errors.own:26:1:[1;31merror[0;39m:closing `}` is unmatched
-    25 |     return .ok(8)
-    26 | }
-       | ^
-    27 | 
-tests/inputs/question_mark_operator_sema_errors.own:31:1:[1;31merror[0;39m:closing `}` is unmatched
-    30 |     return .ok(8)
-    31 | }
-       | ^
-    32 | 
-tests/inputs/question_mark_operator_sema_errors.own:39:1:[1;31merror[0;39m:closing `}` is unmatched
-    38 |     return 0
-    39 | }
-       | ^
+compile::stderr 5
+tests/inputs/question_mark_operator_sema_errors.own:3:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     2 | 
+     3 | printf :: extern("c")  :: fn(format_string u8*, args opaque...) i32
+       |                        ^
+     4 | 
 
 compile::return_code 1
 

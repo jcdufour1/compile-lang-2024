@@ -1,51 +1,11 @@
 compile::stdout 0
 
-compile::stderr 45
-tests/inputs/logical_not_on_void_type.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
-     6 |     none i1
-     7 | }
-       | ^
-     8 | 
-tests/inputs/logical_not_on_void_type.own:12:1:[1;31merror[0;39m:closing `}` is unmatched
-    11 |     string u8*
-    12 | }
-       | ^
-    13 | 
-tests/inputs/logical_not_on_void_type.own:15:41:[1;31merror[0;39m:closing `}` is unmatched
-    14 | get_token :: fn() Token {
-    15 |     return {.num = 34, .string = "hello"}
-       |                                         ^
-    16 | }
-tests/inputs/logical_not_on_void_type.own:16:1:[1;31merror[0;39m:closing `}` is unmatched
-    15 |     return {.num = 34, .string = "hello"}
-    16 | }
-       | ^
-    17 | 
-tests/inputs/logical_not_on_void_type.own:21:5:[1;31merror[0;39m:closing `}` is unmatched
-    20 |         return Opt_int.none(0);
-    21 |     }
-       |     ^
-    22 |     if (!isdigit(unsafe_cast<i32>string[0])) {
-tests/inputs/logical_not_on_void_type.own:24:5:[1;31merror[0;39m:closing `}` is unmatched
-    23 |         return Opt_int.none(0);
-    24 |     }
-       |     ^
-    25 |     // TODO: consider if last if should be an error
-tests/inputs/logical_not_on_void_type.own:28:5:[1;31merror[0;39m:closing `}` is unmatched
-    27 |         return Opt_int.none(0);
-    28 |     }
-       |     ^
-    29 |     return Opt_int.number(9)
-tests/inputs/logical_not_on_void_type.own:30:1:[1;31merror[0;39m:closing `}` is unmatched
-    29 |     return Opt_int.number(9)
-    30 | }
-       | ^
-    31 | 
-tests/inputs/logical_not_on_void_type.own:35:1:[1;31merror[0;39m:closing `}` is unmatched
-    34 |     return 0
-    35 | }
-       | ^
-    36 | 
+compile::stderr 5
+tests/inputs/logical_not_on_void_type.own:2:25:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | isdigit :: extern("c")  :: fn(character i32)
+       |                         ^
+     3 | 
 
 compile::return_code 1
 

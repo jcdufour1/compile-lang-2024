@@ -1,5 +1,5 @@
 
-extern("c") puts :: fn(str_to_print: u8*) i32
+puts :: extern("c")  :: fn(str_to_print: u8*) i32
 
 main :: fn() i32 {
     let : i32 = 9

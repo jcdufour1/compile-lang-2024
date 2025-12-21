@@ -12,8 +12,8 @@ Node :: enum {
     str coll.Str
 }
 
- :: fn
-main() i32 {
+main :: 
+fn() i32 {
     io.print_str(
         "hello"
     )

@@ -1,25 +1,11 @@
 compile::stdout 0
 
-compile::stderr 19
-tests/inputs/signed_assigned_to_unsigned.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
-     6 |     return 76;
-     7 | }
-       | ^
-     8 | 
-tests/inputs/signed_assigned_to_unsigned.own:11:1:[1;31merror[0;39m:closing `}` is unmatched
-    10 |     return 76;
-    11 | }
-       | ^
-    12 | 
-tests/inputs/signed_assigned_to_unsigned.own:15:1:[1;31merror[0;39m:closing `}` is unmatched
-    14 |     return -3
-    15 | }
-       | ^
-    16 | 
-tests/inputs/signed_assigned_to_unsigned.own:21:1:[1;31merror[0;39m:closing `}` is unmatched
-    20 |     return 0
-    21 | }
-       | ^
+compile::stderr 5
+tests/inputs/signed_assigned_to_unsigned.own:3:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     2 | 
+     3 | printf :: extern("c")  :: fn(str_to_print u8*, args opaque...) i32
+       |                        ^
+     4 | 
 
 compile::return_code 1
 

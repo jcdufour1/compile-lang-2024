@@ -1,20 +1,11 @@
 compile::stdout 0
 
-compile::stderr 14
-tests/inputs/failure_to_deref_function_arg.own:5:1:[1;31merror[0;39m:closing `}` is unmatched
-     4 | add_one :: fn(num i32*) {
-     5 | }
-       | ^
-     6 | 
-tests/inputs/failure_to_deref_function_arg.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
-     7 | add_one_not_ptr :: fn(num i32) {
-     8 | }
-       | ^
-     9 | 
-tests/inputs/failure_to_deref_function_arg.own:20:1:[1;31merror[0;39m:closing `}` is unmatched
-    19 |     return 0
-    20 | }
-       | ^
+compile::stderr 5
+tests/inputs/failure_to_deref_function_arg.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | printf :: extern("c")  :: fn(format_string u8*, args opaque...) i32
+       |                        ^
+     3 | 
 
 compile::return_code 1
 

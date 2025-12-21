@@ -1,5 +1,5 @@
 
-extern("c") isdigit :: fn(character i32)
+isdigit :: extern("c") fn(character i32)
 
 Opt_int :: enum {
     number i32

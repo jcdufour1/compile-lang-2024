@@ -1,15 +1,16 @@
 compile::stdout 0
 
-compile::stderr 9
-tests/inputs/function_param_type_missing.own:6:1:[1;31merror[0;39m:closing `}` is unmatched
+compile::stderr 10
+tests/inputs/function_param_type_missing.own:2:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
+     1 | 
+     2 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
+       |                      ^
+     3 | 
+tests/inputs/function_param_type_missing.own:4:23:[1;31merror[0;39m:got token `)`, but expected `symbol` 
+     3 | 
+     4 | println :: fn(string: ) {
+       |                       ^
      5 |     printf("%s\n", string)
-     6 | }
-       | ^
-     7 | 
-tests/inputs/function_param_type_missing.own:11:1:[1;31merror[0;39m:closing `}` is unmatched
-    10 |     return 0
-    11 | }
-       | ^
 
 compile::return_code 1
 
