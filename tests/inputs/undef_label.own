@@ -1,7 +1,7 @@
 
 
 main :: fn() i32 {
-    outer: for 1 {
+    ''outer for 1 {
         yield ''inner
     }
     return 0

@@ -18,7 +18,7 @@ for_range :: fn() {
         io.printf("test 3: no\n")
     }
 
-    label1: for idx i32 in 0..2 {
+    ''label1 for idx i32 in 0..2 {
         io.printf("test 3.3: idx: %d\n", idx)
         continue ''label1
         io.printf("test 3.4: no\n")

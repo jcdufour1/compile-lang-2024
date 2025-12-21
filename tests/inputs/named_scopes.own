@@ -3,10 +3,10 @@ io :: import = std.io
 yield_stmts :: fn() {
     defer io.printf("bye\n")
 
-    thing: for 1 {
+    ''thing for 1 {
         defer io.printf("yes 1.4\n")
         io.printf("yes 1.1\n")
-        thing2: for 1 {
+        ''thing2 for 1 {
             defer io.printf("yes 1.3\n")
             io.printf("yes 1.2\n")
             if 1 {
@@ -21,10 +21,10 @@ yield_stmts :: fn() {
         io.printf("no 1.4\n")
     }
 
-    thing3: for 1 {
+    ''thing3 for 1 {
         defer io.printf("yes 2.6\n")
         io.printf("yes 2.1\n")
-        thing4: for 1 {
+        ''thing4 for 1 {
             defer io.printf("yes 2.3\n")
             io.printf("yes 2.2\n")
             yield ''thing4
@@ -38,10 +38,10 @@ yield_stmts :: fn() {
         io.printf("no 2.1\n")
     }
 
-    thing5: for 1 {
+    ''thing5 for 1 {
         defer io.printf("yes 3.4\n")
         io.printf("yes 3.1\n")
-        thing6: if 1 {
+        ''thing6 if 1 {
             defer io.printf("yes 3.3\n")
             io.printf("yes 3.2\n")
             yield ''thing5
@@ -52,10 +52,10 @@ yield_stmts :: fn() {
         io.printf("no 3.498\n")
     }
 
-    thing7: for 1 {
+    ''thing7 for 1 {
         defer io.printf("yes 35.4\n")
         io.printf("yes 35.1\n")
-        thing8: if 1 {
+        ''thing8 if 1 {
             defer io.printf("yes 35.3\n")
             io.printf("yes 35.2\n")
             break ''thing7
@@ -71,10 +71,10 @@ continue_stmts :: fn() {
     defer io.printf("bye\n")
 
     let idx i32 = 0
-    thing: for 1 {
+    ''thing for 1 {
         defer io.printf("yes 4.6\n")
         io.printf("yes 4.1\n")
-        thing2: for 1 {
+        ''thing2 for 1 {
             defer idx += 1
             defer io.printf("yes 4.5\n")
             io.printf("yes 4.2\n")
@@ -92,10 +92,10 @@ continue_stmts :: fn() {
     }
 
     let idx2 i32 = 0
-    thing3: for 1 {
+    ''thing3 for 1 {
         defer io.printf("yes 5.6\n")
         io.printf("yes 5.1\n")
-        thing4: for 1 {
+        ''thing4 for 1 {
             defer io.printf("yes 5.5\n")
             io.printf("yes 5.2\n")
             defer idx2 += 1
@@ -113,10 +113,10 @@ continue_stmts :: fn() {
     }
 
     let idx_4 i32 = 0
-    thing5: for 1 {
+    ''thing5 for 1 {
         defer io.printf("yes 6.4\n")
         io.printf("yes 6.1\n")
-        thing6: for kdasfdjf i32 in 0..1 {
+        ''thing6 for kdasfdjf i32 in 0..1 {
             defer idx_4 += 1
             defer io.printf("yes 6.3\n")
             io.printf("yes 6.2\n")
@@ -129,10 +129,10 @@ continue_stmts :: fn() {
     }
 
     let idx_100 i32 = 0
-    thing7: for 1 {
+    ''thing7 for 1 {
         defer io.printf("yes 19.6\n")
         io.printf("yes 19.1\n")
-        thing8: for kdasfdjf i32 in 0..1 {
+        ''thing8 for kdasfdjf i32 in 0..1 {
             defer idx_100 += 1
             defer io.printf("yes 19.5\n")
             io.printf("yes 19.2\n")
@@ -148,10 +148,10 @@ continue_stmts :: fn() {
     }
 
     let idx_20 i32 = 0
-    thing9: for 1 {
+    ''thing9 for 1 {
         defer io.printf("yes 20.8\n")
         io.printf("yes 20.1\n")
-        thing10: for kdasfdjf i32 in 0..10000000 {
+        ''thing10 for kdasfdjf i32 in 0..10000000 {
             defer idx_20 += 1
             defer io.printf("yes 20.5\n")
             io.printf("yes 20.2\n")
@@ -172,7 +172,7 @@ continue_stmts :: fn() {
     }
 
     let idx_5 i32 = 0
-    thing100: for kdasfdjf i32 in 0..1 {
+    ''thing100 for kdasfdjf i32 in 0..1 {
     //    defer idx_5 += 1
     //    defer io.printf("yes 8.5\n")
     //    io.printf("yes 8.2\n")
@@ -191,10 +191,10 @@ continue_stmts :: fn() {
 break_stmts :: fn() {
     defer io.printf("bye\n")
 
-    thing: for 1 {
+    ''thing for 1 {
         defer io.printf("yes 30.4\n")
         io.printf("yes 30.1\n")
-        thing2: for 1 {
+        ''thing2 for 1 {
             defer io.printf("yes 30.3\n")
             io.printf("yes 30.2\n")
             if 1 {
@@ -209,10 +209,10 @@ break_stmts :: fn() {
         io.printf("no 30.4\n")
     }
 
-    thing3: for 1 {
+    ''thing3 for 1 {
         defer io.printf("yes 31.6\n")
         io.printf("yes 31.1\n")
-        thing4: for 1 {
+        ''thing4 for 1 {
             defer io.printf("yes 31.3\n")
             io.printf("yes 31.2\n")
             break ''thing4
@@ -226,10 +226,10 @@ break_stmts :: fn() {
         io.printf("no 31.1\n")
     }
 
-    thing5: for 1 {
+    ''thing5 for 1 {
         defer io.printf("yes 32.4\n")
         io.printf("yes 32.1\n")
-        thing6: if 1 {
+        ''thing6 if 1 {
             defer io.printf("yes 32.3\n")
             io.printf("yes 32.2\n")
             break ''thing5

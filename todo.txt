@@ -120,6 +120,7 @@ for generics:
 - make test case for passing args after --run and using argv in program
 - test case for def alias used within struct literal generic arg
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
+- implement non top level structs (do by making top level struct with util_literal_name_new(), then make def in scope of user struct def)
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
 - fix uninitialized warning with gcc (could be gcc bug?)
@@ -132,6 +133,7 @@ for generics:
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- directive to run code at compile time
 - tuples
 - tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
