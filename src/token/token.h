@@ -98,7 +98,6 @@ typedef enum {
     TOKEN_YIELD,
     TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
-    TOKEN_TYPE_DEF,
     TOKEN_GENERIC_TYPE,
     TOKEN_IMPORT,
     TOKEN_DEF,
@@ -233,8 +232,6 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_CHAR_LITERAL:
             return true;
         case TOKEN_CONTINUE:
-            return false;
-        case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_CASE:
             return false;
@@ -383,8 +380,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_GREATER_OR_EQUAL:
             return true;
-        case TOKEN_TYPE_DEF:
-            return false;
         case TOKEN_SINGLE_DOT:
             return true;
         case TOKEN_COMMA:
@@ -594,8 +589,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_GREATER_OR_EQUAL:
             return true;
-        case TOKEN_TYPE_DEF:
-            return false;
         case TOKEN_SWITCH:
             return false;
         case TOKEN_CASE:

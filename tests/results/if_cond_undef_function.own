@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/if_cond_undef_function.own:5:8:[1;31merror[0;39m:symbol `is_true` is not defined
-     4 | fn main() i32 {
+     4 | main :: fn() i32 {
      5 |     if is_true() {
        |        ^
      6 |         puts("hello")

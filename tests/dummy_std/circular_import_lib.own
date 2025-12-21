@@ -1,2 +1,2 @@
 
-type dummy import = tests.inputs.circular_import_main
+dummy :: import = tests.inputs.circular_import_main

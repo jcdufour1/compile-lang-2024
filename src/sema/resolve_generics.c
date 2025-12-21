@@ -99,12 +99,15 @@ void msg_invalid_count_generic_args_internal(
     );
 }
 
+// TODO: add Pos to Ustruct_def_base
 static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def_base* base) {
     is_in_struct_base_def = true;
     bool status = true;
 
     if (base->members.info.count < 1) {
-        todo();
+        // TODO
+        msg_todo_strv(base->name.base, POS_BUILTIN);
+        return false;
     }
 
     {

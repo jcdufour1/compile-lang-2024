@@ -7,7 +7,7 @@ tests/inputs/var_redef.own:6:13:[1;31merror[0;39m:redefinition of symbol `num1
        |             ^
      7 |             let num_temp: i32
 tests/inputs/var_redef.own:5:9:[1;34mnote[0;39m:`num1` originally defined here
-     4 | fn main() i32 {
+     4 | main :: fn() i32 {
      5 |     for num1: i32 in 0..7 {
        |         ^
      6 |         for num1: i32 in 0..num1 {

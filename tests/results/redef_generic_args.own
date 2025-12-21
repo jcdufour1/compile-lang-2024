@@ -1,15 +1,15 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/redef_generic_args.own:2:26:[1;31merror[0;39m:redefinition of member `NumT`
+tests/inputs/redef_generic_args.own:2:24:[1;31merror[0;39m:redefinition of member `NumT`
      1 | 
-     2 | type Token struct(<NumT, NumT>) {
-       |                          ^
+     2 | Token :: struct(<NumT, NumT>) {
+       |                        ^
      3 |     num i32
-tests/inputs/redef_generic_args.own:2:20:[1;34mnote[0;39m:member `NumT` previously defined here
+tests/inputs/redef_generic_args.own:2:18:[1;34mnote[0;39m:member `NumT` previously defined here
      1 | 
-     2 | type Token struct(<NumT, NumT>) {
-       |                    ^
+     2 | Token :: struct(<NumT, NumT>) {
+       |                  ^
      3 |     num i32
 
 compile::return_code 1

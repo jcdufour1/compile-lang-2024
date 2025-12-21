@@ -1,11 +1,11 @@
 
-fn callback(<ItemT>)() {
+callback :: fn(<ItemT>)() {
 }
 
-fn do_nothing(pretend_fn fn()void) {
+do_nothing :: fn(pretend_fn fn()void) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     do_nothing(callback)
     return 0
 }

@@ -6,20 +6,20 @@ tests/inputs/failure_to_deref_function_arg.own:14:13:[1;31merror[0;39m:argumen
     14 |     add_one(num)
        |             ^
     15 | 
-tests/inputs/failure_to_deref_function_arg.own:4:12:[1;34mnote[0;39m:corresponding parameter `num` defined here
+tests/inputs/failure_to_deref_function_arg.own:4:15:[1;34mnote[0;39m:corresponding parameter `num` defined here
      3 | 
-     4 | fn add_one(num i32*) {
-       |            ^
+     4 | add_one :: fn(num i32*) {
+       |               ^
      5 | }
 tests/inputs/failure_to_deref_function_arg.own:17:21:[1;31merror[0;39m:argument is of type `i32*`, but the corresponding parameter `num` is of type `i32`
     16 |     // should be error
     17 |     add_one_not_ptr(&num)
        |                     ^
     18 | 
-tests/inputs/failure_to_deref_function_arg.own:7:20:[1;34mnote[0;39m:corresponding parameter `num` defined here
+tests/inputs/failure_to_deref_function_arg.own:7:23:[1;34mnote[0;39m:corresponding parameter `num` defined here
      6 | 
-     7 | fn add_one_not_ptr(num i32) {
-       |                    ^
+     7 | add_one_not_ptr :: fn(num i32) {
+       |                       ^
      8 | }
 
 compile::return_code 1

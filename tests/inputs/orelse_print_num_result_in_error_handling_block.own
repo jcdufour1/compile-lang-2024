@@ -1,22 +1,22 @@
-type util import = std.util
-type io import = std.io
+util :: import = std.util
+io :: import = std.io
 
-fn do_thing(should_succeed u1) util.Optional(<i32>) {
+do_thing :: fn(should_succeed u1) util.Optional(<i32>) {
     if should_succeed => return .some(9)
     return .none
 }
 
-type FALSE def = 0
-type TRUE def = 1
+FALSE :: def = 0
+TRUE :: def = 1
 
-fn thing1() {
+thing1 :: fn() {
     let num i32 = do_thing(TRUE) orelse {
         io.print_int(num)
         return
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     thing1()
 
     return 0

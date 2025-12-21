@@ -1,8 +1,8 @@
-type io import = std.io
-type coll import = std.collections
-type util import = std.util
+io :: import = std.io
+coll :: import = std.collections
+util :: import = std.util
 
-fn read(file io.File) {
+read :: fn(file io.File) {
     for 1 {
         let line = io.getline(file)?
         defer coll.darr_free(&line)
@@ -11,7 +11,7 @@ fn read(file io.File) {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     if let .some(file) = io.open_file("examples/read_file.own", "r") {
         read(file)
         io.close_file(file)

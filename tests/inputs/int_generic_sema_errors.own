@@ -1,19 +1,19 @@
 
-type io import = std.io
+io :: import = std.io
 
-type Token enum(<max_cap ''i32>){
+Token :: enum(<max_cap ''i32>){
     num i32
 }
 
-fn print_max(<max_cap ''i32>)(token Token(<max_cap>)) {
+print_max :: fn(<max_cap ''i32>)(token Token(<max_cap>)) {
     io.print_int(max_cap)
 }
 
-fn print_max_incorrect(token Token(<max_cap>)) {
+print_max_incorrect :: fn(token Token(<max_cap>)) {
     io.print_int(token.max_cap)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let eight i32 = 8
 
     let token1 Token(<eight>) = .num(7)
@@ -26,7 +26,7 @@ fn main() i32 {
     return 0
 }
 
-type Token_incorrect enum(<num ''i32>){
+Token_incorrect :: enum(<num ''i32>){
     num i32
 }
 

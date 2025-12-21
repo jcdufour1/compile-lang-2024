@@ -1,24 +1,24 @@
 
-extern("c") fn printf(str_to_print u8*, args opaque...) i32
+printf :: extern("c")  fn(str_to_print u8*, args opaque...) i32
 
-type Token enum {
+Token :: enum {
     num i32
     string u8*
 }
 
-type Thing enum {
+Thing :: enum {
     token Token
     num i32
 }
 
-fn token_print(token Token) {
+token_print :: fn(token Token) {
     switch token {
         case Token.num(num): printf("token is number: %d\n", num)
         case Thing.token(token_type): printf("token is Thing.token")
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     token_print(.num(78))
     return 0
 }

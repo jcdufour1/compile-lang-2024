@@ -1,16 +1,16 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/type_token_struct_wrong_order.own:3:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
-     2 | 
+tests/inputs/type_token_struct_wrong_order.own:4:1:[1;31merror[0;39m:closing `}` is unmatched
      3 | type struct Token {
-       |      ^
      4 | }
-tests/inputs/type_token_struct_wrong_order.own:6:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
+       | ^
      5 | 
+tests/inputs/type_token_struct_wrong_order.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
      6 | type struct {
-       |      ^
      7 | }
+       | ^
+     8 | 
 
 compile::return_code 1
 

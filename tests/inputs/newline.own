@@ -1,19 +1,19 @@
 
-type io import = std.io
-type coll import = std.collections
+io :: import = std.io
+coll :: import = std.collections
 
-type Token struct {
+Token :: struct {
     num i32
     str coll.Str
 }
 
-type Node enum {
+Node :: enum {
     num i32
     str coll.Str
 }
 
-fn 
-main() i32 {
+main :: 
+fn() i32 {
     io.print_str(
         "hello"
     )

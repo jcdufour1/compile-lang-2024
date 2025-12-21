@@ -1,9 +1,9 @@
 
-type Token struct(<NumT, NumT>) {
+Token :: struct(<NumT, NumT>) {
     num i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token(<i32, i32>)
     return 0
 }

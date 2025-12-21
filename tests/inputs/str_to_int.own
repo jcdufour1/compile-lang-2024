@@ -1,7 +1,7 @@
-type coll import = std.collections
-type io import = std.io
+coll :: import = std.collections
+io :: import = std.io
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = coll.str_to_int(<i32>)("83095")
     io.print_int(num)
 

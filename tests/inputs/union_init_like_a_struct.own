@@ -1,10 +1,10 @@
 
-type Union raw_union {
+Union :: raw_union {
     num: i32
     cstr: u8*
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let union: Union = {.num = 82, .cstr = 21}
     return 0
 }

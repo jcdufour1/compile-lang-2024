@@ -1,15 +1,15 @@
 
-type io2 import = std.io
-type coll2 import = std.collections
+io2 :: import = std.io
+coll2 :: import = std.collections
 using io2
 using coll2
 
-type Token struct {
+Token :: struct {
     num i32
     string Str
 }
 
-fn using_struct(token Token) {
+using_struct :: fn(token Token) {
     using token
 
     print_int(num)
@@ -19,7 +19,7 @@ fn using_struct(token Token) {
     print_str(token.string)
 }
 
-fn using_struct_concise(using token Token) {
+using_struct_concise :: fn(using token Token) {
     print_int(num)
     print_str(string)
 
@@ -27,7 +27,7 @@ fn using_struct_concise(using token Token) {
     print_str(token.string)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print_str("hello")
     let token Token = {8, "world"}
     using_struct(token)

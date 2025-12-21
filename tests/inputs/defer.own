@@ -1,16 +1,16 @@
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
-type Bool enum {
+Bool :: enum {
     true
     false
 }
 
-fn is_true() Bool {
+is_true :: fn() Bool {
     return .true
 }
 
-fn fun1() i32 {
+fun1 :: fn() i32 {
     defer io.printf("thing 1.4\n")
     io.printf("thing 1.1\n")
     defer io.printf("thing 1.3\n")
@@ -18,7 +18,7 @@ fn fun1() i32 {
     return 1
 }
 
-fn fun2() i32 {
+fun2 :: fn() i32 {
     defer io.printf("thing 2.3\n")
     return 2
     defer io.printf("thing 2.2\n")
@@ -26,7 +26,7 @@ fn fun2() i32 {
     return 1000
 }
 
-fn fun3() i32 {
+fun3 :: fn() i32 {
     //for idx i32 in 0..3 {
     //}
     let num i32 = 0
@@ -41,7 +41,7 @@ fn fun3() i32 {
     return num
 }
 
-fn fun4() i32 {
+fun4 :: fn() i32 {
     defer io.printf("at very end yes 4.2\n")
     if 1 {
         defer io.printf("yes 4.1\n")
@@ -52,7 +52,7 @@ fn fun4() i32 {
     return 1010
 }
 
-fn fun5() i32 {
+fun5 :: fn() i32 {
     defer io.printf("at very end yes 5.1\n")
     let num i32 = 0
     for 1 {
@@ -68,7 +68,7 @@ fn fun5() i32 {
     return num
 }
 
-fn fun6() i32 {
+fun6 :: fn() i32 {
     defer io.printf("at very end yes 6.1\n")
     let num i32 = 0
     for 1 {
@@ -93,7 +93,7 @@ fn fun6() i32 {
     return num
 }
 
-fn fun7() i32 {
+fun7 :: fn() i32 {
     defer io.printf("at very end yes 7.1\n")
     io.printf("yes 7.2\n")
     let num i32 = 0
@@ -125,7 +125,7 @@ fn fun7() i32 {
     return 79
 }
 
-fn fun8() i32 {
+fun8 :: fn() i32 {
     defer io.printf("at very end yes 8.1\n")
     let num i32 = 0
     for idx i32 in 0..2 {
@@ -152,7 +152,7 @@ fn fun8() i32 {
     return 8
 }
 
-fn fun9() i32 {
+fun9 :: fn() i32 {
     defer io.printf("at very end yes 9.1\n")
     let num i32 = 0
     for idx i32 in 0..2 {
@@ -180,7 +180,7 @@ fn fun9() i32 {
     return 8
 }
 
-fn main() i32 {
+main :: fn() i32 {
     util.assert(fun1() == 1)
     util.assert(fun2() == 2)
     util.assert(fun3() == 3)

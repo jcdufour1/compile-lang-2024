@@ -1,14 +1,14 @@
 
 
-type Token enum(<NumberType>) {
+Token :: enum(<NumberType>) {
     number NumberType
     string u8*
 }
 
-fn placeholder() {
+placeholder :: fn() {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token(<i32>) = Token(<i32>).number(54)
 
     switch token {

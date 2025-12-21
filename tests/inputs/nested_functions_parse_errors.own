@@ -1,7 +1,7 @@
-type io import = std.io
+io :: import = std.io
 
-fn main() i32 {
-    fn print_hello() {
+main :: fn() i32 {
+    print_hello :: fn() {
         io.print_str("hello")
     }
 
@@ -10,6 +10,6 @@ fn main() i32 {
     return 0
 }
 
-fn aux() {
+aux :: fn() {
     print_hello()
 }

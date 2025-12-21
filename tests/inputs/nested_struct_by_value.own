@@ -1,33 +1,33 @@
-type Token4 struct {
+Token4 :: struct {
     id i32
     inner Token2
 }
 
-type Token3 enum {
+Token3 :: enum {
     id i32
     inner Token4
 }
 
-type Token2 struct {
+Token2 :: struct {
     id i32
     inner Token3
 }
 
 
-type Token struct {
+Token :: struct {
     id i32
     inner Token
 }
 
-type Arr2 struct {
+Arr2 :: struct {
     item Arr[3]
 }
 
-type Arr struct {
+Arr :: struct {
     item Arr2[3]
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token
     let token2 Token2
 

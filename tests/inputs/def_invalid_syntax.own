@@ -1,8 +1,8 @@
-type print def io.printf
+print :: def io.printf
 
-type print def = io.
+print :: def = io.
 
-fn main() i32 {
+main :: fn() i32 {
     return 0
 }
 

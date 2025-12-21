@@ -1,101 +1,101 @@
-type rt import = std.runtime
+rt :: import = std.runtime
 
-extern("c") fn printf(format_string u8*, args opaque...) i32
+printf :: extern("c")  fn(format_string u8*, args opaque...) i32
 
-fn do_thing(should_succeed u1) rt.Optional(<i32>) {
+do_thing :: fn(should_succeed u1) rt.Optional(<i32>) {
     if should_succeed => return .some(9)
     return .none
 }
 
-fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i64>) {
+do_thing_with_err_val :: fn(should_succeed u1) rt.Result(<i32, i64>) {
     if should_succeed => return .ok(9)
     return .error(27)
 }
 
-type FALSE def = 0
-type TRUE def = 1
+FALSE :: def = 0
+TRUE :: def = 1
 
-type Token struct {
+Token :: struct {
     string u8*
 }
 
-fn thing1() {
+thing1 :: fn() {
     let num i32 = do_thing(FALSE)?
     printf("no1\n")
 }
 
-fn thing2() {
+thing2 :: fn() {
     let num i32 = do_thing(TRUE)?
     printf("yes2: %d\n", num)
 }
 
-fn thing3() {
+thing3 :: fn() {
     let num = do_thing(FALSE)?
     printf("no3\n")
 }
 
-fn thing4() {
+thing4 :: fn() {
     do_thing(FALSE)?
     printf("no4\n")
 }
 
-fn thing5() {
+thing5 :: fn() {
     let num = do_thing(TRUE)?
     printf("yes5: %d\n", num)
 }
 
-fn thing6() {
+thing6 :: fn() {
     do_thing(TRUE)?
     printf("yes6\n")
 }
 
-fn thing7() rt.Optional(<i32>) {
+thing7 :: fn() rt.Optional(<i32>) {
     do_thing(TRUE)?
     printf("yes7.1\n")
     return .some(8)
 }
 
-fn thing8() rt.Optional(<i32>) {
+thing8 :: fn() rt.Optional(<i32>) {
     do_thing(FALSE)?
     printf("no7.1\n")
     return .some(8)
 }
 
-fn thing9() rt.Optional(<i32>) {
+thing9 :: fn() rt.Optional(<i32>) {
     do_thing_with_err_val(FALSE)?
     printf("no9.1\n")
     return .some(8)
 }
 
-fn thing10() {
+thing10 :: fn() {
     do_thing_with_err_val(FALSE)?
     printf("no10.1\n")
 }
 
-fn thing11() rt.Optional(<i32>) {
+thing11 :: fn() rt.Optional(<i32>) {
     do_thing_with_err_val(TRUE)?
     printf("yes11.1\n")
     return .some(8)
 }
 
-fn thing12() {
+thing12 :: fn() {
     do_thing_with_err_val(TRUE)?
     printf("yes12.1\n")
 }
 
-fn thing13() rt.Result(<i32, i64>) {
+thing13 :: fn() rt.Result(<i32, i64>) {
     do_thing_with_err_val(TRUE)?
     printf("yes13.1\n")
     return .ok(7)
 }
 
-fn thing14() rt.Result(<i32, i64>) {
+thing14 :: fn() rt.Result(<i32, i64>) {
     do_thing_with_err_val(FALSE)?
     printf("no14.1\n")
     return .ok(7)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     thing1()
     thing2()
     thing3()

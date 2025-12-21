@@ -356,10 +356,13 @@ static bool get_mod_alias_from_path_token(
         parse_state.curr_mod_alias = name_new(parse_state.curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_TOP_LEVEL, true);
-    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
-
     Strv old_mod_path = parse_state.curr_mod_path;
     parse_state.curr_mod_path = mod_path;
+    if (!usymbol_add(uast_mod_alias_wrap(*mod_alias))) {
+        msg_redefinition_of_symbol(uast_mod_alias_wrap(*mod_alias));
+        status = false;
+        goto finish;
+    }
 
     if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL))) {
         goto finish;
@@ -410,15 +413,22 @@ static bool starts_with_enum_def_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_ENUM;
 }
 
-static bool starts_with_type_def_in_def(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
-}
-
 static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
-static bool starts_with_label(Tk_view tokens) {
+static bool starts_with_label(Tk_view tokens, Scope_id scope_id) {
+    return scope_id != parse_state.scope_id_curr_mod_path &&
+       try_consume(NULL, &tokens, TOKEN_SYMBOL) && 
+       try_consume(NULL, &tokens, TOKEN_COLON) && 
+       !try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
+static bool starts_with_general_def_sync(Tk_view tokens) {
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON) && try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
+static bool starts_with_general_def(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
 }
 
@@ -511,10 +521,9 @@ static void sync(Tk_view* tokens) {
             continue;
         }
 
+        // TODO: see if more things could be added here
         if (
-            starts_with_type_def_in_def(*tokens) ||
-            starts_with_function_decl(*tokens) ||
-            starts_with_function_def(*tokens) ||
+            starts_with_general_def_sync(*tokens) ||
             starts_with_return(*tokens) ||
             starts_with_if(*tokens) ||
             starts_with_for(*tokens) ||
@@ -625,8 +634,6 @@ static bool can_end_stmt(Token token) {
         case TOKEN_LESS_OR_EQUAL:
             return false;
         case TOKEN_GREATER_OR_EQUAL:
-            return false;
-        case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_SWITCH:
             return false;
@@ -793,8 +800,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_GREATER_OR_EQUAL:
             return false;
-        case TOKEN_TYPE_DEF:
-            return false;
         case TOKEN_SWITCH:
             return false;
         case TOKEN_CASE:
@@ -958,8 +963,6 @@ static bool is_right_unary(TOKEN_TYPE token_type) {
         case TOKEN_LESS_OR_EQUAL:
             return false;
         case TOKEN_GREATER_OR_EQUAL:
-            return false;
-        case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_SWITCH:
             return false;
@@ -1320,13 +1323,14 @@ static PARSE_STATUS parse_function_decl_common(
     bool add_to_sym_table,
     Scope_id fn_scope,
     Scope_id block_scope,
-    bool is_lambda
+    bool is_lambda,
+    Token fn_name_tk_if_not_lambda
 ) {
     Token name_token = {0};
     if (is_lambda) {
         name_token = (Token) {.text = util_literal_strv_new(), .type = TOKEN_SYMBOL, .pos = tk_view_front(*tokens).pos};
     } else {
-        name_token = consume(tokens);
+        name_token = fn_name_tk_if_not_lambda;
     }
 
     Uast_generic_param_darr gen_params = {0};
@@ -1368,12 +1372,12 @@ static PARSE_STATUS parse_function_decl_common(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda) {
+static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda, Token fn_name_tk_if_not_lambda) {
     Scope_id fn_scope = SCOPE_TOP_LEVEL;
     Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
 
     Uast_function_decl* fun_decl = NULL;
-    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope, is_lambda)) {
+    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope, is_lambda, fn_name_tk_if_not_lambda)) {
         return PARSE_ERROR;
     }
     if (strv_is_equal(fun_decl->name.base, sv("main"))) {
@@ -1390,23 +1394,20 @@ static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool is_lambda, Scope_id scope_id) {
+static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool is_lambda, Scope_id scope_id, Token fn_name_tk_if_not_lambda) {
+    assert(is_lambda || fn_name_tk_if_not_lambda.type != TOKEN_NONTYPE);
     Token fn_tk = {0};
     unwrap(try_consume(&fn_tk, tokens, TOKEN_FN));
 
     if (!is_lambda && scope_id != parse_state.scope_id_curr_mod_path) {
-        Token fun_name_tk = {0};
-        if (!try_consume(&fun_name_tk, tokens, TOKEN_SYMBOL)) {
-            return PARSE_ERROR;
-        }
         Name fun_name = name_new(
             parse_state.curr_mod_path,
-            fun_name_tk.text,
+            fn_name_tk_if_not_lambda.text,
             (Ulang_type_darr) {0},
             scope_id
         );
         Uast_function_def* fun_def = NULL;
-        if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, true)) {
+        if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, true, fn_name_tk_if_not_lambda)) {
             return PARSE_ERROR;
         }
 
@@ -1429,7 +1430,7 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
     }
 
     Uast_function_def* fun_def = NULL;
-    if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, is_lambda)) {
+    if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, is_lambda, fn_name_tk_if_not_lambda)) {
         return PARSE_ERROR;
     }
     *result = uast_def_wrap(uast_function_def_wrap(fun_def));
@@ -1724,52 +1725,6 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id scope_id) {
-    Token name = {0};
-    if (!consume_expect(&name, tokens, "", TOKEN_SYMBOL)) {
-        return PARSE_ERROR;
-    }
-
-    if (starts_with_struct_def_in_def(*tokens)) {
-        Uast_struct_def* struct_def;
-        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_struct_def_wrap(struct_def);
-    } else if (starts_with_raw_union_def_in_def(*tokens)) {
-        Uast_raw_union_def* raw_union_def;
-        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_raw_union_def_wrap(raw_union_def);
-    } else if (starts_with_enum_def_in_def(*tokens)) {
-        Uast_enum_def* enum_def;
-        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_enum_def_wrap(enum_def);
-    } else if (starts_with_mod_alias_in_def(*tokens)) {
-        Uast_mod_alias* import = NULL;
-        if (PARSE_OK != parse_import(&import, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_mod_alias_wrap(import);
-    } else if (starts_with_lang_def(*tokens)) {
-        Uast_lang_def* lang_def = NULL;
-        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name, scope_id)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_lang_def_wrap(lang_def);
-    } else {
-        msg_parser_expected(
-            tk_view_front(*tokens), "",
-            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_DEF, TOKEN_IMPORT
-        );
-        return PARSE_ERROR;
-    }
-    return PARSE_OK;
-}
-
 static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
     Tk_view* tokens,
@@ -1815,7 +1770,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
-        unwrap(!require_let);
+        assert(!require_let);
     }
 
     Token dummy = {0};
@@ -2214,7 +2169,7 @@ static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id sc
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* tokens) {
+static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* tokens, Token fn_name_tk) {
     PARSE_STATUS status = PARSE_ERROR;
 
     unwrap(try_consume(NULL, tokens, TOKEN_EXTERN));
@@ -2238,7 +2193,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */, false)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */, false, fn_name_tk)) {
         goto error;
     }
     try_consume_newlines(tokens);
@@ -2800,12 +2755,76 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     return uast_expr_unwrap(stmt);
 }
 
+static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
+    Token name_tk = {0};
+    Token colon_tk = {0};
+    unwrap(try_consume(&name_tk, tokens, TOKEN_SYMBOL));
+    unwrap(try_consume(&colon_tk, tokens, TOKEN_COLON));
+    try_consume(NULL, tokens, TOKEN_COLON);
+
+    if (starts_with_struct_def_in_def(*tokens)) {
+        Uast_struct_def* struct_def = NULL;
+        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_struct_def_wrap(struct_def));
+    } else if (starts_with_raw_union_def_in_def(*tokens)) {
+        Uast_raw_union_def* raw_union_def = NULL;
+        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_raw_union_def_wrap(raw_union_def));
+    } else if (starts_with_enum_def_in_def(*tokens)) {
+        Uast_enum_def* enum_def = NULL;
+        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_enum_def_wrap(enum_def));
+    } else if (starts_with_mod_alias_in_def(*tokens)) {
+        Uast_mod_alias* import = NULL;
+        if (PARSE_OK != parse_import(&import, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_mod_alias_wrap(import));
+    } else if (starts_with_lang_def(*tokens)) {
+        Uast_lang_def* lang_def = NULL;
+        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name_tk, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_lang_def_wrap(lang_def));
+    } else if (starts_with_function_decl(*tokens)) {
+        Uast_function_decl* fun_decl;
+        if (PARSE_OK != parse_function_decl(&fun_decl, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_function_decl_wrap(fun_decl));
+    } else if (starts_with_function_def(*tokens)) {
+        if (PARSE_OK != parse_function_def(result, tokens, false, scope_id, name_tk)) {
+            return PARSE_ERROR;
+        }
+    } else if (starts_with_variable_def(*tokens)) {
+        Uast_variable_def* var_def = NULL;
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_variable_def_wrap(var_def));
+    } else {
+        msg_parser_expected(
+            tk_view_front(*tokens), "",
+            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_DEF, TOKEN_IMPORT
+        );
+        return PARSE_ERROR;
+    }
+    unwrap(*result);
+    return PARSE_OK;
+}
+
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
     // TODO: use try_consume_newlines(tokens) instead of try_consume(NULL, tokens, TOKEN_NEW_LINE)
     try_consume_newlines(tokens);
     unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    if (starts_with_label(*tokens)) {
+    if (starts_with_label(*tokens, scope_id)) {
         if (PARSE_OK != parse_label(tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
@@ -2816,14 +2835,10 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     }
 
     Uast_stmt* lhs = NULL;
-    if (starts_with_type_def_in_def(*tokens)) {
-        unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-        Uast_def* fun_decl;
-        if (PARSE_OK != parse_type_def(&fun_decl, tokens, scope_id)) {
+    if (starts_with_general_def(*tokens)) {
+        if (PARSE_OK != parse_general_def(&lhs, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_def_wrap(fun_decl);
     } else if (starts_with_using(*tokens)) {
         Uast_using* using;
         if (PARSE_OK != parse_using(&using, tokens, scope_id)) {
@@ -2836,16 +2851,6 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_defer_wrap(defer);
-    } else if (starts_with_function_decl(*tokens)) {
-        Uast_function_decl* fun_decl;
-        if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_def_wrap(uast_function_decl_wrap(fun_decl));
-    } else if (starts_with_function_def(*tokens)) {
-        if (PARSE_OK != parse_function_def(&lhs, tokens, false, scope_id)) {
-            return PARSE_EXPR_ERROR;
-        }
     } else if (starts_with_return(*tokens)) {
         Uast_return* rtn_stmt = NULL;
         if (PARSE_OK != parse_return(&rtn_stmt, tokens, scope_id)) {
@@ -3400,7 +3405,7 @@ static PARSE_EXPR_STATUS parse_right_unary(
     }
 
     Token oper = consume(tokens);
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
     switch (oper.type) {
         case TOKEN_ORELSE: {
             Uast_block* result_ = NULL;
@@ -3556,8 +3561,6 @@ static PARSE_EXPR_STATUS parse_right_unary(
             fallthrough;
         case TOKEN_RAW_UNION:
             fallthrough;
-        case TOKEN_TYPE_DEF:
-            fallthrough;
         case TOKEN_GENERIC_TYPE:
             fallthrough;
         case TOKEN_IMPORT:
@@ -3599,7 +3602,7 @@ static PARSE_EXPR_STATUS parse_unary(
     // this is a placeholder type
     Ulang_type unary_lang_type = ulang_type_new_int_x(tk_view_front(*tokens).pos/*TODO*/, sv("i32"));
 
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT:
             break;
@@ -3654,7 +3657,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable("");
     }
 
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only unary operators need to be handled here");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only unary operators need to be handled here");
     switch (oper.type) {
         case TOKEN_BITWISE_NOT: {
             Uast_expr_darr args = {0};
@@ -3821,7 +3824,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 79, "exhausive handling of token types; only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 78, "exhausive handling of token types; only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
@@ -3949,7 +3952,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
 
         *tokens = parse_state_restore(saved_point, saved_tk_view);
         Uast_stmt* fun_def_ = NULL;
-        if (PARSE_OK == parse_function_def(&fun_def_, tokens, true, scope_id)) {
+        if (PARSE_OK == parse_function_def(&fun_def_, tokens, true, scope_id, (Token) {0})) {
             if (fun_def_->type != UAST_DEF || uast_def_unwrap(fun_def_)->type != UAST_FUNCTION_DEF) {
                 msg_todo("", uast_stmt_get_pos(fun_def_));
                 return PARSE_EXPR_ERROR;

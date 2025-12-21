@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 13
 tests/inputs/undef_function.own:2:5:[1;31merror[0;39m:symbol `printf` is not defined; did you mean: std/libc::printf
-     1 | fn main() i32 {
+     1 | main :: fn() i32 {
      2 |     printf("hello", num1)
        |     ^
      3 | }
@@ -10,9 +10,9 @@ tests/inputs/undef_function.own:3:1:[1;31merror[0;39m:no return statement in f
      2 |     printf("hello", num1)
      3 | }
        | ^
-tests/inputs/undef_function.own:1:11:[1;34mnote[0;39m:function return type `i32` defined here
-     1 | fn main() i32 {
-       |           ^
+tests/inputs/undef_function.own:1:14:[1;34mnote[0;39m:function return type `i32` defined here
+     1 | main :: fn() i32 {
+       |              ^
      2 |     printf("hello", num1)
 
 compile::return_code 1

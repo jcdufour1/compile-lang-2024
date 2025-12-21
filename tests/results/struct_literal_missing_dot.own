@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/struct_literal_missing_dot.own:8:30:[1;31merror[0;39m:assignment cannot be used as an expression in this situation
-     7 | fn main() i32 {
+     7 | main :: fn() i32 {
      8 |     let div Div = {numerator = 91, .denominator = 1256}
        |                              ^
      9 |     let div2 Div = {.numerator = 92, denominator = 1257}

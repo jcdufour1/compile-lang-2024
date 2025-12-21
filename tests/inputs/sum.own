@@ -1,23 +1,23 @@
-type io import = std.io
+io :: import = std.io
 
-type Token enum {
+Token :: enum {
     num i32
     string u8*
 }
 
-type Thing enum {
+Thing :: enum {
     token Token
     num i32
 }
 
-fn token_print(token Token) {
+token_print :: fn(token Token) {
     switch token {
         case Token.num(num): io.printf("token is number: %d\n", num)
         case Token.string(str): io.printf("token is string: %s\n", str)
     }
 }
 
-fn thing_print(thing Thing) {
+thing_print :: fn(thing Thing) {
     switch thing {
         case Thing.token(currToken): {
             io.printf("thing is token: ")
@@ -27,7 +27,7 @@ fn thing_print(thing Thing) {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token1 Token = Token.num(23)
     let token2 Token = Token.string("hello world")
     let token3 Token = Token.num(57)

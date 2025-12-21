@@ -1,6 +1,6 @@
-type io import = std.io
+io :: import = std.io
 
-fn yield_stmts() {
+yield_stmts :: fn() {
     defer io.printf("bye\n")
 
     thing: for 1 {
@@ -67,7 +67,7 @@ fn yield_stmts() {
     }
 }
 
-fn continue_stmts() {
+continue_stmts :: fn() {
     defer io.printf("bye\n")
 
     let idx i32 = 0
@@ -188,7 +188,7 @@ fn continue_stmts() {
 
 }
 
-fn break_stmts() {
+break_stmts :: fn() {
     defer io.printf("bye\n")
 
     thing: for 1 {
@@ -241,7 +241,7 @@ fn break_stmts() {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     yield_stmts()
     continue_stmts()
     break_stmts()

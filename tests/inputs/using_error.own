@@ -1,18 +1,18 @@
 
-type io import = std.io
+io :: import = std.io
 using io
 
-type Str def = Local_str
+Str :: def = Local_str
 
-type Local_str struct {
+Local_str :: struct {
     buf u8*
     count u64
 }
 
-fn puts() i32 {
+puts :: fn() i32 {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print_str("hello")
 
     return 0

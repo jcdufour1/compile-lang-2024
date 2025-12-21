@@ -1,8 +1,8 @@
-type io import = std.io
+io :: import = std.io
 
-fn print_hello() => io.print_str("hello")
+print_hello :: fn() => io.print_str("hello")
 
-fn main() i32 {
+main :: fn() i32 {
     print_hello()
 
     if 0 => io.print_int(87)

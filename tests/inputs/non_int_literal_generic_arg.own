@@ -1,75 +1,75 @@
-type io import = std.io
+io :: import = std.io
 
-type Alloc struct {
+Alloc :: struct {
     max_thing i32
 }
 
-type Token1 enum(<alloc ''Alloc>) {
+Token1 :: enum(<alloc ''Alloc>) {
     num i32
 }
 
-type Token2 enum(<max_cap ''i32, alloc ''Alloc>) {
+Token2 :: enum(<max_cap ''i32, alloc ''Alloc>) {
     num i32
 }
 
-type Token3Internal struct {
+Token3Internal :: struct {
     float_num f32
     print_fn fn()void
 }
 
-type Token3 enum(<token3 ''Token3Internal>) {
+Token3 :: enum(<token3 ''Token3Internal>) {
     num i32
 }
 
-type NestedAlloc struct {
+NestedAlloc :: struct {
     alloc Alloc
 }
 
-type NestedStruct enum(<alloc ''NestedAlloc>) {
+NestedStruct :: enum(<alloc ''NestedAlloc>) {
     num i32
 }
 
-type Symbol struct(<print_fn ''fn()void>) {
+Symbol :: struct(<print_fn''fn()void>) {
     num i32
 }
 
-fn print_hello() {
+print_hello :: fn() {
     io.print_str("hello")
 }
 
-fn print_bye() {
+print_bye :: fn() {
     io.print_str("bye")
 }
 
-fn do_thing_with_alloc(alloc Alloc) {
+do_thing_with_alloc :: fn(alloc Alloc) {
     io.print_int(alloc.max_thing)
 }
 
-fn do_thing_with_nested_alloc(nested_alloc NestedAlloc) {
+do_thing_with_nested_alloc :: fn(nested_alloc NestedAlloc) {
     do_thing_with_alloc(nested_alloc.alloc)
 }
 
-fn print_max1(<alloc ''Alloc>)(token Token1(<alloc>)) {
+print_max1 :: fn(<alloc ''Alloc>)(token Token1(<alloc>)) {
     do_thing_with_alloc(alloc)
 }
 
-fn print_max2(<max_cap ''i32, alloc ''Alloc>)(token Token2(<max_cap, alloc>)) {
+print_max2 :: fn(<max_cap ''i32, alloc ''Alloc>)(token Token2(<max_cap, alloc>)) {
     do_thing_with_alloc(alloc)
 }
 
-fn print_nested_struct(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_alloc>)) {
+print_nested_struct :: fn(<nested_alloc ''NestedAlloc>)(token NestedStruct(<nested_alloc>)) {
     do_thing_with_nested_alloc(nested_alloc)
 }
 
-fn do_thing_with_token3internal(token3internal Token3Internal) {
+do_thing_with_token3internal :: fn(token3internal Token3Internal) {
     io.print_float(token3internal.float_num)
 }
 
-fn print_float(float f32) {
+print_float :: fn(float f32) {
     io.print_float(float)
 }
 
-fn print_token3(<token3internal ''Token3Internal>)(token Token3(<token3internal>)) {
+print_token3 :: fn(<token3internal ''Token3Internal>)(token Token3(<token3internal>)) {
     do_thing_with_token3internal(token3internal)
     print_float(token3internal.float_num)
     print_float(token.token3.float_num)
@@ -78,10 +78,10 @@ fn print_token3(<token3internal ''Token3Internal>)(token Token3(<token3internal>
     token.token3.print_fn()
 }
 
-type ALLOC1 def = {.max_thing = 8}
-type NESTED_STRUCT_2 def = {{765}}
+ALLOC1 :: def = {.max_thing = 8}
+NESTED_STRUCT_2 :: def = {{765}}
 
-fn struct_literal_tests() {
+struct_literal_tests :: fn() {
     let token1 Token1(<ALLOC1>) = .num(7)
     let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
     print_max1(<ALLOC1>)(token1)
@@ -100,12 +100,12 @@ fn struct_literal_tests() {
     print_token3(<{8.7, print_bye}>)(token3)
 }
 
-fn symbol_print(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {
+symbol_print :: fn(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {
     do_print_fn()
     symbol.print_fn()
 }
 
-fn symbol_tests() {
+symbol_tests :: fn() {
     let hello Symbol(<print_hello>) = {0}
     hello.print_fn()
     symbol_print(<print_hello>)(hello)
@@ -117,25 +117,25 @@ fn symbol_tests() {
     symbol_print(bye)
 }
 
-type Float struct(<float_value ''f32>) {
+Float :: struct(<float_value ''f32>) {
     num i32
 }
 
-type String1 struct(<str_value ''Str>) {
+String1 :: struct(<str_value ''Str>) {
     num i32
 }
 
-fn float_print(<float_val>)(float Float(<float_val>)) {
+float_print :: fn(<float_val>)(float Float(<float_val>)) {
     io.print_float(float_val)
     io.print_float(float.float_value)
 }
 
-fn string_print(<str_val>)(str String1(<str_val>)) {
+string_print :: fn(<str_val>)(str String1(<str_val>)) {
     io.print_str(str_val)
     io.print_str(str.str_value)
 }
 
-fn float_tests() {
+float_tests :: fn() {
     let float1 Float(<8.9>) = {0}
     float_print(<8.9>)(float1)
     float_print(float1)
@@ -145,13 +145,13 @@ fn float_tests() {
     float_print(float2)
 }
 
-fn string_tests() {
+string_tests :: fn() {
     let string String1(<"this is a string">) = {0}
     string_print(<"this is a string">)(string)
     string_print(string)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     struct_literal_tests()
     symbol_tests()
     float_tests()

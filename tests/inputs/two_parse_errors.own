@@ -1,5 +1,5 @@
 
-fn main() {
+main :: fn() {
     let num1: i32 = 
     let num2: i32 = 92
     num3: i32 = 12

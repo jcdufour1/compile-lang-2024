@@ -7,7 +7,7 @@ tests/inputs/missing_yield.own:16:19:[1;31merror[0;39m:no break statement in c
        |                   ^
     17 |         case .false: break 1
 tests/inputs/missing_yield.own:15:14:[1;34mnote[0;39m:case break type `i32` defined here
-    14 | fn main() i32 {
+    14 | main :: fn() i32 {
     15 |     let num1 i32 = switch (is_true()) {
        |              ^
     16 |         case .true: do_nothing()

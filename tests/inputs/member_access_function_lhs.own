@@ -1,14 +1,14 @@
-type io import = std.io
+io :: import = std.io
 
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn token_new() Token {
+token_new :: fn() Token {
     return {89}
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("%d\n", token_new().num)
     io.printf("%d %d\n", token_new().num, token_new().num)
     return 0

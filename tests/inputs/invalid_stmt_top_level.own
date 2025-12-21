@@ -1,7 +1,7 @@
 {
 }
 
-type Token enum {
+Token :: enum {
     num i32
     none
 }

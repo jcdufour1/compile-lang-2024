@@ -1,30 +1,30 @@
-type io import = std.io
+io :: import = std.io
 
 
-type Str_view struct {
+Str_view :: struct {
     data u8*
     count i64
 }
 
-type Token struct {
+Token :: struct {
     file u8*
     line i32
     str_data Str_view
 }
 
-fn get_token() Token {
+get_token :: fn() Token {
     return {.file = "file.txt", .line = 21, .str_data = {.data = "hello world", .count = 11}}
 }
 
-fn get_line(token Token) i32 {
+get_line :: fn(token Token) i32 {
     return token.line
 }
 
-fn get_num() i32 {
+get_num :: fn() i32 {
     return 65
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token = get_token()
     io.printf("%s %d %s\n", token.file, token.line, token.str_data.data)
 

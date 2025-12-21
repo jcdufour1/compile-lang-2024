@@ -1,15 +1,15 @@
-type io import = std.io
+io :: import = std.io
 
-type Union raw_union {
+Union :: raw_union {
     num i32
     cstr u8*
 }
 
-fn fun1(union Union) {
+fun1 :: fn(union Union) {
     io.printf("%d\n", union.num)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let union Union
 
     union.num = 45

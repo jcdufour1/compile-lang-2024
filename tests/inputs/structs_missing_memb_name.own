@@ -1,9 +1,9 @@
 
-type Number struct {
+Number :: struct {
     : i32
     file: u8*
 }
 
-fn main() i32 {
+main :: fn() i32 {
     return 0
 }

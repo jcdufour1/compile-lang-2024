@@ -1,12 +1,12 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn get_string() u8* {
+get_string :: fn() u8* {
     let string u8* = "new programming language"
     return string
 }
 
-fn println(string u8*, num2 i32) i32 {
+println :: fn(string u8*, num2 i32) i32 {
     let string_thing u8* = "67"
     io.puts(string_thing)
     let num1 i32 = 1
@@ -18,7 +18,7 @@ fn println(string u8*, num2 i32) i32 {
     return num2*5
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let count_3 i32 = 89
     for let idx_2: i32 in 0..2 {
         io.puts("thing with colon")

@@ -2,46 +2,46 @@ compile::stdout 0
 
 compile::stderr 42
 [1;31merror[0;39m:redefinition of symbol `tests/inputs/using_error::Str`
-std/prelude.own:11:6:[1;34mnote[0;39m:in expansion of def
+std/prelude.own:11:1:[1;34mnote[0;39m:in expansion of def
     10 | 
-    11 | type Str def = _builtin__coll.Str
-       |      ^
-    12 | type Dstr def = _builtin__coll.Darr(<u8>)
-tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`tests/inputs/using_error::Str` originally defined here
+    11 | Str :: def = _builtin__coll.Str
+       | ^
+    12 | Dstr :: def = _builtin__coll.Darr(<u8>)
+tests/inputs/using_error.own:5:1:[1;34mnote[0;39m:`tests/inputs/using_error::Str` originally defined here
      4 | 
-     5 | type Str def = Local_str
-       |      ^
+     5 | Str :: def = Local_str
+       | ^
      6 | 
 tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `tests/inputs/using_error::puts`
-     2 | type io import = std.io
+     2 | io :: import = std.io
      3 | using io
        | ^
      4 | 
-std/io.own:16:6:[1;34mnote[0;39m:in expansion of def
-    15 | type printf def = libc.printf
-    16 | type puts def = libc.puts
-       |      ^
-    17 | type fopen def = libc.fopen
-tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`tests/inputs/using_error::puts` originally defined here
+std/io.own:16:1:[1;34mnote[0;39m:in expansion of def
+    15 | printf :: def = libc.printf
+    16 | puts :: def = libc.puts
+       | ^
+    17 | fopen :: def = libc.fopen
+tests/inputs/using_error.own:12:1:[1;34mnote[0;39m:`tests/inputs/using_error::puts` originally defined here
     11 | 
-    12 | fn puts() i32 {
-       |    ^
+    12 | puts :: fn() i32 {
+       | ^
     13 | }
 tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `tests/inputs/using_error::Str`
-     2 | type io import = std.io
+     2 | io :: import = std.io
      3 | using io
        | ^
      4 | 
 std/runtime.own:0:0:[1;34mnote[0;39m:in expansion of def
-std/prelude.own:11:6:[1;34mnote[0;39m:in expansion of def
+std/prelude.own:11:1:[1;34mnote[0;39m:in expansion of def
     10 | 
-    11 | type Str def = _builtin__coll.Str
-       |      ^
-    12 | type Dstr def = _builtin__coll.Darr(<u8>)
-tests/inputs/using_error.own:5:6:[1;34mnote[0;39m:`tests/inputs/using_error::Str` originally defined here
+    11 | Str :: def = _builtin__coll.Str
+       | ^
+    12 | Dstr :: def = _builtin__coll.Darr(<u8>)
+tests/inputs/using_error.own:5:1:[1;34mnote[0;39m:`tests/inputs/using_error::Str` originally defined here
      4 | 
-     5 | type Str def = Local_str
-       |      ^
+     5 | Str :: def = Local_str
+       | ^
      6 | 
 
 compile::return_code 1

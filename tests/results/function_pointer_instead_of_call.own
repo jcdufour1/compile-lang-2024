@@ -2,14 +2,14 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/function_pointer_instead_of_call.own:11:10:[1;31merror[0;39m:function callback cannot be assigned to non function callback type `i32`
-    10 | fn main() i32 {
+    10 | main :: fn() i32 {
     11 |     take(one)
        |          ^
     12 |     return 0
-tests/inputs/function_pointer_instead_of_call.own:7:13:[1;34mnote[0;39m:non function callback type `i32` defined here
+tests/inputs/function_pointer_instead_of_call.own:7:16:[1;34mnote[0;39m:non function callback type `i32` defined here
      6 | 
-     7 | fn take(num i32) {
-       |             ^
+     7 | take :: fn(num i32) {
+       |                ^
      8 | }
 
 compile::return_code 1

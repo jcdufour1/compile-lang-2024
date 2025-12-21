@@ -1,17 +1,17 @@
 
-type Bool enum {
+Bool :: enum {
     false
     true
 }
 
-fn is_true() Bool {
+is_true :: fn() Bool {
     return .true
 }
 
-fn do_nothing() {
+do_nothing :: fn() {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num1 i32 = switch (is_true()) {
         case .true: do_nothing()
         case .false: break 1

@@ -1,5 +1,5 @@
 
-fn main() i32 {
+main :: fn() i32 {
     let num1 i32 = 0o98
     // 0 alone is not valid prefix; 0o must be used
     let num2 i32 = 023

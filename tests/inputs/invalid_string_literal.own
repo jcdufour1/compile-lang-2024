@@ -1,5 +1,5 @@
 
-fn main() i32 {
+main :: fn() i32 {
     let str1 = "sdfasd\x"
     let str2 = "sdfasd\x1"
     let str3 = "sdfasd\x1g"

@@ -1,10 +1,10 @@
-type io import = std.io
+io :: import = std.io
 
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.print_int(.num = 8, "")
     return 0
 }

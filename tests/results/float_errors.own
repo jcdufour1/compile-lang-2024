@@ -12,7 +12,7 @@ tests/inputs/float_errors.own:6:20:[1;31merror[0;39m:symbol `num` is not defin
        |                    ^
      7 | }
 tests/inputs/float_errors.own:10:24:[1;31merror[0;39m:floating point operand for operation `==` is not supported
-     9 | fn part2() {
+     9 | part2 :: fn() {
     10 |     let num1 f32 = 8.2 == 4.2
        |                        ^
     11 | }

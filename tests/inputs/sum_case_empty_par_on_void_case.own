@@ -1,11 +1,11 @@
-type io import = std.io
+io :: import = std.io
 
-type Token enum {
+Token :: enum {
     num i32
     open_par
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token = .open_par
     switch token {
         case .num(num): break

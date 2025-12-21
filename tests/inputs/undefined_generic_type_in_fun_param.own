@@ -1,8 +1,8 @@
 
-fn add(lhs i32, rhs Optional(<i32>)) {
+add :: fn(lhs i32, rhs Optional(<i32>)) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     add(56, .none)
     return 0
 }

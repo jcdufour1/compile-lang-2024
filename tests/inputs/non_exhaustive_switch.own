@@ -1,25 +1,25 @@
 
-extern("c") fn puts(str_to_print_2 u8*) 
-extern("c") fn printf(str_to_print_2 u8*, args opaque...) i32
+puts :: extern("c")  fn(str_to_print_2 u8*) 
+printf :: extern("c")  fn(str_to_print_2 u8*, args opaque...) i32
 
-type TokenType enum {
+TokenType :: enum {
     number
     string
 }
 
-type Token struct {
+Token :: struct {
     kind TokenType
     number_data i32
     string_data u8*
 }
 
-fn print_token_switch(token Token) {
+print_token_switch :: fn(token Token) {
     switch token.kind {
     case TokenType.number: printf("%d\n", token.number_data)
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token_type TokenType = TokenType.number
     printf("%d\n", token_type);
 

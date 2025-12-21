@@ -1,8 +1,8 @@
-type Raw raw_union {
+Raw :: raw_union {
     num i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let raw2 Raw = .nfaskdf(7)
     let raw1 Raw = .num(6)
     return 0

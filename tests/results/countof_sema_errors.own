@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 25
-tests/inputs/countof_sema_errors.own:9:41:[1;31merror[0;39m:type `fn(i32, i32)i32` is not a valid operand to `countof`
+tests/inputs/countof_sema_errors.own:9:40:[1;31merror[0;39m:type `fn(i32, i32)i32` is not a valid operand to `countof`
      8 |     let add_fn fn(i32, i32)i32 = add
-     9 |     io.printf("countof add_fn = %zu\n", countof add_fn)
-       |                                         ^
+     9 |     io.printf("countof add_fn= %zu\n", countof add_fn)
+       |                                        ^
     10 | 
 tests/inputs/countof_sema_errors.own:12:38:[1;31merror[0;39m:type `i32` is not a valid operand to `countof`
     11 |     let num i32 = 9

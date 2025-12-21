@@ -65,6 +65,7 @@ syn match ownDelimiter display "(<"
 syn match ownDelimiter display ">)"
 
 syn match ownOperator display "\v[\+\-\*\/\&\=\%\!\^\|\~\?]"
+syn match ownOperator display "\v\.\."
 syn match ownOperator display "[\<]"  " TODO: this also catches < in (<, which could be wrong 
                                       " (however, this may be fine, because operators and delimeters are often the same color anyway)
 syn match ownOperator display "\v\zs[\>]\ze[^\)]"

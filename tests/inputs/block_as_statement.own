@@ -1,7 +1,7 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let upper_num i32 = 75
     {
         let num i32 = 8
