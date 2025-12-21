@@ -1,27 +1,27 @@
 
-extern("c") fn puts(format_string u8*) i32
-extern("c") fn fputc(c i32, file opaque*) i32
-extern("c") fn printf(format_string u8*, args opaque...) i32
-extern("c") fn fopen(file_path u8*, flags u8*) opaque*
-extern("c") fn fclose(file opaque*) i32
-extern("c") fn fgetc(file opaque*) i32
+extern("c") puts :: fn(format_string u8*) i32
+extern("c") fputc :: fn(c i32, file opaque*) i32
+extern("c") printf :: fn(format_string u8*, args opaque...) i32
+extern("c") fopen :: fn(file_path u8*, flags u8*) opaque*
+extern("c") fclose :: fn(file opaque*) i32
+extern("c") fgetc :: fn(file opaque*) i32
 
-extern("c") fn isdigit(u8acter i32) i32
-extern("c") fn abort()
-extern("c") fn strlen(cstr u8*) u64
-extern("c") fn malloc(size u64) opaque*
-extern("c") fn realloc(ptr opaque*, size u64) opaque*
-extern("c") fn free(ptr opaque*)
-extern("c") fn memmove(dest opaque*, src opaque*, n u64)
-extern("c") fn memset(ptr opaque*, value u8, n u64)
-extern("c") fn sqrtf(num f32) f32
-extern("c") fn sqrt(num f64) f64
-extern("c") fn logf(num f32) f32
-extern("c") fn log(num f64) f64
+extern("c") isdigit :: fn(u8acter i32) i32
+extern("c") abort :: fn()
+extern("c") strlen :: fn(cstr u8*) u64
+extern("c") malloc :: fn(size u64) opaque*
+extern("c") realloc :: fn(ptr opaque*, size u64) opaque*
+extern("c") free :: fn(ptr opaque*)
+extern("c") memmove :: fn(dest opaque*, src opaque*, n u64)
+extern("c") memset :: fn(ptr opaque*, value u8, n u64)
+extern("c") sqrtf :: fn(num f32) f32
+extern("c") sqrt :: fn(num f64) f64
+extern("c") logf :: fn(num f32) f32
+extern("c") log :: fn(num f64) f64
 
-extern("c") fn isspace(ch i32) i32
+extern("c") isspace :: fn(ch i32) i32
 
-extern("c") fn rand() i32
-extern("c") fn srand(seed i32)
+extern("c") rand :: fn() i32
+extern("c") srand :: fn(seed i32)
 
 EOF :: def = -1

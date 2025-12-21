@@ -21,16 +21,16 @@ File :: struct {
 }
 
 // TODO: move assert function to runtime?
-fn slice_at_ref(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+slice_at_ref :: fn(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return &buf_at(slice.buf, index)
 }
 
-extern("c") fn own_printf(format Str, args opaque...) i32
-extern("c") fn own_fprintf(file File, format Str, args opaque...) i32
+extern("c") own_printf :: fn(format Str, args opaque...) i32
+extern("c") own_fprintf :: fn(file File, format Str, args opaque...) i32
 
 // TODO: remove keep_going parameter from std?
-fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
+assert :: fn(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
     if (!condition) {
         own_fprintf(
             {own_stderr()},
@@ -47,12 +47,12 @@ fn assert(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, l
     }
 }
 
-fn bitwise_not(<NumT>)(num NumT) NumT {
+bitwise_not :: fn(<NumT>)(num NumT) NumT {
     return unsafe_cast<NumT>(-1)^num
 }
 
-extern("c") fn own_stdout() opaque*
-extern("c") fn own_stderr() opaque*
-extern("c") fn own_stdin() opaque*
+extern("c") own_stdout :: fn() opaque*
+extern("c") own_stderr :: fn() opaque*
+extern("c") own_stdin :: fn() opaque*
 
-extern("c") fn abort()
+extern("c") abort :: fn()

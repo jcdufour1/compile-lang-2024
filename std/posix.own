@@ -1,2 +1,2 @@
 
-extern("c") fn time(tloc u64*) u64
+extern("c") time :: fn(tloc u64*) u64
