@@ -1,11 +1,36 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/invalid_count_fun_args_4.own:2:34:[1;31merror[0;39m:got token `:`, but expected `symbol` 
+compile::stderr 30
+tests/inputs/invalid_count_fun_args_4.own:14:24:[1;31merror[0;39m:function symbol `add1` has 0 function parameters, but the corresponding variable definition has 1 function parameters
+    13 | main :: fn() i32 {
+    14 |     add_using_callback(add1)
+       |                        ^
+    15 |     add_using_callback(add2)
+tests/inputs/invalid_count_fun_args_4.own:2:33:[1;34mnote[0;39m:corresponding variable definition defined here
      1 | 
-     2 | add_using_callback :: fn(add_fn :: fn(i32)i32) {
-       |                                  ^
+     2 | add_using_callback :: fn(add_fn fn(i32)i32) {
+       |                                 ^
      3 | }
+tests/inputs/invalid_count_fun_args_4.own:5:1:[1;34mnote[0;39m:function symbol `add1` defined here
+     4 | 
+     5 | add1 :: fn() i32 {
+       | ^
+     6 |     return 9
+tests/inputs/invalid_count_fun_args_4.own:15:24:[1;31merror[0;39m:function symbol `add2` has 2 function parameters, but the corresponding variable definition has 1 function parameters
+    14 |     add_using_callback(add1)
+    15 |     add_using_callback(add2)
+       |                        ^
+    16 | 
+tests/inputs/invalid_count_fun_args_4.own:2:33:[1;34mnote[0;39m:corresponding variable definition defined here
+     1 | 
+     2 | add_using_callback :: fn(add_fn fn(i32)i32) {
+       |                                 ^
+     3 | }
+tests/inputs/invalid_count_fun_args_4.own:9:1:[1;34mnote[0;39m:function symbol `add2` defined here
+     8 | 
+     9 | add2 :: fn(thing1 i32, thing2 i32) i32 {
+       | ^
+    10 |     return 10
 
 compile::return_code 1
 

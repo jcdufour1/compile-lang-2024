@@ -1,5 +1,5 @@
 
-printf :: extern("c")  :: fn(str_to_print u8*, args opaque...) i32
+printf :: extern("c")  fn(str_to_print u8*, args opaque...) i32
 
 Token :: enum {
     num i32

@@ -1,35 +1,10 @@
-compile::stdout 0
+compile::stdout 4
+hello
+from module dummy one: bye
+from module dummy two: actually bye this time
+from local printf function: bye for the third time
 
-compile::stderr 29
-tests/dummy_std/std_dummy.own:5:1:[1;31merror[0;39m:closing `}` is unmatched
-     4 |     io.printf("r: %u; g: %u; b: %u\n", color.r, color.g, color.b)
-     5 | }
-       | ^
-     6 | 
-tests/dummy_std/std_dummy.own:14:1:[1;31merror[0;39m:closing `}` is unmatched
-    13 |     b u32;
-    14 | }
-       | ^
-    15 | 
-tests/dummy_std/std_dummy.own:19:1:[1;31merror[0;39m:closing `}` is unmatched
-    18 |     io.printf("%s\n", string)
-    19 | }
-       | ^
-    20 | 
-tests/dummy_std/std_dummy.own:24:1:[1;31merror[0;39m:closing `}` is unmatched
-    23 |     return 1
-    24 | }
-       | ^
-    25 | 
-tests/dummy_std/std_dummy.own:28:1:[1;31merror[0;39m:closing `}` is unmatched
-    27 |     return 0
-    28 | }
-       | ^
-    29 | 
-tests/dummy_std/std_dummy_2.own:6:1:[1;31merror[0;39m:closing `}` is unmatched
-     5 |     io.printf("%s\n", string)
-     6 | }
-       | ^
+compile::stderr 0
 
-compile::return_code 1
+compile::return_code 0
 

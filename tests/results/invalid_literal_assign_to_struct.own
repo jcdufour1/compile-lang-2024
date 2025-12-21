@@ -1,10 +1,11 @@
 compile::stdout 0
 
-compile::stderr 4
-tests/inputs/invalid_literal_assign_to_struct.own:1:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
-       |                        ^
-     2 | 
+compile::stderr 5
+tests/inputs/invalid_literal_assign_to_struct.own:10:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `Div`
+     9 |     let div: Div
+    10 |     div = 7
+       |         ^
+    11 |     return 0
 
 compile::return_code 1
 

@@ -1,6 +1,6 @@
 rt :: import = std.runtime
 
-printf :: extern("c")  :: fn(format_string u8*, args opaque...) i32
+printf :: extern("c")  fn(format_string u8*, args opaque...) i32
 
 do_thing :: fn(should_succeed u1) rt.Optional(<i32>) {
     if should_succeed => return .some(9)

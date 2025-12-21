@@ -1,11 +1,6 @@
 compile::stdout 0
 
-compile::stderr 10
-tests/inputs/for_no_double_dot.own:2:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | 
-     2 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
-       |                      ^
-     3 | 
+compile::stderr 5
 tests/inputs/for_no_double_dot.own:5:23:[1;31merror[0;39m:got token `int literal(3)`, but expected `..` after for loop lower bound
      4 | main :: fn() i32 {
      5 |     for idx: i32 in 0 3 {

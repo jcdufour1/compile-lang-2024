@@ -1,11 +1,6 @@
 compile::stdout 0
 
-compile::stderr 10
-tests/inputs/missing_comma_fun_arg.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | 
-     2 | printf :: extern("c")  :: fn(str_to_print: u8*, args: opaque...) i32
-       |                        ^
-     3 | 
+compile::stderr 5
 tests/inputs/missing_comma_fun_arg.own:7:19:[1;31merror[0;39m:got token `int literal(7)`, but expected `)`  or `,` 
      6 |     small_num = 8*2
      7 |     printf("%d\n" 7);

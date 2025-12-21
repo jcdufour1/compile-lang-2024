@@ -418,9 +418,14 @@ static bool starts_with_lang_def(Tk_view tokens) {
 }
 
 static bool starts_with_label(Tk_view tokens, Scope_id scope_id) {
-    return scope_id != parse_state.scope_id_curr_mod_path && \
-       try_consume(NULL, &tokens, TOKEN_SYMBOL) && \
-       try_consume(NULL, &tokens, TOKEN_COLON);
+    return scope_id != parse_state.scope_id_curr_mod_path &&
+       try_consume(NULL, &tokens, TOKEN_SYMBOL) && 
+       try_consume(NULL, &tokens, TOKEN_COLON) && 
+       !try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
+static bool starts_with_general_def_sync(Tk_view tokens) {
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON) && try_consume(NULL, &tokens, TOKEN_COLON);
 }
 
 static bool starts_with_general_def(Tk_view tokens) {
@@ -518,7 +523,7 @@ static void sync(Tk_view* tokens) {
 
         // TODO: see if more things could be added here
         if (
-            starts_with_general_def(*tokens) ||
+            starts_with_general_def_sync(*tokens) ||
             starts_with_return(*tokens) ||
             starts_with_if(*tokens) ||
             starts_with_for(*tokens) ||
@@ -1396,6 +1401,7 @@ static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_
 }
 
 static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool is_lambda, Scope_id scope_id, Token fn_name_tk_if_not_lambda) {
+    assert(is_lambda || fn_name_tk_if_not_lambda.type != TOKEN_NONTYPE);
     Token fn_tk = {0};
     unwrap(try_consume(&fn_tk, tokens, TOKEN_FN));
 
@@ -1770,7 +1776,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
-        unwrap(!require_let);
+        assert(!require_let);
     }
 
     Token dummy = {0};
@@ -2760,10 +2766,7 @@ static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope
     Token colon_tk = {0};
     unwrap(try_consume(&name_tk, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(&colon_tk, tokens, TOKEN_COLON));
-    if (!try_consume(NULL, tokens, TOKEN_COLON)) {
-        msg_todo("single `:` here (`::` should be used for now)", colon_tk.pos);
-        return PARSE_ERROR;
-    }
+    try_consume(NULL, tokens, TOKEN_COLON);
 
     if (starts_with_struct_def_in_def(*tokens)) {
         Uast_struct_def* struct_def = NULL;
@@ -2805,6 +2808,12 @@ static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope
         if (PARSE_OK != parse_function_def(result, tokens, false, scope_id, name_tk)) {
             return PARSE_ERROR;
         }
+    } else if (starts_with_variable_def(*tokens)) {
+        Uast_variable_def* var_def = NULL;
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_variable_def_wrap(var_def));
     } else {
         msg_parser_expected(
             tk_view_front(*tokens), "",
@@ -3927,6 +3936,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     }
 
     if (tk_view_front(*tokens).type == TOKEN_FN) {
+        todo();
         Parse_state saved_point = parse_state;
         Tk_view saved_tk_view = *tokens;
 

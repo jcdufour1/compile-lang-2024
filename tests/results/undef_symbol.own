@@ -1,11 +1,11 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/undef_symbol.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | 
-     2 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
-       |                        ^
-     3 | 
+tests/inputs/undef_symbol.own:5:21:[1;31merror[0;39m:symbol `num1` is not defined
+     4 | main :: fn() i32 {
+     5 |     printf("hello", num1)
+       |                     ^
+     6 |     return 0
 
 compile::return_code 1
 

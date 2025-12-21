@@ -1,11 +1,11 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/duplicate_default.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | 
-     2 | printf :: extern("c")  :: fn(str_to_print u8*, args opaque...) i32
-       |                        ^
-     3 | 
+tests/inputs/duplicate_default.own:13:16:[1;31merror[0;39m:duplicate default in switch statement
+    12 |         default: printf("unhandled token_type")
+    13 |         default: printf("unhandled token_type")
+       |                ^
+    14 |     }
 
 compile::return_code 1
 

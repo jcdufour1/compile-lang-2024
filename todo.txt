@@ -199,6 +199,7 @@ continue(<thing>)
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
 - windows support (including ci)
 - support alternative backend
+- make single colon and double colon separate token types
 
 
 # in the far future

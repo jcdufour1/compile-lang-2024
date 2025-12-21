@@ -1,15 +1,6 @@
 compile::stdout 0
 
-compile::stderr 19
-tests/inputs/var_redef_2.own:1:22:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
-       |                      ^
-     2 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
-tests/inputs/var_redef_2.own:2:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     1 | puts :: extern("c")  :: fn(str_to_print: u8*) i32
-     2 | printf :: extern("c")  :: fn(str_to_print_2: u8*, args: opaque...) i32
-       |                        ^
-     3 | 
+compile::stderr 10
 tests/inputs/var_redef_2.own:9:17:[1;31merror[0;39m:redefinition of symbol `num1`
      8 |         for num3: i32 in num2..9 {
      9 |             let num1: i32 = 67

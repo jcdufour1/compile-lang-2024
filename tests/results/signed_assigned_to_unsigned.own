@@ -1,11 +1,16 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/signed_assigned_to_unsigned.own:3:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     2 | 
-     3 | printf :: extern("c")  :: fn(str_to_print u8*, args opaque...) i32
-       |                        ^
-     4 | 
+compile::stderr 10
+tests/inputs/signed_assigned_to_unsigned.own:18:18:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u32`
+    17 | main :: fn() i32 {
+    18 |     let num1 u32 = get_signed()
+       |                  ^
+    19 |     let num2 u8 = get_signed()
+tests/inputs/signed_assigned_to_unsigned.own:19:17:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
+    18 |     let num1 u32 = get_signed()
+    19 |     let num2 u8 = get_signed()
+       |                 ^
+    20 |     return 0
 
 compile::return_code 1
 

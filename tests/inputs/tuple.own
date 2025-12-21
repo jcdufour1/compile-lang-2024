@@ -9,7 +9,7 @@ TokenType :: enum {
 Token :: enum {
     num i32
     string u8*
-    //both (u8*, i32) // TODO: uncomment this
+    //both u8*, i32 // TODO: uncomment this
 }
 
 get_data :: fn() (u8*, i32) {

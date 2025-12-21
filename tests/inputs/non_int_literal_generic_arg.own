@@ -14,7 +14,7 @@ Token2 :: enum(<max_cap ''i32, alloc ''Alloc>) {
 
 Token3Internal :: struct {
     float_num f32
-    print_fn :: fn()void
+    print_fn fn()void
 }
 
 Token3 :: enum(<token3 ''Token3Internal>) {
@@ -29,7 +29,7 @@ NestedStruct :: enum(<alloc ''NestedAlloc>) {
     num i32
 }
 
-Symbol :: struct(<print_ :: fn''fn()void>) {
+Symbol :: struct(<print_fn''fn()void>) {
     num i32
 }
 

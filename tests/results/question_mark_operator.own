@@ -1,11 +1,18 @@
-compile::stdout 0
+compile::stdout 12
+yes2: 9
+yes5: 9
+yes6
+yes7.1
+yes7.2
+yes8.2
+yes9.2
+yes11.1
+yes11.2
+yes12.1
+yes13.1
+yes13.2
 
-compile::stderr 5
-tests/inputs/question_mark_operator.own:3:24:[1;31merror[0;39m:got token `:`, but expected `fn` in function decl
-     2 | 
-     3 | printf :: extern("c")  :: fn(format_string u8*, args opaque...) i32
-       |                        ^
-     4 | 
+compile::stderr 0
 
-compile::return_code 1
+compile::return_code 0
 
