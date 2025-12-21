@@ -100,8 +100,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
             return sv(">=");
-        case TOKEN_TYPE_DEF:
-            return sv("type");
         case TOKEN_SWITCH:
             return sv("switch");
         case TOKEN_CASE:
@@ -266,8 +264,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
             return sv(">=");
-        case TOKEN_TYPE_DEF:
-            return sv("type");
         case TOKEN_SWITCH:
             return sv("switch");
         case TOKEN_CASE:
@@ -350,7 +346,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             darr_append(arena, &buf, '(');
@@ -415,7 +411,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_IMPORT: fallthrough;
         case TOKEN_DEF: fallthrough;
         case TOKEN_EOF: fallthrough;
-        case TOKEN_TYPE_DEF: fallthrough;
         case TOKEN_DEFER: fallthrough;
         case TOKEN_SIZEOF: fallthrough;
         case TOKEN_YIELD: fallthrough;

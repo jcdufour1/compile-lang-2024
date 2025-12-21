@@ -5,7 +5,7 @@
 #include <operator_type.h>
 
 static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
 
     switch (token_type) {
         case TOKEN_DOUBLE_EQUAL:
@@ -138,8 +138,6 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
             unreachable("");
         case TOKEN_RAW_UNION:
             unreachable("");
-        case TOKEN_TYPE_DEF:
-            unreachable("");
         case TOKEN_GENERIC_TYPE:
             unreachable("");
         case TOKEN_IMPORT:
@@ -175,7 +173,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
 }
 
 static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
 
     switch (token_type) {
         case TOKEN_UNSAFE_CAST:
@@ -275,8 +273,6 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
         case TOKEN_CONTINUE:
             unreachable("");
         case TOKEN_RAW_UNION:
-            unreachable("");
-        case TOKEN_TYPE_DEF:
             unreachable("");
         case TOKEN_GENERIC_TYPE:
             unreachable("");

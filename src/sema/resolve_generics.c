@@ -108,7 +108,6 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
         // TODO
         msg_todo_strv(base->name.base, POS_BUILTIN);
         return false;
-        //todo();
     }
 
     {

@@ -1,21 +1,47 @@
-compile::stdout 0
+compile::stdout 41
+8
+8
+903
+903
+71
+765
+765
+8.700000
+8.700000
+8.700000
+8.700000
+8.700000
+bye
+8.700000
+8.700000
+8.700000
+8.700000
+8.700000
+bye
+hello
+hello
+hello
+hello
+hello
+bye
+bye
+bye
+bye
+bye
+8.900000
+8.900000
+8.900000
+8.900000
+9.300000
+9.300000
+9.300000
+9.300000
+this is a string
+this is a string
+this is a string
+this is a string
 
-compile::stderr 15
-tests/inputs/non_int_literal_generic_arg.own:17:15:[1;31merror[0;39m:got token `:`, but expected `symbol` 
-    16 |     float_num f32
-    17 |     print_fn :: fn()void
-       |               ^
-    18 | }
-tests/inputs/non_int_literal_generic_arg.own:32:26:[1;31merror[0;39m:got token `:`, but expected `,`  or `>)` 
-    31 | 
-    32 | Symbol :: struct(<print_ :: fn''fn()void>) {
-       |                          ^
-    33 |     num i32
-tests/inputs/non_int_literal_generic_arg.own:32:26:[1;31merror[0;39m:got token `:`, but expected `{` in struct, raw_union, or enum definition
-    31 | 
-    32 | Symbol :: struct(<print_ :: fn''fn()void>) {
-       |                          ^
-    33 |     num i32
+compile::stderr 0
 
-compile::return_code 1
+compile::return_code 0
 

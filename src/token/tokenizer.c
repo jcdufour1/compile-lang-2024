@@ -105,7 +105,7 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 79, "exhausive handling of token types (only keywords are explicitly handled)");
+    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem)) || strv_col_front(*file_text_rem) == '_') {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
@@ -146,8 +146,6 @@ static bool get_next_token(
             token->type = TOKEN_ENUM;
         } else if (strv_is_equal(text, sv("continue"))) {
             token->type = TOKEN_CONTINUE;
-        } else if (strv_is_equal(text, sv("type"))) {
-            token->type = TOKEN_TYPE_DEF;
         } else if (strv_is_equal(text, sv("import"))) {
             token->type = TOKEN_IMPORT;
         } else if (strv_is_equal(text, sv("def"))) {

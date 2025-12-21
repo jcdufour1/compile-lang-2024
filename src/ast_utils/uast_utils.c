@@ -245,8 +245,6 @@ bool util_try_uast_literal_new_from_strv(Uast_expr** new_lit, const Strv value, 
             unreachable("");
         case TOKEN_RAW_UNION:
             unreachable("");
-        case TOKEN_TYPE_DEF:
-            unreachable("");
         case TOKEN_GENERIC_TYPE:
             unreachable("");
         case TOKEN_IMPORT:
@@ -436,8 +434,6 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
         case TOKEN_CONTINUE:
             unreachable("");
         case TOKEN_RAW_UNION:
-            unreachable("");
-        case TOKEN_TYPE_DEF:
             unreachable("");
         case TOKEN_GENERIC_TYPE:
             unreachable("");

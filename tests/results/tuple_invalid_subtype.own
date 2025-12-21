@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 33
+compile::stderr 20
 tests/inputs/tuple_invalid_subtype.own:3:29:[1;31merror[0;39m:opening `{` is unmatched
      2 | 
      3 | get_data :: fn() (i32, u8*) {
@@ -11,11 +11,6 @@ tests/inputs/tuple_invalid_subtype.own:4:14:[1;31merror[0;39m:expected newline
      4 |     return 87, "hello"
        |              ^
      5 | }
-tests/inputs/tuple_invalid_subtype.own:7:31:[1;31merror[0;39m:opening `{` is unmatched
-     6 | 
-     7 | get_data_2 :: fn() (u8*, i32) {
-       |                               ^
-     8 |     return "bye", 124
 tests/inputs/tuple_invalid_subtype.own:8:17:[1;31merror[0;39m:expected newline after statement
      7 | get_data_2 :: fn() (u8*, i32) {
      8 |     return "bye", 124
@@ -26,14 +21,6 @@ tests/inputs/tuple_invalid_subtype.own:16:9:[1;31merror[0;39m:expected newline
     16 |     num1, num2 = get_data()
        |         ^
     17 |     num1, num2 = get_data_2()
-tests/inputs/tuple_invalid_subtype.own:19:1:[1;31merror[0;39m:got token `}`, but expected `symbol` 
-    18 |     return 0
-    19 | }
-       | ^
-tests/inputs/tuple_invalid_subtype.own:20:0:[1;31merror[0;39m:got token `end-of-file`, but expected `symbol` 
-    19 | }
-    20 | 
-       | ^
 
 compile::return_code 1
 
