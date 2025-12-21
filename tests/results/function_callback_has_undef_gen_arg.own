@@ -1,16 +1,11 @@
 compile::stdout 0
 
-compile::stderr 10
-tests/inputs/function_callback_has_undef_gen_arg.own:9:16:[1;31merror[0;39m:argument to generic function parameter `ItemT` was not specified
-     8 | main :: fn() i32 {
-     9 |     do_nothing(callback)
-       |                ^
-    10 |     return 0
-tests/inputs/function_callback_has_undef_gen_arg.own:2:14:[1;34mnote[0;39m:generic function parameter `ItemT` defined here
-     1 | 
-     2 | callback :: fn(<ItemT>)() {
-       |              ^
-     3 | }
+compile::stderr 5
+tests/inputs/function_callback_has_undef_gen_arg.own:5:30:[1;31merror[0;39m:got token `:`, but expected `symbol` 
+     4 | 
+     5 | do_nothing :: fn(pretend_fn :: fn()void) {
+       |                              ^
+     6 | }
 
 compile::return_code 1
 

@@ -1,11 +1,20 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/struct_literal_no_delim.own:11:35:[1;31merror[0;39m:got token `=`, but expected `,` , `newline`  or `}` after expression in struct literal
-    10 |     let pos: Pos = {
+compile::stderr 14
+tests/inputs/struct_literal_no_delim.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
+     6 |     line: i32 
+     7 | }
+       | ^
+     8 | 
+tests/inputs/struct_literal_no_delim.own:12:5:[1;31merror[0;39m:closing `}` is unmatched
     11 |         .file = "hello.own" .line = 87
-       |                                   ^
     12 |     }
+       |     ^
+    13 | }
+tests/inputs/struct_literal_no_delim.own:13:1:[1;31merror[0;39m:closing `}` is unmatched
+    12 |     }
+    13 | }
+       | ^
 
 compile::return_code 1
 

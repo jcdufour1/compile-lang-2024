@@ -6,10 +6,10 @@ tests/inputs/invalid_count_fun_args_3.own:6:5:[1;31merror[0;39m:2 arguments ar
      6 |     foo(8, 2)
        |     ^
      7 | 
-tests/inputs/invalid_count_fun_args_3.own:2:4:[1;34mnote[0;39m:function `foo` defined here
+tests/inputs/invalid_count_fun_args_3.own:2:1:[1;34mnote[0;39m:function `foo` defined here
      1 | 
      2 | foo :: fn(num: i32) {
-       |    ^
+       | ^
      3 | }
 
 compile::return_code 1

@@ -2,14 +2,14 @@
 io :: import = std.io
 util :: import = std.util
 
-type Opt def = util.Optional
-type print def = io.printf
+Opt :: def = util.Optional
+print :: def = io.printf
 
 add_internal :: fn(<NumType>)(lhs NumType, rhs NumType) NumType {
     return lhs + rhs
 }
 
-type add def = add_internal
+add :: def = add_internal
 
 main :: fn() i32 {
     print("hello\n")

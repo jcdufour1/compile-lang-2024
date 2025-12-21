@@ -3,7 +3,7 @@ add :: def = add_internal(<i64>)
 add2 :: def = add_internal.thing(<i64>)
 
 main :: fn() i32 {
-    //add(<i32>)()
-    //add2(<i32>)()
+    add(<i32>)()
+    add2(<i32>)()
     return 0
 }

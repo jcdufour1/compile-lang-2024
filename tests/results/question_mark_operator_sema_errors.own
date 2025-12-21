@@ -1,36 +1,35 @@
 compile::stdout 0
 
-compile::stderr 30
-tests/inputs/question_mark_operator_sema_errors.own:19:16:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
-    18 | thing1 :: fn() {
-    19 |     let num u8 = do_thing(TRUE)?
-       |                ^
-    20 |     printf("num = %d\n", num)
-tests/inputs/question_mark_operator_sema_errors.own:24:32:[1;31merror[0;39m:ErrorT of `?` left hand side is of type `i64`, but ErrorT of the function return type is of type `u8` (`i64` cannot be assigned to `u8`)
-    23 | thing2 :: fn() rt.Result(<i32, u8>) {
-    24 |     do_thing_with_err_val(TRUE)?
-       |                                ^
-    25 |     return .ok(8)
-tests/inputs/question_mark_operator_sema_errors.own:10:61:[1;34mnote[0;39m:ErrorT of left hand side defined here
+compile::stderr 29
+tests/inputs/question_mark_operator_sema_errors.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
+     7 |     return .none
+     8 | }
+       | ^
      9 | 
-    10 | do_thing_with_err_val :: fn(should_succeed u1) rt.Result(<i32, i64>) {
-       |                                                             ^
-    11 |     if should_succeed => return .ok(9)
-tests/inputs/question_mark_operator_sema_errors.own:23:29:[1;34mnote[0;39m:ErrorT of function return type defined here
+tests/inputs/question_mark_operator_sema_errors.own:13:1:[1;31merror[0;39m:closing `}` is unmatched
+    12 |     return .error(27)
+    13 | }
+       | ^
+    14 | 
+tests/inputs/question_mark_operator_sema_errors.own:21:1:[1;31merror[0;39m:closing `}` is unmatched
+    20 |     printf("num = %d\n", num)
+    21 | }
+       | ^
     22 | 
-    23 | thing2 :: fn() rt.Result(<i32, u8>) {
-       |                             ^
-    24 |     do_thing_with_err_val(TRUE)?
-tests/inputs/question_mark_operator_sema_errors.own:29:5:[1;31merror[0;39m:expected result type on left hand side of `?`, but got type `rt.Optional(<i32>)`
-    28 | thing3 :: fn() rt.Result(<i32, u8>) {
-    29 |     do_thing(TRUE)?
-       |     ^
-    30 |     return .ok(8)
-tests/inputs/question_mark_operator_sema_errors.own:28:16:[1;34mnote[0;39m:result type is required for the left hand side of `?` because the function return type is a result type
+tests/inputs/question_mark_operator_sema_errors.own:26:1:[1;31merror[0;39m:closing `}` is unmatched
+    25 |     return .ok(8)
+    26 | }
+       | ^
     27 | 
-    28 | thing3 :: fn() rt.Result(<i32, u8>) {
-       |                ^
-    29 |     do_thing(TRUE)?
+tests/inputs/question_mark_operator_sema_errors.own:31:1:[1;31merror[0;39m:closing `}` is unmatched
+    30 |     return .ok(8)
+    31 | }
+       | ^
+    32 | 
+tests/inputs/question_mark_operator_sema_errors.own:39:1:[1;31merror[0;39m:closing `}` is unmatched
+    38 |     return 0
+    39 | }
+       | ^
 
 compile::return_code 1
 

@@ -6,10 +6,10 @@ tests/inputs/nested_generic_mismatch_fun_arg.own:18:20:[1;31merror[0;39m:argum
     18 |     darr_do_things(darr)
        |                    ^
     19 | 
-tests/inputs/nested_generic_mismatch_fun_arg.own:13:19:[1;34mnote[0;39m:corresponding parameter `darr` defined here
+tests/inputs/nested_generic_mismatch_fun_arg.own:13:22:[1;34mnote[0;39m:corresponding parameter `darr` defined here
     12 | 
     13 | darr_do_things :: fn(darr Local_Darr(<Token(<i64, u16>), i32>)) {
-       |                   ^
+       |                      ^
     14 | }
 
 compile::return_code 1

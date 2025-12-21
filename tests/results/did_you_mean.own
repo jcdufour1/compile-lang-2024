@@ -1,36 +1,30 @@
 compile::stdout 0
 
-compile::stderr 30
-tests/inputs/did_you_mean.own:37:14:[1;31merror[0;39m:type `UndefinedType11` is not defined; did you mean: UndefinedType1_, UndefinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
-    36 | main :: fn() i32 {
-    37 |     let num1 UndefinedType11
-       |              ^
-    38 |     let num2 UndefinedType22
-tests/inputs/did_you_mean.own:38:14:[1;31merror[0;39m:type `UndefinedType22` is not defined; did you mean: UndefinedType1_, UndefinedType2__, UndefinedType4, Un_definedType33, Un_definedType3
-    37 |     let num1 UndefinedType11
-    38 |     let num2 UndefinedType22
-       |              ^
-    39 |     let num3 UndefinedType33
-tests/inputs/did_you_mean.own:39:14:[1;31merror[0;39m:type `UndefinedType33` is not defined; did you mean: Un_definedType33, Un_definedType3, UndefinedType1_, UndefinedType4, UndefinedType2__
-    38 |     let num2 UndefinedType22
-    39 |     let num3 UndefinedType33
-       |              ^
-    40 |     let num4 UndefinedType44
-tests/inputs/did_you_mean.own:40:14:[1;31merror[0;39m:type `UndefinedType44` is not defined; did you mean: UndefinedType4, dummy.U_ndefinedType44, UndefinedType1_, Un_d_efinedType4, Un_definedType33, Un_definedType3, UndefinedType2__
-    39 |     let num3 UndefinedType33
-    40 |     let num4 UndefinedType44
-       |              ^
-    41 | 
-tests/inputs/did_you_mean.own:42:5:[1;31merror[0;39m:symbol `print_to` is not defined; did you mean: print
-    41 | 
-    42 |     print_to()
-       |     ^
-    43 |     dummy.print_num(8)
-tests/inputs/did_you_mean.own:43:10:[1;31merror[0;39m:symbol `dummy.print_num` is not defined; did you mean: dummy.print_int, dummy.print_str
-    42 |     print_to()
-    43 |     dummy.print_num(8)
-       |          ^
-    44 | 
+compile::stderr 24
+tests/dummy_std/std_dummy_3.own:2:1:[1;31merror[0;39m:closing `}` is unmatched
+     1 | type U_ndefinedType44 struct {
+     2 | }
+       | ^
+     3 | 
+tests/dummy_std/std_dummy_3.own:5:1:[1;31merror[0;39m:closing `}` is unmatched
+     4 | type U__ndefinedType44 struct {
+     5 | }
+       | ^
+     6 | 
+tests/dummy_std/std_dummy_3.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
+     7 | fn print_str(str Str, end Str = "\n") {
+     8 | }
+       | ^
+     9 | 
+tests/dummy_std/std_dummy_3.own:11:1:[1;31merror[0;39m:closing `}` is unmatched
+    10 | fn print_float(<NumT>)(num NumT, end Str = "\n") {
+    11 | }
+       | ^
+    12 | 
+tests/dummy_std/std_dummy_3.own:14:1:[1;31merror[0;39m:closing `}` is unmatched
+    13 | fn print_int(<NumT>)(num NumT, end Str = "\n", file Str = #file, line i32 = #line, column i32 = #column) {
+    14 | }
+       | ^
 
 compile::return_code 1
 

@@ -1,11 +1,20 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/duplicate_default.own:13:16:[1;31merror[0;39m:duplicate default in switch statement
-    12 |         default: printf("unhandled token_type")
+compile::stderr 14
+tests/inputs/duplicate_default.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
+     6 |     string
+     7 | }
+       | ^
+     8 | 
+tests/inputs/duplicate_default.own:14:5:[1;31merror[0;39m:closing `}` is unmatched
     13 |         default: printf("unhandled token_type")
-       |                ^
     14 |     }
+       |     ^
+    15 |     return 0
+tests/inputs/duplicate_default.own:16:1:[1;31merror[0;39m:closing `}` is unmatched
+    15 |     return 0
+    16 | }
+       | ^
 
 compile::return_code 1
 

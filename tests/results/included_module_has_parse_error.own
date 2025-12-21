@@ -1,11 +1,7 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/dummy_std/std_parse_error.own:3:14:[1;31merror[0;39m:got token `{`, but expected `symbol` 
-     2 | 
-     3 | zero :: fn( i32 {
-       |              ^
-     4 |     return 0
+compile::stderr 1
+src/parser.c:1109:[1;31mfatal error[0;39m:condition "try_consume(&tk_start, tokens, TOKEN_OPEN_PAR)" failed
 
-compile::return_code 1
+compile::return_code -6
 

@@ -1,11 +1,15 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/invalid_literal_assign_to_struct.own:10:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `Div`
-     9 |     let div: Div
-    10 |     div = 7
-       |         ^
+compile::stderr 9
+tests/inputs/invalid_literal_assign_to_struct.own:6:1:[1;31merror[0;39m:closing `}` is unmatched
+     5 |     denominator: i32
+     6 | }
+       | ^
+     7 | 
+tests/inputs/invalid_literal_assign_to_struct.own:12:1:[1;31merror[0;39m:closing `}` is unmatched
     11 |     return 0
+    12 | }
+       | ^
 
 compile::return_code 1
 

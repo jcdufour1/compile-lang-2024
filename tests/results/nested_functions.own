@@ -1,9 +1,21 @@
-compile::stdout 3
-87
-hello
-hi
+compile::stdout 0
 
-compile::stderr 0
+compile::stderr 15
+tests/inputs/nested_functions.own:9:9:[1;31merror[0;39m:symbol `print_num` is not defined
+     8 | 
+     9 |         print_num(87)
+       |         ^
+    10 |         io.print_str("hello")
+tests/inputs/nested_functions.own:13:5:[1;31merror[0;39m:symbol `print_hello` is not defined
+    12 | 
+    13 |     print_hello()
+       |     ^
+    14 | 
+tests/inputs/nested_functions.own:25:5:[1;31merror[0;39m:symbol `print_hello` is not defined
+    24 | 
+    25 |     print_hello()
+       |     ^
+    26 | }
 
-compile::return_code 0
+compile::return_code 1
 

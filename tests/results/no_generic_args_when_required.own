@@ -6,10 +6,10 @@ tests/inputs/no_generic_args_when_required.own:8:16:[1;31merror[0;39m:0 generi
      8 |     let token1 Token = .number(76)
        |                ^
      9 | 
-tests/inputs/no_generic_args_when_required.own:2:6:[1;34mnote[0;39m:generic parameters defined here
+tests/inputs/no_generic_args_when_required.own:2:1:[1;34mnote[0;39m:generic parameters defined here
      1 | 
      2 | Token :: enum(<NumType>) {
-       |      ^
+       | ^
      3 |     string u8*
 
 compile::return_code 1

@@ -1,13 +1,7 @@
-compile::stdout 7
-hello
-bye
-bye
-bye
-yes
-yes
-yes
+compile::stdout 0
 
-compile::stderr 0
+compile::stderr 1
+src/parser.c:1109:[1;31mfatal error[0;39m:condition "try_consume(&tk_start, tokens, TOKEN_OPEN_PAR)" failed
 
-compile::return_code 0
+compile::return_code -6
 

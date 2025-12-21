@@ -1,11 +1,16 @@
 compile::stdout 0
 
-compile::stderr 5
+compile::stderr 10
 tests/inputs/structs_missing_memb_type.own:3:10:[1;31merror[0;39m:got token `newline`, but expected `symbol` 
      2 | Number :: struct {
      3 |     num: 
        |          ^
      4 |     file: u8*
+tests/inputs/structs_missing_memb_type.own:4:9:[1;31merror[0;39m:language feature `single `:` here (`::` should be used for now)` not yet implemented (may or may not be implemented in the future)
+     3 |     num: 
+     4 |     file: u8*
+       |         ^
+     5 | }
 
 compile::return_code 1
 

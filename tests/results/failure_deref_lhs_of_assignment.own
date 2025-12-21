@@ -1,11 +1,10 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/failure_deref_lhs_of_assignment.own:9:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `i32*`
-     8 | 
-     9 |     ptr = 7
-       |         ^
-    10 | 
+compile::stderr 4
+tests/inputs/failure_deref_lhs_of_assignment.own:12:1:[1;31merror[0;39m:closing `}` is unmatched
+    11 |     return 0
+    12 | }
+       | ^
 
 compile::return_code 1
 

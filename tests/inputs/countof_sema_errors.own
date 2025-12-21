@@ -6,7 +6,7 @@ add :: fn(a i32, b i32) i32 {
 
 main :: fn() i32 {
     let add_fn :: fn(i32, i32)i32 = add
-    io.printf("countof add_ :: fn= %zu\n", countof add_fn)
+    io.printf("countof add_fn= %zu\n", countof add_fn)
 
     let num i32 = 9
     io.printf("countof num = %zu\n", countof num)

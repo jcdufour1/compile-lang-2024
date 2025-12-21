@@ -1,9 +1,20 @@
-compile::stdout 3
-hello
-57
-43
+compile::stdout 0
 
-compile::stderr 0
+compile::stderr 14
+tests/inputs/def.own:10:1:[1;31merror[0;39m:closing `}` is unmatched
+     9 |     return lhs + rhs
+    10 | }
+       | ^
+    11 | 
+tests/inputs/def.own:23:5:[1;31merror[0;39m:closing `}` is unmatched
+    22 |         case .none: print("nothing\n")
+    23 |     }
+       |     ^
+    24 | 
+tests/inputs/def.own:26:1:[1;31merror[0;39m:closing `}` is unmatched
+    25 |     return 0
+    26 | }
+       | ^
 
-compile::return_code 0
+compile::return_code 1
 

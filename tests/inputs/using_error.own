@@ -2,7 +2,7 @@
 io :: import = std.io
 using io
 
-type Str def = Local_str
+Str :: def = Local_str
 
 Local_str :: struct {
     buf u8*

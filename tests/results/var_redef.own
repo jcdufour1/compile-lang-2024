@@ -1,16 +1,40 @@
 compile::stdout 0
 
-compile::stderr 10
-tests/inputs/var_redef.own:6:13:[1;31merror[0;39m:redefinition of symbol `num1`
-     5 |     for num1: i32 in 0..7 {
-     6 |         for num1: i32 in 0..num1 {
+compile::stderr 34
+tests/inputs/var_redef.own:11:13:[1;31merror[0;39m:closing `}` is unmatched
+    10 |                 printf("%d ", num1)
+    11 |             }
        |             ^
-     7 |             let num_temp: i32
-tests/inputs/var_redef.own:5:9:[1;34mnote[0;39m:`num1` originally defined here
-     4 | main :: fn() i32 {
-     5 |     for num1: i32 in 0..7 {
+    12 |         }
+tests/inputs/var_redef.own:12:9:[1;31merror[0;39m:closing `}` is unmatched
+    11 |             }
+    12 |         }
        |         ^
-     6 |         for num1: i32 in 0..num1 {
+    13 |         printf("\n")
+tests/inputs/var_redef.own:14:5:[1;31merror[0;39m:closing `}` is unmatched
+    13 |         printf("\n")
+    14 |     }
+       |     ^
+    15 | 
+tests/inputs/var_redef.own:21:13:[1;31merror[0;39m:closing `}` is unmatched
+    20 |                 printf("%d ", num2)
+    21 |             }
+       |             ^
+    22 |         }
+tests/inputs/var_redef.own:22:9:[1;31merror[0;39m:closing `}` is unmatched
+    21 |             }
+    22 |         }
+       |         ^
+    23 |         printf("\n")
+tests/inputs/var_redef.own:24:5:[1;31merror[0;39m:closing `}` is unmatched
+    23 |         printf("\n")
+    24 |     }
+       |     ^
+    25 | 
+tests/inputs/var_redef.own:27:1:[1;31merror[0;39m:closing `}` is unmatched
+    26 |     return 0
+    27 | }
+       | ^
 
 compile::return_code 1
 

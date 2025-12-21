@@ -1,26 +1,31 @@
 compile::stdout 0
 
-compile::stderr 30
-tests/inputs/tuple.own:15:26:[1;31merror[0;39m:opening `{` is unmatched
+compile::stderr 47
+tests/inputs/tuple.own:15:29:[1;31merror[0;39m:opening `{` is unmatched
     14 | 
     15 | get_data :: fn() (u8*, i32) {
-       |                          ^
+       |                             ^
     16 |     return "hello", 76
 tests/inputs/tuple.own:16:19:[1;31merror[0;39m:expected newline after statement
     15 | get_data :: fn() (u8*, i32) {
     16 |     return "hello", 76
        |                   ^
     17 | }
-tests/inputs/tuple.own:19:39:[1;31merror[0;39m:opening `{` is unmatched
+tests/inputs/tuple.own:19:42:[1;31merror[0;39m:opening `{` is unmatched
     18 | 
     19 | get_data_3 :: fn() (i32, u8*, TokenType) {
-       |                                       ^
+       |                                          ^
     20 |     return 89, "bye", TokenType.string
 tests/inputs/tuple.own:20:14:[1;31merror[0;39m:expected newline after statement
     19 | get_data_3 :: fn() (i32, u8*, TokenType) {
     20 |     return 89, "bye", TokenType.string
        |              ^
     21 | }
+tests/inputs/tuple.own:23:49:[1;31merror[0;39m:opening `{` is unmatched
+    22 | 
+    23 | get_data_4 :: fn() (i32, u8*, TokenType, Token) {
+       |                                                 ^
+    24 |     return 91, "getting a new token", TokenType.num, Token.num(12)
 tests/inputs/tuple.own:24:14:[1;31merror[0;39m:expected newline after statement
     23 | get_data_4 :: fn() (i32, u8*, TokenType, Token) {
     24 |     return 91, "getting a new token", TokenType.num, Token.num(12)
@@ -31,6 +36,18 @@ tests/inputs/tuple.own:46:11:[1;31merror[0;39m:expected newline after statemen
     46 |     string, num = get_data()
        |           ^
     47 |     io.printf("%d %s\n", num, string);
+tests/inputs/tuple.own:57:1:[1;31merror[0;39m:got token `}`, but expected `symbol` 
+    56 |     return 0
+    57 | }
+       | ^
+tests/inputs/tuple.own:58:0:[1;31merror[0;39m:got token `end-of-file`, but expected `symbol` 
+    57 | }
+    58 | 
+       | ^
+tests/inputs/tuple.own:58:0:[1;31merror[0;39m:got token `end-of-file`, but expected `symbol` 
+    57 | }
+    58 | 
+       | ^
 
 compile::return_code 1
 

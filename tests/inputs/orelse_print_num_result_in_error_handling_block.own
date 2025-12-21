@@ -6,8 +6,8 @@ do_thing :: fn(should_succeed u1) util.Optional(<i32>) {
     return .none
 }
 
-type FALSE def = 0
-type TRUE def = 1
+FALSE :: def = 0
+TRUE :: def = 1
 
 thing1 :: fn() {
     let num i32 = do_thing(TRUE) orelse {

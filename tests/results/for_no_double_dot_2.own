@@ -1,11 +1,15 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/for_no_double_dot_2.own:5:23:[1;31merror[0;39m:got token `{`, but expected `..` after for loop lower bound
-     4 | main :: fn() i32 {
-     5 |     for idx: i32 in 0 {
-       |                       ^
+compile::stderr 9
+tests/inputs/for_no_double_dot_2.own:7:5:[1;31merror[0;39m:closing `}` is unmatched
      6 |         puts("hello");
+     7 |     }
+       |     ^
+     8 | }
+tests/inputs/for_no_double_dot_2.own:8:1:[1;31merror[0;39m:closing `}` is unmatched
+     7 |     }
+     8 | }
+       | ^
 
 compile::return_code 1
 

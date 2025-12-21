@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/undefined_generic_type_in_fun_param.own:2:21:[1;31merror[0;39m:type `Optional` is not defined; did you mean: std/runtime::Optional
+tests/inputs/undefined_generic_type_in_fun_param.own:2:24:[1;31merror[0;39m:type `Optional` is not defined; did you mean: std/runtime::Optional
      1 | 
      2 | add :: fn(lhs i32, rhs Optional(<i32>)) {
-       |                     ^
+       |                        ^
      3 | }
 
 compile::return_code 1

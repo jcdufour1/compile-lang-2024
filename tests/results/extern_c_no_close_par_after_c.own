@@ -1,11 +1,10 @@
 compile::stdout 0
 
-compile::stderr 5
-tests/inputs/extern_c_no_close_par_after_c.own:2:12:[1;31merror[0;39m:got token `fn`, but expected `)` in function decl
-     1 | 
-     2 | extern("c" puts :: fn(str_to_print: u8*) i32
-       |            ^
-     3 | 
+compile::stderr 4
+tests/inputs/extern_c_no_close_par_after_c.own:7:1:[1;31merror[0;39m:closing `}` is unmatched
+     6 |     return 0
+     7 | }
+       | ^
 
 compile::return_code 1
 

@@ -1,6 +1,6 @@
 
-type Print_buf_def :: fn = fn(BufT, u8)void
-type Print_buf_fn2 def = fn(u16, u8)ThingT
+Print_buf_def :: def = fn(BufT, u8)void
+Print_buf_fn2 :: def = fn(u16, u8)ThingT
 
 main :: fn() i32 {
     let fun Print_buf_fn
