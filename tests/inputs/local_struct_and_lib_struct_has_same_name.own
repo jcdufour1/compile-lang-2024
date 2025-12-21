@@ -1,5 +1,5 @@
 
-type lib import = tests.dummy_std.std_dummy
+lib :: import = tests.dummy_std.std_dummy
 
 type Color struct {
     str Str

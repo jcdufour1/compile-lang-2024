@@ -1,6 +1,6 @@
-type io import = std.io
-type rt import = std.runtime
-type coll import = std.collections
+io :: import = std.io
+rt :: import = std.runtime
+coll :: import = std.collections
 
 fn thing1() {
     let nums i32[3] = [8, 76, 77]

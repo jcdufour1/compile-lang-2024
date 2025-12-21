@@ -1,5 +1,5 @@
-type io import = std.io
-type coll import = std.collections
+io :: import = std.io
+coll :: import = std.collections
 
 fn main() i32 {
     let arg Str = coll.slice_at(io.argv(), 0)

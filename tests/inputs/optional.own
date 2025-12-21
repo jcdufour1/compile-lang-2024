@@ -1,8 +1,8 @@
 // TODO: test case for this
 //let temp util.Optional(<i32>) = number.some
 
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
 type Optional_int enum {
     some i32

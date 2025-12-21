@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 fn yield_stmts() {
     defer io.printf("bye\n")

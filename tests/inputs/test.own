@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 
 fn get_string() u8* {

@@ -1,5 +1,5 @@
 
-type coll import = std.collections
+coll :: import = std.collections
 
 
 fn main() i32 {

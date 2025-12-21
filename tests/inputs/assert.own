@@ -1,7 +1,7 @@
 
-type io import = std.io
-type util import = std.util
-type coll import = std.collections
+io :: import = std.io
+util :: import = std.util
+coll :: import = std.collections
 
 fn main() i32 {
     let file coll.Str = #file

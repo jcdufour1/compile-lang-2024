@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 fn one() i32 {
     return 1

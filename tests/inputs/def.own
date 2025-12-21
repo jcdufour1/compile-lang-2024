@@ -1,6 +1,6 @@
 
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
 type Opt def = util.Optional
 type print def = io.printf

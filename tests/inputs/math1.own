@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 fn main() i32 {
     for let num1 i32 in 0..10 {

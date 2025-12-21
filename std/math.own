@@ -1,5 +1,5 @@
-type util import = std.util
-type c import = std.libc
+util :: import = std.util
+c :: import = std.libc
 
 min :: fn(<NumT>)(lhs NumT, rhs NumT) NumT {
     if lhs < rhs => return lhs

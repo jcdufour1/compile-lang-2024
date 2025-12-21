@@ -1,5 +1,5 @@
 
-type io import = std.io
+io :: import = std.io
 
 fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
     if rhs < 0 {

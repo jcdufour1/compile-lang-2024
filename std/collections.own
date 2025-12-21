@@ -1,7 +1,7 @@
 
-type util import = std.util
-type io import = std.io
-type rt import = std.runtime
+util :: import = std.util
+io :: import = std.io
+rt :: import = std.runtime
 
 Slice :: def = rt.Slice
 Str :: def = u8[]
@@ -30,7 +30,7 @@ slice_consume :: fn(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file,
     return .some(slice[0])
 }
 
-slice_try_get :: fn(<ItemT>)(slice ItemT[]*, should_get  :: fn(ItemT) u1, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
+slice_try_get :: fn(<ItemT>)(slice ItemT[]*, should_get fn(ItemT) u1, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
     if slice.count < 1 => return .none
     if !should_get(slice[0]) => return .none
 

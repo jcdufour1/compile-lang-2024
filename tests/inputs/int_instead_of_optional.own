@@ -1,6 +1,6 @@
 
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
 fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {

@@ -1,6 +1,6 @@
 
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
 fn add(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
     switch rhs {

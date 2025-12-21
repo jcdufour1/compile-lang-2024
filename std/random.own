@@ -1,8 +1,8 @@
 
 
-type c import = std.libc
-type util import = std.util
-type posix import = std.posix
+c :: import = std.libc
+util :: import = std.util
+posix :: import = std.posix
 
 srand :: fn(seed util.Optional(<i32>) = .none) {
     if let .some(num) = seed {

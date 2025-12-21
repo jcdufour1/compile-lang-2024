@@ -126,6 +126,8 @@ for generics:
 - add methods
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
+- def should be defined this way?:
+    EOF :: def -1
 
 
 # roadmap to try to get bootstrap compiler done:

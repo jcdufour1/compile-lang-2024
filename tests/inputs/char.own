@@ -1,5 +1,5 @@
-type io import = std.io
-type rt import = std.runtime
+io :: import = std.io
+rt :: import = std.runtime
 
 fn string_comparison() {
     let string u8* = "hello"

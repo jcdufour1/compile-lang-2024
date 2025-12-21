@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 fn add_one(num i32*) {
     *num = num + 1

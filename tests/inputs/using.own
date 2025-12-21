@@ -1,6 +1,6 @@
 
-type io2 import = std.io
-type coll2 import = std.collections
+io2 :: import = std.io
+coll2 :: import = std.collections
 using io2
 using coll2
 

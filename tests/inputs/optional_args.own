@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 
 fn print(number i32 = 43, string u8* = "hello") {

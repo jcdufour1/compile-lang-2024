@@ -1,7 +1,7 @@
 
-type io import = std.io
-type coll import = std.collections
-type util import = std.util
+io :: import = std.io
+coll :: import = std.collections
+util :: import = std.util
 
 type Token struct {
     num i32

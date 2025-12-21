@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 // TODO: check == edge cases to distinguish between greater_than and greater
 // TODO: check == edge cases to distinguish between less_than and less

@@ -1,5 +1,5 @@
-type math import = std.math
-type io import = std.io
+math :: import = std.math
+io :: import = std.io
 
 fn main() i32 {
     io.printf("abs 9 = %d\n", math.abs(9))

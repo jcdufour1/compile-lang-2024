@@ -1,13 +1,13 @@
-type io import = std.io
-type rt import = std.runtime
-type libc import = std.libc
-type coll import = std.collections
+io :: import = std.io
+rt :: import = std.runtime
+libc :: import = std.libc
+coll :: import = std.collections
 
-Optional :: def = rt.Optional
-Result :: def = rt.Result
+//Optional :: def = rt.Optional
+//Result :: def = rt.Result
 
-usize :: def = rt.usize
-ptr :: def = opaque*
+//usize :: def = rt.usize
+//ptr :: def = opaque*
 
 // overlapping regions are allowed
 // count_items is the number of items to move, not the number of bytes

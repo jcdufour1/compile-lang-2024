@@ -1,4 +1,4 @@
-type foo import = tests.dummy_std.has_using
+foo :: import = tests.dummy_std.has_using
 
 
 fn main() i32 {

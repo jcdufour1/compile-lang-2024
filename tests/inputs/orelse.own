@@ -1,4 +1,4 @@
-type rt import = std.runtime
+rt :: import = std.runtime
 
 extern("c") fn printf(format_string u8*, args opaque...) i32
 

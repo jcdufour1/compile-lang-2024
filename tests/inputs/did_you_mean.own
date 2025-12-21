@@ -1,5 +1,5 @@
 
-type dummy import = tests.dummy_std.std_dummy_3
+dummy :: import = tests.dummy_std.std_dummy_3
 
 type Token struct {
     num i32

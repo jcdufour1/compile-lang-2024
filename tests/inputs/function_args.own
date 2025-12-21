@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 fn print_string(string_input u8*, num1 i32) {
     io.puts(string_input)

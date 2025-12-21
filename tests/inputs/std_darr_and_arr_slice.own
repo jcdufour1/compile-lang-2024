@@ -1,6 +1,6 @@
 
-type io import = std.io
-type coll import = std.collections
+io :: import = std.io
+coll :: import = std.collections
 
 fn darr1() {
     let string coll.Darr(<u8>) = coll.darr_new(<u8>)()

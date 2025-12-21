@@ -1,4 +1,4 @@
-type rt import = std.runtime
+rt :: import = std.runtime
 
 fn main() i32 {
     let num i32 = rt.usize()

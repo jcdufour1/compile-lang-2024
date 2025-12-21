@@ -1,5 +1,5 @@
-type io import = std.
-type io import = .io 
-type io import = 
+io :: import = std.
+io :: import = .io 
+io :: import = 
 type io import std.io 
 type io import std

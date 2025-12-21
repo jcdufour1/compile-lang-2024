@@ -1,4 +1,4 @@
-type io import = std.io
+io :: import = std.io
 
 
 fn add_fn(a i32, b i32) i32 {
