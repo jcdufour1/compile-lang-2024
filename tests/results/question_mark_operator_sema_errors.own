@@ -21,7 +21,7 @@ tests/inputs/question_mark_operator_sema_errors.own:23:29:[1;34mnote[0;39m:Err
     23 | fn thing2() rt.Result(<i32, u8>) {
        |                             ^
     24 |     do_thing_with_err_val(TRUE)?
-tests/inputs/question_mark_operator_sema_errors.own:29:5:[1;31merror[0;39m:expected result type on left hand side of `?`, but got type `std/runtime::Optional(<i32>)`
+tests/inputs/question_mark_operator_sema_errors.own:29:5:[1;31merror[0;39m:expected result type on left hand side of `?`, but got type `rt.Optional(<i32>)`
     28 | fn thing3() rt.Result(<i32, u8>) {
     29 |     do_thing(TRUE)?
        |     ^

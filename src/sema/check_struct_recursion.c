@@ -139,7 +139,7 @@ static bool check_struct_rec_internal(Ustruct_def_base base, Name_darr rec_stack
 
 bool check_struct_for_rec(const Uast_def* def) {
     Strv old_mod_path_curr_file = env.mod_path_curr_file;
-    env.mod_path_curr_file = MOD_PATH_BUILTIN /* TODO */;
+    env.mod_path_curr_file = uast_def_get_name(def).mod_path;
 
     bool status = check_struct_rec_internal(uast_def_get_struct_def_base(def), (Name_darr) {0});
     arena_reset(&struct_like_rec_a);

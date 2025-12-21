@@ -5,6 +5,7 @@
 #include <str_and_num_utils.h>
 #include <uast.h>
 #include <ulang_type_is_equal.h>
+#include <symbol_iter.h>
 
 Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_darr) {0}, .scope_id = scope_id};
@@ -272,10 +273,49 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
 
     assert(!is_msg || env.mod_path_curr_file.count > 0);
     if (!is_msg || !strv_is_equal(name.mod_path, env.mod_path_curr_file)) {
+
+
+
+
         if (!is_msg || !strv_is_equal(name.mod_path, MOD_PATH_BUILTIN)) {
-            string_extend_strv(&a_temp, buf, name.mod_path);
-            if (name.mod_path.count > 0) {
-                string_extend_cstr(&a_temp, buf, "::");
+            bool did_print_alias = false;
+            if (is_msg) {
+                Scope_id curr_scope = name.scope_id;
+                while (1) {
+                    // TODO: consider if mod_aliases should be cached to prevent this nested while loop on every name_print(NAME_MSG, ...)
+                    Usymbol_iter iter = usym_tbl_iter_new(curr_scope);
+                    Uast_def* curr = NULL;
+                    while (usym_tbl_iter_next(&curr, &iter)) {
+                        if (curr->type != UAST_MOD_ALIAS) {
+                            continue;
+                        }
+                        const Uast_mod_alias* mod_alias = uast_mod_alias_const_unwrap(curr);
+                        if (!mod_alias->is_actually_mod_alias) {
+                            continue;
+                        }
+                        if (!strv_is_equal(mod_alias->name.mod_path, env.mod_path_curr_file)) {
+                            continue;
+                        }
+                        if (strv_is_equal(mod_alias->mod_path, name.mod_path)) {
+                            string_extend_f(&a_temp, buf, FMT".", strv_print(mod_alias->name.base));
+                            did_print_alias = true;
+                            goto after_outer;
+                        }
+                    }
+
+                    if (curr_scope == SCOPE_TOP_LEVEL) {
+                        break;
+                    }
+                    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+                }
+            }
+after_outer:
+
+            if (!did_print_alias) {
+                string_extend_strv(&a_temp, buf, name.mod_path);
+                if (name.mod_path.count > 0) {
+                    string_extend_cstr(&a_temp, buf, "::");
+                }
             }
         }
     }

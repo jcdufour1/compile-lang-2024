@@ -96,7 +96,8 @@ static void compile_file_to_ir(void) {
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        true /* TODO */
     );
 
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name));

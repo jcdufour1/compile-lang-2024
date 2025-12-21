@@ -863,6 +863,14 @@ Strv uast_import_path_print_internal(UAST_MODE mode, const Uast_import_path* imp
     return string_to_strv(buf);
 }
 
+static Strv local_loc_print_internal(const char* file, int line) {
+    String buf = {0};
+    string_extend_f(&a_temp, &buf, "/* %s:%d */", file, line);
+    return string_to_strv(buf);
+}
+
+#define local_loc_print(loc) strv_print(local_loc_print_internal((loc).file, (loc).line))
+
 Strv uast_mod_alias_print_internal(UAST_MODE mode, const Uast_mod_alias* alias, Indent indent) {
     String buf = {0};
 
@@ -875,6 +883,8 @@ Strv uast_mod_alias_print_internal(UAST_MODE mode, const Uast_mod_alias* alias, 
             string_extend_cstr(&a_temp, &buf, "(");
             string_extend_strv(&a_main, &buf, alias->mod_path);
             string_extend_cstr(&a_temp, &buf, ")");
+            // TODO
+            //string_extend_f(&a_temp, &buf, FMT, local_loc_print(alias->loc));
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
