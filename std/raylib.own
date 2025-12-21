@@ -53,20 +53,20 @@ extern("c") fn DrawText(text u8*, posX i32, posY i32, fontSize i32, color Color)
 // NOTE: Some strings allocate memory internally for returned strings, just be careful!
 extern("c") fn TextFormat(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
 
-type Vector3 struct {
+Vector3 :: struct {
     a f32
     b f32
     c f32
 }
 
-type Rectangle struct {
+Rectangle :: struct {
     posX f32
     posY f32
     width f32
     height f32
 }
 
-type Color struct {
+Color :: struct {
     r u8; // Color red value
     g u8; // Color green value
     b u8; // Color blue value

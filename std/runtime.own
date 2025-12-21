@@ -1,22 +1,22 @@
 // TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
 // TODO: count should be usize by default when usize is implemented
 
-type Slice struct(<ItemT>) {
+Slice :: struct(<ItemT>) {
     buf ItemT*
     count usize
 }
 
-type Optional enum(<ItemT>) {
+Optional :: enum(<ItemT>) {
     some ItemT
     none
 }
 
-type Result enum(<OkT, ErrorT>) {
+Result :: enum(<OkT, ErrorT>) {
     ok OkT
     error ErrorT
 }
 
-type File struct {
+File :: struct {
     file opaque*
 }
 

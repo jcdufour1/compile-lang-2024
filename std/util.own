@@ -3,11 +3,11 @@ type rt import = std.runtime
 type libc import = std.libc
 type coll import = std.collections
 
-type Optional def = rt.Optional
-type Result def = rt.Result
+Optional :: def = rt.Optional
+Result :: def = rt.Result
 
-type usize def = rt.usize
-type ptr def = opaque*
+usize :: def = rt.usize
+ptr :: def = opaque*
 
 // overlapping regions are allowed
 // count_items is the number of items to move, not the number of bytes
@@ -49,7 +49,7 @@ fn free(<ItemT>)(buf ItemT*) {
     libc.free(unsafe_cast<opaque*>buf)
 }
 
-type assert def = rt.assert
+assert :: def = rt.assert
 
 // NOTE: cstr_free should be called on the returned string later
 fn str_to_cstr(str coll.Str) u8* {

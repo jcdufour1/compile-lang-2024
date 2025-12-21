@@ -5,19 +5,19 @@ type util import = std.util
 
 extern("c") fn own_argv() Str[]
 
-type own_stdout def = rt.own_stdout
-type own_stderr def = rt.own_stderr
-type own_stdin def = rt.own_stdin
+own_stdout :: def = rt.own_stdout
+own_stderr :: def = rt.own_stderr
+own_stdin :: def = rt.own_stdin
 
-type own_printf def = rt.own_printf
-type own_fprintf def = rt.own_fprintf
+own_printf :: def = rt.own_printf
+own_fprintf :: def = rt.own_fprintf
 
-type printf def = libc.printf
-type puts def = libc.puts
-type fopen def = libc.fopen
-type fputc def = libc.fputc
+printf :: def = libc.printf
+puts :: def = libc.puts
+fopen :: def = libc.fopen
+fputc :: def = libc.fputc
 
-type File def = rt.File
+File :: def = rt.File
 
 fn stdout() File => return {own_stdout()}
 fn stderr() File => return {own_stderr()}
@@ -88,7 +88,7 @@ fn print_int(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line 
     print_str_internal__(end)
 }
 
-type Print_buf_fn def = fn(BufT, u8)void
+Print_buf_fn :: def = fn(BufT, u8)void
 
 fn print_i32(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
     let actual_item i32 = *unsafe_cast<i32*>item
@@ -145,12 +145,12 @@ fn print_internal(<BufT>)(format PrintFormat(<BufT>), print_buf_fn fn(BufT, u8)v
     assert(arg_idx == format.args.count)
 }
 
-type PrintFormatArg struct(<BufT>) {
+PrintFormatArg :: struct(<BufT>) {
     item opaque*
     print_item_fn fn(BufT, fn(BufT, u8)void, opaque*)void
 }
 
-type PrintFormat struct(<BufT>) {
+PrintFormat :: struct(<BufT>) {
     format Str
     args PrintFormatArg(<BufT>)[]
 }

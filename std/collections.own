@@ -3,8 +3,8 @@ type util import = std.util
 type io import = std.io
 type rt import = std.runtime
 
-type Slice def = rt.Slice
-type Str def = u8[]
+Slice :: def = rt.Slice
+Str :: def = u8[]
 
 // TODO: make alloc function instead of using malloc directly
 
@@ -20,7 +20,7 @@ fn slice_at(<ItemT>)(slice ItemT[], index usize, file Str = #file, line i32 = #l
     return *slice_at_ref(slice, index, file, line, column)
 }
 
-type slice_at_ref def = rt.slice_at_ref 
+slice_at_ref :: def = rt.slice_at_ref 
 
 fn slice_consume(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
     if slice.count < 1 => return .none
@@ -54,7 +54,7 @@ fn slice_reverse_in_place(<ItemT>)(slice ItemT[]) {
 
 // TODO: count and max should be usize by default when usize is implemented
 // TODO: make max compile time when possible
-type Arr struct(<ItemT, capacity ''usize>) {
+Arr :: struct(<ItemT, capacity ''usize>) {
     buf ItemT*
     count usize
 }
@@ -132,7 +132,7 @@ fn arr_last(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), file 
     return arr.buf[arr.count - 1]
 }
 
-type Darr struct(<ItemT>) {
+Darr :: struct(<ItemT>) {
     buf ItemT*
     count usize
     capacity usize
