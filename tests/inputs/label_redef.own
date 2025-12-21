@@ -1,8 +1,8 @@
 
 
 main :: fn() i32 {
-    hello: {
-        hello: for 1 {
+    ''hello {
+        ''hello for 1 {
         }
     }
 
