@@ -2,8 +2,8 @@
 // TODO: test case for this
 //let temp Optional(<i32>) = number.some
 
-extern("c") printf :: fn(str_to_print u8*, args opaque...) i32
-extern("c") isdigit :: fn(character i32) i32
+printf :: extern("c") fn(str_to_print u8*, args opaque...) i32
+isdigit :: extern("c") fn(character i32) i32
 
 Optional_int :: enum {
     some i34

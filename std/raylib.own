@@ -32,26 +32,26 @@
 **********************************************************************************************/
 
 
-extern("c") InitWindow :: fn(width i32, height i32, title u8*); // Initialize window and OpenGL context
-extern("c") CloseWindow :: fn(); // Close window and unload OpenGL context
-extern("c") BeginDrawing :: fn(); // Setup canvas (framebuffer) to start drawing
-extern("c") EndDrawing :: fn(); // Setup canvas (framebuffer) to start drawing
-extern("c") WindowShouldClose :: fn() u1
-extern("c") ClearBackground :: fn(color Color); // Set background color (framebuffer clear color)
-extern("c") DrawRectangle :: fn(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle
-extern("c") DrawRectangleLines :: fn(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle outline
-extern("c") DrawRectangleLinesEx :: fn(rect Rectangle, thickness f32, color Color) // Draw rectangle outline
-extern("c") WaitTime :: fn(seconds f64); // Wait for some time (halt program execution)
-extern("c") IsKeyPressed :: fn(key i32) u1; // Check if a key has been pressed once
-extern("c") SetTargetFPS :: fn(fps i32) // Set target FPS (maximum)
+InitWindow :: extern("c") fn(width i32, height i32, title u8*); // Initialize window and OpenGL context
+CloseWindow :: extern("c") fn(); // Close window and unload OpenGL context
+BeginDrawing :: extern("c") fn(); // Setup canvas (framebuffer) to start drawing
+EndDrawing :: extern("c") fn(); // Setup canvas (framebuffer) to start drawing
+WindowShouldClose :: extern("c") fn() u1
+ClearBackground :: extern("c") fn(color Color); // Set background color (framebuffer clear color)
+DrawRectangle :: extern("c") fn(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle
+DrawRectangleLines :: extern("c") fn(posX i32, posY i32, width i32, height i32, color Color) // Draw rectangle outline
+DrawRectangleLinesEx :: extern("c") fn(rect Rectangle, thickness f32, color Color) // Draw rectangle outline
+WaitTime :: extern("c") fn(seconds f64); // Wait for some time (halt program execution)
+IsKeyPressed :: extern("c") fn(key i32) u1; // Check if a key has been pressed once
+SetTargetFPS :: extern("c") fn(fps i32) // Set target FPS (maximum)
 
 // Text drawing functions
-extern("c") DrawFPS :: fn(posX i32, posY i32);                                                     // Draw current FPS
-extern("c") DrawText :: fn(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
+DrawFPS :: extern("c") fn(posX i32, posY i32);                                                     // Draw current FPS
+DrawText :: extern("c") fn(text u8*, posX i32, posY i32, fontSize i32, color Color);       // Draw text (using default font)
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
 // NOTE: Some strings allocate memory internally for returned strings, just be careful!
-extern("c") TextFormat :: fn(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
+TextFormat :: extern("c") fn(text u8*, args opaque...) u8*    // Text formatting with variables (sprintf() style)
 
 Vector3 :: struct {
     a f32

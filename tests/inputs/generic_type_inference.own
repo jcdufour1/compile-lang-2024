@@ -32,7 +32,7 @@ add_one_or_two_default_2 :: fn(<ItemType>)(lhs util.Optional(<ItemType>), rhs ut
     return 0
 }
 
-add_using_callback :: fn(<ItemType>)(lhs ItemType, rhs ItemType = .none, add_fn :: fn(ItemType, ItemType)ItemType) ItemType {
+add_using_callback :: fn(<ItemType>)(lhs ItemType, rhs ItemType = .none, add_fn fn(ItemType, ItemType)ItemType) ItemType {
     return add_fn(lhs, rhs)
 }
 

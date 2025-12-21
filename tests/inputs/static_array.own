@@ -35,7 +35,7 @@ thing1 :: fn() {
     }
 }
 
-type COUNT def = 3
+COUNT :: def = 3
 
 thing2 :: fn() {
     let nums i32[COUNT] = [7, 3, 2]

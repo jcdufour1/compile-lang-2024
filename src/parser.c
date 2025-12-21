@@ -356,10 +356,13 @@ static bool get_mod_alias_from_path_token(
         parse_state.curr_mod_alias = name_new(parse_state.curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     }
     *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_TOP_LEVEL, true);
-    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
-
     Strv old_mod_path = parse_state.curr_mod_path;
     parse_state.curr_mod_path = mod_path;
+    if (!usymbol_add(uast_mod_alias_wrap(*mod_alias))) {
+        msg_redefinition_of_symbol(uast_mod_alias_wrap(*mod_alias));
+        status = false;
+        goto finish;
+    }
 
     if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL))) {
         goto finish;
@@ -515,8 +518,7 @@ static void sync(Tk_view* tokens) {
 
         // TODO: see if more things could be added here
         if (
-            starts_with_function_decl(*tokens) ||
-            starts_with_function_def(*tokens) ||
+            starts_with_general_def(*tokens) ||
             starts_with_return(*tokens) ||
             starts_with_if(*tokens) ||
             starts_with_for(*tokens) ||

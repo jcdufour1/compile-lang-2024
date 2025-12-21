@@ -1,4 +1,4 @@
-extern("c") printf :: fn(format_string: u8*, args: opaque...) i32
+printf :: extern("c") fn(format_string: u8*, args: opaque...) i32
 
 main :: fn() i32 {
     for num1: i32 in 5.. {

@@ -1,5 +1,14 @@
 io :: import = std.
+io10affsadn :: import = std.io
+
 io :: import = .io 
+io11 :: import = std.io
+
 io :: import = 
-type io import std.io 
-type io import std
+io12 :: import = std.io
+
+io :: import std.io 
+io13 :: import = std.io
+
+io :: import std
+io14 :: import = std.io
