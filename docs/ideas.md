@@ -582,6 +582,19 @@ fn main() i32 {
 }
 ```
 
+```c
+// this function can be used as either a method or a regular function
+fn at(darr Darr(<i32>), index i32) {
+    return darr.buf[index]
+}
+
+fn main() i32 {
+    let darr Darr(<i32>) = ..
+    let num i32 = darr.at(0)
+    return 0
+}
+```
+
 # ownership
 pointer could use generic with associated arena (this could reduce frustrations)
 type Expr struct('alloc) {

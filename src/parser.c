@@ -410,15 +410,17 @@ static bool starts_with_enum_def_in_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_ENUM;
 }
 
-static bool starts_with_type_def_in_def(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
-}
-
 static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
-static bool starts_with_label(Tk_view tokens) {
+static bool starts_with_label(Tk_view tokens, Scope_id scope_id) {
+    return scope_id != parse_state.scope_id_curr_mod_path && \
+       try_consume(NULL, &tokens, TOKEN_SYMBOL) && \
+       try_consume(NULL, &tokens, TOKEN_COLON);
+}
+
+static bool starts_with_general_def(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_COLON);
 }
 
@@ -511,8 +513,8 @@ static void sync(Tk_view* tokens) {
             continue;
         }
 
+        // TODO: see if more things could be added here
         if (
-            starts_with_type_def_in_def(*tokens) ||
             starts_with_function_decl(*tokens) ||
             starts_with_function_def(*tokens) ||
             starts_with_return(*tokens) ||
@@ -1724,52 +1726,6 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id scope_id) {
-    Token name = {0};
-    if (!consume_expect(&name, tokens, "", TOKEN_SYMBOL)) {
-        return PARSE_ERROR;
-    }
-
-    if (starts_with_struct_def_in_def(*tokens)) {
-        Uast_struct_def* struct_def;
-        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_struct_def_wrap(struct_def);
-    } else if (starts_with_raw_union_def_in_def(*tokens)) {
-        Uast_raw_union_def* raw_union_def;
-        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_raw_union_def_wrap(raw_union_def);
-    } else if (starts_with_enum_def_in_def(*tokens)) {
-        Uast_enum_def* enum_def;
-        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_enum_def_wrap(enum_def);
-    } else if (starts_with_mod_alias_in_def(*tokens)) {
-        Uast_mod_alias* import = NULL;
-        if (PARSE_OK != parse_import(&import, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_mod_alias_wrap(import);
-    } else if (starts_with_lang_def(*tokens)) {
-        Uast_lang_def* lang_def = NULL;
-        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name, scope_id)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_lang_def_wrap(lang_def);
-    } else {
-        msg_parser_expected(
-            tk_view_front(*tokens), "",
-            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_DEF, TOKEN_IMPORT
-        );
-        return PARSE_ERROR;
-    }
-    return PARSE_OK;
-}
-
 static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
     Tk_view* tokens,
@@ -2800,12 +2756,63 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     return uast_expr_unwrap(stmt);
 }
 
+static PARSE_STATUS parse_general_def(Uast_def** result, Tk_view* tokens, Scope_id scope_id) {
+    Token name_tk = {0};
+    Token colon_tk = {0};
+    unwrap(try_consume(&name_tk, tokens, TOKEN_SYMBOL));
+    unwrap(try_consume(&colon_tk, tokens, TOKEN_COLON));
+    if (!try_consume(NULL, tokens, TOKEN_COLON)) {
+        msg_todo("single `:` here (`::` should be used for now)", colon_tk.pos);
+        return PARSE_ERROR;
+    }
+
+    if (starts_with_struct_def_in_def(*tokens)) {
+        Uast_struct_def* struct_def;
+        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_struct_def_wrap(struct_def);
+    } else if (starts_with_raw_union_def_in_def(*tokens)) {
+        Uast_raw_union_def* raw_union_def;
+        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_raw_union_def_wrap(raw_union_def);
+    } else if (starts_with_enum_def_in_def(*tokens)) {
+        Uast_enum_def* enum_def;
+        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_enum_def_wrap(enum_def);
+    } else if (starts_with_mod_alias_in_def(*tokens)) {
+        Uast_mod_alias* import = NULL;
+        if (PARSE_OK != parse_import(&import, tokens, name_tk)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_mod_alias_wrap(import);
+    } else if (starts_with_lang_def(*tokens)) {
+        Uast_lang_def* lang_def = NULL;
+        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name_tk, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_lang_def_wrap(lang_def);
+    } else {
+        msg_parser_expected(
+            tk_view_front(*tokens), "",
+            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_DEF, TOKEN_IMPORT
+        );
+        return PARSE_ERROR;
+    }
+    unwrap(*result);
+    return PARSE_OK;
+}
+
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
     // TODO: use try_consume_newlines(tokens) instead of try_consume(NULL, tokens, TOKEN_NEW_LINE)
     try_consume_newlines(tokens);
     unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    if (starts_with_label(*tokens)) {
+    if (starts_with_label(*tokens, scope_id)) {
         if (PARSE_OK != parse_label(tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
@@ -2816,14 +2823,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     }
 
     Uast_stmt* lhs = NULL;
-    if (starts_with_type_def_in_def(*tokens)) {
-        unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-        Uast_def* fun_decl;
-        if (PARSE_OK != parse_type_def(&fun_decl, tokens, scope_id)) {
+    if (starts_with_general_def(*tokens)) {
+        Uast_def* def = NULL;
+        if (PARSE_OK != parse_general_def(&def, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_def_wrap(fun_decl);
+        lhs = uast_def_wrap(def);
     } else if (starts_with_using(*tokens)) {
         Uast_using* using;
         if (PARSE_OK != parse_using(&using, tokens, scope_id)) {

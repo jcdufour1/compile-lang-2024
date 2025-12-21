@@ -24,6 +24,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -fno-strict-aliasing \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
+# TODO: change gnu11 to c11
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
 			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \

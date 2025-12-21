@@ -123,6 +123,7 @@ for generics:
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
 - fix uninitialized warning with gcc (could be gcc bug?)
+- add methods
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
 

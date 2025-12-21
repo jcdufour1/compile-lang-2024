@@ -98,7 +98,7 @@ typedef enum {
     TOKEN_YIELD,
     TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
-    TOKEN_TYPE_DEF,
+    TOKEN_TYPE_DEF, // TODO: remove this token
     TOKEN_GENERIC_TYPE,
     TOKEN_IMPORT,
     TOKEN_DEF,
