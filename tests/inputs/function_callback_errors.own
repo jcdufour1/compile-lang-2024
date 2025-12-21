@@ -1,14 +1,14 @@
 
-fn add(a i32, b i32) i32 {
+add :: fn(a i32, b i32) i32 {
     return a + b
 }
 
 
-type Token struct {
+Token :: struct {
     ptr fn(i32, i32)i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let ptr fn(i32, i32)i32 = add
     ptr(8)
     ptr(9, 10, 11)

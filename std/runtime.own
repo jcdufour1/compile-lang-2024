@@ -51,8 +51,8 @@ bitwise_not :: fn(<NumT>)(num NumT) NumT {
     return unsafe_cast<NumT>(-1)^num
 }
 
-extern("c") own_stdout :: fn() opaque*
-extern("c") own_stderr :: fn() opaque*
-extern("c") own_stdin :: fn() opaque*
+own_stdout :: extern("c") fn() opaque*
+own_stderr :: extern("c") fn() opaque*
+own_stdin :: extern("c") fn() opaque*
 
-extern("c") abort :: fn()
+abort :: extern("c") fn()

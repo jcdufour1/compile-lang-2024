@@ -8,7 +8,7 @@ tests/inputs/sum_case_var_is_redef.own:9:21:[1;31merror[0;39m:redefinition of 
     10 |         case Opt_int.none(dummy): printf("got nothing\n")
 tests/inputs/sum_case_var_is_redef.own:7:18:[1;34mnote[0;39m:num originally defined here
      6 | 
-     7 | fn opt_int_print(num Opt_int) {
+     7 | opt_int_print :: fn(num Opt_int) {
        |                  ^
      8 |     switch num {
 

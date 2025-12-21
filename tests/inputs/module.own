@@ -2,12 +2,12 @@ io :: import = std.io
 io2 :: import = tests.dummy_std.std_dummy
 io3 :: import = tests.dummy_std.std_dummy_2
 
-fn printf(string u8*) {
+printf :: fn(string u8*) {
     io.printf("from local printf function: ")
     io.printf("%s\n", string)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("hello\n")
     io2.printf("bye")
     io3.printf("actually bye this time")

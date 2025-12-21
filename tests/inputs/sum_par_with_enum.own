@@ -1,10 +1,10 @@
 io :: import = std.io
 
-type Token enum {
+Token :: enum {
     num
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token = .num
     switch token {
         case .num(num): break

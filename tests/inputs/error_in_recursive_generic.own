@@ -1,6 +1,6 @@
 io :: import = std.io
 
-fn add(<RtnType>)(lhs i32, rhs i32) RtnType {
+add :: fn(<RtnType>)(lhs i32, rhs i32) RtnType {
     if rhs < 0 {
         return unsafe_cast<RtnType>add(<RtnType>)(lhs - 1, rhs + 1)
     } 
@@ -10,7 +10,7 @@ fn add(<RtnType>)(lhs i32, rhs i32) RtnType {
     return lhs
 }
 
-fn add2(<RtnType>)(lhs i32, rhs i32) RtnType {
+add2 :: fn(<RtnType>)(lhs i32, rhs i32) RtnType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
@@ -20,7 +20,7 @@ fn add2(<RtnType>)(lhs i32, rhs i32) RtnType {
     return lhs
 }
 
-fn add3(<RtnType>)(lhs i32, rhs i32) RtnType {
+add3 :: fn(<RtnType>)(lhs i32, rhs i32) RtnType {
     if rhs < 0 {
         return add2(lhs - 1, rhs + 1)
     } 
@@ -30,7 +30,7 @@ fn add3(<RtnType>)(lhs i32, rhs i32) RtnType {
     return lhs
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("%d\n", add(<i32>)(56, -34))
     io.printf("%d\n", add2(<i32>)(57, -3))
     add3(58, -2)

@@ -1,7 +1,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let result i32 = 82*4 + 
         2
     io.printf("%d\n", result)

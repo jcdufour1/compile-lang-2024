@@ -1,7 +1,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let small_num i8
     small_num = 8*2
     io.printf("%d\n", small_num);

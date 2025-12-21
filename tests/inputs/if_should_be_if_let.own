@@ -1,12 +1,12 @@
 //io :: import = std.io
 //util :: import = std.util
 
-type Optional enum(<ItemT>) {
+Optional :: enum(<ItemT>) {
     some ItemT
     none
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let opt Optional(<i32>) = .some(3)
 
     if .some(num) = opt {

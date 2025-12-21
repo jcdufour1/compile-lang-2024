@@ -1,6 +1,6 @@
 rt :: import = std.runtime
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = rt.usize()
     return 0
 }

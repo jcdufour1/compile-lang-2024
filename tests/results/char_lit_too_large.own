@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/char_lit_too_large.own:4:17:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
-     3 | fn main() i32 {
+     3 | main :: fn() i32 {
      4 |     let ch u8 = '8j'
        |                 ^
      5 |     io.printf("%c\n", ch)

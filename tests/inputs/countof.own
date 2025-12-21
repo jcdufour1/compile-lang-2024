@@ -1,19 +1,19 @@
 io :: import = std.io
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
 
-type Token enum {
+Token :: enum {
     div Div
     num i32
     string u8*
     character u8
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let div Div = {.numerator = 34, .denominator = 97}
     io.printf("countof div = %zu\n", countof div)
 

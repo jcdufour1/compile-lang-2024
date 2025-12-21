@@ -1,9 +1,9 @@
 
-fn thing(<TypeT>)() TypeT {
+thing :: fn(<TypeT>)() TypeT {
     return .none
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let opt i32? = thing(<i32?>)()
 
     return 0

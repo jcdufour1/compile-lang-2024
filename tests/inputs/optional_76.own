@@ -2,29 +2,29 @@
 // TODO: test case for this
 //let temp Optional(<i32>) = number.some
 
-extern("c") fn printf(str_to_print u8*, args opaque...) i32
-extern("c") fn isdigit(character i32) i32
+extern("c") printf :: fn(str_to_print u8*, args opaque...) i32
+extern("c") isdigit :: fn(character i32) i32
 
-type Optional_int enum {
+Optional_int :: enum {
     some i34
     none
 }
 
-type ParseError struct {
+ParseError :: struct {
     dummy i33
 }
 
-type Result enum(<SuccessType, ErrorType>) {
+Result :: enum(<SuccessType, ErrorType>) {
     ok SuccessType
     error ErrorType
 }
 
-type Token enum {
+Token :: enum {
     number i32
     string u8*
 }
 
-fn main() i32 {
+main :: fn() i32 {
     // Optional is undefined in this file
     let number Optional(<i32>) = .some(84)
     let result2 Result(<Token, ParseError>)

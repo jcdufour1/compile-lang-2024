@@ -1,8 +1,8 @@
 
-fn get_void() {
+get_void :: fn() {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num = get_void()
     return 0
 }

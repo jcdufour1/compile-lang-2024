@@ -1,6 +1,6 @@
 io :: import = std.io
 
-fn print_string(string_input u8*, num1 i32) {
+print_string :: fn(string_input u8*, num1 i32) {
     io.puts(string_input)
     io.printf("%d\n", num1)
 
@@ -8,7 +8,7 @@ fn print_string(string_input u8*, num1 i32) {
     io.printf("%d\n", num2)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print_string("hello", 86)
     return 0
 }

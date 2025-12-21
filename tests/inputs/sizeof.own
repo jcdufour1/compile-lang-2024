@@ -1,118 +1,118 @@
 
 io :: import = std.io
 
-type TokenType enum {
+TokenType :: enum {
     num
     str
 }
 
-type Div1 struct {
+Div1 :: struct {
     num1 i64
     num2 i16
 }
 
-type Div2 struct {
+Div2 :: struct {
     num1 i16
     num2 i64
 }
 
-type Div3 struct {
+Div3 :: struct {
     num1 i32
     num2 i16
 }
 
-type Div4 struct {
+Div4 :: struct {
     num1 i16
     num2 i32
 }
 
-type Div5 struct {
+Div5 :: struct {
     num1 i32
     num2 i32
 }
 
-type Div6 struct {
+Div6 :: struct {
     num1 Div1
     num2 i32
 }
 
-type Div7 struct {
+Div7 :: struct {
     num1 i16
     num2 i16
 }
 
-type Div8 struct {
+Div8 :: struct {
     num1 f128
     num2 i16
 }
 
-type Token1 enum {
+Token1 :: enum {
     num1 i64
     num2 Div1
 }
 
-type Token2 enum {
+Token2 :: enum {
     num2 Div1
     num1 i64
 }
 
-type Token3 enum {
+Token3 :: enum {
     num1 i32
     num2 i16
 }
 
-type Token4 enum {
+Token4 :: enum {
     num1 i16
     num2 i32
 }
 
-type Token5 enum {
+Token5 :: enum {
     num1 i32
     num2 i32
 }
 
-type Raw1 raw_union {
+Raw1 :: raw_union {
     num1 i64
     num2 Div1
 }
 
-type Raw2 raw_union {
+Raw2 :: raw_union {
     num2 Div1
     num1 i64
 }
 
-type Raw3 raw_union {
+Raw3 :: raw_union {
     num1 i32
     num2 i16
 }
 
-type Raw4 raw_union {
+Raw4 :: raw_union {
     num1 i16
     num2 i32
 }
 
-type Raw5 raw_union {
+Raw5 :: raw_union {
     num1 i32
     num2 i32
 }
 
-type Raw6 raw_union {
+Raw6 :: raw_union {
     num1 u1
     num2 i3
 }
 
 // TODO: duplicate members should not be allowed
-type Token enum {
+Token :: enum {
     num i64
     num i64
 }
 
-type StrangeSize struct {
+StrangeSize :: struct {
     num1 u64
     num2 u1
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let nothing void
     io.printf("sizeof nothing = %zu\n", sizeof nothing)
 

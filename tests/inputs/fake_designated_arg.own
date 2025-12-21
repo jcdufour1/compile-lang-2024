@@ -4,22 +4,22 @@ util :: import = std.util
 // these local functions and Local_arr are needed in case the std functions get modified
 //   (so that this test will still catch the bug that it was designed to catch)
 
-type Local_arr struct(<ItemT>) {
+Local_arr :: struct(<ItemT>) {
     buf ItemT*
     count u64
     max u64
 }
 
-fn arr_new(<ItemT>)(max_capacity u64, init_elems coll.Slice(<ItemT>) = [], file coll.Str = #file, line i32 = #line, column i32 = #column) Local_arr(<ItemT>) {
+arr_new :: fn(<ItemT>)(max_capacity u64, init_elems coll.Slice(<ItemT>) = [], file coll.Str = #file, line i32 = #line, column i32 = #column) Local_arr(<ItemT>) {
     let arr Local_arr(<ItemT>) = {util.alloc(<ItemT>)(max_capacity), 0, max_capacity}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
-fn arr_extend(<ItemT>)(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), file coll.Str = #file, line i32 = #line, column i32 = #column) {
+arr_extend :: fn(<ItemT>)(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), file coll.Str = #file, line i32 = #line, column i32 = #column) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let arr Local_arr(<i32>) = arr_new(<i32>)(87)
     let file Str = ""
     arr_extend(&arr, [], .file = file, column = 8)

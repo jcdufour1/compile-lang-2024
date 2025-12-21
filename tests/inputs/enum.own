@@ -2,22 +2,22 @@ io :: import = std.io
 util :: import = std.util
 
 
-type TokenType enum {
+TokenType :: enum {
     number
     string
 }
 
-type TokenType2 enum {
+TokenType2 :: enum {
     number, string
 }
 
-type Token struct {
+Token :: struct {
     kind TokenType
     number_data i32
     string_data u8*
 }
 
-fn print_token_if(token Token) {
+print_token_if :: fn(token Token) {
     if token.kind == TokenType.number {
         io.printf("%d\n", token.number_data)
     } else if token.kind == TokenType.string {
@@ -27,7 +27,7 @@ fn print_token_if(token Token) {
     }
 }
 
-fn print_token_switch(token Token) {
+print_token_switch :: fn(token Token) {
     switch token.kind {
     case TokenType.number: io.printf("%d\n", token.number_data)
     case TokenType.string: io.printf("%s\n", token.string_data)
@@ -35,23 +35,23 @@ fn print_token_switch(token Token) {
     }
 }
 
-fn print_token_switch_non_exhaustive(token Token) {
+print_token_switch_non_exhaustive :: fn(token Token) {
     switch token.kind {
     case TokenType.number: io.printf("%d\n", token.number_data)
     default: io.printf("invalid token type\n")
     }
 }
 
-// check that scope rules are followed for type subtypes enum
-type NodeType enum {
+// check that scope rules are followed for subtypes :: enum
+NodeType :: enum {
     NONE
 }
 
-type LlvmType enum {
+LlvmType :: enum {
     NONE
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token_type TokenType = TokenType.number
     io.printf("%d\n", token_type);
 

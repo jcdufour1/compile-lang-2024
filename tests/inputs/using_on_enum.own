@@ -1,12 +1,12 @@
 
-type Token enum {
+Token :: enum {
     int i32
 }
 
-fn incorrect_using(using token Token) {
+incorrect_using :: fn(using token Token) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     incorrect_using(.num)
     return 0
 }

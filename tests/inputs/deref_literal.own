@@ -1,6 +1,6 @@
 
 
-fn main() i32 {
+main :: fn() i32 {
     *45 = 21
     return 0
 }

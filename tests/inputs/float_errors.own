@@ -1,16 +1,16 @@
 
-fn part1() {
+part1 :: fn() {
     let num2 f64 = 9.8
     let num3 f32 = num2
 
     let num4 f64 = num
 }
 
-fn part2() {
+part2 :: fn() {
     let num1 f32 = 8.2 == 4.2
 }
 
-fn main() i32 {
+main :: fn() i32 {
     part1()
     part2()
     return 0

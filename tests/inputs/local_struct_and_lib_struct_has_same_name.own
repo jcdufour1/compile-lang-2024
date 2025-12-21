@@ -1,12 +1,12 @@
 
 lib :: import = tests.dummy_std.std_dummy
 
-type Color struct {
+Color :: struct {
     str Str
 }
 
 
-fn main() i32 {
+main :: fn() i32 {
     let color lib.Color = {8, 7, 6}
     lib.print_color(color)
 

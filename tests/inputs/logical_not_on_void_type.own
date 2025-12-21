@@ -1,21 +1,21 @@
 
-extern("c") fn isdigit(character i32)
+extern("c") isdigit :: fn(character i32)
 
-type Opt_int enum {
+Opt_int :: enum {
     number i32
     none i1
 }
 
-type Token struct {
+Token :: struct {
     num i32
     string u8*
 }
 
-fn get_token() Token {
+get_token :: fn() Token {
     return {.num = 34, .string = "hello"}
 }
 
-fn read_num(string Str) Opt_int {
+read_num :: fn(string Str) Opt_int {
     if (!get_token()) {
         return Opt_int.none(0);
     }
@@ -29,7 +29,7 @@ fn read_num(string Str) Opt_int {
     return Opt_int.number(9)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     read_num("hello")
     return 0
 }

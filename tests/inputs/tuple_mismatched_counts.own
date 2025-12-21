@@ -1,13 +1,13 @@
 
-fn get_data() (i32, i32) {
+get_data :: fn() (i32, i32) {
     return 87, 21, 3
 }
 
-fn get_data_2() (i32, i32, i32) {
+get_data_2 :: fn() (i32, i32, i32) {
     return 87, 31
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num1 i32
     let num2 i32
     let num3 i32

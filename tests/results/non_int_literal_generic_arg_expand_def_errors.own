@@ -3,12 +3,12 @@ compile::stdout 0
 compile::stderr 150
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:11:18:[1;31merror[0;39m:symbol `NonExistant` is not defined
     10 | 
-    11 | fn thing4(<num ''NonExistant>)() {
+    11 | thing4 :: fn(<num ''NonExistant>)() {
        |                  ^
     12 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:11:18:[1;31merror[0;39m:symbol `NonExistant` is not defined
     10 | 
-    11 | fn thing4(<num ''NonExistant>)() {
+    11 | thing4 :: fn(<num ''NonExistant>)() {
        |                  ^
     12 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -18,7 +18,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merro
     31 |     thing2(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:2:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
      1 | 
-     2 | fn thing1(<num ''i32>)() {
+     2 | thing1 :: fn(<num ''i32>)() {
        |                  ^
      3 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -28,7 +28,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merro
     31 |     thing2(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:2:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
      1 | 
-     2 | fn thing1(<num ''i32>)() {
+     2 | thing1 :: fn(<num ''i32>)() {
        |                  ^
      3 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:31:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -38,7 +38,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:31:13:[1;31merro
     32 |     thing3(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:5:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
      4 | 
-     5 | fn thing2(<num ''fn()void>)() {
+     5 | thing2 :: fn(<num ''fn()void>)() {
        |                  ^
      6 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:31:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -48,7 +48,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:31:13:[1;31merro
     32 |     thing3(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:5:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
      4 | 
-     5 | fn thing2(<num ''fn()void>)() {
+     5 | thing2 :: fn(<num ''fn()void>)() {
        |                  ^
      6 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:32:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -58,7 +58,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:32:13:[1;31merro
     33 |     thing4(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:8:12:[1;34mnote[0;39m:generic parameter defined here as a type (not a constant expression)
      7 | 
-     8 | fn thing3(<NumT>)() {
+     8 | thing3 :: fn(<NumT>)() {
        |            ^
      9 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:32:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -68,7 +68,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:32:13:[1;31merro
     33 |     thing4(<{6}>)()
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:8:12:[1;34mnote[0;39m:generic parameter defined here as a type (not a constant expression)
      7 | 
-     8 | fn thing3(<NumT>)() {
+     8 | thing3 :: fn(<NumT>)() {
        |            ^
      9 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:34:13:[1;31merror[0;39m:2 arguments are passed to struct literal, but 1 arguments expected
@@ -98,7 +98,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:36:13:[1;31merro
     37 |     let incorrect_token Token(<{5}>)
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:21:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
     20 | 
-    21 | fn thing6(<num ''Token>)() {
+    21 | thing6 :: fn(<num ''Token>)() {
        |                  ^
     22 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:36:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
@@ -108,7 +108,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:36:13:[1;31merro
     37 |     let incorrect_token Token(<{5}>)
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:21:18:[1;34mnote[0;39m:non-struct generic parameter type defined here
     20 | 
-    21 | fn thing6(<num ''Token>)() {
+    21 | thing6 :: fn(<num ''Token>)() {
        |                  ^
     22 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
@@ -118,7 +118,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:6:[1;34mnote[0;39m:generic parameters defined here
     23 | 
-    24 | type Token enum {
+    24 | Token :: enum {
        |      ^
     25 |     num i32
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
@@ -128,7 +128,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:6:[1;34mnote[0;39m:generic parameters defined here
     23 | 
-    24 | type Token enum {
+    24 | Token :: enum {
        |      ^
     25 |     num i32
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
@@ -138,7 +138,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:6:[1;34mnote[0;39m:generic parameters defined here
     23 | 
-    24 | type Token enum {
+    24 | Token :: enum {
        |      ^
     25 |     num i32
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
@@ -148,7 +148,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:6:[1;34mnote[0;39m:generic parameters defined here
     23 | 
-    24 | type Token enum {
+    24 | Token :: enum {
        |      ^
     25 |     num i32
 

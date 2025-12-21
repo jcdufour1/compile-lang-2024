@@ -1,11 +1,11 @@
 io :: import = std.io
 
 
-fn print(number i32 = 43, string u8* = "hello") {
+print :: fn(number i32 = 43, string u8* = "hello") {
     io.printf("%d %s\n", number, string)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print()
     print(74)
     print(76, "thing")

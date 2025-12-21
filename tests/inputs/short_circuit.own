@@ -1,17 +1,17 @@
 io :: import = std.io
 
 
-fn one() i32 {
+one :: fn() i32 {
     io.printf("one called\n")
     return 4
 }
 
-fn zero() i32 {
+zero :: fn() i32 {
     io.printf("zero called\n")
     return 0
 }
 
-fn main() i32 {
+main :: fn() i32 {
     {
         let thing u1 = 2 < 7
         if thing {

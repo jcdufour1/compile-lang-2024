@@ -2,13 +2,13 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/function_callback_has_undef_gen_arg.own:9:16:[1;31merror[0;39m:argument to generic function parameter `ItemT` was not specified
-     8 | fn main() i32 {
+     8 | main :: fn() i32 {
      9 |     do_nothing(callback)
        |                ^
     10 |     return 0
 tests/inputs/function_callback_has_undef_gen_arg.own:2:14:[1;34mnote[0;39m:generic function parameter `ItemT` defined here
      1 | 
-     2 | fn callback(<ItemT>)() {
+     2 | callback :: fn(<ItemT>)() {
        |              ^
      3 | }
 

@@ -2,7 +2,7 @@
 io :: import = std.io
 util :: import = std.util
 
-fn add(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
+add :: fn(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
     switch rhs {
         case .some(rhs_val):
             if let .some(lhs_val) = lhs {
@@ -21,7 +21,7 @@ fn add(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
     return 0
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = add(.some(4), .some(5))
     io.print_int(num)
 

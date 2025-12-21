@@ -8,7 +8,7 @@ tests/inputs/mismatched_return_type.own:4:12:[1;31merror[0;39m:returning `u8*`
      5 | }
 tests/inputs/mismatched_return_type.own:2:11:[1;34mnote[0;39m:function return type `i32` defined here
      1 | 
-     2 | fn main() i32 {
+     2 | main :: fn() i32 {
        |           ^
      3 |     let string: u8* = "hello"
 

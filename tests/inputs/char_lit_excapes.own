@@ -1,7 +1,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let ch u8 = '\n'
 
     ch = '\a'

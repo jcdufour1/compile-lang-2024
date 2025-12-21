@@ -2,13 +2,13 @@ compile::stdout 0
 
 compile::stderr 19
 tests/inputs/missing_return.own:3:1:[1;31merror[0;39m:no return statement in function that returns `i32`
-     2 | fn println() i32 {
+     2 | println :: fn() i32 {
      3 | }
        | ^
      4 | 
 tests/inputs/missing_return.own:2:14:[1;34mnote[0;39m:function return type `i32` defined here
      1 | 
-     2 | fn println() i32 {
+     2 | println :: fn() i32 {
        |              ^
      3 | }
 tests/inputs/missing_return.own:8:1:[1;31merror[0;39m:no return statement in function that returns `i32`
@@ -17,7 +17,7 @@ tests/inputs/missing_return.own:8:1:[1;31merror[0;39m:no return statement in f
        | ^
 tests/inputs/missing_return.own:5:11:[1;34mnote[0;39m:function return type `i32` defined here
      4 | 
-     5 | fn main() i32 {
+     5 | main :: fn() i32 {
        |           ^
      6 |     let string: u8* = "hello"
 

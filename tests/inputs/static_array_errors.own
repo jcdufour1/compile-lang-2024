@@ -2,7 +2,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let nums i32[3] = [8, 76]
 
     for idx usize in 0..nums.count {

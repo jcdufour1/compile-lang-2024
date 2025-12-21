@@ -1,7 +1,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let num f32 = 7.1
     io.printf("num = %.02f\n", num)
     let num_int i32 = unsafe_cast<i32>num

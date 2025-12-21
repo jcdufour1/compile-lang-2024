@@ -2,32 +2,32 @@ io :: import = std.io
 util :: import = std.util
 
 
-type Token struct {
+Token :: struct {
     num i32
     string_data u8*
     div5 Div
 }
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
-fn get_numerator(div Div) i32 {
+get_numerator :: fn(div Div) i32 {
     div.numerator = 8
     div.denominator = 7
     io.printf("%d/%d\n", div.numerator, div.denominator)
     return div.numerator
 }
 
-fn get_div(div Div) Div {
+get_div :: fn(div Div) Div {
     div.numerator = 14
     div.denominator = 34
     io.printf("%d/%d\n", div.numerator, div.denominator)
     return div
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let div Div = {.numerator = 0, .denominator = 0}
     div = {.numerator = 9, .denominator = 2}
     io.printf("%d/%d\n", div.numerator, div.denominator)

@@ -1,14 +1,14 @@
 io :: import = std.io
 
-fn is_true() i32 {
+is_true :: fn() i32 {
     return 1
 }
 
-fn is_false() i32 {
+is_false :: fn() i32 {
     return 0
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let should_loop i32 = 1
     for should_loop {
         let temp i32 = 79

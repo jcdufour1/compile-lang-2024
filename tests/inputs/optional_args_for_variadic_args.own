@@ -1,7 +1,7 @@
 
-extern("c") fn print_nums(nums opaque... = 7)
+extern("c") print_nums :: fn(nums opaque... = 7)
 
-fn main() i32 {
+main :: fn() i32 {
     print_nums(87, 34)
     return 0
 }

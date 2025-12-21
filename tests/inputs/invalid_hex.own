@@ -1,4 +1,4 @@
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 0xj87
 }

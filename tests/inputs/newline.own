@@ -2,17 +2,17 @@
 io :: import = std.io
 coll :: import = std.collections
 
-type Token struct {
+Token :: struct {
     num i32
     str coll.Str
 }
 
-type Node enum {
+Node :: enum {
     num i32
     str coll.Str
 }
 
-fn 
+ :: fn
 main() i32 {
     io.print_str(
         "hello"

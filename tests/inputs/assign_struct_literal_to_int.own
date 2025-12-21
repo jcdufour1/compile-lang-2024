@@ -1,7 +1,7 @@
 
 
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 8
     98 = {.num = 34, .string = 32}
     num = {.num = 34, .string = 32}

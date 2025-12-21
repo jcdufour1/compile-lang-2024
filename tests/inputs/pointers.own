@@ -1,56 +1,56 @@
 io :: import = std.io
 
-fn add_one(num i32*) {
+add_one :: fn(num i32*) {
     *num = num + 1
 }
 
-fn sub_one_explicit(num i32*) {
+sub_one_explicit :: fn(num i32*) {
     *num = *num - 1
 }
 
-fn add_one_explicit(num i32*) {
+add_one_explicit :: fn(num i32*) {
     *num = *num + 1
 }
 
-fn operation_2(num i32*) {
+operation_2 :: fn(num i32*) {
     *num = 2*num + 1
 }
 
-fn operation_2_explicit(num i32*) {
+operation_2_explicit :: fn(num i32*) {
     *num = 2*num + 1
 }
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
-fn set_div(div Div*) {
+set_div :: fn(div Div*) {
     let new_div Div = {.numerator = 134, .denominator = 45};
     *div = new_div;
 }
 
-fn set_div_denominator(div Div*) {
+set_div_denominator :: fn(div Div*) {
     div.denominator = 1298;
 }
 
-fn set_div_denominator_explicit_deref(div Div*) {
+set_div_denominator_explicit_deref :: fn(div Div*) {
     (*div).denominator = 1234;
 }
 
-fn print_div(div Div*) {
+print_div :: fn(div Div*) {
     io.printf("%d/%d\n", div.numerator, div.denominator)
 }
 
-fn set_div_from_another(dest Div*, src Div*) {
+set_div_from_another :: fn(dest Div*, src Div*) {
     dest.denominator = src.denominator;
 }
 
-fn set_string(string u8**) {
+set_string :: fn(string u8**) {
     *string = "bye"
 }
 
-fn cast_to_pointer() {
+cast_to_pointer :: fn() {
     let pointer u8* = unsafe_cast<u8*>0
 
     if pointer == unsafe_cast<u8*>0 {
@@ -65,7 +65,7 @@ fn cast_to_pointer() {
     io.printf("pointer back to int: %d\n", zero);
 }
 
-fn cast_pointer_to_pointer() {
+cast_pointer_to_pointer :: fn() {
     let ptr_u8 u8* = unsafe_cast<u8*>1
 
     let ptr_i32 i32* = unsafe_cast<i32*>ptr_u8
@@ -77,12 +77,12 @@ fn cast_pointer_to_pointer() {
     }
 }
 
-fn deref_struct(div Div*) Div {
+deref_struct :: fn(div Div*) Div {
     let div2 Div = *div
     return div2
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 8
     io.printf("%d\n", num)
     add_one(&num)

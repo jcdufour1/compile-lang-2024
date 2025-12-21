@@ -1,7 +1,7 @@
 
 io :: import = std.io
 
-fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+add :: fn(<NumType>)(lhs NumType, rhs NumType) NumType {
     if rhs < 0 {
         return add(<NumType>)(lhs, rhs + 1) - 1
     }
@@ -11,7 +11,7 @@ fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
     return add(<NumType>)(lhs, rhs - 1) + 1
 }
 
-fn add_i32(lhs i32, rhs i32) i32 {
+add_i32 :: fn(lhs i32, rhs i32) i32 {
     if rhs < 0 {
         return add_i32(lhs, rhs + 1) - 1
     }
@@ -21,7 +21,7 @@ fn add_i32(lhs i32, rhs i32) i32 {
     return add_i32(lhs, rhs - 1) + 1
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 78
     io.printf("%d\n", add(<i32>)(num, 33))
     io.printf("%d\n", add_i32(num, 34))

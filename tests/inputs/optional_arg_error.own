@@ -1,8 +1,8 @@
 
-fn thing(text u8 = "hello") {
+thing :: fn(text u8 = "hello") {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     thing()
     return 0
 }

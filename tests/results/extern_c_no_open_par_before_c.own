@@ -3,7 +3,7 @@ compile::stdout 0
 compile::stderr 5
 tests/inputs/extern_c_no_open_par_before_c.own:2:8:[1;31merror[0;39m:got token `string(c)`, but expected `(` in function decl
      1 | 
-     2 | extern "c") fn puts(str_to_print: u8*) i32
+     2 | extern "c") puts :: fn(str_to_print: u8*) i32
        |        ^
      3 | 
 

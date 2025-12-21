@@ -2,11 +2,11 @@ io :: import = std.io
 
 
 
-fn add(a i32, b i32) i32 {
+add :: fn(a i32, b i32) i32 {
     return a + b
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("%d\n", add(8, 3));
     return 0
 }

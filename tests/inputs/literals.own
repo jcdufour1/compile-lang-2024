@@ -1,7 +1,7 @@
 io :: import = std.io
 
 
-fn main() i32 {
+main :: fn() i32 {
     let hex1 i32 = 0xBEEF
     let hex2 i32 = 0xbee_f
     let hex3 i32 = 0x37f

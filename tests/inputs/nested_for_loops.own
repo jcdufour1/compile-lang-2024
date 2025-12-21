@@ -1,6 +1,6 @@
 io :: import = std.io
 
-fn main() i32 {
+main :: fn() i32 {
     for num1 i32 in 0..7 {
         for num2 i32 in 0..num1 {
             io.printf("%d ", num2)

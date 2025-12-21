@@ -1,19 +1,19 @@
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn foo(<token ''Token>)() {
+foo :: fn(<token ''Token>)() {
 }
 
-type Container struct(<token ''Token>) {
+Container :: struct(<token ''Token>) {
     num i32
 }
 
-fn container_new() Container(<{9}>) {
+container_new :: fn() Container(<{9}>) {
     return {6332}
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let container Container(<{8}>) = container_new()
 
     return 0

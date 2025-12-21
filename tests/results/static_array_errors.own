@@ -2,12 +2,12 @@ compile::stdout 0
 
 compile::stderr 40
 tests/inputs/static_array_errors.own:6:23:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
-     5 | fn main() i32 {
+     5 | main :: fn() i32 {
      6 |     let nums i32[3] = [8, 76]
        |                       ^
      7 | 
 tests/inputs/static_array_errors.own:6:17:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
-     5 | fn main() i32 {
+     5 | main :: fn() i32 {
      6 |     let nums i32[3] = [8, 76]
        |                 ^
      7 | 
@@ -27,7 +27,7 @@ tests/inputs/static_array_errors.own:14:32:[1;31merror[0;39m:`count_things` is
        |                                ^
     15 | 
 tests/inputs/static_array_errors.own:6:9:[1;34mnote[0;39m:`nums` defined here
-     5 | fn main() i32 {
+     5 | main :: fn() i32 {
      6 |     let nums i32[3] = [8, 76]
        |         ^
      7 | 

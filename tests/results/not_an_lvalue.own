@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/not_an_lvalue.own:7:5:[1;31merror[0;39m:expression is not an lvalue (lvalue is required)
-     6 | fn main() i32 {
+     6 | main :: fn() i32 {
      7 |     get_num() = 875
        |     ^
      8 |     let ptr i32* = &get_num()

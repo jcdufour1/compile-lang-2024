@@ -2,7 +2,7 @@ io :: import = std.io
 
 
 
-fn main() i32 {
+main :: fn() i32 {
     let NULL_ANY opaque* = unsafe_cast<opaque*>0
 
     let file opaque* = io.fopen("tests/inputs/multiple_non_var_params_decl.own", "r")

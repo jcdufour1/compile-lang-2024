@@ -4,26 +4,26 @@
 io :: import = std.io
 util :: import = std.util
 
-type Optional_int enum {
+Optional_int :: enum {
     some i32
     none
 }
 
-type ParseError struct {
+ParseError :: struct {
     dummy i32
 }
 
-type Result enum(<SuccessType, ErrorType>) {
+Result :: enum(<SuccessType, ErrorType>) {
     ok SuccessType
     error ErrorType
 }
 
-type Token enum {
+Token :: enum {
     number i32
     string u8*
 }
 
-fn token_print(token Token) {
+token_print :: fn(token Token) {
     switch token {
         case Token.number(num): io.printf("token is number: %d\n", num)
         case Token.string(str): io.printf("token is string: %s\n", str)
@@ -31,15 +31,15 @@ fn token_print(token Token) {
 }
 
 // TODO: uncomment this
-//fn get_num_2(<ItemType>)() util.Optional(<ItemType>) {
+//get_num_2 :: fn(<ItemType>)() util.Optional(<ItemType>) {
 //    return .some(52)
 //}
 
-//fn get_num(<ItemType>)() ItemType {
+//get_num :: fn(<ItemType>)() ItemType {
 //    return 52
 //}
 
-fn triangle(<ItemType>)(num ItemType) ItemType {
+triangle :: fn(<ItemType>)(num ItemType) ItemType {
     let result ItemType = 0
     for curr ItemType in 0..num {
         result += curr
@@ -53,12 +53,12 @@ fn triangle(<ItemType>)(num ItemType) ItemType {
     return result
 }
 
-fn try_add_one(<ItemType>)(num ItemType) util.Optional(<ItemType>) {
+try_add_one :: fn(<ItemType>)(num ItemType) util.Optional(<ItemType>) {
     let dummy ItemType = num
     return .some(num + 1)
 }
 
-fn add_one_or_two(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>)) ItemType {
+add_one_or_two :: fn(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>)) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -68,7 +68,7 @@ fn add_one_or_two(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>)) ItemT
     return lhs
 }
 
-fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
+add_one_or_two_default :: fn(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -78,7 +78,7 @@ fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>
     return lhs
 }
 
-fn add_one_or_two_default_verbose(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = util.Optional(<ItemType>).none) ItemType {
+add_one_or_two_default_verbose :: fn(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = util.Optional(<ItemType>).none) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -88,7 +88,7 @@ fn add_one_or_two_default_verbose(<ItemType>)(lhs ItemType, rhs util.Optional(<I
     return lhs
 }
 
-fn verbose() {
+verbose :: fn() {
     let number util.Optional(<i32>) = util.Optional(<i32>).some(84)
     let number2 util.Optional(<i32>) = util.Optional(<i32>).some(87)
     let number3 util.Optional(<i64>) = util.Optional(<i64>).none
@@ -121,7 +121,7 @@ fn verbose() {
     }
 }
 
-fn concise() {
+concise :: fn() {
     let number util.Optional(<i32>) = .some(84)
     let number2 util.Optional(<i32>) = .some(87)
     let number3 util.Optional(<i64>) = .none
@@ -195,7 +195,7 @@ fn concise() {
     io.printf("test 57: got number %d\n", add_one_or_two_default_verbose(<i64>)(835, .some(11)))
 }
 
-fn main() i32 {
+main :: fn() i32 {
     verbose()
     concise()
     return 0;

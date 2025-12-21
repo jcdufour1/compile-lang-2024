@@ -1,7 +1,7 @@
 
-extern("c") fn printf(format_string u8*, args opaque...)
+extern("c") printf :: fn(format_string u8*, args opaque...)
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 7*"hello"
     return 0
 }

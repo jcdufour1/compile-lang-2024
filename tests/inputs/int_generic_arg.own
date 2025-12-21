@@ -1,14 +1,14 @@
 io :: import = std.io
 
-type Token enum(<max_cap ''i32>){
+Token :: enum(<max_cap ''i32>){
     num i32
 }
 
-fn print_max(<max_cap ''int>)(token Token(<max_cap>)) {
+print_max :: fn(<max_cap ''int>)(token Token(<max_cap>)) {
     io.print_int(max_cap)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token(<8>) = .num(7)
     print_max(<8>)(token)
     print_max(token)

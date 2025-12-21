@@ -1,19 +1,19 @@
 io :: import = std.io
 
 
-fn get_num() i32 {
+get_num :: fn() i32 {
     return 87
 }
 
-fn is_false() i32 {
+is_false :: fn() i32 {
     return 0
 }
 
-fn is_true() i32 {
+is_true :: fn() i32 {
     return 1
 }
 
-fn main() i32 {
+main :: fn() i32 {
 
     for 1 {
         io.puts("hello")  // comment comment

@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/non_exhaustive_switch.own:17:5:[1;31merror[0;39m:some cases are not covered: TokenType.string
-    16 | fn print_token_switch(token Token) {
+    16 | print_token_switch :: fn(token Token) {
     17 |     switch token.kind {
        |     ^
     18 |     case TokenType.number: printf("%d\n", token.number_data)

@@ -1,10 +1,10 @@
 
-type Div struct {
+Div :: struct {
     numerator: i32
     denominator: i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let div: Div = {.numerator = 13, .denominator = 14
 
     return 0

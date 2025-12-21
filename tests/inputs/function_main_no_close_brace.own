@@ -1,6 +1,6 @@
 
-extern("c") fn printf(str_to_print_2: u8*, args: opaque...) i32
+extern("c") printf :: fn(str_to_print_2: u8*, args: opaque...) i32
 
-fn main() i32 {
+main :: fn() i32 {
     printf("%d %d\n")
     return 0

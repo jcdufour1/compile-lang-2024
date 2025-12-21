@@ -24,7 +24,7 @@ std/io.own:16:6:[1;34mnote[0;39m:in expansion of def
     17 | type fopen def = libc.fopen
 tests/inputs/using_error.own:12:4:[1;34mnote[0;39m:`tests/inputs/using_error::puts` originally defined here
     11 | 
-    12 | fn puts() i32 {
+    12 | puts :: fn() i32 {
        |    ^
     13 | }
 tests/inputs/using_error.own:3:1:[1;31merror[0;39m:redefinition of symbol `tests/inputs/using_error::Str`

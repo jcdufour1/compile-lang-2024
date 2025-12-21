@@ -1,19 +1,19 @@
 io :: import = std.io
 
 
-fn get_num() i32 {
+get_num :: fn() i32 {
     return 87
 }
 
-fn is_false() i32 {
+is_false :: fn() i32 {
     return 0
 }
 
-fn is_true() i32 {
+is_true :: fn() i32 {
     return 1
 }
 
-fn literal_condition() {
+literal_condition :: fn() {
     if 1 {
         io.puts("yes3")
     } else if 1 {
@@ -104,7 +104,7 @@ fn literal_condition() {
 
 }
 
-fn function_condition() {
+function_condition :: fn() {
     if is_false() {
         io.puts("no15");
     } else if is_true() {
@@ -138,7 +138,7 @@ fn function_condition() {
     }
 }
 
-fn newlines() {
+newlines :: fn() {
     if is_true() {
         io.puts("yes19");
     } 
@@ -178,7 +178,7 @@ fn newlines() {
     }
 }
 
-fn comments() {
+comments :: fn() {
     if is_true() {
         io.puts("yes23");
     } 
@@ -234,7 +234,7 @@ fn comments() {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     literal_condition()
     function_condition()
     newlines()

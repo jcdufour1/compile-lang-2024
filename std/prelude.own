@@ -14,7 +14,7 @@ Darr :: def = _builtin__coll.Darr
 
 assert :: def = _builtin__util.assert
 
-//usize :: def = _builtin__util.usize
+usize :: def = _builtin__util.usize
 ptr :: def = _builtin__util.ptr
 
 // TODO: remove min and max from the prelude?

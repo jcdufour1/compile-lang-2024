@@ -1,13 +1,13 @@
 
-extern("c") fn printf(format_string u8*, args opaque...) i32
+extern("c") printf :: fn(format_string u8*, args opaque...) i32
 
-fn add_one(num i32*) {
+add_one :: fn(num i32*) {
 }
 
-fn add_one_not_ptr(num i32) {
+add_one_not_ptr :: fn(num i32) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 4
 
     // should be error

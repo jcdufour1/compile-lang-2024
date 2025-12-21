@@ -1,7 +1,7 @@
 io :: import = std.io
 libc :: import = std.libc
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 2_100_005_009
 
     io.print_internal({"num = %%\n", []}, io.print_buf_file, io.stdout())

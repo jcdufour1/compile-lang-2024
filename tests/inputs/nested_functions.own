@@ -1,8 +1,8 @@
 io :: import = std.io
 
-fn main() i32 {
-    fn print_hello() {
-        fn print_num(num i32) {
+main :: fn() i32 {
+    print_hello :: fn() {
+        print_num :: fn(num i32) {
             io.print_int(num)
         }
 
@@ -17,8 +17,8 @@ fn main() i32 {
     return 0
 }
 
-fn aux() {
-    fn print_hello() {
+aux :: fn() {
+    print_hello :: fn() {
         io.print_str("hi")
     }
 

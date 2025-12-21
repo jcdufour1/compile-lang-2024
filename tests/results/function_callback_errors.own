@@ -7,7 +7,7 @@ tests/inputs/function_callback_errors.own:13:5:[1;31merror[0;39m:1 arguments a
        |     ^
     14 |     ptr(9, 10, 11)
 tests/inputs/function_callback_errors.own:12:13:[1;34mnote[0;39m:function `ptr` defined here
-    11 | fn main() i32 {
+    11 | main :: fn() i32 {
     12 |     let ptr fn(i32, i32)i32 = add
        |             ^
     13 |     ptr(8)
@@ -17,7 +17,7 @@ tests/inputs/function_callback_errors.own:14:5:[1;31merror[0;39m:3 arguments a
        |     ^
     15 |     ptr(12.1, 13)
 tests/inputs/function_callback_errors.own:12:13:[1;34mnote[0;39m:function `ptr` defined here
-    11 | fn main() i32 {
+    11 | main :: fn() i32 {
     12 |     let ptr fn(i32, i32)i32 = add
        |             ^
     13 |     ptr(8)
@@ -27,7 +27,7 @@ tests/inputs/function_callback_errors.own:15:9:[1;31merror[0;39m:argument is o
        |         ^
     16 | 
 tests/inputs/function_callback_errors.own:12:13:[1;34mnote[0;39m:function callback type defined here
-    11 | fn main() i32 {
+    11 | main :: fn() i32 {
     12 |     let ptr fn(i32, i32)i32 = add
        |             ^
     13 |     ptr(8)
@@ -42,7 +42,7 @@ tests/inputs/function_callback_errors.own:20:15:[1;31merror[0;39m:argument is 
        |               ^
     21 | 
 tests/inputs/function_callback_errors.own:8:9:[1;34mnote[0;39m:function callback type defined here
-     7 | type Token struct {
+     7 | Token :: struct {
      8 |     ptr fn(i32, i32)i32
        |         ^
      9 | }

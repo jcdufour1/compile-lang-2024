@@ -4,18 +4,18 @@ io :: import = std.io
 // TODO: check == edge cases to distinguish between less_than and less
 
 
-fn get_unsigned() u32 {
+get_unsigned :: fn() u32 {
     return 76;
 }
 
-fn get_signed() i32 {
+get_signed :: fn() i32 {
     return -3
 }
 
 // TODO: expected failure case for:
 // - -76 assigned to unsinged thing
 
-fn unsafe_cast_and_modulo() {
+unsafe_cast_and_modulo :: fn() {
     let num7 i8 = -256/2 + 1;
     io.printf("num7: %d\n", unsafe_cast<i32>num7)
     num7 = num7%4
@@ -30,7 +30,7 @@ fn unsafe_cast_and_modulo() {
 
 }
 
-fn division() {
+division :: fn() {
     let num10 u8 = 255
     io.printf("num10: %d\n", unsafe_cast<u32>num10)
     num10 = num10/4
@@ -45,7 +45,7 @@ fn division() {
 
 // the idea with these 4 functions is that 255 and -127 are effectively the same number (because two's complement)
 // we want to make sure that greater_than, etc. are distinguishing between signed and unsigned
-fn greater_than() {
+greater_than :: fn() {
     let num12 u8 = 1
     if num12>255 {
         io.printf("yes num12\n")
@@ -61,7 +61,7 @@ fn greater_than() {
     }
 }
 
-fn greater_than_or_equal() {
+greater_than_or_equal :: fn() {
     let num14 u8 = 1
     if num14>=255 {
         io.printf("yes num14\n")
@@ -77,7 +77,7 @@ fn greater_than_or_equal() {
     }
 }
 
-fn less_than() {
+less_than :: fn() {
     let num16 u8 = 1
     if num16<255 {
         io.printf("yes num16\n")
@@ -93,7 +93,7 @@ fn less_than() {
     }
 }
 
-fn less_than_or_equal() {
+less_than_or_equal :: fn() {
     let num18 u8 = 1
     if num18<=255 {
         io.printf("yes num18\n")
@@ -109,7 +109,7 @@ fn less_than_or_equal() {
     }
 }
 
-fn bit_shift_right() {
+bit_shift_right :: fn() {
     let num20 u8 = 0
     io.printf("num20: %d\n", num20<<1)
 
@@ -123,7 +123,7 @@ fn bit_shift_right() {
     io.printf("num23: %d\n", num23<<8)
 }
 
-fn bit_shift_left() {
+bit_shift_left :: fn() {
     let num24 u8 = 0
     io.printf("num24: %d\n", num24>>1)
 
@@ -134,7 +134,7 @@ fn bit_shift_left() {
     io.printf("num26: %d\n", num26>>2)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num1 u32 = 8 
     let num2 u32 = 3 
     io.printf("%d\n", num1 + num2)

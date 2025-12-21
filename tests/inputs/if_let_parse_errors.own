@@ -1,11 +1,11 @@
 
 util :: import = std.util
 
-fn do_thing() i32? {
+do_thing :: fn() i32? {
     return .none
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let opt io.Optional(<i32>) = .some(7)
     if let .some(num) = opt {
     } else if 1 {

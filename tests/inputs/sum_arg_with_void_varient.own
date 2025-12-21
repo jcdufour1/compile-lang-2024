@@ -1,12 +1,12 @@
 
 
-type Token enum {
+Token :: enum {
     open_par
     num i32
     string u8*
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token1 Token = Token.open_par
     let token2 Token = Token.open_par()
     let token3 Token = Token.open_par(76)

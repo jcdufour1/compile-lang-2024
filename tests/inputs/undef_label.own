@@ -1,6 +1,6 @@
 
 
-fn main() i32 {
+main :: fn() i32 {
     outer: for 1 {
         yield ''inner
     }

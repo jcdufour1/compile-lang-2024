@@ -1,7 +1,7 @@
 math :: import = std.math
 io :: import = std.io
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("abs 9 = %d\n", math.abs(9))
     io.printf("abs -9 = %d\n", math.abs(-9))
     io.printf("abs -9.7 = %0.1f\n", math.abs(0.0 - 9.7 /* TODO: change to -9.7 when possible */))

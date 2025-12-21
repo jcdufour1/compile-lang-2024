@@ -5,13 +5,13 @@ util :: import = std.util
 type Opt def = util.Optional
 type print def = io.printf
 
-fn add_internal(<NumType>)(lhs NumType, rhs NumType) NumType {
+add_internal :: fn(<NumType>)(lhs NumType, rhs NumType) NumType {
     return lhs + rhs
 }
 
 type add def = add_internal
 
-fn main() i32 {
+main :: fn() i32 {
     print("hello\n")
     print("%d\n", add(<i32>)(54, 3))
 

@@ -3,12 +3,12 @@ io :: import = std.io
 coll :: import = std.collections
 util :: import = std.util
 
-type Token struct {
+Token :: struct {
     num i32
     string u8*
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let arr coll.Arr(<Token, 5>) = coll.arr_new(<Token, 5>)()
     defer coll.arr_free(&arr)
 

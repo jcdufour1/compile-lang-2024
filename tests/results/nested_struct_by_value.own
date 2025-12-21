@@ -8,16 +8,16 @@ tests/inputs/nested_struct_by_value.own:3:11:[1;31merror[0;39m:`Token2` recurs
      4 | }
 tests/inputs/nested_struct_by_value.own:11:6:[1;34mnote[0;39m:`Token2` contains `Token3`
     10 | 
-    11 | type Token2 struct {
+    11 | Token2 :: struct {
        |      ^
     12 |     id i32
 tests/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 enum {
+     6 | Token3 :: enum {
        |      ^
      7 |     id i32
 tests/inputs/nested_struct_by_value.own:1:6:[1;34mnote[0;39m:`Token4` contains `Token2`
-     1 | type Token4 struct {
+     1 | Token4 :: struct {
        |      ^
      2 |     id i32
 tests/inputs/nested_struct_by_value.own:8:11:[1;31merror[0;39m:`Token4` recursively includes itself without indirection; consider storing `Token4` by pointer here instead of by value
@@ -26,17 +26,17 @@ tests/inputs/nested_struct_by_value.own:8:11:[1;31merror[0;39m:`Token4` recurs
        |           ^
      9 | }
 tests/inputs/nested_struct_by_value.own:1:6:[1;34mnote[0;39m:`Token4` contains `Token2`
-     1 | type Token4 struct {
+     1 | Token4 :: struct {
        |      ^
      2 |     id i32
 tests/inputs/nested_struct_by_value.own:11:6:[1;34mnote[0;39m:`Token2` contains `Token3`
     10 | 
-    11 | type Token2 struct {
+    11 | Token2 :: struct {
        |      ^
     12 |     id i32
 tests/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 enum {
+     6 | Token3 :: enum {
        |      ^
      7 |     id i32
 tests/inputs/nested_struct_by_value.own:13:11:[1;31merror[0;39m:`Token3` recursively includes itself without indirection; consider storing `Token3` by pointer here instead of by value
@@ -46,16 +46,16 @@ tests/inputs/nested_struct_by_value.own:13:11:[1;31merror[0;39m:`Token3` recur
     14 | }
 tests/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 enum {
+     6 | Token3 :: enum {
        |      ^
      7 |     id i32
 tests/inputs/nested_struct_by_value.own:1:6:[1;34mnote[0;39m:`Token4` contains `Token2`
-     1 | type Token4 struct {
+     1 | Token4 :: struct {
        |      ^
      2 |     id i32
 tests/inputs/nested_struct_by_value.own:11:6:[1;34mnote[0;39m:`Token2` contains `Token3`
     10 | 
-    11 | type Token2 struct {
+    11 | Token2 :: struct {
        |      ^
     12 |     id i32
 tests/inputs/nested_struct_by_value.own:19:11:[1;31merror[0;39m:`Token` recursively includes itself without indirection; consider storing `Token` by pointer here instead of by value
@@ -65,37 +65,37 @@ tests/inputs/nested_struct_by_value.own:19:11:[1;31merror[0;39m:`Token` recurs
     20 | }
 tests/inputs/nested_struct_by_value.own:17:6:[1;34mnote[0;39m:`Token` contains `Token`
     16 | 
-    17 | type Token struct {
+    17 | Token :: struct {
        |      ^
     18 |     id i32
 tests/inputs/nested_struct_by_value.own:23:10:[1;31merror[0;39m:`Arr` recursively includes itself without indirection; consider storing `Arr` by pointer here instead of by value
-    22 | type Arr2 struct {
+    22 | Arr2 :: struct {
     23 |     item Arr[3]
        |          ^
     24 | }
 tests/inputs/nested_struct_by_value.own:26:6:[1;34mnote[0;39m:`Arr` contains `Arr2`
     25 | 
-    26 | type Arr struct {
+    26 | Arr :: struct {
        |      ^
     27 |     item Arr2[3]
 tests/inputs/nested_struct_by_value.own:22:6:[1;34mnote[0;39m:`Arr2` contains `Arr`
     21 | 
-    22 | type Arr2 struct {
+    22 | Arr2 :: struct {
        |      ^
     23 |     item Arr[3]
 tests/inputs/nested_struct_by_value.own:27:10:[1;31merror[0;39m:`Arr2` recursively includes itself without indirection; consider storing `Arr2` by pointer here instead of by value
-    26 | type Arr struct {
+    26 | Arr :: struct {
     27 |     item Arr2[3]
        |          ^
     28 | }
 tests/inputs/nested_struct_by_value.own:22:6:[1;34mnote[0;39m:`Arr2` contains `Arr`
     21 | 
-    22 | type Arr2 struct {
+    22 | Arr2 :: struct {
        |      ^
     23 |     item Arr[3]
 tests/inputs/nested_struct_by_value.own:26:6:[1;34mnote[0;39m:`Arr` contains `Arr2`
     25 | 
-    26 | type Arr struct {
+    26 | Arr :: struct {
        |      ^
     27 |     item Arr2[3]
 

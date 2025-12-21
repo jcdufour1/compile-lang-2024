@@ -1,12 +1,12 @@
 
-fn undef_type_in_arg(thing thing.Foo) {
+undef_type_in_arg :: fn(thing thing.Foo) {
 }
 
-fn undef_variable_type() {
+undef_variable_type :: fn() {
     let token thing2.Token = {.num = 8}
 }
 
-fn main() i32 {
+main :: fn() i32 {
     undef_type_in_arg(thing)
     undef_variable_type()
     return 0

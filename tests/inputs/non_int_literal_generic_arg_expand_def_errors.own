@@ -1,31 +1,31 @@
 
-fn thing1(<num ''i32>)() {
+thing1 :: fn(<num ''i32>)() {
 }
 
-fn thing2(<num ''fn()void>)() {
+thing2 :: fn(<num ''fn()void>)() {
 }
 
-fn thing3(<NumT>)() {
+thing3 :: fn(<NumT>)() {
 }
 
-fn thing4(<num ''NonExistant>)() {
+thing4 :: fn(<num ''NonExistant>)() {
 }
 
-type Struct struct {
+Struct :: struct {
     num i32
 }
 
-fn thing5(<struct1 ''Struct>)() {
+thing5 :: fn(<struct1 ''Struct>)() {
 }
 
-fn thing6(<num ''Token>)() {
+thing6 :: fn(<num ''Token>)() {
 }
 
-type Token enum {
+Token :: enum {
     num i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token Token = .num(7)
     thing1(<{6}>)()
     thing2(<{6}>)()

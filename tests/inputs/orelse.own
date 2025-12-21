@@ -1,13 +1,13 @@
 rt :: import = std.runtime
 
-extern("c") fn printf(format_string u8*, args opaque...) i32
+extern("c") printf :: fn(format_string u8*, args opaque...) i32
 
-fn do_thing(should_succeed u1) rt.Optional(<i32>) {
+do_thing :: fn(should_succeed u1) rt.Optional(<i32>) {
     if should_succeed => return .some(9)
     return .none
 }
 
-fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i32>) {
+do_thing_with_err_val :: fn(should_succeed u1) rt.Result(<i32, i32>) {
     if should_succeed => return .ok(9)
     return .error(27)
 }
@@ -15,11 +15,11 @@ fn do_thing_with_err_val(should_succeed u1) rt.Result(<i32, i32>) {
 type FALSE def = 0
 type TRUE def = 1
 
-type Token struct {
+Token :: struct {
     string u8*
 }
 
-fn thing1() {
+thing1 :: fn() {
     let num i32 = do_thing(FALSE) orelse {
         printf("yes1\n")
         return
@@ -27,7 +27,7 @@ fn thing1() {
     printf("no1\n")
 }
 
-fn thing2() {
+thing2 :: fn() {
     let num i32 = do_thing(TRUE) orelse {
         printf("no2\n")
         return
@@ -36,7 +36,7 @@ fn thing2() {
     printf("%d\n", num)
 }
 
-fn thing3() Token {
+thing3 :: fn() Token {
     let num i32 = do_thing(FALSE) orelse {
         printf("yes3\n")
         return {"hello"}
@@ -45,7 +45,7 @@ fn thing3() Token {
     return {"bye"}
 }
 
-fn thing4() Token {
+thing4 :: fn() Token {
     let num i32 = do_thing_with_err_val(FALSE) orelse(err) {
         printf("yes4: error is %d\n", err)
         return {"hello"}
@@ -54,7 +54,7 @@ fn thing4() Token {
     return {"bye"}
 }
 
-fn thing5() Token {
+thing5 :: fn() Token {
     let num i32 = do_thing_with_err_val(TRUE) orelse(err) {
         printf("no5: error is %d\n", err)
         return {"hello"}
@@ -64,7 +64,7 @@ fn thing5() Token {
     return {"bye"}
 }
 
-fn main() i32 {
+main :: fn() i32 {
     thing1()
     thing2()
     printf("%s\n", thing3().string)

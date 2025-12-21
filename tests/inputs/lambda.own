@@ -1,14 +1,14 @@
 io :: import = std.io
 
-fn do_thing(action fn()void) {
+do_thing :: fn(action fn()void) {
     action()
 }
 
-fn do_thing_2(action fn(i32)void) {
+do_thing_2 :: fn(action fn(i32)void) {
     action(902)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let callback fn()void = fn()void {
         io.print_str("hello1")
     }

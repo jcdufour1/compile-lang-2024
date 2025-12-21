@@ -1,7 +1,7 @@
 
-extern("") fn puts(str_to_print: u8*) i32
+extern("") puts :: fn(str_to_print: u8*) i32
 
-fn main() i32 {
+main :: fn() i32 {
     puts("hello")
     return 0
 }

@@ -1,11 +1,11 @@
 
 
-type Token_type enum {
+Token_type :: enum {
     NUM
     STRING
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let token_type Token_type = Token_type.DOUBLE
     return 0
 }

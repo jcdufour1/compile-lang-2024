@@ -1,11 +1,11 @@
 
-extern("c") fn puts(str_to_print: u8*) i32
+extern("c") puts :: fn(str_to_print: u8*) i32
 
-fn println(string) {
+println :: fn(string) {
     printf("%s\n", string)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     println("hello");
     return 0
 }

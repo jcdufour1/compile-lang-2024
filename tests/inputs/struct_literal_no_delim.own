@@ -1,12 +1,12 @@
 
-extern("c") fn puts(str_to_print: u8*) i32
+extern("c") puts :: fn(str_to_print: u8*) i32
 
-type Pos struct {
+Pos :: struct {
     file: u8*
     line: i32 
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let pos: Pos = {
         .file = "hello.own" .line = 87
     }

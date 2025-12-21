@@ -1,7 +1,7 @@
 foo :: import = tests.dummy_std.has_using
 
 
-fn main() i32 {
+main :: fn() i32 {
     foo.print()
     return 0
 }

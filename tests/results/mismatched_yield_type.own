@@ -7,7 +7,7 @@ tests/inputs/mismatched_yield_type.own:17:21:[1;31merror[0;39m:breaking `u1`, 
        |                     ^
     18 |     }
 tests/inputs/mismatched_yield_type.own:15:13:[1;34mnote[0;39m:case break type `Bool` defined here
-    14 | fn main() i32 {
+    14 | main :: fn() i32 {
     15 |     let num Bool = switch (is_true()) {
        |             ^
     16 |         case .false: break .true

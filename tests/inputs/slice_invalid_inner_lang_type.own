@@ -2,7 +2,7 @@
 coll :: import = std.collections
 
 
-fn main() i32 {
+main :: fn() i32 {
     let slice coll.Slice(<Thing>) = [98, 43]
     return 0
 }

@@ -1,7 +1,7 @@
 io :: import = std.io
 util :: import = std.util
 
-fn main() i32 {
+main :: fn() i32 {
     let opt util.Optional(<i32>) = .some(7)
     if let .some(num) = opt {
         io.printf("yes 1: %d\n", num)

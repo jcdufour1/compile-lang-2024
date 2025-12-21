@@ -1,14 +1,14 @@
-type io import = std.io
-type coll import = std.collections
-type c import = std.libc
-type math import = std.math
-type util import = std.util
+io :: import = std.io
+coll :: import = std.collections
+c :: import = std.libc
+math :: import = std.math
+util :: import = std.util
 
-fn is_whitespace(ch u8) u1 {
+is_whitespace :: fn(ch u8) u1 {
     return ch != '-' && 0 != c.isspace(unsafe_cast<i32>ch)
 }
 
-fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
+check_stack :: fn(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
     if nums_len < min_nums_count {
         for idx u64 in 0..amt_consumed => io.print_str(" ", "")
         io.print_str("^");
@@ -23,7 +23,7 @@ fn check_stack(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
     return .some;
 }
 
-fn calculate(line Str) {
+calculate :: fn(line Str) {
     let old_line Str = line
 
     let nums = coll.darr_new(<i64>)()
@@ -137,7 +137,7 @@ fn calculate(line Str) {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     for 1 {
         if let .some(line) = io.getline(io.stdin()) {
             calculate(coll.darr_slice(line))

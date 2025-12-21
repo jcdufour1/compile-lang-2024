@@ -2,11 +2,11 @@ coll :: import = std.collections
 util :: import = std.util
 io :: import = std.io
 
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     let num i32 = 3
     let ptr i32* = &num
     let ptr_ptr i32** = &ptr
