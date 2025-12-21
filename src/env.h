@@ -45,6 +45,8 @@ typedef struct Env_ {
 
     bool a_main_was_freed;
     bool supress_type_inference_failures;
+
+    Strv mod_path_curr_file;
 } Env;
 
 // TODO: move this function?

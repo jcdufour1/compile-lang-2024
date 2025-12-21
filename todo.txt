@@ -125,7 +125,6 @@ for generics:
 - fix uninitialized warning with gcc (could be gcc bug?)
 - todo should call local_exit?
 - use odin style syntax for variable defs, etc.?
-- name_print(NAME_MSG, ..) should print mod_path of name if mod_path of name is different from current file, etc.
 
 
 # roadmap to try to get bootstrap compiler done:

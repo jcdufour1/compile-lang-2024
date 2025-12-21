@@ -355,7 +355,7 @@ static bool get_mod_alias_from_path_token(
         assert(parse_state.curr_mod_path.count > 0);
         parse_state.curr_mod_alias = name_new(parse_state.curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
     }
-    *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_TOP_LEVEL);
+    *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_TOP_LEVEL, true);
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
 
     Strv old_mod_path = parse_state.curr_mod_path;
@@ -383,7 +383,8 @@ static bool get_mod_alias_from_path_token(
         POS_BUILTIN,
         alias_name,
         mod_path,
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        false
     ))));
 
 finish:
@@ -4098,7 +4099,8 @@ bool parse(void) {
         POS_BUILTIN,
         alias_name,
         MOD_PATH_BUILTIN,
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        true /* TODO */
     ))));
 
     Uast_mod_alias* dummy = NULL;
@@ -4119,6 +4121,7 @@ bool parse(void) {
 
         Strv old_mod_path = parse_state.curr_mod_path;
         parse_state.curr_mod_path = curr_mod.curr_mod_path;
+        env.mod_path_curr_file = curr_mod.curr_mod_path;
         Name old_mod_alias = parse_state.curr_mod_alias;
         parse_state.curr_mod_alias = curr_mod.curr_mod_alias;
 
@@ -4142,6 +4145,7 @@ bool parse(void) {
 
 loop_end:
         parse_state.curr_mod_path = old_mod_path;
+        env.mod_path_curr_file = old_mod_path;
         parse_state.curr_mod_alias = old_mod_alias;
     }
 
