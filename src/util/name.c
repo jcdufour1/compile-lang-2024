@@ -273,12 +273,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
 
     assert(!is_msg || env.mod_path_curr_file.count > 0);
     if (!is_msg || !strv_is_equal(name.mod_path, env.mod_path_curr_file)) {
-
-
-
-
         if (!is_msg || !strv_is_equal(name.mod_path, MOD_PATH_BUILTIN)) {
-            bool did_print_alias = false;
             if (is_msg) {
                 Scope_id curr_scope = name.scope_id;
                 while (1) {
@@ -298,8 +293,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
                         }
                         if (strv_is_equal(mod_alias->mod_path, name.mod_path)) {
                             string_extend_f(&a_temp, buf, FMT".", strv_print(mod_alias->name.base));
-                            did_print_alias = true;
-                            goto after_outer;
+                            goto after_print_path;
                         }
                     }
 
@@ -309,16 +303,15 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
                     curr_scope = scope_get_parent_tbl_lookup(curr_scope);
                 }
             }
-after_outer:
 
-            if (!did_print_alias) {
-                string_extend_strv(&a_temp, buf, name.mod_path);
-                if (name.mod_path.count > 0) {
-                    string_extend_cstr(&a_temp, buf, "::");
-                }
+            string_extend_strv(&a_temp, buf, name.mod_path);
+            if (name.mod_path.count > 0) {
+                string_extend_cstr(&a_temp, buf, "::");
             }
         }
     }
+after_print_path:
+
     string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
