@@ -14,15 +14,15 @@ The language design and implementation are not finished. Breaking changes will o
 ## Example Programs
 ### [Optional](examples/optional.own)
 ```c
-type util import = std.util
-type io import = std.io
+util :: import = std.util
+io :: import = std.io
 
-fn divide(<NumT>)(lhs NumT, rhs NumT) NumT? {
+divide :: fn(<NumT>)(lhs NumT, rhs NumT) NumT? {
     if rhs == 0 => return .none
     return .some(lhs/rhs)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     switch divide(8, 2) {
         case .some(num): {
             io.print_str("result is ", "")
@@ -42,10 +42,10 @@ fn main() i32 {
 
 ### [Defer](examples/defer.own)
 ```c
-type coll import = std.collections
-type io import = std.io
+coll :: import = std.collections
+io :: import = std.io
 
-fn main() i32 {
+main :: fn() i32 {
     let nums coll.Darr(<i32>) = coll.darr_new(<i32>)([94, 23])
     defer coll.darr_free(&nums)
 
