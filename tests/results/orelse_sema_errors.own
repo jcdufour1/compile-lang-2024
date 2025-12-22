@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 35
-tests/inputs/orelse_sema_errors.own:18:34:[1;31merror[0;39m:no return statement in error handling block of orelse
+tests/inputs/orelse_sema_errors.own:18:31:[1;31merror[0;39m:no return statement in error handling block of orelse
     17 | thing1 :: fn() {
     18 |     num i32 := do_thing(TRUE) orelse {
-       |                                  ^
+       |                               ^
     19 |         io.print_int(8)
 tests/inputs/orelse_sema_errors.own:26:9:[1;31merror[0;39m:cannot yield out of error handling block of `orelse`
     25 |         io.print_int(8)
@@ -16,10 +16,10 @@ tests/inputs/orelse_sema_errors.own:33:9:[1;31merror[0;39m:cannot yield out of
     33 |         yield 8
        |         ^
     34 |         return
-tests/inputs/orelse_sema_errors.own:39:41:[1;31merror[0;39m:orelse error symbol cannot be used when the left hand side of orelse is Optional
+tests/inputs/orelse_sema_errors.own:39:38:[1;31merror[0;39m:orelse error symbol cannot be used when the left hand side of orelse is Optional
     38 | thing4 :: fn() {
     39 |     num i32 := do_thing(TRUE) orelse(err) {
-       |                                         ^
+       |                                      ^
     40 |         io.print_int(8)
 tests/inputs/orelse_sema_errors.own:4:40:[1;34mnote[0;39m:left hand side of orelse type defined here
      3 | 
@@ -31,10 +31,10 @@ std/util.own:6:21:[1;34mnote[0;39m:in expansion of def
      6 | Optional :: def = rt.Optional
        |                     ^
      7 | Result :: def = rt.Result
-tests/inputs/orelse_sema_errors.own:47:16:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
+tests/inputs/orelse_sema_errors.own:47:13:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
     46 | thing5 :: fn() {
     47 |     num u8 := do_thing(TRUE) orelse {
-       |                ^
+       |             ^
     48 |         return
 
 compile::return_code 1

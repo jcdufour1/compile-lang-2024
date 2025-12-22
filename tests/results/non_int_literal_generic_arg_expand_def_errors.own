@@ -95,7 +95,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:36:13:[1;31merro
     35 |     thing5(<{}>)()
     36 |     thing6(<{5}>)()
        |             ^
-    37 |     let incorrect_token Token(<{5}>)
+    37 |     incorrect_token Token(<{5}>) :
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:21:21:[1;34mnote[0;39m:non-struct generic parameter type defined here
     20 | 
     21 | thing6 :: fn(<num ''Token>)() {
@@ -105,46 +105,46 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:36:13:[1;31merro
     35 |     thing5(<{}>)()
     36 |     thing6(<{5}>)()
        |             ^
-    37 |     let incorrect_token Token(<{5}>)
+    37 |     incorrect_token Token(<{5}>) :
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:21:21:[1;34mnote[0;39m:non-struct generic parameter type defined here
     20 | 
     21 | thing6 :: fn(<num ''Token>)() {
        |                     ^
     22 | }
-tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
+tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:5:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
     36 |     thing6(<{5}>)()
-    37 |     let incorrect_token Token(<{5}>)
-       |         ^
+    37 |     incorrect_token Token(<{5}>) :
+       |     ^
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:1:[1;34mnote[0;39m:generic parameters defined here
     23 | 
     24 | Token :: enum {
        | ^
     25 |     num i32
-tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
+tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:5:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
     36 |     thing6(<{5}>)()
-    37 |     let incorrect_token Token(<{5}>)
-       |         ^
+    37 |     incorrect_token Token(<{5}>) :
+       |     ^
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:1:[1;34mnote[0;39m:generic parameters defined here
     23 | 
     24 | Token :: enum {
        | ^
     25 |     num i32
-tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
+tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:5:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
     36 |     thing6(<{5}>)()
-    37 |     let incorrect_token Token(<{5}>)
-       |         ^
+    37 |     incorrect_token Token(<{5}>) :
+       |     ^
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:1:[1;34mnote[0;39m:generic parameters defined here
     23 | 
     24 | Token :: enum {
        | ^
     25 |     num i32
-tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:9:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
+tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:37:5:[1;31merror[0;39m:1 generic arguments are passed, but 0 generic arguments expected
     36 |     thing6(<{5}>)()
-    37 |     let incorrect_token Token(<{5}>)
-       |         ^
+    37 |     incorrect_token Token(<{5}>) :
+       |     ^
     38 | 
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:24:1:[1;34mnote[0;39m:generic parameters defined here
     23 | 

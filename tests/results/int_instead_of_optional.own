@@ -12,7 +12,7 @@ tests/inputs/int_instead_of_optional.own:15:33:[1;34mnote[0;39m:generic functi
        |                                 ^
     16 |     switch rhs {
 tests/inputs/int_instead_of_optional.own:40:69:[1;31merror[0;39m:argument is of type `u10`, but the corresponding parameter `lhs` is of type `std/runtime::Optional(<i32>)`
-    39 |     let opt110 util.Optional(<i32>) = .some(838)
+    39 |     opt110 util.Optional(<i32>) := .some(838)
     40 |     io.printf("test 110: got number %d\n", add_one_or_two_default_2(835, opt110))
        |                                                                     ^
     41 | 
@@ -22,7 +22,7 @@ tests/inputs/int_instead_of_optional.own:15:44:[1;34mnote[0;39m:corresponding 
        |                                            ^
     16 |     switch rhs {
 tests/inputs/int_instead_of_optional.own:43:87:[1;31merror[0;39m:argument is of type `std/runtime::Optional(<i32>)`, but the corresponding parameter `rhs` is of type `std/runtime::Optional(<u32>)`
-    42 |     let opt111 util.Optional(<i32>) = .some(838)
+    42 |     opt111 util.Optional(<i32>) := .some(838)
     43 |     io.printf("test 111: got number %d\n", add_one_or_two_default_2(<u32>)(.some(14), opt111))
        |                                                                                       ^
     44 |     return 0

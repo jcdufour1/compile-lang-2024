@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/enum_non_void_case_no_par_on_assign.own:8:28:[1;31merror[0;39m:enum case with non-void inner type cannot be assigned without using (); use `Token.number()` instead of `Token.number`
+tests/inputs/enum_non_void_case_no_par_on_assign.own:8:25:[1;31merror[0;39m:enum case with non-void inner type cannot be assigned without using (); use `Token.number()` instead of `Token.number`
      7 | main :: fn() i32 {
      8 |     token Token := Token.number
-       |                            ^
+       |                         ^
      9 |     return 0
 
 compile::return_code 1

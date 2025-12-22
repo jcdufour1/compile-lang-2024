@@ -1,20 +1,20 @@
 compile::stdout 0
 
 compile::stderr 15
-tests/inputs/invalid_char_lit_3.own:6:20:[1;31merror[0;39m:expected 0 characters in char literal after `\'`, but got 20
+tests/inputs/invalid_char_lit_3.own:6:17:[1;31merror[0;39m:expected 0 characters in char literal after `\'`, but got 17
      5 |     char_correct u8 := 'j'
      6 |     char2 u8 := '\'
-       |                    ^
+       |                 ^
      7 |     char3 u8 := 'ab'
-tests/inputs/invalid_char_lit_3.own:7:23:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 20
+tests/inputs/invalid_char_lit_3.own:7:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 17
      6 |     char2 u8 := '\'
      7 |     char3 u8 := 'ab'
-       |                       ^
+       |                    ^
      8 |     char4 u8 := '\cd'
-tests/inputs/invalid_char_lit_3.own:8:20:[1;31merror[0;39m:language feature `unknown symbol: \` not yet implemented (may or may not be implemented in the future)
+tests/inputs/invalid_char_lit_3.own:8:17:[1;31merror[0;39m:language feature `unknown symbol: \` not yet implemented (may or may not be implemented in the future)
      7 |     char3 u8 := 'ab'
      8 |     char4 u8 := '\cd'
-       |                    ^
+       |                 ^
      9 |     return 0
 
 compile::return_code 1

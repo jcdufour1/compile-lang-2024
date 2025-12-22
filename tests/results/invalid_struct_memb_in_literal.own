@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/invalid_struct_memb_in_literal.own:14:38:[1;31merror[0;39m:expected `.denominator =`, got `.denominatordaklsjfkjskf =`
+tests/inputs/invalid_struct_memb_in_literal.own:14:35:[1;31merror[0;39m:expected `.denominator =`, got `.denominatordaklsjfkjskf =`
     13 | main :: fn() i32 {
-    14 |     let div: Div = {.numerator = 87, .denominatordaklsjfkjskf = 77}
-       |                                      ^
+    14 |     div: Div := {.numerator = 87, .denominatordaklsjfkjskf = 77}
+       |                                   ^
     15 |     return 0
 
 compile::return_code 1

@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/char_unmatched_single_quote.own:4:17:[1;31merror[0;39m:unmatched opening `'`
+tests/inputs/char_unmatched_single_quote.own:4:14:[1;31merror[0;39m:unmatched opening `'`
      3 | main :: fn() i32 {
      4 |     ch u8 := '
-       |                 ^
+       |              ^
      5 |     return 0
 
 compile::return_code 1
