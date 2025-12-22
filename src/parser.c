@@ -1832,6 +1832,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
 
+        try_consume(NULL, tokens, TOKEN_COLON);
         Attrs attrs = {0};
         if (PARSE_OK != parse_attrs(&attrs, tokens)) {
             return PARSE_ERROR;

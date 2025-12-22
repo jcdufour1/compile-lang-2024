@@ -67,12 +67,11 @@ arr_new :: fn(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str =
 
 arr_slice :: fn(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := arr.count - start
-    assert(0, "todo");
-    //if let .some(num) = count {
-    //    actual_count = num
-    //}
-    //let slice ItemT[] = {arr.buf, arr.count}
-    //return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    if let .some(num) = count {
+        actual_count = num
+    }
+    slice ItemT[] := {arr.buf, arr.count}
+    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
     //// TODO: uncomment below line (figure out why it will not compile)
     ////return slice_range({arr.buf, arr.count}, start, actual_count)
 }
@@ -147,14 +146,13 @@ darr_new :: fn(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #l
 
 darr_slice :: fn(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := darr.count - start
-    assert(0, "todo");
-    //if let .some(num) = count {
-    //    actual_count = num
-    //}
-    //let slice ItemT[] = {darr.buf, darr.count}
-    //return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
-    //// TODO: uncomment below line (figure out why it will not compile)
-    ////return slice_range({darr.buf, darr.count}, start, actual_count)
+    if let .some(num) = count {
+        actual_count = num
+    }
+    slice ItemT[] := {darr.buf, darr.count}
+    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    // TODO: uncomment below line (figure out why it will not compile)
+    //return slice_range({darr.buf, darr.count}, start, actual_count)
 }
 
 darr_free :: fn(<ItemT>)(using darr Darr(<ItemT>)*) {

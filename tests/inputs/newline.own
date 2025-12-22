@@ -31,7 +31,7 @@ fn() i32 {
     node Node := .str(
         "bye"
     )
-    if .str(
+    if let .str(
         string
     ) = node {
         io.print_str(
@@ -39,7 +39,7 @@ fn() i32 {
         )
     }
     if 
-    .str(
+    let .str(
         string
     ) = node {
         io.print_str(
@@ -47,14 +47,14 @@ fn() i32 {
         )
     }
 
-    if .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
     else {
         io.print_str("no")
     }
 
-    if .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
 
@@ -62,7 +62,7 @@ fn() i32 {
         io.print_str("no")
     }
 
-    if .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
 
