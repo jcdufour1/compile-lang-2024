@@ -114,6 +114,9 @@ for generics:
 - allow struct literal designated args to be in any order
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
+- add token `::`?
+- add token `:=`?
+- change `if let` to use `:=`
 - make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - document or make functions for uast_def_get_ulang_type
@@ -124,7 +127,7 @@ for generics:
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
 - fix uninitialized warning with gcc (could be gcc bug?)
-- add methods
+- add methods?
 - todo should call local_exit?
 - def should be defined this way?:
     EOF :: def -1
@@ -134,10 +137,16 @@ for generics:
     - tests/inputs/sizeof.own:154:10:error:expected newline after statement
        153 |
        154 |     raw1 Raw1
-- add token `::`?
-- add token `:=`?
-- change `if let` to use `:=`
-- "num i32 @maybe_uninit :" should be written as "num i32 : @maybe_uninit"
+- change import syntax to 
+    io :: import std.io
+- TODO: place this in tutorial/003_structs_and_enums.own
+     enums and structs can also be placed within functions
+    Status :: enum {
+        success
+        ok
+        not_ok
+        failure
+    }
 
 
 

@@ -1708,15 +1708,11 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
 static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token name) {
     Token import_tk = {0};
     unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
-
-    Token dummy = {0};
-    if (!consume_expect(&dummy, tokens, "after `import`", TOKEN_SINGLE_EQUAL)) {
-        return PARSE_ERROR;
-    }
+    const char* before_sym_msg = try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL) ? "after `=`" : "after `import`";
 
     String mod_path = {0};
     Token path_tk = {0};
-    if (!consume_expect(&path_tk, tokens, "after =", TOKEN_SYMBOL)) {
+    if (!consume_expect(&path_tk, tokens, before_sym_msg, TOKEN_SYMBOL)) {
         return PARSE_ERROR;
     }
     string_extend_strv(&a_main, &mod_path, path_tk.text);

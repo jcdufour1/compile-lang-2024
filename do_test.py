@@ -27,6 +27,7 @@ class FileNormal:
 # FileExample will only be compiled
 @dataclass
 class FileExample:
+    path_prefix: str
     path_base: str
 
 @dataclass
@@ -47,7 +48,9 @@ class Parameters:
     do_debug_internal: bool
     do_release_internal: bool
 
+COUNT_DIRS = 3 #TODO: automatically set this value
 EXAMPLES_DIR = "examples"
+TUTORIAL_DIR = "tutorial"
 INPUTS_DIR = os.path.join("tests", "inputs")
 RESULTS_DIR = os.path.join("tests", "results")
 
@@ -86,6 +89,8 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample
     files: list[FileNormal | FileExample] = []
     possible_path: str
 
+    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
+
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
         possible_path = os.path.realpath(possible_base)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
@@ -94,7 +99,12 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample
     for possible_base in map(to_str, list_files_recursively(EXAMPLES_DIR)):
         possible_path = os.path.realpath(possible_base)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileExample(possible_path[len(os.path.realpath(EXAMPLES_DIR)) + 1:]))
+            files.append(FileExample(EXAMPLES_DIR, possible_path[len(os.path.realpath(EXAMPLES_DIR)) + 1:]))
+
+    for possible_base in map(to_str, list_files_recursively(TUTORIAL_DIR)):
+        possible_path = os.path.realpath(possible_base)
+        if os.path.isfile(possible_path) and possible_path in files_to_test:
+            files.append(FileExample(TUTORIAL_DIR, possible_path[len(os.path.realpath(TUTORIAL_DIR)) + 1:]))
 
     return files
 
@@ -151,7 +161,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     if isinstance(file, FileNormal):
         compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     elif isinstance(file, FileExample):
-        compile_cmd.append(os.path.join(EXAMPLES_DIR, file.path_base))
+        compile_cmd.append(os.path.join(file.path_prefix, file.path_base))
     else:
         raise NotImplementedError
     compile_cmd.append("-lm")
@@ -197,7 +207,7 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
             return True
             #success_count += 1
         else:
-            print_error("example compilation fail:" + os.path.join(EXAMPLES_DIR, file[0].path_base) + " (" + file[2] + ")")
+            print_error("example compilation fail:" + os.path.join(file[0].path_prefix, file[0].path_base) + " (" + file[2] + ")")
             print_error("compile error:")
             print(get_result_from_test_result(result))
             if not file[3].keep_going:
@@ -336,9 +346,12 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
+    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
     for possible_base in list_files_recursively(INPUTS_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
     for possible_base in list_files_recursively(EXAMPLES_DIR):
+        callback(list_or_map, os.path.realpath(possible_base))
+    for possible_base in list_files_recursively(TUTORIAL_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
 
 def add_to_map(map: dict, path: str):

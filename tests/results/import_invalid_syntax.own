@@ -1,6 +1,6 @@
 compile::stdout 0
 
-compile::stderr 34
+compile::stderr 42
 [1;31merror[0;39m:could not open file `std/io10affsadn.own`: No such file or directory
 tests/inputs/import_invalid_syntax.own:1:16:[1;34mnote[0;39m:error occured when attempting to import module
      1 | io :: import = std.
@@ -11,7 +11,7 @@ tests/inputs/import_invalid_syntax.own:2:13:[1;31merror[0;39m:expected newline
      2 | io10affsadn :: import = std.io
        |             ^
      3 | 
-tests/inputs/import_invalid_syntax.own:4:16:[1;31merror[0;39m:got token `.`, but expected `symbol` after =
+tests/inputs/import_invalid_syntax.own:4:16:[1;31merror[0;39m:got token `.`, but expected `symbol` after `=`
      3 | 
      4 | io :: import = .io 
        |                ^
@@ -25,16 +25,24 @@ tests/inputs/import_invalid_syntax.own:1:1:[1;34mnote[0;39m:`io` originally de
      1 | io :: import = std.
        | ^
      2 | io10affsadn :: import = std.io
-tests/inputs/import_invalid_syntax.own:10:14:[1;31merror[0;39m:got token `symbol(std)`, but expected `=` after `import`
+tests/inputs/import_invalid_syntax.own:10:1:[1;31merror[0;39m:redefinition of symbol `io`
      9 | 
     10 | io :: import std.io 
-       |              ^
+       | ^
     11 | io13 :: import = std.io
-tests/inputs/import_invalid_syntax.own:13:14:[1;31merror[0;39m:got token `symbol(std)`, but expected `=` after `import`
+tests/inputs/import_invalid_syntax.own:1:1:[1;34mnote[0;39m:`io` originally defined here
+     1 | io :: import = std.
+       | ^
+     2 | io10affsadn :: import = std.io
+tests/inputs/import_invalid_syntax.own:13:1:[1;31merror[0;39m:redefinition of symbol `io`
     12 | 
     13 | io :: import std
-       |              ^
+       | ^
     14 | io14 :: import = std.io
+tests/inputs/import_invalid_syntax.own:1:1:[1;34mnote[0;39m:`io` originally defined here
+     1 | io :: import = std.
+       | ^
+     2 | io10affsadn :: import = std.io
 
 compile::return_code 1
 
