@@ -105,5 +105,5 @@ main :: fn() i32 {
 
 right2 :: fn() {
     let num i32 @maybe_uninit
-    let num2 = num
+    num2 := num
 }

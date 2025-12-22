@@ -34,7 +34,7 @@ snake_first :: fn(snake Snake) Pos {
 }
 
 snake_new :: fn(init_pos Pos, init_dir Dir, squares: Pos) Snake {
-    let darr = coll.darr_new(<Pos>)([init_pos]);
+    darr := coll.darr_new(<Pos>)([init_pos]);
     return {darr, init_dir}
 }
 
@@ -45,9 +45,9 @@ mod :: fn(a i32, b i32) i32 {
 // TODO: test case for this
 //io.printf("pos at idx 1 = {%d, %d}\n", snake.nodes.buf[1].x, snake.nodes.buf[1].y)
 move_snake :: fn(snake Snake*, squares Pos, do_grow u1) u1 {
-    let new_pos = snake_first(*snake)
+    new_pos := snake_first(*snake)
     assert(snake.nodes.count > 0)
-    let last_pos = coll.darr_at(snake.nodes, snake.nodes.count - 1)
+    last_pos := coll.darr_at(snake.nodes, snake.nodes.count - 1)
     switch snake.dir {
         case .down: new_pos.y += 1
         case .up: new_pos.y -= 1
@@ -64,9 +64,9 @@ move_snake :: fn(snake Snake*, squares Pos, do_grow u1) u1 {
         }
     }
     
-    let pos_at_1 = coll.darr_at(snake.nodes, 0)
+    pos_at_1 := coll.darr_at(snake.nodes, 0)
     for idx_ usize in 1..snake.nodes.count {
-        let idx = snake.nodes.count - idx_
+        idx := snake.nodes.count - idx_
         assert(idx < snake.nodes.count, "out of bounds")
         *coll.darr_at_ref(snake.nodes, idx) = coll.darr_at(snake.nodes, idx - 1)
     }
@@ -91,32 +91,32 @@ draw_items :: fn(canvas Pos, border_width i32, square_width i32, snake Snake, ap
     rl.DrawRectangleLinesEx({0.0, 0.0, unsafe_cast<f32>canvas.x, unsafe_cast<f32>canvas.y}, unsafe_cast<f32>border_width, rl.WHITE())
 
     for idx usize in 0..snake.nodes.count {
-        let curr = coll.darr_at(snake.nodes, idx)
+        curr := coll.darr_at(snake.nodes, idx)
         rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.YELLOW())
     }
     for idx usize in 0..apples.count {
-        let curr = coll.darr_at(apples, idx)
+        curr := coll.darr_at(apples, idx)
         rl.DrawRectangle(border_width + square_width*curr.x, border_width + square_width*curr.y, square_width, square_width, rl.RED())
     }
 }
 
 main :: fn() i32 {
-    let COUNT_APPLES = 3
-    let BORDER_WIDTH = 5
+    COUNT_APPLES := 3
+    BORDER_WIDTH := 5
     SQUARES Pos := {20, 10};
-    let SQUARE_WIDTH = 30;
+    SQUARE_WIDTH := 30;
 
     CANVAS Pos := {SQUARES.x*SQUARE_WIDTH + 2*BORDER_WIDTH, SQUARES.y*SQUARE_WIDTH + 2*BORDER_WIDTH}
 
-    let FRAME_RATE = 7
-    let LOOP_RATE = 200;
+    FRAME_RATE := 7
+    LOOP_RATE := 200;
 
     rand.srand()
 
-    let snake = snake_new(rand_pos(SQUARES), .right, SQUARES)
+    snake := snake_new(rand_pos(SQUARES), .right, SQUARES)
     assert(0 < SQUARES.x && 0 < SQUARES.y, "invalid snake cordinates")
 
-    let apples = coll.darr_new(<Pos>)()
+    apples := coll.darr_new(<Pos>)()
     for idx in 0..COUNT_APPLES {
         coll.darr_append(&apples, rand_pos(SQUARES))
     }
@@ -124,7 +124,7 @@ main :: fn() i32 {
     rl.InitWindow(CANVAS.x, CANVAS.y, "Snake Game")
     defer rl.CloseWindow()
 
-    let loop_count = 0
+    loop_count := 0
     do_grow_snake u1 := 0
     rl.SetTargetFPS(LOOP_RATE)
 
@@ -177,7 +177,7 @@ main :: fn() i32 {
 
                 // check for apple collision
                 for snake_ usize in 0..snake.nodes.count {
-                    let curr = coll.darr_at(snake.nodes, snake_)
+                    curr := coll.darr_at(snake.nodes, snake_)
                     for apple usize in 0..apples.count {
                         if pos_is_equal(curr, coll.darr_at(apples, apple)) {
                             do_grow_snake = 1

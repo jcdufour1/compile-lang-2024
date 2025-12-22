@@ -113,7 +113,7 @@ StrangeSize :: struct {
 }
 
 main :: fn() i32 {
-    let nothing void
+    nothing void :
     io.printf("sizeof nothing = %zu\n", sizeof nothing)
 
     num i32 := 91
@@ -151,24 +151,24 @@ main :: fn() i32 {
     token5 Token5 := .num1(8)
     io.printf("sizeof token5 = %zu\n", sizeof token5)
 
-    let raw1 Raw1
+    raw1 Raw1 :
     io.printf("sizeof raw1 = %zu\n", sizeof raw1)
-    let raw2 Raw2
+    raw2 Raw2 :
     io.printf("sizeof raw2 = %zu\n", sizeof raw2)
-    let raw3 Raw3
+    raw3 Raw3 :
     io.printf("sizeof raw3 = %zu\n", sizeof raw3)
-    let raw4 Raw4
+    raw4 Raw4 :
     io.printf("sizeof raw4 = %zu\n", sizeof raw4)
-    let raw5 Raw5
+    raw5 Raw5 :
     io.printf("sizeof raw5 = %zu\n", sizeof raw5)
-    let raw6 Raw6
+    raw6 Raw6 :
     io.printf("sizeof raw6 = %zu\n", sizeof raw6)
 
-    let arr1 u8[12]
+    arr1 u8[12] :
     io.printf("sizeof arr1 = %zu\n", sizeof arr1)
-    let arr2 Div6[2]
+    arr2 Div6[2] :
     io.printf("sizeof arr2 = %zu\n", sizeof arr2)
-    let arr3 StrangeSize[2]
+    arr3 StrangeSize[2] :
     io.printf("sizeof arr3 = %zu\n", sizeof arr3)
 
     return 0

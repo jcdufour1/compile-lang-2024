@@ -68,7 +68,7 @@ cast_to_pointer :: fn() {
 cast_pointer_to_pointer :: fn() {
     ptr_u8 u8* := unsafe_cast<u8*>1
 
-    let ptr_i32 i32* = unsafe_cast<i32*>ptr_u8
+    ptr_i32 i32* := unsafe_cast<i32*>ptr_u8
 
     if ptr_u8 == unsafe_cast<u8*>ptr_i32 {
         io.printf("pointer_to_pointer: yes\n");

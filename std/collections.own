@@ -60,20 +60,21 @@ Arr :: struct(<ItemT, capacity ''usize>) {
 }
 
 arr_new :: fn(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Arr(<ItemT, max_capacity>) {
-    let arr Arr(<ItemT, max_capacity>) = {util.alloc(<ItemT>)(max_capacity), 0}
+    arr Arr(<ItemT, max_capacity>) := {util.alloc(<ItemT>)(max_capacity), 0}
     arr_extend(&arr, init_elems, .file = file, .line = line, .column = column)
     return arr
 }
 
 arr_slice :: fn(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := arr.count - start
-    if let .some(num) = count {
-        actual_count = num
-    }
-    let slice ItemT[] = {arr.buf, arr.count}
-    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
-    // TODO: uncomment below line (figure out why it will not compile)
-    //return slice_range({arr.buf, arr.count}, start, actual_count)
+    assert(0, "todo");
+    //if let .some(num) = count {
+    //    actual_count = num
+    //}
+    //let slice ItemT[] = {arr.buf, arr.count}
+    //return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    //// TODO: uncomment below line (figure out why it will not compile)
+    ////return slice_range({arr.buf, arr.count}, start, actual_count)
 }
 
 arr_free :: fn(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>)*) {
@@ -139,20 +140,21 @@ Darr :: struct(<ItemT>) {
 }
 
 darr_new :: fn(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #line, column i32 = #column) Darr(<ItemT>) {
-    let darr Darr(<ItemT>) = {util.null(<ItemT>)(), 0, 0}
+    darr Darr(<ItemT>) := {util.null(<ItemT>)(), 0, 0}
     darr_extend(&darr, init_elems, .file = file, .line = line, .column = column)
     return darr
 }
 
 darr_slice :: fn(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := darr.count - start
-    if let .some(num) = count {
-        actual_count = num
-    }
-    let slice ItemT[] = {darr.buf, darr.count}
-    return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
-    // TODO: uncomment below line (figure out why it will not compile)
-    //return slice_range({darr.buf, darr.count}, start, actual_count)
+    assert(0, "todo");
+    //if let .some(num) = count {
+    //    actual_count = num
+    //}
+    //let slice ItemT[] = {darr.buf, darr.count}
+    //return slice_range(slice, start, actual_count, .file = file, .line = line, .column = column)
+    //// TODO: uncomment below line (figure out why it will not compile)
+    ////return slice_range({darr.buf, darr.count}, start, actual_count)
 }
 
 darr_free :: fn(<ItemT>)(using darr Darr(<ItemT>)*) {

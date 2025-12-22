@@ -129,6 +129,12 @@ for generics:
 - def should be defined this way?:
     EOF :: def -1
 - remove let keyword from syntax file
+- remove let token type
+- this error message should say "did you mean to add `:` after `Raw1`"
+    - tests/inputs/sizeof.own:154:10:error:expected newline after statement
+       153 |
+       154 |     raw1 Raw1
+
 
 
 # roadmap to try to get bootstrap compiler done:
