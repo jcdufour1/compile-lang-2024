@@ -4,7 +4,7 @@ add :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let num i32 = 9
+    num i32 := 9
 
     if num == add {
     }

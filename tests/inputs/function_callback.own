@@ -16,7 +16,7 @@ Token :: struct {
 main :: fn() i32 {
     print_result(7, 3, add_fn)
 
-    let token Token = {.ptr = add_fn}
+    token Token := {.ptr = add_fn}
     print_result(96, -514, token.ptr)
 
     io.printf("%d\n", token.ptr(-84, -5))

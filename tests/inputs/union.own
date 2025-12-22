@@ -10,7 +10,7 @@ fun1 :: fn(union Union) {
 }
 
 main :: fn() i32 {
-    let union Union
+    union Union :
 
     union.num = 45
     fun1(union)

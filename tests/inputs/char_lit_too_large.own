@@ -1,7 +1,7 @@
 io :: import = std.io
 
 main :: fn() i32 {
-    let ch u8 = '8j'
+    ch u8 := '8j'
     io.printf("%c\n", ch)
 
     return 0

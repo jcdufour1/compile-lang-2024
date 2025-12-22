@@ -1,45 +1,45 @@
 compile::stdout 0
 
 compile::stderr 40
-tests/inputs/static_array_errors.own:6:23:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
+tests/inputs/static_array_errors.own:6:20:[1;31merror[0;39m:2 arguments are passed to array literal, but 3 arguments expected
      5 | main :: fn() i32 {
-     6 |     let nums i32[3] = [8, 76]
-       |                       ^
+     6 |     nums i32[3] := [8, 76]
+       |                    ^
      7 | 
-tests/inputs/static_array_errors.own:6:17:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
+tests/inputs/static_array_errors.own:6:13:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
      5 | main :: fn() i32 {
-     6 |     let nums i32[3] = [8, 76]
-       |                 ^
+     6 |     nums i32[3] := [8, 76]
+       |             ^
      7 | 
-tests/inputs/static_array_errors.own:12:24:[1;31merror[0;39m:4 arguments are passed to array literal, but 3 arguments expected
+tests/inputs/static_array_errors.own:12:21:[1;31merror[0;39m:4 arguments are passed to array literal, but 3 arguments expected
     11 | 
-    12 |     let nums2 i32[3] = [87, 23, 5, 1]
-       |                        ^
+    12 |     nums2 i32[3] := [87, 23, 5, 1]
+       |                     ^
     13 | 
-tests/inputs/static_array_errors.own:12:18:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
+tests/inputs/static_array_errors.own:12:14:[1;34mnote[0;39m:statically sized array defined as containing 3 elements
     11 | 
-    12 |     let nums2 i32[3] = [87, 23, 5, 1]
-       |                  ^
+    12 |     nums2 i32[3] := [87, 23, 5, 1]
+       |              ^
     13 | 
-tests/inputs/static_array_errors.own:14:32:[1;31merror[0;39m:`count_things` is not a member of `nums`
+tests/inputs/static_array_errors.own:14:29:[1;31merror[0;39m:`count_things` is not a member of `nums`
     13 | 
-    14 |     let count_things i32 = nums.count_things
-       |                                ^
+    14 |     count_things i32 := nums.count_things
+       |                             ^
     15 | 
-tests/inputs/static_array_errors.own:6:9:[1;34mnote[0;39m:`nums` defined here
+tests/inputs/static_array_errors.own:6:5:[1;34mnote[0;39m:`nums` defined here
      5 | main :: fn() i32 {
-     6 |     let nums i32[3] = [8, 76]
-       |         ^
+     6 |     nums i32[3] := [8, 76]
+       |     ^
      7 | 
-tests/inputs/static_array_errors.own:16:19:[1;31merror[0;39m:count of statically sized array must be an integer literal
+tests/inputs/static_array_errors.own:16:15:[1;31merror[0;39m:count of statically sized array must be an integer literal
     15 | 
-    16 |     let nums3 i32[UNDEFINED] = [82]
-       |                   ^
+    16 |     nums3 i32[UNDEFINED] := [82]
+       |               ^
     17 | 
-tests/inputs/static_array_errors.own:18:19:[1;31merror[0;39m:could not infer count of elements in the static array
+tests/inputs/static_array_errors.own:18:15:[1;31merror[0;39m:could not infer count of elements in the static array
     17 | 
-    18 |     let nums4 i32[_]
-       |                   ^
+    18 |     nums4 i32[_] :
+       |               ^
     19 | 
 
 compile::return_code 1

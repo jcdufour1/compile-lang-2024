@@ -1,11 +1,11 @@
 
 sub :: fn(<NumType>)(lhs NumType, rhs NumType) {
-    let result NumType = lhs - rhs
+    result NumType := lhs - rhs
     return result
 }
 
 add :: fn(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
-    let result NumType = lhs + rhs
+    result NumType := lhs + rhs
     return result
 }
 
@@ -23,10 +23,10 @@ add_not_regular :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let num1 i32 = sub(<i32, i64>)(7, 8)
-    let num2 i32 = add(<i32>)(7, 8, 9)
-    let token1 Token = {.item = 87, .pos = 32}
-    let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
+    num1 i32 := sub(<i32, i64>)(7, 8)
+    num2 i32 := add(<i32>)(7, 8, 9)
+    token1 Token := {.item = 87, .pos = 32}
+    token2 Token(<i32, i32, i32>) := {.item = 88, .pos = 33}
     add_using_callback(8, 2, add_not_regular)
     return 0
 }

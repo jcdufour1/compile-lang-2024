@@ -16,13 +16,13 @@ get_signed :: fn() i32 {
 // - -76 assigned to unsinged thing
 
 unsafe_cast_and_modulo :: fn() {
-    let num7 i8 = -256/2 + 1;
+    num7 i8 := -256/2 + 1;
     io.printf("num7: %d\n", unsafe_cast<i32>num7)
     num7 = num7%4
     // expect -3
     io.printf("num7: %d\n", unsafe_cast<i32>num7)
 
-    let num8 u8 = 255;
+    num8 u8 := 255;
     io.printf("num8: %d\n", unsafe_cast<u32>num8)
     num8 = num8%4
     // expect 3
@@ -31,12 +31,12 @@ unsafe_cast_and_modulo :: fn() {
 }
 
 division :: fn() {
-    let num10 u8 = 255
+    num10 u8 := 255
     io.printf("num10: %d\n", unsafe_cast<u32>num10)
     num10 = num10/4
     io.printf("num10: %i\n", unsafe_cast<u32>num10)
 
-    let num11 i8 = -256/2 + 1;
+    num11 i8 := -256/2 + 1;
     io.printf("num11: %d\n", unsafe_cast<i32>num11)
     num11 = num11/4
     io.printf("num11: %i\n", unsafe_cast<i32>num11)
@@ -46,14 +46,14 @@ division :: fn() {
 // the idea with these 4 functions is that 255 and -127 are effectively the same number (because two's complement)
 // we want to make sure that greater_than, etc. are distinguishing between signed and unsigned
 greater_than :: fn() {
-    let num12 u8 = 1
+    num12 u8 := 1
     if num12>255 {
         io.printf("yes num12\n")
     } else {
         io.printf("no num12\n")
     }
 
-    let num13 i8 = 1
+    num13 i8 := 1
     if num13>(-127) {
         io.printf("yes num13\n")
     } else {
@@ -62,14 +62,14 @@ greater_than :: fn() {
 }
 
 greater_than_or_equal :: fn() {
-    let num14 u8 = 1
+    num14 u8 := 1
     if num14>=255 {
         io.printf("yes num14\n")
     } else {
         io.printf("no num14\n")
     }
 
-    let num15 i8 = 1
+    num15 i8 := 1
     if num15>=(-127) {
         io.printf("yes num15\n")
     } else {
@@ -78,14 +78,14 @@ greater_than_or_equal :: fn() {
 }
 
 less_than :: fn() {
-    let num16 u8 = 1
+    num16 u8 := 1
     if num16<255 {
         io.printf("yes num16\n")
     } else {
         io.printf("no num16\n")
     }
 
-    let num17 i8 = 1
+    num17 i8 := 1
     if num17<(-127) {
         io.printf("yes num17\n")
     } else {
@@ -94,14 +94,14 @@ less_than :: fn() {
 }
 
 less_than_or_equal :: fn() {
-    let num18 u8 = 1
+    num18 u8 := 1
     if num18<=255 {
         io.printf("yes num18\n")
     } else {
         io.printf("no num18\n")
     }
 
-    let num19 i8 = 1
+    num19 i8 := 1
     if num19<=(-127) {
         io.printf("yes num19\n")
     } else {
@@ -110,45 +110,45 @@ less_than_or_equal :: fn() {
 }
 
 bit_shift_right :: fn() {
-    let num20 u8 = 0
+    num20 u8 := 0
     io.printf("num20: %d\n", num20<<1)
 
-    let num21 u8 = 1
+    num21 u8 := 1
     io.printf("num21: %d\n", num21<<1)
 
-    let num22 u8 = 1
+    num22 u8 := 1
     io.printf("num22: %d\n", num22<<2)
 
-    let num23 u8 = 1
+    num23 u8 := 1
     io.printf("num23: %d\n", num23<<8)
 }
 
 bit_shift_left :: fn() {
-    let num24 u8 = 0
+    num24 u8 := 0
     io.printf("num24: %d\n", num24>>1)
 
-    let num25 u8 = 1
+    num25 u8 := 1
     io.printf("num25: %d\n", num25>>1)
 
-    let num26 u8 = 128
+    num26 u8 := 128
     io.printf("num26: %d\n", num26>>2)
 }
 
 main :: fn() i32 {
-    let num1 u32 = 8 
-    let num2 u32 = 3 
+    num1 u32 := 8 
+    num2 u32 := 3 
     io.printf("%d\n", num1 + num2)
 
-    let num3 u32 = 3*4 
+    num3 u32 := 3*4 
     io.printf("%d\n", num3)
 
-    let num4 u32 = 3*get_unsigned() 
+    num4 u32 := 3*get_unsigned() 
     io.printf("%d\n", num4)
 
-    let num6 i8 = -1
-    let num6_i32 i32 = unsafe_cast<i32>num6
+    num6 i8 := -1
+    num6_i32 i32 := unsafe_cast<i32>num6
     io.printf("num6_i32: %d\n", num6_i32)
-    let num6_u32 u32 = unsafe_cast<u32>num6
+    num6_u32 u32 := unsafe_cast<u32>num6
     io.printf("num6_u32: %d\n", num6_u32)
 
     unsafe_cast_and_modulo()
@@ -161,7 +161,7 @@ main :: fn() i32 {
     bit_shift_right()
     bit_shift_left()
 
-    //let num7 u8 = 255;
+    //num7 u8 := 255;
     //printf("num7: %d\n", num7)
     //num7 = num7%4
     //printf("num7: %d\n", num7)

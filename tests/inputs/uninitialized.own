@@ -10,24 +10,24 @@ Token :: struct {
 }
 
 aux_1arg :: fn(arg i32) i32 {
-    let num i32 = arg
+    num i32 := arg
     return arg
 }
 
 wrong1 :: fn() i32 {
-    let status i32
+    status i32 :
     return status
 }
 
 wrong2 :: fn() i32 {
-    let status i32
+    status i32 :
     aux_1arg(status)
     status = 8
     return status
 }
 
 right1 :: fn() i32 {
-    let status i32
+    status i32 :
     if 1 {
         status = 1
     } else {
@@ -37,7 +37,7 @@ right1 :: fn() i32 {
 }
 
 wrong3 :: fn() i32 {
-    let status i32
+    status i32 :
     if 1 {
     } else {
         status = 4
@@ -46,8 +46,8 @@ wrong3 :: fn() i32 {
 }
 
 wrong4 :: fn() i32 {
-    let way Way = .way1
-    let status i32
+    way Way := .way1
+    status i32 :
     switch way {
         case .way1: break
         case .way2: status = 4
@@ -56,36 +56,36 @@ wrong4 :: fn() i32 {
 }
 
 wrong5 :: fn() i32 {
-    let token Token
+    token Token :
     return token.num
 }
 
 // num var in wrong6 must have the same name as num member in Token struct to test that they do not collide
 wrong6 :: fn() i32 {
     {
-        let num i32 = 0
+        num i32 := 0
     }
 
     {
-        let num i32
-        let num2 i32 = num
+        num i32 :
+        num2 i32 := num
     }
 
     return 0
 }
 
 wrong7 :: fn() i32 {
-    let num i32
+    num i32 :
 
     for 1 {
-        let num2 i32 = num
+        num2 i32 := num
     }
 
     return 0
 }
 
 wrong8 :: fn() i32 {
-    let status i32
+    status i32 :
     return status
 }
 
@@ -104,6 +104,6 @@ main :: fn() i32 {
 }
 
 right2 :: fn() {
-    let num i32 @maybe_uninit
-    let num2 = num
+    num i32 : @maybe_uninit
+    num2 := num
 }

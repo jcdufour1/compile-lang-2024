@@ -12,7 +12,7 @@ do_nothing :: fn() {
 }
 
 main :: fn() i32 {
-    let num Bool = switch (is_true()) {
+    num Bool := switch (is_true()) {
         case .false: break .true
         case .true: break 1
     }

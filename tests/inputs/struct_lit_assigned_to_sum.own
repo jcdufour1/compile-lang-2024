@@ -11,6 +11,6 @@ Thing :: struct {
 }
 
 main :: fn() i32 {
-    let token Token = {.number = 23, .string = "bye"}
+    token Token := {.number = 23, .string = "bye"}
     return 0
 }

@@ -15,7 +15,7 @@ get_signed :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let num1 u32 = get_signed()
-    let num2 u8 = get_signed()
+    num1 u32 := get_signed()
+    num2 u8 := get_signed()
     return 0
 }

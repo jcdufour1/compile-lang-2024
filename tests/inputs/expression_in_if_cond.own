@@ -25,7 +25,7 @@ test_return_msg :: fn() i32 {
 }
 
 greater_or_equal :: fn() {
-    let twenty_four i32 = 24
+    twenty_four i32 := 24
 
     if 8*3 >= 24 {
         io.puts("yes2.30");
@@ -49,7 +49,7 @@ greater_or_equal :: fn() {
 }
 
 less_or_equal :: fn() {
-    let twenty_four i32 = 24
+    twenty_four i32 := 24
 
     if 8*3 <= 24 {
         io.puts("yes2.2");
@@ -124,9 +124,9 @@ main :: fn() i32 {
         io.puts("no5");
     }
 
-    let num_yes2 i32 = 2;
-    let num_yes i32 = 1;
-    let num_no i32 = 0;
+    num_yes2 i32 := 2;
+    num_yes i32 := 1;
+    num_no i32 := 0;
     if num_yes2 {
         io.puts("yes6.2");
     }

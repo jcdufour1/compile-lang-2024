@@ -7,7 +7,7 @@ Pos :: struct {
 }
 
 main :: fn() i32 {
-    let pos: Pos = {
+    pos: Pos := {
         .file = "hello.own" .line = 87
     }
 }

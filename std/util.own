@@ -25,15 +25,15 @@ bitcast :: fn(<CastTo, From>)(item From) CastTo {
 }
 
 swap :: fn(<ItemT>)(lhs ItemT*, rhs ItemT*) {
-    let temp ItemT = *lhs
+    temp ItemT := *lhs
     *lhs = *rhs
     *rhs = temp
 }
 
 // TODO: return optional, etc.?
 alloc :: fn(<ItemT>)(count_items u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
-    let dummy ItemT* = null(<ItemT>)();
-    let buf ItemT* = unsafe_cast<ItemT*>libc.malloc(sizeof(*dummy)*count_items)
+    dummy ItemT* := null(<ItemT>)();
+    buf ItemT* := unsafe_cast<ItemT*>libc.malloc(sizeof(*dummy)*count_items)
     assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
@@ -53,7 +53,7 @@ assert :: def = rt.assert
 
 // NOTE: cstr_free should be called on the returned string later
 str_to_cstr :: fn(str coll.Str) u8* {
-    let cstr coll.Darr(<u8>) = coll.darr_new(<u8>)(str)
+    cstr coll.Darr(<u8>) := coll.darr_new(<u8>)(str)
     coll.darr_append(&cstr, '\0')
     return cstr.buf
 }
@@ -67,7 +67,7 @@ slice_from_cstr :: fn(cstr u8*) Str {
 }
 
 zero :: fn(<ItemT>)() ItemT {
-    let item ItemT @maybe_uninit
+    item ItemT : @maybe_uninit
     libc.memset(unsafe_cast<opaque*>&item, 0, sizeof(item))
     return item
 }

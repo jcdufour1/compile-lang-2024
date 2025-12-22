@@ -72,6 +72,8 @@ static PARSE_STATUS parse_block(
     Uast_stmt_darr init_children
 );
 
+static bool parse_lang_type_struct_ex(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id, bool print_error);
+
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id);
 
 static PARSE_EXPR_STATUS parse_expr(
@@ -483,8 +485,22 @@ static bool starts_with_function_call(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_SYMBOL) && try_consume(NULL, &tokens, TOKEN_OPEN_PAR);
 }
 
-static bool starts_with_variable_def(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_LET;
+static bool starts_with_variable_def(Tk_view tokens, Scope_id scope_id) {
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
+        return false;
+    }
+
+    Tk_view saved_tokens = tokens;
+    Parse_state saved_point = parse_state;
+
+    Ulang_type dummy = {0};
+    parse_lang_type_struct_ex(&dummy, &tokens, scope_id, false);
+    bool status = try_consume(NULL, &tokens, TOKEN_COLON) && !try_consume(NULL, &tokens, TOKEN_COLON);
+
+    // TODO: this restore could cause slower compilation times. In the future, do refactoring to minimize
+    //   restores?
+    parse_state_restore(saved_point, saved_tokens);
+    return status;
 }
 
 static bool starts_with_struct_literal(Tk_view tokens) {
@@ -526,7 +542,7 @@ static void sync(Tk_view* tokens) {
             starts_with_for(*tokens) ||
             starts_with_break(*tokens) ||
             starts_with_function_call(*tokens) ||
-            starts_with_variable_def(*tokens)
+            starts_with_variable_def(*tokens, SCOPE_TOP_LEVEL /* TODO */)
         ) {
             return;
         }
@@ -1091,8 +1107,6 @@ static bool parse_lang_type_struct_atom(Pos* pos, Uname* lang_type_name, int16_t
 
     return true;
 }
-
-static bool parse_lang_type_struct_ex(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id, bool print_error);
 
 // type will be parsed if possible
 static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens, Scope_id scope_id, bool print_error) {
@@ -1767,10 +1781,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     Scope_id scope_id
 ) {
     (void) require_let;
-    if (!try_consume(NULL, tokens, TOKEN_LET)) {
-        assert(!require_let);
-    }
-
     Token dummy = {0};
     bool is_using = try_consume(&dummy, tokens, TOKEN_USING);
 
@@ -1822,6 +1832,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             }
         }
 
+        try_consume(NULL, tokens, TOKEN_COLON);
         Attrs attrs = {0};
         if (PARSE_OK != parse_attrs(&attrs, tokens)) {
             return PARSE_ERROR;
@@ -1849,6 +1860,11 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             msg_todo("using in this situation", var_def->pos);
             return PARSE_ERROR;
         }
+    }
+
+    Token colon_before_eq_tk = {0};
+    if (require_let && !try_consume(&colon_before_eq_tk, tokens, TOKEN_COLON)) {
+        //todo();
     }
 
     return PARSE_OK;
@@ -2756,9 +2772,23 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
     Token name_tk = {0};
     Token colon_tk = {0};
+
+    if (starts_with_variable_def(*tokens, scope_id)) {
+        Uast_variable_def* var_def = NULL;
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_def_wrap(uast_variable_def_wrap(var_def));
+        return PARSE_OK;
+    }
+
     unwrap(try_consume(&name_tk, tokens, TOKEN_SYMBOL));
     unwrap(try_consume(&colon_tk, tokens, TOKEN_COLON));
-    try_consume(NULL, tokens, TOKEN_COLON);
+    Token ex_colon_tk = {0};
+    if (!try_consume(&ex_colon_tk, tokens, TOKEN_COLON)) {
+        msg_todo("only one `:` here", ex_colon_tk.pos);
+        return PARSE_ERROR;
+    }
 
     if (starts_with_struct_def_in_def(*tokens)) {
         Uast_struct_def* struct_def = NULL;
@@ -2800,12 +2830,6 @@ static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope
         if (PARSE_OK != parse_function_def(result, tokens, false, scope_id, name_tk)) {
             return PARSE_ERROR;
         }
-    } else if (starts_with_variable_def(*tokens)) {
-        Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
-            return PARSE_ERROR;
-        }
-        *result = uast_def_wrap(uast_variable_def_wrap(var_def));
     } else {
         msg_parser_expected(
             tk_view_front(*tokens), "",
@@ -2883,7 +2907,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_expr_wrap(uast_block_wrap(block_def));
-    } else if (starts_with_variable_def(*tokens)) {
+    } else if (starts_with_variable_def(*tokens, scope_id)) {
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, false, (Ulang_type) {0}, scope_id)) {
             return PARSE_EXPR_ERROR;
@@ -2928,6 +2952,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     try_consume_newlines(tokens);
     if (!prev_is_newline()) {
+        // TODO: change to "expected newline or semicolon after statement"
         msg(
             DIAG_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
             "expected newline after statement\n"

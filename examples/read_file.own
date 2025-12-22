@@ -4,7 +4,7 @@ util :: import = std.util
 
 read :: fn(file io.File) {
     for 1 {
-        let line = io.getline(file)?
+        line := io.getline(file)?
         defer coll.darr_free(&line)
 
         io.print_str(coll.darr_slice(line), "")

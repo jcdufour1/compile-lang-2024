@@ -1,9 +1,9 @@
 
 
 main :: fn() i32 {
-    let string u8* = "hello"
+    string u8* := "hello"
 
-    let ch u8 = string[0
+    ch u8 := string[0
 
     return 0
 }

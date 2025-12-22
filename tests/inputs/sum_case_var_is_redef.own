@@ -12,7 +12,7 @@ opt_int_print :: fn(num Opt_int) {
 }
 
 main :: fn() i32 {
-    let num Opt_int = Opt_int.some(76)
+    num Opt_int := Opt_int.some(76)
     opt_int_print(num)
     return 0
 }

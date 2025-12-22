@@ -5,6 +5,6 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token Token = .num()
+    token Token := .num()
     return 0
 }

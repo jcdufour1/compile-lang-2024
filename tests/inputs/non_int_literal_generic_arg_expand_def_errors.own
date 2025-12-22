@@ -26,7 +26,7 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token Token = .num(7)
+    token Token := .num(7)
     thing1(<{6}>)()
     thing2(<{6}>)()
     thing3(<{6}>)()
@@ -34,7 +34,7 @@ main :: fn() i32 {
     thing5(<{6, 4.5}>)()
     thing5(<{}>)()
     thing6(<{5}>)()
-    let incorrect_token Token(<{5}>)
+    incorrect_token Token(<{5}>) :
 
     return 0
 }

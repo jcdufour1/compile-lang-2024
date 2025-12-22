@@ -18,7 +18,7 @@ fn() i32 {
         "hello"
     )
 
-    let token Token = {
+    token Token := {
         .num = 8,
         .str = "bye"
     }
@@ -28,7 +28,7 @@ fn() i32 {
     )
 
 
-    let node Node = .str(
+    node Node := .str(
         "bye"
     )
     if let .str(
@@ -38,8 +38,8 @@ fn() i32 {
             string
         )
     }
-    if let 
-    .str(
+    if 
+    let .str(
         string
     ) = node {
         io.print_str(

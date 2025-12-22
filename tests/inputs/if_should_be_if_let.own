@@ -7,7 +7,7 @@ Optional :: enum(<ItemT>) {
 }
 
 main :: fn() i32 {
-    let opt Optional(<i32>) = .some(3)
+    opt Optional(<i32>) := .some(3)
 
     if .some(num) = opt {
         io.print_str("yes\n")

@@ -2,7 +2,7 @@ io :: import = std.io
 
 
 main :: fn() i32 {
-    let ch u8 = '\n'
+    ch u8 := '\n'
 
     ch = '\a'
     ch = '\b'

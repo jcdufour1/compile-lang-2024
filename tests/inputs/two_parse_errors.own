@@ -1,7 +1,7 @@
 
 main :: fn() {
-    let num1: i32 = 
-    let num2: i32 = 92
+    num1: i32 := 
+    num2: i32 := 92
     num3: i32 = 12
     return 0
 }

@@ -6,7 +6,7 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token Token = .open_par
+    token Token := .open_par
     switch token {
         case .num(num): break
         case .open_par(): break

@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/invalid_hex.own:3:19:[1;31merror[0;39m:invalid hex literal
+tests/inputs/invalid_hex.own:3:16:[1;31merror[0;39m:invalid hex literal
      2 | main :: fn() i32 {
-     3 |     let num i32 = 0xj87
-       |                   ^
+     3 |     num i32 := 0xj87
+       |                ^
      4 | }
 
 compile::return_code 1

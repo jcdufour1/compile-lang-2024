@@ -3,6 +3,6 @@ println :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let string: u8* = "hello"
+    string: u8* := "hello"
     println()
 }

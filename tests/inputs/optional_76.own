@@ -26,8 +26,8 @@ Token :: enum {
 
 main :: fn() i32 {
     // Optional is undefined in this file
-    let number Optional(<i32>) = .some(84)
-    let result2 Result(<Token, ParseError>)
+    number Optional(<i32>) := .some(84)
+    result2 Result(<Token, ParseError>) :
     return 0
 }
 

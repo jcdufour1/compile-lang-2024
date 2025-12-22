@@ -3,7 +3,7 @@ util :: import = std.util
 coll :: import = std.collections
 
 main :: fn() i32 {
-    let string Str = "num = 8"
+    string Str := "num = 8"
 
     io.printf("num2 = %d\n", 10)
     io.own_printf("hello\n")

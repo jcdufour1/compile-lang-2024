@@ -22,7 +22,7 @@ add_i32 :: fn(lhs i32, rhs i32) i32 {
 }
 
 main :: fn() i32 {
-    let num i32 = 78
+    num i32 := 78
     io.printf("%d\n", add(<i32>)(num, 33))
     io.printf("%d\n", add_i32(num, 34))
 

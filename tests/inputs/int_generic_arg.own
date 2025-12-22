@@ -9,7 +9,7 @@ print_max :: fn(<max_cap ''int>)(token Token(<max_cap>)) {
 }
 
 main :: fn() i32 {
-    let token Token(<8>) = .num(7)
+    token Token(<8>) := .num(7)
     print_max(<8>)(token)
     print_max(token)
     io.print_int(token.max_cap)

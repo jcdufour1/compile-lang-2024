@@ -28,10 +28,10 @@ Arr :: struct {
 }
 
 main :: fn() i32 {
-    let token Token
-    let token2 Token2
+    token Token :
+    token2 Token2 :
 
-    let arr Arr
+    arr Arr :
 
     return 0
 }

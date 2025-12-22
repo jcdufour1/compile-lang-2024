@@ -9,7 +9,7 @@ do_thing_2 :: fn(action fn(i32)void) {
 }
 
 main :: fn() i32 {
-    let callback fn()void = fn()void {
+    callback fn()void := fn()void {
         io.print_str("hello1")
     }
     do_thing(callback)

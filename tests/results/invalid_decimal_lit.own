@@ -1,20 +1,20 @@
 compile::stdout 0
 
 compile::stderr 15
-tests/inputs/invalid_decimal_lit.own:2:20:[1;31merror[0;39m:invalid decimal literal
+tests/inputs/invalid_decimal_lit.own:2:17:[1;31merror[0;39m:invalid decimal literal
      1 | main :: fn() i32 {
-     2 |     let num1 i32 = 89a
-       |                    ^
-     3 |     let num2 i32 = 7a9
-tests/inputs/invalid_decimal_lit.own:3:20:[1;31merror[0;39m:invalid decimal literal
-     2 |     let num1 i32 = 89a
-     3 |     let num2 i32 = 7a9
-       |                    ^
-     4 |     let num3 i32 = 78a9
-tests/inputs/invalid_decimal_lit.own:4:20:[1;31merror[0;39m:invalid decimal literal
-     3 |     let num2 i32 = 7a9
-     4 |     let num3 i32 = 78a9
-       |                    ^
+     2 |     num1 i32 := 89a
+       |                 ^
+     3 |     num2 i32 := 7a9
+tests/inputs/invalid_decimal_lit.own:3:17:[1;31merror[0;39m:invalid decimal literal
+     2 |     num1 i32 := 89a
+     3 |     num2 i32 := 7a9
+       |                 ^
+     4 |     num3 i32 := 78a9
+tests/inputs/invalid_decimal_lit.own:4:17:[1;31merror[0;39m:invalid decimal literal
+     3 |     num2 i32 := 7a9
+     4 |     num3 i32 := 78a9
+       |                 ^
      5 | }
 
 compile::return_code 1

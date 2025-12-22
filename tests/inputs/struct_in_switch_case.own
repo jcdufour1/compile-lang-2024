@@ -4,7 +4,7 @@ Token :: struct {
 }
 
 main :: fn() i32 {
-    let token Token = {.num = 8}
+    token Token := {.num = 8}
     switch token {
         case .num(num): break
     }

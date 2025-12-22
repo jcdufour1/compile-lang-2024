@@ -13,7 +13,7 @@ zero :: fn() i32 {
 
 main :: fn() i32 {
     {
-        let thing u1 = 2 < 7
+        thing u1 := 2 < 7
         if thing {
             io.printf("yes1\n")
         } else {
@@ -22,7 +22,7 @@ main :: fn() i32 {
     }
 
     {
-        let thing u1 = 7 < 2
+        thing u1 := 7 < 2
         if thing {
             io.printf("no2\n")
         } else {

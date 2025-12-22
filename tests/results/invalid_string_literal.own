@@ -1,40 +1,40 @@
 compile::stdout 0
 
 compile::stderr 35
-tests/inputs/invalid_string_literal.own:3:24:[1;31merror[0;39m:expected two chars after `\x` in string literal
+tests/inputs/invalid_string_literal.own:3:21:[1;31merror[0;39m:expected two chars after `\x` in string literal
      2 | main :: fn() i32 {
-     3 |     let str1 = "sdfasd\x"
+     3 |     str1 := "sdfasd\x"
+       |                     ^
+     4 |     str2 := "sdfasd\x1"
+tests/inputs/invalid_string_literal.own:4:21:[1;31merror[0;39m:expected two chars after `\x` in string literal
+     3 |     str1 := "sdfasd\x"
+     4 |     str2 := "sdfasd\x1"
+       |                     ^
+     5 |     str3 := "sdfasd\x1g"
+tests/inputs/invalid_string_literal.own:5:23:[1;31merror[0;39m:char after `\x` is not hex
+     4 |     str2 := "sdfasd\x1"
+     5 |     str3 := "sdfasd\x1g"
+       |                       ^
+     6 |     str4 := "sdfasd\xg1"
+tests/inputs/invalid_string_literal.own:6:22:[1;31merror[0;39m:char after `\x` is not hex
+     5 |     str3 := "sdfasd\x1g"
+     6 |     str4 := "sdfasd\xg1"
+       |                      ^
+     7 |     str5 := "sdfasd\o16"
+tests/inputs/invalid_string_literal.own:7:21:[1;31merror[0;39m:expected three chars after `\o` in string literal
+     6 |     str4 := "sdfasd\xg1"
+     7 |     str5 := "sdfasd\o16"
+       |                     ^
+     8 |     str6 := "sdfasd\o168"
+tests/inputs/invalid_string_literal.own:8:24:[1;31merror[0;39m:char after `\o` is not octal
+     7 |     str5 := "sdfasd\o16"
+     8 |     str6 := "sdfasd\o168"
        |                        ^
-     4 |     let str2 = "sdfasd\x1"
-tests/inputs/invalid_string_literal.own:4:24:[1;31merror[0;39m:expected two chars after `\x` in string literal
-     3 |     let str1 = "sdfasd\x"
-     4 |     let str2 = "sdfasd\x1"
-       |                        ^
-     5 |     let str3 = "sdfasd\x1g"
-tests/inputs/invalid_string_literal.own:5:26:[1;31merror[0;39m:char after `\x` is not hex
-     4 |     let str2 = "sdfasd\x1"
-     5 |     let str3 = "sdfasd\x1g"
-       |                          ^
-     6 |     let str4 = "sdfasd\xg1"
-tests/inputs/invalid_string_literal.own:6:25:[1;31merror[0;39m:char after `\x` is not hex
-     5 |     let str3 = "sdfasd\x1g"
-     6 |     let str4 = "sdfasd\xg1"
-       |                         ^
-     7 |     let str5 = "sdfasd\o16"
-tests/inputs/invalid_string_literal.own:7:24:[1;31merror[0;39m:expected three chars after `\o` in string literal
-     6 |     let str4 = "sdfasd\xg1"
-     7 |     let str5 = "sdfasd\o16"
-       |                        ^
-     8 |     let str6 = "sdfasd\o168"
-tests/inputs/invalid_string_literal.own:8:27:[1;31merror[0;39m:char after `\o` is not octal
-     7 |     let str5 = "sdfasd\o16"
-     8 |     let str6 = "sdfasd\o168"
-       |                           ^
      9 | 
-tests/inputs/invalid_string_literal.own:10:18:[1;31merror[0;39m:unmatched `"`
+tests/inputs/invalid_string_literal.own:10:15:[1;31merror[0;39m:unmatched `"`
      9 | 
-    10 |     let str100 = "sdfasd\x91\"
-       |                  ^
+    10 |     str100 := "sdfasd\x91\"
+       |               ^
     11 | 
 
 compile::return_code 1

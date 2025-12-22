@@ -9,7 +9,7 @@ print_max :: fn(<max_cap ''i32>)(token Token(<max_cap>)) {
 }
 
 main :: fn() i32 {
-    let eight i32 = 8
+    eight i32 := 8
 
     print_max(<eight>)(token2)
 

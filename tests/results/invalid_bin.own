@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/invalid_bin.own:4:19:[1;31merror[0;39m:invalid bin literal
+tests/inputs/invalid_bin.own:4:16:[1;31merror[0;39m:invalid bin literal
      3 | main :: fn() i32 {
-     4 |     let num i32 = 0b2001
-       |                   ^
+     4 |     num i32 := 0b2001
+       |                ^
      5 |     return 0
 
 compile::return_code 1

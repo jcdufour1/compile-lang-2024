@@ -6,13 +6,13 @@ tests/inputs/int_generic_sema_errors.own:12:40:[1;31merror[0;39m:type `max_cap
     12 | print_max_incorrect :: fn(token Token(<max_cap>)) {
        |                                        ^
     13 |     io.print_int(token.max_cap)
-tests/inputs/int_generic_sema_errors.own:19:23:[1;31merror[0;39m:symbol of variable is not allowed here
+tests/inputs/int_generic_sema_errors.own:19:19:[1;31merror[0;39m:symbol of variable is not allowed here
     18 | 
-    19 |     let token1 Token(<eight>) = .num(7)
-       |                       ^
-    20 |     let token2 Token(<8>) = .num(7)
+    19 |     token1 Token(<eight>) := .num(7)
+       |                   ^
+    20 |     token2 Token(<8>) := .num(7)
 tests/inputs/int_generic_sema_errors.own:21:20:[1;31merror[0;39m:argument is of type `Token(<8>)`, but the corresponding parameter `token` is of type `Token(<9>)`
-    20 |     let token2 Token(<8>) = .num(7)
+    20 |     token2 Token(<8>) := .num(7)
     21 |     print_max(<9>)(token2)
        |                    ^
     22 |     print_max_incorrect(token2)

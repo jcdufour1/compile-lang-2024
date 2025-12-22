@@ -11,6 +11,6 @@ Token :: struct {
 }
 
 main :: fn() i32 {
-    let div: Div = {.numerator = 87, .denominatordaklsjfkjskf = 77}
+    div: Div := {.numerator = 87, .denominatordaklsjfkjskf = 77}
     return 0
 }

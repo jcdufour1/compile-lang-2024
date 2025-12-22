@@ -29,7 +29,7 @@ using_struct_concise :: fn(using token Token) {
 
 main :: fn() i32 {
     print_str("hello")
-    let token Token = {8, "world"}
+    token Token := {8, "world"}
     using_struct(token)
     token = {65, "computer"}
     using_struct_concise(token)

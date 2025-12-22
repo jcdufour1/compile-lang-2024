@@ -52,14 +52,14 @@ LlvmType :: enum {
 }
 
 main :: fn() i32 {
-    let token_type TokenType = TokenType.number
+    token_type TokenType := TokenType.number
     io.printf("%d\n", token_type);
 
     token_type = TokenType.string
     io.printf("%d\n", token_type);
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()}
+        token Token := {.number, 0, util.null(<u8>)()}
         token.kind = TokenType.number
         token.number_data = 87
         token.string_data = "hello"
@@ -68,7 +68,7 @@ main :: fn() i32 {
     }
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()} 
+        token Token := {.number, 0, util.null(<u8>)()} 
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"
@@ -77,7 +77,7 @@ main :: fn() i32 {
     }
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()}
+        token Token := {.number, 0, util.null(<u8>)()}
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"

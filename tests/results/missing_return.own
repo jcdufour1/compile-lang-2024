@@ -19,7 +19,7 @@ tests/inputs/missing_return.own:5:14:[1;34mnote[0;39m:function return type `i3
      4 | 
      5 | main :: fn() i32 {
        |              ^
-     6 |     let string: u8* = "hello"
+     6 |     string: u8* := "hello"
 
 compile::return_code 1
 

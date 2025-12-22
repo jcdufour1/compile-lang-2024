@@ -38,10 +38,10 @@ token_print :: fn(token Token) {
 }
 
 main :: fn() i32 {
-    let num i32
-    let string u8*
-    let token_type TokenType
-    let token Token
+    num i32 :
+    string u8* :
+    token_type TokenType :
+    token Token :
 
     string, num = get_data()
     io.printf("%d %s\n", num, string);

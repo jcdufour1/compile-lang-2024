@@ -20,7 +20,7 @@ abs :: fn(<NumT>)(num NumT) NumT {
 }
 
 pow :: fn(<BaseT, ExpT>)(base BaseT, exponent ExpT) BaseT {
-    let result BaseT = unsafe_cast<BaseT>1
+    result BaseT := unsafe_cast<BaseT>1
     for idx ExpT in 0..exponent {
         result *= base
     }

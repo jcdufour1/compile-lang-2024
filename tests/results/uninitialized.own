@@ -2,12 +2,12 @@ compile::stdout 0
 
 compile::stderr 40
 tests/inputs/uninitialized.own:19:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    18 |     let status i32
+    18 |     status i32 :
     19 |     return status
        |            ^
     20 | }
 tests/inputs/uninitialized.own:24:14:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    23 |     let status i32
+    23 |     status i32 :
     24 |     aux_1arg(status)
        |              ^
     25 |     status = 8
@@ -22,22 +22,22 @@ tests/inputs/uninitialized.own:55:12:[1;31merror[0;39m:symbol `status` is used
        |            ^
     56 | }
 tests/inputs/uninitialized.own:60:17:[1;31merror[0;39m:symbol `token` is used uninitialized on some or all code paths; note that struct must be initialized with a struct literal or function call (individual member accesses do not satisfy initialization requirements)
-    59 |     let token Token
+    59 |     token Token :
     60 |     return token.num
        |                 ^
     61 | }
-tests/inputs/uninitialized.own:71:24:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
-    70 |         let num i32
-    71 |         let num2 i32 = num
-       |                        ^
+tests/inputs/uninitialized.own:71:21:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+    70 |         num i32 :
+    71 |         num2 i32 := num
+       |                     ^
     72 |     }
-tests/inputs/uninitialized.own:81:24:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
+tests/inputs/uninitialized.own:81:21:[1;31merror[0;39m:symbol `num` is used uninitialized on some or all code paths
     80 |     for 1 {
-    81 |         let num2 i32 = num
-       |                        ^
+    81 |         num2 i32 := num
+       |                     ^
     82 |     }
 tests/inputs/uninitialized.own:89:12:[1;31merror[0;39m:symbol `status` is used uninitialized on some or all code paths
-    88 |     let status i32
+    88 |     status i32 :
     89 |     return status
        |            ^
     90 | }

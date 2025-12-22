@@ -9,9 +9,9 @@ is_false :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let should_loop i32 = 1
+    should_loop i32 := 1
     for should_loop {
-        let temp i32 = 79
+        temp i32 := 79
         io.printf("yes1\n")
         io.printf("%d\n", temp)
         should_loop = 0
@@ -26,7 +26,7 @@ main :: fn() i32 {
         return 1
     }
     for 1 {
-        let temp i32 = 80
+        temp i32 := 80
         io.printf("yes2\n")
         io.printf("%d\n", temp)
         break
@@ -37,7 +37,7 @@ main :: fn() i32 {
         return 1
     }
     for is_true() {
-        let temp i32 = 81
+        temp i32 := 81
         io.printf("yes3\n")
         io.printf("%d\n", temp)
         break

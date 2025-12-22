@@ -1,7 +1,7 @@
 
 
 sub :: fn(<NumType>)(lhs NumType, rhs NumType) {
-    let result NumType = lhs - rhs
+    result NumType := lhs - rhs
     return ressff
 }
 

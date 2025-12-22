@@ -10,7 +10,7 @@ Thing :: struct {
 }
 
 main :: fn() i32 {
-    let thing Thing = {.number = 23, .string = "bye"}
-    let token1 Token = thing
+    thing Thing := {.number = 23, .string = "bye"}
+    token1 Token := thing
     return 0
 }

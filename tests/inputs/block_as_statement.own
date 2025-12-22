@@ -2,16 +2,16 @@ io :: import = std.io
 
 
 main :: fn() i32 {
-    let upper_num i32 = 75
+    upper_num i32 := 75
     {
-        let num i32 = 8
+        num i32 := 8
         io.printf("%d\n", num)
         io.printf("%d\n", upper_num)
         upper_num = 21
     }
 
     {
-        let num i32 = 9
+        num i32 := 9
         io.printf("%d\n", num)
         io.printf("%d\n", upper_num)
     }

@@ -9,7 +9,7 @@ placeholder :: fn() {
 }
 
 main :: fn() i32 {
-    let token Token(<i32>) = Token(<i32>).number(54)
+    token Token(<i32>) := Token(<i32>).number(54)
 
     switch token {
         case Token(<i64>).number(num): placeholder()

@@ -36,10 +36,10 @@ add_one_or_two_default_2 :: fn(<ItemType>)(lhs util.Optional(<ItemType>), rhs ut
 main :: fn() i32 {
     io.printf("test 100: got number %d\n", add_one_or_two_default_2(835, .some(11)))
 
-    let opt110 util.Optional(<i32>) = .some(838)
+    opt110 util.Optional(<i32>) := .some(838)
     io.printf("test 110: got number %d\n", add_one_or_two_default_2(835, opt110))
 
-    let opt111 util.Optional(<i32>) = .some(838)
+    opt111 util.Optional(<i32>) := .some(838)
     io.printf("test 111: got number %d\n", add_one_or_two_default_2(<u32>)(.some(14), opt111))
     return 0
 }

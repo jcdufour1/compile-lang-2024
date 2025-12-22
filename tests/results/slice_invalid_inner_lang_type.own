@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/slice_invalid_inner_lang_type.own:6:27:[1;31merror[0;39m:type `Thing` is not defined
+tests/inputs/slice_invalid_inner_lang_type.own:6:23:[1;31merror[0;39m:type `Thing` is not defined
      5 | main :: fn() i32 {
-     6 |     let slice coll.Slice(<Thing>) = [98, 43]
-       |                           ^
+     6 |     slice coll.Slice(<Thing>) := [98, 43]
+       |                       ^
      7 |     return 0
 
 compile::return_code 1

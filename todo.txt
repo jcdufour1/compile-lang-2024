@@ -126,9 +126,19 @@ for generics:
 - fix uninitialized warning with gcc (could be gcc bug?)
 - add methods
 - todo should call local_exit?
-- use odin style syntax for variable defs, etc.?
 - def should be defined this way?:
     EOF :: def -1
+- remove let keyword from syntax file
+- remove let token type
+- this error message should say "did you mean to add `:` after `Raw1`"
+    - tests/inputs/sizeof.own:154:10:error:expected newline after statement
+       153 |
+       154 |     raw1 Raw1
+- add token `::`?
+- add token `:=`?
+- change `if let` to use `:=`
+- "num i32 @maybe_uninit :" should be written as "num i32 : @maybe_uninit"
+
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -180,6 +190,7 @@ continue(<thing>)
 - use libclang to get size of c types (and use size of c types stored locally in project as fallback)
 - use c89 for the c backend instead of c99 for better compatibility
 - stop using todo macro in main branch?
+
 
 
 

@@ -29,7 +29,7 @@ fun2 :: fn() i32 {
 fun3 :: fn() i32 {
     //for idx i32 in 0..3 {
     //}
-    let num i32 = 0
+    num i32 := 0
     if 1 {
         defer num = 3
         num = 2
@@ -54,7 +54,7 @@ fun4 :: fn() i32 {
 
 fun5 :: fn() i32 {
     defer io.printf("at very end yes 5.1\n")
-    let num i32 = 0
+    num i32 := 0
     for 1 {
         defer num = 5
         num = 2
@@ -70,7 +70,7 @@ fun5 :: fn() i32 {
 
 fun6 :: fn() i32 {
     defer io.printf("at very end yes 6.1\n")
-    let num i32 = 0
+    num i32 := 0
     for 1 {
         if 0 {
             defer io.printf("no 6.8")
@@ -96,7 +96,7 @@ fun6 :: fn() i32 {
 fun7 :: fn() i32 {
     defer io.printf("at very end yes 7.1\n")
     io.printf("yes 7.2\n")
-    let num i32 = 0
+    num i32 := 0
     for 1 {
         if num == 2 {
             break
@@ -127,7 +127,7 @@ fun7 :: fn() i32 {
 
 fun8 :: fn() i32 {
     defer io.printf("at very end yes 8.1\n")
-    let num i32 = 0
+    num i32 := 0
     for idx i32 in 0..2 {
         for idx_2 i32 in 0..2 {
             if 0 {
@@ -154,7 +154,7 @@ fun8 :: fn() i32 {
 
 fun9 :: fn() i32 {
     defer io.printf("at very end yes 9.1\n")
-    let num i32 = 0
+    num i32 := 0
     for idx i32 in 0..2 {
         for idx_2 i32 in 0..2 {
             if 0 {

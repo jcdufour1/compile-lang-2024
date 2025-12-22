@@ -1,0 +1,2 @@
+:args */*.own 
+:argdo %s/let \(\w*\) \(\w*\*()<>\.\) = /\1 \2 := /ge | update

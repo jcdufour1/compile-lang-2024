@@ -25,10 +25,10 @@ get_num :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let token Token = get_token()
+    token Token := get_token()
     io.printf("%s %d %s\n", token.file, token.line, token.str_data.data)
 
-    let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = {.data = "bye", .count = 3}})
+    line i32 := get_line({.file = "second_file.txt", .line = get_num(), .str_data = {.data = "bye", .count = 3}})
     io.printf("%d\n", line)
 
     return 0

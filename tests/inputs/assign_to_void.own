@@ -3,6 +3,6 @@ get_void :: fn() {
 }
 
 main :: fn() i32 {
-    let num = get_void()
+    num := get_void()
     return 0
 }

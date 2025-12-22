@@ -28,13 +28,13 @@ argv :: fn() Str[] {
 }
 
 fgetc :: fn(file File) u8? {
-    let ch i32 = libc.fgetc(file.file)
+    ch i32 := libc.fgetc(file.file)
     if ch == libc.EOF => return .none
     return .some(unsafe_cast<u8>ch)
 }
 
 getline :: fn(file File, delim u8 = '\n') coll.Darr(<u8>)? {
-    let new_str coll.Darr(<u8>) = coll.darr_new(<u8>)()
+    new_str coll.Darr(<u8>) := coll.darr_new(<u8>)()
     for 1 {
         if let .some(ch) = fgetc(file) {
             coll.darr_append(&new_str, ch)
@@ -49,12 +49,12 @@ getline :: fn(file File, delim u8 = '\n') coll.Darr(<u8>)? {
 
 // TODO: return Result instead of Optional to specify the reason for open_file failing
 open_file :: fn(file_path Str, options Str) File? {
-    let cstr_path u8* = util.str_to_cstr(file_path)
+    cstr_path u8* := util.str_to_cstr(file_path)
     defer util.cstr_free(cstr_path)
-    let cstr_opts u8* = util.str_to_cstr(options)
+    cstr_opts u8* := util.str_to_cstr(options)
     defer util.cstr_free(cstr_opts)
     
-    let ptr opaque* = libc.fopen(cstr_path, cstr_opts)
+    ptr opaque* := libc.fopen(cstr_path, cstr_opts)
     if ptr == util.null(<opaque>)() => return .none
     return .some({ptr})
 }
@@ -76,13 +76,13 @@ print_str :: fn(str coll.Str, end coll.Str = "\n") {
 }
 
 print_float :: fn(<NumT>)(num NumT, end coll.Str = "\n") {
-    let cond u1 = num < 0.1 // this condition is to give errors for using non float type (for now)
+    cond u1 := num < 0.1 // this condition is to give errors for using non float type (for now)
     own_printf("%f", num)
     print_str_internal__(end)
 }
 
 print_int :: fn(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, line i32 = #line, column i32 = #column) {
-    let cond u1 = num < 1 // this condition is to give errors for using non int type (for now)
+    cond u1 := num < 1 // this condition is to give errors for using non int type (for now)
     util.assert(sizeof(num) <= 8, "bit widths larger than 8 not implemented", .file = file, .line = line, .column = column)
     own_printf("%lld", unsafe_cast<i64>num)
     print_str_internal__(end)
@@ -91,15 +91,15 @@ print_int :: fn(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, li
 Print_buf_ :: def = fn(BufT, u8)void
 
 print_i32 :: fn(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
-    let actual_item i32 = *unsafe_cast<i32*>item
+    actual_item i32 := *unsafe_cast<i32*>item
 
     // TODO: use util.zero
-    let buf u8[12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    buf u8[12] := [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     if actual_item < 0 {
         print_buf_fn(print_buf, '-')
     }
 
-    let buf_idx usize = 11
+    buf_idx usize := 11
     for actual_item > 0 {
         buf[buf_idx] = unsafe_cast<u8>(actual_item%10) + '0'
         assert(buf[buf_idx] > 0)
@@ -118,8 +118,8 @@ print_i32 :: fn(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaq
 print_buf_file :: fn(file File, ch u8) => fputc(ch, file.file)
 
 print_internal :: fn(<BufT>)(format PrintFormat(<BufT>), print_buf_fn fn(BufT, u8)void, print_buf BufT) {
-    let arg_idx usize = 0
-    let skip_one u1 = 0
+    arg_idx usize := 0
+    skip_one u1 := 0
     
     for format_idx usize in 0..format.format.count {
         if skip_one {
@@ -133,7 +133,7 @@ print_internal :: fn(<BufT>)(format PrintFormat(<BufT>), print_buf_fn fn(BufT, u
                 skip_one = 1
             } else {
                 // TODO: remove PrintFormatArg(<BufT>) when possible
-                let curr PrintFormatArg(<BufT>) = format.args[arg_idx]
+                curr PrintFormatArg(<BufT>) := format.args[arg_idx]
                 curr.print_item_fn(print_buf, print_buf_fn, curr.item)
                 arg_idx += 1
                 skip_one = 1

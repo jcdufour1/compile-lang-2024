@@ -34,10 +34,10 @@ print :: fn() {
 }
 
 main :: fn() i32 {
-    let num1 UndefinedType11
-    let num2 UndefinedType22
-    let num3 UndefinedType33
-    let num4 UndefinedType44
+    num1 UndefinedType11 :
+    num2 UndefinedType22 :
+    num3 UndefinedType33 :
+    num4 UndefinedType44 :
 
     print_to()
     dummy.print_num(8)

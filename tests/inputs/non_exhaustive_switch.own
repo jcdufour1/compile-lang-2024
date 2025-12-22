@@ -20,14 +20,14 @@ print_token_switch :: fn(token Token) {
 }
 
 main :: fn() i32 {
-    let token_type TokenType = TokenType.number
+    token_type TokenType := TokenType.number
     printf("%d\n", token_type);
 
     token_type = TokenType.string
     printf("%d\n", token_type);
 
     {
-        let token Token
+        token Token :
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"
