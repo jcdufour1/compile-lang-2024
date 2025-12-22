@@ -3,6 +3,6 @@ coll :: import = std.collections
 
 
 main :: fn() i32 {
-    let slice coll.Slice(<Thing>) = [98, 43]
+    slice coll.Slice(<Thing>) := [98, 43]
     return 0
 }

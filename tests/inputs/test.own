@@ -20,10 +20,10 @@ println :: fn(string u8*, num2 i32) i32 {
 
 main :: fn() i32 {
     count_3 i32 := 89
-    for let idx_2: i32 in 0..2 {
+    for idx_2: i32 in 0..2 {
         io.puts("thing with colon")
     }
-    for let idx_2 i32 in 0..2 {
+    for idx_2 i32 in 0..2 {
         io.puts("thing without colon")
     }
     for idx_2: i32 in 0..2 {
@@ -33,7 +33,7 @@ main :: fn() i32 {
         io.puts("thing without colon no let")
     }
     string_thing u8* := get_string()
-    let string_thing_2 u8*
+    string_thing_2 u8* :
     string_thing_2 = "hello"
     io.printf("%s\n", string_thing)
     io.printf("%s: %d\n", string_thing_2, count_3)

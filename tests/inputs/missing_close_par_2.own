@@ -1,5 +1,5 @@
 
 main :: fn() i32 {
-    let num: i32
+    num: i32 :
     num = 8*(9 +
 }

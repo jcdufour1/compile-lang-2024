@@ -5,6 +5,6 @@ Union :: raw_union {
 }
 
 main :: fn() i32 {
-    let union: Union = {.num = 82, .cstr = 21}
+    union: Union := {.num = 82, .cstr = 21}
     return 0
 }

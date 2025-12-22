@@ -23,7 +23,7 @@ read :: fn(slice u8[]) {
 }
 
 main :: fn() i32 {
-    let arr coll.Arr(<u8, 6>) = coll.arr_new(<u8, 6>)("hello")
+    arr coll.Arr(<u8, 6>) := coll.arr_new(<u8, 6>)("hello")
     defer coll.arr_free(&arr);
 
     read(coll.arr_slice(arr));

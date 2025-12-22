@@ -27,7 +27,7 @@ main :: fn() i32 {
     printf("%d\n", token_type);
 
     {
-        let token Token
+        token Token :
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"

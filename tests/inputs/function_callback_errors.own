@@ -9,7 +9,7 @@ Token :: struct {
 }
 
 main :: fn() i32 {
-    let ptr fn(i32, i32)i32 = add
+    ptr fn(i32, i32)i32 := add
     ptr(8)
     ptr(9, 10, 11)
     ptr(12.1, 13)

@@ -4,7 +4,7 @@ printf :: extern("c")  fn(format_string u8*, args opaque...) i32
 main :: fn() i32 {
     num i32 := 4
 
-    let ptr i32* = &num
+    ptr i32* := &num
 
     ptr = 7
 

@@ -4,7 +4,7 @@ thing :: fn(<TypeT>)() TypeT {
 }
 
 main :: fn() i32 {
-    let opt i32? = thing(<i32?>)()
+    opt i32? := thing(<i32?>)()
 
     return 0
 }

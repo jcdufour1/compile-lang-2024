@@ -6,6 +6,6 @@ Token :: raw_union {
 
 main :: fn() i32 {
     // TODO: remove this statement
-    let token Token
+    token Token :
     return 0
 }

@@ -84,7 +84,7 @@ do_var_rhs :: fn() {
 
 do_var_both :: fn() {
     lhs i32 := 8
-    let rhs i32
+    rhs i32 :
 
     lhs = 1
     rhs = 8
@@ -122,7 +122,7 @@ do_var_both :: fn() {
         io.puts("6")
     }
 
-    let div Div
+    div Div :
 }
 
 Div :: struct {

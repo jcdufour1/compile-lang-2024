@@ -5,7 +5,7 @@ Div :: struct {
 }
 
 main :: fn() i32 {
-    let div: Div = {.numerator = 13, .denominator = 14
+    div: Div := {.numerator = 13, .denominator = 14
 
     return 0
 }

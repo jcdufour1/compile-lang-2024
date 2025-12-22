@@ -82,20 +82,20 @@ ALLOC1 :: def = {.max_thing = 8}
 NESTED_STRUCT_2 :: def = {{765}}
 
 struct_literal_tests :: fn() {
-    let token1 Token1(<ALLOC1>) = .num(7)
-    let token2 Token2(<87, {.max_thing = 903}>) = .num(7)
+    token1 Token1(<ALLOC1>) := .num(7)
+    token2 Token2(<87, {.max_thing = 903}>) := .num(7)
     print_max1(<ALLOC1>)(token1)
     print_max1(token1)
     print_max2(<87, {.max_thing = 903}>)(token2)
     print_max2(token2)
 
-    let nested_struct_lit NestedStruct(<{{71}}>) = .num(7)
+    nested_struct_lit NestedStruct(<{{71}}>) := .num(7)
     print_nested_struct(nested_struct_lit)
-    let nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) = .num(7)
+    nested_struct_2 NestedStruct(<NESTED_STRUCT_2>) := .num(7)
     print_nested_struct(nested_struct_2)
     print_nested_struct(<NESTED_STRUCT_2>)(nested_struct_2)
 
-    let token3 Token3(<{8.7, print_bye}>) = .num(7)
+    token3 Token3(<{8.7, print_bye}>) := .num(7)
     print_token3(token3)
     print_token3(<{8.7, print_bye}>)(token3)
 }
@@ -106,12 +106,12 @@ symbol_print :: fn(<do_print_fn>)(symbol Symbol(<do_print_fn>)) {
 }
 
 symbol_tests :: fn() {
-    let hello Symbol(<print_hello>) = {0}
+    hello Symbol(<print_hello>) := {0}
     hello.print_fn()
     symbol_print(<print_hello>)(hello)
     symbol_print(hello)
 
-    let bye Symbol(<print_bye>) = {0}
+    bye Symbol(<print_bye>) := {0}
     bye.print_fn()
     symbol_print(<print_bye>)(bye)
     symbol_print(bye)
@@ -136,17 +136,17 @@ string_print :: fn(<str_val>)(str String1(<str_val>)) {
 }
 
 float_tests :: fn() {
-    let float1 Float(<8.9>) = {0}
+    float1 Float(<8.9>) := {0}
     float_print(<8.9>)(float1)
     float_print(float1)
 
-    let float2 Float(<9.3>) = {0}
+    float2 Float(<9.3>) := {0}
     float_print(<9.3>)(float2)
     float_print(float2)
 }
 
 string_tests :: fn() {
-    let string String1(<"this is a string">) = {0}
+    string String1(<"this is a string">) := {0}
     string_print(<"this is a string">)(string)
     string_print(string)
 }

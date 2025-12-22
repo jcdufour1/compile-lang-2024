@@ -1,14 +1,14 @@
 io :: import = std.io
 
 main :: fn() i32 {
-    for let num1 i32 in 0..10 {
+    for num1 i32 in 0..10 {
         // define and assign variables
         add_result i32 := num1 + 3
         sub_result i32 := num1 - 3
         mul_result i32 := num1*3
         div_result i32 := num1/3
         curr_num i32 := 9
-        let result5 i32
+        result5 i32 :
         io.printf("%d + 3 = %d\n", num1, add_result)
         io.printf("%d - 3 = %d\n", num1, sub_result)
         io.printf("%d*3 = %d\n", num1, mul_result)

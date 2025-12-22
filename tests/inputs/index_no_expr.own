@@ -1,6 +1,6 @@
 
 main :: fn() i32 {
-    let ptr i32*
+    ptr i32* :
     num i32 := ptr[]
     return 0
 }

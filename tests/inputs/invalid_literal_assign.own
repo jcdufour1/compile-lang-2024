@@ -1,6 +1,6 @@
 
 main :: fn() i32 {
-    let string: u8* = "hello"
+    string: u8* := "hello"
     string = 87
     return 0
 }

@@ -5,6 +5,6 @@ Token :: enum(<NumType>) {
 }
 
 main :: fn() i32 {
-    let token Token(<i32>)
+    token Token(<i32>) :
     return 0
 }

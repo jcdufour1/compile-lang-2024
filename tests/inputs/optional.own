@@ -89,11 +89,11 @@ add_one_or_two_default_verbose :: fn(<ItemType>)(lhs ItemType, rhs util.Optional
 }
 
 verbose :: fn() {
-    let number util.Optional(<i32>) = util.Optional(<i32>).some(84)
-    let number2 util.Optional(<i32>) = util.Optional(<i32>).some(87)
-    let number3 util.Optional(<i64>) = util.Optional(<i64>).none
-    let number4 util.Optional(<i64>) = util.Optional(<i64>).some(91)
-    let result Result(<i32, ParseError>) = Result(<i32, ParseError>).error({.dummy = 8})
+    number util.Optional(<i32>) := util.Optional(<i32>).some(84)
+    number2 util.Optional(<i32>) := util.Optional(<i32>).some(87)
+    number3 util.Optional(<i64>) := util.Optional(<i64>).none
+    number4 util.Optional(<i64>) := util.Optional(<i64>).some(91)
+    result Result(<i32, ParseError>) := Result(<i32, ParseError>).error({.dummy = 8})
 
     switch number {
         case util.Optional(<i32>).some(num): io.printf("test 2: got number: %d\n", num)
@@ -122,12 +122,12 @@ verbose :: fn() {
 }
 
 concise :: fn() {
-    let number util.Optional(<i32>) = .some(84)
-    let number2 util.Optional(<i32>) = .some(87)
-    let number3 util.Optional(<i64>) = .none
-    let number4 util.Optional(<i64>) = .some(91)
-    let result Result(<i32, ParseError>) = .error({.dummy = 8})
-    let result2 Result(<Token, ParseError>) = .ok(.number(7))
+    number util.Optional(<i32>) := .some(84)
+    number2 util.Optional(<i32>) := .some(87)
+    number3 util.Optional(<i64>) := .none
+    number4 util.Optional(<i64>) := .some(91)
+    result Result(<i32, ParseError>) := .error({.dummy = 8})
+    result2 Result(<Token, ParseError>) := .ok(.number(7))
 
     switch number {
         case .some(num): io.printf("test 21: got number: %d\n", num)
@@ -167,7 +167,7 @@ concise :: fn() {
     io.printf("test 42: got number: %d\n", triangle(<i64>)(num2))
     io.printf("test 43: got number: %d\n", unsafe_cast<i32>(triangle(<i16>)(6)))
 
-    let result10 util.Optional(<i32>) = try_add_one(<i32>)(12)
+    result10 util.Optional(<i32>) := try_add_one(<i32>)(12)
     switch result10 {
         case .some(num): io.printf("test 44: got number: %d\n", num)
         case .none: io.printf("test 44: got nothing")

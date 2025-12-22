@@ -7,7 +7,7 @@ Color :: struct {
 
 
 main :: fn() i32 {
-    let color lib.Color = {8, 7, 6}
+    color lib.Color := {8, 7, 6}
     lib.print_color(color)
 
     return 0

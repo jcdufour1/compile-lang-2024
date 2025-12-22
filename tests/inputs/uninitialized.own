@@ -15,19 +15,19 @@ aux_1arg :: fn(arg i32) i32 {
 }
 
 wrong1 :: fn() i32 {
-    let status i32
+    status i32 :
     return status
 }
 
 wrong2 :: fn() i32 {
-    let status i32
+    status i32 :
     aux_1arg(status)
     status = 8
     return status
 }
 
 right1 :: fn() i32 {
-    let status i32
+    status i32 :
     if 1 {
         status = 1
     } else {
@@ -37,7 +37,7 @@ right1 :: fn() i32 {
 }
 
 wrong3 :: fn() i32 {
-    let status i32
+    status i32 :
     if 1 {
     } else {
         status = 4
@@ -47,7 +47,7 @@ wrong3 :: fn() i32 {
 
 wrong4 :: fn() i32 {
     way Way := .way1
-    let status i32
+    status i32 :
     switch way {
         case .way1: break
         case .way2: status = 4
@@ -56,7 +56,7 @@ wrong4 :: fn() i32 {
 }
 
 wrong5 :: fn() i32 {
-    let token Token
+    token Token :
     return token.num
 }
 
@@ -67,7 +67,7 @@ wrong6 :: fn() i32 {
     }
 
     {
-        let num i32
+        num i32 :
         num2 i32 := num
     }
 
@@ -75,7 +75,7 @@ wrong6 :: fn() i32 {
 }
 
 wrong7 :: fn() i32 {
-    let num i32
+    num i32 :
 
     for 1 {
         num2 i32 := num
@@ -85,7 +85,7 @@ wrong7 :: fn() i32 {
 }
 
 wrong8 :: fn() i32 {
-    let status i32
+    status i32 :
     return status
 }
 
@@ -104,6 +104,6 @@ main :: fn() i32 {
 }
 
 right2 :: fn() {
-    let num i32 @maybe_uninit
+    num i32 : @maybe_uninit
     num2 := num
 }

@@ -8,17 +8,17 @@ Token :: struct {
 
 main :: fn() i32 {
     num i32 := 3
-    let ptr i32* = &num
-    let ptr_ptr i32** = &ptr
+    ptr i32* := &num
+    ptr_ptr i32** := &ptr
 
-    let arr coll.Arr(<Token*, 1>) = coll.arr_new(<Token*, 1>)([util.null(<Token>)()])
+    arr coll.Arr(<Token*, 1>) := coll.arr_new(<Token*, 1>)([util.null(<Token>)()])
     *coll.arr_at_ref(arr, 0) = util.alloc(<Token>)(1)
     coll.arr_at_ref(arr, 0).num = 9
 
     io.print_int(coll.arr_at_ref(arr, 0).num)
 
-    let arr2 coll.Arr(<Token**, 1>) = coll.arr_new(<Token**, 1>)([util.null(<Token*>)()])
-    let arr3 coll.Arr(<Token***, 1>) = coll.arr_new(<Token***, 1>)([util.null(<Token**>)()])
+    arr2 coll.Arr(<Token**, 1>) := coll.arr_new(<Token**, 1>)([util.null(<Token*>)()])
+    arr3 coll.Arr(<Token***, 1>) := coll.arr_new(<Token***, 1>)([util.null(<Token**>)()])
 
     return 0
 }

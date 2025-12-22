@@ -3,7 +3,7 @@ io :: import = std.io
 main :: fn() i32 {
     for num1 i32 in 0..7 {
         for num2 i32 in 0..num1 {
-            let num_temp i32
+            num_temp i32 :
             num_temp = num2
             if num_temp < 5 {
                 io.printf("%d ", num2)

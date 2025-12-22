@@ -5,13 +5,13 @@ util :: import = std.util
 add :: fn(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
     switch rhs {
         case .some(rhs_val):
-            if let .some(lhs_val) = lhs {
+            if .some(lhs_val) := lhs {
                 return lhs_val + rhs_val
             } else {
                 return rhs_val
             }
         case .none:
-            if let .some(lhs_val) = lhs {
+            if .some(lhs_val) := lhs {
                 return lhs_val
             } else {
                 return 0

@@ -5,6 +5,6 @@ Token :: struct {
 }
 
 main :: fn() i32 {
-    let token Token
+    token Token :
     return 0
 }

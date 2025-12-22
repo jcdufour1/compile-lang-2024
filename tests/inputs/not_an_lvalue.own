@@ -5,6 +5,6 @@ get_num :: fn() i32 {
 
 main :: fn() i32 {
     get_num() = 875
-    let ptr i32* = &get_num()
+    ptr i32* := &get_num()
     return 0
 }

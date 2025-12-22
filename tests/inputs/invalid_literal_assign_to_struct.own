@@ -6,7 +6,7 @@ Div :: struct {
 }
 
 main :: fn() i32 {
-    let div: Div
+    div: Div :
     div = 7
     return 0
 }

@@ -14,7 +14,7 @@ container_new :: fn() Container(<{9}>) {
 }
 
 main :: fn() i32 {
-    let container Container(<{8}>) = container_new()
+    container Container(<{8}>) := container_new()
 
     return 0
 }
