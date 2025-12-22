@@ -2,8 +2,8 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/invalid_assignment_to_sum.own:14:22:[1;31merror[0;39m:type `Thing` cannot be implicitly converted to `Token`
-    13 |     let thing Thing = {.number = 23, .string = "bye"}
-    14 |     let token1 Token = thing
+    13 |     thing Thing := {.number = 23, .string = "bye"}
+    14 |     token1 Token := thing
        |                      ^
     15 |     return 0
 

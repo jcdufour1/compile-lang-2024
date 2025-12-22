@@ -2,7 +2,7 @@ coll :: import = std.collections
 io :: import = std.io
 
 main :: fn() i32 {
-    let num i32 = coll.str_to_int(<i32>)("83095")
+    num i32 := coll.str_to_int(<i32>)("83095")
     io.print_int(num)
 
     num = coll.str_to_int(<i32>)("0")
@@ -11,31 +11,31 @@ main :: fn() i32 {
     num = coll.str_to_int(<i32>)("-13")
     io.print_int(num)
 
-    let str coll.Darr(<u8>) = coll.str_from_int(-1)
+    str coll.Darr(<u8>) := coll.str_from_int(-1)
     defer coll.darr_free(&str)
     io.print_str(coll.darr_slice(str))
 
-    let str2 coll.Darr(<u8>) = coll.str_from_int(0)
+    str2 coll.Darr(<u8>) := coll.str_from_int(0)
     defer coll.darr_free(&str2)
     io.print_str(coll.darr_slice(str2))
 
-    let str3 coll.Darr(<u8>) = coll.str_from_int(9506)
+    str3 coll.Darr(<u8>) := coll.str_from_int(9506)
     defer coll.darr_free(&str3)
     io.print_str(coll.darr_slice(str3))
 
-    let str4 coll.Darr(<u8>) = coll.str_from_int(95745)
+    str4 coll.Darr(<u8>) := coll.str_from_int(95745)
     defer coll.darr_free(&str4)
     io.print_str(coll.darr_slice(str4))
 
-    let input4 Str = "- 79"
+    input4 Str := "- 79"
     if let .some(num4) = coll.str_consume_int(<i32>)(&input4) => assert(0)
     else => io.print_str("yes 4")
 
-    let input5 Str = "-76"
+    input5 Str := "-76"
     if let .some(num5) = coll.str_consume_int(<i32>)(&input5) => io.print_int(num5)
     else => assert(0)
 
-    let input6 Str = "0"
+    input6 Str := "0"
     if let .some(num6) = coll.str_consume_int(<i32>)(&input6) => io.print_int(num6)
     else => assert(0)
 

@@ -8,11 +8,11 @@ tests/inputs/invalid_stmt_top_level.own:1:1:[1;31merror[0;39m:this statement i
      2 | }
 tests/inputs/invalid_stmt_top_level.own:9:17:[1;31merror[0;39m:this statement is not permitted in the top level
      8 | 
-     9 | let token Token = .none
+     9 | token Token := .none
        |                 ^
     10 | switch token {
 tests/inputs/invalid_stmt_top_level.own:10:1:[1;31merror[0;39m:this statement is not permitted in the top level
-     9 | let token Token = .none
+     9 | token Token := .none
     10 | switch token {
        | ^
     11 |     case .num(num): break

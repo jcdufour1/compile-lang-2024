@@ -3,7 +3,7 @@ Raw :: raw_union {
 }
 
 main :: fn() i32 {
-    let raw2 Raw = .nfaskdf(7)
-    let raw1 Raw = .num(6)
+    raw2 Raw := .nfaskdf(7)
+    raw1 Raw := .num(6)
     return 0
 }

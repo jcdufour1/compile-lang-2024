@@ -5,8 +5,8 @@ Div :: struct {
 }
 
 main :: fn() i32 {
-    let div Div = {numerator = 91, .denominator = 1256}
-    let div2 Div = {.numerator = 92, denominator = 1257}
+    div Div := {numerator = 91, .denominator = 1256}
+    div2 Div := {.numerator = 92, denominator = 1257}
 
     return 0
 }

@@ -22,7 +22,7 @@ add :: fn(lhs util.Optional(<i32>), rhs util.Optional(<i32>)) i32 {
 }
 
 main :: fn() i32 {
-    let num i32 = add(.some(4), .some(5))
+    num i32 := add(.some(4), .some(5))
     io.print_int(num)
 
     return 0

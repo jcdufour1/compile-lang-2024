@@ -12,7 +12,7 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token Token = .num(8)
-    let thing Thing = {43, 78}
+    token Token := .num(8)
+    thing Thing := {43, 78}
     return 0
 }

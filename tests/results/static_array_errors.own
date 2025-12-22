@@ -23,7 +23,7 @@ tests/inputs/static_array_errors.own:12:18:[1;34mnote[0;39m:statically sized a
     13 | 
 tests/inputs/static_array_errors.own:14:32:[1;31merror[0;39m:`count_things` is not a member of `nums`
     13 | 
-    14 |     let count_things i32 = nums.count_things
+    14 |     count_things i32 := nums.count_things
        |                                ^
     15 | 
 tests/inputs/static_array_errors.own:6:9:[1;34mnote[0;39m:`nums` defined here

@@ -11,7 +11,7 @@ main :: fn() i32 {
 
     let nums2 i32[3] = [87, 23, 5, 1]
 
-    let count_things i32 = nums.count_things
+    count_things i32 := nums.count_things
 
     let nums3 i32[UNDEFINED] = [82]
 

@@ -23,9 +23,9 @@ get_num :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let token Token = get_token()
+    token Token := get_token()
 
-    let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
+    line i32 := get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
 
     return 0
 }

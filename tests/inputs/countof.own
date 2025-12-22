@@ -14,10 +14,10 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let div Div = {.numerator = 34, .denominator = 97}
+    div Div := {.numerator = 34, .denominator = 97}
     io.printf("countof div = %zu\n", countof div)
 
-    let token Token = .num(3)
+    token Token := .num(3)
     io.printf("countof token = %zu\n", countof token)
 
     return 0

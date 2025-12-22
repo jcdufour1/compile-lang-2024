@@ -35,7 +35,7 @@ for_range :: fn() {
 }
 
 for_cond :: fn() {
-    let idx1 i32 = 0
+    idx1 i32 := 0
     for idx1 < 100 {
         io.printf("test 5: %d\n", idx1)
 
@@ -48,7 +48,7 @@ for_cond :: fn() {
         break
     }
 
-    let idx2 i32 = 0
+    idx2 i32 := 0
     for idx2 < 2 {
         io.printf("test 6: idx: %d\n", idx2)
         idx2 = idx2 + 1
@@ -56,7 +56,7 @@ for_cond :: fn() {
         io.printf("test 7: no\n")
     }
 
-    let idx3 i32 = 0
+    idx3 i32 := 0
     for idx3 < 2 {
         io.printf("test 8: idx: %d\n", idx3)
         idx3 = idx3 + 1

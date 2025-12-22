@@ -2,7 +2,7 @@
 
 
 main :: fn() i32 {
-    let num i32 = 8
+    num i32 := 8
     98 = {.num = 34, .string = 32}
     num = {.num = 34, .string = 32}
     return 0

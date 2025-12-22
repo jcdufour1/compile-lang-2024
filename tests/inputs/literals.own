@@ -2,30 +2,30 @@ io :: import = std.io
 
 
 main :: fn() i32 {
-    let hex1 i32 = 0xBEEF
-    let hex2 i32 = 0xbee_f
-    let hex3 i32 = 0x37f
+    hex1 i32 := 0xBEEF
+    hex2 i32 := 0xbee_f
+    hex3 i32 := 0x37f
 
     io.printf("hex1: %x\n", hex1)
     io.printf("hex2: %x\n", hex2)
     io.printf("hex3: %x\n", hex3)
 
-    let underscore_num i32 = 1_234_567
+    underscore_num i32 := 1_234_567
     io.printf("underscore_num: %d\n", underscore_num)
 
-    let octal_num_1 i32 = 0o236
+    octal_num_1 i32 := 0o236
     // expected: 158
     io.printf("octal_num_1: %d\n", octal_num_1)
 
-    let octal_num_2 i32 = 0o23_7
+    octal_num_2 i32 := 0o23_7
     // expected: 159
     io.printf("octal_num_2: %d\n", octal_num_2)
 
-    let bin_num_1 i32 = 0b0010
+    bin_num_1 i32 := 0b0010
     // expected: 2
     io.printf("bin_num_1: %d\n", bin_num_1)
 
-    let bin_num_2 i32 = 0b0010_1111
+    bin_num_2 i32 := 0b0010_1111
     // expected: 47
     io.printf("bin_num_2: %d\n", bin_num_2)
     return 0

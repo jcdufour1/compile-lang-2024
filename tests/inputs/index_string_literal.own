@@ -11,7 +11,7 @@ get_four :: fn() i32 {
 }
 
 main :: fn() i32 {
-    let string u8* = "hello"
+    string u8* := "hello"
 
     io.printf("%c\n", rt.buf_at(string, get_zero()))
     io.printf("%c\n", rt.buf_at(string, get_four()))

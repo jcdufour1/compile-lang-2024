@@ -26,7 +26,7 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token Token = .num(7)
+    token Token := .num(7)
     thing1(<{6}>)()
     thing2(<{6}>)()
     thing3(<{6}>)()

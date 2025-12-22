@@ -6,6 +6,6 @@ Token_type :: enum {
 }
 
 main :: fn() i32 {
-    let token_type Token_type = Token_type.DOUBLE
+    token_type Token_type := Token_type.DOUBLE
     return 0
 }

@@ -3,7 +3,7 @@ compile::stdout 0
 compile::stderr 5
 tests/inputs/sum_callee_too_many_args.own:8:23:[1;31merror[0;39m:() in enum case has no argument; add argument in () or remove ()
      7 | main :: fn() i32 {
-     8 |     let token Token = .num()
+     8 |     token Token := .num()
        |                       ^
      9 |     return 0
 

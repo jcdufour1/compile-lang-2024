@@ -1,4 +1,4 @@
 main :: fn() i32 {
- let num i32 = 9;
+ num i32 := 9;
 	return	0
 }

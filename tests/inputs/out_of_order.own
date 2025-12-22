@@ -2,7 +2,7 @@ io :: import = std.io
 
 
 main :: fn() i32 {
-    let token Token = get_token("file57.txt", 914, {.data = "new data", .count = 8})
+    token Token := get_token("file57.txt", 914, {.data = "new data", .count = 8})
     io.printf("%s %d %s\n", token.file, token.line, token.str_data.data)
 
     return 0

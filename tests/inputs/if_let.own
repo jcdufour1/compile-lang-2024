@@ -26,7 +26,7 @@ main :: fn() i32 {
 
     let result1 util.Result(<i32, Str>) = .ok(6)
     if let .ok(num) = result1 {
-        let num2 i32 = num
+        num2 i32 := num
         io.printf("yes 5: %d\n", num)
     } else (str) {
         io.printf("no 5: ")
@@ -46,7 +46,7 @@ main :: fn() i32 {
         io.printf("no 7: ")
         io.print_str(str)
     } else (num) {
-        let num4 i32 = num
+        num4 i32 := num
         io.printf("yes 7: %d\n", num)
     }
 

@@ -20,12 +20,12 @@ Token :: struct {
 }
 
 thing1 :: fn() {
-    let num i32 = do_thing(FALSE)?
+    num i32 := do_thing(FALSE)?
     printf("no1\n")
 }
 
 thing2 :: fn() {
-    let num i32 = do_thing(TRUE)?
+    num i32 := do_thing(TRUE)?
     printf("yes2: %d\n", num)
 }
 

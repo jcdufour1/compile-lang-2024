@@ -28,14 +28,14 @@ thing_print :: fn(thing Thing) {
 }
 
 main :: fn() i32 {
-    let token1 Token = Token.num(23)
-    let token2 Token = Token.string("hello world")
-    let token3 Token = Token.num(57)
-    let token4 Token = Token.num(32)
+    token1 Token := Token.num(23)
+    token2 Token := Token.string("hello world")
+    token3 Token := Token.num(57)
+    token4 Token := Token.num(32)
 
-    let thing1 Thing = Thing.token(token1)
-    let thing2 Thing = Thing.token(token2)
-    let thing3 Thing = Thing.num(87)
+    thing1 Thing := Thing.token(token1)
+    thing2 Thing := Thing.token(token2)
+    thing3 Thing := Thing.num(87)
     token_print(token1)
     token_print(token2)
     token_print(token3)

@@ -12,7 +12,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:11:21:[1;31merro
        |                     ^
     12 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
-    29 |     let token Token = .num(7)
+    29 |     token Token := .num(7)
     30 |     thing1(<{6}>)()
        |             ^
     31 |     thing2(<{6}>)()
@@ -22,7 +22,7 @@ tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:2:21:[1;34mnote
        |                     ^
      3 | }
 tests/inputs/non_int_literal_generic_arg_expand_def_errors.own:30:13:[1;31merror[0;39m:struct literal assigned to non-struct generic parameter
-    29 |     let token Token = .num(7)
+    29 |     token Token := .num(7)
     30 |     thing1(<{6}>)()
        |             ^
     31 |     thing2(<{6}>)()

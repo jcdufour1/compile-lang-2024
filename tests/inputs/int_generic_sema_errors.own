@@ -14,7 +14,7 @@ print_max_incorrect :: fn(token Token(<max_cap>)) {
 }
 
 main :: fn() i32 {
-    let eight i32 = 8
+    eight i32 := 8
 
     let token1 Token(<eight>) = .num(7)
     let token2 Token(<8>) = .num(7)

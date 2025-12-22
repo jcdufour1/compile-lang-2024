@@ -21,7 +21,7 @@ arr_extend :: fn(<ItemT>)(dest Local_arr(<ItemT>)*, src coll.Slice(<ItemT>), fil
 
 main :: fn() i32 {
     let arr Local_arr(<i32>) = arr_new(<i32>)(87)
-    let file Str = ""
+    file Str := ""
     arr_extend(&arr, [], .file = file, column = 8)
     return 0
 }

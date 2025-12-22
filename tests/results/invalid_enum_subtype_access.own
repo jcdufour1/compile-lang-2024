@@ -3,7 +3,7 @@ compile::stdout 0
 compile::stderr 10
 tests/inputs/invalid_enum_subtype_access.own:9:43:[1;31merror[0;39m:`DOUBLE` is not a member of `Token_type`; did you mean: NUM
      8 | main :: fn() i32 {
-     9 |     let token_type Token_type = Token_type.DOUBLE
+     9 |     token_type Token_type := Token_type.DOUBLE
        |                                           ^
     10 |     return 0
 tests/inputs/invalid_enum_subtype_access.own:3:1:[1;34mnote[0;39m:`Token_type` defined here

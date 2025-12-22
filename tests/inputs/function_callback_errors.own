@@ -14,9 +14,9 @@ main :: fn() i32 {
     ptr(9, 10, 11)
     ptr(12.1, 13)
 
-    let num i16 = ptr(12, 13)
+    num i16 := ptr(12, 13)
 
-    let token Token = {.ptr = ptr}
+    token Token := {.ptr = ptr}
     token.ptr(34.5, 6)
 
     return 0

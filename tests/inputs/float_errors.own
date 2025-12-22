@@ -1,13 +1,13 @@
 
 part1 :: fn() {
-    let num2 f64 = 9.8
-    let num3 f32 = num2
+    num2 f64 := 9.8
+    num3 f32 := num2
 
-    let num4 f64 = num
+    num4 f64 := num
 }
 
 part2 :: fn() {
-    let num1 f32 = 8.2 == 4.2
+    num1 f32 := 8.2 == 4.2
 }
 
 main :: fn() i32 {

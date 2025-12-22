@@ -1,6 +1,6 @@
 
 main :: fn() i32 {
-    let char1 u8 = ''
-    let char_correct u8 = 'j'
+    char1 u8 := ''
+    char_correct u8 := 'j'
     return 0
 }

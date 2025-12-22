@@ -3,12 +3,12 @@ compile::stdout 0
 compile::stderr 10
 tests/inputs/struct_literal_missing_dot.own:8:30:[1;31merror[0;39m:assignment cannot be used as an expression in this situation
      7 | main :: fn() i32 {
-     8 |     let div Div = {numerator = 91, .denominator = 1256}
+     8 |     div Div := {numerator = 91, .denominator = 1256}
        |                              ^
-     9 |     let div2 Div = {.numerator = 92, denominator = 1257}
+     9 |     div2 Div := {.numerator = 92, denominator = 1257}
 tests/inputs/struct_literal_missing_dot.own:9:50:[1;31merror[0;39m:assignment cannot be used as an expression in this situation
-     8 |     let div Div = {numerator = 91, .denominator = 1256}
-     9 |     let div2 Div = {.numerator = 92, denominator = 1257}
+     8 |     div Div := {numerator = 91, .denominator = 1256}
+     9 |     div2 Div := {.numerator = 92, denominator = 1257}
        |                                                  ^
     10 | 
 

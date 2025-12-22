@@ -7,7 +7,7 @@ TokenType :: enum {
 }
 
 main :: fn() i32 {
-    let token_type TokenType = TokenType.num
+    token_type TokenType := TokenType.num
     switch token_type {
         default: printf("unhandled token_type")
         default: printf("unhandled token_type")

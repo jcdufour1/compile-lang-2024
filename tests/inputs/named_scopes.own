@@ -70,7 +70,7 @@ yield_stmts :: fn() {
 continue_stmts :: fn() {
     defer io.printf("bye\n")
 
-    let idx i32 = 0
+    idx i32 := 0
     ''thing for 1 {
         defer io.printf("yes 4.6\n")
         io.printf("yes 4.1\n")
@@ -91,7 +91,7 @@ continue_stmts :: fn() {
         io.printf("no 4.4\n")
     }
 
-    let idx2 i32 = 0
+    idx2 i32 := 0
     ''thing3 for 1 {
         defer io.printf("yes 5.6\n")
         io.printf("yes 5.1\n")
@@ -112,7 +112,7 @@ continue_stmts :: fn() {
         io.printf("no 5.4\n")
     }
 
-    let idx_4 i32 = 0
+    idx_4 i32 := 0
     ''thing5 for 1 {
         defer io.printf("yes 6.4\n")
         io.printf("yes 6.1\n")
@@ -128,7 +128,7 @@ continue_stmts :: fn() {
         io.printf("no 6.4\n")
     }
 
-    let idx_100 i32 = 0
+    idx_100 i32 := 0
     ''thing7 for 1 {
         defer io.printf("yes 19.6\n")
         io.printf("yes 19.1\n")
@@ -147,7 +147,7 @@ continue_stmts :: fn() {
         io.printf("no 19.4\n")
     }
 
-    let idx_20 i32 = 0
+    idx_20 i32 := 0
     ''thing9 for 1 {
         defer io.printf("yes 20.8\n")
         io.printf("yes 20.1\n")
@@ -171,7 +171,7 @@ continue_stmts :: fn() {
         io.printf("no 20.4\n")
     }
 
-    let idx_5 i32 = 0
+    idx_5 i32 := 0
     ''thing100 for kdasfdjf i32 in 0..1 {
     //    defer idx_5 += 1
     //    defer io.printf("yes 8.5\n")

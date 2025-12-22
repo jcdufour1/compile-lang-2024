@@ -6,7 +6,7 @@ Token :: enum {
     none
 }
 
-let token Token = .none
+token Token := .none
 switch token {
     case .num(num): break
     case .none: break

@@ -7,7 +7,7 @@ Div :: struct {
 }
 
 main :: fn() i32 {
-    let div Div = {
+    div Div := {
         .numerator = 87,
         .denominator = 13
     }

@@ -66,7 +66,7 @@ arr_new :: fn(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str =
 }
 
 arr_slice :: fn(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
-    let actual_count usize = arr.count - start
+    actual_count usize := arr.count - start
     if let .some(num) = count {
         actual_count = num
     }
@@ -145,7 +145,7 @@ darr_new :: fn(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #l
 }
 
 darr_slice :: fn(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
-    let actual_count usize = darr.count - start
+    actual_count usize := darr.count - start
     if let .some(num) = count {
         actual_count = num
     }
@@ -239,17 +239,17 @@ darr_last :: fn(<ItemT>)(darr Darr(<ItemT>), file Str = #file, line i32 = #line,
 // TODO: check for overflow
 // TODO: call str_consume_int function to reduce duplication
 str_to_int :: fn(<NumT>)(str Str, file Str = #file, line i32 = #line, column i32 = #column) NumT {
-    let should_neg u1 = 0
+    should_neg u1 := 0
     if slice_at(str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1
         str = slice_range(str, 1, str.count - 1)
     }
 
-    let result NumT = 0
+    result NumT := 0
     for idx usize in 0..str.count {
         result *= 10
 
-        let curr u8 = slice_at(str, idx, .file = file, .line = line, .column = column)
+        curr u8 := slice_at(str, idx, .file = file, .line = line, .column = column)
         assert(
             curr >= '0' && curr <= '9',
             "str contains nonzero digits",
@@ -269,17 +269,17 @@ str_to_int :: fn(<NumT>)(str Str, file Str = #file, line i32 = #line, column i32
 
 // TODO: check for overflow
 str_consume_int :: fn(<NumT>)(str Str*, file Str = #file, line i32 = #line, column i32 = #column) NumT? {
-    let should_neg u1 = 0
+    should_neg u1 := 0
     if slice_at(*str, 0, .file = file, .line = line, .column = column) == '-' {
         should_neg = 1
         *str = slice_range(*str, 1, str.count - 1)
     }
 
-    let result NumT = 0
-    let is_some u1 = 0
+    result NumT := 0
+    is_some u1 := 0
     for str.count > 0 {
-        let curr NumT = unsafe_cast<NumT>str[0]
-        //let curr NumT = unsafe_cast<NumT>str[0]
+        curr NumT := unsafe_cast<NumT>str[0]
+        //curr NumT := unsafe_cast<NumT>str[0]
         if curr < '0' || curr > '9' => break
 
         is_some = 1
@@ -296,13 +296,13 @@ str_consume_int :: fn(<NumT>)(str Str*, file Str = #file, line i32 = #line, colu
 
 // TODO: return result, optional, etc. instead of crashing?
 str_from_int :: fn(<NumT>)(num NumT, file Str = #file, line i32 = #line, column i32 = #column) Darr(<u8>) {
-    let result Darr(<u8>) = darr_new(<u8>)()
+    result Darr(<u8>) := darr_new(<u8>)()
     if num == 0 {
         darr_append(&result, '0')
         return result
     }
 
-    let should_neg u1 = 0
+    should_neg u1 := 0
     if num < 0 {
         should_neg = 1
         num *= unsafe_cast<NumT>-1

@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 50
 tests/inputs/invalid_count_generic_args.own:9:12:[1;31merror[0;39m:returning `i32`, but type `void` expected
-     8 |     let result NumType = lhs + rhs
+     8 |     result NumType := lhs + rhs
      9 |     return result
        |            ^
     10 | }
@@ -10,7 +10,7 @@ tests/inputs/invalid_count_generic_args.own:7:76:[1;34mnote[0;39m:function ret
      6 | 
      7 | add :: fn(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
        |                                                                            ^
-     8 |     let result NumType = lhs + rhs
+     8 |     result NumType := lhs + rhs
 tests/inputs/invalid_count_generic_args.own:13:12:[1;31merror[0;39m:generic arguments were not expected here
     12 | add_using_callback :: fn(lhs i32, rhs i32, add_fn fn()i32) i32 {
     13 |     return add_fn(<i32>)()
@@ -18,22 +18,22 @@ tests/inputs/invalid_count_generic_args.own:13:12:[1;31merror[0;39m:generic ar
     14 | }
 tests/inputs/invalid_count_generic_args.own:26:20:[1;31merror[0;39m:2 generic arguments are passed, but 1 generic arguments expected
     25 | main :: fn() i32 {
-    26 |     let num1 i32 = sub(<i32, i64>)(7, 8)
+    26 |     num1 i32 := sub(<i32, i64>)(7, 8)
        |                    ^
-    27 |     let num2 i32 = add(<i32>)(7, 8, 9)
+    27 |     num2 i32 := add(<i32>)(7, 8, 9)
 tests/inputs/invalid_count_generic_args.own:2:1:[1;34mnote[0;39m:generic parameters defined here
      1 | 
      2 | sub :: fn(<NumType>)(lhs NumType, rhs NumType) {
        | ^
-     3 |     let result NumType = lhs - rhs
+     3 |     result NumType := lhs - rhs
 tests/inputs/invalid_count_generic_args.own:27:18:[1;31merror[0;39m:type `void` cannot be implicitly converted to `i32`
-    26 |     let num1 i32 = sub(<i32, i64>)(7, 8)
-    27 |     let num2 i32 = add(<i32>)(7, 8, 9)
+    26 |     num1 i32 := sub(<i32, i64>)(7, 8)
+    27 |     num2 i32 := add(<i32>)(7, 8, 9)
        |                  ^
-    28 |     let token1 Token = {.item = 87, .pos = 32}
+    28 |     token1 Token := {.item = 87, .pos = 32}
 tests/inputs/invalid_count_generic_args.own:28:16:[1;31merror[0;39m:0 generic arguments are passed, but 2 generic arguments expected
-    27 |     let num2 i32 = add(<i32>)(7, 8, 9)
-    28 |     let token1 Token = {.item = 87, .pos = 32}
+    27 |     num2 i32 := add(<i32>)(7, 8, 9)
+    28 |     token1 Token := {.item = 87, .pos = 32}
        |                ^
     29 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
 tests/inputs/invalid_count_generic_args.own:16:1:[1;34mnote[0;39m:generic parameters defined here
@@ -42,7 +42,7 @@ tests/inputs/invalid_count_generic_args.own:16:1:[1;34mnote[0;39m:generic para
        | ^
     17 |     item ItemType
 tests/inputs/invalid_count_generic_args.own:29:16:[1;31merror[0;39m:3 generic arguments are passed, but 2 generic arguments expected
-    28 |     let token1 Token = {.item = 87, .pos = 32}
+    28 |     token1 Token := {.item = 87, .pos = 32}
     29 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
        |                ^
     30 |     add_using_callback(8, 2, add_not_regular)

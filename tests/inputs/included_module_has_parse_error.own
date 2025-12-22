@@ -1,6 +1,6 @@
 io :: import = tests.dummy_std.std_parse_error
 
 main :: fn() i32 {
-    let num i32 = io.zero()
+    num i32 := io.zero()
     return 0
 }

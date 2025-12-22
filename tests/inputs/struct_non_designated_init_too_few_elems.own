@@ -5,6 +5,6 @@ Div :: struct {
 }
 
 main :: fn() i32 {
-    let div Div = {9}
+    div Div := {9}
     return 0
 }

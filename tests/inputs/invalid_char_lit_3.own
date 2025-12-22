@@ -1,10 +1,10 @@
 
 
 main :: fn() i32 {
-    let char1 u8 = ''
-    let char_correct u8 = 'j'
-    let char2 u8 = '\'
-    let char3 u8 = 'ab'
-    let char4 u8 = '\cd'
+    char1 u8 := ''
+    char_correct u8 := 'j'
+    char2 u8 := '\'
+    char3 u8 := 'ab'
+    char4 u8 := '\cd'
     return 0
 }

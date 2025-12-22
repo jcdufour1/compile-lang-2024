@@ -2,7 +2,7 @@ io :: import = std.io
 rt :: import = std.runtime
 
 string_comparison :: fn() {
-    let string u8* = "hello"
+    string u8* := "hello"
 
     if rt.buf_at(string, 0) == 'h' {
         io.printf("yes1\n");
@@ -68,7 +68,7 @@ literal_comparison :: fn() {
 }
 
 newline :: fn() {
-    let string u8* = "hello\n"
+    string u8* := "hello\n"
     if rt.buf_at(string, 5) == '\n' {
         io.printf("yes11\n")
     } else {

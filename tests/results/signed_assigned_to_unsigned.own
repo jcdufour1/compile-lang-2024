@@ -3,12 +3,12 @@ compile::stdout 0
 compile::stderr 10
 tests/inputs/signed_assigned_to_unsigned.own:18:18:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u32`
     17 | main :: fn() i32 {
-    18 |     let num1 u32 = get_signed()
+    18 |     num1 u32 := get_signed()
        |                  ^
-    19 |     let num2 u8 = get_signed()
+    19 |     num2 u8 := get_signed()
 tests/inputs/signed_assigned_to_unsigned.own:19:17:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
-    18 |     let num1 u32 = get_signed()
-    19 |     let num2 u8 = get_signed()
+    18 |     num1 u32 := get_signed()
+    19 |     num2 u8 := get_signed()
        |                 ^
     20 |     return 0
 

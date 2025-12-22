@@ -2,20 +2,20 @@ io :: import = std.io
 
 
 main :: fn() i32 {
-    let num f32 = 7.1
+    num f32 := 7.1
     io.printf("num = %.02f\n", num)
-    let num_int i32 = unsafe_cast<i32>num
+    num_int i32 := unsafe_cast<i32>num
     io.printf("num_int = %d\n", num_int)
 
-    let num2 f32 = 4.0
-    let num2_reinterpret i32 = *unsafe_cast<i32*>&num2
+    num2 f32 := 4.0
+    num2_reinterpret i32 := *unsafe_cast<i32*>&num2
     io.printf("num2_reinterpret = %x\n", num2_reinterpret)
 
-    let num3 f32 = 7.1*1.2
+    num3 f32 := 7.1*1.2
     io.printf("num3 = %f\n", num3)
 
     // demonstrate that f64 is actually more than 32 bits wide
-    let num5 f64 = 0.1234567890123456789;
+    num5 f64 := 0.1234567890123456789;
     io.printf("num5 = %0.09f\n", num5);
 
     return 0

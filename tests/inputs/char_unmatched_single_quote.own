@@ -1,6 +1,6 @@
 
 
 main :: fn() i32 {
-    let ch u8 = '
+    ch u8 := '
     return 0
 }

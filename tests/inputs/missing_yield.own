@@ -12,12 +12,12 @@ do_nothing :: fn() {
 }
 
 main :: fn() i32 {
-    let num1 i32 = switch (is_true()) {
+    num1 i32 := switch (is_true()) {
         case .true: do_nothing()
         case .false: break 1
     }
 
-    let num2 i32 = switch (is_true()) {
+    num2 i32 := switch (is_true()) {
         case .false: break 1
         case .true: do_nothing()
     }

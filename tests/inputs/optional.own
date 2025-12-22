@@ -40,7 +40,7 @@ token_print :: fn(token Token) {
 //}
 
 triangle :: fn(<ItemType>)(num ItemType) ItemType {
-    let result ItemType = 0
+    result ItemType := 0
     for curr ItemType in 0..num {
         result += curr
     }
@@ -54,7 +54,7 @@ triangle :: fn(<ItemType>)(num ItemType) ItemType {
 }
 
 try_add_one :: fn(<ItemType>)(num ItemType) util.Optional(<ItemType>) {
-    let dummy ItemType = num
+    dummy ItemType := num
     return .some(num + 1)
 }
 
@@ -159,9 +159,9 @@ concise :: fn() {
         case .error(error): io.printf("test 31: got error: %d\n", error.dummy)
     }
 
-    let num3 i32 = 4
-    let num2 i64 = 5
-    let num1 i16 = 6
+    num3 i32 := 4
+    num2 i64 := 5
+    num1 i16 := 6
     io.printf("test 40: got number: %d\n", triangle(<i32>)(num3))
     io.printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
     io.printf("test 42: got number: %d\n", triangle(<i64>)(num2))

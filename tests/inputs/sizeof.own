@@ -116,39 +116,39 @@ main :: fn() i32 {
     let nothing void
     io.printf("sizeof nothing = %zu\n", sizeof nothing)
 
-    let num i32 = 91
+    num i32 := 91
     io.printf("sizeof num = %zu\n", sizeof num)
     io.printf("sizeof(num) = %zu\n", sizeof(num))
 
-    let token_type TokenType = .num
+    token_type TokenType := .num
     io.printf("sizeof token_type = %zu\n", sizeof token_type)
 
-    let div1 Div1 = {.num1 = 8, .num2 = 6}
+    div1 Div1 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div1 = %zu\n", sizeof div1)
-    let div2 Div2 = {.num1 = 8, .num2 = 6}
+    div2 Div2 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div2 = %zu\n", sizeof div2)
-    let div3 Div3 = {.num1 = 8, .num2 = 6}
+    div3 Div3 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div3 = %zu\n", sizeof div3)
-    let div4 Div4 = {.num1 = 8, .num2 = 6}
+    div4 Div4 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div4 = %zu\n", sizeof div4)
-    let div5 Div5 = {.num1 = 8, .num2 = 6}
+    div5 Div5 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div5 = %zu\n", sizeof div5)
-    let div6 Div6 = {.num1 = {.num1 = 9, .num2 = 0}, .num2 = 6}
+    div6 Div6 := {.num1 = {.num1 = 9, .num2 = 0}, .num2 = 6}
     io.printf("sizeof div6 = %zu\n", sizeof div6)
-    let div7 Div7 = {.num1 = 8, .num2 = 6}
+    div7 Div7 := {.num1 = 8, .num2 = 6}
     io.printf("sizeof div7 = %zu\n", sizeof div7)
-    let div8 Div8 = {.num1 = 8.0, .num2 = 6}
+    div8 Div8 := {.num1 = 8.0, .num2 = 6}
     io.printf("sizeof div8 = %zu\n", sizeof div8)
 
-    let token1 Token1 = .num1(8)
+    token1 Token1 := .num1(8)
     io.printf("sizeof token1 = %zu\n", sizeof token1)
-    let token2 Token2 = .num1(8)
+    token2 Token2 := .num1(8)
     io.printf("sizeof token2 = %zu\n", sizeof token2)
-    let token3 Token3 = .num1(8)
+    token3 Token3 := .num1(8)
     io.printf("sizeof token3 = %zu\n", sizeof token3)
-    let token4 Token4 = .num1(8)
+    token4 Token4 := .num1(8)
     io.printf("sizeof token4 = %zu\n", sizeof token4)
-    let token5 Token5 = .num1(8)
+    token5 Token5 := .num1(8)
     io.printf("sizeof token5 = %zu\n", sizeof token5)
 
     let raw1 Raw1

@@ -13,14 +13,14 @@ Token :: enum {
 }
 
 main :: fn() i32 {
-    let token_type TokenType = TokenType.num
+    token_type TokenType := TokenType.num
     switch token_type {
         case TokenType.num: printf("this is a number")
         case TokenType.num: printf("this is a number")
         case TokenType.string: printf("this is a string")
     }
 
-    let token Token = Token.num(43)
+    token Token := Token.num(43)
     switch token {
         case Token.num(num): printf("token is number: %d\n", num)
         case Token.num(num): printf("token is number: %d\n", num)

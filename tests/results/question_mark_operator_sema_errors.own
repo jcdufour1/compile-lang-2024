@@ -3,7 +3,7 @@ compile::stdout 0
 compile::stderr 30
 tests/inputs/question_mark_operator_sema_errors.own:19:16:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
     18 | thing1 :: fn() {
-    19 |     let num u8 = do_thing(TRUE)?
+    19 |     num u8 := do_thing(TRUE)?
        |                ^
     20 |     printf("num = %d\n", num)
 tests/inputs/question_mark_operator_sema_errors.own:24:32:[1;31merror[0;39m:ErrorT of `?` left hand side is of type `i64`, but ErrorT of the function return type is of type `u8` (`i64` cannot be assigned to `u8`)

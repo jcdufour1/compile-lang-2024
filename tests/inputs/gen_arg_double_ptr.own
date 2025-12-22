@@ -7,7 +7,7 @@ Token :: struct {
 }
 
 main :: fn() i32 {
-    let num i32 = 3
+    num i32 := 3
     let ptr i32* = &num
     let ptr_ptr i32** = &ptr
 

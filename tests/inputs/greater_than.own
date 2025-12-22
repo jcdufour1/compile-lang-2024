@@ -27,7 +27,7 @@ do_constants :: fn() {
 }
 
 do_var_lhs :: fn() {
-    let num1 i32 = 8
+    num1 i32 := 8
 
     if num1 < 1 {
         io.puts("1")
@@ -55,7 +55,7 @@ do_var_lhs :: fn() {
 }
 
 do_var_rhs :: fn() {
-    let num2 i32 = 8
+    num2 i32 := 8
 
     if 1 < num2  {
         io.puts("1")
@@ -83,7 +83,7 @@ do_var_rhs :: fn() {
 }
 
 do_var_both :: fn() {
-    let lhs i32 = 8
+    lhs i32 := 8
     let rhs i32
 
     lhs = 1

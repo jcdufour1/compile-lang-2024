@@ -16,7 +16,7 @@ FALSE :: def = 0
 TRUE :: def = 1
 
 thing1 :: fn() {
-    let num u8 = do_thing(TRUE)?
+    num u8 := do_thing(TRUE)?
     printf("num = %d\n", num)
 }
 
