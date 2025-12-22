@@ -67,8 +67,7 @@ slice_from_cstr :: fn(cstr u8*) Str {
 }
 
 zero :: fn(<ItemT>)() ItemT {
-    assert(0, "todo")
-    //item ItemT @maybe_uninit
-    //libc.memset(unsafe_cast<opaque*>&item, 0, sizeof(item))
-    //return item
+    item ItemT : @maybe_uninit
+    libc.memset(unsafe_cast<opaque*>&item, 0, sizeof(item))
+    return item
 }
