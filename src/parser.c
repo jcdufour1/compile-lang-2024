@@ -1708,7 +1708,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
 static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token name) {
     Token import_tk = {0};
     unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
-    const char* before_sym_msg = try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL) ? "after =" : "after `import`";
+    const char* before_sym_msg = try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL) ? "after `=`" : "after `import`";
 
     String mod_path = {0};
     Token path_tk = {0};
