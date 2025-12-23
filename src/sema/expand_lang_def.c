@@ -450,7 +450,6 @@ static bool expand_def_ulang_type_expr(
                 }
 
                 Uast_struct_def* struct_def = uast_struct_def_unwrap(memb_def);
-            todo();
                 lang_type.expr = uast_operator_wrap(uast_unary_wrap(uast_unary_new(
                     lit->pos,
                     lang_type.expr,

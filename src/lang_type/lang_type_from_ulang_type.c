@@ -314,11 +314,8 @@ bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_ar
         0
     ));
 
-    Tast_def* array_def_ = NULL;
-    if (!symbol_lookup(&array_def_, serialize_ulang_type_array(MOD_PATH_ARRAYS, lang_type, true))) {
-        unwrap(symbol_add(tast_array_def_wrap(tast_array_def_new(lang_type.pos, item_type, count))));
-    }
-
+    // TODO: making new array def every time is wasteful. only make array def when nessessary
+    symbol_add(tast_array_def_wrap(tast_array_def_new(lang_type.pos, item_type, count)));
     return true;
 }
 

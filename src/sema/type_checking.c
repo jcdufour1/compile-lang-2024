@@ -1775,7 +1775,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
                 "(note: casting struct literal not yet implemented)\n"
             );
             status = false;
-            assert(env.error_count > 0);
+            assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
             goto end;
         }
         case UAST_FN:
