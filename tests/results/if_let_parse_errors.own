@@ -2,14 +2,14 @@ compile::stdout 0
 
 compile::stderr 10
 tests/inputs/if_let_parse_errors.own:11:12:[1;31merror[0;39m:`else if` causes of `if let` statements are not supported
-    10 |     if let .some(num) = opt {
+    10 |     if .some(num) := opt {
     11 |     } else if 1 {
        |            ^
     12 |     }
-tests/inputs/if_let_parse_errors.own:14:26:[1;31merror[0;39m:expected newline or `;` after statement
+tests/inputs/if_let_parse_errors.own:14:8:[1;31merror[0;39m:expected enum case (e.g. `.some(num)`) here
     13 | 
     14 |     if num := do_thing() {
-       |                          ^
+       |        ^
     15 |     }
 
 compile::return_code 1

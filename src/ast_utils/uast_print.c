@@ -347,6 +347,7 @@ Strv uast_int_print_internal(UAST_MODE mode, const Uast_int* num, Indent indent)
         case UAST_LOG:
             string_extend_cstr_indent(&a_temp, &buf, "number", indent);
             string_extend_int64_t(&a_temp, &buf, num->data);
+            extend_pos(&buf, num->pos);
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:

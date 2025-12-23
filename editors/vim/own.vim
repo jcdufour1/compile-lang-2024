@@ -15,7 +15,6 @@ syn keyword ownKeyword
     \ if
     \ import
     \ in
-    \ let
     \ switch
     \ type
     \ orelse
@@ -63,9 +62,12 @@ syn match ownFloatLiteral display "\v<[1-9](_*\d)*>\.\v<\d(_*\d)*>"
 syn match ownDelimiter display "[{},()\[\]]"
 syn match ownDelimiter display "(<"
 syn match ownDelimiter display ">)"
+syn match ownDelimiter display "\v\:\:"
 
+" TODO: avoid matching `===`, etc
 syn match ownOperator display "\v[\+\-\*\/\&\=\%\!\^\|\~\?]"
 syn match ownOperator display "\v\.\."
+syn match ownOperator display "\v\:\="
 syn match ownOperator display "[\<]"  " TODO: this also catches < in (<, which could be wrong 
                                       " (however, this may be fine, because operators and delimeters are often the same color anyway)
 syn match ownOperator display "\v\zs[\>]\ze[^\)]"

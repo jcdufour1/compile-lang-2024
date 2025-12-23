@@ -7,7 +7,7 @@ do_thing :: fn() i32? {
 
 main :: fn() i32 {
     opt io.Optional(<i32>) := .some(7)
-    if let .some(num) = opt {
+    if .some(num) := opt {
     } else if 1 {
     }
 

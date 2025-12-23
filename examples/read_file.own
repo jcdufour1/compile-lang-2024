@@ -12,7 +12,7 @@ read :: fn(file io.File) {
 }
 
 main :: fn() i32 {
-    if let .some(file) = io.open_file("examples/read_file.own", "r") {
+    if .some(file) := io.open_file("examples/read_file.own", "r") {
         read(file)
         io.close_file(file)
     } else {

@@ -78,8 +78,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("extern");
         case TOKEN_STRUCT:
             return sv("struct");
-        case TOKEN_LET:
-            return sv("let");
         case TOKEN_IN:
             return sv("in");
         case TOKEN_BREAK:
@@ -242,8 +240,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("extern");
         case TOKEN_STRUCT:
             return sv("struct");
-        case TOKEN_LET:
-            return sv("let");
         case TOKEN_IN:
             return sv("in");
         case TOKEN_BREAK:
@@ -346,7 +342,7 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 78, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             darr_append(arena, &buf, '(');
@@ -389,7 +385,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_EXTERN: fallthrough;
         case TOKEN_STRUCT: fallthrough;
         case TOKEN_RAW_UNION: fallthrough;
-        case TOKEN_LET: fallthrough;
         case TOKEN_IN: fallthrough;
         case TOKEN_NEW_LINE: fallthrough;
         case TOKEN_BREAK: fallthrough;

@@ -36,7 +36,7 @@ fgetc :: fn(file File) u8? {
 getline :: fn(file File, delim u8 = '\n') coll.Darr(<u8>)? {
     new_str coll.Darr(<u8>) := coll.darr_new(<u8>)()
     for 1 {
-        if let .some(ch) = fgetc(file) {
+        if .some(ch) := fgetc(file) {
             coll.darr_append(&new_str, ch)
             if ch == delim => return .some(new_str)
         } else {

@@ -67,7 +67,7 @@ arr_new :: fn(<ItemT, max_capacity ''usize>)(init_elems ItemT[] = [], file Str =
 
 arr_slice :: fn(<ItemT, max_capacity ''usize>)(arr Arr(<ItemT, max_capacity>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := arr.count - start
-    if let .some(num) = count {
+    if .some(num) := count {
         actual_count = num
     }
     slice ItemT[] := {arr.buf, arr.count}
@@ -146,7 +146,7 @@ darr_new :: fn(<ItemT>)(init_elems ItemT[] = [], file Str = #file, line i32 = #l
 
 darr_slice :: fn(<ItemT>)(darr Darr(<ItemT>), start usize = 0, count usize? = .none, file Str = #file, line i32 = #line, column i32 = #column) ItemT[] {
     actual_count usize := darr.count - start
-    if let .some(num) = count {
+    if .some(num) := count {
         actual_count = num
     }
     slice ItemT[] := {darr.buf, darr.count}
