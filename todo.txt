@@ -133,11 +133,7 @@ for generics:
     EOF :: def -1
 - remove let keyword from syntax file
 - remove let token type
-- this error message should say "did you mean to add `:` after `Raw1`"
-    - tests/inputs/sizeof.own:154:10:error:expected newline after statement
-       153 |
-       154 |     raw1 Raw1
-- test log level in ci
+- test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
 
 

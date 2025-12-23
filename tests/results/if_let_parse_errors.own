@@ -6,7 +6,7 @@ tests/inputs/if_let_parse_errors.own:11:12:[1;31merror[0;39m:`else if` causes 
     11 |     } else if 1 {
        |            ^
     12 |     }
-tests/inputs/if_let_parse_errors.own:14:26:[1;31merror[0;39m:expected newline after statement
+tests/inputs/if_let_parse_errors.own:14:26:[1;31merror[0;39m:expected newline or `;` after statement
     13 | 
     14 |     if num := do_thing() {
        |                          ^

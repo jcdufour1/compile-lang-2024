@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/unclosed_string_literal.own:5:12:[1;31merror[0;39m:unmatched `"`
+tests/inputs/unclosed_string_literal.own:5:12:[1;31merror[0;39m:unmatched opening `"`
      4 | main :: fn() i32 {
      5 |     printf("hello)
        |            ^

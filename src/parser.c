@@ -2932,11 +2932,22 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     try_consume_newlines(tokens);
     if (!prev_is_newline()) {
-        // TODO: change to "expected newline or semicolon after statement"
-        msg(
-            DIAG_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
-            "expected newline after statement\n"
-        );
+        Token front = tk_view_front(*tokens);
+        if (front.type == TOKEN_SYMBOL) {
+            msg(
+                DIAG_NO_NEW_LINE_AFTER_STATEMENT,
+                tk_view_front(*tokens).pos,
+                "expected newline or `;` after statement; "
+                "if this is a variable definition, place `:` after `"FMT"`\n",
+                strv_print(front.text)
+            );
+        } else {
+            msg(
+                DIAG_NO_NEW_LINE_AFTER_STATEMENT,
+                front.pos,
+                "expected newline or `;` after statement\n"
+            );
+        }
         return PARSE_EXPR_ERROR;
     }
     unwrap(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -2962,7 +2973,10 @@ static PARSE_STATUS parse_block(
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        if (try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START) || try_consume(&open_brace_token, tokens, TOKEN_COLON)) {
+        if (
+            try_consume(&open_brace_token, tokens, TOKEN_ONE_LINE_BLOCK_START) ||
+            try_consume(&open_brace_token, tokens, TOKEN_COLON)
+        ) {
             is_one_line = true;
         } else {
             msg_parser_expected(
