@@ -876,7 +876,7 @@ Strv uast_mod_alias_print_internal(UAST_MODE mode, const Uast_mod_alias* alias, 
             string_extend_cstr(&a_temp, &buf, "(");
             string_extend_strv(&a_main, &buf, alias->mod_path);
             string_extend_cstr(&a_temp, &buf, ")");
-            string_extend_f(&a_temp, &buf, FMT, loc_print(alias->loc));
+            string_extend_f(&a_temp, &buf, FMT, loc_print(loc_get(alias->loc)));
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
@@ -1271,7 +1271,7 @@ Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* d
             string_extend_cstr_indent(&a_temp, &buf, "variable_def", indent);
             extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
             extend_name(NAME_LOG, &buf, def->name);
-            string_extend_f(&a_temp, &buf, FMT, loc_print(def->loc));
+            string_extend_f(&a_temp, &buf, FMT, loc_print(loc_get(def->loc)));
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
