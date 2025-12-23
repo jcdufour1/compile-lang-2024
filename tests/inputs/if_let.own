@@ -1,31 +1,31 @@
-io :: import = std.io
-util :: import = std.util
+//io :: import = std.io
+//util :: import = std.util
 
 main :: fn() i32 {
     opt util.Optional(<i32>) := .some(7)
-    if let .some(num) = opt {
+    if .some(num) := opt {
         io.printf("yes 1: %d\n", num)
     }
 
-    if let .some(num) = opt {
+    if .some(num) := opt {
         io.printf("yes 2: %d\n", num)
     } else {
         io.printf("no 2\n")
     }
 
     opt = .none
-    if let .some(num) = opt {
+    if .some(num) := opt {
         io.printf("no 3: %d\n", num)
     } else {
         io.printf("yes 3\n")
     }
 
-    if let .some(num) = opt {
+    if .some(num) := opt {
         io.printf("no 4: %d\n", num)
     }
 
     result1 util.Result(<i32, Str>) := .ok(6)
-    if let .ok(num) = result1 {
+    if .ok(num) := result1 {
         num2 i32 := num
         io.printf("yes 5: %d\n", num)
     } else (str) {
@@ -34,7 +34,7 @@ main :: fn() i32 {
     }
 
     result2 util.Result(<i32, Str>) := .error("did not work")
-    if let .ok(num) = result2 {
+    if .ok(num) := result2 {
         io.printf("no 6: %d\n", num)
     } else (str) {
         io.printf("yes 6: ")
@@ -42,7 +42,7 @@ main :: fn() i32 {
     }
 
     result3 util.Result(<i32, Str>) := .ok(6)
-    if let .error(str) = result3 {
+    if .error(str) := result3 {
         io.printf("no 7: ")
         io.print_str(str)
     } else (num) {
@@ -51,7 +51,7 @@ main :: fn() i32 {
     }
 
     result4 util.Result(<i32, Str>) := .error("did not work")
-    if let .error(str) = result4 {
+    if .error(str) := result4 {
         io.printf("yes 8: ")
         io.print_str(str)
     } else (num) {

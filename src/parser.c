@@ -82,6 +82,13 @@ static PARSE_EXPR_STATUS parse_expr(
     Scope_id scope_id
 );
 
+static PARSE_EXPR_EX_STATUS parse_expr_ex(
+    Uast_expr** result,
+    Tk_view* tokens,
+    Scope_id scope_id,
+    bool allow_if_let_sum_assign 
+);
+
 static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
     Tk_view* tokens,
@@ -2281,19 +2288,20 @@ static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_
 
 static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* cond_child;
-    switch (parse_expr(&cond_child, tokens, scope_id)) {
-        case PARSE_EXPR_OK:
+    switch (parse_expr_ex(&cond_child, tokens, scope_id, true)) {
+        case PARSE_EXPR_EX_OK_NORMAL:
             break;
-        case PARSE_EXPR_ERROR:
-            return PARSE_EXPR_ERROR;
-        case PARSE_EXPR_NONE:
+        case PARSE_EXPR_EX_OK_IF_LET:
+            todo();
+        case PARSE_EXPR_EX_NONE:
+            return PARSE_EXPR_NONE;
+        case PARSE_EXPR_EX_ERROR:
             return PARSE_EXPR_NONE;
         default:
             unreachable("");
     }
 
     Uast_operator* cond_oper = NULL;
-
     // TODO: make helper function that does this
     switch (cond_child->type) {
         case UAST_OPERATOR:
@@ -2391,6 +2399,19 @@ static PARSE_STATUS parse_if_else_chain_internal(
         default:
             unreachable("");
     }
+    log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, if_stmt->condition));
+    //if (
+    //    if_stmt->condition->child->type == UAST_BINARY &&
+    //    uast_binary_unwrap(if_stmt->condition->child)->token_type == BINARY_SINGLE_EQUAL
+    //) {
+    //    msg(
+    //        DIAG_IF_SHOULD_BE_IF_LET,
+    //        if_stmt->condition->pos,
+    //        "assignment is not allowed for if statement condition; did you mean to use `if let` instead of `if`?\n"
+    //    );
+    //    return PARSE_ERROR;
+    //}
+
     if (
         if_stmt->condition->child->type == UAST_BINARY &&
         uast_binary_unwrap(if_stmt->condition->child)->token_type == BINARY_SINGLE_EQUAL
@@ -2610,14 +2631,14 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
     Token if_start_token;
     unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
-    if (tk_view_front(*tokens).type == TOKEN_LET) {
-        Uast_switch* lang_switch = NULL;
-        if (PARSE_OK != parse_if_let_internal(&lang_switch, if_start_token, tokens, scope_id)) {
-            return PARSE_ERROR;
-        }
-        *expr = uast_switch_wrap(lang_switch);
-        return PARSE_OK;
-    }
+    //if (tk_view_front(*tokens).type == TOKEN_LET) {
+    //    Uast_switch* lang_switch = NULL;
+    //    if (PARSE_OK != parse_if_let_internal(&lang_switch, if_start_token, tokens, scope_id)) {
+    //        return PARSE_ERROR;
+    //    }
+    //    *expr = uast_switch_wrap(lang_switch);
+    //    return PARSE_OK;
+    //}
 
     Uast_block* if_else = NULL;
     if (PARSE_OK != parse_if_else_chain_internal(&if_else, if_start_token, tokens, scope_id)) {
@@ -3936,11 +3957,11 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     return parse_generic_binary_internal(result, new_lhs, tokens, scope_id, bin_idx, depth);
 }
 
-static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_EXPR_EX_STATUS parse_expr_ex(Uast_expr** result, Tk_view* tokens, Scope_id scope_id, bool allow_if_let_sum_assign) {
     Token underscore_tk = {0};
     if (try_consume(&underscore_tk, tokens, TOKEN_UNDERSCORE)) {
         *result = uast_underscore_wrap(uast_underscore_new(underscore_tk.pos));
-        return PARSE_EXPR_OK;
+        return PARSE_EXPR_EX_OK_NORMAL;
     }
 
     if (tk_view_front(*tokens).type == TOKEN_FN) {
@@ -3958,7 +3979,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
                 ulang_type_get_pos(lang_type),
                 ulang_type_fn_const_unwrap(lang_type)
             ));
-            return PARSE_EXPR_OK;
+            return PARSE_EXPR_EX_OK_NORMAL;
         }
         assert(
             env.error_count == prev_error_count &&
@@ -3971,22 +3992,36 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
         if (PARSE_OK == parse_function_def(&fun_def_, tokens, true, scope_id, (Token) {0})) {
             if (fun_def_->type != UAST_DEF || uast_def_unwrap(fun_def_)->type != UAST_FUNCTION_DEF) {
                 msg_todo("", uast_stmt_get_pos(fun_def_));
-                return PARSE_EXPR_ERROR;
+                return PARSE_EXPR_EX_ERROR;
             }
             Uast_function_def* fun_def = uast_function_def_unwrap(uast_def_unwrap(fun_def_));
 
             *result = uast_symbol_wrap(uast_symbol_new(fun_def->pos, fun_def->decl->name));
-            return PARSE_EXPR_OK;
+            return PARSE_EXPR_EX_OK_NORMAL;
         }
 
         unwrap(PARSE_ERROR == parse_lang_type_struct_require_ex(&lang_type, tokens, scope_id, true));
-        return PARSE_EXPR_ERROR;
+        return PARSE_EXPR_EX_ERROR;
     }
 
     Uast_expr* lhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
-        return status;
+        return parse_expr_status_to_parse_expr_ex_status(status);
+    }
+
+    Token sum_assign_tk = {0};
+    if (allow_if_let_sum_assign && try_consume(&sum_assign_tk, tokens, TOKEN_COLON)) {
+        if (!try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
+            todo();
+        }
+        Uast_expr* rhs = NULL;
+        PARSE_EXPR_STATUS status = parse_expr(&rhs, tokens, scope_id);
+        if (status != PARSE_EXPR_OK) {
+            return PARSE_EXPR_EX_ERROR;
+        }
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(sum_assign_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
+        return PARSE_EXPR_EX_OK_IF_LET;
     }
 
     Token equal_tk = {0};
@@ -3999,28 +4034,37 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     } else if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         *result = lhs;
         unwrap(*result);
-        return PARSE_EXPR_OK;
+        return PARSE_EXPR_EX_OK_NORMAL;
     }
-    
+
     Uast_expr* rhs = NULL;
     Uast_expr* final_rhs = NULL;
     switch (parse_generic_binary(&rhs, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
             if (is_assign_bin) {
-                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, true, scope_id, oper.pos), rhs, binary_type_from_token_type(oper.type))));
+                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+                    oper.pos,
+                    uast_expr_clone(lhs, true, scope_id, oper.pos),
+                    rhs,
+                    binary_type_from_token_type(oper.type)
+                )));
             } else {
                 final_rhs = rhs;
             }
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, final_rhs, BINARY_SINGLE_EQUAL)));
             unwrap(*result);
-            return PARSE_EXPR_OK;
+            return PARSE_EXPR_EX_OK_NORMAL;
         case PARSE_EXPR_NONE:
             msg_expected_expr(*tokens, "after `=`");
-            return PARSE_EXPR_ERROR;
+            return PARSE_EXPR_EX_ERROR;
         case PARSE_EXPR_ERROR:
-            return PARSE_EXPR_ERROR;
+            return PARSE_EXPR_EX_ERROR;
     }
     unreachable("");
+}
+
+static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
+    return parse_expr_ex_status_to_parse_expr_status(parse_expr_ex(result, tokens, scope_id, false));
 }
 
 static void parser_do_tests(void);

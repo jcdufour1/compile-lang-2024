@@ -17,6 +17,43 @@ typedef enum {
     PARSE_EXPR_ERROR, // tokens need to be synced by callers
 } PARSE_EXPR_STATUS;
 
+typedef enum {
+    PARSE_EXPR_EX_OK_NORMAL, // no need for callers to sync tokens, and no message reported to the user
+    PARSE_EXPR_EX_OK_IF_LET, // no need for callers to sync tokens, and no message reported to the user
+    PARSE_EXPR_EX_NONE, // no expr parsed; no message reported to the user, and no need for callers to sync tokens
+    PARSE_EXPR_EX_ERROR, // tokens need to be synced by callers
+} PARSE_EXPR_EX_STATUS;
+
+static inline PARSE_EXPR_STATUS parse_expr_ex_status_to_parse_expr_status(PARSE_EXPR_EX_STATUS status) {
+    switch (status) {
+        case PARSE_EXPR_EX_OK_NORMAL:
+            return PARSE_EXPR_OK;
+        case PARSE_EXPR_EX_ERROR:
+            return PARSE_EXPR_ERROR;
+        case PARSE_EXPR_EX_NONE:
+            return PARSE_EXPR_NONE;
+        case PARSE_EXPR_EX_OK_IF_LET:
+            unreachable("");
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static inline PARSE_EXPR_EX_STATUS parse_expr_status_to_parse_expr_ex_status(PARSE_EXPR_STATUS status) {
+    switch (status) {
+        case PARSE_EXPR_OK:
+            return PARSE_EXPR_EX_OK_NORMAL;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_EX_ERROR;
+        case PARSE_EXPR_NONE:
+            return PARSE_EXPR_EX_NONE;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, const Uast_def* new_sym_def);
 
 #define msg_redefinition_of_symbol(new_sym_def) \
