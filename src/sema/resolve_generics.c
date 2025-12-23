@@ -733,7 +733,6 @@ bool resolve_generics_function_def_call(
             1/*TODO*/
         );
         if (!try_lang_type_from_ulang_type_fn(type_res, new_fn)) {
-            assert(env.error_count > 0);
             status = false;
             goto end;
         }
@@ -786,7 +785,6 @@ bool resolve_generics_function_def_call(
     );
     Lang_type_fn rtn_type_ = {0};
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn)) {
-        assert(env.error_count > 0);
         status = false;
         goto end;
     }

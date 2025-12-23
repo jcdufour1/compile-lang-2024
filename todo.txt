@@ -137,8 +137,6 @@ for generics:
     - tests/inputs/sizeof.own:154:10:error:expected newline after statement
        153 |
        154 |     raw1 Raw1
-- change import syntax to 
-    io :: import std.io
 - test log level in ci
 - make loc printing work for uasts and tasts
 

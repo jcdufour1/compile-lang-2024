@@ -1272,6 +1272,7 @@ Strv uast_primitive_def_print_internal(UAST_MODE mode, const Uast_primitive_def*
     return string_to_strv(buf);
 }
 
+// TODO: remove this function when possible
 static Strv adsfasldf_local_loc_print_internal(const char* file, int line) {
     String buf = {0};
     string_extend_f(&a_temp, &buf, "/* %s:%d */", file, line);

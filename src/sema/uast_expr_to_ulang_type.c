@@ -234,17 +234,6 @@ static EXPR_TO_ULANG_TYPE uast_expr_to_ulang_type_int_liternal(Ulang_type* resul
             *result = ulang_type_regular_const_wrap(reg);
             return EXPR_TO_ULANG_TYPE_NORMAL;
         }
-            //Name sym_name = uast_symbol_const_unwrap(expr)->name;
-            //*result = ulang_type_regular_const_wrap(ulang_type_regular_new(
-            //    ulang_type_atom_new(
-            //        name_to_uname(sym_name),
-            //        0
-            //    ),
-            //    //name_to_uname(uast_symbol_const_unwrap(expr)->name),
-            //    uast_symbol_const_unwrap(expr)->pos
-            //));
-
-            //return EXPR_TO_ULANG_TYPE_NORMAL;
         case UAST_INDEX: {
             const Uast_index* index = uast_index_const_unwrap(expr);
             if (index->index->type == UAST_LITERAL) {

@@ -134,20 +134,18 @@ static bool expand_def_ulang_type_regular(
                 return false;
             }
 
-            todo();
-            //Uname new_uname = uname_new(
-            //    uast_symbol_unwrap(access->callee)->name,
-            //    access->member_name->name.base,
-            //    lang_type.name.gen_args,
-            //    //SCOPE_TOP_LEVEL/*TODO*/
-            //);
-            //todo();
-            //*new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-            //    lang_type.pos,
-            //    new_uname,
-            //    lang_type.pointer_depth
-            //));
-            //return true;
+            Uname new_uname = uname_new(
+                uast_symbol_unwrap(access->callee)->name,
+                access->member_name->name.base,
+                lang_type.name.gen_args,
+                lang_type.name.scope_id // TODO
+            );
+            *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
+                lang_type.pos,
+                new_uname,
+                lang_type.pointer_depth
+            ));
+            return true;
         }
         case UAST_SYMBOL:
             lang_type.name = name_to_uname(uast_symbol_unwrap(new_expr)->name);

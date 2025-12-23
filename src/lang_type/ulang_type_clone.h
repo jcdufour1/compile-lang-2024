@@ -66,13 +66,11 @@ static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type
 }
 
 static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lang_type, bool use_new_scope, Scope_id new_scope) {
-    Ulang_type_regular reg = ulang_type_regular_new(
+    return ulang_type_regular_new(
         lang_type.pos,
         uname_clone(lang_type.name, use_new_scope, new_scope),
         lang_type.pointer_depth
     );
-
-    return reg;
 }
 
 static inline Ulang_type_array ulang_type_array_clone(Ulang_type_array lang_type, bool use_new_scope, Scope_id new_scope) {
