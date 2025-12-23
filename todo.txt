@@ -116,7 +116,6 @@ for generics:
 - expected failure case for generic parameter having the same name as top level function
 - add token `::`?
 - add token `:=`?
-- change `if let` to use `:=`
 - make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - document or make functions for uast_def_get_ulang_type
@@ -132,7 +131,6 @@ for generics:
 - def should be defined this way?:
     EOF :: def -1
 - remove let keyword from syntax file
-- remove let token type
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
 
