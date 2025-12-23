@@ -1273,8 +1273,6 @@ Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* d
             extend_name(NAME_LOG, &buf, def->name);
             string_extend_f(&a_temp, &buf, FMT, loc_print(def->loc));
             string_extend_cstr(&a_temp, &buf, "\n");
-            log(LOG_DEBUG, FMT"\n", string_print(buf));
-            todo();
             break;
         case UAST_MSG:
             msg_todo("", def->pos);
