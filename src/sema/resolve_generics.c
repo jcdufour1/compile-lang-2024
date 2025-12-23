@@ -804,6 +804,10 @@ bool resolve_generics_function_def_implementation(Name name) {
     Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_darr) {0}, name.scope_id);
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = name.mod_path;
+    bool status = true;
+
     unwrap(
         !symbol_lookup(&dummy_2, name) &&
         "same function has been passed to resolve_generics_function_def_implementation "
@@ -813,11 +817,8 @@ bool resolve_generics_function_def_implementation(Name name) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, name)) {
         // we only need to type check this function
-        Strv old_mod_path_curr_file = env.mod_path_curr_file;
-        env.mod_path_curr_file = name.mod_path;
-        bool status = resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
-        env.mod_path_curr_file = old_mod_path_curr_file;
-        return status;
+        status = resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
+        goto end;
     } else {
         // we need to make new uast function implementation and then type check it
         unwrap(usymbol_lookup(&result, name_plain));
@@ -826,23 +827,24 @@ bool resolve_generics_function_def_implementation(Name name) {
         Uast_block* new_block = uast_block_clone(def->body, true, def->decl->name.scope_id, def->body->pos);
         assert(new_block != def->body);
 
-        Strv old_mod_path_curr_file = env.mod_path_curr_file;
-        env.mod_path_curr_file = name.mod_path;
         Uast_function_decl* new_decl = NULL;
         assert(env.mod_path_curr_file.count > 0);
         bool status = resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos);
         if (!status) {
-            env.mod_path_curr_file = old_mod_path_curr_file;
-            return false;
+            status = false;
+            goto end;
         }
         
         Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
         usym_tbl_add(uast_function_def_wrap(new_def));
         assert(env.mod_path_curr_file.count > 0);
         status = resolve_generics_set_function_def_types(new_def);
-        env.mod_path_curr_file = old_mod_path_curr_file;
-        return status;
+        goto end;
     }
-    unreachable("");
+
+
+end:
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return status;
 }
 
