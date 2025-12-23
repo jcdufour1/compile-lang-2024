@@ -111,7 +111,7 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
     Scope_id scope_id
 );
 
-static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
+static PARSE_EXPR_EX_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 
 static PARSE_STATUS parse_generics_args(Ulang_type_darr* args, Tk_view* tokens, Scope_id scope_id);
 
@@ -1955,12 +1955,15 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
     *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Name) {0}, false);
     
     switch (parse_condition(&(*for_new)->condition, tokens, block_scope)) {
-        case PARSE_EXPR_OK:
+        case PARSE_EXPR_EX_OK_NORMAL:
             break;
-        case PARSE_EXPR_NONE:
+        case PARSE_EXPR_EX_NONE:
             msg_expected_expr(*tokens, "");
             return PARSE_ERROR;
-        case PARSE_EXPR_ERROR:
+        case PARSE_EXPR_EX_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_EX_OK_IF_LET:
+            msg_todo("if let in for loops", tk_view_front(*tokens).pos);
             return PARSE_ERROR;
         default:
             unreachable("");
@@ -2286,17 +2289,18 @@ static PARSE_STATUS parse_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_
     return PARSE_OK;
 }
 
-static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* tokens, Scope_id scope_id) {
+static PARSE_EXPR_EX_STATUS parse_condition(Uast_condition** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* cond_child;
     switch (parse_expr_ex(&cond_child, tokens, scope_id, true)) {
         case PARSE_EXPR_EX_OK_NORMAL:
             break;
         case PARSE_EXPR_EX_OK_IF_LET:
-            todo();
+            *result = uast_condition_new(uast_expr_get_pos(cond_child), uast_operator_unwrap(cond_child));
+            return PARSE_EXPR_EX_OK_IF_LET;
         case PARSE_EXPR_EX_NONE:
-            return PARSE_EXPR_NONE;
+            return PARSE_EXPR_EX_NONE;
         case PARSE_EXPR_EX_ERROR:
-            return PARSE_EXPR_NONE;
+            return PARSE_EXPR_EX_NONE;
         default:
             unreachable("");
     }
@@ -2353,7 +2357,7 @@ static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* token
     }
 
     *result = uast_condition_new(uast_expr_get_pos(cond_child), cond_oper);
-    return PARSE_EXPR_OK;
+    return PARSE_EXPR_EX_OK_NORMAL;
 }
 
 static void if_else_chain_consume_newline(Tk_view* tokens) {
@@ -2389,11 +2393,13 @@ static PARSE_STATUS parse_if_else_chain_internal(
     if_stmt = uast_if_new(if_token.pos, NULL, NULL);
     
     switch (parse_condition(&if_stmt->condition, tokens, parent)) {
-        case PARSE_EXPR_OK:
+        case PARSE_EXPR_EX_OK_NORMAL:
             break;
-        case PARSE_EXPR_ERROR:
+        case PARSE_EXPR_EX_OK_IF_LET:
+            todo();
+        case PARSE_EXPR_EX_ERROR:
             return PARSE_ERROR;
-        case PARSE_EXPR_NONE:
+        case PARSE_EXPR_EX_NONE:
             msg_expected_expr(*tokens, "");
             return PARSE_ERROR;
         default:
@@ -2435,11 +2441,13 @@ static PARSE_STATUS parse_if_else_chain_internal(
 
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
             switch (parse_condition(&if_stmt->condition, tokens, parent)) {
-                case PARSE_EXPR_OK:
+                case PARSE_EXPR_EX_OK_NORMAL:
                     break;
-                case PARSE_EXPR_ERROR:
+                case PARSE_EXPR_EX_OK_IF_LET:
+                    todo();
+                case PARSE_EXPR_EX_ERROR:
                     return PARSE_ERROR;
-                case PARSE_EXPR_NONE:
+                case PARSE_EXPR_EX_NONE:
                     msg_expected_expr(*tokens, "");
                     return PARSE_ERROR;
                 default:
