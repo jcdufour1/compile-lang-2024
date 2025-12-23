@@ -2425,7 +2425,7 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
                 case PARSE_EXPR_EX_OK_IF_LET:
                     msg(
                         DIAG_IF_LET_INVALID_SYNTAX,
-                        uast_expr_get_pos(if_stmt->condition),
+                        if_stmt->condition->pos,
                         "`:=` cannot be used in else cases of regular if statements\n"
                     );
                     return PARSE_EXPR_EX_ERROR;
