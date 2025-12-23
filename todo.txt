@@ -140,6 +140,7 @@ for generics:
 - change import syntax to 
     io :: import std.io
 - test log level in ci
+- make loc printing work for uasts and tasts
 
 
 

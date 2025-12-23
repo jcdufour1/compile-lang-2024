@@ -344,9 +344,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         string_extend_cstr(&a_temp, buf, ".");
     }
     if (mode == UNAME_LOG) {
-        // TODO: uncomment below when possible to allow for better debugging (cannot be uncommented
-        //   right now becuause it causes bugs with try_lang_type_from_ulang_type_array function)
-        //   maybe introduce UNAME_NORMAL that is different from UNAME_LOG to prevent some issues?
+        // TODO: uncomment below when possible to allow for better debugging?
         //string_extend_f(&a_temp, buf, "s%zu_", name.scope_id);
     }
     string_extend_strv(&a_temp, buf, name.base);

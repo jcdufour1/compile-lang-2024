@@ -2951,34 +2951,41 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 }
 
 static void load_def_out_of_line(Tast_def* old_def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = tast_def_get_name(old_def).mod_path;
+    assert(tast_def_get_name(old_def).mod_path.count > 0);
+
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             load_function_def(tast_function_def_unwrap(old_def));
-            return;
+            break;
         case TAST_FUNCTION_DECL:
             load_function_decl(tast_function_decl_unwrap(old_def));
-            return;
+            break;
         case TAST_VARIABLE_DEF:
-            return;
+            break;
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
-            return;
+            break;
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
-            return;
+            break;
         case TAST_ENUM_DEF:
-            return;
+            break;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT_PATH:
             load_import_path(tast_import_path_unwrap(old_def));
-            return;
+            break;
         case TAST_LABEL:
-            return;
+            break;
         case TAST_ARRAY_DEF:
-            return;
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Ir_name sym_name, Ir_name if_rtning, Ir_name otherwise) {

@@ -1288,7 +1288,9 @@ Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* d
             string_extend_cstr_indent(&a_temp, &buf, "variable_def", indent);
             extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
             extend_name(NAME_LOG, &buf, def->name);
-            string_extend_f(&a_temp, &buf, FMT, asldjfasdf_local_loc_print(def->loc));
+#           ifndef NDEBUG
+                string_extend_f(&a_temp, &buf, FMT, asldjfasdf_local_loc_print(def->loc));
+#           endif // NDEBUG
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
