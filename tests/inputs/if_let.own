@@ -1,5 +1,5 @@
-//io :: import = std.io
-//util :: import = std.util
+io :: import = std.io
+util :: import = std.util
 
 main :: fn() i32 {
     opt util.Optional(<i32>) := .some(7)

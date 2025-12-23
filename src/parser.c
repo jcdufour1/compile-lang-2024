@@ -2374,7 +2374,7 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
     }
 }
 
-static PARSE_STATUS parse_if_else_chain_internal(
+static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
     Uast_block** if_else_chain,
     Token if_token,
     Tk_view* tokens,
@@ -2386,7 +2386,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
     // TODO: (maybe not): extract this if and block_new into separate function
     Name dummy = {0};
     if (PARSE_OK != label_thing(&dummy, parent)) {
-        return PARSE_ERROR;
+        return PARSE_EXPR_EX_ERROR;
     }
 
     Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
@@ -2396,12 +2396,12 @@ static PARSE_STATUS parse_if_else_chain_internal(
         case PARSE_EXPR_EX_OK_NORMAL:
             break;
         case PARSE_EXPR_EX_OK_IF_LET:
-            todo();
+            return PARSE_EXPR_EX_OK_IF_LET;
         case PARSE_EXPR_EX_ERROR:
-            return PARSE_ERROR;
+            return PARSE_EXPR_EX_ERROR;
         case PARSE_EXPR_EX_NONE:
             msg_expected_expr(*tokens, "");
-            return PARSE_ERROR;
+            return PARSE_EXPR_EX_ERROR;
         default:
             unreachable("");
     }
@@ -2427,10 +2427,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
             if_stmt->condition->pos,
             "assignment is not allowed for if statement condition; did you mean to use `if let` instead of `if`?\n"
         );
-        return PARSE_ERROR;
+        return PARSE_EXPR_EX_ERROR;
     }
     if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_darr) {0})) {
-        return PARSE_ERROR;
+        return PARSE_EXPR_EX_ERROR;
     }
     darr_append(&a_main, &ifs, if_stmt);
 
@@ -2446,10 +2446,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
                 case PARSE_EXPR_EX_OK_IF_LET:
                     todo();
                 case PARSE_EXPR_EX_ERROR:
-                    return PARSE_ERROR;
+                    return PARSE_EXPR_EX_ERROR;
                 case PARSE_EXPR_EX_NONE:
                     msg_expected_expr(*tokens, "");
-                    return PARSE_ERROR;
+                    return PARSE_EXPR_EX_ERROR;
                 default:
                     unreachable("");
             }
@@ -2462,7 +2462,7 @@ static PARSE_STATUS parse_if_else_chain_internal(
         }
 
         if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(parent, util_literal_name_new()), (Uast_stmt_darr) {0})) {
-            return PARSE_ERROR;
+            return PARSE_EXPR_EX_ERROR;
         }
         darr_append(&a_main, &ifs, if_stmt);
 
@@ -2488,11 +2488,10 @@ static PARSE_STATUS parse_if_else_chain_internal(
     Uast_stmt_darr chain_ = {0};
     darr_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
     *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent);
-    return PARSE_OK;
+    return PARSE_EXPR_EX_OK_NORMAL;
 }
 
 static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_token, Tk_view* tokens, Scope_id scope_id) {
-    unwrap(try_consume(NULL, tokens, TOKEN_LET));
     Scope_id if_true_scope = symbol_collection_new(scope_id, util_literal_name_new());
     Scope_id if_false_scope = symbol_collection_new(scope_id, util_literal_name_new());
 
@@ -2508,7 +2507,10 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
     }
 
     Token eq_token = {0};
-    if (!consume_expect(&eq_token, tokens, "", TOKEN_SINGLE_EQUAL)) {
+    if (!consume_expect(&eq_token, tokens, "", TOKEN_COLON)) {
+        return PARSE_ERROR;
+    }
+    if (!consume_expect(NULL, tokens, "", TOKEN_SINGLE_EQUAL)) {
         return PARSE_ERROR;
     }
 
@@ -2648,11 +2650,31 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
     //    return PARSE_OK;
     //}
 
+    Parse_state saved_point = parse_state;
+    Tk_view saved_tokens = *tokens;
+
     Uast_block* if_else = NULL;
-    if (PARSE_OK != parse_if_else_chain_internal(&if_else, if_start_token, tokens, scope_id)) {
+    switch (parse_if_else_chain_internal(&if_else, if_start_token, tokens, scope_id)) {
+        case PARSE_EXPR_EX_OK_NORMAL:
+            *expr = uast_block_wrap(if_else);
+            return PARSE_OK;
+        case PARSE_EXPR_EX_OK_IF_LET:
+            // TODO: it may be better to refactor parse_if_let_internal so that this restore is not nessessary
+            *tokens = parse_state_restore(saved_point, saved_tokens);
+            break;
+        case PARSE_EXPR_EX_NONE:
+            todo();
+        case PARSE_EXPR_EX_ERROR:
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+
+    Uast_switch* lang_switch = NULL;
+    if (PARSE_OK != parse_if_let_internal(&lang_switch, if_start_token, tokens, scope_id)) {
         return PARSE_ERROR;
     }
-    *expr = uast_block_wrap(if_else);
+    *expr = uast_switch_wrap(lang_switch);
     return PARSE_OK;
 }
 
