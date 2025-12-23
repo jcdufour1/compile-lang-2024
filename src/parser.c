@@ -317,6 +317,7 @@ bool consume_expect_internal(const char* file, int line, Token* result, Tk_view*
     return false;
 }
 
+// TODO: rename msg to msg_suffix?
 #define consume_expect(result, tokens, msg, ...) \
     consume_expect_internal(__FILE__, __LINE__, result, tokens, msg, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), (TOKEN_TYPE[]){__VA_ARGS__})
     
@@ -1843,11 +1844,6 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
         }
     }
 
-    Token colon_before_eq_tk = {0};
-    if (require_let && !try_consume(&colon_before_eq_tk, tokens, TOKEN_COLON)) {
-        //todo();
-    }
-
     return PARSE_OK;
 }
 
@@ -2294,7 +2290,7 @@ static PARSE_EXPR_EX_STATUS parse_condition(Uast_condition** result, Tk_view* to
         case PARSE_EXPR_EX_NONE:
             return PARSE_EXPR_EX_NONE;
         case PARSE_EXPR_EX_ERROR:
-            return PARSE_EXPR_EX_NONE;
+            return PARSE_EXPR_EX_ERROR;
         default:
             unreachable("");
     }
@@ -2427,7 +2423,12 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
                 case PARSE_EXPR_EX_OK_NORMAL:
                     break;
                 case PARSE_EXPR_EX_OK_IF_LET:
-                    todo();
+                    msg(
+                        DIAG_IF_LET_INVALID_SYNTAX,
+                        uast_expr_get_pos(if_stmt->condition),
+                        "`:=` cannot be used in else cases of regular if statements\n"
+                    );
+                    return PARSE_EXPR_EX_ERROR;
                 case PARSE_EXPR_EX_ERROR:
                     return PARSE_EXPR_EX_ERROR;
                 case PARSE_EXPR_EX_NONE:
@@ -2624,15 +2625,6 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
     Token if_start_token;
     unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
-    //if (tk_view_front(*tokens).type == TOKEN_LET) {
-    //    Uast_switch* lang_switch = NULL;
-    //    if (PARSE_OK != parse_if_let_internal(&lang_switch, if_start_token, tokens, scope_id)) {
-    //        return PARSE_ERROR;
-    //    }
-    //    *expr = uast_switch_wrap(lang_switch);
-    //    return PARSE_OK;
-    //}
-
     Parse_state saved_point = parse_state;
     Tk_view saved_tokens = *tokens;
 
@@ -2646,7 +2638,8 @@ static PARSE_STATUS parse_if_else_chain(Uast_expr** expr, Tk_view* tokens, Scope
             *tokens = parse_state_restore(saved_point, saved_tokens);
             break;
         case PARSE_EXPR_EX_NONE:
-            todo();
+            msg_expected_expr(*tokens, "");
+            return PARSE_ERROR;
         case PARSE_EXPR_EX_ERROR:
             return PARSE_ERROR;
         default:
@@ -3784,7 +3777,7 @@ static PARSE_STATUS parse_expr_index(
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         default:
-            todo();
+            unreachable("");
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
@@ -4023,8 +4016,8 @@ static PARSE_EXPR_EX_STATUS parse_expr_ex(Uast_expr** result, Tk_view* tokens, S
 
     Token sum_assign_tk = {0};
     if (allow_if_let_sum_assign && try_consume(&sum_assign_tk, tokens, TOKEN_COLON)) {
-        if (!try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
-            todo();
+        if (!consume_expect(NULL, tokens, "after `:` in if", TOKEN_SINGLE_EQUAL)) {
+            return PARSE_EXPR_EX_ERROR;
         }
         Uast_expr* rhs = NULL;
         PARSE_EXPR_STATUS status = parse_expr(&rhs, tokens, scope_id);

@@ -24,7 +24,7 @@ check_stack :: fn(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
 }
 
 calculate :: fn(line Str) {
-    old_line Str := line
+    old_line := line
 
     nums := coll.darr_new(<i64>)()
     defer coll.darr_free(&nums)
