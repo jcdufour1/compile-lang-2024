@@ -1522,10 +1522,29 @@ static PARSE_STATUS parse_struct_def_base(
     Name name,
     Tk_view* tokens,
     bool require_sub_types,
-    Ulang_type default_lang_type
+    Ulang_type default_lang_type,
+    Scope_id scope_id
 ) {
     memset(base, 0, sizeof(*base));
-    base->name = name;
+
+    if (scope_id == parse_state.scope_id_curr_mod_path) {
+        base->name = name;
+    } else {
+        base->name = util_literal_name_new();
+
+        Name actual_name = name;
+        actual_name.scope_id = scope_id;
+        Uast_lang_def* lang_def = uast_lang_def_new(
+            tk_view_front(*tokens).pos,
+            actual_name,
+            uast_symbol_wrap(uast_symbol_new(tk_view_front(*tokens).pos, base->name)),
+            false
+        );
+        if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+            return PARSE_ERROR;
+        }
+    }
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&base->generics, tokens, name.scope_id);
@@ -1591,6 +1610,8 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
             return PARSE_ERROR;
         }
 
+            todo();
+            todo();
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(name_token.pos, lang_type_name, 0)), 
@@ -1611,11 +1632,11 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* tokens, Token name) {
+static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* tokens, Token name, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(&base, name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_ERROR;
     }
 
@@ -1627,11 +1648,11 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_view* tokens, Token name) {
+static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_view* tokens, Token name, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(&base, name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_def_base(&base, name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_ERROR;
     }
 
@@ -1643,7 +1664,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, Token name) {
+static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, Token name, Scope_id scope_id) {
     Token enum_tk = {0};
     unwrap(try_consume(&enum_tk, tokens, TOKEN_ENUM));
 
@@ -1653,7 +1674,8 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
         name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
         tokens,
         false,
-        ulang_type_new_void(tk_view_front(*tokens).pos)
+        ulang_type_new_void(tk_view_front(*tokens).pos),
+        scope_id
     )) {
         return PARSE_ERROR;
     }
@@ -2788,19 +2810,19 @@ static PARSE_STATUS parse_general_def(Uast_stmt** result, Tk_view* tokens, Scope
 
     if (starts_with_struct_def_in_def(*tokens)) {
         Uast_struct_def* struct_def = NULL;
-        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name_tk)) {
+        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name_tk, scope_id)) {
             return PARSE_ERROR;
         }
         *result = uast_def_wrap(uast_struct_def_wrap(struct_def));
     } else if (starts_with_raw_union_def_in_def(*tokens)) {
         Uast_raw_union_def* raw_union_def = NULL;
-        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name_tk)) {
+        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name_tk, scope_id)) {
             return PARSE_ERROR;
         }
         *result = uast_def_wrap(uast_raw_union_def_wrap(raw_union_def));
     } else if (starts_with_enum_def_in_def(*tokens)) {
         Uast_enum_def* enum_def = NULL;
-        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name_tk)) {
+        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name_tk, scope_id)) {
             return PARSE_ERROR;
         }
         *result = uast_def_wrap(uast_enum_def_wrap(enum_def));

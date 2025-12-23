@@ -139,14 +139,7 @@ for generics:
        154 |     raw1 Raw1
 - change import syntax to 
     io :: import std.io
-- TODO: place this in tutorial/003_structs_and_enums.own
-     enums and structs can also be placed within functions
-    Status :: enum {
-        success
-        ok
-        not_ok
-        failure
-    }
+- test log level in ci
 
 
 

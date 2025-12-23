@@ -448,23 +448,38 @@ Strv ir_operator_print_internal(const Ir_operator* operator, Indent indent) {
 }
 
 Strv ir_def_print_internal(const Ir_def* def, Indent indent) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = ir_def_get_name(LANG_TYPE_MODE_LOG/*TODO */, def).mod_path;
+
+    Strv result = {0};
     switch (def->type) {
         case IR_FUNCTION_DEF:
-            return ir_function_def_print_internal(ir_function_def_const_unwrap(def), indent);
+            result = ir_function_def_print_internal(ir_function_def_const_unwrap(def), indent);
+            break;
         case IR_FUNCTION_DECL:
-            return ir_function_decl_print_internal(ir_function_decl_const_unwrap(def), indent);
+            result = ir_function_decl_print_internal(ir_function_decl_const_unwrap(def), indent);
+            break;
         case IR_VARIABLE_DEF:
-            return ir_variable_def_print_internal(ir_variable_def_const_unwrap(def), indent);
+            result = ir_variable_def_print_internal(ir_variable_def_const_unwrap(def), indent);
+            break;
         case IR_STRUCT_DEF:
-            return ir_struct_def_print_internal(ir_struct_def_const_unwrap(def), indent);
+            result = ir_struct_def_print_internal(ir_struct_def_const_unwrap(def), indent);
+            break;
         case IR_PRIMITIVE_DEF:
-            return ir_primitive_def_print_internal(ir_primitive_def_const_unwrap(def), indent);
+            result = ir_primitive_def_print_internal(ir_primitive_def_const_unwrap(def), indent);
+            break;
         case IR_LABEL:
-            return ir_label_print_internal(ir_label_const_unwrap(def), indent);
+            result = ir_label_print_internal(ir_label_const_unwrap(def), indent);
+            break;
         case IR_LITERAL_DEF:
-            return ir_literal_def_print_internal(ir_literal_def_const_unwrap(def), indent);
+            result = ir_literal_def_print_internal(ir_literal_def_const_unwrap(def), indent);
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return result;
 }
 
 Strv ir_expr_print_internal(const Ir_expr* expr, Indent indent) {

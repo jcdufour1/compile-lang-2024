@@ -15,6 +15,8 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_d
                 );
                 return false;
             }
+            log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, def));
+            //assert(ulang_type_regular_const_unwrap(uast_variable_def_const_unwrap(def)->lang_type).name.scope_id != SCOPE_TOP_LEVEL);
             return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type);
         case UAST_FUNCTION_DECL:
             return try_lang_type_from_ulang_type(result, uast_function_decl_const_unwrap(def)->return_type);

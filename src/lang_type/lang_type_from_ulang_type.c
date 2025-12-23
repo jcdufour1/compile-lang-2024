@@ -123,7 +123,16 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
+
+            // figure out if mod alias of name points to the current module
+            assert(env.mod_path_curr_file.count > 0);
+            if (strv_is_equal(env.mod_path_curr_file, alias->mod_path) && name.scope_id != SCOPE_NOT) {
+                *new_name = name_new(alias->mod_path, name.base, name.gen_args, name.scope_id);
+                assert(new_name->scope_id != SCOPE_NOT);
+                return true;
+            }
             *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
+            assert(new_name->scope_id != SCOPE_NOT);
             return true;
         }
         case UAST_POISON_DEF:
@@ -211,6 +220,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
+            //todo();
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_void_const_unwrap(lang_type).pos,
                 uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
@@ -228,6 +238,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
                 msg_todo("", lang_type_get_pos(lang_type));
                 return ulang_type_new_void(lang_type_get_pos(lang_type));
             }
+            //todo();
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_get_pos(lang_type),
                 name_to_uname(name),

@@ -7,6 +7,7 @@
 #include <lang_type_print.h>
 #include <pos_util.h>
 #include <symbol_table.h>
+#include <loc.h>
 
 static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
@@ -1271,6 +1272,14 @@ Strv uast_primitive_def_print_internal(UAST_MODE mode, const Uast_primitive_def*
     return string_to_strv(buf);
 }
 
+static Strv adsfasldf_local_loc_print_internal(const char* file, int line) {
+    String buf = {0};
+    string_extend_f(&a_temp, &buf, "/* %s:%d */", file, line);
+    return string_to_strv(buf);
+}
+
+#define asldjfasdf_local_loc_print(loc) strv_print(adsfasldf_local_loc_print_internal((loc).file, (loc).line))
+
 Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* def, Indent indent) {
     String buf = {0};
 
@@ -1279,6 +1288,7 @@ Strv uast_variable_def_print_internal(UAST_MODE mode, const Uast_variable_def* d
             string_extend_cstr_indent(&a_temp, &buf, "variable_def", indent);
             extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
             extend_name(NAME_LOG, &buf, def->name);
+            string_extend_f(&a_temp, &buf, FMT, asldjfasdf_local_loc_print(def->loc));
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:
