@@ -137,7 +137,7 @@ for generics:
     - tests/inputs/sizeof.own:154:10:error:expected newline after statement
        153 |
        154 |     raw1 Raw1
-- test log level in ci
+- test log symbol level in ci
 - make loc printing work for uasts and tasts
 
 
