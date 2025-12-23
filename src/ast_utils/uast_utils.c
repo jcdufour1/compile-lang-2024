@@ -13,13 +13,22 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_d
                     dest_pos,
                     "generic arguments were not expected here\n"
                 );
+                assert(env.error_count > 0);
                 return false;
             }
             log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, def));
             //assert(ulang_type_regular_const_unwrap(uast_variable_def_const_unwrap(def)->lang_type).name.scope_id != SCOPE_TOP_LEVEL);
-            return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type);
+            if (!try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type)) {
+                assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
+                return false;
+            }
+            return true;
         case UAST_FUNCTION_DECL:
-            return try_lang_type_from_ulang_type(result, uast_function_decl_const_unwrap(def)->return_type);
+            if (!try_lang_type_from_ulang_type(result, uast_function_decl_const_unwrap(def)->return_type)) {
+                assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
+                return false;
+            }
+            return true;
         case UAST_PRIMITIVE_DEF:
             *result = uast_primitive_def_const_unwrap(def)->lang_type;
             return true;
@@ -30,13 +39,19 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_d
         case UAST_ENUM_DEF: {
             Ulang_type ulang_type = {0};
             if (!ustruct_def_base_get_lang_type_(&ulang_type, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
+                assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
                 return false;
             }
-            return try_lang_type_from_ulang_type(result, ulang_type);
+            if (!try_lang_type_from_ulang_type(result, ulang_type)) {
+                assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
+                return false;
+            }
+            return true;
         }
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_POISON_DEF:
+            assert(env.error_count > 0);
             return false;
         case UAST_IMPORT_PATH:
             unreachable("");

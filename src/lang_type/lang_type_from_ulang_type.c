@@ -278,6 +278,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
 bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type) {
     Lang_type item_type = {0};
     if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
+        assert(env.error_count > 0);
         return false;
     }
     
@@ -289,6 +290,7 @@ bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_ar
                 "could not infer count of elements in the static array\n"
             );
         }
+        assert(env.error_count > 0);
         return false;
     }
 

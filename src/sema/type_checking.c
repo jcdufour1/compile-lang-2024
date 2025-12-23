@@ -511,7 +511,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         uast_def_get_name(sym_def)
                     )));
                 }
-                assert(env.error_count > 0);
                 return false;
             }
             Tast_def* def_typed = NULL;
@@ -1571,7 +1570,7 @@ bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_
         }
         case UAST_SYMBOL:
             if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast), is_from_check_assign)) {
-                assert(env.error_count > 0);
+                assert(env.supress_type_inference_failures || env.silent_generic_resol_errors || env.error_count > 0);
                 status = false;
                 goto end;
             }
