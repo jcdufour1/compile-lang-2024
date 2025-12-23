@@ -477,7 +477,10 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ARRAY_DEF: {
             const Tast_array_def* array_def = tast_array_def_const_unwrap(def);
             Ulang_type item_type = lang_type_to_ulang_type(array_def->item_type);
-            return serialize_ulang_type_array(
+
+            bool old_is_printing = env.is_printing;
+            env.is_printing = true;
+            Name result = serialize_ulang_type_array(
                 MOD_PATH_ARRAYS,
                 ulang_type_array_new(
                     array_def->pos,
@@ -487,6 +490,8 @@ static inline Name tast_def_get_name(const Tast_def* def) {
                 ),
                 true
             );
+            env.is_printing = old_is_printing;
+            return result;
         }
     }
     unreachable("");

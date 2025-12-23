@@ -507,6 +507,10 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         )
     );
 
+    bool status = true;
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = name.mod_path;
+
     Uast_def* after_res = NULL;
     // TODO: rename resolve_generics_ulang_type_int_liternal_struct_like?
     if (!resolve_generics_ulang_type_int_liternal_struct_like(
@@ -516,13 +520,10 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         lang_type,
         uast_def_get_pos(before_res),
         local_uast_struct_def_new
-       )) {
-        return false;
+   )) {
+        status = false;
+        goto end;
     }
-
-    bool status = true;
-    Strv old_mod_path_curr_file = env.mod_path_curr_file;
-    env.mod_path_curr_file = name.mod_path;
 
     switch (before_res->type) {
         case UAST_STRUCT_DEF:
@@ -563,6 +564,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
             unreachable("");
     }
 
+end:
     env.mod_path_curr_file = old_mod_path_curr_file;
     return status;
 }
@@ -704,9 +706,14 @@ bool resolve_generics_function_def_call(
     Ulang_type_darr gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
+    bool status = true;
+
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     name_normalize(def->decl->generics, &name);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_darr) {0}, def->decl->name.scope_id);
+
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = def->decl->name.mod_path;
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
@@ -726,17 +733,21 @@ bool resolve_generics_function_def_call(
             1/*TODO*/
         );
         if (!try_lang_type_from_ulang_type_fn(type_res, new_fn)) {
-            return false;
+            status = false;
+            goto end;
         }
         *new_name = name;
-        return true;
+        status = true;
+        goto end;
     }
 
     if (def->decl->generics.info.count != gen_args.info.count) {
         if (!env.supress_type_inference_failures) {
             msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args.info.count, def->decl->generics.info.count, def->decl->generics.info.count);
         }
-        return false;
+        assert(env.error_count > 0);
+        status = false;
+        goto end;
     }
 
     Uast_function_decl* decl = uast_function_decl_clone(def->decl, true, def->decl->name.scope_id);
@@ -774,20 +785,27 @@ bool resolve_generics_function_def_call(
     );
     Lang_type_fn rtn_type_ = {0};
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn)) {
-        return false;
+        status = false;
+        goto end;
     }
     *type_res = rtn_type_;
     *new_name = name;
 
     darr_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
 
-    return true;
+end:
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return status;
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
     Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_darr) {0}, name.scope_id);
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = name.mod_path;
+    bool status = true;
+
     unwrap(
         !symbol_lookup(&dummy_2, name) &&
         "same function has been passed to resolve_generics_function_def_implementation "
@@ -797,11 +815,8 @@ bool resolve_generics_function_def_implementation(Name name) {
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, name)) {
         // we only need to type check this function
-        Strv old_mod_path_curr_file = env.mod_path_curr_file;
-        env.mod_path_curr_file = name.mod_path;
-        bool status = resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
-        env.mod_path_curr_file = old_mod_path_curr_file;
-        return status;
+        status = resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
+        goto end;
     } else {
         // we need to make new uast function implementation and then type check it
         unwrap(usymbol_lookup(&result, name_plain));
@@ -810,23 +825,24 @@ bool resolve_generics_function_def_implementation(Name name) {
         Uast_block* new_block = uast_block_clone(def->body, true, def->decl->name.scope_id, def->body->pos);
         assert(new_block != def->body);
 
-        Strv old_mod_path_curr_file = env.mod_path_curr_file;
-        env.mod_path_curr_file = name.mod_path;
         Uast_function_decl* new_decl = NULL;
         assert(env.mod_path_curr_file.count > 0);
         bool status = resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos);
         if (!status) {
-            env.mod_path_curr_file = old_mod_path_curr_file;
-            return false;
+            status = false;
+            goto end;
         }
         
         Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
         usym_tbl_add(uast_function_def_wrap(new_def));
         assert(env.mod_path_curr_file.count > 0);
         status = resolve_generics_set_function_def_types(new_def);
-        env.mod_path_curr_file = old_mod_path_curr_file;
-        return status;
+        goto end;
     }
-    unreachable("");
+
+
+end:
+    env.mod_path_curr_file = old_mod_path_curr_file;
+    return status;
 }
 

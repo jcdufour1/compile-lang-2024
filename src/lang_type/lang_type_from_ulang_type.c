@@ -123,7 +123,15 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     switch (alias_->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
+
+            assert(env.is_printing || env.mod_path_curr_file.count > 0);
+            if (strv_is_equal(env.mod_path_curr_file, alias->mod_path) && name.scope_id != SCOPE_NOT) {
+                *new_name = name_new(alias->mod_path, name.base, name.gen_args, name.scope_id);
+                assert(new_name->scope_id != SCOPE_NOT);
+                return true;
+            }
             *new_name = name_new(alias->mod_path, name.base, name.gen_args, alias->mod_path_scope);
+            assert(new_name->scope_id != SCOPE_NOT);
             return true;
         }
         case UAST_POISON_DEF:
@@ -301,11 +309,8 @@ bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_ar
         0
     ));
 
-    Tast_def* array_def_ = NULL;
-    if (!symbol_lookup(&array_def_, serialize_ulang_type_array(MOD_PATH_ARRAYS, lang_type, true))) {
-        unwrap(symbol_add(tast_array_def_wrap(tast_array_def_new(lang_type.pos, item_type, count))));
-    }
-
+    // TODO: making new array def every time is wasteful. only make array def when nessessary
+    symbol_add(tast_array_def_wrap(tast_array_def_new(lang_type.pos, item_type, count)));
     return true;
 }
 

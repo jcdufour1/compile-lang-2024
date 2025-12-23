@@ -138,7 +138,7 @@ static bool expand_def_ulang_type_regular(
                 uast_symbol_unwrap(access->callee)->name,
                 access->member_name->name.base,
                 lang_type.name.gen_args,
-                SCOPE_TOP_LEVEL/*TODO*/
+                lang_type.name.scope_id // TODO
             );
             *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type.pos,
@@ -1463,6 +1463,9 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
     bool status = true;
     bool old_must_expand_again = must_expand_again;
 
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = uast_def_get_name(def).mod_path;
+
     switch (def->type) {
         case UAST_MOD_ALIAS:
             status = expand_def_mod_alias(uast_mod_alias_unwrap(def));
@@ -1510,6 +1513,8 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
             status = true;
             break;
     }
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 
     if (must_expand_again) {
         expand_again_add(&a_pass, def);

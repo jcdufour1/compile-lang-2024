@@ -103,6 +103,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     unreachable("");
 }
 
+// TODO: move this function to .c file
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
     if (
         lang_type_name_base_is_number(lang_type.name.base) ||

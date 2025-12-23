@@ -46,6 +46,7 @@ static inline void log_internal_ex(
     Indent indent,
     const char* format, ...
 ) {
+    // TODO: figure out why log_internal_ex does not seem to work for dest other than stderr
     va_list args;
     va_start(args, format);
 

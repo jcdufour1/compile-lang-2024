@@ -2000,6 +2000,9 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     name_parent_fn = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
 
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = old_fun_def->decl->name.mod_path;
+
     Ir_function_decl* new_decl = ir_function_decl_new(
         pos,
         NULL,
@@ -2068,10 +2071,17 @@ static void load_function_def(Tast_function_def* old_fun_def) {
 
     unwrap(ir_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
     name_parent_fn = old_fun_name;
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void load_function_decl(Tast_function_decl* old_fun_decl) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = old_fun_decl->name.mod_path;
+
     unwrap(ir_add(ir_def_wrap(ir_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
@@ -2204,6 +2214,9 @@ static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_de
 }
 
 static void load_struct_def(Tast_struct_def* old_def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = old_def->base.name.mod_path;
+
     ir_tbl_add(ir_def_wrap(ir_struct_def_wrap(load_struct_def_clone(old_def))));
 
     Tast_def* dummy = NULL;
@@ -2215,6 +2228,8 @@ static void load_struct_def(Tast_struct_def* old_def) {
         unwrap(sym_tbl_add(tast_struct_def_wrap(new_def)));
         load_struct_def(new_def);
     }
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool is_last_if) {
@@ -2936,34 +2951,41 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
 }
 
 static void load_def_out_of_line(Tast_def* old_def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = tast_def_get_name(old_def).mod_path;
+    assert(tast_def_get_name(old_def).mod_path.count > 0);
+
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             load_function_def(tast_function_def_unwrap(old_def));
-            return;
+            break;
         case TAST_FUNCTION_DECL:
             load_function_decl(tast_function_decl_unwrap(old_def));
-            return;
+            break;
         case TAST_VARIABLE_DEF:
-            return;
+            break;
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
-            return;
+            break;
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
-            return;
+            break;
         case TAST_ENUM_DEF:
-            return;
+            break;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT_PATH:
             load_import_path(tast_import_path_unwrap(old_def));
-            return;
+            break;
         case TAST_LABEL:
-            return;
+            break;
         case TAST_ARRAY_DEF:
-            return;
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Ir_name sym_name, Ir_name if_rtning, Ir_name otherwise) {

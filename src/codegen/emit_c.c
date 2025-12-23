@@ -216,26 +216,32 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
 }
 
 static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = ir_def_get_name(LANG_TYPE_MODE_LOG/*TODO */, def).mod_path;
+
     switch (def->type) {
         case IR_FUNCTION_DEF:
             emit_c_function_def(strs, ir_function_def_const_unwrap(def));
-            return;
+            break;
         case IR_VARIABLE_DEF:
-            return;
+            break;
         case IR_FUNCTION_DECL:
             emit_c_function_decl(strs, ir_function_decl_const_unwrap(def));
-            return;
+            break;
         case IR_LABEL:
-            return;
+            break;
         case IR_STRUCT_DEF:
             emit_c_struct_def(strs, ir_struct_def_const_unwrap(def));
-            return;
+            break;
         case IR_PRIMITIVE_DEF:
             todo();
         case IR_LITERAL_DEF:
             todo();
+        default:
+            unreachable("");
     }
-    unreachable("");
+    
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void emit_c_import_path(Emit_c_strs* strs, const Ir_import_path* ir) {

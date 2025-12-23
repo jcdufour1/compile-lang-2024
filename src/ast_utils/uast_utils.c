@@ -35,6 +35,7 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_d
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_POISON_DEF:
+            assert(env.error_count > 0);
             return false;
         case UAST_IMPORT_PATH:
             unreachable("");
@@ -301,7 +302,7 @@ Uast_expr* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_ty
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            assert(value < INT8_MAX);
+            assert(value <= INT8_MAX);
             new_lit = uast_literal_wrap(uast_int_wrap(uast_int_new(pos, value)));
             break;
         }

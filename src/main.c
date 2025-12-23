@@ -107,6 +107,7 @@ static void compile_file_to_ir(void) {
     add_builtin_defs();
 
     // generate ir from file(s)
+    // TODO: figure out why it does not work to put non-stderr file in log_internal_ex
     do_pass_status(parse, usymbol_log_level, stderr);
     do_pass(expand_using, usymbol_log_level, stderr);
     do_pass(expand_def, usymbol_log_level, stderr);

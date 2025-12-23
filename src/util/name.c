@@ -343,6 +343,10 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_temp, buf, ".");
     }
+    if (mode == UNAME_LOG) {
+        // TODO: uncomment below when possible to allow for better debugging?
+        //string_extend_f(&a_temp, buf, "s%zu_", name.scope_id);
+    }
     string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
