@@ -125,7 +125,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(alias_);
 
             // figure out if mod alias of name points to the current module
-            assert(env.mod_path_curr_file.count > 0);
+            assert(env.is_printing || env.mod_path_curr_file.count > 0);
             if (strv_is_equal(env.mod_path_curr_file, alias->mod_path) && name.scope_id != SCOPE_NOT) {
                 *new_name = name_new(alias->mod_path, name.base, name.gen_args, name.scope_id);
                 assert(new_name->scope_id != SCOPE_NOT);
