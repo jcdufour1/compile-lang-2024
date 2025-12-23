@@ -34,56 +34,56 @@ calculate :: fn(line Str) {
 
         amt_consumed := old_line.count - line.count
 
-        if let .some(ch) = coll.slice_consume(&line, '\n') {
+        if .some(ch) := coll.slice_consume(&line, '\n') {
             assert(line.count == 0)
             break
         }
 
-        if let .some(ch) = coll.slice_try_get(&line, is_whitespace) => continue
+        if .some(ch) := coll.slice_try_get(&line, is_whitespace) => continue
 
-        if let .some(ch) = coll.slice_consume(&line, '+') => {
+        if .some(ch) := coll.slice_consume(&line, '+') => {
             check_stack(amt_consumed, nums.count, 2)?
             result := coll.darr_pop(&nums) + coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '-') => {
+        if .some(ch) := coll.slice_consume(&line, '-') :=> {
             check_stack(amt_consumed, nums.count, 2)?
             result := coll.darr_pop(&nums) - coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '/') => {
+        if .some(ch) := coll.slice_consume(&line, '/') => {
             check_stack(amt_consumed, nums.count, 2)?
             result := coll.darr_pop(&nums)/coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '*') => {
+        if .some(ch) := coll.slice_consume(&line, '*') :=> {
             check_stack(amt_consumed, nums.count, 2)?
             result := coll.darr_pop(&nums)*coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '%') => {
+        if .some(ch) := coll.slice_consume(&line, '%') => {
             check_stack(amt_consumed, nums.count, 2)?
             result := coll.darr_pop(&nums)%coll.darr_pop(&nums)
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, '^') => {
+        if .some(ch) := coll.slice_consume(&line, '^') => {
             check_stack(amt_consumed, nums.count, 2)?
             result := math.pow(coll.darr_pop(&nums), coll.darr_pop(&nums))
             coll.darr_append(&nums, result)
             continue
         }
 
-        if let .some(ch) = coll.slice_consume(&line, 'e') => {
+        if .some(ch) := coll.slice_consume(&line, 'e') => {
             coll.darr_append(&nums, math.e(<i64>)())
             continue
         }
@@ -117,7 +117,7 @@ calculate :: fn(line Str) {
             continue
         }
 
-        if let .some(num) = coll.str_consume_int(<i64>)(&line) {
+        if .some(num) := coll.str_consume_int(<i64>)(&line) {
             coll.darr_append(&nums, num)
             continue
         }
@@ -139,7 +139,7 @@ calculate :: fn(line Str) {
 
 main :: fn() i32 {
     for 1 {
-        if let .some(line) = io.getline(io.stdin()) {
+        if .some(line) := io.getline(io.stdin()) {
             calculate(coll.darr_slice(line))
             coll.darr_free(&line)
         } else {

@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/if_should_be_if_let.own:12:19:[1;31merror[0;39m:assignment is not allowed for if statement condition; did you mean to use `if let` instead of `if`?
+tests/inputs/if_should_be_if_let.own:12:19:[1;31merror[0;39m:assignment is not allowed for if statement condition; did you mean to use `if <expression> :=` instead of a regular if statement?
     11 | 
     12 |     if .some(num) = opt {
        |                   ^

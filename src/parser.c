@@ -2399,18 +2399,6 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
         default:
             unreachable("");
     }
-    log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, if_stmt->condition));
-    //if (
-    //    if_stmt->condition->child->type == UAST_BINARY &&
-    //    uast_binary_unwrap(if_stmt->condition->child)->token_type == BINARY_SINGLE_EQUAL
-    //) {
-    //    msg(
-    //        DIAG_IF_SHOULD_BE_IF_LET,
-    //        if_stmt->condition->pos,
-    //        "assignment is not allowed for if statement condition; did you mean to use `if let` instead of `if`?\n"
-    //    );
-    //    return PARSE_ERROR;
-    //}
 
     if (
         if_stmt->condition->child->type == UAST_BINARY &&
@@ -2419,7 +2407,8 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
         msg(
             DIAG_IF_SHOULD_BE_IF_LET,
             if_stmt->condition->pos,
-            "assignment is not allowed for if statement condition; did you mean to use `if let` instead of `if`?\n"
+            "assignment is not allowed for if statement condition; "
+            "did you mean to use `if <expression> :=` instead of a regular if statement?\n"
         );
         return PARSE_EXPR_EX_ERROR;
     }
