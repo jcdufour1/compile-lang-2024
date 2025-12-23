@@ -92,7 +92,6 @@ typedef enum {
     TOKEN_RETURN,
     TOKEN_EXTERN,
     TOKEN_STRUCT,
-    TOKEN_LET,
     TOKEN_IN,
     TOKEN_BREAK,
     TOKEN_YIELD,
@@ -211,8 +210,6 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_RETURN:
             return false;
         case TOKEN_STRUCT:
-            return false;
-        case TOKEN_LET:
             return false;
         case TOKEN_IN:
             return false;
@@ -352,8 +349,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_STRUCT:
             return false;
         case TOKEN_EXTERN:
-            return false;
-        case TOKEN_LET:
             return false;
         case TOKEN_IN:
             return false;
@@ -563,8 +558,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_EXTERN:
             return false;
         case TOKEN_STRUCT:
-            return false;
-        case TOKEN_LET:
             return false;
         case TOKEN_IN:
             return false;

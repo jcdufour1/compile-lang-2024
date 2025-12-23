@@ -5,7 +5,7 @@ util :: import = std.util
 posix :: import = std.posix
 
 srand :: fn(seed util.Optional(<i32>) = .none) {
-    if let .some(num) = seed {
+    if .some(num) := seed {
         c.srand(num)
         return
     }
