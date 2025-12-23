@@ -208,7 +208,7 @@ static bool get_next_token(
         Pos pos_start_lit = *pos;
         pos_start_lit.column++;
         if (!strv_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
-            msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
+            msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched opening `\"`\n");
             return false;
         }
         check_string_literal_is_valid(quote_str.base, pos_start_lit);
@@ -721,7 +721,7 @@ bool tokenize(Tk_view* result, Strv file_path) {
         darr_append(&a_main, &tokens, curr_token);
     }
 
-    darr_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
+    darr_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_EOF, .pos = pos}));
 
     *result = (Tk_view) {.tokens = tokens.buf, .count = tokens.info.count};
     return env.error_count == prev_err_count;

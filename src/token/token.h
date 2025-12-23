@@ -114,9 +114,8 @@ typedef enum {
 
 typedef struct {
     Strv text;
-    TOKEN_TYPE type;
-
     Pos pos;
+    TOKEN_TYPE type;
 } Token;
 
 typedef enum {

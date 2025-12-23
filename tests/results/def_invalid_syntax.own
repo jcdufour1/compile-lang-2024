@@ -5,7 +5,7 @@ tests/inputs/def_invalid_syntax.own:1:14:[1;31merror[0;39m:got token `symbol(i
      1 | print :: def io.printf
        |              ^
      2 | 
-tests/inputs/def_invalid_syntax.own:5:6:[1;31merror[0;39m:expected newline after statement
+tests/inputs/def_invalid_syntax.own:5:6:[1;31merror[0;39m:expected newline or `;` after statement
      4 | 
      5 | main :: fn() i32 {
        |      ^

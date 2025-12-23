@@ -156,7 +156,8 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
             DIAG_UNINITIALIZED_VARIABLE, pos,
             "symbol `"FMT"` is used uninitialized on some or all code paths; "
             "note that struct must be initialized with a struct literal or function call "
-            "(individual member accesses do not satisfy initialization requirements)\n", ir_name_print(NAME_MSG, name));
+            "(individual member accesses do not satisfy initialization requirements)\n",
+            ir_name_print(NAME_MSG, name));
     } else {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }

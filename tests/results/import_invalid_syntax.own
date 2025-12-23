@@ -6,7 +6,7 @@ tests/inputs/import_invalid_syntax.own:1:16:[1;34mnote[0;39m:error occured whe
      1 | io :: import = std.
        |                ^
      2 | io10affsadn :: import = std.io
-tests/inputs/import_invalid_syntax.own:2:13:[1;31merror[0;39m:expected newline after statement
+tests/inputs/import_invalid_syntax.own:2:13:[1;31merror[0;39m:expected newline or `;` after statement
      1 | io :: import = std.
      2 | io10affsadn :: import = std.io
        |             ^

@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/two_parse_errors.own:4:9:[1;31merror[0;39m:expected newline after statement
+tests/inputs/two_parse_errors.own:4:9:[1;31merror[0;39m:expected newline or `;` after statement
      3 |     num1: i32 := 
      4 |     num2: i32 := 92
        |         ^

@@ -100,13 +100,13 @@ static void append_member(Members* members, const char* type, const char* name) 
     darr_append(&a_gen, members, member);
 }
 
-static Strv loc_print_internal(const char* file, int line) {
+static Strv auto_gen_loc_print_internal(const char* file, int line) {
     String buf = {0};
     string_extend_f(&a_gen, &buf, "/* %s:%d */", file, line);
     return string_to_strv(buf);
 }
 
-#define loc_print() strv_print(loc_print_internal(file, line))
+#define auto_gen_loc_print() strv_print(auto_gen_loc_print_internal(file, line))
 
 
 //

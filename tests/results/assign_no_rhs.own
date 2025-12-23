@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/assign_no_rhs.own:5:9:[1;31merror[0;39m:expected newline after statement
+tests/inputs/assign_no_rhs.own:5:9:[1;31merror[0;39m:expected newline or `;` after statement
      4 |     num1: i32 := 
      5 |     num2: i32 := 89
        |         ^
