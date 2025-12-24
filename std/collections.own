@@ -3,8 +3,8 @@ util :: import = std.util
 io :: import = std.io
 rt :: import = std.runtime
 
-Slice :: def = rt.Slice
-Str :: def = u8[]
+Slice :: def rt.Slice
+Str :: def u8[]
 
 // TODO: make alloc function instead of using malloc directly
 
@@ -20,7 +20,7 @@ slice_at :: fn(<ItemT>)(slice ItemT[], index usize, file Str = #file, line i32 =
     return *slice_at_ref(slice, index, file, line, column)
 }
 
-slice_at_ref :: def = rt.slice_at_ref 
+slice_at_ref :: def rt.slice_at_ref 
 
 slice_consume :: fn(<ItemT>)(slice ItemT[]*, to_consume ItemT, file Str = #file, line i32 = #line, column i32 = #column) ItemT? {
     if slice.count < 1 => return .none

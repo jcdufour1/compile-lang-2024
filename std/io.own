@@ -5,19 +5,19 @@ util :: import = std.util
 
 own_argv :: extern("c") fn() Str[]
 
-own_stdout :: def = rt.own_stdout
-own_stderr :: def = rt.own_stderr
-own_stdin :: def = rt.own_stdin
+own_stdout :: def rt.own_stdout
+own_stderr :: def rt.own_stderr
+own_stdin :: def rt.own_stdin
 
-own_printf :: def = rt.own_printf
-own_fprintf :: def = rt.own_fprintf
+own_printf :: def rt.own_printf
+own_fprintf :: def rt.own_fprintf
 
-printf :: def = libc.printf
-puts :: def = libc.puts
-fopen :: def = libc.fopen
-fputc :: def = libc.fputc
+printf :: def libc.printf
+puts :: def libc.puts
+fopen :: def libc.fopen
+fputc :: def libc.fputc
 
-File :: def = rt.File
+File :: def rt.File
 
 stdout :: fn() File => return {own_stdout()}
 stderr :: fn() File => return {own_stderr()}
@@ -88,7 +88,7 @@ print_int :: fn(<NumT>)(num NumT, end coll.Str = "\n", file coll.Str = #file, li
     print_str_internal__(end)
 }
 
-Print_buf_ :: def = fn(BufT, u8)void
+Print_buf_ :: def fn(BufT, u8)void
 
 print_i32 :: fn(<BufT>)(print_buf BufT, print_buf_fn fn(BufT, u8)void, item opaque*) {
     actual_item i32 := *unsafe_cast<i32*>item

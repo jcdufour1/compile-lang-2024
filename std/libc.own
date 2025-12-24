@@ -24,4 +24,4 @@ isspace :: extern("c") fn(ch i32) i32
 rand :: extern("c") fn() i32
 srand :: extern("c") fn(seed i32)
 
-EOF :: def = -1
+EOF :: def -1

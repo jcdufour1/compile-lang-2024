@@ -1,9 +1,9 @@
-num_num1 :: def = num
-num :: def = num_num1
+num_num1 :: def num
+num :: def num_num1
 
-thing_num2 :: def = thing
-thing_num1 :: def = thing_num2
-thing :: def = thing_num1
+thing_num2 :: def thing
+thing_num1 :: def thing_num2
+thing :: def thing_num1
 
 num()
 thing()
