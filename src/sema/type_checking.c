@@ -1891,7 +1891,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
     }
 
     if (enum_case->tag->lang_type.type != LANG_TYPE_VOID) {
-        Uast_assignment* new_assign = uast_assignment_new(
+        Uast_binary* new_assign = uast_binary_new(
             new_def->pos,
             uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
             uast_enum_access_wrap(uast_enum_access_new(
@@ -1899,9 +1899,14 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                 enum_case->tag,
                 def_lang_type,
                 uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
-            ))
+            )),
+            BINARY_SINGLE_EQUAL
         );
-        darr_append(&a_main, &check_env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
+        darr_append(
+            &a_main,
+            &check_env.switch_case_defer_add_enum_case_part,
+            uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(new_assign)))
+        );
     }
 
     *new_case = enum_case;
@@ -4739,13 +4744,14 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         oper_var->name,
         oper_var->attrs
     )));
-    Uast_assignment* oper_assign = uast_assignment_new(
+    Uast_binary* oper_assign = uast_binary_new(
         oper_var->pos,
         uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name)), 
-        lang_switch->operand
+        lang_switch->operand,
+        BINARY_SINGLE_EQUAL
     );
     Tast_expr* new_oper_assign = NULL;
-    if (!try_set_assignment_types(&new_oper_assign, oper_assign, false)) {
+    if (!try_set_binary_types(&new_oper_assign, oper_assign, false)) {
         return false;
     }
 
