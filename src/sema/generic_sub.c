@@ -244,7 +244,6 @@ void generic_sub_lang_type(
             return;
         }
         case ULANG_TYPE_REMOVED:
-            msg_todo("", ulang_type_get_pos(lang_type));
             return;
     }
     unreachable("");

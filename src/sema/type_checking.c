@@ -978,14 +978,14 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
             unreachable("");
     }
 
+    Uast_def* var_def_ = NULL;
+    if (!usymbol_lookup(&var_def_, lhs->name)) {
+        todo();
+    }
+    if (var_def_->type != UAST_VARIABLE_DEF) {
+        todo();
+    }
     {
-        Uast_def* var_def_ = NULL;
-        if (!usymbol_lookup(&var_def_, lhs->name)) {
-            todo();
-        }
-        if (var_def_->type != UAST_VARIABLE_DEF) {
-            todo();
-        }
         darr_foreach(idx, Uast_expr*, expr, uast_variable_def_unwrap(var_def_)->addit_exprs_infer_from) {
             Tast_expr* dummy = NULL;
             switch (try_set_binary_types_infer_lhs_internal(&dummy, lhs, expr, uast_expr_get_pos(expr), false)) {
@@ -1004,8 +1004,22 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
         }
     }
 
-    log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, oper));
-    todo();
+    switch (try_set_binary_types_infer_lhs_internal(new_tast, lhs, oper->rhs, oper->pos, true)) {
+        case INFER_LHS_OK:
+            return true;
+        case INFER_LHS_NONE:
+            msg(
+                DIAG_TYPE_COULD_NOT_BE_INFERED,
+                uast_def_get_pos(var_def_),
+                "could not infer the type of this variable definition\n"
+            );
+            return false;
+        case INFER_LHS_ERROR:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 // returns false if unsuccessful
