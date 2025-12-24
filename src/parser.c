@@ -1854,13 +1854,6 @@ static PARSE_STATUS parse_for_range_internal(
     Scope_id block_scope
 ) {
     Name user_name = var_def_user->name;
-    Uast_variable_def* var_def_builtin = uast_variable_def_new(
-        var_def_user->pos,
-        ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id),
-        (Attrs) {0}
-    );
-    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
@@ -1886,6 +1879,17 @@ static PARSE_STATUS parse_for_range_internal(
         default:
             unreachable("");
     }
+
+    Uast_expr_darr addit_exprs_to_infer_from = {0};
+    darr_append(&a_main, &addit_exprs_to_infer_from, upper_bound);
+    Uast_variable_def* var_def_builtin = uast_variable_def_new(
+        var_def_user->pos,
+        ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id),
+        (Attrs) {0},
+        addit_exprs_to_infer_from
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
     Uast_binary* increment = uast_binary_new(
         uast_expr_get_pos(upper_bound),

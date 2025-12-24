@@ -1911,7 +1911,13 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Name sym_name, 
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         darr_append(&a_main, &params, uast_param_new(
             lang_type.pos,
-            uast_variable_def_new(lang_type.pos, darr_at(lang_type.params.ulang_types, idx), util_literal_name_new(), (Attrs) {0} /* TODO */),
+            uast_variable_def_new(
+                lang_type.pos,
+                darr_at(lang_type.params.ulang_types, idx),
+                util_literal_name_new(),
+                (Attrs) {0}, /* TODO */
+                (Uast_expr_darr) {0}
+            ),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
@@ -4496,7 +4502,8 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
             mark->pos,
             src_uerror_type,
             util_literal_name_new(),
-            (Attrs) {0} // TODO
+            (Attrs) {0}, // TODO
+            (Uast_expr_darr) {0}
         );
         unwrap(usymbol_add(uast_variable_def_wrap(src_err_type_var_def)));
 
@@ -4725,7 +4732,8 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         uast_expr_get_pos(oper),
         lang_type_to_ulang_type(tast_expr_get_lang_type(new_operand_typed)),
         util_literal_name_new(),
-        (Attrs) {0} // TODO
+        (Attrs) {0}, // TODO
+        (Uast_expr_darr) {0}
     );
     unwrap(usymbol_add(uast_variable_def_wrap(oper_var)));
     symbol_add(tast_variable_def_wrap(tast_variable_def_new(
