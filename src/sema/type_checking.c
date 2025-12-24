@@ -997,6 +997,7 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
             Tast_expr* dummy = NULL;
             switch (try_set_binary_types_infer_lhs_internal(&dummy, lhs, expr, uast_expr_get_pos(expr), false)) {
                 case INFER_LHS_OK: {
+                    // TODO: consider if new uast binary actually needs to be made here (maybe I could just set oper types instead)
                     Uast_binary* new_bin = uast_binary_new(oper->pos, uast_symbol_wrap(lhs), oper->rhs, BINARY_SINGLE_EQUAL);
                     return try_set_binary_types(new_tast, new_bin, false);
                 }
