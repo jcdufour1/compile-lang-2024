@@ -1151,7 +1151,7 @@ static bool parse_lang_type_struct_ex(Ulang_type* lang_type, Tk_view* tokens, Sc
         }
         Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type));
         if (!parse_lang_type_struct_ex(rtn_type, tokens, scope_id, print_error)) {
-            return false;
+            *rtn_type = ulang_type_new_void(parse_state.prev_token.pos);
         }
         *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(lang_type_token.pos, params, rtn_type, 1));
         return true;

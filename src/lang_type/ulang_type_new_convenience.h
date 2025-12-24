@@ -9,6 +9,8 @@
 #include <lang_type_from_ulang_type.h>
 #include <strv.h>
 
+// TODO: place con in function names for readability?
+
 static inline Ulang_type ulang_type_new_int_x(Pos pos, Strv base) {
     assert(strv_at(base, 0) == 'u' || strv_at(base, 0) == 'i');
     for (size_t idx = 1; idx < base.count; idx++) {

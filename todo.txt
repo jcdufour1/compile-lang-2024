@@ -130,7 +130,6 @@ for generics:
 - todo should call local_exit?
 - def should be defined this way?:
     EOF :: def -1
-- remove let keyword from syntax file
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
 

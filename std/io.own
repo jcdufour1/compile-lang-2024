@@ -148,7 +148,7 @@ print_internal :: fn(<BufT>)(format PrintFormat(<BufT>), print_buf_fn fn(BufT, u
 
 PrintFormatArg :: struct(<BufT>) {
     item opaque*
-    print_item_fn fn(BufT, fn(BufT, u8)void, opaque*)void
+    print_item_fn fn(BufT, fn(BufT, u8)void, opaque*)
 }
 
 PrintFormat :: struct(<BufT>) {
