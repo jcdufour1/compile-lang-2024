@@ -99,7 +99,6 @@ static void compile_file_to_ir(void) {
         SCOPE_TOP_LEVEL,
         true /* TODO */
     );
-
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
@@ -109,7 +108,6 @@ static void compile_file_to_ir(void) {
     // generate ir from file(s)
     // TODO: figure out why it does not work to put non-stderr file in log_internal_ex
     do_pass_status(parse, usymbol_log_level, stderr);
-    todo();
     do_pass(expand_using, usymbol_log_level, stderr);
     do_pass(expand_def, usymbol_log_level, stderr);
     do_pass(try_set_types, symbol_log_level, stderr);
