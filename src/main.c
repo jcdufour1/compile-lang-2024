@@ -99,7 +99,6 @@ static void compile_file_to_ir(void) {
         SCOPE_TOP_LEVEL,
         true /* TODO */
     );
-
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 

@@ -1429,7 +1429,8 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
             fn_tk.pos,
             ulang_type_from_uast_function_decl(fun_def->decl),
             fun_name,
-            (Attrs) {0}
+            (Attrs) {0},
+            (Uast_expr_darr) {0}
         );
         if (!usymbol_add(uast_variable_def_wrap(var_def))) {
             msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
@@ -1821,7 +1822,8 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             name_token.pos,
             lang_type,
             name_new(parse_state.curr_mod_path, name_token.text, (Ulang_type_darr) {0}, scope_id),
-            attrs
+            attrs,
+            (Uast_expr_darr) {0}
         );
         *result = uast_variable_def_wrap(var_def);
 
@@ -1852,13 +1854,6 @@ static PARSE_STATUS parse_for_range_internal(
     Scope_id block_scope
 ) {
     Name user_name = var_def_user->name;
-    Uast_variable_def* var_def_builtin = uast_variable_def_new(
-        var_def_user->pos,
-        ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
-        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id),
-        (Attrs) {0}
-    );
-    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
@@ -1884,6 +1879,17 @@ static PARSE_STATUS parse_for_range_internal(
         default:
             unreachable("");
     }
+
+    Uast_expr_darr addit_exprs_to_infer_from = {0};
+    darr_append(&a_main, &addit_exprs_to_infer_from, upper_bound);
+    Uast_variable_def* var_def_builtin = uast_variable_def_new(
+        var_def_user->pos,
+        ulang_type_clone(var_def_user->lang_type, true/* TODO */, user_name.scope_id),
+        name_new(MOD_PATH_BUILTIN, util_literal_strv_new(), user_name.gen_args, user_name.scope_id),
+        (Attrs) {0},
+        addit_exprs_to_infer_from
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
 
     Uast_binary* increment = uast_binary_new(
         uast_expr_get_pos(upper_bound),

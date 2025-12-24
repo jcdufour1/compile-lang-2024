@@ -8,6 +8,7 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v4
 
+      # TODO: use apt-get instead of apt for better stability
       - run: sudo apt update 
       - run: sudo apt install clang-20 python3 mypy
       - run: mypy do_test.py
