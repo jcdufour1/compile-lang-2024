@@ -887,58 +887,122 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
     return true;
 }
 
-static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
-    assert(oper->token_type == BINARY_SINGLE_EQUAL);
+typedef enum {
+    INFER_LHS_OK,
+    INFER_LHS_NONE,
+    INFER_LHS_ERROR,
+} INFER_LHS_STATUS;
+
+static INFER_LHS_STATUS try_set_binary_types_infer_lhs_internal(Tast_expr** new_tast, Uast_symbol* lhs, Uast_expr* rhs, Pos oper_pos, bool can_infer_from_int_lit) {
+    if (!can_infer_from_int_lit && rhs->type == UAST_LITERAL) {
+        const Uast_literal* rhs_lit = uast_literal_const_unwrap(rhs);
+        switch (rhs_lit->type) {
+            case UAST_INT:
+                return INFER_LHS_NONE;
+            case UAST_FLOAT:
+                return INFER_LHS_NONE;
+            case UAST_STRING:
+                break;
+            case UAST_VOID:
+                break;
+            default:
+                unreachable("");
+        }
+        unreachable("");
+    }
 
     Tast_expr* new_rhs;
-    if (!try_set_expr_types(&new_rhs, oper->rhs, true)) {
-        return false;
+    if (!try_set_expr_types(&new_rhs, rhs, true)) {
+        return INFER_LHS_ERROR;
     }
 
-    if (oper->lhs->type != UAST_SYMBOL) {
-        msg_todo("type inference with non variable def in this situation", uast_expr_get_pos(oper->lhs));
-        return false;
-    }
-
-    Uast_symbol* lhs = uast_symbol_unwrap(oper->lhs);
     Uast_def* lhs_def_ = NULL;
     unwrap(
         usymbol_lookup(&lhs_def_, lhs->name) &&
         "try_set_binary_types_infer_lhs should not have been called if lhs_def_ is undefined"
     );
     if (lhs_def_->type != UAST_VARIABLE_DEF) {
-        msg_todo("", uast_expr_get_pos(oper->lhs));
-        return false;
+        msg_todo("", lhs->pos);
+        return INFER_LHS_ERROR;
     }
     Uast_variable_def* lhs_def = uast_variable_def_unwrap(lhs_def_);
     lhs_def->lang_type = lang_type_to_ulang_type(lang_type_standardize(
         tast_expr_get_lang_type(new_rhs),
-        oper->rhs->type == UAST_LITERAL,
-        uast_expr_get_pos(oper->lhs)
+        rhs->type == UAST_LITERAL,
+        lhs->pos
     ));
 
-    Tast_expr* new_lhs;
-    if (!try_set_expr_types(&new_lhs, oper->lhs, true /* TODO */)) {
-        return false;
+    Tast_expr* new_lhs = NULL;
+    if (!try_set_symbol_types(&new_lhs, lhs, true /* TODO */)) {
+        return INFER_LHS_ERROR;
     }
 
-    switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_rhs), oper->rhs, oper->pos)) {
+    switch (check_general_assignment(&check_env, &new_rhs, tast_expr_get_lang_type(new_rhs), rhs, oper_pos)) {
         case CHECK_ASSIGN_OK:
-            *new_tast = tast_assignment_wrap(tast_assignment_new(oper->pos, new_lhs, new_rhs));
-            return true;
+            *new_tast = tast_assignment_wrap(tast_assignment_new(oper_pos, new_lhs, new_rhs));
+            return INFER_LHS_OK;
         case CHECK_ASSIGN_INVALID:
             msg(
                 DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
-                oper->pos,
+                oper_pos,
                 "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
             );
-            return false;
+            return INFER_LHS_ERROR;
         case CHECK_ASSIGN_ERROR:
-            return false;
+            return INFER_LHS_ERROR;
     }
     unreachable("");
+}
+
+//try_set_binary_types_infer_lhs_internal(Tast_expr** new_tast, Uast_binary* oper, bool can_infer_from_int_lit)
+static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* oper) {
+    assert(oper->token_type == BINARY_SINGLE_EQUAL);
+
+    if (oper->lhs->type != UAST_SYMBOL) {
+        msg_todo("type inference with non variable def in this situation", uast_expr_get_pos(oper->lhs));
+        todo();
+        return false;
+    }
+    Uast_symbol* lhs = uast_symbol_unwrap(oper->lhs);
+
+    switch (try_set_binary_types_infer_lhs_internal(new_tast, lhs, oper->rhs, oper->pos, false)) {
+        case INFER_LHS_OK:
+            return true;
+        case INFER_LHS_NONE:
+            break;
+        case INFER_LHS_ERROR:
+            todo();
+        default:
+            unreachable("");
+    }
+
+    {
+        Uast_def* var_def_ = NULL;
+        if (!usymbol_lookup(&var_def_, lhs->name)) {
+            todo();
+        }
+        if (var_def_->type != UAST_VARIABLE_DEF) {
+            todo();
+        }
+        darr_foreach(idx, Uast_expr*, expr, uast_variable_def_unwrap(var_def_)->addit_exprs_infer_from) {
+            switch (try_set_binary_types_infer_lhs_internal(new_tast, lhs, expr, uast_expr_get_pos(expr), false)) {
+                case INFER_LHS_OK:
+                    return true;
+                case INFER_LHS_NONE:
+                    break;
+                case INFER_LHS_ERROR:
+                    todo();
+                default:
+                    unreachable("");
+            }
+
+        }
+    }
+
+    log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, oper));
+    todo();
 }
 
 // returns false if unsuccessful
