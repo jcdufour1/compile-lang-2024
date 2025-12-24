@@ -1867,7 +1867,8 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
             (Ulang_type_darr) {0} /* TODO */,
             sym->name.scope_id
         ),
-        (Attrs) {0} // TODO
+        (Attrs) {0}, // TODO
+        (Uast_expr_darr) {0}
     );
     if (!usymbol_add(uast_variable_def_wrap(new_def))) {
         // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)

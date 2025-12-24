@@ -845,6 +845,7 @@ static EXPAND_NAME_STATUS expand_def_name(
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def, bool is_rhs, Uast_expr* rhs) {
+    todo();
     return expand_def_ulang_type(
         &def->lang_type,
         def->pos,

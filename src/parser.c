@@ -1429,7 +1429,8 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
             fn_tk.pos,
             ulang_type_from_uast_function_decl(fun_def->decl),
             fun_name,
-            (Attrs) {0}
+            (Attrs) {0},
+            (Uast_expr_darr) {0}
         );
         if (!usymbol_add(uast_variable_def_wrap(var_def))) {
             msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
@@ -1821,7 +1822,8 @@ static PARSE_STATUS parse_variable_def_or_generic_param(
             name_token.pos,
             lang_type,
             name_new(parse_state.curr_mod_path, name_token.text, (Ulang_type_darr) {0}, scope_id),
-            attrs
+            attrs,
+            (Uast_expr_darr) {0}
         );
         *result = uast_variable_def_wrap(var_def);
 

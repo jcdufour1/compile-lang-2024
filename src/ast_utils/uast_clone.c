@@ -453,7 +453,8 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, bool us
         def->pos,
         ulang_type_clone(def->lang_type, use_new_scope, new_scope),
         name_clone(def->name, use_new_scope, new_scope),
-        def->attrs
+        def->attrs,
+        uast_expr_darr_clone(def->addit_exprs_infer_from, use_new_scope, new_scope, def->pos/*TODO*/)
     );
 }
 
