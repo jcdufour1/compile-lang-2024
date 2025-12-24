@@ -118,7 +118,7 @@ OBJS=\
 	 ${BUILD_DIR}/ir/ir_graphvis.o \
 	 ${BUILD_DIR}/util/subprocess.o
 
-DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/auto_gen.c
+DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/*.h src/util/auto_gen/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
 # DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen/auto_gen* ${BUILD_DIR}/ast_utils/tast.h

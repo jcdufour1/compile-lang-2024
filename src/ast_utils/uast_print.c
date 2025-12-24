@@ -704,26 +704,6 @@ Strv uast_stmt_removed_print_internal(UAST_MODE mode, const Uast_stmt_removed* r
     return string_to_strv(buf);
 }
 
-Strv uast_assignment_print_internal(UAST_MODE mode, const Uast_assignment* assign, Indent indent) {
-    String buf = {0};
-
-    switch (mode) {
-        case UAST_LOG:
-            string_extend_cstr_indent(&a_temp, &buf, "assignment\n", indent);
-            indent += INDENT_WIDTH;
-            string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mode, assign->lhs, indent));
-            string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mode, assign->rhs, indent));
-            break;
-        case UAST_MSG:
-            msg_todo("", assign->pos);
-            break;
-        default:
-            unreachable("");
-    }
-
-    return string_to_strv(buf);
-}
-
 Strv uast_if_print_internal(UAST_MODE mode, const Uast_if* lang_if, Indent indent) {
     String buf = {0};
 
@@ -1390,8 +1370,6 @@ Strv uast_stmt_print_internal(UAST_MODE mode, const Uast_stmt* stmt, Indent inde
             return uast_def_print_internal(mode, uast_def_const_unwrap(stmt), indent);
         case UAST_YIELD:
             return uast_yield_print_internal(mode, uast_yield_const_unwrap(stmt), indent);
-        case UAST_ASSIGNMENT:
-            return uast_assignment_print_internal(mode, uast_assignment_const_unwrap(stmt), indent);
         case UAST_RETURN:
             return uast_return_print_internal(mode, uast_return_const_unwrap(stmt), indent);
         case UAST_FOR_WITH_COND:

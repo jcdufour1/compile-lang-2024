@@ -56,8 +56,6 @@ void generic_sub_binary(Uast_binary* oper, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg);
 
-void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type gen_arg);
-
 void generic_sub_literal(Uast_literal* lit, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_for_with_cond(Uast_for_with_cond* lang_for, Name gen_param, Ulang_type gen_arg);

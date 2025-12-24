@@ -36,8 +36,6 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
         case UAST_DEFER:
             unreachable("");
         case UAST_YIELD:

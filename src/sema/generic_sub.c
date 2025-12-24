@@ -370,10 +370,6 @@ void generic_sub_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt, Name gen_param, Ula
             generic_sub_continue(uast_continue_unwrap(stmt), gen_param, gen_arg);
             *new_stmt = stmt;
             return;
-        case UAST_ASSIGNMENT:
-            generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
-            *new_stmt = stmt;
-            return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             *new_stmt = stmt;
@@ -449,11 +445,6 @@ void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg) 
         generic_sub_expr(&lang_case->expr, lang_case->expr, gen_param, gen_arg);
     }
     generic_sub_block(lang_case->if_true, gen_param, gen_arg);
-}
-
-void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(&assign->lhs, assign->lhs, gen_param, gen_arg);
-    generic_sub_expr(&assign->rhs, assign->rhs, gen_param, gen_arg);
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {

@@ -1294,11 +1294,6 @@ static bool expand_def_yield(Uast_yield* yield) {
     // TODO: does yield->break_out_of need to be expanded?
 }
 
-static bool expand_def_assignment(Uast_assignment* assign) {
-    bool status = expand_def_expr_not_ulang_type(&assign->lhs, assign->lhs, true, assign->rhs);
-    return expand_def_expr_not_ulang_type(&assign->rhs, assign->rhs, false, NULL) && status;
-}
-
 static bool expand_def_continue(Uast_continue* cont) {
     (void) cont;
     return true;
@@ -1327,8 +1322,6 @@ static bool expand_def_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt) {
             return expand_def_continue(uast_continue_unwrap(stmt));
         case UAST_YIELD:
             return expand_def_yield(uast_yield_unwrap(stmt));
-        case UAST_ASSIGNMENT:
-            return expand_def_assignment(uast_assignment_unwrap(stmt));
         case UAST_RETURN:
             return expand_def_return(uast_return_unwrap(stmt));
         case UAST_DEFER:
