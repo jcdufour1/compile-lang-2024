@@ -1,8 +1,0 @@
-print :: def io.printf
-
-print :: def = io.
-
-main :: fn() i32 {
-    return 0
-}
-

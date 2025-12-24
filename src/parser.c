@@ -1660,10 +1660,6 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         msg(DIAG_LANG_DEF_IN_RUNTIME, lang_def_tk.pos, "`def` cannot be used in "FMT"\n", strv_print(MOD_PATH_RUNTIME));
     }
 
-    Token dummy = {0};
-    if (!consume_expect(&dummy, tokens, "after `def`", TOKEN_SINGLE_EQUAL)) {
-        return PARSE_ERROR;
-    }
     Uast_expr* expr = NULL;
     switch (parse_expr(&expr, tokens, scope_id)) {
         case PARSE_EXPR_ERROR:

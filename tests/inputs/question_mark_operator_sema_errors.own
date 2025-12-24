@@ -12,8 +12,8 @@ do_thing_with_err_val :: fn(should_succeed u1) rt.Result(<i32, i64>) {
     return .error(27)
 }
 
-FALSE :: def = 0
-TRUE :: def = 1
+FALSE :: def 0
+TRUE :: def 1
 
 thing1 :: fn() {
     num u8 := do_thing(TRUE)?

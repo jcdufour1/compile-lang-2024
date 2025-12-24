@@ -78,8 +78,8 @@ print_token3 :: fn(<token3internal ''Token3Internal>)(token Token3(<token3intern
     token.token3.print_fn()
 }
 
-ALLOC1 :: def = {.max_thing = 8}
-NESTED_STRUCT_2 :: def = {{765}}
+ALLOC1 :: def {.max_thing = 8}
+NESTED_STRUCT_2 :: def {{765}}
 
 struct_literal_tests :: fn() {
     token1 Token1(<ALLOC1>) := .num(7)
