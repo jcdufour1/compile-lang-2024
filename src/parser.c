@@ -1435,11 +1435,12 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
             msg_redefinition_of_symbol(uast_variable_def_wrap(var_def));
             return PARSE_ERROR;
         }
-        *result = uast_assignment_wrap(uast_assignment_new(
+        *result = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
             fn_tk.pos,
             uast_symbol_wrap(uast_symbol_new(var_def->pos, var_def->name)),
-            uast_symbol_wrap(uast_symbol_new(fn_tk.pos, fun_def->decl->name))
-        ));
+            uast_symbol_wrap(uast_symbol_new(fn_tk.pos, fun_def->decl->name)),
+            BINARY_SINGLE_EQUAL
+        ))));
         return PARSE_OK;
     }
 
@@ -1884,7 +1885,7 @@ static PARSE_STATUS parse_for_range_internal(
             unreachable("");
     }
 
-    Uast_assignment* increment = uast_assignment_new(
+    Uast_binary* increment = uast_binary_new(
         uast_expr_get_pos(upper_bound),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
         uast_operator_wrap(uast_binary_wrap(uast_binary_new(
@@ -1892,29 +1893,32 @@ static PARSE_STATUS parse_for_range_internal(
             uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
             util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound)),
             BINARY_ADD
-        )))
+        ))),
+        BINARY_SINGLE_EQUAL
     );
     Uast_stmt_darr init_children = {0};
-    darr_append(&a_main, &init_children, uast_assignment_wrap(increment));
+    darr_append(&a_main, &init_children, uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(increment))));
 
     Uast_block* inner = NULL;
     if (PARSE_OK != parse_block(&inner, tokens, false, symbol_collection_new(block_scope, util_literal_name_new()), init_children)) {
         return PARSE_ERROR;
     }
 
-    Uast_assignment* init_assign = uast_assignment_new(
+    Uast_binary* init_assign = uast_binary_new(
         uast_expr_get_pos(lower_bound),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
-        lower_bound
+        lower_bound,
+        BINARY_SINGLE_EQUAL
     );
-    darr_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
+    darr_append(&a_main, &outer->children, uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(init_assign))));
 
-    Uast_assignment* user_assign = uast_assignment_new(
+    Uast_binary* user_assign = uast_binary_new(
         uast_expr_get_pos(lower_bound),
         uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_user->name)),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name))
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+        BINARY_SINGLE_EQUAL
     );
-    darr_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
+    darr_insert(&a_main, &inner->children, 0, uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(user_assign))));
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,

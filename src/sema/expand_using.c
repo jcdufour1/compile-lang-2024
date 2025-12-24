@@ -138,8 +138,6 @@ static EXPAND_USING_STMT expand_using_stmt(Uast_stmt* stmt) {
             return USING_STMT_KEEP;
         case UAST_CONTINUE:
             return USING_STMT_KEEP;
-        case UAST_ASSIGNMENT:
-            return USING_STMT_KEEP;
         case UAST_RETURN:
             return USING_STMT_KEEP;
         case UAST_STMT_REMOVED:

@@ -324,14 +324,6 @@ Uast_continue* uast_continue_clone(const Uast_continue* cont, bool use_new_scope
     );
 }
 
-Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_assignment_new(
-        assign->pos,
-        uast_expr_clone(assign->lhs, use_new_scope, new_scope, dest_pos),
-        uast_expr_clone(assign->rhs, use_new_scope, new_scope, dest_pos)
-    );
-}
-
 Uast_return* uast_return_clone(const Uast_return* rtn, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, use_new_scope, new_scope, dest_pos), rtn->is_auto_inserted);
 }
@@ -430,8 +422,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
             return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_CONTINUE:
             return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
-        case UAST_ASSIGNMENT:
-            return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_RETURN:
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_DEFER:

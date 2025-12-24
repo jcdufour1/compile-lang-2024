@@ -1856,16 +1856,6 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
     unreachable("");
 }
 
-// TODO: remove Uast_assignment?
-bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign, bool is_actually_used_as_expr) {
-    return try_set_binary_types(new_expr, uast_binary_new(
-        assign->pos,
-        assign->lhs,
-        assign->rhs,
-        BINARY_SINGLE_EQUAL
-    ), is_actually_used_as_expr);
-}
-
 bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_darr args, Tast_enum_case* enum_case) {
     Uast_symbol* sym = uast_symbol_unwrap(darr_at(args, 0));
     Uast_variable_def* new_def = uast_variable_def_new(
@@ -1891,7 +1881,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
     }
 
     if (enum_case->tag->lang_type.type != LANG_TYPE_VOID) {
-        Uast_assignment* new_assign = uast_assignment_new(
+        Uast_binary* new_assign = uast_binary_new(
             new_def->pos,
             uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
             uast_enum_access_wrap(uast_enum_access_new(
@@ -1899,9 +1889,14 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                 enum_case->tag,
                 def_lang_type,
                 uast_expr_clone(check_env.parent_of_operand, true /* TODO */, sym->name.scope_id, enum_case->pos)
-            ))
+            )),
+            BINARY_SINGLE_EQUAL
         );
-        darr_append(&a_main, &check_env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
+        darr_append(
+            &a_main,
+            &check_env.switch_case_defer_add_enum_case_part,
+            uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(new_assign)))
+        );
     }
 
     *new_case = enum_case;
@@ -2584,6 +2579,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Name* sym_name = NULL;
     // TODO: switch from TAST_* to UAST_* in this switch
     switch (fun_call->callee->type) {
+        case UAST_INDEX:
+            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
+            return false;
         case UAST_UNDERSCORE:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
@@ -2594,9 +2592,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_IF_ELSE_CHAIN:
-            msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
-            return false;
-        case UAST_ASSIGNMENT:
             msg_todo("this type of function callee", uast_expr_get_pos(fun_call->callee));
             return false;
         case UAST_OPERATOR:
@@ -4739,13 +4734,14 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         oper_var->name,
         oper_var->attrs
     )));
-    Uast_assignment* oper_assign = uast_assignment_new(
+    Uast_binary* oper_assign = uast_binary_new(
         oper_var->pos,
         uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name)), 
-        lang_switch->operand
+        lang_switch->operand,
+        BINARY_SINGLE_EQUAL
     );
     Tast_expr* new_oper_assign = NULL;
-    if (!try_set_assignment_types(&new_oper_assign, oper_assign, false)) {
+    if (!try_set_binary_types(&new_oper_assign, oper_assign, false)) {
         return false;
     }
 
@@ -5162,8 +5158,6 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
             return false;
         case UAST_CONTINUE:
             return false;
-        case UAST_ASSIGNMENT:
-            return false;
         case UAST_RETURN:
             return false;
         case UAST_DEFER:
@@ -5213,17 +5207,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
                 goto end;
             }
             *new_tast = tast_for_with_cond_wrap(new_tast_);
-            status = STMT_OK;
-            goto end;
-        }
-        case UAST_ASSIGNMENT: {
-            Tast_expr* new_tast_ = NULL;
-            assert(check_env.expr_is_actually_used_as_expr == false);
-            if (!try_set_assignment_types(&new_tast_, uast_assignment_unwrap(stmt), false)) {
-                status = STMT_ERROR;
-                goto end;
-            }
-            *new_tast = tast_expr_wrap(new_tast_);
             status = STMT_OK;
             goto end;
         }
