@@ -8,12 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <msg.h>
 #include <errno.h>
 #include <local_string.h>
 #include <file.h>
 #include <ast_msg.h>
+
+#ifdef _WIN32
+#   include <winapi_wrappers.h>
+#else
+#   include <sys/wait.h>
+#endif // _WIN32
 
 Strv cmd_to_strv(Arena* arena, Strv_darr cmd) {
     String cmd_str = {0};
@@ -27,8 +32,8 @@ Strv cmd_to_strv(Arena* arena, Strv_darr cmd) {
     return string_to_strv(cmd_str);
 }
 
-// returns return code
-int subprocess_call(Strv_darr cmd) {
+#ifndef _WIN32
+static int subprocess_call_posix(Strv_darr cmd) {
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
@@ -72,4 +77,24 @@ int subprocess_call(Strv_darr cmd) {
         local_exit(EXIT_CODE_FAIL);
     }
     unreachable("");
+}
+#endif // _WIN32
+
+#ifdef _WIN32
+static int subprocess_call_win32(Strv_darr cmd) {
+    if (!winapi_CreateProcessA(
+    )) {
+        todo();
+    }
+    todo();
+}
+#endif // _WIN32
+
+// returns return code
+int subprocess_call(Strv_darr cmd) {
+#   ifdef _WIN32
+        return subprocess_call_win32(cmd);
+#   else
+        return subprocess_call_posix(cmd);
+#   endif // _WIN32
 }

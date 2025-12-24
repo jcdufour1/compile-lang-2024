@@ -71,6 +71,8 @@ static TARGET_OS get_default_os(void) {
     // TODO: add ifdef for windows
 #   ifdef __linux__
         return OS_LINUX;
+#   elif defined(_WIN32)
+        return OS_WINDOWS;
 #   else
         // TODO: return OS_UNKNOWN?
 #       error "unsupported operating system"
@@ -81,6 +83,10 @@ static_assert(array_count(abi_table) == 1, "exhausive handling of abis");
 static TARGET_ABI get_default_abi(void) {
 #   ifdef __GLIBC__
         return ABI_GNU;
+#   elif defined(__MINGW32__) || defined(__MINGW64__)
+        return ABI_GNU;
+#   elif defined(_MSC_VER)
+#       error "_MSC_VER ot implemented"
 #   else
         // TODO: return ABI_UNKNOWN?
 #       error "unsupported abi"
@@ -712,7 +718,7 @@ static void long_option_target_triplet(Pos pos_self, Arg curr_opt) {
             msg(
                 DIAG_CMD_OPT_INVALID_SYNTAX,
                 curr_opt.pos,
-                "target triplet has only %zu substrings, but 4 was expected\n",
+                "target triplet has only "SIZE_T_FMT" substrings, but 4 was expected\n",
                 count_substrings
             );
             local_exit(EXIT_CODE_FAIL);
@@ -976,7 +982,7 @@ void parse_args(int argc, char** argv) {
                 Strv first_str = sv(array_at(long_options, first).text);
                 Strv last_str = sv(array_at(long_options, last).text);
                 if (strv_starts_with(first_str, last_str) || strv_starts_with(last_str, first_str)) {
-                    log(LOG_FATAL, "options with indices %zu and %zu have overlapping names\n", first, last);
+                    log(LOG_FATAL, "options with indices "SIZE_T_FMT" and "SIZE_T_FMT" have overlapping names\n", first, last);
                     local_exit(EXIT_CODE_FAIL);
                 }
             }

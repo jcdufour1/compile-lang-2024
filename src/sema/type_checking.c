@@ -404,8 +404,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                     msg(
                         DIAG_INVALID_COUNT_FUN_ARGS,
                         sym_untyped->pos,
-                        "function symbol `"FMT"` has %zu function parameters, but "
-                        "the corresponding variable definition has %zu function parameters\n",
+                        "function symbol `"FMT"` has "SIZE_T_FMT" function parameters, but "
+                        "the corresponding variable definition has "SIZE_T_FMT" function parameters\n",
                         name_print(NAME_MSG, sym_untyped->name),
                         fun_def->decl->params->params.info.count,
                         fn.params.ulang_types.info.count
@@ -1275,7 +1275,7 @@ bool try_set_tuple_assignment_types(
         msg(
             DIAG_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
             "tuple `"FMT"` cannot be assigned to `"FMT"`; "
-            "tuple `"FMT"` has %zu elements, but type `"FMT"` has %zu elements\n",
+            "tuple `"FMT"` has "SIZE_T_FMT" elements, but type `"FMT"` has "SIZE_T_FMT" elements\n",
             uast_print(UAST_MSG, tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
             uast_print(UAST_MSG, tuple), tuple->members.info.count,
             lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
@@ -1530,7 +1530,7 @@ bool try_set_array_literal_types(
         size_t count = (size_t)array.count;
         if (count != lit->members.info.count) {
             msg_invalid_count_struct_literal_args(lit->members, count, count, lit->pos, true);
-            msg(DIAG_NOTE, array.pos, "statically sized array defined as containing %zu elements\n", count);
+            msg(DIAG_NOTE, array.pos, "statically sized array defined as containing "SIZE_T_FMT" elements\n", count);
             return false;
         }
     } else {
@@ -2212,7 +2212,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
             if (fun_call->args.info.count > 1) {
                 msg(
                     DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_callee_unwrap(new_callee)->pos,
-                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
+                    "() in enum case must contain exactly one argument, but "SIZE_T_FMT" arguments found\n",
                     fun_call->args.info.count
                 );
                 return FUN_MIDDLE_ERROR;
@@ -2288,7 +2288,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
             if (fun_call->args.info.count > 1) {
                 msg(
                     DIAG_ENUM_CASE_TOO_MOPAQUE_ARGS, tast_enum_case_unwrap(new_callee)->pos,
-                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
+                    "() in enum case must contain exactly one argument, but "SIZE_T_FMT" arguments found\n",
                     fun_call->args.info.count
                 );
                 return FUN_MIDDLE_ERROR;

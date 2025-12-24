@@ -6,10 +6,10 @@ WERROR_ALL ?= 0
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 C_WARNINGS = -Werror=incompatible-pointer-types \
 			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
-			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
+			 -Wno-format -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
 
 C_FLAGS_COMMON = ${C_WARNINGS} \
-			     -std=c11 -pedantic -g \
+			     -std=c11 -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \
 			       	 -I src/ \
@@ -27,7 +27,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 # TODO: change gnu11 to c11
 # TODO: make common flags for sanitizers (so that autogen can have better sanitizers)
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
-			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
+			     -std=gnu11 -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL}
 			     #-fsanitize=address -fno-omit-frame-pointer
 

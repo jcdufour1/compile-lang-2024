@@ -216,7 +216,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         if (strv.count != 1) {
             msg(
                 DIAG_INVALID_CHAR_LIT, pos,
-                "expected exactly one character in char literal without excapes, but got %zu\n",
+                "expected exactly one character in char literal without excapes, but got "SIZE_T_FMT"\n",
                 strv.count
             );
             return false;
@@ -254,7 +254,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (strv.count != 0) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected 0 characters in char literal after `\\%c`, but got %zu\n",
+                    "expected 0 characters in char literal after `\\%c`, but got "SIZE_T_FMT"\n",
                     esc_char, strv.count
                 );
                 return false;
@@ -265,7 +265,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (strv.count != 2) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected exactly 2 characters in char literal after `\\x` excape, but got %zu\n",
+                    "expected exactly 2 characters in char literal after `\\x` excape, but got "SIZE_T_FMT"\n",
                     strv.count + 1
                 );
                 return false;
@@ -276,7 +276,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (strv.count != 3) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected exactly 3 characters in char literal after `\\o` excape, but got %zu\n",
+                    "expected exactly 3 characters in char literal after `\\o` excape, but got "SIZE_T_FMT"\n",
                     strv.count + 1
                 );
                 return false;
