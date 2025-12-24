@@ -893,7 +893,13 @@ typedef enum {
     INFER_LHS_ERROR,
 } INFER_LHS_STATUS;
 
-static INFER_LHS_STATUS try_set_binary_types_infer_lhs_internal(Tast_expr** new_tast, Uast_symbol* lhs, Uast_expr* rhs, Pos oper_pos, bool can_infer_from_int_lit) {
+static INFER_LHS_STATUS try_set_binary_types_infer_lhs_internal(
+    Tast_expr** new_tast,
+    Uast_symbol* lhs,
+    Uast_expr* rhs,
+    Pos oper_pos,
+    bool can_infer_from_int_lit // TODO: give this paramter a better name
+) {
     if (!can_infer_from_int_lit && rhs->type == UAST_LITERAL) {
         const Uast_literal* rhs_lit = uast_literal_const_unwrap(rhs);
         switch (rhs_lit->type) {
@@ -902,7 +908,7 @@ static INFER_LHS_STATUS try_set_binary_types_infer_lhs_internal(Tast_expr** new_
             case UAST_FLOAT:
                 return INFER_LHS_NONE;
             case UAST_STRING:
-                break;
+                return INFER_LHS_NONE;
             case UAST_VOID:
                 break;
             default:
@@ -962,7 +968,6 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
 
     if (oper->lhs->type != UAST_SYMBOL) {
         msg_todo("type inference with non variable def in this situation", uast_expr_get_pos(oper->lhs));
-        todo();
         return false;
     }
     Uast_symbol* lhs = uast_symbol_unwrap(oper->lhs);
@@ -973,17 +978,19 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
         case INFER_LHS_NONE:
             break;
         case INFER_LHS_ERROR:
-            todo();
+            return false;
         default:
             unreachable("");
     }
 
     Uast_def* var_def_ = NULL;
     if (!usymbol_lookup(&var_def_, lhs->name)) {
-        todo();
+        msg_undefined_symbol(lhs->name, lhs->pos);
+        return false;
     }
     if (var_def_->type != UAST_VARIABLE_DEF) {
-        todo();
+        msg_todo("", lhs->pos);
+        return false;
     }
     {
         darr_foreach(idx, Uast_expr*, expr, uast_variable_def_unwrap(var_def_)->addit_exprs_infer_from) {
@@ -996,7 +1003,7 @@ static bool try_set_binary_types_infer_lhs(Tast_expr** new_tast, Uast_binary* op
                 case INFER_LHS_NONE:
                     break;
                 case INFER_LHS_ERROR:
-                    todo();
+                    return false;
                 default:
                     unreachable("");
             }
