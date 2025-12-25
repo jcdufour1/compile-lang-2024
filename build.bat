@@ -3,10 +3,10 @@ ECHO "building project"
 
 set CC_COMPILER=clang
 
-set BUILD_DIR=./build/release/
+set BUILD_DIR=build/release/
 
 set AUTOGEN_C_FILES=src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
-set AUTOGEN_INCLUDE_PATHS=-I ./third_party/ -I src/util/ -I src/util/auto_gen/
+set AUTOGEN_INCLUDE_PATHS=-I third_party/ -I src/util/ -I src/util/auto_gen/
  
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 if %errorlevel% neq 0 exit /b %errorlevel%
@@ -80,7 +80,7 @@ set MAIN_C_FILES=^
 
 
 set MAIN_INCLUDE_PATHS=^
-    -I ./third_party/ ^
+    -I third_party/ ^
     -I %BUILD_DIR% ^
     -I src/ ^
     -I src/util/ ^
@@ -93,5 +93,5 @@ set MAIN_INCLUDE_PATHS=^
     -I src/ast_utils/
 
 
-%CC_COMPILER% -DNDEBUG -O2 -Wall -Wextra -Wno-deprecated-declarations -o %BUILD_DIR%/main %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% 
+%CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -o %BUILD_DIR%/main %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% 
 if %errorlevel% neq 0 exit /b %errorlevel%
