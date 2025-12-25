@@ -230,15 +230,20 @@ def do_tests(do_debug: bool, params: Parameters):
         debug_release_text = "release"
         debug_env = "0"
 
-    cmd = ["make", "-j", str(params.count_threads), "build"]
     print_info("compiling " + debug_release_text + " :")
-    map_thing: Dict[str, str] = {"DEBUG": debug_env}
-    if params.makefile_cc_compiler:
-        map_thing["CC_COMPILER"] = params.makefile_cc_compiler
-    if params.makefile_werror_all:
-        map_thing["WERROR_ALL"] = "1" if params.makefile_werror_all else "0"
-    process = subprocess.run(cmd, env=dict(os.environ | map_thing))
-    if process.returncode != 0:
+    rtn_code: int
+    if os.name == "nt":
+        rtn_code = subprocess.run(["cmd", "build.bat"]).returncode
+        print_success("compiling " + debug_release_text + " : done")
+    else:
+        cmd = ["make", "-j", str(params.count_threads), "build"]
+        map_thing: Dict[str, str] = {"DEBUG": debug_env}
+        if params.makefile_cc_compiler:
+            map_thing["CC_COMPILER"] = params.makefile_cc_compiler
+        if params.makefile_werror_all:
+            map_thing["WERROR_ALL"] = "1" if params.makefile_werror_all else "0"
+        rtn_code = subprocess.run(cmd, env=dict(os.environ | map_thing)).returncode
+    if rtn_code != 0:
         print_error("compilation of " + debug_release_text + " failed")
         sys.exit(1)
     print_success("compiling " + debug_release_text + " : done")

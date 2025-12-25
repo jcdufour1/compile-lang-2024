@@ -50,6 +50,7 @@ static struct {
     const char* abi_cstr;
 } abi_table[] = {
     {.abi = ABI_GNU, .abi_cstr = "gnu"},
+    {.abi = ABI_MSVC, .abi_cstr = "msvc"},
 };
 
 static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
@@ -79,14 +80,14 @@ static TARGET_OS get_default_os(void) {
 #   endif
 }
 
-static_assert(array_count(abi_table) == 1, "exhausive handling of abis");
+static_assert(array_count(abi_table) == 2, "exhausive handling of abis");
 static TARGET_ABI get_default_abi(void) {
 #   ifdef __GLIBC__
         return ABI_GNU;
 #   elif defined(__MINGW32__) || defined(__MINGW64__)
         return ABI_GNU;
 #   elif defined(_MSC_VER)
-#       error "unreachable"
+        return ABI_MSVC;
 #   else
         // TODO: return ABI_UNKNOWN?
 #       error "unsupported abi"

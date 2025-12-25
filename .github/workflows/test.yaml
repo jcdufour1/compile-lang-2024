@@ -20,5 +20,5 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v4
 
-      - run: winget install python3 LLVM --accept-source-agreements --disable-interactivity --accept-package-agreements
-      - run: python3 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
+      - run: winget install python3.14 LLVM --accept-source-agreements --slient --disable-interactivity --accept-package-agreements
+      - run: python3.14 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang

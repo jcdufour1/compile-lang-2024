@@ -22,6 +22,7 @@ typedef enum {
 
 typedef enum {
     ABI_GNU,
+    ABI_MSVC,
 } TARGET_ABI;
 
 typedef struct {
