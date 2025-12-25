@@ -8,7 +8,7 @@ set BUILD_DIR=./build/release/
 set AUTOGEN_C_FILES=src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
 set AUTOGEN_INCLUDE_PATHS=-I ./third_party/ -I src/util/ -I src/util/auto_gen/
  
-%CC_COMPILER% %AUTOGEN_C_FILES% -o %BUILD_DIR/auto_gen %AUTOGEN_INCLUDE_PATHS%
+%CC_COMPILER% %AUTOGEN_C_FILES% -o %BUILD_DIR%/auto_gen %AUTOGEN_INCLUDE_PATHS%
 
 set LIBS=-lshlwapi
 
