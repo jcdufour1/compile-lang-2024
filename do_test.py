@@ -237,7 +237,7 @@ def do_tests(do_debug: bool, params: Parameters):
     rtn_code: int
     if os.name == "nt":
         print_info("compiling " + debug_release_text + " :")
-        rtn_code = subprocess.run(["cmd", "build.bat"]).returncode
+        rtn_code = subprocess.run(["cmd", "/c", "build.bat"]).returncode
         print_info("thing thing")
     else:
         cmd = ["make", "-j", str(params.count_threads), "build"]
