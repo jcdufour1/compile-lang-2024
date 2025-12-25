@@ -1,5 +1,5 @@
 import os, subprocess, sys, pathlib, difflib, multiprocessing
-from typing import Callable, Tuple, Optional, Dict
+from typing import Callable, Tuple, Optional, Dict, Union
 from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
