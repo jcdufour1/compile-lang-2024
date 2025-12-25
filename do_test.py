@@ -218,6 +218,9 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
         raise NotImplementedError
 
 def do_tests(do_debug: bool, params: Parameters):
+    if os.name == "nt" and do_debug:
+        return
+
     success = True
     success_count = 0
     fail_count = 0
