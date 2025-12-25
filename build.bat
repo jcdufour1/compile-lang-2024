@@ -4,11 +4,16 @@ ECHO "building project"
 set CC_COMPILER=clang
 
 set BUILD_DIR=./build/release/
- 
+
 set AUTOGEN_C_FILES=src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
 set AUTOGEN_INCLUDE_PATHS=-I ./third_party/ -I src/util/ -I src/util/auto_gen/
  
+if not exist %BUILD_DIR% md %BUILD_DIR%
+
 %CC_COMPILER% %AUTOGEN_C_FILES% -o %BUILD_DIR%/auto_gen %AUTOGEN_INCLUDE_PATHS%
+%BUILD_DIR%/auto_gen %BUILD_DIR%
+
+
 
 set LIBS=-lshlwapi
 
