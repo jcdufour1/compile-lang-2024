@@ -22,7 +22,7 @@ jobs:
 
       - run: winget install python3.12 --accept-source-agreements --disable-interactivity --accept-package-agreements
       - run: py -3.12 --version
-      - run: py -m venv .venv
+      - run: py -3.12 -m venv .venv
       - run: .\.venv\scripts/activate
       - run: python --version
       - run: python3 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
