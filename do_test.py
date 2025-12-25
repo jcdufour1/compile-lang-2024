@@ -191,6 +191,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
 
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
+    print_info(compile_cmd)
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
 def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
