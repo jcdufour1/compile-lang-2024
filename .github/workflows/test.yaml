@@ -30,7 +30,7 @@ jobs:
         run: py -3.12 -m venv .venv
 
       - name: thing 5
-        run: .\.venv\scripts/activate
+        run: .\.venv\scripts\activate
 
       - name: thing 6
         run: python --version
