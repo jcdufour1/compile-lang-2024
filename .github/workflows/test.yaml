@@ -33,7 +33,7 @@ jobs:
         run: .\.venv\scripts\activate
 
       - name: thing 6
-        run: python --version
+        run: .\.venv\scripts\activate python --version
 
       - name: thing 7
-        run: python3 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
+        run: .\.venv\scripts\activate python3 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
