@@ -21,4 +21,4 @@ jobs:
         uses: actions/checkout@v4
 
       - run: winget install python3.12 LLVM --accept-source-agreements --disable-interactivity --accept-package-agreements
-      - run: python3.14 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
+      - run: python3.12 do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang
