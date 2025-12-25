@@ -84,9 +84,9 @@ def list_files_recursively(dir: str) -> list[str]:
             result.append(os.path.join(root, file_path))
     return result
 
-def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample]:
+def get_files_to_test(files_to_test: list[str]) -> list[Union[FileNormal, FileExample]]:
     # TODO: print error for invalid path in files_to_test
-    files: list[FileNormal | FileExample] = []
+    files: list[Union[FileNormal, FileExample]] = []
     possible_path: str
 
     assert(COUNT_DIRS == 3 and "exhausive handling of directories")
@@ -142,7 +142,7 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[str], 
 def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
-def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | FileExample, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
+def compile_and_run_test(do_debug: bool, output_name: str, file: Union[FileNormal, FileExample], debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
@@ -193,7 +193,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
-def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
+def do_regular_test(file: Tuple[Union[FileNormal, FileExample], bool, str, Parameters]) -> bool:
     if isinstance(file[0], FileNormal):
         if test_file(file[0], file[1], file[2], file[3]):
             return True
@@ -250,7 +250,7 @@ def do_tests(do_debug: bool, params: Parameters):
     print()
 
     # TODO: having bool, str, and Parameters in every element of regular_files may not be ideal
-    regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters]] = []
+    regular_files: list[tuple[Union[FileNormal, FileExample], bool, str, Parameters]] = []
 
     for file in get_files_to_test(params.files_to_test):
         regular_files.append((file, do_debug, debug_release_text, params))
@@ -349,7 +349,7 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     #print()
     return True
 
-def append_all_files(list_or_map: list | dict, callback: Callable):
+def append_all_files(Union[list_or_map: list, dict, callback: Callable]):
     possible_path: str
     assert(COUNT_DIRS == 3 and "exhausive handling of directories")
     for possible_base in list_files_recursively(INPUTS_DIR):
