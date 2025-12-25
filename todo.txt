@@ -130,6 +130,7 @@ for generics:
 - todo should call local_exit?
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
+- figure out why color does not work in wine
 
 
 

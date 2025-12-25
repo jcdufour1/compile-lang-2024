@@ -4,6 +4,9 @@ WERROR_ALL ?= 0
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
+
+LIBS ?= -lshlwapi
+
 C_WARNINGS = -Werror=incompatible-pointer-types \
 			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
 			 -Wno-format -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
@@ -22,13 +25,15 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			       	 -I src/ir \
 			       	 -I src/ast_utils/ \
 			     -fno-strict-aliasing \
-			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} -D __USE_MINGW_ANSI_STDIO=1
+				 
 
 # TODO: change gnu11 to c11
 # TODO: make common flags for sanitizers (so that autogen can have better sanitizers)
+# TODO: make C_FLAGS_COMMON_2?
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
-			     -std=gnu11 -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
-			     -D MIN_LOG_LEVEL=${LOG_LEVEL}
+			     -std=c11 -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} -D __USE_MINGW_ANSI_STDIO=1
 			     #-fsanitize=address -fno-omit-frame-pointer
 
 BUILD_DIR_DEBUG ?= ./build/debug/
@@ -91,6 +96,7 @@ OBJS=\
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/util/cfg.o \
 	 ${BUILD_DIR}/util/newstring.o \
+	 ${BUILD_DIR}/util/winapi_wrappers.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
@@ -181,7 +187,7 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
-	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS}
+	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS} -lshlwapi
 
 ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
@@ -347,6 +353,9 @@ ${BUILD_DIR}/util/cfg.o: ${DEP_COMMON} src/util/cfg.c
 
 ${BUILD_DIR}/util/newstring.o: ${DEP_COMMON} src/util/newstring.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/newstring.o src/util/newstring.c
+
+${BUILD_DIR}/util/winapi_wrappers.o: ${DEP_COMMON} src/util/winapi_wrappers.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/winapi_wrappers.o src/util/winapi_wrappers.c
 
 # TODO: implement make clean
 # make clean:

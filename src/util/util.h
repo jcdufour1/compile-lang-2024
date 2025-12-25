@@ -1,6 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#ifdef _MSC_VER
+#   error "compiling with MSVC is not supported. use another compiler (such as clang or gcc) instead."
+#endif // _MSC_VER
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -201,8 +205,12 @@ typedef size_t Scope_id;
 
 #define FMT "%.*s"
 
+// TODO: give better name
+#define thing(expr) #expr
+
+// TODO: inline SIZE_T_FMT macro?
 #ifdef _WIN32
-#   define SIZE_T_FMT "%I64u"
+#   define SIZE_T_FMT "%zu"
 #else
 #   define SIZE_T_FMT "%zu"
 #endif // WINDOWS_PLATFORM

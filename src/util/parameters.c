@@ -86,7 +86,7 @@ static TARGET_ABI get_default_abi(void) {
 #   elif defined(__MINGW32__) || defined(__MINGW64__)
         return ABI_GNU;
 #   elif defined(_MSC_VER)
-#       error "_MSC_VER ot implemented"
+#       error "unreachable"
 #   else
         // TODO: return ABI_UNKNOWN?
 #       error "unsupported abi"
