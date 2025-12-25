@@ -33,6 +33,10 @@ static inline size_t max_size_t(size_t a, size_t b) {
     return a > b ? a : b;
 }
 
+#include <stdlib.h>
+#ifdef max
+#   undef max
+#endif // max
 #define max(a, b) _Generic ((a), \
         int: max_int, \
         size_t: max_size_t \
