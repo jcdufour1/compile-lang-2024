@@ -20,7 +20,7 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v4
 
-      - run: winget install pythonpy python3.12 --accept-source-agreements --disable-interactivity --accept-package-agreements
+      - run: winget install python3.12 --accept-source-agreements --disable-interactivity --accept-package-agreements
       - run: py -3.12 --version
       - run: py -m venv .venv
       - run: .\.venv\scripts/activate
