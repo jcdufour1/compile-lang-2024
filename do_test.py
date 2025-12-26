@@ -57,7 +57,10 @@ RESULTS_DIR = os.path.join("tests", "results")
 BUILD_DEBUG_DIR = os.path.join("build", "debug")
 BUILD_RELEASE_DIR = os.path.join("build", "release")
 
-EXE_BASE_NAME = "main"
+if os.name == "nt":
+    EXE_BASE_NAME = "main.exe"
+else:
+    EXE_BASE_NAME = "main"
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
