@@ -208,9 +208,13 @@ typedef size_t Scope_id;
 #   define SIZE_T_FMT "%I64u"
 #else
 #   define SIZE_T_FMT "%zu"
-#endif // WINDOWS_PLATFORM
+#endif // _WIN32
 
-#define PATH_SEPARATOR '/'
+#ifdef _WIN32
+#   define PATH_SEPARATOR '\\'
+#else
+#   define PATH_SEPARATOR '/'
+#endif // _WIN32
 
 #define MOD_PATH_COMMAND_LINE sv("std/does_not_exist/cmd")
 
