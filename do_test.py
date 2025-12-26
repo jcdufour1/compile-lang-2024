@@ -182,6 +182,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         raise NotImplementedError
     compile_cmd.append("--error")
     compile_cmd.append("no-main-function")
+    compile_cmd.append("--print-posix-msg")
     if path_c_compiler is not None:
         compile_cmd.append("--path-c-compiler")
         compile_cmd.append(path_c_compiler)
@@ -220,16 +221,11 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
     else:
         raise NotImplementedError
 
-has_been_called: bool = False
-
 def do_tests(do_debug: bool, params: Parameters):
     global has_been_called
     if os.name == "nt" and do_debug:
         return
 
-    if has_been_called:
-        assert(False)
-    has_been_called = True
     success = True
     success_count = 0
     fail_count = 0

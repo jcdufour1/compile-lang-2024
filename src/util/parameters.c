@@ -467,7 +467,7 @@ static void parse_file_option(int* argc, char*** argv) {
     assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
@@ -590,6 +590,12 @@ static void long_option_dump_backend_ir(Pos pos_self, Arg curr_opt) {
     params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
+static void long_option_print_posix_msg(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.print_posix_msg = true;
+}
+
 static void long_option_dump_ir(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
     (void) curr_opt;
@@ -617,7 +623,7 @@ static void long_option_dump_dot(Pos pos_self, Arg curr_opt) {
 
 static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -816,7 +822,7 @@ static void long_option_dummy(Pos pos_self, Arg curr_opt) {
 
 static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types in params below");
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
     const char* text;
@@ -881,6 +887,12 @@ Long_option_pair long_options[] = {
         .action = long_option_max_errors,
         .arg_type = ARG_SINGLE
     },
+    {
+        .text = "print-posix-msg",
+        .description = "print path with posix line separator in diagnositics (intended for windows ci)",
+        .action = long_option_print_posix_msg,
+        .arg_type = ARG_NONE
+    },
 
     {.text = "run", .description = "n/a", .action = long_option_dummy, .arg_type = ARG_REMAINING_RUN_ONLY},
 };
@@ -931,7 +943,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(int argc, char** argv) {
@@ -1003,7 +1015,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
