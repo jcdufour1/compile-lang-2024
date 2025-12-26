@@ -13,11 +13,11 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
 %CC_COMPILER% %AUTOGEN_C_FILES% -o %BUILD_DIR%/auto_gen %AUTOGEN_INCLUDE_PATHS% -D IN_AUTOGEN 
 :: if %errorlevel% neq 0 exit /b %errorlevel%
-:: %BUILD_DIR%/auto_gen %BUILD_DIR%
+%BUILD_DIR%/auto_gen %BUILD_DIR%
 :: :: if %errorlevel% neq 0 exit /b %errorlevel%
 :: 
-:: 
-:: 
+
+
 :: set LIBS=-lshlwapi
 :: 
 :: set MAIN_C_FILES=^
