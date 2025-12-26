@@ -1,7 +1,10 @@
-#include <stdio.h>
-
+#define _WIN32_WINNT 0x0600
 #include <windows.h>
 #include <shlwapi.h>
+#include <sysinfoapi.h>
+
+#include <stdio.h>
+
 #include <winapi_wrappers.h>
 
 bool winapi_CreateDirectoryA(const char* dir_name) {
@@ -73,4 +76,8 @@ const char* winapi_err_print(unsigned long err) {
         abort();
     }
     return err_print_buf;
+}
+
+unsigned long long winapi_GetTickCount64(void) {
+    return GetTickCount64();
 }

@@ -25,4 +25,6 @@ unsigned long winapi_GetLastError(void);
 
 const char* winapi_err_print(unsigned long err);
 
+unsigned long long winapi_GetTickCount64(void);
+
 #endif // _WIN32

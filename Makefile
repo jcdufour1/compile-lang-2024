@@ -187,7 +187,7 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
-	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS} -lshlwapi
+	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS} -D _WIN32_WINNT=0x0600 -lshlwapi
 
 ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
