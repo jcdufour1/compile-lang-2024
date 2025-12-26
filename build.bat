@@ -3,7 +3,7 @@ ECHO "building project"
 
 set CC_COMPILER=clang
 
-set BUILD_DIR=build\release\
+set BUILD_DIR=build\release
 
 set AUTOGEN_C_FILES=src\util\params_log_level.c src\util\arena.c src\util\auto_gen\auto_gen.c src\util\newstring.c
 set AUTOGEN_INCLUDE_PATHS=-I third_party\ -I src\util\ -I src\util\auto_gen\
