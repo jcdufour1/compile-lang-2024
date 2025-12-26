@@ -1020,7 +1020,7 @@ void parse_args(int argc, char** argv) {
     }
 
     if (params.compile_own && (params.stop_after == STOP_AFTER_BIN || params.stop_after == STOP_AFTER_RUN)) {
-        darr_append(&a_main, &params.c_input_files, sv("std/util.c"));
+        darr_append(&a_main, &params.c_input_files, sv("std"PATH_SEP"util.c"));
     }
 
     // set default output file path
