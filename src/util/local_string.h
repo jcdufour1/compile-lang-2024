@@ -220,4 +220,6 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...);
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
 
+Strv char_repr(Arena* arena, char ch);
+
 #endif // NEWSTRING_H

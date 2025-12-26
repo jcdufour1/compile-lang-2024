@@ -1,3 +1,4 @@
+// TODO: rename this file to local_string.c
 #include <local_string.h>
 
 #ifdef IN_AUTOGEN
@@ -51,3 +52,32 @@ Strv strv_from_f(Arena* arena, const char* format, ...) {
     return string_to_strv(buf);
 }
 
+#define char_repr_local_thing(arena, ch) \
+    do { \
+        String buf = {0}; \
+        darr_append(arena, &buf, ch); \
+        return string_to_strv(buf); \
+    } while(0);
+
+Strv char_repr(Arena* arena, char ch) {
+    String buf = {0}; \
+
+    if (isalnum(ch)) {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '_') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '/') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '\\') {
+        darr_append(arena, &buf, '\\');
+        darr_append(arena, &buf, '\\');
+        return string_to_strv(buf);
+    }
+    todo();
+}
