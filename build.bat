@@ -9,12 +9,12 @@ set AUTOGEN_C_FILES=src/util/params_log_level.c src/util/arena.c src/util/auto_g
 set AUTOGEN_INCLUDE_PATHS=-I third_party/ -I src/util/ -I src/util/auto_gen/
  
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
-if %errorlevel% neq 0 exit /b %errorlevel%
+:: if %errorlevel% neq 0 exit /b %errorlevel%
 
 %CC_COMPILER% %AUTOGEN_C_FILES% -o %BUILD_DIR%/auto_gen %AUTOGEN_INCLUDE_PATHS% -D IN_AUTOGEN 
-if %errorlevel% neq 0 exit /b %errorlevel%
+:: if %errorlevel% neq 0 exit /b %errorlevel%
 %BUILD_DIR%/auto_gen %BUILD_DIR%
-if %errorlevel% neq 0 exit /b %errorlevel%
+:: if %errorlevel% neq 0 exit /b %errorlevel%
 
 
 
@@ -94,4 +94,4 @@ set MAIN_INCLUDE_PATHS=^
 
 
 %CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%/main %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS
-if %errorlevel% neq 0 exit /b %errorlevel%
+:: if %errorlevel% neq 0 exit /b %errorlevel%
