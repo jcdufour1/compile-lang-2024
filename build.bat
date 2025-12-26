@@ -93,5 +93,5 @@ set MAIN_INCLUDE_PATHS=^
     -I src/ast_utils/
 
 
-%CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -o %BUILD_DIR%/main %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% 
+%CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%/main %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS
 if %errorlevel% neq 0 exit /b %errorlevel%
