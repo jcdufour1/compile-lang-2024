@@ -178,9 +178,11 @@ typedef size_t Scope_id;
 #define SCOPE_NOT SIZE_MAX
 
 #ifdef _WIN32
-#   define PATH_SEP '\\'
+#   define PATH_SEP_CHAR '\\'
+#   define PATH_SEP "\\"
 #else
-#   define PATH_SEP '/'
+#   define PATH_SEP_CHAR '/'
+#   define PATH_SEP "/"
 #endif // _WIN32
 
 #define MOD_PATH_STD (sv("std"PATH_SEP))

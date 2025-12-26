@@ -173,8 +173,8 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         {
             Strv mod_path = name.mod_path;
             Strv dummy = {0};
-            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEP)) {
-                unwrap(strv_try_consume(&mod_path, PATH_SEP));
+            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEP_CHAR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEP_CHAR));
                 path_count++;
             }
         }
@@ -186,8 +186,8 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         {
             Strv mod_path = name.mod_path;
             Strv dir_name = {0};
-            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEP)) {
-                unwrap(strv_try_consume(&mod_path, PATH_SEP));
+            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEP_CHAR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEP_CHAR));
                 serialize_strv(&buf, dir_name);
             }
             serialize_strv(&buf, mod_path);
