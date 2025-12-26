@@ -3,11 +3,9 @@
 #include <strv.h>
 #include <cstr_darr.h>
 #include <subprocess.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <msg.h>
 #include <errno.h>
 #include <local_string.h>
@@ -17,6 +15,8 @@
 #ifdef _WIN32
 #   include <winapi_wrappers.h>
 #else
+#   include <signal.h>
+#   include <unistd.h>
 #   include <sys/wait.h>
 #endif // _WIN32
 
