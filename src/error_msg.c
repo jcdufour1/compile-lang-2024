@@ -41,6 +41,8 @@ static void show_location_error(Pos pos) {
         file_con = *file_con_;
         unwrap(pos.line > 0);
     }
+    log(LOG_DEBUG, FMT"\n", strv_repr(file_con));
+    todo();
 
     if (pos.line > 1) {
         uint32_t line = 1;

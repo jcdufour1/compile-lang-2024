@@ -168,7 +168,8 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd.append(os.path.join(file.path_prefix, file.path_base))
     else:
         raise NotImplementedError
-    compile_cmd.append("-lm")
+    if os.name == "nt":
+        compile_cmd.append("-lm")
     if do_debug:
         compile_cmd.append("--set-log-level")
         compile_cmd.append("INFO")
