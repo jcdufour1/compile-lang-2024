@@ -3342,7 +3342,7 @@ error:
 
 bool try_set_directive_types(Tast_expr** new_call, Uast_directive* directive) {
     if (strv_is_equal(directive->name, sv("file"))) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(directive->pos, directive->value.file_path, false)));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(directive->pos, strv_repr(&a_main, directive->value.file_path), false)));
         return true;
     } else if (strv_is_equal(directive->name, sv("line"))) {
         *new_call = util_tast_literal_new_from_int64_t(directive->value.line, TOKEN_INT_LITERAL, directive->pos);

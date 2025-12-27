@@ -222,4 +222,6 @@ Strv strv_from_f(Arena* arena, const char* format, ...);
 
 Strv char_repr(Arena* arena, char ch);
 
+Strv strv_repr(Arena* arena, Strv strv);
+
 #endif // NEWSTRING_H

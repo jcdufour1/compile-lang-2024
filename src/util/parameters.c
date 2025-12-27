@@ -69,7 +69,6 @@ static TARGET_VENDOR get_default_vendor(void) {
 
 static_assert(array_count(os_table) == 2, "exhausive handling of operating systems");
 static TARGET_OS get_default_os(void) {
-    // TODO: add ifdef for windows
 #   ifdef __linux__
         return OS_LINUX;
 #   elif defined(_WIN32)

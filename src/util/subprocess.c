@@ -80,12 +80,14 @@ static int subprocess_call_posix(Strv_darr cmd) {
 }
 #endif // _WIN32
 
+#ifdef _WIN32
 typedef struct {
     Winapi_handle hProcess;
     Winapi_handle hThread;
     unsigned long dwProcessId;
     unsigned long dwThreadId;
 } Process_information;
+#endif // _WIN32
 
 // below function and struct adapted from part of subprocess_create_ex and from struct subprocess_startup_info_s in:
 //   https://github.com/sheredom/subprocess.h
@@ -220,13 +222,11 @@ static int subprocess_call_win32(Strv_darr cmd) {
         &startup_info,
         &process_info
     )) {
-        todo();
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "could not create subprocess: %s\n", winapi_print_last_error());
         msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
         local_exit(EXIT_CODE_FAIL);
     }
 
-    todo();
     unsigned long status = winapi_WaitForSingleObject(process_info.hProcess, winapi_INFINITE());
     if (status == winapi_WAIT_FAILED()) {
         msg(DIAG_CHILD_PROCESS_FAILURE /* TODO */, POS_BUILTIN, "wait failed: %s\n", winapi_print_last_error());
@@ -252,7 +252,6 @@ static int subprocess_call_win32(Strv_darr cmd) {
         local_exit(EXIT_CODE_FAIL);
     }
 
-    todo();
     return (int)exit_code;
 }
 #endif // _WIN32

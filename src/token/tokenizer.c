@@ -451,6 +451,8 @@ static bool get_next_token(
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;
     }
+
+    // TODO: support for \r\n line ending
 }
 
 static void test(const char* file_text, Tk_view expected) {
