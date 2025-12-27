@@ -93,7 +93,8 @@ set MAIN_INCLUDE_PATHS=^
     -I src\ast_utils\
 
 
-%CC_COMPILER% -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS -D LOG_LEVEL=LOG_VERBOSE
+:: TODO: avoid hardcoding 3 (LOG_LEVEL) if possible
+%CC_COMPILER% -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS -D LOG_LEVEL=3
 :: %CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS
 dir build\release
 if %errorlevel% neq 0 exit \b %errorlevel%
