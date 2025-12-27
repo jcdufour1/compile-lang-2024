@@ -138,10 +138,20 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
 def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
     #print_info(repr(process.stderr))
     result: str = ""
-    result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    try:
+        result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    except Exception as e:
+        print_info(process)
+        print_error(e)
+        sys.exit(1)
     result += str(process.stdout) + "\n"
-    result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
-    result += str(process.stderr) + "\n"
+    try:
+        result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    except Exception as e:
+        print_info(process)
+        print_error(e)
+        sys.exit(1)
+        result += str(process.stderr) + "\n"
     result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
     return result
 
