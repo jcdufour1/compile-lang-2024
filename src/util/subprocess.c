@@ -80,8 +80,6 @@ static int subprocess_call_posix(Strv_darr cmd) {
 }
 #endif // _WIN32
 
-typedef void* Winapi_handle;
-
 typedef struct {
     Winapi_handle hProcess;
     Winapi_handle hThread;
@@ -116,7 +114,7 @@ typedef struct {
   void *hStdError;
 } Subprocess_startup_info_s;
 
-static bool excape_thing(char* commandLine[]) {
+static char* excape_thing(char* commandLine[]) {
     // Combine commandLine together into a single string
     size_t len = 0;
     int i = 0;
@@ -193,27 +191,7 @@ static bool excape_thing(char* commandLine[]) {
 
     commandLineCombined[len] = '\0';
 
-    Subprocess_startup_info_s startup_info = {0};
-    Process_information process_info = {0};
-
-    if (!winapi_CreateProcessA(
-        NULL,
-        commandLineCombined,
-        NULL,
-        NULL,
-        false,
-        0 /* TODO */,
-        NULL,
-        NULL,
-        &startup_info,
-        &process_info
-    )) {
-        unsigned long err = winapi_GetLastError();
-        msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "could not create subprocess: %s\n", winapi_err_print(err));
-        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", commandLineCombined);
-        local_exit(EXIT_CODE_FAIL);
-    }
-    todo();
+    return commandLineCombined;
 }
 #endif // _WIN32
 
@@ -225,9 +203,57 @@ static int subprocess_call_win32(Strv_darr cmd) {
         darr_append(&a_temp, &cstrs, curr);
     }
     darr_append(&a_temp, &cstrs, NULL);
-    if (!excape_thing(cstr_darr_to_c_cstr_darr(&a_temp, cstrs))) {
+    char* cmd_excaped = excape_thing(cstr_darr_to_c_cstr_darr(&a_temp, cstrs));
+
+    Subprocess_startup_info_s startup_info = {0};
+    Process_information process_info = {0};
+
+    if (!winapi_CreateProcessA(
+        NULL,
+        cmd_excaped,
+        NULL,
+        NULL,
+        false,
+        0 /* TODO */,
+        NULL,
+        NULL,
+        &startup_info,
+        &process_info
+    )) {
+        todo();
+        msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "could not create subprocess: %s\n", winapi_print_last_error());
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
     }
+
     todo();
+    unsigned long status = winapi_WaitForSingleObject(process_info.hProcess, winapi_INFINITE());
+    if (status == winapi_WAIT_FAILED()) {
+        msg(DIAG_CHILD_PROCESS_FAILURE /* TODO */, POS_BUILTIN, "wait failed: %s\n", winapi_print_last_error());
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_ABANDONED()) {
+        msg_todo("abandoned process", POS_BUILTIN);
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_TIMEOUT()) {
+        msg_todo("WAIT_TIMEOUT", POS_BUILTIN);
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_OBJECT_0()) {
+    } else {
+        msg(DIAG_CHILD_PROCESS_FAILURE/*TODO*/, POS_BUILTIN, "function WaitForSingleObject from win32 api returned unknown status 0x%08x\n", status);
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
+    }
+
+    unsigned long exit_code = 0;
+    if (!winapi_GetExitCodeProcess(process_info.hProcess, &exit_code)) {
+        msg(DIAG_CHILD_PROCESS_FAILURE /* TODO */, POS_BUILTIN, "GetExitCodeProcess failed: %s\n", winapi_print_last_error());
+        // TODO: refactor below line into a separate function?
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
+    }
+
+    todo();
+    return (int)exit_code;
 }
 #endif // _WIN32
 
