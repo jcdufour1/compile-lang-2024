@@ -149,8 +149,7 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes]
         result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
     except Exception as e:
         print_info(process)
-        print_error(e)
-        sys.exit(1)
+        raise Exception(e)
         result += str(process.stderr) + "\n"
     result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
     return result
