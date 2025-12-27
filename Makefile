@@ -8,6 +8,7 @@ C_WARNINGS = -Werror=incompatible-pointer-types \
 			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
 			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
 
+# TODO: fix MIN_LOG_LEVEL and LOG_LEVEL naming (it seems needlessly complex)
 C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
