@@ -100,6 +100,6 @@ set MAIN_INCLUDE_PATHS=^
 
 dir build\release\
 
-build\release\main tests\inputs\assignment_used_as_expr_sema_errors.own
+build\release\main tests\inputs\assignment_used_as_expr_sema_errors.own -o thing.exe --error no-main-function --print-posix-msg --path-c-compiler clang --run
 
 if %errorlevel% neq 0 exit \b %errorlevel%
