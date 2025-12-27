@@ -1706,7 +1706,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         if (!consume_expect(&path_tk, tokens, "after . in module path", TOKEN_SYMBOL)) {
             return PARSE_ERROR;
         }
-        string_extend_strv(&a_main, &mod_path, char_repr(&a_main, PATH_SEP_CHAR));
+        string_extend_cstr(&a_main, &mod_path, PATH_SEP);
         string_extend_strv(&a_main, &mod_path, path_tk.text);
     }
 

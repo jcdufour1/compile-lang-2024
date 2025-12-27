@@ -211,7 +211,7 @@ static bool excape_thing(char* commandLine[]) {
         unsigned long err = winapi_GetLastError();
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "could not create subprocess: %s\n", winapi_err_print(err));
         msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", commandLineCombined);
-        todo();
+        local_exit(EXIT_CODE_FAIL);
     }
     todo();
 }
