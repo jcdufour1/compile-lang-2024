@@ -306,7 +306,11 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     else:
         raise NotImplementedError
 
+    print_info("process_result before: ", repr(process_result));
+    print_info("expected_output before: ", repr(expected_output));
     if normalize(process_result) != normalize(expected_output):
+        print_info("process_result after: ", repr(process_result));
+        print_info("expected_output after: ", repr(expected_output));
         actual_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")

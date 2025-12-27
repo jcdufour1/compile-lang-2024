@@ -682,6 +682,9 @@ bool tokenize(Tk_view* result, Strv file_path) {
 
     Strv* file_con = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
+    for (size_t idx = 0; idx < file_con->count; idx++) {
+        unwrap(strv_at(*file_con, idx) != '\r');
+    }
     Strv_col curr_file_text = {.base = *file_con};
 
     Pos pos = {.line = 1, .column = 0};
