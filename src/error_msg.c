@@ -41,7 +41,7 @@ static void show_location_error(Pos pos) {
         file_con = *file_con_;
         unwrap(pos.line > 0);
     }
-    log(LOG_NOTE, FMT"\n", strv_repr(&a_leak, file_con));
+    log(LOG_NOTE, FMT"\n", strv_print(strv_repr(&a_leak, file_con)));
     todo();
 
     if (pos.line > 1) {
