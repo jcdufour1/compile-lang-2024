@@ -32,7 +32,7 @@ class FileExample:
 
 @dataclass
 class TestResult:
-    compile: subprocess.CompletedProcess[str]
+    compile: subprocess.CompletedProcess[bytes]
 
 @dataclass
 class Parameters:
@@ -133,7 +133,7 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
         raise NotImplementedError
 
 
-def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
+def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
     print_info(repr(process.stderr))
     result: str = ""
     result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
@@ -198,7 +198,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     print_info(compile_cmd)
-    return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
+    return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
 def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
     if isinstance(file[0], FileNormal):

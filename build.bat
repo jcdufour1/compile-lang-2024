@@ -97,5 +97,9 @@ set MAIN_INCLUDE_PATHS=^
 :: TODO: MIN_LOG_LEVEL should be 3 instead of 4?
 %CC_COMPILER% -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS -D MIN_LOG_LEVEL=4
 :: %CC_COMPILER% -DNDEBUG -O2 -Wno-deprecated-declarations -Wno-macro-redefined -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D _CRT_SECURE_NO_WARNINGS
-dir build\release
+
+dir build\release\
+
+build\release\main tests\inputs\assignment_used_as_expr_sema_errors.own
+
 if %errorlevel% neq 0 exit \b %errorlevel%
