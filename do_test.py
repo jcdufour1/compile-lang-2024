@@ -59,8 +59,10 @@ BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 if os.name == "nt":
     EXE_BASE_NAME = "main.exe"
+    DEFAULT_ENCODING = "windows-1252"
 else:
     EXE_BASE_NAME = "main"
+    DEFAULT_ENCODING = "utf-8"
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
@@ -134,11 +136,11 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
 
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
-    print_info(repr(process.stderr))
+    #print_info(repr(process.stderr))
     result: str = ""
-    result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
+    result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
     result += str(process.stdout) + "\n"
-    result += type_str + "::" + "stderr " + str(str(process.stderr).count("\n")) + "\n"
+    result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
     result += str(process.stderr) + "\n"
     result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
     return result
