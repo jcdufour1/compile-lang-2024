@@ -42,7 +42,6 @@ static void show_location_error(Pos pos) {
         unwrap(pos.line > 0);
     }
     log(LOG_NOTE, FMT"\n", strv_print(strv_repr(&a_leak, file_con)));
-    todo();
 
     if (pos.line > 1) {
         uint32_t line = 1;
