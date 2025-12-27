@@ -59,7 +59,7 @@ BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 if os.name == "nt":
     EXE_BASE_NAME = "main.exe"
-    DEFAULT_ENCODING = "windows-1252"
+    DEFAULT_ENCODING = "utf-8"
 else:
     EXE_BASE_NAME = "main"
     DEFAULT_ENCODING = "utf-8"

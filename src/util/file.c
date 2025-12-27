@@ -18,6 +18,7 @@
 #   include <sys/types.h>
 #endif // _WIN32
 
+// TODO: this compiler's handling of line endings on windows may not be robust enough
 bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
     FILE* file = fopen(strv_dup(&a_main, file_path), "rb");
