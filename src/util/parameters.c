@@ -1059,6 +1059,7 @@ void parse_args(int argc, char** argv) {
             case STOP_AFTER_BIN:
                 fallthrough;
             case STOP_AFTER_RUN:
+                // TODO: make this different on windows
                 params.output_file_path = sv("a.out");
                 break;
             case STOP_AFTER_COUNT:

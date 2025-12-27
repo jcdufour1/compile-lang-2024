@@ -88,6 +88,7 @@ typedef struct {
 } File_type_pair;
 
 static_assert(FILE_TYPE_COUNT == 7, "exhausive handling of file types");
+// TODO: add exe
 File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},

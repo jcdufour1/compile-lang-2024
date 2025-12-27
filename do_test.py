@@ -134,6 +134,7 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
 
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
+    print_info(repr(process.stderr))
     result: str = ""
     result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
     result += str(process.stdout) + "\n"
@@ -173,7 +174,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd.append("INFO")
     if isinstance(file, FileNormal):
         compile_cmd.append("-o")
-        compile_cmd.append(os.path.basename(remove_extension(file.path_base)))
+        compile_cmd.append(os.path.basename(remove_extension(file.path_base)) + (".exe" if os.name == "nt" else ""))
     elif isinstance(file, FileExample):
         compile_cmd.append("-c")
         compile_cmd.append("-o")
