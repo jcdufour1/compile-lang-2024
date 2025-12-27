@@ -67,6 +67,42 @@ Strv char_repr(Arena* arena, char ch) {
         darr_append(arena, &buf, ch);
         return string_to_strv(buf);
     }
+    if (ch == '{') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '}') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '(') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == ')') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '?') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '.') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == ':') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == '=') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
+    if (ch == ' ') {
+        darr_append(arena, &buf, ch);
+        return string_to_strv(buf);
+    }
     if (ch == '\\') {
         // TODO: make string_append function
         darr_append(arena, &buf, '\\');
