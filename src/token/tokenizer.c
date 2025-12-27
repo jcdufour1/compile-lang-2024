@@ -220,6 +220,7 @@ static bool get_next_token(
         token->type = TOKEN_COMMA;
         return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '+')) {
+        // TODO: use msg_todo instad of unwrap
         unwrap((file_text_rem->base.count < 1 || strv_col_front(*file_text_rem) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
@@ -682,9 +683,6 @@ bool tokenize(Tk_view* result, Strv file_path) {
 
     Strv* file_con = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
-    for (size_t idx = 0; idx < file_con->count; idx++) {
-        unwrap(strv_at(*file_con, idx) != '\r');
-    }
     Strv_col curr_file_text = {.base = *file_con};
 
     Pos pos = {.line = 1, .column = 0};
