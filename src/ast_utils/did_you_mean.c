@@ -132,6 +132,8 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
     const Candidate* lhs = lhs_;
     const Candidate* rhs = rhs_;
 
+    log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
+    log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
     if (lhs->difference < rhs->difference) {
         return QSORT_LESS_THAN;
     }
@@ -146,6 +148,7 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
             return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
         }
         if (!strv_is_equal(lhs->name.mod_path, rhs->name.mod_path)) {
+            // TODO: only call strv_replace in ci?
             return strv_cmp(
                 strv_replace(&a_temp, lhs->name.mod_path, sv("\\"), sv("/")),
                 strv_replace(&a_temp, rhs->name.mod_path, sv("\\"), sv("/"))
