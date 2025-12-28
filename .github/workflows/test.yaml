@@ -9,16 +9,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: update package cache
-      - run: sudo apt-get update 
+        run: sudo apt-get update 
 
       - name: install clang, python and mypy
-      - run: sudo apt-get install clang-20 python3 mypy
+        run: sudo apt-get install clang-20 python3 mypy
 
       - name: check do_test.py (mypy)
-      - run: mypy do_test.py
+        run: mypy do_test.py
 
       - name: building project and running tests
-      - run: python3 do_test.py --test --path-c-compiler=clang-20 --makefile-cc-compiler=clang-20 --makefile-werror-all=1
+        run: python3 do_test.py --test --path-c-compiler=clang-20 --makefile-cc-compiler=clang-20 --makefile-werror-all=1
 
   Windows-Clang:
     runs-on: windows-latest
