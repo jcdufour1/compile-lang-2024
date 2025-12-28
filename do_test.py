@@ -296,6 +296,7 @@ def normalize(string: str) -> str:
         return string2
     # TODO: this could cause forward slashes in source code (not error messages) to be changed to backslashes.
     #   find better solution for normalizing paths (eg. normalize all paths in compiler itself instead of here)
+    assert(False)
     return string2.replace("\\", "/")
 
 # return true if test was successful
