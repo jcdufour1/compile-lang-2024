@@ -62,7 +62,7 @@ if os.name == "nt":
     DEFAULT_ENCODING = "latin-1" # TODO
 else:
     EXE_BASE_NAME = "main"
-    DEFAULT_ENCODING = "latin-1" # TODO
+    DEFAULT_ENCODING = "windows-1252" # TODO
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
@@ -138,24 +138,15 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
 def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
     #print_info(repr(process.stderr))
     result: str = ""
-    try:
-        # TODO: use explicit decode instead of str?
-        #result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
-        #result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
-        result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
-        result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
-    except Exception as e:
-        print_info(process)
-        print_error(e)
-    try:
-        result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
-        result += process.stderr.decode(DEFAULT_ENCODING) + "\n"
-        result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
-    except Exception as e:
-        print_info("thing thing 674:")
-        print_error(e)
-        # TODO
-        result += str(process.stderr) + "\n"
+
+    result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
+
+    result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    result += process.stderr.decode(DEFAULT_ENCODING) + "\n"
+
+    result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
+
     return result
 
 def get_result_from_test_result(process: TestResult) -> str:
@@ -212,7 +203,6 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
 
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
-    print_info(compile_cmd)
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
 def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
@@ -260,7 +250,6 @@ def do_tests(do_debug: bool, params: Parameters):
     if os.name == "nt":
         print_info("compiling " + debug_release_text + " :")
         rtn_code = subprocess.run(["cmd", "/c", "build.bat"]).returncode
-        print_info("thing thing")
     else:
         cmd = ["make", "-j", str(params.count_threads), "build"]
         print_info("compiling " + debug_release_text + " :")
@@ -321,11 +310,7 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     else:
         raise NotImplementedError
 
-    print_info("process_result before: ", repr(process_result));
-    print_info("expected_output before: ", repr(expected_output));
     if normalize(process_result) != normalize(expected_output):
-        print_info("process_result after: ", repr(process_result));
-        print_info("expected_output after: ", repr(expected_output));
         actual_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
