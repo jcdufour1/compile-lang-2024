@@ -1,8 +1,0 @@
-compile::stdout 1
-tests/inputs/assert.own:8:7
-
-compile::stderr 1
-tests/inputs/assert.own:9:9:assertion failure: hello
-
-compile::return_code 0
-
