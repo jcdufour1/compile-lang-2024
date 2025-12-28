@@ -4,15 +4,12 @@ WERROR_ALL ?= 0
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
 # TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
-
-LIBS ?= -lshlwapi
-
 C_WARNINGS = -Werror=incompatible-pointer-types \
 			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
-			 -Wno-format -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
+			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address
 
 C_FLAGS_COMMON = ${C_WARNINGS} \
-			     -std=c11 -g \
+			     -std=c11 -pedantic -g \
 			         -I ./third_party/ \
                      -I ${BUILD_DIR} \
 			       	 -I src/ \
@@ -25,16 +22,13 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			       	 -I src/ir \
 			       	 -I src/ast_utils/ \
 			     -fno-strict-aliasing \
-			     -D MIN_LOG_LEVEL=${LOG_LEVEL} -D __USE_MINGW_ANSI_STDIO=1
-				 
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 # TODO: change gnu11 to c11
-# TODO: make common flags for sanitizers (so that autogen can have better sanitizers)
-# TODO: make C_FLAGS_COMMON_2?
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
-			     -std=c11 -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
-			     -D MIN_LOG_LEVEL=${LOG_LEVEL} -D __USE_MINGW_ANSI_STDIO=1
-			     #-fsanitize=address -fno-omit-frame-pointer
+			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
+			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
+			     -fsanitize=address -fno-omit-frame-pointer
 
 BUILD_DIR_DEBUG ?= ./build/debug/
 BUILD_DIR_RELEASE ?= ./build/release/
@@ -47,15 +41,13 @@ ifndef CC_COMPILER
 	endif
 endif
 
-CC_COMPILER_AUTOGEN ?= CC_COMPILER
-
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
     #C_FLAGS += -fsanitize=address -fno-sanitize-recover=address -fno-omit-frame-pointer
-#    C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
-#			   -fsanitize=address -fno-sanitize-recover=address \
-#			   -fno-omit-frame-pointer
+    C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
+			   -fsanitize=address -fno-sanitize-recover=address \
+			   -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
@@ -96,7 +88,6 @@ OBJS=\
 	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/util/cfg.o \
 	 ${BUILD_DIR}/util/newstring.o \
-	 ${BUILD_DIR}/util/winapi_wrappers.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type/lang_type_from_ulang_type.o \
@@ -180,14 +171,14 @@ test_quick: run
 # auto_gen and util
 # TODO: reduce duplication in Makefile?
 ${BUILD_DIR}/auto_gen: src/util/auto_gen/auto_gen.c ${DEP_UTIL}
-	${CC_COMPILER_AUTOGEN} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
+	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
 
 ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
-	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS} -D _WIN32_WINNT=0x0600 -lshlwapi
+	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS}
 
 ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
@@ -353,9 +344,6 @@ ${BUILD_DIR}/util/cfg.o: ${DEP_COMMON} src/util/cfg.c
 
 ${BUILD_DIR}/util/newstring.o: ${DEP_COMMON} src/util/newstring.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/newstring.o src/util/newstring.c
-
-${BUILD_DIR}/util/winapi_wrappers.o: ${DEP_COMMON} src/util/winapi_wrappers.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/winapi_wrappers.o src/util/winapi_wrappers.c
 
 # TODO: implement make clean
 # make clean:
