@@ -171,6 +171,7 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
     }
     log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
     log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
+    log(LOG_NOTE, "%d\n", lhs_is_local);
     return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
 }
 
