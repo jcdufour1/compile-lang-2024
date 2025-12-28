@@ -139,20 +139,23 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes]
     #print_info(repr(process.stderr))
     result: str = ""
     try:
-        result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+        # TODO: use explicit decode instead of str?
+        #result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+        #result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
+        result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
+        result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
     except Exception as e:
         print_info(process)
         print_error(e)
         sys.exit(1)
-    result += str(process.stdout) + "\n"
     try:
-        result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+        result += type_str + "::" + "stderr " + str(str(process.stderr).count("\n")) + "\n"
+        result += type_str + "::" + "return_code " + str(process.stderr) + "\n\n"
     except Exception as e:
         print_info("thing thing 674:")
-        print_info(process)
-        raise Exception(e)
+        print_error(e)
+        # TODO
         result += str(process.stderr) + "\n"
-    result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
     return result
 
 def get_result_from_test_result(process: TestResult) -> str:
