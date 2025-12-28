@@ -158,6 +158,8 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
+    print_info(os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME))
+    print_info(compile_cmd)
 
     if output_name == "test.c":
         compile_cmd.append("--backend")
