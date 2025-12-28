@@ -138,6 +138,7 @@ for generics:
     ||     19 |     buf := util.alloc(<u8>)()
     ||        |                ^
     ||     20 | 
+- add windows instructions to quickstart
 
 
 
@@ -210,7 +211,6 @@ continue(<thing>)
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 - use generics to associate custom allocators with things?
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
-- windows support (including ci)
 - support alternative backend
 - make single colon and double colon separate token types
 

@@ -146,7 +146,10 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
             return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
         }
         if (!strv_is_equal(lhs->name.mod_path, rhs->name.mod_path)) {
-            return strv_cmp(lhs->name.mod_path, rhs->name.mod_path) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+            return strv_cmp(
+                strv_replace(&a_temp, lhs->name.mod_path, sv("\\"), sv("/")),
+                strv_replace(&a_temp, rhs->name.mod_path, sv("\\"), sv("/"))
+            ) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
         }
         return candidate_compare_gen_args(lhs->name.gen_args, rhs->name.gen_args);
     }

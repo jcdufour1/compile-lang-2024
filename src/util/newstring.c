@@ -126,3 +126,20 @@ Strv strv_repr(Arena* arena, Strv strv) {
     }
     return string_to_strv(buf);
 }
+
+Strv strv_replace(Arena* arena, Strv strv, Strv find, Strv replace_with) {
+    String buf = {0};
+    size_t idx = 0;
+    while (idx < strv.count) {
+        Strv potential_find = strv_slice(strv, idx, strv.count - idx);
+        if (strv_starts_with(potential_find, find)) {
+            string_extend_strv(arena, &buf, replace_with);
+            idx += find.count;
+        } else {
+            darr_append(arena, &buf, strv_at(strv, idx));
+            idx++;
+        }
+    }
+
+    return string_to_strv(buf);
+}

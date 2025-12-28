@@ -1,8 +1,7 @@
 compile::stdout 0
 
-compile::stderr 2
+compile::stderr 1
 [1;31mfatal error[0;39m:child process for the compiled program returned exit code 15
-[1;34mnote[0;39m:child process run with command `./return_code_15`
 
 compile::return_code 15
 

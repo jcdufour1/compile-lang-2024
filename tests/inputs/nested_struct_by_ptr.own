@@ -11,7 +11,7 @@ main :: fn() i32 {
     token1 Token := {.id = 7, .inner = unsafe_cast<Token*>0}
     token2 Token := {.id = 8, .inner = &token1}
 
-    io.printf("token1: .id = %d, .inner = ")
+    io.printf("token1: .id = %d, .inner = ", token1.id)
     token_ptr_print(token1.inner)
     io.printf("\n")
 
@@ -24,7 +24,8 @@ token_ptr_print :: fn(pointer Token*) {
     buf := util.alloc(<u8>)(100000)
 
     if (pointer == util.null(<Token>)()) {
-        io.printf("<nil>")
+        io.printf("(nil)")
+        return
     }
     io.printf("%p", unsafe_cast<opaque*>pointer)
 }

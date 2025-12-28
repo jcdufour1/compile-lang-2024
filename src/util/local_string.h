@@ -220,8 +220,13 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...);
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
 
+// TODO: move to str_and_num_utils?
 Strv char_repr(Arena* arena, char ch);
 
+// TODO: move to str_and_num_utils?
 Strv strv_repr(Arena* arena, Strv strv);
+
+// TODO: move to str_and_num_utils?
+Strv strv_replace(Arena* arena, Strv strv, Strv find, Strv replace_with);
 
 #endif // NEWSTRING_H

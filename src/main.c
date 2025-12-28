@@ -210,6 +210,11 @@ int main(int argc, char** argv) {
     assert(!strv_contains(&dummy, sv("th"), sv("ih")));
     assert(!strv_contains(&dummy, sv("ih"), sv("eh")));
 
+    assert(strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main"), sv("z"), sv("a"))));
+    assert(!strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main8"), sv("z"), sv("a"))));
+    assert(strv_is_equal(sv("m8n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8"))));
+    assert(strv_is_equal(sv("m8_n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8_"))));
+
     parse_args(argc, argv);
     do_passes();
 }
