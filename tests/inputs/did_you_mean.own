@@ -17,10 +17,6 @@ Un_definedType3 :: struct {
     num i32
 }
 
-Un_definedType33 :: struct {
-    num i32
-}
-
 UndefinedType4 :: struct {
     num i32
 }
@@ -35,12 +31,12 @@ print :: fn() {
 
 main :: fn() i32 {
     num1 UndefinedType11 :
-    //num2 UndefinedType22 :
-    //num3 UndefinedType33 :
-    //num4 UndefinedType44 :
+    num2 UndefinedType22 :
+    num3 UndefinedType33 :
+    num4 UndefinedType44 :
 
-    //print_to()
-    //dummy.print_num(8)
+    print_to()
+    dummy.print_num(8)
 
     return 0
 }
