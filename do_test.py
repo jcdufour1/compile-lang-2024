@@ -290,7 +290,13 @@ def do_tests(do_debug: bool, params: Parameters):
 
 
 def normalize(string: str) -> str:
-    return string.replace("\r", "")
+    string2: str = string.replace("\r", "")
+
+    if os.name != "nt":
+        return string2
+    # TODO: this could cause forward slashes in source code (not error messages) to be changed to backslashes.
+    #   find better solution for normalizing paths (eg. normalize all paths in compiler itself instead of here)
+    return string2.replace("\\", "/")
 
 # return true if test was successful
 def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
