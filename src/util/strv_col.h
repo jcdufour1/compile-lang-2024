@@ -8,6 +8,7 @@
 #include "util.h"
 #include "strv.h"
 #include "strv_struct.h"
+#include <globals.h>
 
 typedef struct {
     Strv base;
