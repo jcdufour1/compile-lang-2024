@@ -248,7 +248,8 @@ def do_tests(do_debug: bool, params: Parameters):
     rtn_code: int
     if os.name == "nt":
         print_info("compiling " + debug_release_text + " :")
-        rtn_code = subprocess.run(["cmd", "/c", "build.bat"]).returncode
+        map_thing: Dict[str, str] = {"SHOULD_PRINT_POSIX_MSG": "1"}
+        rtn_code = subprocess.run(["cmd", "/c", "build.bat"], env=dict(os.environ | map_thing)).returncode
     else:
         cmd = ["make", "-j", str(params.count_threads), "build"]
         print_info("compiling " + debug_release_text + " :")
