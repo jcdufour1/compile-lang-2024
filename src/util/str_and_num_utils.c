@@ -211,14 +211,31 @@ error:
     return status;
 }
 
+static size_t try_strv_to_char_strv_count(Strv strv) {
+#   ifndef _WIN32
+        return strv.count;
+#   endif // _WIN32
+
+    if (!params.print_posix_msg) {
+        return strv.count;
+    }
+
+    size_t actual_count = 0;
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        if (strv_at(strv, idx) != '\r') {
+            actual_count++;
+        }
+    }
+    return actual_count;
+}
+
 bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
     if (!strv_try_consume(&strv, '\\')) {
         if (strv.count != 1) {
-            strv.count = 0; // TODO: remove this statement when possible (this statement is temporary hack for windows ci)
             msg(
                 DIAG_INVALID_CHAR_LIT, pos,
                 "expected exactly one character in char literal without excapes, but got "SIZE_T_FMT"\n",
-                strv.count
+                try_strv_to_char_strv_count(strv)
             );
             return false;
         }
@@ -253,11 +270,10 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             fallthrough;
         case '0':
             if (strv.count != 0) {
-                strv.count = 0; // TODO: remove this statement when possible (this statement is temporary hack for windows ci)
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
                     "expected 0 characters in char literal after `\\%c`, but got "SIZE_T_FMT"\n",
-                    esc_char, strv.count
+                    esc_char, try_strv_to_char_strv_count(strv)
                 );
                 return false;
             }
@@ -269,7 +285,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
                     "expected exactly 2 characters in char literal after `\\x` excape, but got "SIZE_T_FMT"\n",
-                    strv.count + 1
+                    try_strv_to_char_strv_count(strv) + 1
                 );
                 return false;
             }
@@ -277,11 +293,10 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         case 'o':
             // octal
             if (strv.count != 3) {
-                strv.count = 0; // TODO: remove this statement when possible (this statement is temporary hack for windows ci)
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
                     "expected exactly 3 characters in char literal after `\\o` excape, but got "SIZE_T_FMT"\n",
-                    strv.count + 1
+                    try_strv_to_char_strv_count(strv) + 1
                 );
                 return false;
             }

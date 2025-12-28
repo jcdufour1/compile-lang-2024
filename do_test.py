@@ -59,7 +59,7 @@ BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 if os.name == "nt":
     EXE_BASE_NAME = "main.exe"
-    DEFAULT_ENCODING = "latin-1" # TODO
+    DEFAULT_ENCODING = "utf-8" # TODO
 else:
     EXE_BASE_NAME = "main"
     DEFAULT_ENCODING = "windows-1252" # TODO
@@ -136,7 +136,6 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
 
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
-    #print_info(repr(process.stderr))
     result: str = ""
 
     result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
@@ -158,8 +157,6 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
-    print_info(os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME))
-    print_info(compile_cmd)
 
     if output_name == "test.c":
         compile_cmd.append("--backend")
@@ -205,7 +202,6 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
 
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
-    print_info(compile_cmd)
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
 def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:

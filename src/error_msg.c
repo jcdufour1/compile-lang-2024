@@ -41,7 +41,6 @@ static void show_location_error(Pos pos) {
         file_con = *file_con_;
         unwrap(pos.line > 0);
     }
-    //log(LOG_NOTE, FMT"\n", strv_print(strv_repr(&a_leak, file_con)));
 
     if (pos.line > 1) {
         uint32_t line = 1;
@@ -238,8 +237,7 @@ void msg_internal(
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed += max(buf_cap_needed, second_count);
+                buf_cap_needed += max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             } else {
                 buf_cap_needed = max(buf_cap_needed, (size_t)snprintf(
                     NULL,
@@ -250,8 +248,7 @@ void msg_internal(
                     pos.column,
                     get_log_level_str(log_level)
                 ));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed = max(buf_cap_needed, second_count);
+                buf_cap_needed = max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             }
         }
         buf_cap_needed += 1;
@@ -273,7 +270,15 @@ void msg_internal(
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         } else {
-            snprintf(temp_buf.buf, temp_buf.info.count, FMT":%d:%d:%s:", strv_print(mod_path_param_normalize(&a_leak, pos.file_path)), pos.line, pos.column, get_log_level_str(log_level));
+            snprintf(
+                temp_buf.buf,
+                temp_buf.info.count,
+                FMT":%d:%d:%s:",
+                strv_print(mod_path_param_normalize(&a_leak, pos.file_path)),
+                pos.line,
+                pos.column,
+                get_log_level_str(log_level)
+            );
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
             
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);

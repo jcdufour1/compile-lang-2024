@@ -128,20 +128,15 @@ static int candidate_compare_gen_args(Ulang_type_darr lhs_gen_args, Ulang_type_d
     return QSORT_EQUAL; // TODO
 }
 
+// TODO: this function may give slightly different results on windows
 static int candidate_compare(const void* lhs_, const void* rhs_) {
     const Candidate* lhs = lhs_;
     const Candidate* rhs = rhs_;
 
-    //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-    //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
     if (lhs->difference < rhs->difference) {
-        //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-        //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
         return QSORT_LESS_THAN;
     }
     if (lhs->difference > rhs->difference) {
-        //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-        //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
         return QSORT_MORE_THAN;
     }
 
@@ -149,29 +144,13 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
     bool rhs_is_local = strv_is_equal(rhs->name.mod_path, sym_mod_path);
     if (lhs_is_local == rhs_is_local) {
         if (!strv_is_equal(lhs->name.base, rhs->name.base)) {
-            //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-            //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
-            //log(LOG_NOTE, "%d\n", strv_cmp(lhs->name.base, rhs->name.base) < 0);
             return strv_cmp(lhs->name.base, rhs->name.base) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
         }
         if (!strv_is_equal(lhs->name.mod_path, rhs->name.mod_path)) {
-            // TODO: only call strv_replace in ci?
-            //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-            //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
-            //log(LOG_NOTE, "%d\n", strv_cmp(
-                //strv_replace(&a_temp, lhs->name.mod_path, sv("\\"), sv("/")),
-                //strv_replace(&a_temp, rhs->name.mod_path, sv("\\"), sv("/"))
-            //));
-            return strv_cmp(
-                strv_replace(&a_temp, lhs->name.mod_path, sv("\\"), sv("/")),
-                strv_replace(&a_temp, rhs->name.mod_path, sv("\\"), sv("/"))
-            ) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+            return strv_cmp(lhs->name.mod_path, rhs->name.mod_path) < 0 ? QSORT_LESS_THAN : QSORT_MORE_THAN;
         }
-        todo();
+        return candidate_compare_gen_args(lhs->name.gen_args, rhs->name.gen_args);
     }
-    //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, lhs->name));
-    //log(LOG_NOTE, FMT"\n", name_print(NAME_LOG, rhs->name));
-    //log(LOG_NOTE, "%d\n", lhs_is_local);
     return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
 }
 

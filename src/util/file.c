@@ -88,7 +88,7 @@ typedef struct {
     FILE_TYPE type;
 } File_type_pair;
 
-static_assert(FILE_TYPE_COUNT == 7, "exhausive handling of file types");
+static_assert(FILE_TYPE_COUNT == 8, "exhausive handling of file types");
 // TODO: add exe
 File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
@@ -98,6 +98,7 @@ File_type_pair file_type_pairs[] = {
     {"o", FILE_TYPE_OBJECT},
     {"s", FILE_TYPE_LOWER_S},
     {"S", FILE_TYPE_UPPER_S},
+    {"exe", FILE_TYPE_PE_EXE},
 };
 
 bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path) {

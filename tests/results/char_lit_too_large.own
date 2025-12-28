@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/char_lit_too_large.own:4:14:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 0
+tests/inputs/char_lit_too_large.own:4:14:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
      3 | main :: fn() i32 {
      4 |     ch u8 := '8j'
        |              ^

@@ -469,7 +469,7 @@ static void parse_file_option(int* argc, char*** argv) {
         PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
-    static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
+    static_assert(FILE_TYPE_COUNT == 8, "exhaustive handling of file types");
 
     FILE_TYPE file_type = 0;
     Strv err_text = {0};
@@ -478,6 +478,9 @@ static void parse_file_option(int* argc, char*** argv) {
         local_exit(EXIT_CODE_FAIL);
     }
     switch (file_type) {
+        case FILE_TYPE_PE_EXE:
+            msg_todo("executable file passed on the command line", curr_opt.pos);
+            local_exit(EXIT_CODE_FAIL);
         case FILE_TYPE_OWN:
             if (is_compiling()) {
                 msg_todo("multiple .own files specified on the command line", curr_opt.pos);
@@ -1059,8 +1062,11 @@ void parse_args(int argc, char** argv) {
             case STOP_AFTER_BIN:
                 fallthrough;
             case STOP_AFTER_RUN:
-                // TODO: make this different on windows
-                params.output_file_path = sv("a.out");
+#               ifdef _WIN32
+                    params.output_file_path = sv("a.exe");
+#               else
+                    params.output_file_path = sv("a.out");
+#               endif // _WIN32
                 break;
             case STOP_AFTER_COUNT:
                 unreachable("");
