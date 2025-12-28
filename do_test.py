@@ -59,10 +59,10 @@ BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 if os.name == "nt":
     EXE_BASE_NAME = "main.exe"
-    DEFAULT_ENCODING = "utf-8"
+    DEFAULT_ENCODING = "latin-1" # TODO
 else:
     EXE_BASE_NAME = "main"
-    DEFAULT_ENCODING = "utf-8"
+    DEFAULT_ENCODING = "latin-1" # TODO
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
@@ -142,15 +142,16 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes]
         # TODO: use explicit decode instead of str?
         #result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
         #result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
-        result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
+        result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
         result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
     except Exception as e:
         print_info(process)
         print_error(e)
         sys.exit(1)
     try:
-        result += type_str + "::" + "stderr " + str(str(process.stderr).count("\n")) + "\n"
-        result += type_str + "::" + "return_code " + str(process.stderr) + "\n\n"
+        result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+        result += process.stderr.decode(DEFAULT_ENCODING) + "\n"
+        result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
     except Exception as e:
         print_info("thing thing 674:")
         print_error(e)
