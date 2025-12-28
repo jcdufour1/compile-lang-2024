@@ -89,11 +89,10 @@ typedef struct {
 } Process_information;
 #endif // _WIN32
 
-// below function and struct adapted from part of subprocess_create_ex and from struct subprocess_startup_info_s in:
+// below struct adapted from struct subprocess_startup_info_s in:
 //   https://github.com/sheredom/subprocess.h
 //   original license: unlicence
 //
-
 #ifdef _WIN32
 typedef struct {
   unsigned long cb;
@@ -116,7 +115,11 @@ typedef struct {
   void *hStdError;
 } Subprocess_startup_info_s;
 
-static char* excape_thing(char* commandLine[]) {
+// below function adapted from part of subprocess_create_ex in:
+//   https://github.com/sheredom/subprocess.h
+//   original license: unlicence
+//
+static char* get_cmd_excaped_win32(char* commandLine[]) {
     // Combine commandLine together into a single string
     size_t len = 0;
     int i = 0;
@@ -205,7 +208,7 @@ static int subprocess_call_win32(Strv_darr cmd) {
         darr_append(&a_temp, &cstrs, curr);
     }
     darr_append(&a_temp, &cstrs, NULL);
-    char* cmd_excaped = excape_thing(cstr_darr_to_c_cstr_darr(&a_temp, cstrs));
+    char* cmd_excaped = get_cmd_excaped_win32(cstr_darr_to_c_cstr_darr(&a_temp, cstrs));
 
     Subprocess_startup_info_s startup_info = {0};
     Process_information process_info = {0};
@@ -216,7 +219,7 @@ static int subprocess_call_win32(Strv_darr cmd) {
         NULL,
         NULL,
         false,
-        0 /* TODO */,
+        0,
         NULL,
         NULL,
         &startup_info,
