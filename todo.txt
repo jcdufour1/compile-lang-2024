@@ -139,6 +139,7 @@ for generics:
     ||        |                ^
     ||     20 | 
 - add windows instructions to quickstart
+- fix warnings in windows ci
 
 
 

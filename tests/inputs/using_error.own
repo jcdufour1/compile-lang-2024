@@ -2,7 +2,7 @@
 io :: import = std.io
 using io
 
-// TODO: uncomment below
+// TODO: uncomment below (but use dummy std instead of actual std to allow for better control over the output)
 // TODO: below gives different error on windows then on linux
 // TODO: on linux, below gives two errors. It should likely only give one.
 //Str :: def Local_str
