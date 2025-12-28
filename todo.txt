@@ -131,6 +131,7 @@ for generics:
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
 - figure out why color does not work in wine
+- in python script, use threading, etc. to reduce race conditions
 
 
 
