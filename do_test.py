@@ -299,7 +299,6 @@ def normalize(string: str) -> str:
         return string2
     # TODO: this could cause forward slashes in source code (not error messages) to be changed to backslashes.
     #   find better solution for normalizing paths (eg. normalize all paths in compiler itself instead of here)
-    assert(False)
     return string2.replace("\\", "/")
 
 # return true if test was successful
@@ -320,7 +319,9 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     else:
         raise NotImplementedError
 
-    if normalize(process_result) != normalize(expected_output):
+    process_result = normalize(process_result)
+    expected_output = normalize(expected_output)
+    if process_result != expected_output:
         actual_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
