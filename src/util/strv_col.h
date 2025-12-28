@@ -27,7 +27,7 @@ static inline void strv_col_advance_pos(Pos* pos, char ch) {
     if (ch == '\n') {
         pos->line++;
         pos->column = 0;
-    } else if (ch != '\r' || print_posix_msg) {
+    } else if (ch != '\r' || !print_posix_msg) {
         pos->column++;
     }
 }
