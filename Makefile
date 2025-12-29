@@ -104,6 +104,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/lang_type/
 	mkdir -p ${BUILD_DIR}/ir/
 	mkdir -p ${BUILD_DIR}/ast_utils/
+	mkdir -p ${BUILD_DIR}/unity_build/
 
 # TODO: always run setup before ${BUILD_DIR}/main
 build: setup ${BUILD_DIR}/main
@@ -126,25 +127,25 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 #${BUILD_DIR}/main: ${DEP_COMMON}
 	#${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main src/unity_build_almost_everything.c src/util/subprocess.c
 
-${BUILD_DIR}/main: ${DEP_COMMON} ${BUILD_DIR}/unity_build_token_and_parser.o ${BUILD_DIR}/unity_build_ir_and_codegen.o ${BUILD_DIR}/unity_build_miscellaneous.o ${BUILD_DIR}/unity_build_sema.o
+${BUILD_DIR}/main: ${DEP_COMMON} ${BUILD_DIR}/unity_build/unity_build_token_and_parser.o ${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o ${BUILD_DIR}/unity_build/unity_build_miscellaneous.o ${BUILD_DIR}/unity_build/unity_build_sema.o
 	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main \
-		${BUILD_DIR}/unity_build_token_and_parser.o \
-		${BUILD_DIR}/unity_build_ir_and_codegen.o \
-		${BUILD_DIR}/unity_build_miscellaneous.o \
-		${BUILD_DIR}/unity_build_sema.o \
+		${BUILD_DIR}/unity_build/unity_build_token_and_parser.o \
+		${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o \
+		${BUILD_DIR}/unity_build/unity_build_miscellaneous.o \
+		${BUILD_DIR}/unity_build/unity_build_sema.o \
 		src/util/subprocess.c
 
-${BUILD_DIR}/unity_build_token_and_parser.o: ${DEP_COMMON} src/unity_build_token_and_parser.c
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build_token_and_parser.o src/unity_build_token_and_parser.c
+${BUILD_DIR}/unity_build/unity_build_token_and_parser.o: ${DEP_COMMON}
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build/unity_build_token_and_parser.o src/unity_build/unity_build_token_and_parser.c
 
-${BUILD_DIR}/unity_build_ir_and_codegen.o: ${DEP_COMMON} src/unity_build_ir_and_codegen.c
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build_ir_and_codegen.o src/unity_build_ir_and_codegen.c
+${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o: ${DEP_COMMON}
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o src/unity_build/unity_build_ir_and_codegen.c
 
-${BUILD_DIR}/unity_build_miscellaneous.o: ${DEP_COMMON} src/unity_build_miscellaneous.c
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build_miscellaneous.o src/unity_build_miscellaneous.c
+${BUILD_DIR}/unity_build/unity_build_miscellaneous.o: ${DEP_COMMON}
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build/unity_build_miscellaneous.o src/unity_build/unity_build_miscellaneous.c
 
-${BUILD_DIR}/unity_build_sema.o: ${DEP_COMMON} src/unity_build_sema.c
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build_sema.o src/unity_build_sema.c
+${BUILD_DIR}/unity_build/unity_build_sema.o: ${DEP_COMMON}
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/unity_build/unity_build_sema.o src/unity_build/unity_build_sema.c
 
 # TODO: implement make clean
 # make clean:
