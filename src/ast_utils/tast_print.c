@@ -7,7 +7,7 @@
 
 #include <symbol_table.h>
 
-static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
+static void tast_extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
     string_extend_size_t(&a_temp, buf, scope_id);
     string_extend_cstr(&a_temp, buf, "\n");
@@ -296,7 +296,7 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     string_extend_cstr_indent(&a_temp, &buf, "lang_type: ", indent + INDENT_WIDTH);
     string_extend_strv(&a_temp, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, block->lang_type));
 
-    extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
+    tast_extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
     string_extend_cstr(&a_temp, &buf, "\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "parent_block_scope: ", indent + INDENT_WIDTH);
