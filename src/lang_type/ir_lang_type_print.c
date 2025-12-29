@@ -4,6 +4,21 @@
 #include <resolve_generics.h>
 #include <ast_msg.h>
 
+// TODO: merge this shared with lang_type_mode_to_name_mode
+static NAME_MODE ir_lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
+    switch (mode) {
+        case LANG_TYPE_MODE_LOG:
+            return NAME_LOG;
+        case LANG_TYPE_MODE_MSG:
+            return NAME_MSG;
+        case LANG_TYPE_MODE_EMIT_LLVM:
+            return NAME_EMIT_C;
+        case LANG_TYPE_MODE_EMIT_C:
+            return NAME_EMIT_IR;
+    }
+    unreachable("");
+}
+
 void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     switch (type) {
         case IR_LANG_TYPE_PRIMITIVE:
@@ -117,7 +132,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 goto end;
             }
-            extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
                 darr_append(&a_temp, string, '*');
             }
@@ -130,7 +145,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 break;
             }
 
-            extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             goto end;
         }
         case IR_LANG_TYPE_PRIMITIVE: {
@@ -143,7 +158,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
             }
             assert(name.base.count >= 1);
-            extend_ir_name(lang_type_mode_to_name_mode(mode), string, name);
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
                 darr_append(&a_temp, string, '*');
             }
