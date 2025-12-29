@@ -246,14 +246,15 @@ def do_tests(do_debug: bool, params: Parameters):
         debug_env = "0"
 
     rtn_code: int
+    map_thing: Dict[str, str]
     if os.name == "nt":
         print_info("compiling " + debug_release_text + " :")
-        map_thing: Dict[str, str] = {"SHOULD_PRINT_POSIX_MSG": "1"}
+        map_thing = {"SHOULD_PRINT_POSIX_MSG": "1"}
         rtn_code = subprocess.run(["cmd", "/c", "build.bat"], env=dict(os.environ | map_thing)).returncode
     else:
         cmd = ["make", "-j", str(params.count_threads), "build"]
         print_info("compiling " + debug_release_text + " :")
-        map_thing: Dict[str, str] = {"DEBUG": debug_env}
+        map_thing = {"DEBUG": debug_env}
         if params.makefile_cc_compiler:
             map_thing["CC_COMPILER"] = params.makefile_cc_compiler
         if params.makefile_werror_all:
