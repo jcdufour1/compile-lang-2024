@@ -556,7 +556,7 @@ Strv print_enum_def_member_internal(Lang_type enum_def_lang_type, size_t memb_id
         &buf,
         FMT"."FMT,
         strv_print(lang_type_print_internal(LANG_TYPE_MODE_MSG, enum_def_lang_type)),
-        strv_print(name_print_internal(NAME_MSG, false, darr_at(enum_def.members, memb_idx)->name))
+        strv_print(name_print_internal(NAME_MSG, false, darr_at(enum_def.members, memb_idx)->name, true))
     );
 
     return string_to_strv(buf);

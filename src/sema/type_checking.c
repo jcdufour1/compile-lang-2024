@@ -151,14 +151,14 @@ static void msg_invalid_function_arg_internal(
             "argument is of type `"FMT"`, "
             "but the corresponding parameter `"FMT"` is of type `"FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-            name_print(NAME_MSG, corres_param->name),
+            name_print(NAME_MSG, corres_param->name, true),
             lang_type_print(LANG_TYPE_MODE_MSG, param_lang_type)
         );
         msg_internal(
             file, line,
             DIAG_NOTE, corres_param->pos,
             "corresponding parameter `"FMT"` defined here\n",
-            name_print(NAME_MSG, corres_param->name)
+            name_print(NAME_MSG, corres_param->name, true)
         );
     }
 }
@@ -189,7 +189,7 @@ static void msg_invalid_count_function_args_internal(
 
     msg_internal(
         file, line, DIAG_NOTE, fun_decl_pos,
-        "function `"FMT"` defined here\n", name_print(NAME_MSG, fun_decl_name)
+        "function `"FMT"` defined here\n", name_print(NAME_MSG, fun_decl_name, false)
     );
 }
 
@@ -406,7 +406,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         sym_untyped->pos,
                         "function symbol `"FMT"` has "SIZE_T_FMT" function parameters, but "
                         "the corresponding variable definition has "SIZE_T_FMT" function parameters\n",
-                        name_print(NAME_MSG, sym_untyped->name),
+                        name_print(NAME_MSG, sym_untyped->name, false),
                         fun_def->decl->params->params.info.count,
                         fn.params.ulang_types.info.count
                     );
@@ -419,7 +419,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         DIAG_NOTE,
                         fun_def->pos,
                         "function symbol `"FMT"` defined here\n",
-                        name_print(NAME_MSG, fun_def->decl->name)
+                        name_print(NAME_MSG, fun_def->decl->name, false)
                     );
                     return false;
                 }
@@ -461,13 +461,13 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         msg(
                             DIAG_FUNCTION_PARAM_NOT_SPECIFIED, sym_untyped->pos,
                             "argument to generic function parameter `"FMT"` was not specified\n",
-                            name_print(NAME_MSG, gen_param->name)
+                            name_print(NAME_MSG, gen_param->name, true)
                         );
                         msg(
                             DIAG_NOTE,
                             gen_param->pos,
                             "generic function parameter `"FMT"` defined here\n", 
-                            name_print(NAME_MSG, gen_param->name)
+                            name_print(NAME_MSG, gen_param->name, true)
                         );
                         return false;
                     }
@@ -2471,19 +2471,19 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                             DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                             uast_expr_get_pos(darr_at(fun_call->args, actual_arg_count)),
                             "function parameter `"FMT"` has been assigned to more than once\n", 
-                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
                         );
                         msg(
                             DIAG_NOTE,
                             uast_expr_get_pos(darr_at(fun_call->args, curr_arg_count)),
                             "original assignment to parameter `"FMT"` here\n",
-                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
                         );
                         msg(
                             DIAG_NOTE,
                             fun_decl->pos,
                             "function `"FMT"` defined here\n", 
-                            name_print(NAME_MSG, fun_name)
+                            name_print(NAME_MSG, fun_name, false)
                         );
                         status = false;
                         goto error;
@@ -2497,13 +2497,14 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                     DIAG_INVALID_MEMBER_ACCESS,
                     lhs->pos,
                     "`"FMT"` is not a parameter of function `"FMT"`\n", 
-                    strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
+                    strv_print(lhs->member_name->name.base),
+                    name_print(NAME_MSG, fun_name, false)
                 );
                 msg(
                     DIAG_NOTE,
                     fun_decl->pos,
                     "function `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, fun_name)
+                    name_print(NAME_MSG, fun_name, false)
                 );
                 status = false;
                 goto error;
@@ -2555,13 +2556,13 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 DIAG_INVALID_MEMBER_ACCESS,
                 tast_expr_get_pos(darr_at(new_args, curr_arg_count)),
                 "function parameter `"FMT"` has been assigned to more than once\n", 
-                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
             );
             msg(
                 DIAG_NOTE,
                 fun_decl->pos,
                 "function `"FMT"` defined here\n", 
-                name_print(NAME_MSG, fun_name)
+                name_print(NAME_MSG, fun_name, false)
             );
             status = false;
             goto error;
@@ -2644,13 +2645,13 @@ bool try_set_function_call_types_old(Tast_expr** new_call, Uast_function_call* f
                 msg(
                     DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
                     "argument to function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, param_name)
+                    name_print(NAME_MSG, param_name, true)
                 );
                 msg(
                     DIAG_NOTE,
                     darr_at(params->params, idx)->pos,
                     "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name)
+                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name, true)
                 );
             }
             status = false;
@@ -2921,19 +2922,19 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                             DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                             uast_expr_get_pos(darr_at(fun_call->args, actual_arg_count)),
                             "function parameter `"FMT"` has been assigned to more than once\n", 
-                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
                         );
                         msg(
                             DIAG_NOTE,
                             uast_expr_get_pos(darr_at(fun_call->args, curr_arg_count)),
                             "original assignment to parameter `"FMT"` here\n",
-                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                            name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
                         );
                         msg(
                             DIAG_NOTE,
                             fun_decl_temp->pos,
                             "function `"FMT"` defined here\n", 
-                            name_print(NAME_MSG, fun_name)
+                            name_print(NAME_MSG, fun_name, false)
                         );
                         status = false;
                         goto error;
@@ -2947,13 +2948,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     DIAG_INVALID_MEMBER_ACCESS /* TODO */,
                     lhs->pos,
                     "`"FMT"` is not a parameter of function `"FMT"`\n", 
-                    strv_print(lhs->member_name->name.base), name_print(NAME_MSG, fun_name)
+                    strv_print(lhs->member_name->name.base),
+                    name_print(NAME_MSG, fun_name, false)
                 );
                 msg(
                     DIAG_NOTE,
                     fun_decl_temp->pos,
                     "function `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, fun_name)
+                    name_print(NAME_MSG, fun_name, false)
                 );
                 status = false;
                 goto error;
@@ -2973,14 +2975,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 DIAG_INVALID_MEMBER_ACCESS,
                 uast_expr_get_pos(darr_at(fun_call->args, curr_arg_count)),
                 "function parameter `"FMT"` has been assigned to more than once\n", 
-                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, false)
             );
             // TODO: print pos of original assignment here?
             msg(
                 DIAG_NOTE,
                 fun_decl_temp->pos,
                 "function `"FMT"` defined here\n", 
-                name_print(NAME_MSG, fun_name)
+                name_print(NAME_MSG, fun_name, false)
             );
             status = false;
             goto error;
@@ -3020,13 +3022,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 msg(
                     DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
                     "argument to function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name)
+                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name, true)
                 );
                 msg(
                     DIAG_NOTE,
                     darr_at(params->params, idx)->pos,
                     "function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name)
+                    name_print(NAME_MSG, darr_at(params->params, idx)->base->name, true)
                 );
                 status = false;
             }
@@ -3090,13 +3092,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 msg(
                     DIAG_FUNCTION_PARAM_NOT_SPECIFIED, fun_call->pos,
                     "argument to generic function parameter `"FMT"` was not specified\n",
-                    name_print(NAME_MSG, param_name)
+                    name_print(NAME_MSG, param_name, true)
                 );
                 msg(
                     DIAG_NOTE,
                     darr_at(gen_params, gen_idx)->pos,
                     "generic function parameter `"FMT"` defined here\n", 
-                    name_print(NAME_MSG, darr_at(gen_params, gen_idx)->name)
+                    name_print(NAME_MSG, darr_at(gen_params, gen_idx)->name, true)
                 );
             }
             status = false;
@@ -3188,7 +3190,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     name_found = true;
 
                     if (darr_at(new_args_set, curr_arg_count)) {
-                        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name));
+                        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lhs->member_name->name, false));
                         unreachable("this should have been caught in the earlier check");
                     }
 
@@ -3243,13 +3245,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 DIAG_INVALID_MEMBER_ACCESS,
                 tast_expr_get_pos(darr_at(new_args, curr_arg_count)),
                 "function parameter `"FMT"` has been assigned to more than once\n", 
-                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name)
+                name_print(NAME_MSG, darr_at(params->params, curr_arg_count)->base->name, true)
             );
             msg(
                 DIAG_NOTE,
                 fun_decl->pos,
                 "function `"FMT"` defined here\n", 
-                name_print(NAME_MSG, fun_name)
+                name_print(NAME_MSG, fun_name, false)
             );
             status = false;
             goto error;
@@ -3412,14 +3414,14 @@ static void msg_invalid_member_internal_2_not_base(
         DIAG_INVALID_MEMBER_ACCESS,
         access->pos,
         "`"FMT"` is not a member of `"FMT"`\n", 
-        strv_print(sym_name), name_print(NAME_MSG, base_name)
+        strv_print(sym_name), name_print(NAME_MSG, base_name, false)
     );
     msg_internal(
         file, line,
         DIAG_NOTE,
         uast_def_get_pos(def),
         "`"FMT"` defined here\n",
-        name_print(NAME_MSG, uast_def_get_name(def))
+        name_print(NAME_MSG, uast_def_get_name(def), false)
     );
 }
 

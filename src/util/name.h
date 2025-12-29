@@ -82,7 +82,7 @@ Strv serialize_name(Name name);
 
 Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name);
 
-Strv name_print_internal(NAME_MODE mode, bool serialize, Name name);
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, bool base_only);
 
 Strv uname_print_internal(UNAME_MODE mode, Uname name);
 
@@ -100,7 +100,7 @@ Name name_clone(Name name, bool use_new_scope, Scope_id new_scope);
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id scope_id);
 
-#define name_print(mode, name) strv_print(name_print_internal(mode, false, name))
+#define name_print(mode, name, base_only) strv_print(name_print_internal(mode, false, name, base_only))
 
 #define ir_name_print(mode, name) strv_print(ir_name_print_internal(mode, false, name))
 

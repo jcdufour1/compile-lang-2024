@@ -236,7 +236,12 @@ Strv serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
-Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, bool base_only) {
+    if (base_only) {
+        assert(!serialize && "not implemented");
+        return name.base;
+    }
+
     if (serialize) {
         return serialize_name(name);
     }

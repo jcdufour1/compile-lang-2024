@@ -21,7 +21,7 @@ main :: fn() i32 {
 }
 
 token_ptr_print :: fn(pointer Token*) {
-    buf := util.alloc(<u8>)(100000)
+    buf := util.alloc(<u8>)()
 
     if (pointer == util.null(<Token>)()) {
         io.printf("(nil)")

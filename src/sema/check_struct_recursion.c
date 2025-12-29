@@ -19,8 +19,8 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 DIAG_STRUCT_LIKE_RECURSION, lang_type.pos,
                 "`"FMT"` recursively includes itself without indirection; consider "
                 "storing `"FMT"` by pointer here instead of by value\n",
-                name_print(NAME_MSG, uast_def_get_name(def)),
-                name_print(NAME_MSG, uast_def_get_name(def))
+                name_print(NAME_MSG, uast_def_get_name(def), false),
+                name_print(NAME_MSG, uast_def_get_name(def), false)
             );
             Uast_def* prev = def;
             for (size_t idx_stk = idx + 1; idx_stk < rec_stack.info.count; idx_stk++) {
@@ -29,8 +29,8 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 msg(
                     DIAG_NOTE, uast_def_get_pos(prev),
                     "`"FMT"` contains `"FMT"`\n",
-                    name_print(NAME_MSG, uast_def_get_name(prev)),
-                    name_print(NAME_MSG, uast_def_get_name(curr))
+                    name_print(NAME_MSG, uast_def_get_name(prev), false),
+                    name_print(NAME_MSG, uast_def_get_name(curr), false)
                 );
 
                 prev = curr;
@@ -38,8 +38,8 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
             msg(
                 DIAG_NOTE, uast_def_get_pos(prev),
                 "`"FMT"` contains `"FMT"`\n",
-                name_print(NAME_MSG, uast_def_get_name(prev)),
-                name_print(NAME_MSG, uast_def_get_name(def))
+                name_print(NAME_MSG, uast_def_get_name(prev), false),
+                name_print(NAME_MSG, uast_def_get_name(def), false)
             );
             return false;
         }
