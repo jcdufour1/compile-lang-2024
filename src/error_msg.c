@@ -6,6 +6,23 @@
 #include <pos_util.h>
 #include <file.h>
 
+static Strv mod_path_param_normalize(Arena* arena, Strv mod_path) {
+#   ifndef _WIN32
+        return mod_path;
+#   endif // __WIN32
+
+    if (!params.print_posix_msg) {
+        return mod_path;
+    }
+
+    String new_path = {0};
+    for (size_t idx = 0; idx < mod_path.count; idx++) {
+        char curr_ch = strv_at(mod_path, idx);
+        darr_append(arena, &new_path, curr_ch == '\\' ? '/' : curr_ch);
+    }
+    return string_to_strv(new_path);
+}
+
 static void show_location_error(Pos pos) {
     Strv file_con = {0};
     if (strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
@@ -220,20 +237,18 @@ void msg_internal(
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed += max(buf_cap_needed, second_count);
+                buf_cap_needed += max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             } else {
                 buf_cap_needed = max(buf_cap_needed, (size_t)snprintf(
                     NULL,
                     0,
                     FMT":%d:%d:%s:",
-                    strv_print(pos.file_path),
+                    strv_print(mod_path_param_normalize(&a_leak, pos.file_path)),
                     pos.line,
                     pos.column,
                     get_log_level_str(log_level)
                 ));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed = max(buf_cap_needed, second_count);
+                buf_cap_needed = max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             }
         }
         buf_cap_needed += 1;
@@ -255,7 +270,15 @@ void msg_internal(
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         } else {
-            snprintf(temp_buf.buf, temp_buf.info.count, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            snprintf(
+                temp_buf.buf,
+                temp_buf.info.count,
+                FMT":%d:%d:%s:",
+                strv_print(mod_path_param_normalize(&a_leak, pos.file_path)),
+                pos.line,
+                pos.column,
+                get_log_level_str(log_level)
+            );
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
             
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);

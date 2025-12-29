@@ -87,7 +87,7 @@ static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_
                 log(log_level, "TOKENS expected:\n");
                 log_tokens(log_level, b);
                 log(
-                    log_level, "idx %zu: "FMT" is not equal to "FMT"\n",
+                    log_level, "idx "SIZE_T_FMT": "FMT" is not equal to "FMT"\n",
                     idx, token_print(TOKEN_MODE_LOG, tk_view_at(a, idx)), token_print(TOKEN_MODE_LOG, tk_view_at(b, idx))
                 );
             }

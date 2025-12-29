@@ -164,15 +164,15 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
 #   ifndef NDEBUG
         log(LOG_DEBUG, FMT"\n", loc_print(loc));
-        log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
-        log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", cfg_node_idx);
-        log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
+        log(LOG_DEBUG, ""SIZE_T_FMT"\n", cfg_node_areas.info.count);
+        log(LOG_DEBUG, "curr_cfg_node_area idx: "SIZE_T_FMT"\n", cfg_node_idx);
+        log(LOG_DEBUG, "name.scope_id: "SIZE_T_FMT"\n", name.scope_id);
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
         darr_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
-            log(LOG_DEBUG, "frame %zu:\n", cfg_node_idx);
+            log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", cfg_node_idx);
             String buf = {0};
             string_extend_strv(&a_temp, &buf, cfg_node_print_internal(darr_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
@@ -193,7 +193,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
 
     // TODO: make function to log entire cfg_node_areas
     darr_foreach(idx, Init_table, frame, cfg_node_areas) {
-        log(LOG_DEBUG, "frame %zu:\n", idx);
+        log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
         init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame, INDENT_WIDTH);
         //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
             //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
@@ -389,7 +389,7 @@ static void check_unit_block(const Ir_block* block) {
 
     // TODO: make function to log entire cfg_node_areas
     //darr_foreach(idx, Frame, frame, cfg_node_areas) {
-    //    log(LOG_DEBUG, "frame %zu:\n", idx);
+    //    log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
     //    init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
     //    log(LOG_DEBUG, "\n");
     //    //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/

@@ -130,6 +130,16 @@ for generics:
 - todo should call local_exit?
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
+- figure out why color does not work in wine
+- in python script, use threading, etc. to reduce race conditions
+- avoid printing util mod alias of function parameter below:
+    tests/inputs/nested_struct_by_ptr.own|19 col 16| [1;31merror[0;39m:argument to function parameter `util.count_items` was not specified
+    ||     18 | token_ptr_print :: fn(pointer Token*) u8* {
+    ||     19 |     buf := util.alloc(<u8>)()
+    ||        |                ^
+    ||     20 | 
+- add windows instructions to quickstart
+- fix warnings in windows ci
 
 
 
@@ -202,7 +212,6 @@ continue(<thing>)
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 - use generics to associate custom allocators with things?
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
-- windows support (including ci)
 - support alternative backend
 - make single colon and double colon separate token types
 

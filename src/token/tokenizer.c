@@ -220,6 +220,7 @@ static bool get_next_token(
         token->type = TOKEN_COMMA;
         return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '+')) {
+        // TODO: use msg_todo instad of unwrap
         unwrap((file_text_rem->base.count < 1 || strv_col_front(*file_text_rem) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
@@ -451,6 +452,8 @@ static bool get_next_token(
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;
     }
+
+    // TODO: support for \r\n line ending
 }
 
 static void test(const char* file_text, Tk_view expected) {

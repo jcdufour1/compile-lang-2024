@@ -6,7 +6,7 @@ coll :: import = std.collections
 Optional :: def rt.Optional
 Result :: def rt.Result
 
-usize :: def rt.usize
+//usize :: def rt.usize
 //ptr :: def opaque*
 
 // overlapping regions are allowed

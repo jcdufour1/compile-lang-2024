@@ -582,7 +582,7 @@ static void gen_symbol_table_log(Uast_type uast) {
     gen_gen("    size_t idx = 0;\n");
     gen_gen("    while (true) {\n");
     gen_gen("        "FMT"_table curr = darr_at(env.symbol_tables, curr_scope)."FMT"_table;\n", strv_first_upper_print(&a_gen, sym_text), strv_print(sym_text));
-    gen_gen("        log_internal(log_level, file, line, 0, \"level: %%zu\\n\", idx);\n");
+    gen_gen("        log_internal(log_level, file, line, 0, \"level: \"SIZE_T_FMT\"\\n\", idx);\n");
     gen_gen("        "FMT"_level_log_internal(dest, log_level, file, line, curr, indent + INDENT_WIDTH);\n", strv_print(sym_text));
     gen_gen("        if (curr_scope == 0) {\n");
     gen_gen("            break;\n");

@@ -50,6 +50,7 @@ static struct {
     const char* abi_cstr;
 } abi_table[] = {
     {.abi = ABI_GNU, .abi_cstr = "gnu"},
+    {.abi = ABI_MSVC, .abi_cstr = "msvc"},
 };
 
 static_assert(array_count(arch_table) == 1, "exhausive handling of architectures");
@@ -68,19 +69,24 @@ static TARGET_VENDOR get_default_vendor(void) {
 
 static_assert(array_count(os_table) == 2, "exhausive handling of operating systems");
 static TARGET_OS get_default_os(void) {
-    // TODO: add ifdef for windows
 #   ifdef __linux__
         return OS_LINUX;
+#   elif defined(_WIN32)
+        return OS_WINDOWS;
 #   else
         // TODO: return OS_UNKNOWN?
 #       error "unsupported operating system"
 #   endif
 }
 
-static_assert(array_count(abi_table) == 1, "exhausive handling of abis");
+static_assert(array_count(abi_table) == 2, "exhausive handling of abis");
 static TARGET_ABI get_default_abi(void) {
 #   ifdef __GLIBC__
         return ABI_GNU;
+#   elif defined(__MINGW32__) || defined(__MINGW64__)
+        return ABI_GNU;
+#   elif defined(_MSC_VER)
+        return ABI_MSVC;
 #   else
         // TODO: return ABI_UNKNOWN?
 #       error "unsupported abi"
@@ -460,10 +466,10 @@ static void parse_file_option(int* argc, char*** argv) {
     assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
-    static_assert(FILE_TYPE_COUNT == 7, "exhaustive handling of file types");
+    static_assert(FILE_TYPE_COUNT == 8, "exhaustive handling of file types");
 
     FILE_TYPE file_type = 0;
     Strv err_text = {0};
@@ -472,6 +478,9 @@ static void parse_file_option(int* argc, char*** argv) {
         local_exit(EXIT_CODE_FAIL);
     }
     switch (file_type) {
+        case FILE_TYPE_PE_EXE:
+            msg_todo("executable file passed on the command line", curr_opt.pos);
+            local_exit(EXIT_CODE_FAIL);
         case FILE_TYPE_OWN:
             if (is_compiling()) {
                 msg_todo("multiple .own files specified on the command line", curr_opt.pos);
@@ -583,6 +592,12 @@ static void long_option_dump_backend_ir(Pos pos_self, Arg curr_opt) {
     params.stop_after = STOP_AFTER_BACKEND_IR;
 }
 
+static void long_option_print_posix_msg(Pos pos_self, Arg curr_opt) {
+    (void) pos_self;
+    (void) curr_opt;
+    params.print_posix_msg = true;
+}
+
 static void long_option_dump_ir(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
     (void) curr_opt;
@@ -610,7 +625,7 @@ static void long_option_dump_dot(Pos pos_self, Arg curr_opt) {
 
 static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
@@ -712,7 +727,7 @@ static void long_option_target_triplet(Pos pos_self, Arg curr_opt) {
             msg(
                 DIAG_CMD_OPT_INVALID_SYNTAX,
                 curr_opt.pos,
-                "target triplet has only %zu substrings, but 4 was expected\n",
+                "target triplet has only "SIZE_T_FMT" substrings, but 4 was expected\n",
                 count_substrings
             );
             local_exit(EXIT_CODE_FAIL);
@@ -809,7 +824,7 @@ static void long_option_dummy(Pos pos_self, Arg curr_opt) {
 
 static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types in params below");
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
     const char* text;
@@ -874,6 +889,12 @@ Long_option_pair long_options[] = {
         .action = long_option_max_errors,
         .arg_type = ARG_SINGLE
     },
+    {
+        .text = "print-posix-msg",
+        .description = "print path with posix line separator in diagnositics (intended for windows ci)",
+        .action = long_option_print_posix_msg,
+        .arg_type = ARG_NONE
+    },
 
     {.text = "run", .description = "n/a", .action = long_option_dummy, .arg_type = ARG_REMAINING_RUN_ONLY},
 };
@@ -924,7 +945,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(int argc, char** argv) {
@@ -976,7 +997,7 @@ void parse_args(int argc, char** argv) {
                 Strv first_str = sv(array_at(long_options, first).text);
                 Strv last_str = sv(array_at(long_options, last).text);
                 if (strv_starts_with(first_str, last_str) || strv_starts_with(last_str, first_str)) {
-                    log(LOG_FATAL, "options with indices %zu and %zu have overlapping names\n", first, last);
+                    log(LOG_FATAL, "options with indices "SIZE_T_FMT" and "SIZE_T_FMT" have overlapping names\n", first, last);
                     local_exit(EXIT_CODE_FAIL);
                 }
             }
@@ -996,7 +1017,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (
@@ -1013,7 +1034,7 @@ void parse_args(int argc, char** argv) {
     }
 
     if (params.compile_own && (params.stop_after == STOP_AFTER_BIN || params.stop_after == STOP_AFTER_RUN)) {
-        darr_append(&a_main, &params.c_input_files, sv("std/util.c"));
+        darr_append(&a_main, &params.c_input_files, sv("std"PATH_SEP"util.c"));
     }
 
     // set default output file path
@@ -1041,7 +1062,11 @@ void parse_args(int argc, char** argv) {
             case STOP_AFTER_BIN:
                 fallthrough;
             case STOP_AFTER_RUN:
-                params.output_file_path = sv("a.out");
+#               ifdef _WIN32
+                    params.output_file_path = sv("a.exe");
+#               else
+                    params.output_file_path = sv("a.out");
+#               endif // _WIN32
                 break;
             case STOP_AFTER_COUNT:
                 unreachable("");

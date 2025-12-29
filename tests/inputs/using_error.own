@@ -2,7 +2,10 @@
 io :: import = std.io
 using io
 
-Str :: def Local_str
+// TODO: uncomment below (but use dummy std instead of actual std to allow for better control over the output)
+// TODO: below gives different error on windows then on linux
+// TODO: on linux, below gives two errors. It should likely only give one.
+//Str :: def Local_str
 
 Local_str :: struct {
     buf u8*

@@ -18,10 +18,16 @@ static inline Strv_col strv_col_slice(Strv_col strv, size_t start, size_t count)
 }
 
 static inline void strv_col_advance_pos(Pos* pos, char ch) {
+#   ifdef PRINT_POSIX_MSG
+    bool print_posix_msg = true;
+#   else
+    bool print_posix_msg = false;
+#   endif // PRINT_POSIX_MSG
+          
     if (ch == '\n') {
         pos->line++;
         pos->column = 0;
-    } else {
+    } else if (ch != '\r' || !print_posix_msg) {
         pos->column++;
     }
 }

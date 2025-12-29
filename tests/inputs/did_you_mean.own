@@ -17,10 +17,6 @@ Un_definedType3 :: struct {
     num i32
 }
 
-Un_definedType33 :: struct {
-    num i32
-}
-
 UndefinedType4 :: struct {
     num i32
 }

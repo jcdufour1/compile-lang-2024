@@ -125,7 +125,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -170,7 +170,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -187,7 +187,9 @@ NEVER_RETURN void do_passes(void) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            if (!params.print_posix_msg) {
+                msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            }
             // exit with the child process return status
             local_exit(status);
         }
@@ -207,6 +209,11 @@ int main(int argc, char** argv) {
     assert(!strv_contains(&dummy, sv("th"), sv("thi")));
     assert(!strv_contains(&dummy, sv("th"), sv("ih")));
     assert(!strv_contains(&dummy, sv("ih"), sv("eh")));
+
+    assert(strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main"), sv("z"), sv("a"))));
+    assert(!strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main8"), sv("z"), sv("a"))));
+    assert(strv_is_equal(sv("m8n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8"))));
+    assert(strv_is_equal(sv("m8_n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8_"))));
 
     parse_args(argc, argv);
     do_passes();

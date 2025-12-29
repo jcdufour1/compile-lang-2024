@@ -128,6 +128,7 @@ static int candidate_compare_gen_args(Ulang_type_darr lhs_gen_args, Ulang_type_d
     return QSORT_EQUAL; // TODO
 }
 
+// TODO: this function may give slightly different results on windows
 static int candidate_compare(const void* lhs_, const void* rhs_) {
     const Candidate* lhs = lhs_;
     const Candidate* rhs = rhs_;

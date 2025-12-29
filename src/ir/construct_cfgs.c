@@ -140,7 +140,7 @@ static void construct_cfg_block(Ir_block* block) {
                                        // true means is dominator, false means not
                                        //   (eg. if cfg_dominators[1][0] is false, 
                                        //   then node 0 is not a dominator of node 1)
-    //log(LOG_VERBOSE, "count cfg nodes: %zu\n", block->cfg.info.count);
+    //log(LOG_VERBOSE, "count cfg nodes: "SIZE_T_FMT"\n", block->cfg.info.count);
 
     //if 1 dominates 2, then every path from start to 2 must go through 1
     {

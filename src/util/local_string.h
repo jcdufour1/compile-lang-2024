@@ -38,7 +38,7 @@ static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t
 
 static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
     char num_str[32] = {0};
-    sprintf(num_str, "%zu", num);
+    sprintf(num_str, ""SIZE_T_FMT"", num);
     string_extend_cstr(arena, str, num_str);
 }
 
@@ -219,5 +219,14 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...);
 
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
+
+// TODO: move to str_and_num_utils?
+Strv char_repr(Arena* arena, char ch);
+
+// TODO: move to str_and_num_utils?
+Strv strv_repr(Arena* arena, Strv strv);
+
+// TODO: move to str_and_num_utils?
+Strv strv_replace(Arena* arena, Strv strv, Strv find, Strv replace_with);
 
 #endif // NEWSTRING_H
