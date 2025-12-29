@@ -4,7 +4,7 @@
 #include <resolve_generics.h>
 #include <ast_msg.h>
 
-// TODO: merge this shared with lang_type_mode_to_name_mode
+// TODO: this and lang_type_mode_to_name_mode do the same thing and one should be removed while the other should be extern function?
 static NAME_MODE ir_lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
     switch (mode) {
         case LANG_TYPE_MODE_LOG:

@@ -4083,10 +4083,9 @@ bool try_set_function_decl_types(
 ) {
     Tast_function_params* new_params = NULL;
     if (!try_set_function_params_types(&new_params, decl->params, add_to_sym_tbl)) {
-        //Uast_poison_def* poison = uast_poison_def_new(decl->pos, decl->name);
-        todo();
-        //usymbol_update(uast_poison_def_wrap(poison));
-        //return false;
+        Uast_poison_def* poison = uast_poison_def_new(decl->pos, decl->name);
+        usymbol_update(uast_poison_def_wrap(poison));
+        return false;
     }
 
     Lang_type fun_rtn_type = {0}; 
