@@ -138,7 +138,6 @@ for generics:
     ||     19 |     buf := util.alloc(<u8>)()
     ||        |                ^
     ||     20 | 
-- add windows instructions to quickstart
 - fix warnings in windows ci
 
 
