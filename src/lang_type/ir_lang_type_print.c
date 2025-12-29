@@ -59,21 +59,6 @@ Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type)
     return string_to_strv(buf);
 }
 
-// TODO: make this an extern function?
-static NAME_MODE lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
-    switch (mode) {
-        case LANG_TYPE_MODE_LOG:
-            return NAME_LOG;
-        case LANG_TYPE_MODE_MSG:
-            return NAME_MSG;
-        case LANG_TYPE_MODE_EMIT_LLVM:
-            return NAME_EMIT_C;
-        case LANG_TYPE_MODE_EMIT_C:
-            return NAME_EMIT_IR;
-    }
-    unreachable("");
-}
-
 // TODO: add arena argument?
 void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
