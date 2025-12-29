@@ -62,7 +62,7 @@ main :: fn() i32 {
 ### [Reverse Polish Notation Calculator](examples/calculator.own)
 #### start the calculator
 ```sh
-./build/release/main examples/calculator.own -O2 -lm --run
+$ ./build/release/main examples/calculator.own -O2 -lm --run
 ```
 #### calculate sqrt(9)*45
 ```sh
@@ -75,7 +75,7 @@ main :: fn() i32 {
 - This example uses raylib. Raylib is not vendored, so it will need to be installed separately and linked manually.
 - Example command line to run snake game:
 ```sh
-./build/release/main examples/snake_game.own -O2 /usr/local/raylib-5.5_linux_amd64/lib/libraylib.a -lm --run
+$ ./build/release/main examples/snake_game.own -O2 /usr/local/raylib-5.5_linux_amd64/lib/libraylib.a -lm --run
 ```
 
 ## Quickstart
@@ -103,7 +103,7 @@ $ DEBUG=1 CC_COMPILER=clang make build
 ```
 3. build and run an example program
 ```sh
-./build/release/main examples/readme_1.own --run
+$ ./build/release/main examples/readme_1.own --run
 ```
 
 
