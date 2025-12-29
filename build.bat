@@ -27,10 +27,10 @@ if %errorlevel% neq 0 exit \b %errorlevel%
 set LIBS=-lshlwapi
 
 set MAIN_C_FILES=^
-    src\unity_build_ir_and_codegen.c ^
-    src\unity_build_miscellaneous.c ^
-    src\unity_build_sema.c ^
-    src\unity_build_token_and_parser.c ^
+    src\unity_build\unity_build_ir_and_codegen.c ^
+    src\unity_build\unity_build_miscellaneous.c ^
+    src\unity_build\unity_build_sema.c ^
+    src\unity_build\unity_build_token_and_parser.c ^
     src\util\subprocess.c ^
     src\util\winapi_wrappers.c
 
