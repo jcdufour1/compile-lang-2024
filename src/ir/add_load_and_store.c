@@ -94,6 +94,8 @@ static Ir_name struct_rtn_name_parent_function;
 
 static Name name_parent_fn;
 
+static bool curr_block_has_defer = false;
+
 #define if_for_add_cond_goto(old_oper, new_block, label_name_if_true, label_name_if_false) \
     if_for_add_cond_goto_internal(loc_new(), old_oper, new_block, label_name_if_true, label_name_if_false)
 
@@ -175,8 +177,12 @@ static void load_block_stmts(
     DEFER_PARENT_OF parent_of,
     Pos pos,
     Lang_type lang_type,
-    bool is_top_level // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
+    bool is_top_level, // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
+    bool block_has_defer
 ) {
+    bool old_curr_block_has_defer = curr_block_has_defer;
+    curr_block_has_defer = block_has_defer;
+
     Tast_def* dummy = NULL;
     unwrap(!symbol_lookup(&dummy, *yield_dest_name));
 
@@ -406,7 +412,7 @@ static void load_block_stmts(
             for (size_t idx = 0; idx < children.info.count; idx++) {
                 load_stmt(new_block, darr_at(children, idx), false);
             }
-            return;
+            goto end;
         }
         case DEFER_PARENT_OF_NONE:
             msg_todo("", lang_type_get_pos(lang_type));
@@ -470,7 +476,7 @@ static void load_block_stmts(
             msg_todo("", lang_type_get_pos(lang_type));
             break;
         default:
-            todo();
+            unreachable("");
     }
     unwrap(!symbol_lookup(&dummy, break_expr->name));
 
@@ -531,6 +537,9 @@ static void load_block_stmts(
     darr_pop(&defered_collections.coll_stack);
 
     unwrap(defered_collections.coll_stack.info.count == old_colls_count);
+
+end:
+    curr_block_has_defer = old_curr_block_has_defer;
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
@@ -2067,7 +2076,8 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
         old_fun_def->decl->return_type,
-        false
+        false,
+        old_fun_def->body->has_defer
     );
 
     unwrap(ir_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
@@ -2492,7 +2502,8 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         DEFER_PARENT_OF_FOR,
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos, 0)),
-        false
+        false,
+        old_for->body->has_defer
     );
     add_label(new_block, after_inner_block, pos);
 
@@ -3083,7 +3094,8 @@ static Ir_block* load_block(
         parent_of,
         old_block->pos,
         lang_type,
-        is_top_level
+        is_top_level,
+        old_block->has_defer
     );
 
     if (defered_collections.coll_stack.info.count > 0) {
