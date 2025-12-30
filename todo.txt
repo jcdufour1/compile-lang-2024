@@ -107,8 +107,6 @@ for generics:
 - check that there are not duplicate main functions (make expected failure test)
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
-- figure out why this does not work:
-    fn do_nothing(pretend_fn fn()) {
 - allow struct literal designated args to be in any order
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
