@@ -272,7 +272,7 @@ def do_tests(do_debug: bool, params: Parameters):
     for file in get_files_to_test(params.files_to_test):
         regular_files.append((file, do_debug, debug_release_text, params))
 
-    with ProcessPoolExecutor(max_workers = 1) as executor:
+    with ProcessPoolExecutor(max_workers = params.count_threads) as executor:
         futures = executor.map(do_regular_test, regular_files)
         for future in futures:
             if future:
