@@ -157,7 +157,7 @@ static void load_label(Ir_block* new_block, Tast_label* old_label);
 
 static Ir_name load_return(Ir_block* new_block, Tast_return* old_return);
 
-static void load_break(Ir_block* new_block, Tast_actual_break* old_break);
+static void load_break(Ir_block* new_block, bool old_brk_do_brk_expr, Tast_expr* old_brk_expr, Pos old_brk_pos);
 
 static Ir_name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign);
 
@@ -2526,23 +2526,23 @@ static void load_for_with_cond(Ir_block* new_block, Tast_for_with_cond* old_for)
     darr_extend(&a_main, &new_block->children, &new_for->children);
 }
 
-static void load_break(Ir_block* new_block, Tast_actual_break* old_break) {
-    if (label_if_break.base.count < 1) {
+static void load_break(Ir_block* new_block, bool old_brk_do_brk_expr, Tast_expr* old_brk_expr, Pos old_brk_pos) {
+    if (curr_block_has_defer && label_if_break.base.count < 1) {
         return;
     }
 
-    if (old_break->do_break_expr) {
+    if (old_brk_do_brk_expr) {
         load_assignment(new_block, tast_assignment_new(
-            old_break->pos,
-            tast_symbol_wrap(tast_symbol_new(old_break->pos, ((Sym_typed_base) {
-                .lang_type = tast_expr_get_lang_type(old_break->break_expr),
+            old_brk_pos,
+            tast_symbol_wrap(tast_symbol_new(old_brk_pos, ((Sym_typed_base) {
+                .lang_type = tast_expr_get_lang_type(old_brk_expr),
                 .name = ir_name_to_name(load_break_symbol_name)
             }))),
-            old_break->break_expr
+            old_brk_expr
         ));
     }
 
-    unwrap(label_if_break.base.count > 0);
+    unwrap(!curr_block_has_defer || label_if_break.base.count > 0);
 }
 
 static void load_label(Ir_block* new_block, Tast_label* old_label) {
@@ -2858,6 +2858,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 }
 
 static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
+    if (is_defered) {
+        // TODO: uncomment below assertion when possible
+        //assert(curr_block_has_defer);
+    }
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -2903,15 +2907,20 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             return;
         case TAST_ACTUAL_BREAK: {
             if (is_defered) {
-                load_break(new_block, tast_actual_break_unwrap(old_stmt));
+                Tast_actual_break* brk = tast_actual_break_unwrap(old_stmt);
+                load_break(new_block, brk->do_break_expr, brk->break_expr, brk->pos);
                 return;
             }
             unreachable("tast_actual_break should never be passed into load_stmt unless is_defered is true");
         }
         case TAST_YIELD: {
-            if (is_defered) {
-                todo();
-                //load_break(new_block, tast_actual_break_unwrap(old_stmt));
+            assert(!is_defered && "TAST_ACTUAL_BREAK should represent defered breaks instead of TAST_YIELD");
+            if (!curr_block_has_defer) {
+                log(LOG_DEBUG, FMT"\n", tast_print(old_stmt));
+                Tast_yield* yield = tast_yield_unwrap(old_stmt);
+                log(LOG_DEBUG, "%d\n", yield->do_yield_expr);
+                load_break(new_block, yield->do_yield_expr, yield->yield_expr, yield->pos);
+                load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true);
                 return;
             }
 

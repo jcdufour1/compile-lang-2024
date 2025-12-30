@@ -114,6 +114,7 @@ for generics:
 - in python script, use mutex, etc. to reduce race conditions
 - fix warnings in windows ci
 - add option to use msg printing for logging ir?
+- fix README.md formatting (of Quickstart)
 
 
 
