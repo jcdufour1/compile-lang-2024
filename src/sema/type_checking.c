@@ -4312,6 +4312,7 @@ bool try_set_defer_types(Tast_defer** new_tast, const Uast_defer* defer) {
     check_env.parent_defer_pos = defer->pos;
     PARENT_OF_DEFER old_parent_of_defer = check_env.parent_of_defer;
     check_env.parent_of_defer = PARENT_OF_DEFER_DEFER;
+    check_env.is_in_defer = true;
 
     Tast_stmt* new_child = NULL;
     switch (try_set_stmt_types(&new_child, defer->child, false)) {
