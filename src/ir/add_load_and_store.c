@@ -2866,7 +2866,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             load_def(new_block, tast_def_unwrap(old_stmt));
             return;
         case TAST_RETURN: {
-            if (is_defered) {
+            if (is_defered || !curr_block_has_defer) {
                 load_return(new_block, tast_return_unwrap(old_stmt));
                 return;
             }
