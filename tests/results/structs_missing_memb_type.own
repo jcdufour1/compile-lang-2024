@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/structs_missing_memb_type.own:3:10:[1;31merror[0;39m:got token `newline`, but expected `symbol` 
-     2 | type Number struct {
+     2 | Number :: struct {
      3 |     num: 
        |          ^
      4 |     file: u8*

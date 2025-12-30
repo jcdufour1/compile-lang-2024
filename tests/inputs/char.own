@@ -1,8 +1,8 @@
-type io import = std.io
-type rt import = std.runtime
+io :: import = std.io
+rt :: import = std.runtime
 
-fn string_comparison() {
-    let string u8* = "hello"
+string_comparison :: fn() {
+    string u8* := "hello"
 
     if rt.buf_at(string, 0) == 'h' {
         io.printf("yes1\n");
@@ -35,7 +35,7 @@ fn string_comparison() {
     }
 }
 
-fn literal_comparison() {
+literal_comparison :: fn() {
     if 'h' == 'h' {
         io.printf("yes6\n");
     } else {
@@ -67,8 +67,8 @@ fn literal_comparison() {
     }
 }
 
-fn newline() {
-    let string u8* = "hello\n"
+newline :: fn() {
+    string u8* := "hello\n"
     if rt.buf_at(string, 5) == '\n' {
         io.printf("yes11\n")
     } else {
@@ -76,7 +76,7 @@ fn newline() {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     string_comparison()
     literal_comparison()
     newline()

@@ -1,11 +1,11 @@
 
 
-fn sub(<NumType>)(lhs NumType, rhs NumType) {
-    let result NumType = lhs - rhs
+sub :: fn(<NumType>)(lhs NumType, rhs NumType) {
+    result NumType := lhs - rhs
     return ressff
 }
 
-fn main() i32 {
+main :: fn() i32 {
     sub(<i32>)(6, 7)
     return 0
 }

@@ -1,0 +1,21 @@
+io :: import std.io
+
+main :: fn() i32 {
+    Token :: struct {
+        num i32
+    }
+    token Token := {8}
+    io.print_int(token.num)
+
+    aux()
+
+    return 0
+}
+
+aux :: fn() {
+    Token :: struct {
+        num f32
+    }
+    token Token := {8.9}
+    io.print_float(token.num)
+}

@@ -1,13 +1,13 @@
-//type io import = std.io
-//type util import = std.util
+//io :: import = std.io
+//util :: import = std.util
 
-type Optional enum(<ItemT>) {
+Optional :: enum(<ItemT>) {
     some ItemT
     none
 }
 
-fn main() i32 {
-    let opt Optional(<i32>) = .some(3)
+main :: fn() i32 {
+    opt Optional(<i32>) := .some(3)
 
     if .some(num) = opt {
         io.print_str("yes\n")

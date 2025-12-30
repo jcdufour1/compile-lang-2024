@@ -1,19 +1,19 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn yes() i32 {
+yes :: fn() i32 {
     return 1
 }
 
-fn yes2() i32 {
+yes2 :: fn() i32 {
     return 2
 }
 
-fn no() i32 {
+no :: fn() i32 {
     return 0
 }
 
-fn test_return_msg() i32 {
+test_return_msg :: fn() i32 {
     // test that there is no diagnostic "no return statement", etc.
     if 8*3 == 0 {
         return 0
@@ -24,8 +24,8 @@ fn test_return_msg() i32 {
     return 4
 }
 
-fn greater_or_equal() {
-    let twenty_four i32 = 24
+greater_or_equal :: fn() {
+    twenty_four i32 := 24
 
     if 8*3 >= 24 {
         io.puts("yes2.30");
@@ -48,8 +48,8 @@ fn greater_or_equal() {
     }
 }
 
-fn less_or_equal() {
-    let twenty_four i32 = 24
+less_or_equal :: fn() {
+    twenty_four i32 := 24
 
     if 8*3 <= 24 {
         io.puts("yes2.2");
@@ -75,7 +75,7 @@ fn less_or_equal() {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     if 8*3 < 5 {
         io.puts("no");
     }
@@ -124,9 +124,9 @@ fn main() i32 {
         io.puts("no5");
     }
 
-    let num_yes2 i32 = 2;
-    let num_yes i32 = 1;
-    let num_no i32 = 0;
+    num_yes2 i32 := 2;
+    num_yes i32 := 1;
+    num_no i32 := 0;
     if num_yes2 {
         io.puts("yes6.2");
     }

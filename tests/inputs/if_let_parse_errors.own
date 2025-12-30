@@ -1,9 +1,17 @@
 
+util :: import = std.util
 
-fn main() i32 {
-    let opt io.Optional(<i32>) = .some(7)
-    if let .some(num) = opt {
+do_thing :: fn() i32? {
+    return .none
+}
+
+main :: fn() i32 {
+    opt io.Optional(<i32>) := .some(7)
+    if .some(num) := opt {
     } else if 1 {
+    }
+
+    if num := do_thing() {
     }
 
     return 0

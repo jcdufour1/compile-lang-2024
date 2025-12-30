@@ -1,23 +1,23 @@
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
 
-type TokenType enum {
+TokenType :: enum {
     number
     string
 }
 
-type TokenType2 enum {
+TokenType2 :: enum {
     number, string
 }
 
-type Token struct {
+Token :: struct {
     kind TokenType
     number_data i32
     string_data u8*
 }
 
-fn print_token_if(token Token) {
+print_token_if :: fn(token Token) {
     if token.kind == TokenType.number {
         io.printf("%d\n", token.number_data)
     } else if token.kind == TokenType.string {
@@ -27,7 +27,7 @@ fn print_token_if(token Token) {
     }
 }
 
-fn print_token_switch(token Token) {
+print_token_switch :: fn(token Token) {
     switch token.kind {
     case TokenType.number: io.printf("%d\n", token.number_data)
     case TokenType.string: io.printf("%s\n", token.string_data)
@@ -35,31 +35,31 @@ fn print_token_switch(token Token) {
     }
 }
 
-fn print_token_switch_non_exhaustive(token Token) {
+print_token_switch_non_exhaustive :: fn(token Token) {
     switch token.kind {
     case TokenType.number: io.printf("%d\n", token.number_data)
     default: io.printf("invalid token type\n")
     }
 }
 
-// check that scope rules are followed for type subtypes enum
-type NodeType enum {
+// check that scope rules are followed for subtypes :: enum
+NodeType :: enum {
     NONE
 }
 
-type LlvmType enum {
+LlvmType :: enum {
     NONE
 }
 
-fn main() i32 {
-    let token_type TokenType = TokenType.number
+main :: fn() i32 {
+    token_type TokenType := TokenType.number
     io.printf("%d\n", token_type);
 
     token_type = TokenType.string
     io.printf("%d\n", token_type);
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()}
+        token Token := {.number, 0, util.null(<u8>)()}
         token.kind = TokenType.number
         token.number_data = 87
         token.string_data = "hello"
@@ -68,7 +68,7 @@ fn main() i32 {
     }
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()} 
+        token Token := {.number, 0, util.null(<u8>)()} 
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"
@@ -77,7 +77,7 @@ fn main() i32 {
     }
 
     {
-        let token Token = {.number, 0, util.null(<u8>)()}
+        token Token := {.number, 0, util.null(<u8>)()}
         token.kind = TokenType.string
         token.number_data = 87
         token.string_data = "hello"

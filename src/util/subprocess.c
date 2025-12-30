@@ -1,36 +1,39 @@
 #define _GNU_SOURCE
 
 #include <strv.h>
-#include <cstr_vec.h>
+#include <cstr_darr.h>
 #include <subprocess.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
 #include <msg.h>
 #include <errno.h>
-#include <msg_todo.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <file.h>
+#include <ast_msg.h>
 
-Strv cmd_to_strv(Arena* arena, Strv_vec cmd) {
+#ifdef _WIN32
+#   include <winapi_wrappers.h>
+#else
+#   include <signal.h>
+#   include <unistd.h>
+#   include <sys/wait.h>
+#endif // _WIN32
+
+Strv cmd_to_strv(Arena* arena, Strv_darr cmd) {
     String cmd_str = {0};
     for (size_t idx = 0; idx < cmd.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(arena, &cmd_str, " ");
         }
         // TODO: consider arguments that contain spaces, etc.
-        string_extend_strv(arena, &cmd_str, vec_at(cmd, idx));
+        string_extend_strv(arena, &cmd_str, darr_at(cmd, idx));
     }
     return string_to_strv(cmd_str);
 }
 
-// returns return code
-int subprocess_call(Strv_vec cmd) {
-    Arena a_temp = {0};
-
+#ifndef _WIN32
+static int subprocess_call_posix(Strv_darr cmd) {
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
@@ -40,13 +43,13 @@ int subprocess_call(Strv_vec cmd) {
 
     if (pid == 0) {
         // child process
-        Cstr_vec cstrs = {0};
+        Cstr_darr cstrs = {0};
         for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            const char* curr = strv_dup(&a_temp, vec_at(cmd, idx));
-            vec_append(&a_temp, &cstrs, curr);
+            const char* curr = strv_dup(&a_temp, darr_at(cmd, idx));
+            darr_append(&a_temp, &cstrs, curr);
         }
-        vec_append(&a_temp, &cstrs, NULL);
-        execvpe(strv_dup(&a_temp, vec_at(cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
+        darr_append(&a_temp, &cstrs, NULL);
+        execvpe(strv_dup(&a_temp, darr_at(cmd, 0)), cstr_darr_to_c_cstr_darr(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));
         msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_temp, cmd)));
@@ -58,7 +61,6 @@ int subprocess_call(Strv_vec cmd) {
     wait(&wstatus);
 
     if (WIFEXITED(wstatus)) {
-        arena_free(&a_temp);
         return WEXITSTATUS(wstatus);
     } else if (WIFSIGNALED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was killed by signal %d\n", WTERMSIG(wstatus));
@@ -75,4 +77,193 @@ int subprocess_call(Strv_vec cmd) {
         local_exit(EXIT_CODE_FAIL);
     }
     unreachable("");
+}
+#endif // _WIN32
+
+#ifdef _WIN32
+typedef struct {
+    Winapi_handle hProcess;
+    Winapi_handle hThread;
+    unsigned long dwProcessId;
+    unsigned long dwThreadId;
+} Process_information;
+#endif // _WIN32
+
+// below struct adapted from struct subprocess_startup_info_s in:
+//   https://github.com/sheredom/subprocess.h
+//   original license: unlicence
+//
+#ifdef _WIN32
+typedef struct {
+  unsigned long cb;
+  char *lpReserved;
+  char *lpDesktop;
+  char *lpTitle;
+  unsigned long dwX;
+  unsigned long dwY;
+  unsigned long dwXSize;
+  unsigned long dwYSize;
+  unsigned long dwXCountChars;
+  unsigned long dwYCountChars;
+  unsigned long dwFillAttribute;
+  unsigned long dwFlags;
+  unsigned short wShowWindow;
+  unsigned short cbReserved2;
+  unsigned char *lpReserved2;
+  void *hStdInput;
+  void *hStdOutput;
+  void *hStdError;
+} Subprocess_startup_info_s;
+
+// below function adapted from part of subprocess_create_ex in:
+//   https://github.com/sheredom/subprocess.h
+//   original license: unlicence
+//
+static char* get_cmd_excaped_win32(char* commandLine[]) {
+    // Combine commandLine together into a single string
+    size_t len = 0;
+    int i = 0;
+    int j = 0;
+    int need_quoting = 0;
+    char *commandLineCombined = NULL;
+    for (i = 0; commandLine[i]; i++) {
+        // for the trailing \0
+        len++;
+
+        // Quote the argument if it has a space in it
+        if (strpbrk(commandLine[i], "\t\v ") != NULL || commandLine[i][0] == '\0') {
+            len += 2;
+        }
+
+        for (j = 0; '\0' != commandLine[i][j]; j++) {
+              switch (commandLine[i][j]) {
+                  case '\\':
+                    if (commandLine[i][j + 1] == '"') {
+                      len++;
+                    }
+
+                    break;
+                  case '"':
+                    len++;
+                    break;
+                  default:
+                    break;
+              }
+              len++;
+        }
+    }
+
+    commandLineCombined = arena_alloc(&a_temp, len);
+
+    if (!commandLineCombined) {
+      return false;
+    }
+
+    // Gonna re-use len to store the write index into commandLineCombined
+    len = 0;
+
+    for (i = 0; commandLine[i]; i++) {
+        if (0 != i) {
+            commandLineCombined[len++] = ' ';
+        }
+
+        need_quoting = strpbrk(commandLine[i], "\t\v ") != NULL || commandLine[i][0] == '\0';
+        if (need_quoting) {
+            commandLineCombined[len++] = '"';
+        }
+
+        for (j = 0; '\0' != commandLine[i][j]; j++) {
+            switch (commandLine[i][j]) {
+                case '\\':
+                    if (commandLine[i][j + 1] == '"') {
+                      commandLineCombined[len++] = '\\';
+                    }
+
+                    break;
+                case '"':
+                    commandLineCombined[len++] = '\\';
+                    break;
+                default:
+                    break;
+            }
+
+            commandLineCombined[len++] = commandLine[i][j];
+        }
+        if (need_quoting) {
+            commandLineCombined[len++] = '"';
+        }
+    }
+
+    commandLineCombined[len] = '\0';
+
+    return commandLineCombined;
+}
+#endif // _WIN32
+
+#ifdef _WIN32
+static int subprocess_call_win32(Strv_darr cmd) {
+    Cstr_darr cstrs = {0};
+    for (size_t idx = 0; idx < cmd.info.count; idx++) {
+        const char* curr = strv_dup(&a_temp, darr_at(cmd, idx));
+        darr_append(&a_temp, &cstrs, curr);
+    }
+    darr_append(&a_temp, &cstrs, NULL);
+    char* cmd_excaped = get_cmd_excaped_win32(cstr_darr_to_c_cstr_darr(&a_temp, cstrs));
+
+    Subprocess_startup_info_s startup_info = {0};
+    Process_information process_info = {0};
+
+    if (!winapi_CreateProcessA(
+        NULL,
+        cmd_excaped,
+        NULL,
+        NULL,
+        false,
+        0,
+        NULL,
+        NULL,
+        &startup_info,
+        &process_info
+    )) {
+        msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "could not create subprocess: %s\n", winapi_print_last_error());
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
+    }
+
+    unsigned long status = winapi_WaitForSingleObject(process_info.hProcess, winapi_INFINITE());
+    if (status == winapi_WAIT_FAILED()) {
+        msg(DIAG_CHILD_PROCESS_FAILURE /* TODO */, POS_BUILTIN, "wait failed: %s\n", winapi_print_last_error());
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_ABANDONED()) {
+        msg_todo("abandoned process", POS_BUILTIN);
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_TIMEOUT()) {
+        msg_todo("WAIT_TIMEOUT", POS_BUILTIN);
+        local_exit(EXIT_CODE_FAIL);
+    } else if (status == winapi_WAIT_OBJECT_0()) {
+    } else {
+        msg(DIAG_CHILD_PROCESS_FAILURE/*TODO*/, POS_BUILTIN, "function WaitForSingleObject from win32 api returned unknown status 0x%08x\n", status);
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
+    }
+
+    unsigned long exit_code = 0;
+    if (!winapi_GetExitCodeProcess(process_info.hProcess, &exit_code)) {
+        msg(DIAG_CHILD_PROCESS_FAILURE /* TODO */, POS_BUILTIN, "GetExitCodeProcess failed: %s\n", winapi_print_last_error());
+        // TODO: refactor below line into a separate function?
+        msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
+        local_exit(EXIT_CODE_FAIL);
+    }
+
+    return (int)exit_code;
+}
+#endif // _WIN32
+
+// returns return code
+int subprocess_call(Strv_darr cmd) {
+#   ifdef _WIN32
+        return subprocess_call_win32(cmd);
+#   else
+        return subprocess_call_posix(cmd);
+#   endif // _WIN32
 }

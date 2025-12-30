@@ -1,7 +1,7 @@
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
-fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
+add_one_or_two_default :: fn(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {
         case .some(rhs_val):
             return lhs + rhs_val
@@ -11,17 +11,17 @@ fn add_one_or_two_default(<ItemType>)(lhs ItemType, rhs util.Optional(<ItemType>
     return lhs
 }
 
-fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
+add_one_or_two_default_2 :: fn(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.Optional(<ItemType>) = .none) ItemType {
     switch rhs {
         case .some(rhs_val): {
-            if let .some(lhs_val) = lhs {
+            if .some(lhs_val) := lhs {
                 return lhs_val + rhs_val
             } else {
                 return rhs_val
             }
         }
         case .none: {
-            if let .some(lhs_val) = lhs {
+            if .some(lhs_val) := lhs {
                 return lhs_val
             } else {
                 return 0
@@ -32,24 +32,24 @@ fn add_one_or_two_default_2(<ItemType>)(lhs util.Optional(<ItemType>), rhs util.
     return 0
 }
 
-fn add_using_callback(<ItemType>)(lhs ItemType, rhs ItemType = .none, add_fn fn(ItemType, ItemType)ItemType) ItemType {
+add_using_callback :: fn(<ItemType>)(lhs ItemType, rhs ItemType = .none, add_fn fn(ItemType, ItemType)ItemType) ItemType {
     return add_fn(lhs, rhs)
 }
 
-fn add_callback(<ItemT>)(lhs ItemT, rhs ItemT) ItemT {
+add_callback :: fn(<ItemT>)(lhs ItemT, rhs ItemT) ItemT {
     return lhs + rhs
 }
 
-fn main() i32 {
+main :: fn() i32 {
     io.printf("test 100: got number %d\n", add_one_or_two_default(78))
     io.printf("test 101: got number %d\n", add_one_or_two_default(79, .none))
     io.printf("test 102: got number %d\n", add_one_or_two_default(14, .some(16)))
     io.printf("test 103: got number %d\n", add_one_or_two_default(835, .some(11)))
 
     io.printf("test 110: got number %d\n", add_one_or_two_default_2(<i32>)(.some(836), .some(12)))
-    let opt111 util.Optional(<i32>) = .some(837)
+    opt111 util.Optional(<i32>) := .some(837)
     io.printf("test 111: got number %d\n", add_one_or_two_default_2(opt111, .some(13)))
-    let opt112 util.Optional(<i32>) = .some(838)
+    opt112 util.Optional(<i32>) := .some(838)
     io.printf("test 112: got number %d\n", add_one_or_two_default_2(.some(14), opt112))
 
     io.printf("test 120: got number %d\n", add_using_callback(87, 32, add_callback))

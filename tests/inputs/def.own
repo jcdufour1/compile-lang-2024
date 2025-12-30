@@ -1,21 +1,21 @@
 
-type io import = std.io
-type util import = std.util
+io :: import = std.io
+util :: import = std.util
 
-type Opt def = util.Optional
-type print def = io.printf
+Opt :: def util.Optional
+print :: def io.printf
 
-fn add_internal(<NumType>)(lhs NumType, rhs NumType) NumType {
+add_internal :: fn(<NumType>)(lhs NumType, rhs NumType) NumType {
     return lhs + rhs
 }
 
-type add def = add_internal
+add :: def add_internal
 
-fn main() i32 {
+main :: fn() i32 {
     print("hello\n")
     print("%d\n", add(<i32>)(54, 3))
 
-    let opt Opt(<i32>) = .some(43)
+    opt Opt(<i32>) := .some(43)
 
     switch opt {
         case .some(num): print("%d\n", num)

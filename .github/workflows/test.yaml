@@ -1,14 +1,39 @@
-name: Github Actions Test
+name: Tests
 run-name: Run Name
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
+  Linux-Clang:
+    runs-on: ubuntu-24.04
     steps:
       - name: checkout repo
         uses: actions/checkout@v4
 
-      - run: sudo apt update 
-      - run: sudo apt install clang python3 mypy
-      - run: mypy do_test.py
-      - run: python3 do_test.py --test --path-c-compiler=clang
+      - name: update package cache
+        run: sudo apt-get update 
+
+      - name: install clang, python and mypy
+        run: sudo apt-get install clang-20 python3 mypy
+
+      - name: check do_test.py (mypy)
+        run: mypy do_test.py
+
+      - name: building project and running tests
+        run: python3 do_test.py --test --path-c-compiler=clang-20 --makefile-cc-compiler=clang-20 --makefile-werror-all=1
+
+  Windows-Clang:
+    runs-on: windows-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - name: install python
+        run: winget install -e --id Python.Python.3.12 --accept-source-agreements --disable-interactivity --accept-package-agreements
+
+      - name: before activate python venv
+        run: py -3.12 -m venv .venv
+
+      - name: activate python venv
+        run: .\.venv\scripts\activate
+
+      - name: building project and running tests
+        run: .\.venv\scripts\python do_test.py --test --path-c-compiler=clang --makefile-cc-compiler=clang

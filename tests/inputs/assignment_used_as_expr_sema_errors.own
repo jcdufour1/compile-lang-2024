@@ -1,0 +1,13 @@
+util :: import = std.util
+
+do_thing :: fn() i32? {
+    return .none
+}
+
+main :: fn() i32 {
+    switch num = do_thing() {
+        case .some(num): break
+    }
+
+    return 0
+}

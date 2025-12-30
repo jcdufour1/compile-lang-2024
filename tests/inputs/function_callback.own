@@ -1,22 +1,22 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn add_fn(a i32, b i32) i32 {
+add_fn :: fn(a i32, b i32) i32 {
     return a + b;
 }
 
-fn print_result(a i32, b i32, callback fn(i32, i32) i32) {
+print_result :: fn(a i32, b i32, callback fn(i32, i32) i32) {
     io.printf("%d\n", callback(a, b))
 }
 
-type Token struct {
+Token :: struct {
     ptr fn(i32, i32)i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print_result(7, 3, add_fn)
 
-    let token Token = {.ptr = add_fn}
+    token Token := {.ptr = add_fn}
     print_result(96, -514, token.ptr)
 
     io.printf("%d\n", token.ptr(-84, -5))

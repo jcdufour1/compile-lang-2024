@@ -7,7 +7,7 @@ tests/inputs/struct_members_same_name.own:6:5:[1;31merror[0;39m:redefinition o
        |     ^
      7 | }
 tests/inputs/struct_members_same_name.own:5:5:[1;34mnote[0;39m:member `num` previously defined here
-     4 | type Thing struct {
+     4 | Thing :: struct {
      5 |     num i32
        |     ^
      6 |     num i32
@@ -17,7 +17,7 @@ tests/inputs/struct_members_same_name.own:11:5:[1;31merror[0;39m:redefinition 
        |     ^
     12 | }
 tests/inputs/struct_members_same_name.own:10:5:[1;34mnote[0;39m:member `num` previously defined here
-     9 | type Token enum {
+     9 | Token :: enum {
     10 |     num i32
        |     ^
     11 |     num i32

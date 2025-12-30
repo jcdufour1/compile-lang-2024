@@ -1,8 +1,8 @@
 
-fn add(lhs i32, rhs Token) {
+add :: fn(lhs i32, rhs Token) {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     add(8, 9)
     return 0
 }

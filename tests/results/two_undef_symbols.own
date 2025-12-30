@@ -1,12 +1,12 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/two_undef_symbols.own:8:23:[1;31merror[0;39m:symbol `num3` is not defined
+tests/inputs/two_undef_symbols.own:8:23:[1;31merror[0;39m:symbol `num3` is not defined; did you mean: num1, num2
      7 | 
      8 |     printf("%d %d\n", num3, num4)
        |                       ^
      9 | 
-tests/inputs/two_undef_symbols.own:8:29:[1;31merror[0;39m:symbol `num4` is not defined
+tests/inputs/two_undef_symbols.own:8:29:[1;31merror[0;39m:symbol `num4` is not defined; did you mean: num1, num2
      7 | 
      8 |     printf("%d %d\n", num3, num4)
        |                             ^

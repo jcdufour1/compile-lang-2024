@@ -1,17 +1,17 @@
-type io import = std.io
-type rt import = std.runtime
+io :: import = std.io
+rt :: import = std.runtime
 
 
-fn get_zero() i32 {
+get_zero :: fn() i32 {
     return 0
 }
 
-fn get_four() i32 {
+get_four :: fn() i32 {
     return 4
 }
 
-fn main() i32 {
-    let string u8* = "hello"
+main :: fn() i32 {
+    string u8* := "hello"
 
     io.printf("%c\n", rt.buf_at(string, get_zero()))
     io.printf("%c\n", rt.buf_at(string, get_four()))

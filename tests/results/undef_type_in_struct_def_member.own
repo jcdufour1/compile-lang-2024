@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/undef_type_in_struct_def_member.own:3:9:[1;31merror[0;39m:type `BigInt` is not defined
-     2 | type Token struct {
+     2 | Token :: struct {
      3 |     num BigInt
        |         ^
      4 |     string u8*

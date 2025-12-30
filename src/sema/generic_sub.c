@@ -23,7 +23,7 @@ void generic_sub_defer(Uast_defer* defer, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_using(Uast_using* using, Name gen_param, Ulang_type gen_arg) {
-    Uast_int* dummy = NULL;
+    Uast_expr* dummy = NULL;
     int16_t pointer_depth = 0;
     switch (generic_sub_name(&dummy, &pointer_depth, &using->sym_name, using->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
@@ -56,20 +56,20 @@ void generic_sub_lang_type_regular(
     // TODO: call generic_sub_name here?
     Name temp = {0};
 
-    unwrap(name_from_uname(&temp, lang_type.atom.str, lang_type.pos));
+    unwrap(name_from_uname(&temp, lang_type.name, lang_type.pos));
     if (name_is_equal(gen_param, temp)) {
-        *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.atom.str.scope_id);
+        *new_lang_type = ulang_type_clone(gen_arg, true, lang_type.name.scope_id);
 
-        int16_t base_depth = lang_type.atom.pointer_depth;
+        int16_t base_depth = lang_type.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
         return;
     }
 
-    lang_type = ulang_type_regular_clone(lang_type, true, lang_type.atom.str.scope_id);
-    Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
+    lang_type = ulang_type_regular_clone(lang_type, true, lang_type.name.scope_id);
+    Ulang_type_darr* gen_args = &lang_type.name.gen_args;
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(*gen_args, idx), gen_param, gen_arg);
+        generic_sub_lang_type(darr_at_ref(gen_args, idx), darr_at(*gen_args, idx), gen_param, gen_arg);
     }
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
@@ -95,9 +95,90 @@ void generic_sub_lang_type_expr(
     *new_lang_type = ulang_type_expr_const_wrap(lang_type);
 }
 
+void generic_sub_lang_type_struct_lit(
+    Ulang_type_struct_lit* new_lang_type,
+    Ulang_type_struct_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    generic_sub_expr(&lang_type.expr, lang_type.expr, gen_param, gen_arg);
+    *new_lang_type = lang_type;
+}
+
+void generic_sub_lang_type_fn_lit(
+    Ulang_type_fn_lit* new_lang_type,
+    Ulang_type_fn_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    Uast_expr* unexpected = NULL;
+    int16_t pointer_depth_to_add = 0;
+    switch (generic_sub_name(
+        &unexpected,
+        &pointer_depth_to_add,
+        &lang_type.name,
+        lang_type.pos,
+        gen_param,
+        gen_arg
+    )) {
+        case GEN_SUB_NAME_NORMAL:
+            lang_type.pointer_depth += pointer_depth_to_add;
+            *new_lang_type = lang_type;
+            return;
+        case GEN_SUB_NAME_NEW_INT:
+            msg_todo("", uast_expr_get_pos(unexpected));
+            return;
+        case GEN_SUB_NAME_ERROR:
+            return;
+    }
+    *new_lang_type = lang_type;
+}
+
+void generic_sub_lang_type_lit(
+    Ulang_type_lit* new_lang_type,
+    Ulang_type_lit lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_INT_LIT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_FLOAT_LIT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_STRING_LIT:
+            *new_lang_type = lang_type;
+            return;
+        case ULANG_TYPE_STRUCT_LIT: {
+            Ulang_type_struct_lit new_lit = {0};
+            generic_sub_lang_type_struct_lit(
+                &new_lit,
+                ulang_type_struct_lit_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_struct_lit_const_wrap(new_lit);
+            return;
+        }
+        case ULANG_TYPE_FN_LIT: {
+            Ulang_type_fn_lit new_lit = {0};
+            generic_sub_lang_type_fn_lit(
+                &new_lit,
+                ulang_type_fn_lit_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_fn_lit_const_wrap(new_lit);
+            return;
+        }
+    }
+    unreachable("");
+}
+
 void generic_sub_lang_type_tuple(Ulang_type_tuple* lang_type, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lang_type->ulang_types.info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(&lang_type->ulang_types, idx), vec_at(lang_type->ulang_types, idx), gen_param, gen_arg);
+        generic_sub_lang_type(darr_at_ref(&lang_type->ulang_types, idx), darr_at(lang_type->ulang_types, idx), gen_param, gen_arg);
     }
 }
 
@@ -151,11 +232,18 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
-        case ULANG_TYPE_INT:
-            msg_todo("", ulang_type_get_pos(lang_type));
+        case ULANG_TYPE_LIT: {
+            Ulang_type_lit new_lit = {0};
+            generic_sub_lang_type_lit(
+                &new_lit,
+                ulang_type_lit_const_unwrap(lang_type),
+                gen_param,
+                gen_arg
+            );
+            *new_lang_type = ulang_type_lit_const_wrap(new_lit);
             return;
+        }
         case ULANG_TYPE_REMOVED:
-            msg_todo("", ulang_type_get_pos(lang_type));
             return;
     }
     unreachable("");
@@ -163,7 +251,7 @@ void generic_sub_lang_type(
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg) {
     generic_sub_lang_type(&def->lang_type, def->lang_type, gen_param, gen_arg);
-    Uast_int* dummy = NULL;
+    Uast_expr* dummy = NULL;
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&dummy, &ptr_depth_offset, &def->name, def->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
@@ -178,7 +266,7 @@ void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type
 }
 
 void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
-    Uast_int* dummy = NULL;
+    Uast_expr* dummy = NULL;
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&dummy, &ptr_depth_offset, &label->name, label->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
@@ -194,18 +282,18 @@ void generic_sub_label(Uast_label* label, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        generic_sub_lang_type(&vec_at(base->members, idx)->lang_type, vec_at(base->members, idx)->lang_type, gen_param, gen_arg);
+        generic_sub_lang_type(&darr_at(base->members, idx)->lang_type, darr_at(base->members, idx)->lang_type, gen_param, gen_arg);
     }
     Pos pos = POS_BUILTIN;
     if (base->members.info.count > 0) {
-        pos = vec_at(base->members, 0)->pos;
+        pos = darr_at(base->members, 0)->pos;
     }
-    Uast_int* dummy = NULL;
+    Uast_expr* dummy = NULL;
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&dummy, &ptr_depth_offset, &base->name, pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
             if (ptr_depth_offset > 0) {
-                msg_todo("", vec_at(base->members, 0)->pos);
+                msg_todo("", darr_at(base->members, 0)->pos);
             }
             return;
         case GEN_SUB_NAME_NEW_INT:
@@ -281,10 +369,6 @@ void generic_sub_stmt(Uast_stmt** new_stmt, Uast_stmt* stmt, Name gen_param, Ula
             generic_sub_continue(uast_continue_unwrap(stmt), gen_param, gen_arg);
             *new_stmt = stmt;
             return;
-        case UAST_ASSIGNMENT:
-            generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
-            *new_stmt = stmt;
-            return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             *new_stmt = stmt;
@@ -315,27 +399,27 @@ void generic_sub_if(Uast_if* lang_if, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-        generic_sub_if(vec_at(if_else->uasts, idx), gen_param, gen_arg);
+        generic_sub_if(darr_at(if_else->uasts, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_array_literal(Uast_array_literal* lit, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        generic_sub_expr(vec_at_ref(&lit->members, idx), vec_at(lit->members, idx), gen_param, gen_arg);
+        generic_sub_expr(darr_at_ref(&lit->members, idx), darr_at(lit->members, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(&lang_switch->operand, lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
-        generic_sub_case(vec_at(lang_switch->cases, idx), gen_param, gen_arg);
+        generic_sub_case(darr_at(lang_switch->cases, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_for_with_cond(Uast_for_with_cond* lang_for, Name gen_param, Ulang_type gen_arg) {
     generic_sub_condition(lang_for->condition, gen_param, gen_arg);
     generic_sub_block(lang_for->body, gen_param, gen_arg);
-    Uast_int* dummy = NULL;
+    Uast_expr* dummy = NULL;
     int16_t ptr_depth_offset = 0;
     switch (generic_sub_name(&dummy, &ptr_depth_offset, &lang_for->continue_label, lang_for->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
@@ -362,11 +446,6 @@ void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg) 
     generic_sub_block(lang_case->if_true, gen_param, gen_arg);
 }
 
-void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(&assign->lhs, assign->lhs, gen_param, gen_arg);
-    generic_sub_expr(&assign->rhs, assign->rhs, gen_param, gen_arg);
-}
-
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
@@ -376,7 +455,7 @@ void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        generic_sub_stmt(vec_at_ref(&block->children, idx), vec_at(block->children, idx), gen_param, gen_arg);
+        generic_sub_stmt(darr_at_ref(&block->children, idx), darr_at(block->children, idx), gen_param, gen_arg);
     }
 }
 
@@ -415,6 +494,10 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             *new_expr = expr;
             generic_sub_orelse(uast_orelse_unwrap(expr), gen_param, gen_arg);
             return;
+        case UAST_QUESTION_MARK:
+            *new_expr = expr;
+            generic_sub_question_mark(uast_question_mark_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_TUPLE:
             *new_expr = expr;
             msg_todo("", uast_expr_get_pos(expr));
@@ -443,11 +526,15 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
             *new_expr = expr;
             generic_sub_array_literal(uast_array_literal_unwrap(expr), gen_param, gen_arg);
             return;
-        case UAST_MACRO:
+        case UAST_DIRECTIVE:
             *new_expr = expr;
             return;
         case UAST_FN:
-            todo();
+            *new_expr = expr;
+            msg_todo("", uast_expr_get_pos(expr));
+            return;
+        case UAST_UNDERSCORE:
+            *new_expr = expr;
             return;
         case UAST_EXPR_REMOVED:
             *new_expr = expr;
@@ -458,20 +545,24 @@ void generic_sub_expr(Uast_expr** new_expr, Uast_expr* expr, Name gen_param, Ula
 
 void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        generic_sub_expr(vec_at_ref(&fun_call->args, idx), vec_at(fun_call->args, idx), gen_param, gen_arg);
+        generic_sub_expr(darr_at_ref(&fun_call->args, idx), darr_at(fun_call->args, idx), gen_param, gen_arg);
     }
     generic_sub_expr(&fun_call->callee, fun_call->callee, gen_param, gen_arg);
 }
 
 void generic_sub_struct_literal(Uast_struct_literal* lit, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        generic_sub_expr(vec_at_ref(&lit->members, idx), vec_at(lit->members, idx), gen_param, gen_arg);
+        generic_sub_expr(darr_at_ref(&lit->members, idx), darr_at(lit->members, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_orelse(Uast_orelse* orelse, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr(&orelse->expr_to_unwrap, orelse->expr_to_unwrap, gen_param, gen_arg);
     generic_sub_block(orelse->if_error, gen_param, gen_arg);
+}
+
+void generic_sub_question_mark(Uast_question_mark* mark, Name gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(&mark->expr_to_unwrap, mark->expr_to_unwrap, gen_param, gen_arg);
 }
 
 void generic_sub_member_access(Uast_expr** new_expr, Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {
@@ -494,9 +585,9 @@ void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg) {
 }
 
 GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
-    Uast_int* new_int = NULL;
+    Uast_expr* new_expr = NULL;
     int16_t ptr_depth_offset = 0;
-    switch (generic_sub_name(&new_int, &ptr_depth_offset, &sym->name, sym->pos, gen_param, gen_arg)) {
+    switch (generic_sub_name(&new_expr, &ptr_depth_offset, &sym->name, sym->pos, gen_param, gen_arg)) {
         case GEN_SUB_NAME_NORMAL:
             if (ptr_depth_offset <= 0) {
                 return GEN_SUB_NAME_NORMAL;
@@ -519,7 +610,7 @@ GEN_SUB_NAME_STATUS generic_sub_symbol(Uast_expr** new_sym, Uast_symbol* sym, Na
             *new_sym = uast_operator_wrap(uast_binary_wrap(bin));
             return GEN_SUB_NAME_NORMAL;
         case GEN_SUB_NAME_NEW_INT:
-            *new_sym = uast_literal_wrap(uast_int_wrap(new_int));
+            *new_sym = new_expr;
             return GEN_SUB_NAME_NEW_INT;
         case GEN_SUB_NAME_ERROR:
             return GEN_SUB_NAME_ERROR;
@@ -555,8 +646,45 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
     generic_sub_lang_type(&unary->lang_type, unary->lang_type, gen_param, gen_arg);
 }
 
+GEN_SUB_NAME_STATUS generic_sub_name_const_expr(Uast_expr** new_expr, Pos name_pos, Ulang_type_lit gen_arg) {
+    switch (gen_arg.type) {
+        case ULANG_TYPE_INT_LIT:
+            *new_expr = uast_literal_wrap(uast_int_wrap(uast_int_new(
+                name_pos,
+                ulang_type_int_lit_const_unwrap(gen_arg).data
+            )));
+            return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_FLOAT_LIT:
+            *new_expr = uast_literal_wrap(uast_float_wrap(uast_float_new(
+                name_pos,
+                ulang_type_float_lit_const_unwrap(gen_arg).data
+            )));
+            return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_STRING_LIT:
+            *new_expr = uast_literal_wrap(uast_string_wrap(uast_string_new(
+                name_pos,
+                ulang_type_string_lit_const_unwrap(gen_arg).data
+            )));
+            return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_STRUCT_LIT:
+            *new_expr = uast_expr_clone(
+                ulang_type_struct_lit_const_unwrap(gen_arg).expr,
+                false,
+                0,
+                name_pos
+            ); // clone
+            return GEN_SUB_NAME_NEW_INT;
+        case ULANG_TYPE_FN_LIT: {
+            Ulang_type_fn_lit lit = ulang_type_fn_lit_const_unwrap(gen_arg);
+            *new_expr = uast_symbol_wrap(uast_symbol_new(lit.pos, lit.name));
+            return GEN_SUB_NAME_NEW_INT; // TODO: rename GEN_SUB_NAME_NEW_INT
+        }
+    }
+    unreachable("");
+}
+
 GEN_SUB_NAME_STATUS generic_sub_name(
-    Uast_int** new_expr,
+    Uast_expr** new_expr,
     int16_t* pointer_depth_to_add, // this variable should be used if and only if 
                                    //   GEN_SUB_NAME_NORMAL is returned
     Name* name,
@@ -578,14 +706,17 @@ GEN_SUB_NAME_STATUS generic_sub_name(
         switch (gen_arg.type) {
             case ULANG_TYPE_REGULAR: {
                 Ulang_type_regular reg = ulang_type_regular_const_unwrap(gen_arg);
-                if (name_from_uname(name, reg.atom.str, reg.pos)) {
+                if (name_from_uname(name, reg.name, reg.pos)) {
                     return GEN_SUB_NAME_NORMAL;
                 }
                 return GEN_SUB_NAME_ERROR;
             }
-            case ULANG_TYPE_INT:
-                *new_expr = uast_int_new(name_pos, ulang_type_int_const_unwrap(gen_arg).data);
-                return GEN_SUB_NAME_NEW_INT;
+            case ULANG_TYPE_LIT:
+                return generic_sub_name_const_expr(
+                    new_expr,
+                    name_pos,
+                    ulang_type_lit_const_unwrap(gen_arg)
+                );
             case ULANG_TYPE_TUPLE:
                 msg_todo("", name_pos);
                 return GEN_SUB_NAME_ERROR;
@@ -605,7 +736,7 @@ GEN_SUB_NAME_STATUS generic_sub_name(
     }
 
     for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(&name->gen_args, idx), vec_at(name->gen_args, idx), gen_param, gen_arg);
+        generic_sub_lang_type(darr_at_ref(&name->gen_args, idx), darr_at(name->gen_args, idx), gen_param, gen_arg);
     }
 
     return GEN_SUB_NAME_NORMAL;

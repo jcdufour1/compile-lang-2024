@@ -1,12 +1,12 @@
 
-type coll import = std.collections
-type io import = std.io
+coll :: import = std.collections
+io :: import = std.io
 
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn read(slice u8[]) {
+read :: fn(slice u8[]) {
     for idx usize in 0..slice.count {
         io.printf("%c", slice[idx])
     }
@@ -22,8 +22,8 @@ fn read(slice u8[]) {
     io.printf("\n")
 }
 
-fn main() i32 {
-    let arr coll.Arr(<u8, 6>) = coll.arr_new(<u8, 6>)("hello")
+main :: fn() i32 {
+    arr coll.Arr(<u8, 6>) := coll.arr_new(<u8, 6>)("hello")
     defer coll.arr_free(&arr);
 
     read(coll.arr_slice(arr));

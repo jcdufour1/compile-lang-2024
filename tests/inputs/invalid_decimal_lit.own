@@ -1,5 +1,5 @@
-fn main() i32 {
-    let num1 i32 = 89a
-    let num2 i32 = 7a9
-    let num3 i32 = 78a9
+main :: fn() i32 {
+    num1 i32 := 89a
+    num2 i32 := 7a9
+    num3 i32 := 78a9
 }

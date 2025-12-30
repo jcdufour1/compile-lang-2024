@@ -1,7 +1,7 @@
 
-type io import = std.does_not_exist
+io :: import = std.does_not_exist
 
-fn main() i32 {
+main :: fn() i32 {
     io.print_str("hello\n")
     return 0
 }

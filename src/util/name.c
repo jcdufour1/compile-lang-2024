@@ -5,45 +5,48 @@
 #include <str_and_num_utils.h>
 #include <uast.h>
 #include <ulang_type_is_equal.h>
+#include <symbol_iter.h>
 
-Name name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id, .attrs = attrs};
+Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = (Ulang_type_darr) {0}, .scope_id = scope_id};
 }
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_vec gen_args, Scope_id scope_id, Attrs attrs) {
-    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id, attrs));
+// TODO: replace genrgs in src with gen_args
+Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+}
+
+Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
+    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id));
 }
 
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
-    // TODO: this function could cause collisions
-    //   only normalize primitive types to prevent possible bugs, or remove this function, etc.?
-    Uast_def* dummy = NULL;
-    Name possible_new = name_new(MOD_PATH_BUILTIN, name.base, name.gen_args, name.scope_id, (Attrs) {0});
-    if (usymbol_lookup(&dummy, possible_new)) {
-        return name_to_uname(possible_new);
+    if (lang_type_name_base_is_number(name.base)) {
+        name.mod_alias = MOD_ALIAS_BUILTIN;
     }
     return name;
 }
 
-static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+static Uname uname_new_internal(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
+    assert(base.count > 0);
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
 Uname name_to_uname(Name name) {
-    if (lang_type_atom_is_signed(lang_type_atom_new(name, 0))) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(name, 0))) {
-        return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
-    } else if (lang_type_atom_is_float(lang_type_atom_new(name, 0))) {
+    if (lang_type_name_base_is_number(name.base), 0) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 #   ifndef NDEBUG
-        Uast_def* dummy = NULL;
-        unwrap(usymbol_lookup(&dummy, alias_name));
+        // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
+        //Uast_def* dummy = NULL;
+        //if (!usymbol_lookup(&dummy, alias_name)) {
+        //    log(LOG_FATAL, FMT"\n", name_print(NAME_LOG, alias_name));
+        //    unreachable("");
+        //}
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
@@ -56,7 +59,6 @@ Name ir_name_to_name(Ir_name name) {
     }
 
     Ir_name_to_name_table_node* result = NULL;
-    //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_EMIT_C, name));
     unwrap(
         ir_name_to_name_lookup(&result, name) &&
         "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"
@@ -64,7 +66,7 @@ Name ir_name_to_name(Ir_name name) {
     return result->name_regular;
 }
 
-// TODO: Attrs should be stored in hash tables instead if in Name and Ir_name?
+// TODO: Attrs should be stored in hash tables instead of in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
@@ -73,19 +75,14 @@ Ir_name name_to_ir_name(Name name) {
 
     Name_to_ir_name_table_node* result = NULL;
     if (name_to_ir_name_lookup(&result, name)) {
-        result->ir_name.attrs |= name.attrs;
         return result->ir_name;
     }
 
     if (name.scope_id == SCOPE_TOP_LEVEL) {
-        if (strv_is_equal(name.base, sv("num"))) {
-            todo();
-        }
         Ir_name ir_name = *(Ir_name*)&name;
         static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
         unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
         unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-        ir_name.attrs |= name.attrs;
         return ir_name;
     }
 
@@ -101,16 +98,14 @@ Ir_name name_to_ir_name(Name name) {
     Ir_name ir_name = *(Ir_name*)&ir_name_;
     static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
     ir_name.scope_id = prev;
-    ir_name.attrs |= name.attrs;
     assert(ir_name.scope_id != SCOPE_TOP_LEVEL);
     assert(name.scope_id != SCOPE_TOP_LEVEL);
     unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
     unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-    ir_name.attrs |= name.attrs;
     return ir_name;
 }
 
-Uname uname_new(Name mod_alias, Strv base, Ulang_type_vec gen_args, Scope_id scope_id) {
+Uname uname_new(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
     unwrap(mod_alias.base.count > 0);
     return uname_normalize(uname_new_internal(mod_alias, base, gen_args, scope_id));
 }
@@ -121,6 +116,26 @@ void extend_name_ir(String* buf, Name name) {
 
 void extend_name_c(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
+}
+
+// TODO: improve naming of serialize_strv_actual and serialize_strv
+void serialize_strv_actual(String* buf, Strv strv) {
+    string_extend_cstr(&a_main, buf, "_");
+    string_extend_size_t(&a_main, buf, strv.count);
+    string_extend_cstr(&a_main, buf, "_");
+    // TODO: refactor this for loop into a separate function
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        char curr = strv.str[idx];
+
+        if (isalnum(curr)) {
+            darr_append(&a_main, buf, curr);
+        } else if (curr == '_') {
+            string_extend_cstr(&a_main, buf, "__");
+        } else {
+            string_extend_f(&a_main, buf, "_%02x", curr);
+        }
+    }
+    string_extend_cstr(&a_main, buf, "_");
 }
 
 void serialize_strv(String* buf, Strv strv) {
@@ -134,18 +149,21 @@ void serialize_strv(String* buf, Strv strv) {
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 // TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
-// TODO: this function will sometimes serialize into string, and then extend that string into
-//   another. avoid that, because serialize_name_symbol_table is one of the most expensive functions
-//   of the compiler
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
+    if (lang_type_name_base_is_number(name.base)) {
+        name.mod_path = MOD_PATH_BUILTIN;
+    }
+
     String buf = {0};
 
     String new_mod_path = {0};
     for (size_t idx = 0; idx < name.mod_path.count; idx++) {
         if (strv_at(name.mod_path, idx) == '.') {
-            vec_append(arena, &new_mod_path, '_');
+            darr_append(arena, &new_mod_path, '_');
         } else {
-            vec_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
+            darr_append(arena, &new_mod_path, strv_at(name.mod_path, idx));
         }
     }
     name.mod_path = string_to_strv(new_mod_path);
@@ -155,8 +173,8 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         {
             Strv mod_path = name.mod_path;
             Strv dummy = {0};
-            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
-                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
+            while (strv_try_consume_until(&dummy, &mod_path, PATH_SEP_CHAR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEP_CHAR));
                 path_count++;
             }
         }
@@ -168,8 +186,8 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         {
             Strv mod_path = name.mod_path;
             Strv dir_name = {0};
-            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
-                unwrap(strv_try_consume(&mod_path, PATH_SEPARATOR));
+            while (strv_try_consume_until(&dir_name, &mod_path, PATH_SEP_CHAR)) {
+                unwrap(strv_try_consume(&mod_path, PATH_SEP_CHAR));
                 serialize_strv(&buf, dir_name);
             }
             serialize_strv(&buf, mod_path);
@@ -185,7 +203,14 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
             // NOTE: even though ulang_types are used for generic arguments, mod_aliases are not actually used,
             //   so there is no need to switch to using Lang_type for generic arguents
-            string_extend_strv(arena, &buf, serialize_name_symbol_table(&a_main, serialize_ulang_type(name.mod_path, vec_at(name.gen_args, idx), false)));
+            string_extend_strv(
+                arena,
+                &buf,
+                serialize_name_symbol_table(
+                    &a_main,
+                    serialize_ulang_type(name.mod_path, darr_at(name.gen_args, idx), false)
+                )
+            );
         }
     }
 
@@ -211,7 +236,17 @@ Strv serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
-Strv name_print_internal(NAME_MODE mode, bool serialize, Name name) {
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, NAME_BASE_ONLY_CHOICE base_only_choice) {
+    switch (base_only_choice) {
+        case NAME_FULL:
+            break;
+        case NAME_BASE_ONLY:
+            assert(!serialize && "not implemented");
+            return name.base;
+        default:
+            unreachable("");
+    }
+
     if (serialize) {
         return serialize_name(name);
     }
@@ -246,15 +281,47 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         string_extend_cstr(&a_temp, buf, "_");
     }
 
-    if (!is_msg) {
-        // TODO: even when is_msg is true, show prefix sometimes to avoid confusion?
-        //   (maybe only show prefix when mod_path of name is different than mod_path of file that 
-        //   name appears in)
-        string_extend_strv(&a_temp, buf, name.mod_path);
-        if (name.mod_path.count > 0) {
-            string_extend_cstr(&a_temp, buf, "::");
+    assert(!is_msg || env.mod_path_curr_file.count > 0);
+    if (!is_msg || !strv_is_equal(name.mod_path, env.mod_path_curr_file)) {
+        if (!is_msg || !strv_is_equal(name.mod_path, MOD_PATH_BUILTIN)) {
+            if (is_msg) {
+                Scope_id curr_scope = name.scope_id;
+                while (1) {
+                    // TODO: consider if mod_aliases should be cached to prevent this nested while loop on every name_print(NAME_MSG, ...)
+                    Usymbol_iter iter = usym_tbl_iter_new(curr_scope);
+                    Uast_def* curr = NULL;
+                    while (usym_tbl_iter_next(&curr, &iter)) {
+                        if (curr->type != UAST_MOD_ALIAS) {
+                            continue;
+                        }
+                        const Uast_mod_alias* mod_alias = uast_mod_alias_const_unwrap(curr);
+                        if (!mod_alias->is_actually_mod_alias) {
+                            continue;
+                        }
+                        if (!strv_is_equal(mod_alias->name.mod_path, env.mod_path_curr_file)) {
+                            continue;
+                        }
+                        if (strv_is_equal(mod_alias->mod_path, name.mod_path)) {
+                            string_extend_f(&a_temp, buf, FMT".", strv_print(mod_alias->name.base));
+                            goto after_print_path;
+                        }
+                    }
+
+                    if (curr_scope == SCOPE_TOP_LEVEL) {
+                        break;
+                    }
+                    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+                }
+            }
+
+            string_extend_strv(&a_temp, buf, name.mod_path);
+            if (name.mod_path.count > 0) {
+                string_extend_cstr(&a_temp, buf, "::");
+            }
         }
     }
+after_print_path:
+
     string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
@@ -263,15 +330,10 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(is_msg ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
-    }
-    if (name.attrs > 0) {
-        string_extend_cstr(&a_temp, buf, "(*attrs:0x");
-        string_extend_hex_8_digits(&a_temp, buf, name.attrs);
-        string_extend_cstr(&a_temp, buf, "*)");
     }
 }
 
@@ -291,6 +353,10 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
         string_extend_cstr(&a_temp, buf, ".");
     }
+    if (mode == UNAME_LOG) {
+        // TODO: uncomment below when possible to allow for better debugging?
+        //string_extend_f(&a_temp, buf, "s"SIZE_T_FMT"_", name.scope_id);
+    }
     string_extend_strv(&a_temp, buf, name.base);
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, "(<");
@@ -299,7 +365,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_strv(&a_temp, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(name.gen_args, idx)));
+        string_extend_strv(&a_temp, buf, ulang_type_print_internal(mode == UNAME_MSG ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
@@ -347,12 +413,12 @@ void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
 
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope, (Attrs) {0});
+    return name_new(name.mod_path, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
-    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, use_new_scope, new_scope), scope);
+    return uname_new(name.mod_alias, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
 }
 
 bool ir_name_is_equal(Ir_name a, Ir_name b) {
@@ -369,7 +435,7 @@ bool name_is_equal(Name a, Name b) {
         return false;
     }
     for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-        if (!ulang_type_is_equal(vec_at(a.gen_args, idx), vec_at(b.gen_args, idx))) {
+        if (!ulang_type_is_equal(darr_at(a.gen_args, idx), darr_at(b.gen_args, idx))) {
             return false;
         }
     }
@@ -388,5 +454,15 @@ bool uname_is_equal(Uname a, Uname b) {
         todo();
         return false;
     }
+
+    // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
+    //   if it is required to?
+    if (lang_type_name_base_is_number(new_a.base)) {
+        new_a.mod_path = MOD_PATH_BUILTIN;
+    }
+    if (lang_type_name_base_is_number(new_b.base)) {
+        new_b.mod_path = MOD_PATH_BUILTIN;
+    }
+
     return name_is_equal(new_a, new_b);
 }

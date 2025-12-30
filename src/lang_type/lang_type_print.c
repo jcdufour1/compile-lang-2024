@@ -2,9 +2,31 @@
 #include <lang_type_after.h>
 #include <ulang_type.h>
 #include <resolve_generics.h>
+#include <ast_msg.h>
 
-void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
-    switch (type) {
+static void extend_lang_type_lit_tag_to_string(String* buf, Lang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT:
+            string_extend_cstr(&a_temp, buf, "int");
+            return;
+        case LANG_TYPE_STRUCT_LIT:
+            string_extend_cstr(&a_temp, buf, "struct_lit");
+            return;
+        case LANG_TYPE_STRING_LIT:
+            string_extend_cstr(&a_temp, buf, "string_lit");
+            return;
+        case LANG_TYPE_FN_LIT:
+            string_extend_cstr(&a_temp, buf, "fn");
+            return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_cstr(&a_temp, buf, "float");
+            return;
+    }
+    unreachable("");
+}
+
+void extend_lang_type_tag_to_string(String* buf, Lang_type lang_type) {
+    switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             string_extend_cstr(&a_temp, buf, "primitive");
             return;
@@ -29,8 +51,8 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_ARRAY:
             string_extend_cstr(&a_temp, buf, "array");
             return;
-        case LANG_TYPE_INT:
-            string_extend_cstr(&a_temp, buf, "int");
+        case LANG_TYPE_LIT:
+            extend_lang_type_lit_tag_to_string(buf, lang_type_lit_const_unwrap(lang_type));
             return;
         case LANG_TYPE_REMOVED:
             string_extend_cstr(&a_temp, buf, "removed");
@@ -39,7 +61,7 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-Strv lang_type_vec_print_internal(Lang_type_vec types) {
+Strv lang_type_darr_print_internal(Lang_type_darr types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -47,48 +69,11 @@ Strv lang_type_vec_print_internal(Lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, vec_at(types, idx));
+        extend_lang_type_to_string(&buf, LANG_TYPE_MODE_MSG, darr_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
     return string_to_strv(buf);
-}
-
-void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
-    Name temp = atom.str;
-
-    if (atom.str.base.count > 1) {
-        switch (mode) {
-            case LANG_TYPE_MODE_LOG:
-                extend_name(NAME_LOG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_MSG:
-                extend_name(NAME_MSG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_C:
-                extend_name(NAME_EMIT_C, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_name(NAME_EMIT_IR, string, atom.str);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        unreachable("");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_temp, string, '*');
-    }
-
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
-            todo();
-        }
-    }
 }
 
 Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
@@ -110,20 +95,49 @@ Strv lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     return string_to_strv(buf);
 }
 
-Strv lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
-    String buf = {0};
-    extend_lang_type_atom(&buf, mode, atom);
-    return string_to_strv(buf);
+static void extend_lang_type_lit_to_string(String* string, Lang_type_lit lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_INT_LIT:
+            string_extend_int64_t(&a_temp, string, lang_type_int_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_FLOAT_LIT:
+            string_extend_double(&a_temp, string, lang_type_float_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_STRING_LIT:
+            serialize_strv_actual(string, lang_type_string_lit_const_unwrap(lang_type).data);
+            return;
+        case LANG_TYPE_STRUCT_LIT:
+            string_extend_strv(&a_temp, string, uast_expr_print_internal(UAST_MSG, lang_type_struct_lit_const_unwrap(lang_type).data, 0));
+            return;
+        case LANG_TYPE_FN_LIT:
+            extend_name(NAME_MSG, string, lang_type_fn_lit_const_unwrap(lang_type).name);
+            return;
+    }
+    unreachable("");
+}
+
+static NAME_MODE lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
+    switch (mode) {
+        case LANG_TYPE_MODE_LOG:
+            return NAME_LOG;
+        case LANG_TYPE_MODE_MSG:
+            return NAME_MSG;
+        case LANG_TYPE_MODE_EMIT_LLVM:
+            return NAME_EMIT_C;
+        case LANG_TYPE_MODE_EMIT_C:
+            return NAME_EMIT_IR;
+    }
+    unreachable("");
 }
 
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '<');
+        darr_append(&a_temp, string, '<');
     }
 
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
-            extend_lang_type_tag_to_string(string, lang_type.type);
+            extend_lang_type_tag_to_string(string, lang_type);
             string_extend_cstr(&a_main, string, " ");
             break;
         case LANG_TYPE_MODE_MSG:
@@ -136,33 +150,34 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             unreachable("");
     }
 
-    if (lang_type.type == LANG_TYPE_PRIMITIVE) {
-        // TODO: uncomment this?
-        //unwrap(!strv_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).str.base, sv("void")));
-    }
-
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
-            Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
+            Lang_type_darr lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
             for (size_t idx = 0; idx < lang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_lang_type_to_string(string, mode, vec_at(lang_types, idx));
+                extend_lang_type_to_string(string, mode, darr_at(lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
             }
-            goto end;
+            break;
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
-            string_extend_cstr(&a_main, string, "fn");
+            string_extend_f(&a_main, string, "%sfn", fn.pointer_depth > 1 ? "(" : "");
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
-            goto end;
+            if (fn.pointer_depth > 1) {
+                darr_append(&a_temp, string, ')');
+            }
+            for (int16_t idx = 1; idx < fn.pointer_depth; idx++) {
+                darr_append(&a_temp, string, '*');
+            }
+            break;
         }
         case LANG_TYPE_ARRAY: {
             Lang_type_array array = lang_type_array_const_unwrap(lang_type);
@@ -171,46 +186,62 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             string_extend_int64_t(&a_temp, string, array.count);
             string_extend_cstr(&a_temp, string, "]");
             for (int16_t idx = 0; idx < array.pointer_depth; idx++) {
-                vec_append(&a_temp, string, '*');
+                darr_append(&a_temp, string, '*');
             }
-            goto end;
+            break;
         }
         case LANG_TYPE_ENUM:
             fallthrough;
         case LANG_TYPE_RAW_UNION:
             fallthrough;
-        case LANG_TYPE_STRUCT:
-            // TODO: uncomment below assert?
-            //assert(!strv_is_equal(lang_type_get_atom(mode, lang_type).str.base, sv("void")));
-            // TODO: figure out why __attribute__((fallthrough)); is needed in only this one place
-            //   when compiling with clang? Figure out if __attribute__((fallthrough)) should
-            //   be used everywhere
-            fallthrough;
+        case LANG_TYPE_STRUCT: {
+            Name name = {0};
+            assert(!strv_is_equal(name.base, sv("void")));
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+                darr_append(&a_temp, string, '*');
+            }
+            break;
+        }
         case LANG_TYPE_VOID: {
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            goto end;
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            break;
         }
         case LANG_TYPE_PRIMITIVE: {
-            Strv base = lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type).base;
-            Lang_type_atom atom = {0};
-            unwrap(try_lang_type_get_atom(&atom, mode, lang_type));
-            extend_lang_type_atom(string, mode, atom);
-            unwrap(base.count >= 1);
-            goto end;
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                break;
+            }
+            assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
+            assert(name.base.count >= 1);
+            extend_name(lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+                darr_append(&a_temp, string, '*');
+            }
+            break;
         }
         case LANG_TYPE_REMOVED:
-            goto end;
-        case LANG_TYPE_INT:
-            string_extend_int64_t(&a_temp, string, lang_type_int_const_unwrap(lang_type).data);
-            goto end;
+            break;
+        case LANG_TYPE_LIT:
+            extend_lang_type_lit_to_string(string, lang_type_lit_const_unwrap(lang_type));
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
 
-end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '>');
+        darr_append(&a_temp, string, '>');
     }
 }
 

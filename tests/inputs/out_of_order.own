@@ -1,24 +1,24 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn main() i32 {
-    let token Token = get_token("file57.txt", 914, {.data = "new data", .count = 8})
+main :: fn() i32 {
+    token Token := get_token("file57.txt", 914, {.data = "new data", .count = 8})
     io.printf("%s %d %s\n", token.file, token.line, token.str_data.data)
 
     return 0
 }
 
-fn get_token(file u8*, line i32, data Str_view) Token {
+get_token :: fn(file u8*, line i32, data Str_view) Token {
     return {.file = file, .line = line, .str_data = data}
 }
 
 
-type Str_view struct {
+Str_view :: struct {
     data u8*
     count i64
 }
 
-type Token struct {
+Token :: struct {
     file u8*
     line i32
     str_data Str_view

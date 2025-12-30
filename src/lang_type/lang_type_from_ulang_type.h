@@ -6,25 +6,17 @@
 #include <lang_type_print.h>
 #include <uast_utils.h>
 #include <resolve_generics.h>
-#include <ulang_type_get_pos.h>
 #include <msg.h>
 #include <tast_utils.h>
 #include <ulang_type_serialize.h>
 #include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
-
-// TODO: remove this forward decl when possible
-static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b);
+#include <ast_msg.h>
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 // TODO: remove Pos parameter
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type);
-
-// TODO: remove these two forward decls and replace with better system
-bool lang_type_atom_is_signed(Lang_type_atom atom);
-bool lang_type_atom_is_unsigned(Lang_type_atom atom);
-bool lang_type_atom_is_float(Lang_type_atom atom);
 
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos);
 
@@ -38,24 +30,24 @@ static inline bool try_lang_type_from_ulang_type_fn(
     Ulang_type_fn lang_type
 );
 
-// TODO: figure out way to reduce duplicate vec allocations
+// TODO: figure out way to reduce duplicate darr allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
     Ulang_type_tuple lang_type
 ) {
-    Lang_type_vec new_lang_types = {0};
+    Lang_type_darr new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
         Lang_type new_child = {0};
-        if (!try_lang_type_from_ulang_type(&new_child, vec_at(lang_type.ulang_types, idx))) {
+        if (!try_lang_type_from_ulang_type(&new_child, darr_at(lang_type.ulang_types, idx))) {
             return false;
         }
-        vec_append(&a_main, &new_lang_types, new_child);
+        darr_append(&a_main, &new_lang_types, new_child);
     }
-    *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types);
+    *new_lang_type = lang_type_tuple_new(lang_type.pos, new_lang_types, lang_type.pointer_depth);
     return true;
 }
 
-// TODO: figure out way to reduce duplicate vec allocations
+// TODO: figure out way to reduce duplicate darr allocations
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
     Ulang_type_fn lang_type
@@ -70,41 +62,40 @@ static inline bool try_lang_type_from_ulang_type_fn(
         assert(env.error_count > 0);
         return false;
     }
-    *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type);
+    *new_lang_type = lang_type_fn_new(lang_type.pos, new_params, new_rtn_type, lang_type.pointer_depth);
     return true;
 }
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type) {
     Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str, lang_type.pos));
-    Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
+    unwrap(name_from_uname(&name, lang_type.name, lang_type.pos));
     assert(name.mod_path.count > 0);
 
-    if (lang_type_atom_is_signed(atom)) {
+    if (lang_type_name_base_is_signed(name.base)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
-            atom.pointer_depth
+            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            ulang_type_regular_get_pointer_depth(lang_type)
         );
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
-    } else if (lang_type_atom_is_unsigned(atom)) {
+    } else if (lang_type_name_base_is_unsigned(name.base)) {
         Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
-            atom.pointer_depth
+            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            ulang_type_regular_get_pointer_depth(lang_type) 
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
-    } else if (lang_type_atom_is_float(atom)) {
+    } else if (lang_type_name_base_is_float(name.base)) {
         Lang_type_float new_float = lang_type_float_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(atom.str.base, 1, atom.str.base.count - 1)),
-            atom.pointer_depth
+            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            ulang_type_regular_get_pointer_depth(lang_type) 
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
-    } else if (strv_is_equal(atom.str.base, sv("void"))) {
-        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
-    } else if (strv_is_equal(atom.str.base, sv("opaque"))) {
-        return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, atom.pointer_depth)));
+    } else if (strv_is_equal(name.base, sv("void"))) {
+        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, lang_type.pointer_depth));
+    } else if (strv_is_equal(name.base, sv("opaque"))) {
+        return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, ulang_type_regular_get_pointer_depth(lang_type))));
     } else {
         log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
@@ -112,7 +103,17 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     unreachable("");
 }
 
+// TODO: move this function to .c file
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
+    if (
+        lang_type_name_base_is_number(lang_type.name.base) ||
+        strv_is_equal(lang_type.name.base, sv("void")) ||
+        strv_is_equal(lang_type.name.base, sv("opaque"))
+    ) {
+        *new_lang_type = lang_type_from_ulang_type_regular_primitive(lang_type);
+        return true;
+    }
+
     (void) new_lang_type;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};
@@ -121,7 +122,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     // report error if generic args are invalid
-    vec_foreach(gen_idx, Ulang_type, gen_arg, lang_type.atom.str.gen_args) {
+    darr_foreach(gen_idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
         Lang_type dummy = {0};
         if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
             return false;
@@ -129,29 +130,39 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     Name temp_name = {0};
-    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str, lang_type.pos)) {
+    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).name, lang_type.pos)) {
         return false;
     }
 
-    Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    //Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    int16_t temp_ptr_depth = ulang_type_regular_const_unwrap(resolved).pointer_depth;
     switch (type) {
         case LANG_TYPE_STRUCT:
-            *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
+            *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, temp_name, temp_ptr_depth));
             return true;
         case LANG_TYPE_RAW_UNION:
-            *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, new_atom));
+            *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, temp_name, temp_ptr_depth));
             return true;
         case LANG_TYPE_ENUM:
-            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, new_atom));
+            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, temp_name, temp_ptr_depth));
             return true;
         case LANG_TYPE_PRIMITIVE:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
             return true;
         case LANG_TYPE_VOID:
-            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos, lang_type.pointer_depth));
             return true;
-        default:
-            unreachable("");
+        case LANG_TYPE_TUPLE:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_ARRAY:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_FN:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_LIT:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_REMOVED:
+            msg_soft_todo("", ulang_type_get_pos(resolved));
+            return false;
     }
     unreachable("");
 }
@@ -164,39 +175,16 @@ static inline bool try_lang_type_from_ulang_type_array_is_unsigned_int(const Uas
     return lit->type == UAST_INT && uast_int_const_unwrap(lit)->data >= 0;
 }
 
-static inline bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type) {
-    Lang_type item_type = {0};
-    if (!try_lang_type_from_ulang_type(&item_type, *lang_type.item_type)) {
-        return false;
-    }
-
-    if (!try_lang_type_from_ulang_type_array_is_unsigned_int(lang_type.count)) {
-        if (!env.silent_generic_resol_errors) {
-            msg(
-                DIAG_NON_INT_LITERAL_IN_STATIC_ARRAY,
-                uast_expr_get_pos(lang_type.count),
-                "length of statically sized array must be an integer literal\n"
-            );
-        }
-        return false;
-    }
-
-    *new_lang_type = lang_type_array_const_wrap(lang_type_array_new(
-        lang_type.pos,
-        arena_dup(&a_main, &item_type),
-        uast_int_unwrap(uast_literal_unwrap(lang_type.count))->data,
-        0
-    ));
-    return true;
-}
+bool try_lang_type_from_ulang_type_array(Lang_type* new_lang_type, Ulang_type_array lang_type);
 
 static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
     // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
-    Ulang_type_vec new_types = {0};
+    Ulang_type_darr new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(lang_type.lang_types, idx)));
+        darr_append(&a_main, &new_types, lang_type_to_ulang_type(darr_at(lang_type.lang_types, idx)));
     }
-    return ulang_type_tuple_new(new_types, lang_type.pos);
+    // TODO: uncomment lang_type.pointer_depth below
+    return ulang_type_tuple_new(lang_type.pos, new_types, /*lang_type.pointer_depth*/0);
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE

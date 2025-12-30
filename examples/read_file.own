@@ -1,16 +1,18 @@
-type io import = std.io
-type coll import = std.collections
-type util import = std.util
+io :: import = std.io
+coll :: import = std.collections
+util :: import = std.util
 
-fn read(file io.File) {
+read :: fn(file io.File) {
     for 1 {
-        if let .some(line) = io.getline(file) => io.print_str(coll.darr_slice(line), "")
-        else => return
+        line := io.getline(file)?
+        defer coll.darr_free(&line)
+
+        io.print_str(coll.darr_slice(line), "")
     }
 }
 
-fn main() i32 {
-    if let .some(file) = io.open_file("examples/read_file.own", "r") {
+main :: fn() i32 {
+    if .some(file) := io.open_file("examples/read_file.own", "r") {
         read(file)
         io.close_file(file)
     } else {

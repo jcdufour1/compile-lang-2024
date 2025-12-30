@@ -1,10 +1,10 @@
 
-type Token enum {
+Token :: enum {
     num i32
     string u8*
 }
 
-fn main() i32 {
-    let token Token = .num()
+main :: fn() i32 {
+    token Token := .num()
     return 0
 }

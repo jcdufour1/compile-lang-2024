@@ -1,10 +1,10 @@
 
-fn copy(<NumT>)(num NumT) NumT {
+copy :: fn(<NumT>)(num NumT) NumT {
     return num
 }
 
 
-fn main() i32 {
-    let num i32 = 0
+main :: fn() i32 {
+    num i32 := 0
     return copy(nudsfjasdf)
 }

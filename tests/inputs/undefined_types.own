@@ -1,7 +1,7 @@
 
 
-fn main() i32 {
-    let token Token
+main :: fn() i32 {
+    token Token :
 
     return 0
 }

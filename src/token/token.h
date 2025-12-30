@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "strv.h"
-#include "newstring.h"
+#include <strv.h>
+#include <local_string.h>
 
 #define token_print(mode, token) strv_print(token_print_internal(&a_temp, mode, token))
 
@@ -37,6 +37,10 @@ typedef enum {
     TOKEN_LOGICAL_NOT,
     TOKEN_BITWISE_NOT,
     TOKEN_UNSAFE_CAST,
+
+    // right unary operators
+    TOKEN_ORELSE,
+    TOKEN_QUESTION_MARK,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -74,6 +78,8 @@ typedef enum {
     TOKEN_DEFER,
     TOKEN_DOUBLE_TICK,
     TOKEN_ONE_LINE_BLOCK_START,
+    TOKEN_UNDERSCORE,
+    TOKEN_AT_SIGN,
 
     // keywords
     TOKEN_FN,
@@ -86,20 +92,17 @@ typedef enum {
     TOKEN_RETURN,
     TOKEN_EXTERN,
     TOKEN_STRUCT,
-    TOKEN_LET,
     TOKEN_IN,
     TOKEN_BREAK,
     TOKEN_YIELD,
     TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
-    TOKEN_TYPE_DEF,
     TOKEN_GENERIC_TYPE,
     TOKEN_IMPORT,
     TOKEN_DEF,
     TOKEN_SIZEOF,
     TOKEN_COUNTOF,
     TOKEN_USING,
-    TOKEN_ORELSE,
 
     // comment
     TOKEN_COMMENT,
@@ -110,9 +113,8 @@ typedef enum {
 
 typedef struct {
     Strv text;
-    TOKEN_TYPE type;
-
     Pos pos;
+    TOKEN_TYPE type;
 } Token;
 
 typedef enum {
@@ -130,6 +132,8 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token);
 static inline bool token_is_literal(Token token) {
     switch (token.type) {
         case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_AT_SIGN:
             return false;
         case TOKEN_SINGLE_PLUS:
             return false;
@@ -207,8 +211,6 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_STRUCT:
             return false;
-        case TOKEN_LET:
-            return false;
         case TOKEN_IN:
             return false;
         case TOKEN_BREAK:
@@ -226,8 +228,6 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_CHAR_LITERAL:
             return true;
         case TOKEN_CONTINUE:
-            return false;
-        case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_CASE:
             return false;
@@ -282,6 +282,10 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_ORELSE:
             return false;
+        case TOKEN_QUESTION_MARK:
+            return false;
+        case TOKEN_UNDERSCORE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -292,6 +296,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
     switch (token.type) {
         case TOKEN_SINGLE_MINUS:
             return true;
+        case TOKEN_AT_SIGN:
+            return false;
         case TOKEN_SINGLE_PLUS:
             return true;
         case TOKEN_ASTERISK:
@@ -344,8 +350,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_EXTERN:
             return false;
-        case TOKEN_LET:
-            return false;
         case TOKEN_IN:
             return false;
         case TOKEN_BREAK:
@@ -370,8 +374,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_GREATER_OR_EQUAL:
             return true;
-        case TOKEN_TYPE_DEF:
-            return false;
         case TOKEN_SINGLE_DOT:
             return true;
         case TOKEN_COMMA:
@@ -442,6 +444,10 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_ORELSE:
             return true;
+        case TOKEN_QUESTION_MARK:
+            return true;
+        case TOKEN_UNDERSCORE:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -482,6 +488,8 @@ static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE 
 static inline bool token_is_binary(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_AT_SIGN:
             return false;
         case TOKEN_SINGLE_PLUS:
             return true;
@@ -551,8 +559,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_STRUCT:
             return false;
-        case TOKEN_LET:
-            return false;
         case TOKEN_IN:
             return false;
         case TOKEN_BREAK:
@@ -575,8 +581,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_GREATER_OR_EQUAL:
             return true;
-        case TOKEN_TYPE_DEF:
-            return false;
         case TOKEN_SWITCH:
             return false;
         case TOKEN_CASE:
@@ -632,6 +636,10 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_USING:
             return false;
         case TOKEN_ORELSE:
+            return false;
+        case TOKEN_QUESTION_MARK:
+            return false;
+        case TOKEN_UNDERSCORE:
             return false;
         case TOKEN_COUNT:
             unreachable("");

@@ -1,18 +1,21 @@
 
-type io import = std.io
+io :: import = std.io
 using io
 
-type Str def = Local_str
+// TODO: uncomment below (but use dummy std instead of actual std to allow for better control over the output)
+// TODO: below gives different error on windows then on linux
+// TODO: on linux, below gives two errors. It should likely only give one.
+//Str :: def Local_str
 
-type Local_str struct {
+Local_str :: struct {
     buf u8*
     count u64
 }
 
-fn puts() i32 {
+puts :: fn() i32 {
 }
 
-fn main() i32 {
+main :: fn() i32 {
     print_str("hello")
 
     return 0

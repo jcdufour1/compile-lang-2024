@@ -1,2 +1,2 @@
 
-fn array_access()
+array_access :: fn()

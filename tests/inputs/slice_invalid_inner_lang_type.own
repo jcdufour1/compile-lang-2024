@@ -1,8 +1,8 @@
 
-type coll import = std.collections
+coll :: import = std.collections
 
 
-fn main() i32 {
-    let slice coll.Slice(<Thing>) = [98, 43]
+main :: fn() i32 {
+    slice coll.Slice(<Thing>) := [98, 43]
     return 0
 }

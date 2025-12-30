@@ -1,13 +1,13 @@
-type io import = std.io
+io :: import = std.io
 
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
-fn main() i32 {
-    let div Div = {
+main :: fn() i32 {
+    div Div := {
         .numerator = 87,
         .denominator = 13
     }

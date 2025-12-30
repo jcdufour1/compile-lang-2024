@@ -1,13 +1,13 @@
 #include <tast.h>
+#include <uast.h>
 #include <ir_utils.h>
 #include <util.h>
-#include <tast_serialize.h>
 #include <lang_type_print.h>
 #include <pos_util.h>
 
 #include <symbol_table.h>
 
-static void extend_scope(String* buf, Scope_id scope_id, Indent indent) {
+static void tast_extend_scope(String* buf, Scope_id scope_id, Indent indent) {
     string_extend_cstr_indent(&a_temp, buf, "scope: ", indent);
     string_extend_size_t(&a_temp, buf, scope_id);
     string_extend_cstr(&a_temp, buf, "\n");
@@ -120,7 +120,7 @@ Strv tast_function_call_print_internal(const Tast_function_call* fun_call, Inden
     string_extend_strv(&a_temp, &buf, tast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Strv arg_text = tast_expr_print_internal(vec_at(fun_call->args, idx), indent + INDENT_WIDTH);
+        Strv arg_text = tast_expr_print_internal(darr_at(fun_call->args, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, &buf, arg_text);
     }
 
@@ -136,7 +136,7 @@ Strv tast_struct_literal_print_internal(const Tast_struct_literal* lit, Indent i
     string_extend_cstr(&a_temp, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Strv memb_text = tast_expr_print_internal(vec_at(lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = tast_expr_print_internal(darr_at(lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, &buf, memb_text);
     }
 
@@ -151,7 +151,7 @@ Strv tast_tuple_print_internal(const Tast_tuple* lit, Indent indent) {
     string_extend_strv(&a_temp, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, lang_type_tuple_const_wrap(lit->lang_type)));
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Strv memb_text = tast_expr_print_internal(vec_at(lit->members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = tast_expr_print_internal(darr_at(lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, &buf, memb_text);
     }
 
@@ -296,7 +296,7 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     string_extend_cstr_indent(&a_temp, &buf, "lang_type: ", indent + INDENT_WIDTH);
     string_extend_strv(&a_temp, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, block->lang_type));
 
-    extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
+    tast_extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
     string_extend_cstr(&a_temp, &buf, "\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "parent_block_scope: ", indent + INDENT_WIDTH);
@@ -304,13 +304,13 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     string_extend_cstr(&a_temp, &buf, "\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
-    usymbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
+    usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-    symbol_extend_table_internal(&buf, vec_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
+    symbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Strv arg_text = tast_stmt_print_internal(vec_at(block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = tast_stmt_print_internal(darr_at(block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, &buf, arg_text);
     }
 
@@ -323,7 +323,7 @@ Strv tast_function_params_print_internal(const Tast_function_params* function_pa
     string_extend_cstr_indent(&a_temp, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Strv arg_text = tast_variable_def_print_internal(vec_at(function_params->params, idx), indent);
+        Strv arg_text = tast_variable_def_print_internal(darr_at(function_params->params, idx), indent);
         string_extend_strv(&a_temp, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -444,6 +444,20 @@ Strv tast_label_print_internal(const Tast_label* label, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv tast_array_def_print_internal(const Tast_array_def* def, Indent indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&a_temp, &buf, "array_def", indent);
+    extend_pos(&buf, def->pos);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->item_type);
+    string_extend_cstr(&a_main, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "count:", indent);
+    string_extend_int64_t(&a_temp, &buf, def->count);
+    string_extend_cstr(&a_main, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Strv tast_defer_print_internal(const Tast_defer* defer, Indent indent) {
     String buf = {0};
 
@@ -459,7 +473,7 @@ Strv tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, Indent
     string_extend_cstr_indent(&a_temp, &buf, "if_else_chain\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
-        Strv arg_text = tast_if_print_internal(vec_at(if_else->tasts, idx), indent);
+        Strv arg_text = tast_if_print_internal(darr_at(if_else->tasts, idx), indent);
         string_extend_strv(&a_temp, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -512,7 +526,7 @@ static void extend_struct_def_base(String* buf, const char* type_name, Struct_de
     string_extend_cstr(&a_temp, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = tast_variable_def_print_internal(vec_at(base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = tast_variable_def_print_internal(darr_at(base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&a_temp, buf, memb_text);
     }
 }
@@ -606,6 +620,8 @@ Strv tast_def_print_internal(const Tast_def* def, Indent indent) {
             return tast_import_path_print_internal(tast_import_path_const_unwrap(def), indent);
         case TAST_LABEL:
             return tast_label_print_internal(tast_label_const_unwrap(def), indent);
+        case TAST_ARRAY_DEF:
+            return tast_array_def_print_internal(tast_array_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

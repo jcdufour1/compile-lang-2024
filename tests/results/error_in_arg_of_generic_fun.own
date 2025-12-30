@@ -2,7 +2,7 @@ compile::stdout 0
 
 compile::stderr 5
 tests/inputs/error_in_arg_of_generic_fun.own:9:17:[1;31merror[0;39m:symbol `nudsfjasdf` is not defined
-     8 |     let num i32 = 0
+     8 |     num i32 := 0
      9 |     return copy(nudsfjasdf)
        |                 ^
     10 | }

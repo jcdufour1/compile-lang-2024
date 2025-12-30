@@ -1,8 +1,8 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn main() i32 {
-    let result i32 = 82*4 + 
+main :: fn() i32 {
+    result i32 := 82*4 + 
         2
     io.printf("%d\n", result)
     return 0

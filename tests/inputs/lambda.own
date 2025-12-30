@@ -1,0 +1,27 @@
+io :: import = std.io
+
+do_thing :: fn(action fn()void) {
+    action()
+}
+
+do_thing_2 :: fn(action fn(i32)void) {
+    action(902)
+}
+
+main :: fn() i32 {
+    callback fn()void := fn()void {
+        io.print_str("hello1")
+    }
+    do_thing(callback)
+
+    do_thing(fn()void {
+        io.print_str("hello2")
+    })
+
+    do_thing_2(fn(num i32)void {
+        io.print_str("hello3")
+        io.print_int(num)
+    })
+
+    return 0
+}

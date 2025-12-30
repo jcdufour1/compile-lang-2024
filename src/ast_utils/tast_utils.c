@@ -10,15 +10,15 @@ Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
 
 Tast_expr* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Tast_expr* new_lit = NULL;
-    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos)));
+    unwrap(try_set_expr_types(&new_lit, util_uast_literal_new_from_int64_t(value, token_type, pos), true));
     return new_lit;
 }
 
-Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type, bool is_actually_used_as_expr) {
     Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
-    unwrap(try_set_binary_types(&new_tast, binary));
+    unwrap(try_set_binary_types(&new_tast, binary, is_actually_used_as_expr));
 
     return tast_operator_unwrap(new_tast);
 }
@@ -29,7 +29,11 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child)),
         if_cond_child,
         BINARY_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), 32, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(
+            lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)),
+            32/*TODO*/,
+            0
+        )))
     );
 
     return tast_binary_wrap(binary);
@@ -40,7 +44,7 @@ size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type(vec_at(base.members, idx)->lang_type);
+        uint64_t curr_size = sizeof_lang_type(darr_at(base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

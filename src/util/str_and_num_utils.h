@@ -28,7 +28,11 @@ Name util_literal_name_new_prefix_scope_internal(
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
 static inline Name util_literal_name_new_poison(void) {
-    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0});
+    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+}
+
+static inline Ir_name util_literal_ir_name_new_poison(void) {
+    return ir_name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 }
 
 #define util_literal_ir_name_new(ir_name_tables) \
@@ -44,6 +48,8 @@ size_t get_count_excape_seq(Strv strv);
 
 // \n excapes are actually stored as is in tokens and irs, but should be printed as \0a
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv);
+
+size_t strv_with_excapes_count_chars(Strv strv);
 
 static bool isdigit_no_underscore(char prev, char curr);
 
@@ -70,5 +76,9 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
 
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
+
+Strv serialize_double(double num);
+
+bool check_string_literal_is_valid(Strv lit_text, Pos pos);
 
 #endif // STR_AND_NUM_UTILS_H

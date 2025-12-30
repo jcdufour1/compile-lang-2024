@@ -1,8 +1,8 @@
-type io import = std.io
-type coll import = std.collections
+io :: import = std.io
+coll :: import = std.collections
 
-fn main() i32 {
-    let slice coll.Slice(<i32>) = [87, 131]
+main :: fn() i32 {
+    slice coll.Slice(<i32>) := [87, 131]
 
     io.printf("%d\n", coll.slice_at(<i32>)(slice, 0))
     io.printf("%d\n", coll.slice_at(<i32>)(slice, 1))

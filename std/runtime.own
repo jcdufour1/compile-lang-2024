@@ -1,35 +1,58 @@
 // TODO: consider making Slice.count type generic (probably implement default arguments for generics first)
 // TODO: count should be usize by default when usize is implemented
 
-type Slice struct(<ItemT>) {
+Slice :: struct(<ItemT>) {
     buf ItemT*
     count usize
 }
 
-type Optional enum(<ItemT>) {
+Optional :: enum(<ItemT>) {
     some ItemT
     none
 }
 
+Result :: enum(<OkT, ErrorT>) {
+    ok OkT
+    error ErrorT
+}
+
+File :: struct {
+    file opaque*
+}
+
 // TODO: move assert function to runtime?
-fn slice_at_ref(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
+slice_at_ref :: fn(<ItemT>)(slice ItemT[], index u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     assert(index < slice.count, "out of bounds", .file = file, .line = line, .column = column);
     return &buf_at(slice.buf, index)
 }
 
-extern("c") fn strlen(cstr u8*) u64
+own_printf :: extern("c") fn(format Str, args opaque...) i32
+own_fprintf :: extern("c") fn(file File, format Str, args opaque...) i32
 
-fn bitwise_not(<NumT>)(num NumT) NumT {
+// TODO: remove keep_going parameter from std?
+assert :: fn(condition u1, message Str = "", keep_going u1 = 0, file Str = #file, line i32 = #line, column i32 = #column) {
+    if (!condition) {
+        own_fprintf(
+            {own_stderr()},
+            "%.*s:%d:%d:assertion failure: %s\n",
+            unsafe_cast<i32>file.count,
+            file.buf,
+            unsafe_cast<i32>line,
+            unsafe_cast<i32>column,
+            message
+        )
+        if (!keep_going) {
+            abort()
+        }
+    }
+}
+
+bitwise_not :: fn(<NumT>)(num NumT) NumT {
     return unsafe_cast<NumT>(-1)^num
 }
 
-type PrintFormatArg struct(<BufT>) {
-    item opaque*
-    print_item_fn fn(BufT, fn(BufT, u8)void, opaque*)void
-}
+own_stdout :: extern("c") fn() opaque*
+own_stderr :: extern("c") fn() opaque*
+own_stdin :: extern("c") fn() opaque*
 
-type PrintFormat struct(<BufT>) {
-    format Str
-    args PrintFormatArg(<BufT>)[]
-}
-
+abort :: extern("c") fn()

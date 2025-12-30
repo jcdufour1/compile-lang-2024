@@ -1,11 +1,11 @@
 
 
-type c import = std.libc
-type util import = std.util
-type posix import = std.posix
+c :: import = std.libc
+util :: import = std.util
+posix :: import = std.posix
 
-fn srand(seed util.Optional(<i32>) = .none) {
-    if let .some(num) = seed {
+srand :: fn(seed util.Optional(<i32>) = .none) {
+    if .some(num) := seed {
         c.srand(num)
         return
     }
@@ -13,6 +13,6 @@ fn srand(seed util.Optional(<i32>) = .none) {
 }
 
 // min and max are inclusive
-fn int_range(min i32, max i32) i32 {
+int_range :: fn(min i32, max i32) i32 {
     return min + c.rand()%(max - min)
 }

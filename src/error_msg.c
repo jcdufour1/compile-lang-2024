@@ -6,11 +6,41 @@
 #include <pos_util.h>
 #include <file.h>
 
+static Strv mod_path_param_normalize(Arena* arena, Strv mod_path) {
+#   ifndef _WIN32
+        return mod_path;
+#   endif // __WIN32
+
+    if (!params.print_posix_msg) {
+        return mod_path;
+    }
+
+    String new_path = {0};
+    for (size_t idx = 0; idx < mod_path.count; idx++) {
+        char curr_ch = strv_at(mod_path, idx);
+        darr_append(arena, &new_path, curr_ch == '\\' ? '/' : curr_ch);
+    }
+    return string_to_strv(new_path);
+}
+
 static void show_location_error(Pos pos) {
-    Strv* file_con_ = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
-    Strv file_con = *file_con_;
-    unwrap(pos.line > 0);
+    Strv file_con = {0};
+    if (strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
+        // TODO: cache this string (in case error happens in command line args multiple times)?
+        String buf = {0};
+        for (int idx = 0; idx < params.argc; idx++) {
+            if (idx > 0) {
+                string_extend_cstr(&a_leak, &buf, " ");
+            }
+            string_extend_cstr(&a_leak, &buf, params.argv[idx]);
+        }
+        file_con = string_to_strv(buf);
+    } else {
+        Strv* file_con_ = NULL;
+        unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
+        file_con = *file_con_;
+        unwrap(pos.line > 0);
+    }
 
     if (pos.line > 1) {
         uint32_t line = 1;
@@ -20,7 +50,7 @@ static void show_location_error(Pos pos) {
         size_t count_prev = 0;
         {
             Strv temp_file_text = file_con;
-            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+            while (file_con.count > 0 && strv_first(temp_file_text) != '\n') {
                 count_prev++;
                 strv_consume(&temp_file_text);
             }
@@ -35,7 +65,7 @@ static void show_location_error(Pos pos) {
     size_t count_curr = 0;
     {
         Strv temp_file_text = file_con;
-        while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+        while (temp_file_text.count > 0 && strv_first(temp_file_text) != '\n') {
             count_curr++;
             strv_consume(&temp_file_text);
         }
@@ -54,7 +84,7 @@ static void show_location_error(Pos pos) {
         size_t count_next = 0;
         {
             Strv temp_file_text = file_con;
-            while (file_con.count > 0 && strv_front(temp_file_text) != '\n') {
+            while (file_con.count > 0 && strv_first(temp_file_text) != '\n') {
                 count_next++;
                 strv_consume(&temp_file_text);
             }
@@ -81,10 +111,6 @@ static Defered_msg defered_msg_new(
         .pos_in_defered_msgs = pos_in_defered_msgs
     };
 }
-
-#define QSORT_LESS_THAN (-1)
-#define QSORT_EQUAL 0
-#define QSORT_MORE_THAN 1
 
 static int defered_msg_compare(const void* lhs_, const void* rhs_) {
     const Defered_msg* lhs = lhs_;
@@ -126,7 +152,7 @@ static int defered_msg_compare(const void* lhs_, const void* rhs_) {
 
 void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_msg) {
     fprintf(stderr, FMT, strv_print(actual_msg));
-    if (pos.line > 0) {
+    if (pos.line > 0 || strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
         show_location_error(pos);
     }
 
@@ -143,7 +169,7 @@ void msg_internal_actual_print(const char* file, int line, Pos pos, Strv actual_
             get_log_level_str(LOG_NOTE)
         );
         fprintf(stderr, "in expansion of def\n");
-        if (exp_from->line > 0) {
+        if (exp_from->line > 0 || strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
             show_location_error(*exp_from);
         }
 
@@ -161,11 +187,11 @@ void print_all_defered_msgs(void) {
 
     qsort(env.defered_msgs.buf, env.defered_msgs.info.count, sizeof(env.defered_msgs.buf[0]), defered_msg_compare);
 
-    vec_foreach(idx, Defered_msg, curr, env.defered_msgs) {
+    darr_foreach(idx, Defered_msg, curr, env.defered_msgs) {
         msg_internal_actual_print(curr.file, curr.line, curr.pos_actual_msg, curr.actual_msg);
     }
 
-    vec_reset(&env.defered_msgs);
+    darr_reset(&env.defered_msgs);
 }
 
 __attribute__((format (printf, 5, 6)))
@@ -192,7 +218,7 @@ void msg_internal(
 
     Pos pos_for_sort = pos;
     if (log_level == LOG_NOTE && env.defered_msgs.info.count > 0) {
-        pos_for_sort = vec_top(env.defered_msgs).pos_for_sort;
+        pos_for_sort = darr_top(env.defered_msgs).pos_for_sort;
     }
 
     if (log_level >= LOG_ERROR) {
@@ -211,38 +237,48 @@ void msg_internal(
         if (1) {
             if (pos.line < 1) {
                 buf_cap_needed = (size_t)snprintf(NULL, 0, "%s:", get_log_level_str(log_level));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed += max(buf_cap_needed, second_count);
+                buf_cap_needed += max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             } else {
                 buf_cap_needed = max(buf_cap_needed, (size_t)snprintf(
                     NULL,
                     0,
                     FMT":%d:%d:%s:",
-                    strv_print(pos.file_path),
+                    strv_print(mod_path_param_normalize(&a_leak, pos.file_path)),
                     pos.line,
                     pos.column,
                     get_log_level_str(log_level)
                 ));
-                size_t second_count = (size_t)vsnprintf(NULL, 0, format, args_copy);
-                buf_cap_needed = max(buf_cap_needed, second_count);
+                buf_cap_needed = max(buf_cap_needed, (size_t)vsnprintf(NULL, 0, format, args_copy));
             }
         }
         buf_cap_needed += 1;
 
         static String temp_buf = {0};
         temp_buf.info.count = 0;
-        vec_reserve(&a_leak, &temp_buf, buf_cap_needed);
+        darr_reserve(&a_leak, &temp_buf, buf_cap_needed);
         temp_buf.info.count = buf_cap_needed;
 
         String actual_buf = {0};
         if (pos.line < 1) {
-            snprintf(temp_buf.buf, temp_buf.info.count, "%s:", get_log_level_str(log_level));
+            if (strv_is_equal(pos.file_path, MOD_PATH_COMMAND_LINE)) {
+                snprintf(temp_buf.buf, temp_buf.info.count, "<command line>:%s:", get_log_level_str(log_level));
+            } else {
+                snprintf(temp_buf.buf, temp_buf.info.count, "%s:", get_log_level_str(log_level));
+            }
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
 
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
         } else {
-            snprintf(temp_buf.buf, temp_buf.info.count, FMT":%d:%d:%s:", strv_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
+            snprintf(
+                temp_buf.buf,
+                temp_buf.info.count,
+                FMT":%d:%d:%s:",
+                strv_print(mod_path_param_normalize(&a_leak, pos.file_path)),
+                pos.line,
+                pos.column,
+                get_log_level_str(log_level)
+            );
             string_extend_cstr(&a_leak, &actual_buf, temp_buf.buf);
             
             vsnprintf(temp_buf.buf, temp_buf.info.count, format, args);
@@ -252,7 +288,7 @@ void msg_internal(
             msg_internal_actual_print(file, line, pos, string_to_strv(actual_buf));
         } else {
             size_t pos_in_defered_msgs = env.defered_msgs.info.count;
-            vec_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, pos_for_sort, string_to_strv(actual_buf), pos_in_defered_msgs));
+            darr_append(&a_leak, &env.defered_msgs, defered_msg_new(file, line, pos, pos_for_sort, string_to_strv(actual_buf), pos_in_defered_msgs));
         }
     }
 

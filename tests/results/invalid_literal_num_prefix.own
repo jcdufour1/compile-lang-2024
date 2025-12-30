@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/invalid_literal_num_prefix.own:3:19:[1;31merror[0;39m:invalid literal prefix `0u`
-     2 | fn main() i32 {
-     3 |     let num i32 = 0u1234
-       |                   ^
+tests/inputs/invalid_literal_num_prefix.own:3:16:[1;31merror[0;39m:invalid literal prefix `0u`
+     2 | main :: fn() i32 {
+     3 |     num i32 := 0u1234
+       |                ^
      4 |     return 0
 
 compile::return_code 1

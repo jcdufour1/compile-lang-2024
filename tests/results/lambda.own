@@ -1,0 +1,10 @@
+compile::stdout 4
+hello1
+hello2
+hello3
+902
+
+compile::stderr 0
+
+compile::return_code 0
+

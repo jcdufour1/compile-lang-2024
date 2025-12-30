@@ -1,19 +1,21 @@
 
-type io import = std.io
+io :: import = std.io
 
 
-fn main() i32 {
-    let nums i32[3] = [8, 76]
+main :: fn() i32 {
+    nums i32[3] := [8, 76]
 
     for idx usize in 0..nums.count {
         io.print_int(<i32>)(nums[idx], "\n")
     }
 
-    let nums2 i32[3] = [87, 23, 5, 1]
+    nums2 i32[3] := [87, 23, 5, 1]
 
-    let count_things i32 = nums.count_things
+    count_things i32 := nums.count_things
 
-    let nums3 i32[UNDEFINED] = [82]
+    nums3 i32[UNDEFINED] := [82]
+
+    nums4 i32[_] :
 
     return 0
 }

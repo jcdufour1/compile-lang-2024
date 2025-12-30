@@ -37,7 +37,6 @@ static Ir* rm_void_def(Ir_def* def) {
         case IR_VARIABLE_DEF:
             return rm_void_variable_def(ir_variable_def_unwrap(def));
         case IR_STRUCT_DEF:
-            // TODO
             return ir_def_wrap(def);
         case IR_PRIMITIVE_DEF:
             todo();
@@ -54,12 +53,10 @@ static Ir* rm_void_def(Ir_def* def) {
 static Ir* rm_void_expr(Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
-            // TODO
             return ir_expr_wrap(expr);
         case IR_LITERAL:
             return ir_expr_wrap(expr);
         case IR_FUNCTION_CALL:
-            // TODO
             return ir_expr_wrap(expr);
     }
     unreachable("");
@@ -124,8 +121,8 @@ static Ir* rm_void_ir(Ir* ir) {
 
 static Ir* rm_void_block(Ir_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        assert(vec_at(block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
-        *vec_at_ref(&block->children, idx) = rm_void_ir(vec_at(block->children, idx));
+        assert(darr_at(block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
+        *darr_at_ref(&block->children, idx) = rm_void_ir(darr_at(block->children, idx));
     }
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);

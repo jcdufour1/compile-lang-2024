@@ -1,7 +1,3 @@
-#
-, operator (like in "vec_at" macro)
-should := be assignment operator?
-
 
 
 # generics
@@ -58,17 +54,6 @@ for generics:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
     -- have proper delimeters (eg. space)
-- for below, figure out why order is wrong:
-    tests/inputs/uninitialized.own:47:19:note:tracing path of uninitialized variable use
-        46 |     switch way {
-        47 |         case .way1: break
-           |                   ^
-        48 |         case .way2: status = 4
-    tests/inputs/uninitialized.own:46:5:note:tracing path of uninitialized variable use
-        45 |     let status i32
-        46 |     switch way {
-           |     ^
-        47 |         case .way1: break
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
@@ -105,18 +90,37 @@ for generics:
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
-- member_name of member access should not be substituted in generic substitution
-- do_test.py should have confirmation before update
+- member_name of member access should not be substituted in generic substitution?
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
-- append own to all symbols when emitting c to prevent collisions with third party libraries, etc.
-- in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
-     be able to remove u64. fix bug that prevents it from being possible.
-- figure out why this does not work:
-    fn do_nothing(pretend_fn fn()) {
+- store pos in Uast_struct_def_base?
+- store pos in Tast_struct_def_base?
+- allow struct literal designated args to be in any order
+- float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
+- expected failure case for generic parameter having the same name as top level function
+- make better hash table system (use autogen or use library)
+- see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
+- document or make functions for uast_def_get_ulang_type
+- make test case for passing args after --run and using argv in program
+- test case for def alias used within struct literal generic arg
+- make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
+- in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
+- add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
+- fix uninitialized warning with gcc (could be gcc bug?)
+- add methods?
+- todo should call local_exit?
+- test log_(usymbol|symbol|ir)_level in ci
+- make loc printing work for uasts and tasts
+- in python script, use mutex, etc. to reduce race conditions
+- fix warnings in windows ci
+
+
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
+- directive to run code at compile time
+- tuples
+- tutorial (place in tutorial directory, etc. start file names with 001, etc.)
 - constraints in generics
 - orelse, !!, ??, etc.
 - extern("c") defintions
@@ -124,9 +128,8 @@ for generics:
 - global constants
 - global variables
 - way to get tag of sum (be sure that checking if sums are equal is possible)
-- mandatory initialization or similar
-- manual zero initialization
-- safe cast (use "cast(<i64>)" to cast num to i64)?
+- std function for manual zero initialization
+- safe cast (use "cast(<i64>)" to cast num to i64, or use go style casting (eg. "i64(num)")?
 - test for break in switch case 
 - distinct
 - pointer generic
@@ -154,7 +157,14 @@ continue(<thing>)
 - fix printing for lang_type in msg to not put newline
 - expected failure case for invalid type in extern "c" function
 - expected success test that excaped " is supported in string literal
-
+- write documentation
+- documentation should note that using can emulate inheritance in structs (I also need expected
+    success test case for that)
+- use libclang to get extern c declarations automatically
+- use libclang for help with c abi (so that i can actually use llvm?)
+- use libclang to get size of c types (and use size of c types stored locally in project as fallback)
+- use c89 for the c backend instead of c99 for better compatibility
+- stop using todo macro in main branch?
 
 
 
@@ -173,10 +183,10 @@ continue(<thing>)
       }
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
-- when generics are mature, use them to associate custom allocators with things
+- use generics to associate custom allocators with things?
 - for testing: make overview grid that uses one letter per test to make it easier to see what tests pass
-- windows support (including ci)
 - support alternative backend
+- make single colon and double colon separate token types
 
 
 # in the far future
@@ -184,3 +194,6 @@ continue(<thing>)
 - dynamic dispatch in generics (function pointers, constant expressions, etc. should be stored in 
     table; there should be one table per generic variant)
 - function to set break point in source code (eg. `breakpoint`)
+- use own calling convention
+    - types larger than 16 bytes should by passed by pointer?
+- array of structs and structs of array options

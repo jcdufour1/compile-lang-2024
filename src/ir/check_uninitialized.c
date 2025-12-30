@@ -3,8 +3,7 @@
 #include <msg.h>
 #include <ir_utils.h>
 #include <name.h>
-#include <ulang_type_get_pos.h>
-#include <bool_vec.h>
+#include <bool_darr.h>
 #include <symbol_log.h>
 #include <cfg_foreach.h>
 
@@ -12,15 +11,15 @@
 
 static void check_unit_ir_builtin(const Ir* ir);
 
-//static Frame_vec already_run_frames = {0};
+//static Frame_darr already_run_frames = {0};
 static bool check_unit_src_internal_name_failed = false;
 
 static size_t block_pos = {0};
 static size_t cfg_node_idx = 0;
 static Init_table* curr_cfg_node_area = NULL;
-static Init_table_vec cfg_node_areas = {0};
-static Cfg_node_vec curr_block_cfg = {0};
-static Ir_vec curr_block_children = {0};
+static Init_table_darr cfg_node_areas = {0};
+static Cfg_node_darr curr_block_cfg = {0};
+static Ir_darr curr_block_children = {0};
 static bool print_errors_for_unit;
 
 // TODO: rename unit to uninit?
@@ -49,7 +48,7 @@ static void check_unit_src_internal_literal(const Ir_literal* lit) {
 static void check_unit_src_internal_function_call(const Ir_function_call* call, Pos pos, Loc loc) {
     check_unit_src(call->callee, pos, ir_get_loc(call));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Ir_name curr = vec_at(call->args, idx);
+        Ir_name curr = darr_at(call->args, idx);
         check_unit_src(curr, pos, loc);
     }
 }
@@ -131,16 +130,11 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         return;
     }
 
-    if (name.attrs & ATTR_ALLOW_UNINIT) {
-        return;
-    }
-
     Ir_name at_fun_start = name_to_ir_name(name_new(
         MOD_PATH_BUILTIN,
         sv("at_fun_start"),
-        (Ulang_type_vec) {0},
-        name.scope_id,
-        (Attrs) {0}
+        (Ulang_type_darr) {0},
+        name.scope_id
     ));
 
     Init_table_node* result = NULL;
@@ -162,35 +156,35 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
             DIAG_UNINITIALIZED_VARIABLE, pos,
             "symbol `"FMT"` is used uninitialized on some or all code paths; "
             "note that struct must be initialized with a struct literal or function call "
-            "(individual member accesses do not satisfy initialization requirements)\n", ir_name_print(NAME_MSG, name));
+            "(individual member accesses do not satisfy initialization requirements)\n",
+            ir_name_print(NAME_MSG, name));
     } else {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
 
 #   ifndef NDEBUG
         log(LOG_DEBUG, FMT"\n", loc_print(loc));
-        log(LOG_DEBUG, "%zu\n", cfg_node_areas.info.count);
-        log(LOG_DEBUG, "curr_cfg_node_area idx: %zu\n", cfg_node_idx);
-        log(LOG_DEBUG, "name.scope_id: %zu\n", name.scope_id);
+        log(LOG_DEBUG, ""SIZE_T_FMT"\n", cfg_node_areas.info.count);
+        log(LOG_DEBUG, "curr_cfg_node_area idx: "SIZE_T_FMT"\n", cfg_node_idx);
+        log(LOG_DEBUG, "name.scope_id: "SIZE_T_FMT"\n", name.scope_id);
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
-        name.attrs |= ATTR_ALLOW_UNINIT;
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, name));
 
         log(LOG_DEBUG, "\n\n\n\nTHING THING:\n\n\n\n");
-        vec_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
-            log(LOG_DEBUG, "frame %zu:\n", cfg_node_idx);
+        darr_foreach(cfg_node_idx, Init_table, n_frame, cfg_node_areas) {
+            log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", cfg_node_idx);
             String buf = {0};
-            string_extend_strv(&a_temp, &buf, cfg_node_print_internal(vec_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
+            string_extend_strv(&a_temp, &buf, cfg_node_print_internal(darr_at(curr_block_cfg, cfg_node_idx), cfg_node_idx, INDENT_WIDTH));
             log(LOG_DEBUG, FMT"\n", string_print(buf));
             init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, n_frame, INDENT_WIDTH);
 
             log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, "body at frame\n");
-            for (size_t block_idx = vec_at(curr_block_cfg, cfg_node_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
-                log(LOG_DEBUG, FMT, strv_print(ir_print_internal(vec_at(curr_block_children, block_idx), INDENT_WIDTH)));
+            for (size_t block_idx = darr_at(curr_block_cfg, cfg_node_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
+                log(LOG_DEBUG, FMT, strv_print(ir_print_internal(darr_at(curr_block_children, block_idx), INDENT_WIDTH)));
 
                 if (
                     block_idx + 1 < curr_block_children.info.count &&
-                    ir_is_label(vec_at(curr_block_children, block_idx + 1))
+                    ir_is_label(darr_at(curr_block_children, block_idx + 1))
                 ) {
                     break;
                 }
@@ -198,10 +192,10 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         }
 
     // TODO: make function to log entire cfg_node_areas
-    vec_foreach(idx, Init_table, frame, cfg_node_areas) {
-        log(LOG_DEBUG, "frame %zu:\n", idx);
+    darr_foreach(idx, Init_table, frame, cfg_node_areas) {
+        log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
         init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame, INDENT_WIDTH);
-        //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
+        //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
             //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
             //Init_table_node curr_in_tbl = {0};
             //bool is_init_in_pred = true;
@@ -223,7 +217,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
           
     for (size_t idx = 0; idx < cfg_node_areas.info.count; idx++) {
         // prevent printing error for the same symbol on several code paths
-        init_symbol_add(vec_at_ref(&cfg_node_areas, idx), (Init_table_node) {
+        init_symbol_add(darr_at_ref(&cfg_node_areas, idx), (Init_table_node) {
             .name = name,
             .cfg_node_of_init = idx,
             .block_pos_of_init = 0,
@@ -258,9 +252,12 @@ static void check_unit_src_internal_ir(const Ir* ir, Pos pos, Loc loc) {
         case IR_LOAD_ELEMENT_PTR:
             fallthrough;
         case IR_ARRAY_ACCESS:
-            fallthrough;
+            check_unit_src_internal_name(ir_get_name(LANG_TYPE_MODE_LOG, ir), pos, loc);
+            return;
         case IR_ALLOCA:
-            check_unit_src_internal_name(ir_get_name(ir), pos, loc);
+            if (!(ir_alloca_const_unwrap(ir)->attrs & ATTR_ALLOW_UNINIT)) {
+                check_unit_src_internal_name(ir_get_name(LANG_TYPE_MODE_LOG, ir), pos, loc);
+            }
             return;
         case IR_IMPORT_PATH:
             todo();
@@ -287,12 +284,12 @@ static void check_unit_dest(const Ir_name dest) {
 }
 
 // returns true if the label was found
-// TODO: move this function elsewhere, since this function may be useful for other passes?
-static size_t label_name_to_block_idx(Ir_vec block_children, Ir_name label) {
+// TODO: move this function elsewhere, since this function may be useful for other passes? (or remove this function)
+static size_t label_name_to_block_idx(Ir_darr block_children, Ir_name label) {
     for (size_t idx = 0; idx < block_children.info.count; idx++) {
         // TODO: find a way to avoid O(n) time for finding new block idx 
         //   (eg. by storing approximate idx of block_idx in label definition in eariler pass)
-        const Ir* curr = vec_at(block_children, idx);
+        const Ir* curr = darr_at(block_children, idx);
         if (curr->type == IR_BLOCK) {
             todo();
         }
@@ -319,29 +316,29 @@ static void check_unit_block(const Ir_block* block) {
 
     unwrap(cfg_node_areas.info.count == 0);
     unwrap(curr_cfg_node_area);
-    vec_foreach(idx, Cfg_node, curr1, block->cfg) {
+    darr_foreach(idx, Cfg_node, curr1, block->cfg) {
         (void) curr1;
         if (idx == 0) {
-            vec_append(&a_pass, &cfg_node_areas, *curr_cfg_node_area);
+            darr_append(&a_pass, &cfg_node_areas, *curr_cfg_node_area);
             continue;
         }
-        vec_append(&a_pass, &cfg_node_areas, ((Init_table) {0}));
+        darr_append(&a_pass, &cfg_node_areas, ((Init_table) {0}));
     }
 
     for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
-        vec_foreach(idx, Cfg_node, curr, block->cfg) {
+        darr_foreach(idx, Cfg_node, curr, block->cfg) {
             cfg_node_idx = idx;
-            curr_cfg_node_area = vec_at_ref(&cfg_node_areas, idx);
+            curr_cfg_node_area = darr_at_ref(&cfg_node_areas, idx);
 
             ir_in_cfg_node_foreach(block_idx, curr_ir, curr, block->children) {
                 (void) curr_ir;
                 block_pos = block_idx;
-                check_unit_ir_from_block(vec_at(block->children, block_idx));
+                check_unit_ir_from_block(darr_at(block->children, block_idx));
             }
 
             if (curr.preds.info.count > 0) {
-                size_t pred_0 = vec_at(curr.preds, 0);
-                Init_table_iter iter = init_tbl_iter_new_table(vec_at(cfg_node_areas, pred_0));
+                size_t pred_0 = darr_at(curr.preds, 0);
+                Init_table_iter iter = init_tbl_iter_new_table(darr_at(cfg_node_areas, pred_0));
                 Init_table_node curr_in_tbl = {0};
                 while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
                     bool is_init_in_pred = true;
@@ -353,14 +350,14 @@ static void check_unit_block(const Ir_block* block) {
                         }
                         continue;
                     }
-                    vec_foreach(pred_idx, size_t, pred, curr.preds) {
+                    darr_foreach(pred_idx, size_t, pred, curr.preds) {
                         if (iter_idx < 10) {
                             if (pred_idx >= curr.pred_backedge_start) {
                                 continue;
                             }
                         }
 
-                        Init_table* pred_frame = vec_at_ref(&cfg_node_areas, pred);
+                        Init_table* pred_frame = darr_at_ref(&cfg_node_areas, pred);
                         Init_table_node* dummy = NULL;
                         if (!init_symbol_lookup(pred_frame, &dummy, curr_in_tbl.name)) {
                             is_init_in_pred = false;
@@ -381,7 +378,7 @@ static void check_unit_block(const Ir_block* block) {
 
     cfg_foreach(cfg_node_idx_, curr2, block->cfg) {
         cfg_node_idx = cfg_node_idx_;
-        curr_cfg_node_area = vec_at_ref(&cfg_node_areas, cfg_node_idx);
+        curr_cfg_node_area = darr_at_ref(&cfg_node_areas, cfg_node_idx);
 
         ir_in_cfg_node_foreach(block_idx, ir, curr2, block->children) {
             block_pos = block_idx;
@@ -391,11 +388,11 @@ static void check_unit_block(const Ir_block* block) {
     
 
     // TODO: make function to log entire cfg_node_areas
-    //vec_foreach(idx, Frame, frame, cfg_node_areas) {
-    //    log(LOG_DEBUG, "frame %zu:\n", idx);
+    //darr_foreach(idx, Frame, frame, cfg_node_areas) {
+    //    log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
     //    init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
     //    log(LOG_DEBUG, "\n");
-    //    //vec_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
+    //    //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
     //        //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
     //        //Init_table_node curr_in_tbl = {0};
     //        //bool is_init_in_pred = true;
@@ -414,7 +411,7 @@ static void check_unit_block(const Ir_block* block) {
     //}
     //log(LOG_DEBUG, "\n\n");
 
-    cfg_node_areas = (Init_table_vec) {0};
+    cfg_node_areas = (Init_table_darr) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
     assert(curr_cfg_node_area->count == 0);
     assert(curr_cfg_node_area->capacity == 0);
@@ -426,7 +423,7 @@ static void check_unit_import_path(const Ir_import_path* import) {
 
 static void check_unit_function_params(const Ir_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        check_unit_dest(vec_at(params->params, idx)->name_self);
+        check_unit_dest(darr_at(params->params, idx)->name_self);
     }
 }
 
@@ -435,10 +432,15 @@ static void check_unit_function_decl(const Ir_function_decl* decl) {
 }
 
 static void check_unit_function_def(const Ir_function_def* def) {
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = def->decl->name.mod_path;
+
     unwrap(curr_cfg_node_area);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
     check_unit_block(def->body);
+    
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 static void check_unit_store_another_ir(const Ir_store_another_ir* store) {
@@ -507,7 +509,7 @@ static void check_unit_def(const Ir_def* def) {
 static void check_unit_function_call(const Ir_function_call* call) {
     check_unit_src(call->callee, call->pos, ir_get_loc(call));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
-        Ir_name curr = vec_at(call->args, idx);
+        Ir_name curr = darr_at(call->args, idx);
         check_unit_src(curr, call->pos /* TODO: call->pos may not always be good enough? */, ir_get_loc(call));
     }
 }

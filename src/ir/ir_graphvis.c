@@ -115,18 +115,18 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         bool is_last = idx + 1 >= block->children.info.count;
-        Ir* curr = vec_at(block->children, idx);
-        Ir* next = is_last ? NULL : vec_at(block->children, idx + 1);
+        Ir* curr = darr_at(block->children, idx);
+        Ir* next = is_last ? NULL : darr_at(block->children, idx + 1);
 
         if (idx < 1) {
-            arrow_names_label(buf, block->name, ir_get_name(curr), sv("next"));
+            arrow_names_label(buf, block->name, ir_get_name(LANG_TYPE_MODE_LOG, curr), sv("next"));
         }
 
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
         if (ir_tbl_add_ex(&already_visited, curr)) {
             Ir_name old_parent_block_next = ir_graphvis_parent_block_next;
-            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_get_name(next);
+            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_get_name(LANG_TYPE_MODE_LOG, next);
             ir_graphvis_internal(buf, curr);
             ir_graphvis_parent_block_next = old_parent_block_next;
         }
@@ -137,13 +137,13 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
                 if (ir_graphvis_parent_block_next.base.count > 0) {
                     arrow_names_label(
                         buf,
-                        ir_get_name(curr),
+                        ir_get_name(LANG_TYPE_MODE_LOG, curr),
                         ir_graphvis_parent_block_next,
                         sv("next")
                     );
                 }
             } else {
-                arrow_names_label(buf, ir_get_name(curr), ir_get_name(next), sv("next"));
+                arrow_names_label(buf, ir_get_name(LANG_TYPE_MODE_LOG, curr), ir_get_name(LANG_TYPE_MODE_LOG, next), sv("next"));
             }
         }
     }
@@ -153,7 +153,7 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
     while (ir_tbl_iter_next(&curr, &iter)) {
         if (ir_tbl_add_ex(&already_visited, curr)) {
             todo();
-            arrow_names(buf, block->name, ir_get_name(curr));
+            arrow_names(buf, block->name, ir_get_name(LANG_TYPE_MODE_LOG, curr));
             ir_graphvis_internal(buf, curr);
         }
     }
@@ -165,7 +165,7 @@ static void ir_function_params_graphvis_internal(String* buf, const Ir_function_
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
-        arrow_names_label(buf, params->name, vec_at(params->params, idx)->name_self, string_to_strv(idx_buf));
+        arrow_names_label(buf, params->name, darr_at(params->params, idx)->name_self, string_to_strv(idx_buf));
     }
 }
 
@@ -197,9 +197,9 @@ static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def
 
 static void ir_struct_def_base_graphvis_internal(String* buf, const Ir_struct_def_base* base) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        arrow_names(buf, base->name, vec_at(base->members, idx)->name_self);
+        arrow_names(buf, base->name, darr_at(base->members, idx)->name_self);
         todo();
-        //ir_variable_def_graphvis_internal(buf, vec_at(base->members, idx));
+        //ir_variable_def_graphvis_internal(buf, darr_at(base->members, idx));
     }
 }
 
@@ -311,7 +311,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
-        arrow_names_label(buf, args_name, vec_at(call->args, idx), string_to_strv(idx_buf));
+        arrow_names_label(buf, args_name, darr_at(call->args, idx), string_to_strv(idx_buf));
     }
 
     // TODO: lang_type

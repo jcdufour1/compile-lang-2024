@@ -1,8 +1,8 @@
 
-type add def = add_internal(<i64>)
-type add2 def = add_internal.thing(<i64>)
+add :: def add_internal(<i64>)
+add2 :: def add_internal.thing(<i64>)
 
-fn main() i32 {
+main :: fn() i32 {
     add(<i32>)()
     add2(<i32>)()
     return 0

@@ -1,0 +1,15 @@
+io :: import = std.io
+
+main :: fn() i32 {
+    print_hello :: fn() {
+        io.print_str("hello")
+    }
+
+    aux()
+
+    return 0
+}
+
+aux :: fn() {
+    print_hello()
+}

@@ -10,6 +10,7 @@ typedef enum {
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
 #include <ir_forward_decl.h>
+#include <name.h>
 
 
 typedef struct {
@@ -27,7 +28,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     void** buf;
-} Generic_vec;
+} Generic_darr;
 
 
 typedef struct {
@@ -56,6 +57,20 @@ typedef struct {
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
 } Symbol_table;
+
+
+typedef struct {
+    Tast_def* tast;
+    Strv key;
+    SYM_TBL_STATUS status;
+} Expand_again_table_tast;
+static_assert(sizeof(Expand_again_table_tast) == sizeof(Generic_symbol_table_tast), "");
+
+typedef struct {
+    Expand_again_table_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Expand_again_table;
 
 
 typedef struct {
@@ -93,7 +108,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Init_table* buf;
-} Init_table_vec;
+} Init_table_darr;
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
 
@@ -118,7 +133,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Ir_name_to_name_table* buf;
-} Ir_name_to_name_table_vec;
+} Ir_name_to_name_table_darr;
 
 
 typedef struct {
@@ -142,7 +157,7 @@ typedef struct {
 typedef struct {
     Vec_base info;
     Name_to_ir_name_table* buf;
-} Name_to_ir_name_table_vec;
+} Name_to_ir_name_table_darr;
 
 
 typedef struct {
@@ -215,10 +230,14 @@ typedef struct {
 } File_path_to_text;
 
 
+// TODO: this symbol_collection system is suboptional (come up with a better system):
+//   - Expand_again is only used in one pass, but is stored everywhere
+//   - Symbol_table and Ir_table are stored even in Uast
 typedef struct {
     Usymbol_table usymbol_table;
     Symbol_table symbol_table;
-    Ir_table alloca_table;
+    Ir_table ir_table;
+    Expand_again_table expand_again_table;
 } Symbol_collection;
 
 #endif // SYMBOL_TABLE_STRUCT_H

@@ -29,44 +29,44 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
-Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec, bool use_new_scope, Scope_id new_scope) {
-    Uast_generic_param_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(vec, idx), use_new_scope, new_scope));
+Uast_generic_param_darr uast_generic_param_darr_clone(Uast_generic_param_darr darr, bool use_new_scope, Scope_id new_scope) {
+    Uast_generic_param_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, uast_generic_param_clone(darr_at(darr, idx), use_new_scope, new_scope));
     }
-    return new_vec;
+    return new_darr;
 }
 
-Uast_param_vec uast_param_vec_clone(Uast_param_vec vec, bool use_new_scope, Scope_id new_scope) {
-    Uast_param_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_param_clone(vec_at(vec, idx), use_new_scope, new_scope));
+Uast_param_darr uast_param_darr_clone(Uast_param_darr darr, bool use_new_scope, Scope_id new_scope) {
+    Uast_param_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, uast_param_clone(darr_at(darr, idx), use_new_scope, new_scope));
     }
-    return new_vec;
+    return new_darr;
 }
 
-Uast_if_vec uast_if_vec_clone(Uast_if_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    Uast_if_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_if_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
+Uast_if_darr uast_if_darr_clone(Uast_if_darr darr, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Uast_if_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, uast_if_clone(darr_at(darr, idx), use_new_scope, new_scope, dest_pos));
     }
-    return new_vec;
+    return new_darr;
 }
 
-Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    Uast_expr_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
+Uast_expr_darr uast_expr_darr_clone(Uast_expr_darr darr, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Uast_expr_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, uast_expr_clone(darr_at(darr, idx), use_new_scope, new_scope, dest_pos));
     }
-    return new_vec;
+    return new_darr;
 }
 
-Uast_case_vec uast_case_vec_clone(Uast_case_vec vec, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    Uast_case_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_case_clone(vec_at(vec, idx), use_new_scope, new_scope, dest_pos));
+Uast_case_darr uast_case_darr_clone(Uast_case_darr darr, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Uast_case_darr new_darr = {0};
+    for (size_t idx = 0; idx < darr.info.count; idx++) {
+        darr_append(&a_main, &new_darr, uast_case_clone(darr_at(darr, idx), use_new_scope, new_scope, dest_pos));
     }
-    return new_vec;
+    return new_darr;
 }
 
 Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol, bool use_new_scope, Scope_id new_scope) {
@@ -110,7 +110,7 @@ Uast_index* uast_index_clone(const Uast_index* index, bool use_new_scope, Scope_
 Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_function_call_new(
         fun_call->pos,
-        uast_expr_vec_clone(fun_call->args, use_new_scope, new_scope, dest_pos),
+        uast_expr_darr_clone(fun_call->args, use_new_scope, new_scope, dest_pos),
         uast_expr_clone(fun_call->callee, use_new_scope, new_scope, dest_pos),
         fun_call->is_user_generated
     );
@@ -119,18 +119,18 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
 Uast_struct_literal* uast_struct_literal_clone(const Uast_struct_literal* lit, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_struct_literal_new(
         lit->pos,
-        uast_expr_vec_clone(lit->members, use_new_scope, new_scope, dest_pos)
+        uast_expr_darr_clone(lit->members, use_new_scope, new_scope, dest_pos)
     );
 }
 
 Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_tuple_new(tuple->pos, uast_expr_vec_clone(tuple->members, use_new_scope, new_scope, dest_pos));
+    return uast_tuple_new(tuple->pos, uast_expr_darr_clone(tuple->members, use_new_scope, new_scope, dest_pos));
 }
 
-Uast_macro* uast_macro_clone(const Uast_macro* macro, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+Uast_directive* uast_directive_clone(const Uast_directive* directive, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     (void) new_scope;
     (void) use_new_scope;
-    return uast_macro_new(macro->pos, macro->name, dest_pos);
+    return uast_directive_new(directive->pos, directive->name, dest_pos);
 }
 
 Uast_operator* uast_operator_clone(const Uast_operator* oper, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -207,8 +207,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
     switch (expr->type) {
         case UAST_BLOCK:
             return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
-        case UAST_MACRO:
-            return uast_macro_wrap(uast_macro_clone(uast_macro_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_DIRECTIVE:
+            return uast_directive_wrap(uast_directive_clone(uast_directive_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_OPERATOR:
             return uast_operator_wrap(uast_operator_clone(uast_operator_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_SYMBOL:
@@ -241,6 +241,10 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, bool use_new_scope, Scope_id n
             return uast_orelse_wrap(uast_orelse_clone(uast_orelse_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_FN:
             return uast_fn_wrap(uast_fn_clone(uast_fn_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_QUESTION_MARK:
+            return uast_question_mark_wrap(uast_question_mark_clone(uast_question_mark_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
+        case UAST_UNDERSCORE:
+            return uast_underscore_wrap(uast_underscore_clone(uast_underscore_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
         case UAST_EXPR_REMOVED:
             return uast_expr_removed_wrap(uast_expr_removed_clone(uast_expr_removed_const_unwrap(expr), use_new_scope, new_scope, dest_pos));
     }
@@ -266,8 +270,8 @@ Uast_def* uast_def_clone(const Uast_def* def, bool use_new_scope, Scope_id new_s
         case UAST_VARIABLE_DEF: {
             // TODO: simplify
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def), use_new_scope, new_scope);
-            unwrap(uast_variable_def_const_unwrap(def) != new_def);
-            unwrap(def != uast_variable_def_wrap(new_def));
+            assert(uast_variable_def_const_unwrap(def) != new_def);
+            assert(def != uast_variable_def_wrap(new_def));
             return uast_variable_def_wrap(new_def);
         }
         case UAST_POISON_DEF:
@@ -320,24 +324,16 @@ Uast_continue* uast_continue_clone(const Uast_continue* cont, bool use_new_scope
     );
 }
 
-Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_assignment_new(
-        assign->pos,
-        uast_expr_clone(assign->lhs, use_new_scope, new_scope, dest_pos),
-        uast_expr_clone(assign->rhs, use_new_scope, new_scope, dest_pos)
-    );
-}
-
 Uast_return* uast_return_clone(const Uast_return* rtn, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, use_new_scope, new_scope, dest_pos), rtn->is_auto_inserted);
 }
 
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_if_else_chain_new(if_else->pos, uast_if_vec_clone(if_else->uasts, use_new_scope, new_scope, dest_pos));
+    return uast_if_else_chain_new(if_else->pos, uast_if_darr_clone(if_else->uasts, use_new_scope, new_scope, dest_pos));
 }
 
 Uast_array_literal* uast_array_literal_clone(const Uast_array_literal* if_else, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
-    return uast_array_literal_new(if_else->pos, uast_expr_vec_clone(if_else->members, use_new_scope, new_scope, dest_pos));
+    return uast_array_literal_new(if_else->pos, uast_expr_darr_clone(if_else->members, use_new_scope, new_scope, dest_pos));
 }
 
 Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -347,13 +343,33 @@ Uast_orelse* uast_orelse_clone(const Uast_orelse* orelse, bool use_new_scope, Sc
         uast_expr_clone(orelse->expr_to_unwrap, use_new_scope, new_scope, dest_pos),
         uast_block_clone(orelse->if_error, use_new_scope, new_scope, dest_pos),
         scope,
-        name_clone(orelse->break_out_of, use_new_scope, new_scope)
+        name_clone(orelse->break_out_of, use_new_scope, new_scope),
+        orelse->is_error_symbol,
+        uast_symbol_clone(orelse->error_symbol, use_new_scope, new_scope)
     );
 }
 
 Uast_fn* uast_fn_clone(const Uast_fn* fn, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     (void) dest_pos;
     return uast_fn_new(fn->pos, ulang_type_fn_clone(fn->ulang_type, use_new_scope, new_scope));
+}
+
+Uast_question_mark* uast_question_mark_clone(const Uast_question_mark* mark, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    Scope_id scope = use_new_scope ? new_scope : mark->scope_id;
+    (void) dest_pos;
+    return uast_question_mark_new(
+        mark->pos,
+        uast_expr_clone(mark->expr_to_unwrap, use_new_scope, new_scope, dest_pos),
+        scope,
+        name_clone(mark->break_out_of, use_new_scope, new_scope)
+    );
+}
+
+Uast_underscore* uast_underscore_clone(const Uast_underscore* underscore, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
+    (void) use_new_scope;
+    (void) new_scope;
+    (void) dest_pos;
+    return uast_underscore_new(underscore->pos);
 }
 
 Uast_expr_removed* uast_expr_removed_clone(const Uast_expr_removed* removed, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
@@ -367,7 +383,7 @@ Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, bool use_new_scop
     return uast_switch_new(
         lang_switch->pos,
         uast_expr_clone(lang_switch->operand, use_new_scope, new_scope, dest_pos),
-        uast_case_vec_clone(lang_switch->cases, use_new_scope, new_scope, dest_pos)
+        uast_case_darr_clone(lang_switch->cases, use_new_scope, new_scope, dest_pos)
     );
 }
 
@@ -406,8 +422,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, bool use_new_scope, Scope_id n
             return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_CONTINUE:
             return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
-        case UAST_ASSIGNMENT:
-            return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_RETURN:
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt), use_new_scope, new_scope, dest_pos));
         case UAST_DEFER:
@@ -435,13 +449,19 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, bool use_new_scope, Scope
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, bool use_new_scope, Scope_id new_scope) {
-    return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, use_new_scope, new_scope), name_clone(def->name, use_new_scope, new_scope));
+    return uast_variable_def_new(
+        def->pos,
+        ulang_type_clone(def->lang_type, use_new_scope, new_scope),
+        name_clone(def->name, use_new_scope, new_scope),
+        def->attrs,
+        uast_expr_darr_clone(def->addit_exprs_infer_from, use_new_scope, new_scope, def->pos/*TODO*/)
+    );
 }
 
 Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, bool use_new_scope, Scope_id new_scope) {
     return uast_function_decl_new(
         decl->pos,
-        uast_generic_param_vec_clone(decl->generics, use_new_scope, new_scope),
+        uast_generic_param_darr_clone(decl->generics, use_new_scope, new_scope),
         uast_function_params_clone(decl->params, use_new_scope, new_scope),
         ulang_type_clone(decl->return_type, use_new_scope, new_scope),
         name_clone(decl->name, use_new_scope, new_scope)
@@ -451,15 +471,15 @@ Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, boo
 Uast_function_params* uast_function_params_clone(const Uast_function_params* params, bool use_new_scope, Scope_id new_scope) {
     return uast_function_params_new(
         params->pos,
-        uast_param_vec_clone(params->params, use_new_scope, new_scope)
+        uast_param_darr_clone(params->params, use_new_scope, new_scope)
     );
 }
 
 Uast_block* uast_block_clone(const Uast_block* block, bool use_new_scope, Scope_id parent, Pos dest_pos) {
-    Uast_stmt_vec new_children = {0};
+    Uast_stmt_darr new_children = {0};
     Scope_id scope = use_new_scope ? scope_id_clone(block->scope_id, parent) : block->scope_id;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(block->children, idx), use_new_scope, scope, dest_pos));
+        darr_append(&a_main, &new_children, uast_stmt_clone(darr_at(block->children, idx), use_new_scope, scope, dest_pos));
     }
     return uast_block_new(block->pos, new_children, block->pos_end, scope);
 }

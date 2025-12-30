@@ -14,7 +14,7 @@ static uint64_t bit_width_to_bytes(uint64_t bit_width) {
 }
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
-    if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
+    if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;
     }
 
@@ -33,7 +33,7 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 
 uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
-    if (ir_lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
+    if (ir_lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;
     }
 
@@ -54,29 +54,33 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return sizeof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", lang_type_get_pos(lang_type));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
-        case LANG_TYPE_INT:
+        case LANG_TYPE_LIT:
             // TODO
             return 0;
         case LANG_TYPE_TUPLE:
@@ -95,24 +99,28 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE:
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
-        case LANG_TYPE_ENUM: {
-            Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
-            return alignof_def(def);
-        }
+        case LANG_TYPE_STRUCT:
+            fallthrough;
+        case LANG_TYPE_ENUM:
+            fallthrough;
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
         }
         case LANG_TYPE_ARRAY: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            Name name = {0};
+            if (!lang_type_get_name(&name, lang_type)) {
+                msg_todo("", tast_def_get_pos(def));
+                return 0;
+            }
+            unwrap(symbol_lookup(&def, name));
             return alignof_def(def);
         }
         case LANG_TYPE_VOID:
@@ -120,10 +128,11 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
-            // TODO
-            todo();
-        case LANG_TYPE_INT:
-            todo();
+            msg_todo("", lang_type_get_pos(lang_type));
+            return 0;
+        case LANG_TYPE_LIT:
+            msg_todo("", lang_type_get_pos(lang_type));
+            return 0;
         case LANG_TYPE_REMOVED:
             unreachable("");
     }
@@ -136,7 +145,9 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
             return sizeof_llvm_primitive(ir_lang_type_primitive_const_unwrap(lang_type));
         case IR_LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def, ir_name_to_name(ir_lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type))));
+            Ir_name name = {0};
+            unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
+            unwrap(symbol_lookup(&def, ir_name_to_name(name)));
             return sizeof_def(def);
         }
         case IR_LANG_TYPE_VOID:
@@ -144,6 +155,7 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
         case IR_LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case IR_LANG_TYPE_FN:
+            // TODO
             todo();
     }
     unreachable(FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
@@ -151,6 +163,8 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
 
 uint64_t sizeof_def(const Tast_def* def) {
     switch (def->type) {
+        case TAST_ARRAY_DEF:
+            return sizeof_array_def(tast_array_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return sizeof_lang_type(tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
@@ -159,13 +173,25 @@ uint64_t sizeof_def(const Tast_def* def) {
             return sizeof_struct_def_base(&tast_enum_def_const_unwrap(def)->base, true);
         case TAST_RAW_UNION_DEF:
             return sizeof_struct_def_base(&tast_raw_union_def_const_unwrap(def)->base, true);
-        default:
-            unreachable("");
+        case TAST_LABEL:
+            fallthrough;
+        case TAST_IMPORT_PATH:
+            fallthrough;
+        case TAST_FUNCTION_DEF:
+            fallthrough;
+        case TAST_PRIMITIVE_DEF:
+            fallthrough;
+        case TAST_FUNCTION_DECL:
+            msg_todo("", tast_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
 uint64_t alignof_def(const Tast_def* def) {
     switch (def->type) {
+        case TAST_ARRAY_DEF:
+            return alignof_array_def(tast_array_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return alignof_lang_type(tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
@@ -174,15 +200,40 @@ uint64_t alignof_def(const Tast_def* def) {
             return alignof_struct_def_base(&tast_enum_def_const_unwrap(def)->base);
         case TAST_RAW_UNION_DEF:
             return alignof_struct_def_base(&tast_raw_union_def_const_unwrap(def)->base);
-        default:
-            unreachable("");
+        case TAST_LABEL:
+            fallthrough;
+        case TAST_IMPORT_PATH:
+            fallthrough;
+        case TAST_FUNCTION_DEF:
+            fallthrough;
+        case TAST_PRIMITIVE_DEF:
+            fallthrough;
+        case TAST_FUNCTION_DECL:
+            msg_todo("", tast_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
-uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
+uint64_t sizeof_struct_literal(const Tast_struct_literal* lit) {
     Tast_def* def_ = NULL;
-    unwrap(symbol_lookup(&def_, lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
+    Name name = {0};
+    if (!lang_type_get_name(&name, lit->lang_type)) {
+        msg_todo("", lit->pos);
+        return 0;
+    }
+    unwrap(symbol_lookup(&def_, name));
     return sizeof_struct_def_base(&tast_struct_def_unwrap(def_)->base, false);
+}
+
+// TODO: consider using int64_t instead of uint64_t for bit_width to reduce conversions between unsigned and signed
+uint64_t sizeof_array_def(const Tast_array_def* def) {
+    uint64_t end_alignment = alignof_lang_type(def->item_type);
+    uint64_t total = sizeof_lang_type(def->item_type)*(uint64_t)def->count;
+
+    // TODO: use get_next_multiple function or similar function
+    total += (end_alignment - total%end_alignment)%end_alignment;
+    return total;
 }
 
 uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
@@ -190,7 +241,7 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(base->members, idx);
+        const Tast_variable_def* memb_def = darr_at(base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         end_alignment = max(end_alignment, alignof_lang_type(memb_def->lang_type));
         if (is_sum_type) {
@@ -208,19 +259,13 @@ uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type) {
 uint64_t alignof_struct_def_base(const Struct_def_base* base) {
     uint64_t max_align = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        max_align = max(max_align, alignof_lang_type(vec_at(base->members, idx)->lang_type));
+        max_align = max(max_align, alignof_lang_type(darr_at(base->members, idx)->lang_type));
     }
     return max_align;
 }
 
-uint64_t sizeof_struct_expr(const Tast_expr* struct_literal_or_def) {
-    switch (struct_literal_or_def->type) {
-        case TAST_STRUCT_LITERAL:
-            return sizeof_struct_literal(tast_struct_literal_const_unwrap(struct_literal_or_def));
-        default:
-            unreachable("");
-    }
-    unreachable("");
+uint64_t alignof_array_def(const Tast_array_def* def) {
+    return alignof_lang_type(def->item_type);
 }
 
 static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
@@ -228,9 +273,13 @@ static uint64_t ir_sizeof_expr(const Ir_expr* expr) {
     switch (expr->type) {
         case IR_LITERAL:
             return sizeof_ir_lang_type(ir_literal_get_lang_type(ir_literal_const_unwrap(expr)));
-        default:
-            unreachable("");
+        case IR_OPERATOR:
+            fallthrough;
+        case IR_FUNCTION_CALL:
+            msg_todo("", ir_expr_get_pos(expr));
+            return 0;
     }
+    unreachable("");
 }
 
 static uint64_t ir_sizeof_def(const Ir_def* def) {
@@ -238,9 +287,21 @@ static uint64_t ir_sizeof_def(const Ir_def* def) {
     switch (def->type) {
         case TAST_VARIABLE_DEF:
             return sizeof_ir_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
-        default:
-            unreachable("");
+        case IR_FUNCTION_DEF:
+            fallthrough;
+        case IR_VARIABLE_DEF:
+            fallthrough;
+        case IR_STRUCT_DEF:
+            fallthrough;
+        case IR_FUNCTION_DECL:
+            fallthrough;
+        case IR_LABEL:
+            fallthrough;
+        case IR_LITERAL_DEF:
+            msg_todo("", ir_def_get_pos(def));
+            return 0;
     }
+    unreachable("");
 }
 
 uint64_t ir_sizeof_item(const Ir* item) {
@@ -250,9 +311,35 @@ uint64_t ir_sizeof_item(const Ir* item) {
             return ir_sizeof_expr(ir_expr_const_unwrap(item));
         case TAST_DEF:
             return ir_sizeof_def(ir_def_const_unwrap(item));
-        default:
-            unreachable("");
+        case IR_BLOCK:
+            fallthrough;
+        case IR_LOAD_ELEMENT_PTR:
+            fallthrough;
+        case IR_ARRAY_ACCESS:
+            fallthrough;
+        case IR_FUNCTION_PARAMS:
+            fallthrough;
+        case IR_DEF:
+            fallthrough;
+        case IR_RETURN:
+            fallthrough;
+        case IR_COND_GOTO:
+            fallthrough;
+        case IR_ALLOCA:
+            fallthrough;
+        case IR_LOAD_ANOTHER_IR:
+            fallthrough;
+        case IR_STORE_ANOTHER_IR:
+            fallthrough;
+        case IR_IMPORT_PATH:
+            fallthrough;
+        case IR_STRUCT_MEMB_DEF:
+            fallthrough;
+        case IR_REMOVED:
+            msg_todo("", ir_get_pos(item));
+            return 0;
     }
+    unreachable("");
 }
 
 // TODO: update or remove this function
@@ -263,7 +350,7 @@ uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(base->members, idx);
+        const Tast_variable_def* memb_def = darr_at(base->members, idx);
         uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;

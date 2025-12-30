@@ -15,7 +15,6 @@ syn keyword ownKeyword
     \ if
     \ import
     \ in
-    \ let
     \ switch
     \ type
     \ orelse
@@ -63,8 +62,12 @@ syn match ownFloatLiteral display "\v<[1-9](_*\d)*>\.\v<\d(_*\d)*>"
 syn match ownDelimiter display "[{},()\[\]]"
 syn match ownDelimiter display "(<"
 syn match ownDelimiter display ">)"
+syn match ownDelimiter display "\v\:\:"
 
-syn match ownOperator display "\v[\+\-\*\/\&\=\%\!\^\|\~]"
+" TODO: avoid matching `===`, etc
+syn match ownOperator display "\v[\+\-\*\/\&\=\%\!\^\|\~\?]"
+syn match ownOperator display "\v\.\."
+syn match ownOperator display "\v\:\="
 syn match ownOperator display "[\<]"  " TODO: this also catches < in (<, which could be wrong 
                                       " (however, this may be fine, because operators and delimeters are often the same color anyway)
 syn match ownOperator display "\v\zs[\>]\ze[^\)]"
@@ -84,6 +87,8 @@ syn match ownCharLiteral display "\v'.'"
 syn match ownCharLiteral display "\v'\\.'"
 syn match ownCharLiteral display "\v'\\x\x\x'"
 syn match ownCharLiteral display "\v'\\o\o\o\o'"
+
+syn match ownAttr display "@maybe_uninit"
 
 "
 " hi def links
@@ -106,6 +111,7 @@ hi def link ownDelimiter      Delimiter
 hi def link ownOperator       Operator
 hi def link ownStructLike     Structure
 hi def link ownComment        Comment
+hi def link ownAttr           Special
 
 hi def link ownIntTypeError Error
 hi def link ownFloatTypeError Error

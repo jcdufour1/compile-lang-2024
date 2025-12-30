@@ -1,16 +1,16 @@
 
-fn get_data() (i32, i32) {
+get_data :: fn() (i32, i32) {
     return 87, 21, 3
 }
 
-fn get_data_2() (i32, i32, i32) {
+get_data_2 :: fn() (i32, i32, i32) {
     return 87, 31
 }
 
-fn main() i32 {
-    let num1 i32
-    let num2 i32
-    let num3 i32
+main :: fn() i32 {
+    num1 i32 :
+    num2 i32 :
+    num3 i32 :
 
     num1, num2 = get_data()
     num1, num2, num3 = get_data()

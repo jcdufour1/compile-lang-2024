@@ -1,20 +1,24 @@
 
-#include "util.h"
-#include "newstring.h"
-#include "parameters.h"
+#include <util.h>
+#include <local_string.h>
+#include <parameters.h>
+#include <ast_msg.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <msg.h>
 #include <file.h>
-#include <newstring.h>
-#include <msg_todo.h>
 #include <env.h>
 #include <time.h>
 
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <sys/types.h>
+#ifdef _WIN32
+#   include <winapi_wrappers.h>
+#else
+#   include <sys/stat.h>
+#   include <sys/sysmacros.h>
+#   include <sys/types.h>
+#endif // _WIN32
 
+// TODO: this compiler's handling of line endings on windows may not be robust enough
 bool read_file(Strv* result, Strv file_path) {
     String file_text = {0};
     FILE* file = fopen(strv_dup(&a_main, file_path), "rb");
@@ -30,7 +34,7 @@ bool read_file(Strv* result, Strv file_path) {
     size_t buf_size = 2024;
     size_t amount_read = 0;
     do {
-        vec_reserve(&a_main, &file_text, buf_size);
+        darr_reserve(&a_main, &file_text, buf_size);
         amount_read = fread(file_text.buf + file_text.info.count, 1, buf_size, file);
         file_text.info.count += amount_read;
     } while (amount_read > 0);
@@ -47,8 +51,8 @@ bool read_file(Strv* result, Strv file_path) {
 
     fclose(file);
 
-    if (file_text.info.count < 1 || vec_at(file_text, file_text.info.count - 1) != '\n') {
-        vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
+    if (file_text.info.count < 1 || darr_at(file_text, file_text.info.count - 1) != '\n') {
+        darr_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
     }
     *result = string_to_strv(file_text);
     return true;
@@ -84,7 +88,8 @@ typedef struct {
     FILE_TYPE type;
 } File_type_pair;
 
-static_assert(FILE_TYPE_COUNT == 7, "exhausive handling of file types");
+static_assert(FILE_TYPE_COUNT == 8, "exhausive handling of file types");
+// TODO: add exe
 File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},
@@ -93,28 +98,26 @@ File_type_pair file_type_pairs[] = {
     {"o", FILE_TYPE_OBJECT},
     {"s", FILE_TYPE_LOWER_S},
     {"S", FILE_TYPE_UPPER_S},
+    {"exe", FILE_TYPE_PE_EXE},
 };
 
-FILE_TYPE get_file_type(Strv file_path) {
+bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path) {
     Strv ext = {0};
     if (!get_file_extension(&ext, file_path)) {
-        // TODO: print what user command line option caused this, etc.
-        msg_todo("executable file passed on the command line", POS_BUILTIN);
-        local_exit(EXIT_CODE_FAIL);
+        *err_text = sv("executable file passed on the command line");
+        return false;
     }
 
     for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
         File_type_pair curr = file_type_pairs[idx];
         if (strv_is_equal(sv(curr.text), ext)) {
-            return curr.type;
+            *result = curr.type;
+            return true;
         }
     }
 
-    String buf = {0};
-    string_extend_strv(&a_main, &buf, sv("file with extension ."));
-    string_extend_strv(&a_main, &buf, ext);
-    msg_todo_strv(string_to_strv(buf), POS_BUILTIN);
-    local_exit(EXIT_CODE_FAIL);
+    *err_text = strv_from_f(&a_temp, "file with extension ."FMT, strv_print(ext));
+    return false;
 }
 
 void file_extend_strv(FILE* file, Strv strv) {
@@ -137,7 +140,7 @@ Strv file_strip_extension(Strv file_path) {
 
 Strv file_basename(Strv file_path) {
     Strv new_path = file_path;
-    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != PATH_SEPARATOR) {
+    while (new_path.count > 0 && strv_at(new_path, new_path.count - 1) != PATH_SEP_CHAR) {
         new_path = strv_slice(new_path, 0, new_path.count - 1);
     }
     return strv_slice(file_path, new_path.count, file_path.count - new_path.count);
@@ -155,18 +158,16 @@ NEVER_RETURN void local_exit(int exit_code) {
     exit(exit_code);
 }
 
-bool make_dir(Strv dir_path) {
+#ifndef _WIN32
+static bool make_dir_posix(Strv dir_path) {
     const char* dir_cstr = strv_dup(&a_temp, dir_path);
 
     struct stat dir_status = {0};
+    if (0 == mkdir(dir_cstr, 0755)) {
+        return true;
+    }
+
     if (-1 == stat(dir_cstr, &dir_status)) {
-        if (errno == ENOENT) {
-            if (0 != mkdir(dir_cstr, 0755)) {
-                msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not make directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
-                return false;
-            }
-            return true;
-        }
         msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "could not stat directory `"FMT"`: %s\n", strv_print(dir_path), strerror(errno));
         return false;
     }
@@ -178,5 +179,33 @@ bool make_dir(Strv dir_path) {
     }
     
     return true;
+}
+#endif // _WIN32
+
+#ifdef _WIN32
+static bool make_dir_win32(Strv dir_path) {
+    const char* dir_cstr = strv_dup(&a_temp, dir_path);
+
+    if (winapi_CreateDirectoryA(dir_cstr)) {
+        return true;
+    }
+
+    if (!winapi_PathIsDirectoryA(dir_cstr)) {
+        msg(DIAG_DIR_COULD_NOT_BE_MADE, POS_BUILTIN, "`"FMT"` exists but is not a directory\n", strv_print(dir_path));
+        msg(DIAG_NOTE, POS_BUILTIN, "`"FMT"` is the build-dir specified (or default)\n", strv_print(dir_path));
+        return false;
+    }
+    
+    return true;
+}
+#endif // _WIN32
+
+bool make_dir(Strv dir_path) {
+#   ifdef _WIN32
+        return make_dir_win32(dir_path);
+#   else
+        return make_dir_posix(dir_path);
+#   endif // _WIN32
+    unreachable("");
 }
 

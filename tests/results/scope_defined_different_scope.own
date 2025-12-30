@@ -1,8 +1,8 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/scope_defined_different_scope.own:9:9:[1;31merror[0;39m:symbol `thing` is not defined
-     8 |     thing2: for 1 {
+tests/inputs/scope_defined_different_scope.own:9:9:[1;31merror[0;39m:symbol `thing` is not defined; did you mean: thing2, main
+     8 |     ''thing2 for 1 {
      9 |         yield ''thing
        |         ^
     10 |     }

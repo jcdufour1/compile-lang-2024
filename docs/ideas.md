@@ -179,6 +179,18 @@ fn at(darr Darr('T, 'S)*, index S) S {
     return darr.items[darr.count]
 }
 
+# generics idea function 2.6
+fn append(<>)(darr Darr(<$T, _>)*, item T) {
+    reserve(darr, 1)
+    darr.items[darr.count] = item
+    darr.count += 1
+}
+
+fn at(darr Darr(_, $S)*, index S) S {
+    assert(index < darr.count && "out of bounds")
+    return darr.items[darr.count]
+}
+
 allocate thing (error)
 ```c
 fn void main() {
@@ -559,6 +571,19 @@ fn darr_at(darr Darr(inout 'T, 'I), index I) inout T {
 ```c
 // this function can be used as either a method or a regular function
 @method
+fn at(darr Darr(<i32>), index i32) {
+    return darr.buf[index]
+}
+
+fn main() i32 {
+    let darr Darr(<i32>) = ..
+    let num i32 = darr.at(0)
+    return 0
+}
+```
+
+```c
+// this function can be used as either a method or a regular function
 fn at(darr Darr(<i32>), index i32) {
     return darr.buf[index]
 }

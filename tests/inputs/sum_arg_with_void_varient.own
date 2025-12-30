@@ -1,15 +1,15 @@
 
 
-type Token enum {
+Token :: enum {
     open_par
     num i32
     string u8*
 }
 
-fn main() i32 {
-    let token1 Token = Token.open_par
-    let token2 Token = Token.open_par()
-    let token3 Token = Token.open_par(76)
+main :: fn() i32 {
+    token1 Token := Token.open_par
+    token2 Token := Token.open_par()
+    token3 Token := Token.open_par(76)
 
     switch token1 {
         case .num(num): break

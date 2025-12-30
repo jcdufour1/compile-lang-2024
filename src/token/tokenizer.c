@@ -7,10 +7,10 @@
 #include <env.h>
 #include <do_passes.h>
 #include <ctype.h>
-#include <pos_vec.h>
+#include <pos_darr.h>
 #include <msg.h>
-#include <msg_todo.h>
 #include <str_and_num_utils.h>
+#include <ast_msg.h>
 
 static Arena a_token = {0};
 
@@ -105,11 +105,13 @@ static bool get_next_token(
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
 
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types (only keywords are explicitly handled)");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types (only keywords are explicitly handled)");
     if (isalpha(strv_col_front(*file_text_rem)) || strv_col_front(*file_text_rem) == '_') {
         Strv text = strv_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (strv_is_equal(text, sv("unsafe_cast"))) {
             token->type = TOKEN_UNSAFE_CAST;
+        } else if (strv_is_equal(text, sv("_"))) {
+            token->type = TOKEN_UNDERSCORE;
         } else if (strv_is_equal(text, sv("defer"))) {
             token->type = TOKEN_DEFER;
         } else if (strv_is_equal(text, sv("fn"))) {
@@ -132,8 +134,6 @@ static bool get_next_token(
             token->type = TOKEN_EXTERN;
         } else if (strv_is_equal(text, sv("struct"))) {
             token->type = TOKEN_STRUCT;
-        } else if (strv_is_equal(text, sv("let"))) {
-            token->type = TOKEN_LET;
         } else if (strv_is_equal(text, sv("in"))) {
             token->type = TOKEN_IN;
         } else if (strv_is_equal(text, sv("break"))) {
@@ -144,8 +144,6 @@ static bool get_next_token(
             token->type = TOKEN_ENUM;
         } else if (strv_is_equal(text, sv("continue"))) {
             token->type = TOKEN_CONTINUE;
-        } else if (strv_is_equal(text, sv("type"))) {
-            token->type = TOKEN_TYPE_DEF;
         } else if (strv_is_equal(text, sv("import"))) {
             token->type = TOKEN_IMPORT;
         } else if (strv_is_equal(text, sv("def"))) {
@@ -205,11 +203,13 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '"')) {
         token->type = TOKEN_STRING_LITERAL;
         Strv_col quote_str = {0};
+        Pos pos_start_lit = *pos;
+        pos_start_lit.column++;
         if (!strv_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
-            msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
-            token->type = TOKEN_NONTYPE;
+            msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched opening `\"`\n");
             return false;
         }
+        check_string_literal_is_valid(quote_str.base, pos_start_lit);
         unwrap(strv_col_try_consume(pos, file_text_rem, '"'));
         token->text = quote_str.base;
         return true;
@@ -220,6 +220,7 @@ static bool get_next_token(
         token->type = TOKEN_COMMA;
         return true;
     } else if (strv_col_try_consume(pos, file_text_rem, '+')) {
+        // TODO: use msg_todo instad of unwrap
         unwrap((file_text_rem->base.count < 1 || strv_col_front(*file_text_rem) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
@@ -245,23 +246,23 @@ static bool get_next_token(
             trim_non_newline_whitespace(file_text_rem, pos);
             token->type = TOKEN_COMMENT;
         } else if (strv_col_try_consume(pos, file_text_rem, '*')) {
-            Pos_vec pos_stack = {0};
-            vec_append(&a_token, &pos_stack, *pos);
+            Pos_darr pos_stack = {0};
+            darr_append(&a_token, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {
                 Strv temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
                     msg(
                         DIAG_MISSING_CLOSE_MULTILINE, 
-                        vec_top(pos_stack), "unmatched opening `/*`\n"
+                        darr_top(pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;
                 }
 
                 if (strv_try_consume(&temp_text, '/') && strv_try_consume(&temp_text, '*')) {
-                    vec_append(&a_token, &pos_stack, *pos);
+                    darr_append(&a_token, &pos_stack, *pos);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else if (strv_try_consume(&temp_text, '*') && strv_try_consume(&temp_text, '/')) {
-                    vec_pop(&pos_stack);
+                    darr_pop(&pos_stack);
                     strv_col_consume_count(pos, file_text_rem, 2);
                 } else {
                     strv_col_consume(pos, file_text_rem);
@@ -419,6 +420,9 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, ']')) {
         token->type = TOKEN_CLOSE_SQ_BRACKET;
         return true;
+    } else if (strv_col_try_consume(pos, file_text_rem, '?')) {
+        token->type = TOKEN_QUESTION_MARK;
+        return true;
     } else if (strv_col_front(*file_text_rem) == '.') {
         Strv_col dots = strv_col_consume_while(pos, file_text_rem, is_dot);
         if (dots.base.count == 1) {
@@ -438,13 +442,18 @@ static bool get_next_token(
     } else if (strv_col_try_consume(pos, file_text_rem, '\n')) {
         token->type = TOKEN_NEW_LINE;
         return true;
+    } else if (strv_col_try_consume(pos, file_text_rem, '@')) {
+        token->type = TOKEN_AT_SIGN;
+        return true;
     } else {
         String buf = {0};
         string_extend_strv(&a_token, &buf, sv("unknown symbol: "));
-        vec_append(&a_token, &buf, strv_col_front(*file_text_rem));
+        darr_append(&a_token, &buf, strv_col_front(*file_text_rem));
         msg_todo_strv(string_to_strv(buf), *pos);
         return false;
     }
+
+    // TODO: support for \r\n line ending
 }
 
 static void test(const char* file_text, Tk_view expected) {
@@ -453,7 +462,7 @@ static void test(const char* file_text, Tk_view expected) {
     todo();
     //Env env = {.file_text = sv(file_text)};
 
-    //Token_vec tokens = {0};
+    //Token_darr tokens = {0};
     //if (!tokenize(&tokens, & (Strv){0})) {
     //    unreachable("");
     //}
@@ -462,38 +471,38 @@ static void test(const char* file_text, Tk_view expected) {
     //unwrap(tk_view_is_equal_log(LOG_TRACE, tk_view, expected));
 }
 
-static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
+static inline Tk_view tokens_to_tk_view(Token_darr tokens) {
     Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
     return tk_view;
 }
 
 // TODO
 //static void test1(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new(sv("hello"), TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new(sv("hello"), TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //    test("hello\n", tokens_to_tk_view(expected));
 //}
 //
 //static void test2(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //    test("// hello\n", tokens_to_tk_view(expected));
 //}
 //
 //static void test3(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    darr_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
 //    const char* text = 
 //        "if 1 {\n"
@@ -503,36 +512,36 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //    test(text, tokens_to_tk_view(expected));
 //}
 //
-//static Token_vec get_expected(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//static Token_darr get_expected(void) {
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    darr_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
-//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
 //    return expected;
 //}
 //
 //static void test4(void) {
-//    Token_vec expected = get_expected();
+//    Token_darr expected = get_expected();
 //
 //    test(
 //        "if 1 {\n    puts(\"hello\")\n}\n else {\n    puts(\"unreachable\")\n}\n",
@@ -551,7 +560,7 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //}
 //
 //static void test5(void) {
-//    Token_vec expected = get_expected();
+//    Token_darr expected = get_expected();
 //
 //    const char* text = 
 //        "if 1 {\n"
@@ -566,7 +575,7 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //}
 //
 //static void test6(void) {
-//    Token_vec expected = get_expected();
+//    Token_darr expected = get_expected();
 //
 //    const char* text = 
 //        "if 1 {\n"
@@ -581,29 +590,29 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //}
 //
 //static void test7(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    darr_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
-//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
 //    const char* text = 
 //        "if 1 {\n"
@@ -619,29 +628,29 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 //}
 //
 //static void test8(void) {
-//    Token_vec expected = {0};
-//    vec_append(&a_main, &expected, token_new("", TOKEN_IF));
-//    vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    Token_darr expected = {0};
+//    darr_append(&a_main, &expected, token_new("", TOKEN_IF));
+//    darr_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("hello", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
-//    vec_append(&a_main, &expected, token_new("", TOKEN_ELSE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
-//    vec_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
-//    vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_ELSE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("puts", TOKEN_SYMBOL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_OPEN_PAR));
+//    darr_append(&a_main, &expected, token_new("unreachable", TOKEN_STRING_LITERAL));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_PAR));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_CLOSE_CURLY_BRACE));
+//    darr_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
 //
 //    const char* text = 
 //        "if 1 {\n"
@@ -670,7 +679,7 @@ static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
 
 bool tokenize(Tk_view* result, Strv file_path) {
     size_t prev_err_count = env.error_count;
-    Token_vec tokens = {0};
+    Token_darr tokens = {0};
 
     Strv* file_con = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
@@ -687,7 +696,7 @@ bool tokenize(Tk_view* result, Strv file_path) {
         // avoid consecutive newline tokens
         if (
             tokens.info.count > 1 && 
-            vec_top(tokens).type == TOKEN_NEW_LINE &&
+            darr_top(tokens).type == TOKEN_NEW_LINE &&
             curr_token.type == TOKEN_NEW_LINE
         ) {
             continue;
@@ -701,7 +710,7 @@ bool tokenize(Tk_view* result, Strv file_path) {
                 if (!is_preced_space && next_token.type == TOKEN_SINGLE_EQUAL) {
                     // +=, *=, etc.
                     // append TOKEN_ASSIGN_BY_BIN, which will be followed by the binary operator
-                    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
+                    darr_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
                 } else {
                     // put back the next token
                     pos = temp_pos;
@@ -710,10 +719,10 @@ bool tokenize(Tk_view* result, Strv file_path) {
             }
         }
 
-        vec_append(&a_main, &tokens, curr_token);
+        darr_append(&a_main, &tokens, curr_token);
     }
 
-    vec_append(&a_main, &tokens, ((Token) {.text = sv(""), TOKEN_EOF, pos}));
+    darr_append(&a_main, &tokens, ((Token) {.text = sv(""), .type = TOKEN_EOF, .pos = pos}));
 
     *result = (Tk_view) {.tokens = tokens.buf, .count = tokens.info.count};
     return env.error_count == prev_err_count;

@@ -1,9 +1,9 @@
-type io import = std.io
-type rt import = std.runtime
-type coll import = std.collections
+io :: import = std.io
+rt :: import = std.runtime
+coll :: import = std.collections
 
-fn thing1() {
-    let nums i32[3] = [8, 76, 77]
+thing1 :: fn() {
+    nums i32[3] := [8, 76, 77]
 
     for idx usize in 0..nums.count {
         io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n")
@@ -30,23 +30,31 @@ fn thing1() {
     }
 
     for idx usize in 0..nums.count {
-        let ptr i32* = &nums[idx]
+        ptr i32* := &nums[idx]
         io.printf("thing 4: %d\n", *ptr)
     }
 }
 
-type COUNT def = 3
+COUNT :: def 3
 
-fn thing2() {
-    let nums i32[COUNT] = [7, 3, 2]
+thing2 :: fn() {
+    nums i32[COUNT] := [7, 3, 2]
     for idx usize in 0..nums.count {
         io.printf("thing 5: %d\n", nums[idx])
     }
 }
 
-fn main() i32 {
+thing3 :: fn() {
+    nums i32[_] := [91, 0o103 /*67*/, 0x45 /*69*/]
+    for idx usize in 0..nums.count {
+        io.printf("thing 6: %d\n", nums[idx])
+    }
+}
+
+main :: fn() i32 {
     thing1()
     thing2()
+    thing3()
 
     return 0
 }

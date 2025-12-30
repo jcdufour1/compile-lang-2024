@@ -1,8 +1,8 @@
 #include <str_and_num_utils.h>
 #include <msg.h>
-#include <msg_todo.h>
 #include <errno.h>
-#include <string_vec.h>
+#include <string_darr.h>
+#include <ast_msg.h>
 
 size_t get_count_excape_seq(Strv strv) {
     size_t count_excapes = 0;
@@ -25,7 +25,7 @@ void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
         // TODO: extend "\x0a", etc instead of handling every case to simplify this function
         char front_char = strv_consume(&strv);
         if (front_char == '\\') {
-            vec_append(arena, string, '\\');
+            darr_append(arena, string, '\\');
             switch (strv_consume(&strv)) {
                 case 'n':
                     string_extend_hex_2_digits(arena, string, 0x0a);
@@ -34,7 +34,7 @@ void string_extend_strv_eval_escapes(Arena* arena, String* string, Strv strv) {
                     unreachable("");
             }
         } else {
-            vec_append(arena, string, front_char);
+            darr_append(arena, string, front_char);
         }
     }
 }
@@ -212,17 +212,35 @@ error:
     return status;
 }
 
+static size_t try_strv_to_char_strv_count(Strv strv) {
+#   ifndef _WIN32
+        return strv.count;
+#   endif // _WIN32
+
+    if (!params.print_posix_msg) {
+        return strv.count;
+    }
+
+    size_t actual_count = 0;
+    for (size_t idx = 0; idx < strv.count; idx++) {
+        if (strv_at(strv, idx) != '\r') {
+            actual_count++;
+        }
+    }
+    return actual_count;
+}
+
 bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
     if (!strv_try_consume(&strv, '\\')) {
         if (strv.count != 1) {
             msg(
                 DIAG_INVALID_CHAR_LIT, pos,
-                "expected exactly one character in char literal without excapes, but got %zu\n",
-                strv.count
+                "expected exactly one character in char literal without excapes, but got "SIZE_T_FMT"\n",
+                try_strv_to_char_strv_count(strv)
             );
             return false;
         }
-        *result = strv_front(strv);
+        *result = strv_first(strv);
         return true;
     }
 
@@ -255,8 +273,8 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (strv.count != 0) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected 0 characters in char literal after `\\%c`, but got %zu\n",
-                    esc_char, strv.count
+                    "expected 0 characters in char literal after `\\%c`, but got "SIZE_T_FMT"\n",
+                    esc_char, try_strv_to_char_strv_count(strv)
                 );
                 return false;
             }
@@ -264,10 +282,11 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         case 'x':
             // hexadecimal
             if (strv.count != 2) {
+                strv.count = 0; // TODO: remove this statement when possible (this statement is temporary hack for windows ci)
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected exactly 2 characters in char literal after `\\x` excape, but got %zu\n",
-                    strv.count + 1
+                    "expected exactly 2 characters in char literal after `\\x` excape, but got "SIZE_T_FMT"\n",
+                    try_strv_to_char_strv_count(strv) + 1
                 );
                 return false;
             }
@@ -277,8 +296,8 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
             if (strv.count != 3) {
                 msg(
                     DIAG_INVALID_CHAR_LIT, pos,
-                    "expected exactly 3 characters in char literal after `\\o` excape, but got %zu\n",
-                    strv.count + 1
+                    "expected exactly 3 characters in char literal after `\\o` excape, but got "SIZE_T_FMT"\n",
+                    try_strv_to_char_strv_count(strv) + 1
                 );
                 return false;
             }
@@ -286,7 +305,7 @@ bool try_strv_to_char(char* result, const Pos pos, Strv strv) {
         default: {
             String buf = {0};
             string_extend_cstr(&a_main, &buf, "excape sequence `\\");
-            vec_append(&a_main, &buf, esc_char);
+            darr_append(&a_main, &buf, esc_char);
             string_extend_cstr(&a_main, &buf, "`");
             msg_todo_strv(string_to_strv(buf), pos);
             return false;
@@ -401,7 +420,7 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 
     // TODO: use better solution for debugging
     //string_extend_cstr(&a_main, &var_name, "file____");
-    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Strv) {0}, (Ulang_type_vec) {0}, 0)));
+    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(sv(file), (Strv) {0}, (Ulang_type_darr) {0}, 0)));
     //string_extend_cstr(&a_main, &var_name, "_");
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
@@ -419,9 +438,125 @@ Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefi
 }
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
-    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, scope_id, (Attrs) {0});
+    return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_darr) {0}, scope_id);
 }
 
 Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
     return name_to_ir_name(util_literal_name_new_prefix_scope_internal(file, line, debug_prefix, scope_id));
 }
+
+Strv serialize_double(double num) {
+    String buf = {0};
+
+    String temp = {0};
+    string_extend_double(&a_temp, &temp, num);
+    size_t idx_decimal = 0;
+    bool did_find_dec = false;
+    darr_foreach(idx, char, curr, temp) {
+        idx_decimal = idx;
+        if (curr == '.') {
+            did_find_dec = true;
+            break;
+        }
+    }
+    unwrap(did_find_dec);
+
+    string_extend_f(
+        &a_main,
+        &buf,
+        FMT"_"FMT,
+        strv_print(string_slice(temp, 0, idx_decimal)),
+        strv_print(string_slice(temp, idx_decimal + 1, temp.info.count - (idx_decimal + 1)))
+    );
+
+    return string_to_strv(buf);
+}
+
+size_t strv_with_excapes_count_chars(Strv strv) {
+    size_t count = 0;
+    while (strv.count > 0) {
+        char curr = strv_consume(&strv);
+        if (curr == '\\') {
+            char next = strv_consume(&strv); // eg. n in \n, x in \x
+            if (next == 'x') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+            } else if (next == 'o') {
+                strv_consume(&strv);
+                strv_consume(&strv);
+                strv_consume(&strv);
+            }
+        }
+
+        count++;
+    }
+
+    return count;
+}
+
+static bool local_is_octal_digit(char ch) {
+    return ch >= '0' && ch <= '7';
+}
+
+bool check_string_literal_is_valid(Strv lit_text, Pos pos) {
+    Pos curr_pos = pos;
+    while (lit_text.count > 0) {
+        char curr = strv_consume(&lit_text);
+        curr_pos.column++;
+        if (curr == '\\') {
+            assert(lit_text.count > 0 && "there is a bug elsewhere");
+            char next = strv_consume(&lit_text); // eg. n in \n, x in \x
+            if (next == 'x') {
+                if (lit_text.count < 2) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "expected two chars after `\\x` in string literal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char1 = strv_consume(&lit_text);
+                if (!isxdigit(char1)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\x` is not hex\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char2 = strv_consume(&lit_text);
+                if (!isxdigit(char2)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\x` is not hex\n");
+                    return false;
+                }
+                curr_pos.column++;
+            } else if (next == 'o') {
+                if (lit_text.count < 3) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "expected three chars after `\\o` in string literal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char1 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char1)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char2 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char2)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+
+                char char3 = strv_consume(&lit_text);
+                if (!local_is_octal_digit(char3)) {
+                    msg(DIAG_INVALID_STRING_LITERAL, curr_pos, "char after `\\o` is not octal\n");
+                    return false;
+                }
+                curr_pos.column++;
+            }
+        }
+    }
+
+    return true;
+}
+

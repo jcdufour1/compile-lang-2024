@@ -1,9 +1,9 @@
-type io import = std.io
-type util import = std.util
-type coll import = std.collections
+io :: import = std.io
+util :: import = std.util
+coll :: import = std.collections
 
-fn main() i32 {
-    let string Str = "num = 8"
+main :: fn() i32 {
+    string Str := "num = 8"
 
     io.printf("num2 = %d\n", 10)
     io.own_printf("hello\n")

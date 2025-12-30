@@ -1,10 +1,10 @@
 
-type Token struct {
+Token :: struct {
     num i32
 }
 
-fn main() i32 {
-    let token Token = {.num = 8}
+main :: fn() i32 {
+    token Token := {.num = 8}
     switch token {
         case .num(num): break
     }

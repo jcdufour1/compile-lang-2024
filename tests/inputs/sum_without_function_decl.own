@@ -1,14 +1,14 @@
-type io import = std.io
+io :: import = std.io
 
 
-type Opt_int enum {
+Opt_int :: enum {
     none
     some i32
     string u8*
 }
 
-fn main() i32 {
-    let num Opt_int = Opt_int.some(76)
+main :: fn() i32 {
+    num Opt_int := Opt_int.some(76)
 
     num = Opt_int.none
 

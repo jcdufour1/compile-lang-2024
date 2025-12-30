@@ -1,11 +1,11 @@
 
-type Token raw_union {
+Token :: raw_union {
     string NewString
     num BigInt
 }
 
-fn main() i32 {
+main :: fn() i32 {
     // TODO: remove this statement
-    let token Token
+    token Token :
     return 0
 }

@@ -1,7 +1,8 @@
 #include <operator_type.h>
 
+WSWITCH_ENUM_IGNORE_START
+
 BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types; only binary operators need to be explicitly handled here");
     switch (type) {
         case TOKEN_SINGLE_EQUAL:
             return BINARY_SINGLE_EQUAL;
@@ -46,3 +47,5 @@ BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type) {
     }
     unreachable("");
 }
+
+WSWITCH_ENUM_IGNORE_END

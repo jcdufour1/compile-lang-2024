@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "token.h"
 #include "assert.h"
+#include <local_math.h>
 
 typedef struct {
     const Token* tokens;
@@ -66,7 +67,7 @@ static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, co
 
 static inline Strv tk_view_print_internal(Arena* arena, Tk_view tk_view) {
     String buf = {0};
-    vec_reset(&buf);
+    darr_reset(&buf);
 
     for (size_t idx = 0; idx < tk_view.count; idx++) {
         string_extend_strv(&a_temp, &buf, token_print_internal(arena, TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
@@ -86,7 +87,7 @@ static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_
                 log(log_level, "TOKENS expected:\n");
                 log_tokens(log_level, b);
                 log(
-                    log_level, "idx %zu: "FMT" is not equal to "FMT"\n",
+                    log_level, "idx "SIZE_T_FMT": "FMT" is not equal to "FMT"\n",
                     idx, token_print(TOKEN_MODE_LOG, tk_view_at(a, idx)), token_print(TOKEN_MODE_LOG, tk_view_at(b, idx))
                 );
             }

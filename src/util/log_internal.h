@@ -29,9 +29,42 @@ static inline const char* get_log_level_str(LOG_LEVEL log_level) {
             return LOG_RED"error"LOG_NORMAL;
         case LOG_FATAL:
             return LOG_RED"fatal error"LOG_NORMAL;
+        case LOG_COUNT:
+            fprintf(stderr, "unreachable: uncovered log_level\n");
+            abort();
     }
     fprintf(stderr, "unreachable: uncovered log_level\n");
     abort();
+}
+
+static inline void log_internal_ex(
+    FILE* dest,
+    LOG_LEVEL log_level,
+    bool print_location,
+    const char* file,
+    int line,
+    Indent indent,
+    const char* format, ...
+) {
+    // TODO: figure out why log_internal_ex does not seem to work for dest other than stderr
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        for (Indent idx = 0; idx < indent; idx++) {
+            fprintf(dest, " ");
+        }
+        if (print_location) {
+            fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        }
+        if (vfprintf(dest, format, args) < 0) {
+            // TODO: consider if abort should be done here
+            fprintf(stderr, "unreachable: vfprintf failed. destination file stream may have been opened for reading instead of writing\n");
+            abort();
+        }
+    }
+
+    va_end(args);
 }
 
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {

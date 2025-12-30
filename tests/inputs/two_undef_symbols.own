@@ -1,9 +1,9 @@
 
-extern("c") fn printf(str_to_print_2: u8*, args: opaque...) i32
+printf :: extern("c") fn(str_to_print_2: u8*, args: opaque...) i32
 
-fn main() i32 {
-    let num1: i32 = 87
-    let num2: i32 = 88
+main :: fn() i32 {
+    num1: i32 = 87
+    num2: i32 = 88
 
     printf("%d %d\n", num3, num4)
 

@@ -1,57 +1,57 @@
-type io import = std.io
+io :: import = std.io
 
-fn add_one(num i32*) {
+add_one :: fn(num i32*) {
     *num = num + 1
 }
 
-fn sub_one_explicit(num i32*) {
+sub_one_explicit :: fn(num i32*) {
     *num = *num - 1
 }
 
-fn add_one_explicit(num i32*) {
+add_one_explicit :: fn(num i32*) {
     *num = *num + 1
 }
 
-fn operation_2(num i32*) {
+operation_2 :: fn(num i32*) {
     *num = 2*num + 1
 }
 
-fn operation_2_explicit(num i32*) {
+operation_2_explicit :: fn(num i32*) {
     *num = 2*num + 1
 }
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
-fn set_div(div Div*) {
-    let new_div Div = {.numerator = 134, .denominator = 45};
+set_div :: fn(div Div*) {
+    new_div Div := {.numerator = 134, .denominator = 45};
     *div = new_div;
 }
 
-fn set_div_denominator(div Div*) {
+set_div_denominator :: fn(div Div*) {
     div.denominator = 1298;
 }
 
-fn set_div_denominator_explicit_deref(div Div*) {
+set_div_denominator_explicit_deref :: fn(div Div*) {
     (*div).denominator = 1234;
 }
 
-fn print_div(div Div*) {
+print_div :: fn(div Div*) {
     io.printf("%d/%d\n", div.numerator, div.denominator)
 }
 
-fn set_div_from_another(dest Div*, src Div*) {
+set_div_from_another :: fn(dest Div*, src Div*) {
     dest.denominator = src.denominator;
 }
 
-fn set_string(string u8**) {
+set_string :: fn(string u8**) {
     *string = "bye"
 }
 
-fn cast_to_pointer() {
-    let pointer u8* = unsafe_cast<u8*>0
+cast_to_pointer :: fn() {
+    pointer u8* := unsafe_cast<u8*>0
 
     if pointer == unsafe_cast<u8*>0 {
         io.printf("yes\n");
@@ -61,14 +61,14 @@ fn cast_to_pointer() {
         io.printf("no\n");
     }
 
-    let zero i64 = unsafe_cast<i64>pointer
+    zero i64 := unsafe_cast<i64>pointer
     io.printf("pointer back to int: %d\n", zero);
 }
 
-fn cast_pointer_to_pointer() {
-    let ptr_u8 u8* = unsafe_cast<u8*>1
+cast_pointer_to_pointer :: fn() {
+    ptr_u8 u8* := unsafe_cast<u8*>1
 
-    let ptr_i32 i32* = unsafe_cast<i32*>ptr_u8
+    ptr_i32 i32* := unsafe_cast<i32*>ptr_u8
 
     if ptr_u8 == unsafe_cast<u8*>ptr_i32 {
         io.printf("pointer_to_pointer: yes\n");
@@ -77,13 +77,13 @@ fn cast_pointer_to_pointer() {
     }
 }
 
-fn deref_struct(div Div*) Div {
-    let div2 Div = *div
+deref_struct :: fn(div Div*) Div {
+    div2 Div := *div
     return div2
 }
 
-fn main() i32 {
-    let num i32 = 8
+main :: fn() i32 {
+    num i32 := 8
     io.printf("%d\n", num)
     add_one(&num)
     io.printf("%d\n", num)
@@ -96,7 +96,7 @@ fn main() i32 {
     operation_2_explicit(&num)
     io.printf("%d\n", num)
 
-    let div Div = {.numerator = 87, .denominator = 123};
+    div Div := {.numerator = 87, .denominator = 123};
     io.printf("part 67: %d/%d\n", div.numerator, div.denominator)
     set_div(&div);
     io.printf("%d/%d\n", div.numerator, div.denominator)
@@ -105,13 +105,13 @@ fn main() i32 {
     set_div_denominator(&div);
     io.printf("%d/%d\n", div.numerator, div.denominator)
     print_div(&div);
-    let div2 Div = {.numerator = 93, .denominator = 71};
+    div2 Div := {.numerator = 93, .denominator = 71};
     set_div_from_another(&div2, &div);
     io.printf("%d/%d\n", div2.numerator, div2.denominator)
     // ensure original div was not modified by `set_div_from_another`
     io.printf("%d/%d\n", div.numerator, div.denominator)
 
-    let string u8* = "hello"
+    string u8* := "hello"
     io.printf("%s\n", string)
     set_string(&string)
     io.printf("%s\n", string)

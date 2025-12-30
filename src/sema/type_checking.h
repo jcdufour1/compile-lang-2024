@@ -12,6 +12,7 @@ typedef enum {
     PARENT_OF_RETURN,
     PARENT_OF_BREAK,
     PARENT_OF_IF,
+    PARENT_OF_ORELSE,
 } PARENT_OF;
 
 typedef enum {
@@ -33,8 +34,8 @@ typedef struct {
     
     bool break_in_case;
     
-    Uast_block_vec switch_case_defer_add_if_true;
-    Uast_stmt_vec switch_case_defer_add_enum_case_part;
+    Uast_block_darr switch_case_defer_add_if_true;
+    Uast_stmt_darr switch_case_defer_add_enum_case_part;
     
     Lang_type lhs_lang_type;
     
@@ -53,14 +54,14 @@ typedef struct {
 
     Lang_type switch_lang_type;
     size_t switch_prev_idx;
+
+    bool expr_is_actually_used_as_expr;
 } Type_checking_env;
 
-bool try_set_assignment_types(Tast_expr** new_expr, Uast_assignment* assign);
-
 // returns false if unsuccessful
-bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr);
+bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* expr, bool expr_is_actually_used_as_expr);
 
-bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign);
+bool try_set_expr_types_internal(Tast_expr** new_tast, Uast_expr* uast, bool is_type, Lang_type type, bool is_from_check_assign, bool expr_is_actually_used_as_expr);
 
 bool try_set_binary_types_finish(
     Tast_expr** new_tast,
@@ -71,7 +72,7 @@ bool try_set_binary_types_finish(
 );
 
 // returns false if unsuccessful
-bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator);
+bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator, bool is_actually_used_as_expr);
 
 bool try_set_block_types(Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def, bool is_top_level);
 
@@ -98,6 +99,12 @@ bool try_set_tuple_assignment_types(
     Uast_tuple* tuple
 );
 
+bool try_set_struct_literal_member_types_simplify(
+    Uast_expr_darr* membs,
+    Uast_variable_def_darr memb_defs,
+    Pos pos
+);
+
 bool try_set_struct_literal_types(
     Tast_struct_literal** new_tast,
     Lang_type dest_lang_type,
@@ -116,7 +123,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal);
 
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call);
 
-bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro);
+bool try_set_directive_types(Tast_expr** new_call, Uast_directive* directive);
 
 bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access, bool is_from_check_assign);
 
@@ -157,6 +164,8 @@ bool try_set_module_alias_types(Tast_block** new_tast, Uast_mod_alias* tast);
 bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch);
 
 bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse);
+
+bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark);
 
 bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else);
 

@@ -1,7 +1,7 @@
-type io import = std.io
+io :: import = std.io
 
 
-fn for_range() {
+for_range :: fn() {
     for idx i32 in 0..100 {
         io.printf("test 1: idx: %d\n", idx)
 
@@ -18,7 +18,7 @@ fn for_range() {
         io.printf("test 3: no\n")
     }
 
-    label1: for idx i32 in 0..2 {
+    ''label1 for idx i32 in 0..2 {
         io.printf("test 3.3: idx: %d\n", idx)
         continue ''label1
         io.printf("test 3.4: no\n")
@@ -34,8 +34,8 @@ fn for_range() {
     }
 }
 
-fn for_cond() {
-    let idx1 i32 = 0
+for_cond :: fn() {
+    idx1 i32 := 0
     for idx1 < 100 {
         io.printf("test 5: %d\n", idx1)
 
@@ -48,7 +48,7 @@ fn for_cond() {
         break
     }
 
-    let idx2 i32 = 0
+    idx2 i32 := 0
     for idx2 < 2 {
         io.printf("test 6: idx: %d\n", idx2)
         idx2 = idx2 + 1
@@ -56,7 +56,7 @@ fn for_cond() {
         io.printf("test 7: no\n")
     }
 
-    let idx3 i32 = 0
+    idx3 i32 := 0
     for idx3 < 2 {
         io.printf("test 8: idx: %d\n", idx3)
         idx3 = idx3 + 1
@@ -64,7 +64,7 @@ fn for_cond() {
     }
 }
 
-fn main() i32 {
+main :: fn() i32 {
     for_range()
     for_cond()
 

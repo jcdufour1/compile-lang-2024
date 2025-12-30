@@ -1,26 +1,26 @@
-type io import = std.io
+io :: import = std.io
 
 
-type Bool enum {
+Bool :: enum {
     false
     true
 }
 
-fn is_true() Bool {
+is_true :: fn() Bool {
     return .true
 }
 
-fn is_false() Bool {
+is_false :: fn() Bool {
     return .false
 }
 
-fn main() i32 {
-    let num1 i32 = switch (is_true()) {
+main :: fn() i32 {
+    num1 i32 := switch (is_true()) {
         case .true: break 2
         case .false: break 3
     }
 
-    let num2 i32 = switch (is_false()) {
+    num2 i32 := switch (is_false()) {
         case .true: break 2
         case .false: break 3
     }

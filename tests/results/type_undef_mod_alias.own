@@ -1,15 +1,15 @@
 compile::stdout 0
 
 compile::stderr 10
-tests/inputs/type_undef_mod_alias.own:2:34:[1;31merror[0;39m:module alias `thing` is not defined
+tests/inputs/type_undef_mod_alias.own:2:37:[1;31merror[0;39m:module alias `thing` is not defined
      1 | 
-     2 | fn undef_type_in_arg(thing thing.Foo) {
-       |                                  ^
+     2 | undef_type_in_arg :: fn(thing thing.Foo) {
+       |                                     ^
      3 | }
-tests/inputs/type_undef_mod_alias.own:6:22:[1;31merror[0;39m:module alias `thing2` is not defined
-     5 | fn undef_variable_type() {
-     6 |     let token thing2.Token = {.num = 8}
-       |                      ^
+tests/inputs/type_undef_mod_alias.own:6:18:[1;31merror[0;39m:module alias `thing2` is not defined
+     5 | undef_variable_type :: fn() {
+     6 |     token thing2.Token := {.num = 8}
+       |                  ^
      7 | }
 
 compile::return_code 1

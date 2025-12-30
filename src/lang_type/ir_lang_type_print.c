@@ -2,6 +2,22 @@
 #include <ir_lang_type_after.h>
 #include <ulang_type.h>
 #include <resolve_generics.h>
+#include <ast_msg.h>
+
+// TODO: this and lang_type_mode_to_name_mode do the same thing and one should be removed while the other should be extern function?
+static NAME_MODE ir_lang_type_mode_to_name_mode(LANG_TYPE_MODE mode) {
+    switch (mode) {
+        case LANG_TYPE_MODE_LOG:
+            return NAME_LOG;
+        case LANG_TYPE_MODE_MSG:
+            return NAME_MSG;
+        case LANG_TYPE_MODE_EMIT_LLVM:
+            return NAME_EMIT_C;
+        case LANG_TYPE_MODE_EMIT_C:
+            return NAME_EMIT_IR;
+    }
+    unreachable("");
+}
 
 void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     switch (type) {
@@ -24,7 +40,7 @@ void extend_ir_lang_type_tag_to_string(String* buf, IR_LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
+Strv ir_lang_type_darr_print_internal(Ir_lang_type_darr types) {
     String buf = {0};
 
     string_extend_cstr(&a_main, &buf, "<");
@@ -32,48 +48,11 @@ Strv ir_lang_type_vec_print_internal(Ir_lang_type_vec types) {
         if (idx > 0) {
             string_extend_cstr(&a_main, &buf, ", ");
         }
-        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(types, idx));
+        extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, darr_at(types, idx));
     }
     string_extend_cstr(&a_main, &buf, ">\n");
 
     return string_to_strv(buf);
-}
-
-void extend_ir_lang_type_atom(String* string, LANG_TYPE_MODE mode, Ir_lang_type_atom atom) {
-    Ir_name temp = atom.str;
-
-    if (atom.str.base.count > 1) {
-        switch (mode) {
-            case LANG_TYPE_MODE_LOG:
-                extend_ir_name(NAME_LOG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_MSG:
-                extend_ir_name(NAME_MSG, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_C:
-                extend_ir_name(NAME_EMIT_C, string, atom.str);
-                break;
-            case LANG_TYPE_MODE_EMIT_LLVM:
-                extend_ir_name(NAME_EMIT_IR, string, atom.str);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        string_extend_cstr(&a_temp, string, "void");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&a_temp, string, '*');
-    }
-
-    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
-        if (temp.gen_args.info.count > 0) {
-            todo();
-        }
-    }
 }
 
 Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
@@ -95,15 +74,10 @@ Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type)
     return string_to_strv(buf);
 }
 
-Strv ir_lang_type_atom_print_internal(Ir_lang_type_atom atom, LANG_TYPE_MODE mode) {
-    String buf = {0};
-    extend_ir_lang_type_atom(&buf, mode, atom);
-    return string_to_strv(buf);
-}
-
+// TODO: add arena argument?
 void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '<');
+        darr_append(&a_temp, string, '<');
     }
 
     switch (mode) {
@@ -121,17 +95,18 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             unreachable("");
     }
 
+    // TODO: remove gotos in below switch
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");
             }
-            Ir_lang_type_vec ir_lang_types = ir_lang_type_tuple_const_unwrap(ir_lang_type).ir_lang_types;
+            Ir_lang_type_darr ir_lang_types = ir_lang_type_tuple_const_unwrap(ir_lang_type).ir_lang_types;
             for (size_t idx = 0; idx < ir_lang_types.info.count; idx++) {
                 if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
                     string_extend_cstr(&a_main, string, ", ");
                 }
-                extend_ir_lang_type_to_string(string, mode, vec_at(ir_lang_types, idx));
+                extend_ir_lang_type_to_string(string, mode, darr_at(ir_lang_types, idx));
             }
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, ")");
@@ -139,25 +114,62 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         case IR_LANG_TYPE_FN: {
             Ir_lang_type_fn fn = ir_lang_type_fn_const_unwrap(ir_lang_type);
-            string_extend_cstr(&a_main, string, "fn");
+            string_extend_f(&a_main, string, "%sfn", fn.pointer_depth > 1 ? "(" : "");
             extend_ir_lang_type_to_string(string, mode, ir_lang_type_tuple_const_wrap(fn.params));
             extend_ir_lang_type_to_string(string, mode, *fn.return_type);
+            if (fn.pointer_depth > 1) {
+                darr_append(&a_temp, string, ')');
+            }
+            assert(fn.pointer_depth > 0);
+            for (int16_t idx = 1/*TODO*/; idx < fn.pointer_depth; idx++) {
+                darr_append(&a_temp, string, '*');
+            }
             goto end;
         }
-        case IR_LANG_TYPE_STRUCT:
-            unwrap(!strv_is_equal(ir_lang_type_get_atom(mode, ir_lang_type).str.base, sv("void")));
-            fallthrough;
-        case IR_LANG_TYPE_VOID:
-            fallthrough;
-        case IR_LANG_TYPE_PRIMITIVE:
-            extend_ir_lang_type_atom(string, mode, ir_lang_type_get_atom(mode, ir_lang_type));
+        case IR_LANG_TYPE_STRUCT: {
+            Ir_name name = {0};
+            if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
+                msg_todo("", ir_lang_type_get_pos(ir_lang_type));
+                goto end;
+            }
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
+                darr_append(&a_temp, string, '*');
+            }
+            goto end;
+        }
+        case IR_LANG_TYPE_VOID: {
+            Ir_name name = {0};
+            if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
+                msg_todo("", ir_lang_type_get_pos(ir_lang_type));
+                break;
+            }
+
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            goto end;
+        }
+        case IR_LANG_TYPE_PRIMITIVE: {
+            Ir_name name = {0};
+            if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
+                msg_todo("", ir_lang_type_get_pos(ir_lang_type));
+                break;
+            }
+            if (mode == LANG_TYPE_MODE_LOG) {
+                assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
+            }
+            assert(name.base.count >= 1);
+            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
+                darr_append(&a_temp, string, '*');
+            }
+        }
             goto end;
     }
     unreachable("");
 
 end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&a_temp, string, '>');
+        darr_append(&a_temp, string, '>');
     }
 }
 

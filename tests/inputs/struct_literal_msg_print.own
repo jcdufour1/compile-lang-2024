@@ -1,0 +1,20 @@
+Token :: struct {
+    num i32
+}
+
+foo :: fn(<token ''Token>)() {
+}
+
+Container :: struct(<token ''Token>) {
+    num i32
+}
+
+container_new :: fn() Container(<{9}>) {
+    return {6332}
+}
+
+main :: fn() i32 {
+    container Container(<{8}>) := container_new()
+
+    return 0
+}

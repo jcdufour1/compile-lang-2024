@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+tests/inputs/int_generic_def_sub_errors.own:14:16:[1;31merror[0;39m:symbol of variable is not allowed here
+    13 | 
+    14 |     print_max(<eight>)(token2)
+       |                ^
+    15 | 
+tests/inputs/int_generic_def_sub_errors.own:14:16:[1;31merror[0;39m:symbol of variable is not allowed here
+    13 | 
+    14 |     print_max(<eight>)(token2)
+       |                ^
+    15 | 
+
+compile::return_code 1
+

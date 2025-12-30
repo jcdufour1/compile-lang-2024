@@ -1,22 +1,22 @@
 
-fn add(a i32, b i32) i32 {
+add :: fn(a i32, b i32) i32 {
     return a + b
 }
 
 
-type Token struct {
+Token :: struct {
     ptr fn(i32, i32)i32
 }
 
-fn main() i32 {
-    let ptr fn(i32, i32)i32 = add
+main :: fn() i32 {
+    ptr fn(i32, i32)i32 := add
     ptr(8)
     ptr(9, 10, 11)
     ptr(12.1, 13)
 
-    let num i16 = ptr(12, 13)
+    num i16 := ptr(12, 13)
 
-    let token Token = {.ptr = ptr}
+    token Token := {.ptr = ptr}
     token.ptr(34.5, 6)
 
     return 0

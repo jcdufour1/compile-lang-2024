@@ -4,7 +4,6 @@
 #include <lang_type_after.h>
 #include <ir_lang_type_after.h>
 #include <name.h>
-#include <ulang_type_get_pos.h>
 
 Ir_lang_type ir_operator_get_lang_type(const Ir_operator* operator) {
     if (operator->type == IR_UNARY) {
@@ -25,7 +24,7 @@ Ir_lang_type ir_literal_get_lang_type(const Ir_literal* lit) {
         case IR_STRING:
             return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), 8, 1)));
         case IR_VOID:
-            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit)));
+            return ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_literal_get_pos(lit), 0));
         case IR_FUNCTION_NAME:
             return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(ir_lang_type_unsigned_int_new(ir_literal_get_pos(lit), params.sizeof_usize, 1)));
     }
@@ -52,8 +51,14 @@ Ir_lang_type ir_def_get_lang_type(const Ir_def* def) {
             return ir_variable_def_const_unwrap(def)->lang_type;
         case IR_FUNCTION_DECL:
             unreachable("");
-        case IR_STRUCT_DEF:
-            return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(ir_def_get_pos(def), ir_lang_type_atom_new(ir_struct_def_const_unwrap(def)->base.name, 0)));
+        case IR_STRUCT_DEF: {
+            const Ir_struct_def* struct_def = ir_struct_def_const_unwrap(def);
+            return ir_lang_type_struct_const_wrap(ir_lang_type_struct_new(
+                struct_def->pos,
+                struct_def->base.name,
+                0
+            ));
+        }
         case IR_PRIMITIVE_DEF:
             unreachable("");
         case IR_LABEL:
@@ -148,10 +153,13 @@ Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
     unreachable("");
 }
 
-Ir_name ir_def_get_name(const Ir_def* def) {
+Ir_name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
     switch (def->type) {
-        case IR_PRIMITIVE_DEF:
-            return ir_lang_type_get_str(LANG_TYPE_MODE_LOG, ir_primitive_def_const_unwrap(def)->lang_type);
+        case IR_PRIMITIVE_DEF: {
+            Ir_name result = {0};
+            unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
+            return result;
+        }
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
@@ -168,10 +176,10 @@ Ir_name ir_def_get_name(const Ir_def* def) {
     unreachable("");
 }
 
-Ir_name ir_get_name(const Ir* ir) {
+Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
-            return ir_def_get_name(ir_def_const_unwrap(ir));
+            return ir_def_get_name(mode, ir_def_const_unwrap(ir));
         case IR_EXPR:
             return ir_expr_get_name(ir_expr_const_unwrap(ir));
         case IR_BLOCK:
@@ -195,7 +203,7 @@ Ir_name ir_get_name(const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL, (Attrs) {0}));
+            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL));
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:
@@ -217,11 +225,11 @@ Ir* ir_from_ir_name(Ir_name name) {
 
 size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Ir_name memb_name) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        if (ir_name_is_equal(vec_at(def->base.members, idx)->name_self, memb_name)) {
+        if (ir_name_is_equal(darr_at(def->base.members, idx)->name_self, memb_name)) {
             return idx;
         }
     }
-    log(LOG_DEBUG, FMT"\n", ir_struct_def_print(def));
+    log(LOG_DEBUG, FMT"\n", ir_print(def));
     unreachable(FMT, ir_name_print(NAME_MSG, memb_name));
 }
 

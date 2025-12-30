@@ -1,7 +1,7 @@
 
-type io import = std.io
+io :: import = std.io
 
-fn main() i32 {
+main :: fn() i32 {
     io.print_str("hello")
 
     io.print_float(8.7)

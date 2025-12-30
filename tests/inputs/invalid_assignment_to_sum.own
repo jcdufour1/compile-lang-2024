@@ -1,16 +1,16 @@
 
-type Token enum {
+Token :: enum {
     number i32
     string u8*
 }
 
-type Thing struct {
+Thing :: struct {
     number i32
     string u8*
 }
 
-fn main() i32 {
-    let thing Thing = {.number = 23, .string = "bye"}
-    let token1 Token = thing
+main :: fn() i32 {
+    thing Thing := {.number = 23, .string = "bye"}
+    token1 Token := thing
     return 0
 }

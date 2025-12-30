@@ -1,7 +1,7 @@
 
 
-fn main() i32 {
-    let string1: Str = "hello"
-    let num1: i32 = 7*string1
+main :: fn() i32 {
+    string1: Str := "hello"
+    num1: i32 := 7*string1
     return 0
 }

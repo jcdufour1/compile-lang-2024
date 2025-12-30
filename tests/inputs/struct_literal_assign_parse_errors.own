@@ -1,13 +1,13 @@
 
-type Div struct {
+Div :: struct {
     numerator i32
     denominator i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     // TODO: better error message for div3 error
-    let div3 Div = {.numerator = 92, .denominator = }
-    let div4 Div = {.numerator = 92, = 43}
-    let div5 Div = {.numerator = 92, .denominator 43}
+    div3 Div := {.numerator = 92, .denominator = }
+    div4 Div := {.numerator = 92, = 43}
+    div5 Div := {.numerator = 92, .denominator 43}
     return 0
 }

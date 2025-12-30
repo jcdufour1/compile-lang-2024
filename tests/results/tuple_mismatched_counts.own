@@ -1,22 +1,22 @@
 compile::stdout 0
 
 compile::stderr 20
-tests/inputs/tuple_mismatched_counts.own:2:26:[1;31merror[0;39m:opening `{` is unmatched
+tests/inputs/tuple_mismatched_counts.own:2:29:[1;31merror[0;39m:opening `{` is unmatched
      1 | 
-     2 | fn get_data() (i32, i32) {
-       |                          ^
+     2 | get_data :: fn() (i32, i32) {
+       |                             ^
      3 |     return 87, 21, 3
-tests/inputs/tuple_mismatched_counts.own:3:14:[1;31merror[0;39m:expected newline after statement
-     2 | fn get_data() (i32, i32) {
+tests/inputs/tuple_mismatched_counts.own:3:14:[1;31merror[0;39m:expected newline or `;` after statement
+     2 | get_data :: fn() (i32, i32) {
      3 |     return 87, 21, 3
        |              ^
      4 | }
-tests/inputs/tuple_mismatched_counts.own:7:14:[1;31merror[0;39m:expected newline after statement
-     6 | fn get_data_2() (i32, i32, i32) {
+tests/inputs/tuple_mismatched_counts.own:7:14:[1;31merror[0;39m:expected newline or `;` after statement
+     6 | get_data_2 :: fn() (i32, i32, i32) {
      7 |     return 87, 31
        |              ^
      8 | }
-tests/inputs/tuple_mismatched_counts.own:15:9:[1;31merror[0;39m:expected newline after statement
+tests/inputs/tuple_mismatched_counts.own:15:9:[1;31merror[0;39m:expected newline or `;` after statement
     14 | 
     15 |     num1, num2 = get_data()
        |         ^

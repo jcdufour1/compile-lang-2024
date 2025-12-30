@@ -3,7 +3,7 @@
 #define SYMBOL_TABLE_H
 
 #include "strv.h"
-#include <newstring.h>
+#include <local_string.h>
 #include "symbol_table_struct.h"
 #include <do_passes.h>
 #include <uast_forward_decl.h>
@@ -12,8 +12,6 @@
 #include <env.h>
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
-
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent);
 
 void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, Indent indent, const char* file_path, int line);
 
@@ -40,7 +38,6 @@ bool usymbol_add(Uast_def* tast_of_symbol);
 
 void usymbol_update(Uast_def* tast_of_symbol);
 
-void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent);
 void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Indent indent, const char* file_path, int line);
 
 #define symbol_log_table(log_level, sym_table) \
@@ -66,8 +63,7 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void alloca_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent);
-void alloca_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
+void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
     do { \
@@ -102,8 +98,6 @@ bool init_symbol_add(Init_table* init_table, Init_table_node node);
 Symbol_table* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);
-
-const char* sym_tbl_status_print(SYM_TBL_STATUS status);
 
 bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key);
 
@@ -169,6 +163,10 @@ bool name_to_ir_name_add_internal(
 bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name);
 
 bool name_to_ir_name_add(Name_to_ir_name_table_node node);
+
+bool expand_again_add(Arena* arena, Uast_def* item);
+    
+bool expand_again_lookup(Uast_def** result, Name name);
 
 #endif // SYMBOL_TABLE_H
 

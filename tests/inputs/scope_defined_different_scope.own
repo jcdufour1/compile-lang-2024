@@ -1,11 +1,11 @@
 
 
-fn main() i32 {
-    thing: for 1 {
+main :: fn() i32 {
+    ''thing for 1 {
         yield ''thing
     }
 
-    thing2: for 1 {
+    ''thing2 for 1 {
         yield ''thing
     }
 

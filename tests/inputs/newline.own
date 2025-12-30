@@ -1,24 +1,24 @@
 
-type io import = std.io
-type coll import = std.collections
+io :: import = std.io
+coll :: import = std.collections
 
-type Token struct {
+Token :: struct {
     num i32
     str coll.Str
 }
 
-type Node enum {
+Node :: enum {
     num i32
     str coll.Str
 }
 
-fn 
-main() i32 {
+main :: 
+fn() i32 {
     io.print_str(
         "hello"
     )
 
-    let token Token = {
+    token Token := {
         .num = 8,
         .str = "bye"
     }
@@ -28,33 +28,33 @@ main() i32 {
     )
 
 
-    let node Node = .str(
+    node Node := .str(
         "bye"
     )
-    if let .str(
+    if .str(
         string
-    ) = node {
+    ) := node {
         io.print_str(
             string
         )
     }
-    if let 
+    if 
     .str(
         string
-    ) = node {
+    ) := node {
         io.print_str(
             string
         )
     }
 
-    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if .some(file) := io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
     else {
         io.print_str("no")
     }
 
-    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if .some(file) := io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
 
@@ -62,7 +62,7 @@ main() i32 {
         io.print_str("no")
     }
 
-    if let .some(file) = io.open_file("tests/inputs/newline.own", "r") {
+    if .some(file) := io.open_file("tests/inputs/newline.own", "r") {
         io.print_str("yes")
     } 
 

@@ -1,1 +1,1 @@
-type print def = 
+print :: def 

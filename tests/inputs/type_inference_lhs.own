@@ -1,12 +1,12 @@
-type io import = std.io
+io :: import = std.io
 
-fn print(foo i32) {
-    let num2 = foo
+print :: fn(foo i32) {
+    num2 := foo
     io.print_int(num2)
 }
 
-fn main() i32 {
-    let num = 8
+main :: fn() i32 {
+    num := 8
     print(num)
 
     for idx in 0..9 {

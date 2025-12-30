@@ -1,0 +1,14 @@
+U_ndefinedType44 :: struct {
+}
+
+U__ndefinedType44 :: struct {
+}
+
+print_str :: fn(str Str, end Str = "\n") {
+}
+
+print_float :: fn(<NumT>)(num NumT, end Str = "\n") {
+}
+
+print_int :: fn(<NumT>)(num NumT, end Str = "\n", file Str = #file, line i32 = #line, column i32 = #column) {
+}

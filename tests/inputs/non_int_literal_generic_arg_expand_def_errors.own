@@ -1,0 +1,40 @@
+
+thing1 :: fn(<num ''i32>)() {
+}
+
+thing2 :: fn(<num ''fn()void>)() {
+}
+
+thing3 :: fn(<NumT>)() {
+}
+
+thing4 :: fn(<num ''NonExistant>)() {
+}
+
+Struct :: struct {
+    num i32
+}
+
+thing5 :: fn(<struct1 ''Struct>)() {
+}
+
+thing6 :: fn(<num ''Token>)() {
+}
+
+Token :: enum {
+    num i32
+}
+
+main :: fn() i32 {
+    token Token := .num(7)
+    thing1(<{6}>)()
+    thing2(<{6}>)()
+    thing3(<{6}>)()
+    thing4(<{6}>)()
+    thing5(<{6, 4.5}>)()
+    thing5(<{}>)()
+    thing6(<{5}>)()
+    incorrect_token Token(<{5}>) :
+
+    return 0
+}

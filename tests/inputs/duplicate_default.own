@@ -1,13 +1,13 @@
 
-extern("c") fn printf(str_to_print u8*, args opaque...) i32
+printf :: extern("c") fn(str_to_print u8*, args opaque...) i32
 
-type TokenType enum {
+TokenType :: enum {
     num
     string
 }
 
-fn main() i32 {
-    let token_type TokenType = TokenType.num
+main :: fn() i32 {
+    token_type TokenType := TokenType.num
     switch token_type {
         default: printf("unhandled token_type")
         default: printf("unhandled token_type")

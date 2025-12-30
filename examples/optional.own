@@ -1,12 +1,12 @@
-type util import = std.util
-type io import = std.io
+util :: import = std.util
+io :: import = std.io
 
-fn divide(<NumT>)(lhs NumT, rhs NumT) util.Optional(<NumT>) {
+divide :: fn(<NumT>)(lhs NumT, rhs NumT) NumT? {
     if rhs == 0 => return .none
     return .some(lhs/rhs)
 }
 
-fn main() i32 {
+main :: fn() i32 {
     switch divide(8, 2) {
         case .some(num): {
             io.print_str("result is ", "")
@@ -15,7 +15,7 @@ fn main() i32 {
         case .none: io.print_str("error when dividing (cannot divide by zero\n")
     }
 
-    if let .some(num) = divide(6, 3) {
+    if .some(num) := divide(6, 3) {
         io.print_str("result is ", "")
         io.print_int(num)
     } else => io.print_str("error when dividing (cannot divide by zero\n")

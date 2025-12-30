@@ -1,5 +1,5 @@
 import os, subprocess, sys, pathlib, difflib, multiprocessing
-from typing import Callable, Tuple, Optional
+from typing import Callable, Tuple, Optional, Dict
 from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
@@ -27,11 +27,12 @@ class FileNormal:
 # FileExample will only be compiled
 @dataclass
 class FileExample:
+    path_prefix: str
     path_base: str
 
 @dataclass
 class TestResult:
-    compile: subprocess.CompletedProcess[str]
+    compile: subprocess.CompletedProcess[bytes]
 
 @dataclass
 class Parameters:
@@ -40,19 +41,28 @@ class Parameters:
     action: Action
     keep_going: bool
     path_c_compiler: Optional[str]
+    makefile_cc_compiler: Optional[str]
+    makefile_werror_all: bool
     do_color: bool
     count_threads: int
     do_debug_internal: bool
     do_release_internal: bool
 
+COUNT_DIRS = 3 #TODO: automatically set this value
 EXAMPLES_DIR = "examples"
+TUTORIAL_DIR = "tutorial"
 INPUTS_DIR = os.path.join("tests", "inputs")
 RESULTS_DIR = os.path.join("tests", "results")
 
 BUILD_DEBUG_DIR = os.path.join("build", "debug")
 BUILD_RELEASE_DIR = os.path.join("build", "release")
 
-EXE_BASE_NAME = "main"
+if os.name == "nt":
+    EXE_BASE_NAME = "main.exe"
+    DEFAULT_ENCODING = "utf-8" # TODO
+else:
+    EXE_BASE_NAME = "main"
+    DEFAULT_ENCODING = "windows-1252" # TODO
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
@@ -84,6 +94,8 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample
     files: list[FileNormal | FileExample] = []
     possible_path: str
 
+    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
+
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
         possible_path = os.path.realpath(possible_base)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
@@ -92,7 +104,12 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample
     for possible_base in map(to_str, list_files_recursively(EXAMPLES_DIR)):
         possible_path = os.path.realpath(possible_base)
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileExample(possible_path[len(os.path.realpath(EXAMPLES_DIR)) + 1:]))
+            files.append(FileExample(EXAMPLES_DIR, possible_path[len(os.path.realpath(EXAMPLES_DIR)) + 1:]))
+
+    for possible_base in map(to_str, list_files_recursively(TUTORIAL_DIR)):
+        possible_path = os.path.realpath(possible_base)
+        if os.path.isfile(possible_path) and possible_path in files_to_test:
+            files.append(FileExample(TUTORIAL_DIR, possible_path[len(os.path.realpath(TUTORIAL_DIR)) + 1:]))
 
     return files
 
@@ -118,13 +135,17 @@ def get_expected_output(file: FileNormal, action: Action) -> str:
         raise NotImplementedError
 
 
-def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
+def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
     result: str = ""
-    result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
-    result += str(process.stdout) + "\n"
-    result += type_str + "::" + "stderr " + str(str(process.stderr).count("\n")) + "\n"
-    result += str(process.stderr) + "\n"
+
+    result += type_str + "::" + "stdout " + str(process.stdout.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    result += process.stdout.decode(DEFAULT_ENCODING) + "\n"
+
+    result += type_str + "::" + "stderr " + str(process.stderr.decode(DEFAULT_ENCODING).count("\n")) + "\n"
+    result += process.stderr.decode(DEFAULT_ENCODING) + "\n"
+
     result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
+
     return result
 
 def get_result_from_test_result(process: TestResult) -> str:
@@ -149,16 +170,17 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     if isinstance(file, FileNormal):
         compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     elif isinstance(file, FileExample):
-        compile_cmd.append(os.path.join(EXAMPLES_DIR, file.path_base))
+        compile_cmd.append(os.path.join(file.path_prefix, file.path_base))
     else:
         raise NotImplementedError
-    compile_cmd.append("-lm")
+    if os.name != "nt":
+        compile_cmd.append("-lm")
     if do_debug:
         compile_cmd.append("--set-log-level")
         compile_cmd.append("INFO")
     if isinstance(file, FileNormal):
         compile_cmd.append("-o")
-        compile_cmd.append(os.path.basename(remove_extension(file.path_base)))
+        compile_cmd.append(os.path.basename(remove_extension(file.path_base)) + (".exe" if os.name == "nt" else ""))
     elif isinstance(file, FileExample):
         compile_cmd.append("-c")
         compile_cmd.append("-o")
@@ -167,6 +189,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         raise NotImplementedError
     compile_cmd.append("--error")
     compile_cmd.append("no-main-function")
+    compile_cmd.append("--print-posix-msg")
     if path_c_compiler is not None:
         compile_cmd.append("--path-c-compiler")
         compile_cmd.append(path_c_compiler)
@@ -179,7 +202,7 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
 
     # TODO: print when --verbose flag
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
-    return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
+    return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
 def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
     if isinstance(file[0], FileNormal):
@@ -195,7 +218,7 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
             return True
             #success_count += 1
         else:
-            print_error("example compilation fail:" + os.path.join(EXAMPLES_DIR, file[0].path_base) + " (" + file[2] + ")")
+            print_error("example compilation fail:" + os.path.join(file[0].path_prefix, file[0].path_base) + " (" + file[2] + ")")
             print_error("compile error:")
             print(get_result_from_test_result(result))
             if not file[3].keep_going:
@@ -205,6 +228,10 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
         raise NotImplementedError
 
 def do_tests(do_debug: bool, params: Parameters):
+    global has_been_called
+    if os.name == "nt" and do_debug:
+        return
+
     success = True
     success_count = 0
     fail_count = 0
@@ -218,10 +245,22 @@ def do_tests(do_debug: bool, params: Parameters):
         debug_release_text = "release"
         debug_env = "0"
 
-    cmd = ["make", "-j", str(params.count_threads), "build"]
-    print_info("compiling " + debug_release_text + " :")
-    process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": debug_env}))
-    if process.returncode != 0:
+    rtn_code: int
+    map_thing: Dict[str, str]
+    if os.name == "nt":
+        print_info("compiling " + debug_release_text + " :")
+        map_thing = {"SHOULD_PRINT_POSIX_MSG": "1"}
+        rtn_code = subprocess.run(["cmd", "/c", "build.bat"], env=dict(os.environ | map_thing)).returncode
+    else:
+        cmd = ["make", "-j", str(params.count_threads), "build"]
+        print_info("compiling " + debug_release_text + " :")
+        map_thing = {"DEBUG": debug_env}
+        if params.makefile_cc_compiler:
+            map_thing["CC_COMPILER"] = params.makefile_cc_compiler
+        if params.makefile_werror_all:
+            map_thing["WERROR_ALL"] = "1" if params.makefile_werror_all else "0"
+        rtn_code = subprocess.run(cmd, env=dict(os.environ | map_thing)).returncode
+    if rtn_code != 0:
         print_error("compilation of " + debug_release_text + " failed")
         sys.exit(1)
     print_success("compiling " + debug_release_text + " : done")
@@ -233,7 +272,7 @@ def do_tests(do_debug: bool, params: Parameters):
     for file in get_files_to_test(params.files_to_test):
         regular_files.append((file, do_debug, debug_release_text, params))
 
-    with ProcessPoolExecutor(max_workers = params.count_threads) as executor:
+    with ProcessPoolExecutor(max_workers = 1) as executor:
         futures = executor.map(do_regular_test, regular_files)
         for future in futures:
             if future:
@@ -252,7 +291,13 @@ def do_tests(do_debug: bool, params: Parameters):
 
 
 def normalize(string: str) -> str:
-    return string.replace("\r", "")
+    string2: str = string.replace("\r", "")
+
+    if os.name != "nt":
+        return string2
+    # TODO: this could cause forward slashes in source code (not error messages) to be changed to backslashes.
+    #   find better solution for normalizing paths (eg. normalize all paths in compiler itself instead of here)
+    return string2.replace("\\", "/")
 
 # return true if test was successful
 def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
@@ -272,7 +317,9 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     else:
         raise NotImplementedError
 
-    if normalize(process_result) != normalize(expected_output):
+    process_result = normalize(process_result)
+    expected_output = normalize(expected_output)
+    if process_result != expected_output:
         actual_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
@@ -329,9 +376,12 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
+    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
     for possible_base in list_files_recursively(INPUTS_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
     for possible_base in list_files_recursively(EXAMPLES_DIR):
+        callback(list_or_map, os.path.realpath(possible_base))
+    for possible_base in list_files_recursively(TUTORIAL_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
 
 def add_to_map(map: dict, path: str):
@@ -344,6 +394,8 @@ def parse_args() -> Parameters:
     keep_going: bool = True
     has_found_flag = False
     path_c_compiler: Optional[str] = None
+    makefile_cc_compiler: Optional[str] = None
+    makefile_werror_all: bool = False
     do_color:bool = True
     do_release: Optional[bool] = True
     do_debug: Optional[bool] = True
@@ -371,6 +423,13 @@ def parse_args() -> Parameters:
             do_color = False
         elif arg.startswith("--path-c-compiler="):
             path_c_compiler = arg[len("--path-c-compiler="):]
+        elif arg.startswith("--makefile-cc-compiler="):
+            makefile_cc_compiler = arg[len("--makefile-cc-compiler="):]
+        elif arg.startswith("--makefile-werror-all="):
+            num_str: str = arg[len("--makefile-werror-all="):]
+            if len(num_str) != 1 or not num_str.isdigit() or (num_str[0] != '0' and num_str[0] != '1'):
+                print_error("invalid arg to \"--makefile-werror-all=\" (expected \"0\" or \"1\")")
+            makefile_werror_all = False if int(num_str) == 0 else True
         elif arg.startswith("--exclude="):
             to_exclude_raw = arg[len("--exclude="):]
             for idx, path in enumerate(to_exclude_raw.split(",")):
@@ -419,6 +478,8 @@ def parse_args() -> Parameters:
         action,
         keep_going,
         path_c_compiler,
+        makefile_cc_compiler,
+        makefile_werror_all,
         do_color,
         count_threads,
         do_debug_actual,
@@ -452,6 +513,12 @@ def do_something(readme_ex_lines: list[str], actual_ex_lines, example: str) -> N
 
 def main() -> None:
     params: Parameters = parse_args()
+
+    if params.action == Action.UPDATE:
+        confirm_input: str = input("confirm update: yes/[no]")
+        if confirm_input.lower() != "yes":
+            print_error("aborting")
+            sys.exit(1)
 
     if params.do_debug_internal:
         do_tests(True, params)

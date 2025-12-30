@@ -1,8 +1,8 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/undef_label.own:5:9:[1;31merror[0;39m:symbol `inner` is not defined
-     4 |     outer: for 1 {
+tests/inputs/undef_label.own:5:9:[1;31merror[0;39m:symbol `inner` is not defined; did you mean: outer
+     4 |     ''outer for 1 {
      5 |         yield ''inner
        |         ^
      6 |     }

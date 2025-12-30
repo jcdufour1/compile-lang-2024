@@ -1,6 +1,6 @@
-type io import = std.io
+io :: import = std.io
 
-fn do_constants() {
+do_constants :: fn() {
     if 8 < 1 {
         io.puts("1")
     }
@@ -26,8 +26,8 @@ fn do_constants() {
     }
 }
 
-fn do_var_lhs() {
-    let num1 i32 = 8
+do_var_lhs :: fn() {
+    num1 i32 := 8
 
     if num1 < 1 {
         io.puts("1")
@@ -54,8 +54,8 @@ fn do_var_lhs() {
     }
 }
 
-fn do_var_rhs() {
-    let num2 i32 = 8
+do_var_rhs :: fn() {
+    num2 i32 := 8
 
     if 1 < num2  {
         io.puts("1")
@@ -82,9 +82,9 @@ fn do_var_rhs() {
     }
 }
 
-fn do_var_both() {
-    let lhs i32 = 8
-    let rhs i32
+do_var_both :: fn() {
+    lhs i32 := 8
+    rhs i32 :
 
     lhs = 1
     rhs = 8
@@ -122,15 +122,15 @@ fn do_var_both() {
         io.puts("6")
     }
 
-    let div Div
+    div Div :
 }
 
-type Div struct {
+Div :: struct {
     a i32
     b i32
 }
 
-fn main() i32 {
+main :: fn() i32 {
     do_constants()
     do_var_lhs()
     do_var_rhs()

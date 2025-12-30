@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/binary_mismatched_types.own:5:22:[1;31merror[0;39m:types `u3` and `Slice(<u8>)` are not valid operands to binary expression
-     4 |     let string1: Str = "hello"
-     5 |     let num1: i32 = 7*string1
-       |                      ^
+tests/inputs/binary_mismatched_types.own:5:19:[1;31merror[0;39m:types `u3` and `std/runtime::Slice(<u8>)` are not valid operands to binary expression
+     4 |     string1: Str := "hello"
+     5 |     num1: i32 := 7*string1
+       |                   ^
      6 |     return 0
 
 compile::return_code 1

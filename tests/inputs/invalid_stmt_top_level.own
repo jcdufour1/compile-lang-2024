@@ -1,12 +1,12 @@
 {
 }
 
-type Token enum {
+Token :: enum {
     num i32
     none
 }
 
-let token Token = .none
+token Token := .none
 switch token {
     case .num(num): break
     case .none: break

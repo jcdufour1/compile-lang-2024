@@ -1,7 +1,7 @@
 
 
-fn main() i32 {
-    let num1 i32 = 0x8fg2
-    let num2 i32 = 4x8f82
+main :: fn() i32 {
+    num1 i32 := 0x8fg2
+    num2 i32 := 4x8f82
     return 0
 }

@@ -1,5 +1,5 @@
 
-fn main() i32 {
-    let num i32 = 0o78
+main :: fn() i32 {
+    num i32 := 0o78
     return 0
 }

@@ -1,0 +1,36 @@
+compile::stdout 0
+
+compile::stderr 30
+tests/inputs/did_you_mean.own:33:10:[1;31merror[0;39m:type `UndefinedType11` is not defined; did you mean: UndefinedType1_, UndefinedType4, Un_definedType3, UndefinedType2__
+    32 | main :: fn() i32 {
+    33 |     num1 UndefinedType11 :
+       |          ^
+    34 |     num2 UndefinedType22 :
+tests/inputs/did_you_mean.own:34:10:[1;31merror[0;39m:type `UndefinedType22` is not defined; did you mean: UndefinedType1_, UndefinedType2__, UndefinedType4, Un_definedType3
+    33 |     num1 UndefinedType11 :
+    34 |     num2 UndefinedType22 :
+       |          ^
+    35 |     num3 UndefinedType33 :
+tests/inputs/did_you_mean.own:35:10:[1;31merror[0;39m:type `UndefinedType33` is not defined; did you mean: Un_definedType3, UndefinedType1_, UndefinedType4, UndefinedType2__
+    34 |     num2 UndefinedType22 :
+    35 |     num3 UndefinedType33 :
+       |          ^
+    36 |     num4 UndefinedType44 :
+tests/inputs/did_you_mean.own:36:10:[1;31merror[0;39m:type `UndefinedType44` is not defined; did you mean: UndefinedType4, dummy.U_ndefinedType44, UndefinedType1_, Un_d_efinedType4, Un_definedType3, UndefinedType2__
+    35 |     num3 UndefinedType33 :
+    36 |     num4 UndefinedType44 :
+       |          ^
+    37 | 
+tests/inputs/did_you_mean.own:38:5:[1;31merror[0;39m:symbol `print_to` is not defined; did you mean: print
+    37 | 
+    38 |     print_to()
+       |     ^
+    39 |     dummy.print_num(8)
+tests/inputs/did_you_mean.own:39:10:[1;31merror[0;39m:symbol `dummy.print_num` is not defined; did you mean: dummy.print_int, dummy.print_str
+    38 |     print_to()
+    39 |     dummy.print_num(8)
+       |          ^
+    40 | 
+
+compile::return_code 1
+

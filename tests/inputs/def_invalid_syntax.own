@@ -1,8 +1,0 @@
-type print def io.printf
-
-type print def = io.
-
-fn main() i32 {
-    return 0
-}
-

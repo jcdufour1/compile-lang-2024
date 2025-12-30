@@ -1,12 +1,12 @@
-extern("c") fn printf(str_to_print_2: u8*, args: opaque...) i32
+printf :: extern("c") fn(str_to_print_2: u8*, args: opaque...) i32
 
-type Div struct {
+Div :: struct {
     numerator: i32
     denominator: i32
 }
 
-fn main() i32 {
-    let div: Div
+main :: fn() i32 {
+    div: Div :
     div = 7
     return 0
 }

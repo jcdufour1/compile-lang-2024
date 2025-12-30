@@ -1,8 +1,8 @@
 #include <symbol_iter.h>
 #include <ast_msg.h>
 #include <lang_type_from_ulang_type.h>
-#include <ulang_type_get_atom.h>
 #include <pos_util.h>
+#include <ulang_type_after.h>
 
 typedef enum {
     USING_STMT_KEEP,
@@ -22,9 +22,16 @@ static void expand_using_using(Uast_using* using) {
 
     if (def->type == UAST_VARIABLE_DEF) {
         Uast_variable_def* var_def = uast_variable_def_unwrap(def);
+        Uname lang_type_uname = {0};
+        if (!ulang_type_get_uname(&lang_type_uname, var_def->lang_type)) {
+            msg_todo("", using->pos);
+            return;
+        }
         Name lang_type_name = {0};
-        name_from_uname(&lang_type_name, ulang_type_get_atom(var_def->lang_type).str, ulang_type_get_pos(var_def->lang_type));
-        vec_reset(&lang_type_name.gen_args);
+        if (!name_from_uname(&lang_type_name, lang_type_uname, ulang_type_get_pos(var_def->lang_type))) {
+            return;
+        }
+        darr_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
         if (struct_def_->type != UAST_STRUCT_DEF) {
@@ -44,7 +51,7 @@ static void expand_using_using(Uast_using* using) {
         Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
 
         for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-            Uast_variable_def* curr = vec_at(struct_def->base.members, idx);
+            Uast_variable_def* curr = darr_at(struct_def->base.members, idx);
             Name alias_name = using->sym_name;
             alias_name.mod_path = using->mod_path_to_put_defs;
             alias_name.base = curr->name.base;
@@ -131,8 +138,6 @@ static EXPAND_USING_STMT expand_using_stmt(Uast_stmt* stmt) {
             return USING_STMT_KEEP;
         case UAST_CONTINUE:
             return USING_STMT_KEEP;
-        case UAST_ASSIGNMENT:
-            return USING_STMT_KEEP;
         case UAST_RETURN:
             return USING_STMT_KEEP;
         case UAST_STMT_REMOVED:
@@ -149,7 +154,7 @@ static void expand_using_block(Uast_block* block) {
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Uast_stmt** curr = vec_at_ref(&block->children, idx);
+        Uast_stmt** curr = darr_at_ref(&block->children, idx);
         if (USING_STMT_DISCARD == expand_using_stmt(*curr)) {
             *curr = uast_stmt_removed_wrap(uast_stmt_removed_new(uast_stmt_get_pos(*curr)));
         }
@@ -157,41 +162,48 @@ static void expand_using_block(Uast_block* block) {
 }
 
 static void expand_using_def(Uast_def* def) {
+    // TODO: setting env.mod_path_curr_file on every Uast_def may be inefficient
+    Strv old_mod_path_curr_file = env.mod_path_curr_file;
+    env.mod_path_curr_file = uast_def_get_name(def).mod_path;
+
     switch (def->type) {
         case UAST_LABEL:
-            return;
+            break;
         case UAST_VOID_DEF:
-            return;
+            break;
         case UAST_POISON_DEF:
-            return;
+            break;
         case UAST_IMPORT_PATH:
             expand_using_block(uast_import_path_unwrap(def)->block);
-            return;
+            break;
         case UAST_MOD_ALIAS:
-            return;
+            break;
         case UAST_GENERIC_PARAM:
-            return;
+            break;
         case UAST_FUNCTION_DEF:
             expand_using_block(uast_function_def_unwrap(def)->body);
-            return;
+            break;
         case UAST_VARIABLE_DEF:
-            return;
+            break;
         case UAST_STRUCT_DEF:
-            return;
+            break;
         case UAST_RAW_UNION_DEF:
-            return;
+            break;
         case UAST_ENUM_DEF:
-            return;
+            break;
         case UAST_LANG_DEF:
-            return;
+            break;
         case UAST_PRIMITIVE_DEF:
-            return;
+            break;
         case UAST_FUNCTION_DECL:
-            return;
+            break;
         case UAST_BUILTIN_DEF:
-            return;
+            break;
+        default:
+            unreachable("");
     }
-    unreachable("");
+
+    env.mod_path_curr_file = old_mod_path_curr_file;
 }
 
 void expand_using(void) {

@@ -78,8 +78,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("extern");
         case TOKEN_STRUCT:
             return sv("struct");
-        case TOKEN_LET:
-            return sv("let");
         case TOKEN_IN:
             return sv("in");
         case TOKEN_BREAK:
@@ -100,8 +98,6 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
             return sv(">=");
-        case TOKEN_TYPE_DEF:
-            return sv("type");
         case TOKEN_SWITCH:
             return sv("switch");
         case TOKEN_CASE:
@@ -156,6 +152,12 @@ Strv token_type_to_strv_msg(TOKEN_TYPE token_type) {
             return sv("using");
         case TOKEN_ORELSE:
             return sv("orelse");
+        case TOKEN_QUESTION_MARK:
+            return sv("?");
+        case TOKEN_UNDERSCORE:
+            return sv("_");
+        case TOKEN_AT_SIGN:
+            return sv("@");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -238,8 +240,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("extern");
         case TOKEN_STRUCT:
             return sv("struct");
-        case TOKEN_LET:
-            return sv("let");
         case TOKEN_IN:
             return sv("in");
         case TOKEN_BREAK:
@@ -260,8 +260,6 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("continue");
         case TOKEN_GREATER_OR_EQUAL:
             return sv(">=");
-        case TOKEN_TYPE_DEF:
-            return sv("type");
         case TOKEN_SWITCH:
             return sv("switch");
         case TOKEN_CASE:
@@ -316,6 +314,12 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
             return sv("using");
         case TOKEN_ORELSE:
             return sv("orelse");
+        case TOKEN_QUESTION_MARK:
+            return sv("?");
+        case TOKEN_UNDERSCORE:
+            return sv("_");
+        case TOKEN_AT_SIGN:
+            return sv("@");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -324,7 +328,7 @@ Strv token_type_to_strv_log(TOKEN_TYPE token_type) {
 
 Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     String buf = {0};
-    vec_reset(&buf);
+    darr_reset(&buf);
 
     switch (mode) {
         case TOKEN_MODE_LOG:
@@ -338,12 +342,12 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 76, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 77, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
         case TOKEN_OPEN_PAR: fallthrough;
         case TOKEN_NONTYPE: fallthrough;
@@ -381,7 +385,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_EXTERN: fallthrough;
         case TOKEN_STRUCT: fallthrough;
         case TOKEN_RAW_UNION: fallthrough;
-        case TOKEN_LET: fallthrough;
         case TOKEN_IN: fallthrough;
         case TOKEN_NEW_LINE: fallthrough;
         case TOKEN_BREAK: fallthrough;
@@ -403,7 +406,6 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_IMPORT: fallthrough;
         case TOKEN_DEF: fallthrough;
         case TOKEN_EOF: fallthrough;
-        case TOKEN_TYPE_DEF: fallthrough;
         case TOKEN_DEFER: fallthrough;
         case TOKEN_SIZEOF: fallthrough;
         case TOKEN_YIELD: fallthrough;
@@ -413,6 +415,9 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_GENERIC_TYPE: fallthrough;
         case TOKEN_ONE_LINE_BLOCK_START: fallthrough;
         case TOKEN_ORELSE: fallthrough;
+        case TOKEN_QUESTION_MARK: fallthrough;
+        case TOKEN_UNDERSCORE: fallthrough;
+        case TOKEN_AT_SIGN: fallthrough;
         case TOKEN_USING:
             break;
         case TOKEN_MACRO: 
@@ -425,15 +430,17 @@ Strv token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_CHAR_LITERAL: 
             fallthrough;
         case TOKEN_INT_LITERAL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
         case TOKEN_FLOAT_LITERAL:
-            vec_append(arena, &buf, '(');
+            darr_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            vec_append(arena, &buf, ')');
+            darr_append(arena, &buf, ')');
             break;
+        case TOKEN_COUNT:
+            unreachable("");
         default:
             unreachable("");
     }

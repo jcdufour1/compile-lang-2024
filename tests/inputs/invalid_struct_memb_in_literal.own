@@ -1,16 +1,16 @@
 
-type Div struct {
+Div :: struct {
     numerator: i32
     denominator: i32
 }
 
-type Token struct {
+Token :: struct {
     num: i32
     string_data: u8*
     div5: Div
 }
 
-fn main() i32 {
-    let div: Div = {.numerator = 87, .denominatordaklsjfkjskf = 77}
+main :: fn() i32 {
+    div: Div := {.numerator = 87, .denominatordaklsjfkjskf = 77}
     return 0
 }

@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <assert.h>
-#include <newstring.h>
+#include <local_string.h>
 #include <tast.h>
 #include <parameters.h>
 #include <file.h>
@@ -8,7 +8,7 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
-#include <strv_vec.h>
+#include <strv_darr.h>
 #include <subprocess.h>
 #include <ir_graphvis.h>
 #include <symbol_iter.h>
@@ -22,16 +22,15 @@
 
 static void add_primitives(void) {
     unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
-    vec_append(&a_main, &env.gen_args_char, ulang_type_new_char());
+    darr_append(&a_main, &env.gen_args_char, ulang_type_new_char(POS_BUILTIN));
 }
 
 static void add_builtin_def(Strv name) {
     unwrap(usym_tbl_add(uast_builtin_def_wrap(uast_builtin_def_new(POS_BUILTIN, name_new(
         MOD_PATH_RUNTIME,
         name,
-        (Ulang_type_vec) {0},
-        SCOPE_TOP_LEVEL,
-        (Attrs) {0}
+        (Ulang_type_darr) {0},
+        SCOPE_TOP_LEVEL
     )))));
 }
 
@@ -43,7 +42,7 @@ static void add_builtin_defs(void) {
     add_builtin_def(sv("usize"));
 }
 
-#define do_pass(pass_fn, sym_log_fn) \
+#define do_pass(pass_fn, sym_log_fn, sym_log_dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         pass_fn(); \
@@ -55,16 +54,14 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
-        } \
+        sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_temp);\
         arena_reset(&a_pass);\
     } while (0)
 
-#define do_pass_status(pass_fn, sym_log_fn) \
+#define do_pass_status(pass_fn, sym_log_fn, dest) \
     do { \
         uint64_t before = get_time_milliseconds(); \
         bool status = pass_fn(); \
@@ -79,7 +76,7 @@ static void add_builtin_defs(void) {
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(LOG_DEBUG, SCOPE_TOP_LEVEL);\
+            sym_log_fn(dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
@@ -87,7 +84,7 @@ static void add_builtin_defs(void) {
         arena_reset(&a_pass);\
     } while (0)
 
-void compile_file_to_ir(void) {
+static void compile_file_to_ir(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
@@ -95,28 +92,31 @@ void compile_file_to_ir(void) {
 
     symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
 
-    add_primitives();
-    add_builtin_defs();
-
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
-        SCOPE_TOP_LEVEL
+        SCOPE_TOP_LEVEL,
+        true /* TODO */
     );
+    log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name, NAME_FULL));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
 
+    add_primitives();
+    add_builtin_defs();
+
     // generate ir from file(s)
-    do_pass_status(parse, usymbol_log_level);
-    do_pass(expand_using, symbol_log_level);
-    do_pass(expand_def, symbol_log_level);
-    do_pass(try_set_types, symbol_log_level);
-    do_pass(add_load_and_store, ir_log_level);
+    // TODO: figure out why it does not work to put non-stderr file in log_internal_ex
+    do_pass_status(parse, usymbol_log_level, stderr);
+    do_pass(expand_using, usymbol_log_level, stderr);
+    do_pass(expand_def, usymbol_log_level, stderr);
+    do_pass(try_set_types, symbol_log_level, stderr);
+    do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
-    do_pass(construct_cfgs, ir_log_level);
-    do_pass(remove_void_assigns, ir_log_level);
-    do_pass(check_uninitialized, ir_log_level);
+    do_pass(construct_cfgs, ir_log_level, stderr);
+    do_pass(remove_void_assigns, ir_log_level, stderr);
+    do_pass(check_uninitialized, ir_log_level, stderr);
 }
 
 NEVER_RETURN void do_passes(void) {
@@ -125,7 +125,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -162,7 +162,7 @@ NEVER_RETURN void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                do_pass(emit_c_from_tree, ir_log_level);
+                do_pass(emit_c_from_tree, ir_log_level, stderr);
                 break;
             default:
                 unreachable("");
@@ -170,23 +170,26 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 27,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
     static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop_after states (not all are explicitly handled");
     if (params.stop_after == STOP_AFTER_RUN) {
-        Strv_vec cmd = {0};
+        Strv_darr cmd = {0};
         String output_path = {0};
         string_extend_cstr(&a_temp, &output_path, "./");
         string_extend_strv(&a_temp, &output_path, params.output_file_path);
-        vec_append(&a_temp, &cmd, string_to_strv(output_path));
+        darr_append(&a_temp, &cmd, string_to_strv(output_path));
+        darr_extend(&a_temp, &cmd, &params.run_args);
         print_all_defered_msgs();
         arena_free_a_main();
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            if (!params.print_posix_msg) {
+                msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
+            }
             // exit with the child process return status
             local_exit(status);
         }
@@ -199,6 +202,19 @@ NEVER_RETURN void do_passes(void) {
 }
 
 int main(int argc, char** argv) {
+    size_t dummy = {0};
+    (void) dummy;
+    assert(strv_contains(&dummy, sv("th"), sv("t")));
+    assert(strv_contains(&dummy, sv("th"), sv("th")));
+    assert(!strv_contains(&dummy, sv("th"), sv("thi")));
+    assert(!strv_contains(&dummy, sv("th"), sv("ih")));
+    assert(!strv_contains(&dummy, sv("ih"), sv("eh")));
+
+    assert(strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main"), sv("z"), sv("a"))));
+    assert(!strv_is_equal(sv("main"), strv_replace(&a_temp, sv("main8"), sv("z"), sv("a"))));
+    assert(strv_is_equal(sv("m8n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8"))));
+    assert(strv_is_equal(sv("m8_n"), strv_replace(&a_temp, sv("main"), sv("ai"), sv("8_"))));
+
     parse_args(argc, argv);
     do_passes();
 }

@@ -1,11 +1,11 @@
 compile::stdout 0
 
 compile::stderr 5
-tests/inputs/optional_76.own:29:16:[1;31merror[0;39m:type `Optional(<i32>)` is not defined
+tests/inputs/optional_76.own:29:12:[1;31merror[0;39m:type `Optional` is not defined; did you mean: std/runtime::Optional
     28 |     // Optional is undefined in this file
-    29 |     let number Optional(<i32>) = .some(84)
-       |                ^
-    30 |     let result2 Result(<Token, ParseError>)
+    29 |     number Optional(<i32>) := .some(84)
+       |            ^
+    30 |     result2 Result(<Token, ParseError>) :
 
 compile::return_code 1
 

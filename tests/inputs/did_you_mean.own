@@ -1,0 +1,43 @@
+
+dummy :: import = tests.dummy_std.std_dummy_3
+
+Token :: struct {
+    num i32
+}
+
+UndefinedType1_ :: struct {
+    num i32
+}
+
+UndefinedType2__ :: struct {
+    num i32
+}
+
+Un_definedType3 :: struct {
+    num i32
+}
+
+UndefinedType4 :: struct {
+    num i32
+}
+
+Un_d_efinedType4 :: struct {
+    num i32
+}
+
+
+print :: fn() {
+}
+
+main :: fn() i32 {
+    num1 UndefinedType11 :
+    num2 UndefinedType22 :
+    num3 UndefinedType33 :
+    num4 UndefinedType44 :
+
+    print_to()
+    dummy.print_num(8)
+
+    return 0
+}
+
