@@ -514,6 +514,12 @@ def do_something(readme_ex_lines: list[str], actual_ex_lines, example: str) -> N
 def main() -> None:
     params: Parameters = parse_args()
 
+    if params.action == Action.UPDATE:
+        confirm_input: str = input("confirm update: yes/[no]")
+        if confirm_input.lower() != "yes":
+            print_error("aborting")
+            sys.exit(1)
+
     if params.do_debug_internal:
         do_tests(True, params)
     if params.do_release_internal:

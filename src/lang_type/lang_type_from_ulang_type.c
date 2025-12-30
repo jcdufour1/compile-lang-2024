@@ -114,7 +114,7 @@ bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     if (!usymbol_lookup(&alias_, alias_name)) {
         msg(
             DIAG_UNDEFINED_SYMBOL, name_pos, "module alias `"FMT"` is not defined\n",
-            name_print(NAME_MSG, alias_name)
+            name_print(NAME_MSG, alias_name, NAME_FULL)
         );
         unwrap(usymbol_add(uast_poison_def_wrap(uast_poison_def_new(name_pos, alias_name))));
         return false;

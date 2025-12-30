@@ -10,7 +10,7 @@ is_whitespace :: fn(ch u8) u1 {
 
 check_stack :: fn(amt_consumed u64, nums_len u64, min_nums_count u64) void? {
     if nums_len < min_nums_count {
-        for idx u64 in 0..amt_consumed => io.print_str(" ", "")
+        for idx in 0..amt_consumed => io.print_str(" ", "")
         io.print_str("^");
         io.print_str("error: this operation requires at least ", "");
         io.print_int(min_nums_count, "");

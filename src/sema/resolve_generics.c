@@ -32,7 +32,7 @@ static void msg_undefined_type_internal(
                         DIAG_UNDEFINED_TYPE,
                         pos,
                         "type `"FMT"` is not defined"FMT"\n",
-                        name_print(NAME_MSG, base_name),
+                        name_print(NAME_MSG, base_name, NAME_FULL),
                         did_you_mean_type_print(base_name)
                     );
                     goto end;
@@ -125,12 +125,12 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
                     msg(
                         DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
                         "redefinition of member `"FMT"`\n",
-                        name_print(NAME_MSG, curr->name)
+                        name_print(NAME_MSG, curr->name, NAME_BASE_ONLY)
                     );
                     msg(
                         DIAG_NOTE, prev->pos,
                         "member `"FMT"` previously defined here\n",
-                        name_print(NAME_MSG, prev->name)
+                        name_print(NAME_MSG, prev->name, NAME_BASE_ONLY)
                     );
                     status = false;
                 }
@@ -152,12 +152,12 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
                     msg(
                         DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
                         "redefinition of member `"FMT"`\n",
-                        name_print(NAME_MSG, curr->name)
+                        name_print(NAME_MSG, curr->name, NAME_BASE_ONLY)
                     );
                     msg(
                         DIAG_NOTE, darr_at(base->members, prev_idx)->pos,
                         "member `"FMT"` previously defined here\n",
-                        name_print(NAME_MSG, curr->name)
+                        name_print(NAME_MSG, curr->name, NAME_BASE_ONLY)
                     );
                     status = false;
                 }
@@ -172,12 +172,12 @@ static bool try_set_struct_def_base_types(Struct_def_base* new_base, Ustruct_def
                     msg(
                         DIAG_REDEF_STRUCT_BASE_MEMBER, curr->pos,
                         "redefinition of member `"FMT"`\n",
-                        name_print(NAME_MSG, curr->name)
+                        name_print(NAME_MSG, curr->name, NAME_BASE_ONLY)
                     );
                     msg(
                         DIAG_NOTE, gen_param->pos,
                         "member `"FMT"` previously defined here\n",
-                        name_print(NAME_MSG, curr->name)
+                        name_print(NAME_MSG, curr->name, NAME_BASE_ONLY)
                     );
                     status = false;
                 }

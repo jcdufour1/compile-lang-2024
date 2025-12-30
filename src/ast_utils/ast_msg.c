@@ -10,7 +10,7 @@ void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Po
         file, line,
         DIAG_UNDEFINED_SYMBOL, sym_pos,
         "symbol `"FMT"` is not defined"FMT"\n",
-        name_print(NAME_MSG, sym_name),
+        name_print(NAME_MSG, sym_name, NAME_FULL),
         did_you_mean_symbol_print(sym_name)
     );
 }
@@ -18,14 +18,14 @@ void msg_undefined_symbol_internal(const char* file, int line, Name sym_name, Po
 PARSE_STATUS msg_redefinition_of_symbol_internal(const char* file, int line, const Uast_def* new_sym_def) {
     msg_internal(
         file, line, DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
+        "redefinition of symbol `"FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def), NAME_FULL)
     );
 
     Uast_def* original_def = NULL;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg_internal(
         file, line, DIAG_NOTE, uast_def_get_pos(original_def),
-        "`"FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
+        "`"FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def), NAME_FULL)
     );
 
     return PARSE_ERROR;

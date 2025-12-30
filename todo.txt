@@ -54,17 +54,6 @@ for generics:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
     -- have proper delimeters (eg. space)
-- for below, figure out why order is wrong:
-    tests/inputs/uninitialized.own:47:19:note:tracing path of uninitialized variable use
-        46 |     switch way {
-        47 |         case .way1: break
-           |                   ^
-        48 |         case .way2: status = 4
-    tests/inputs/uninitialized.own:46:5:note:tracing path of uninitialized variable use
-        45 |     let status i32
-        46 |     switch way {
-           |     ^
-        47 |         case .way1: break
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
@@ -102,27 +91,19 @@ for generics:
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
 - member_name of member access should not be substituted in generic substitution?
-- do_test.py should have confirmation before update
 - check that the main function has the correct signature (make expected failure test)
 - check that there are not duplicate main functions (make expected failure test)
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
-- in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
-     be able to remove u64. fix bug that prevents it from being possible.
-- figure out why this does not work:
-    fn do_nothing(pretend_fn fn()) {
 - allow struct literal designated args to be in any order
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
-- add token `::`?
-- add token `:=`?
 - make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - document or make functions for uast_def_get_ulang_type
 - make test case for passing args after --run and using argv in program
 - test case for def alias used within struct literal generic arg
 - make expected success test for strange input name (eg. "tests/inputs/thing&-.own")?
-- implement non top level structs (do by making top level struct with util_literal_name_new(), then make def in scope of user struct def)
 - in autogen_(u||ir)lang_type, call common function after generating (u||ir)lang_type
 - add prefix to symbols when emitting backend IR (start with double underscore, etc.) to prevent collisions
 - fix uninitialized warning with gcc (could be gcc bug?)
@@ -130,15 +111,7 @@ for generics:
 - todo should call local_exit?
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
-- figure out why color does not work in wine
-- in python script, use threading, etc. to reduce race conditions
-- avoid printing util mod alias of function parameter below:
-    tests/inputs/nested_struct_by_ptr.own|19 col 16| [1;31merror[0;39m:argument to function parameter `util.count_items` was not specified
-    ||     18 | token_ptr_print :: fn(pointer Token*) u8* {
-    ||     19 |     buf := util.alloc(<u8>)()
-    ||        |                ^
-    ||     20 | 
-- add windows instructions to quickstart
+- in python script, use mutex, etc. to reduce race conditions
 - fix warnings in windows ci
 
 
