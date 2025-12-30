@@ -107,15 +107,11 @@ for generics:
 - check that there are not duplicate main functions (make expected failure test)
 - store pos in Uast_struct_def_base?
 - store pos in Tast_struct_def_base?
-- in examples/calculator.own:13 ("for idx u64 in 0..amt_consumed => io.print_str(" ", "")"), I should
-     be able to remove u64. fix bug that prevents it from being possible.
 - figure out why this does not work:
     fn do_nothing(pretend_fn fn()) {
 - allow struct literal designated args to be in any order
 - float generic args: make sure that duplicate functions are not being created because of floating point rounding errors
 - expected failure case for generic parameter having the same name as top level function
-- add token `::`?
-- add token `:=`?
 - make better hash table system (use autogen or use library)
 - see if a_temp can be used in autogen. If not, do refactoring so that a_temp can be used in autogen
 - document or make functions for uast_def_get_ulang_type
@@ -130,14 +126,7 @@ for generics:
 - todo should call local_exit?
 - test log_(usymbol|symbol|ir)_level in ci
 - make loc printing work for uasts and tasts
-- figure out why color does not work in wine
-- in python script, use threading, etc. to reduce race conditions
-- avoid printing util mod alias of function parameter below:
-    tests/inputs/nested_struct_by_ptr.own|19 col 16| [1;31merror[0;39m:argument to function parameter `util.count_items` was not specified
-    ||     18 | token_ptr_print :: fn(pointer Token*) u8* {
-    ||     19 |     buf := util.alloc(<u8>)()
-    ||        |                ^
-    ||     20 | 
+- in python script, use mutex, etc. to reduce race conditions
 - fix warnings in windows ci
 
 
