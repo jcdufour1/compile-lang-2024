@@ -170,7 +170,7 @@ static Strv did_you_mean_print_common_finish(Candidate_darr candidates) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, &buf, ",");
         }
-        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name, false));
+        string_extend_f(&a_temp, &buf, " "FMT, name_print(NAME_MSG, candidate.name, NAME_FULL));
     }
     return string_to_strv(buf);
 }

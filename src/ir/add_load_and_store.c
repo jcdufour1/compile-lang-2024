@@ -2829,7 +2829,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 msg(
                     DIAG_UNDEFINED_SYMBOL, tast_stmt_get_pos(old_stmt),
                     "label `"FMT"` points to a scope that is not a parent of this statement\n",
-                    name_print(NAME_MSG, break_out_of, false)
+                    name_print(NAME_MSG, break_out_of, NAME_FULL)
                 );
             }
             break;

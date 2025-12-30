@@ -576,7 +576,7 @@ static inline size_t tast_get_member_index(const Struct_def_base* struct_def, St
         }
         log(LOG_TRACE, FMT" "FMT"\n", tast_print(curr_member), strv_print(member_name));
     }
-    unreachable("member "FMT" of "FMT" not found", strv_print(member_name), name_print(NAME_LOG, struct_def->name, false));
+    unreachable("member "FMT" of "FMT" not found", strv_print(member_name), name_print(NAME_LOG, struct_def->name, NAME_FULL));
 }
 
 static inline bool tast_operator_is_lvalue(const Tast_operator* oper) {

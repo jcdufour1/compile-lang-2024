@@ -236,10 +236,15 @@ Strv serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
-Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, bool base_only) {
-    if (base_only) {
-        assert(!serialize && "not implemented");
-        return name.base;
+Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, NAME_BASE_ONLY_CHOICE base_only_choice) {
+    switch (base_only_choice) {
+        case NAME_FULL:
+            break;
+        case NAME_BASE_ONLY:
+            assert(!serialize && "not implemented");
+            return name.base;
+        default:
+            unreachable("");
     }
 
     if (serialize) {
