@@ -54,17 +54,6 @@ for generics:
     -- label should be indented
     -- literal should be printed as literal instead of as just name
     -- have proper delimeters (eg. space)
-- for below, figure out why order is wrong:
-    tests/inputs/uninitialized.own:47:19:note:tracing path of uninitialized variable use
-        46 |     switch way {
-        47 |         case .way1: break
-           |                   ^
-        48 |         case .way2: status = 4
-    tests/inputs/uninitialized.own:46:5:note:tracing path of uninitialized variable use
-        45 |     let status i32
-        46 |     switch way {
-           |     ^
-        47 |         case .way1: break
 - proper print functions for Ulang_type_regular, etc.
 - this can crash the compiler (because of the i32):
     io.printf("before 1: %d\n", *rt.static_array_access(nums, idx), "\n", i32)
