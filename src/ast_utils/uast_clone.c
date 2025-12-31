@@ -177,7 +177,7 @@ Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
 
 Uast_label* uast_label_clone(const Uast_label* label, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : label->name.scope_id;
-    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope));
+    return uast_label_new(label->pos, name_clone(label->name, use_new_scope, new_scope), scope_to_name_tbl_lookup(scope), label->has_continue);
 }
 
 Uast_builtin_def* uast_builtin_def_clone(const Uast_builtin_def* def, bool use_new_scope, Scope_id new_scope) {

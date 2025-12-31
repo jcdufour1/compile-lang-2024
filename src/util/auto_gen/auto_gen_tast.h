@@ -444,6 +444,7 @@ static Uast_type tast_gen_label(const char* prefix) {
 
     append_member(&lang_label.members, "Name", "name");
     append_member(&lang_label.members, "Name", "block_scope");
+    append_member(&lang_label.members, "bool", "has_continue");
 
     return lang_label;
 }
