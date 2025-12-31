@@ -4229,6 +4229,7 @@ bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
     check_env.parent_of = PARENT_OF_BREAK; // TODO
+    check_env.curr_block_has_continue = true;
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, cont->break_out_of)) {

@@ -2901,7 +2901,17 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
     if (pairs->info.count > 0) {
         // jump to the top of the defer stack to execute the defered statements
-        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(*pairs).label->name));
+        assert(defered_collections.coll_stack.info.count > 0 && "TODO");
+        size_t top_idx = defered_collections.coll_stack.info.count - 1;
+        while (!darr_at(defered_collections.coll_stack, top_idx).block_has_defer) {
+            if (top_idx < 1) {
+                break; // TODO
+            }
+            top_idx--;
+        }
+
+        //Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(*pairs).label->name));
+        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, top_idx).pairs).label->name));
         darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
     }
 }
