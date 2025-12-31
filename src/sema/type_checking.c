@@ -4170,6 +4170,7 @@ bool try_set_yield_types(Tast_yield** new_tast, Uast_yield* yield) {
     bool status = true;
     PARENT_OF old_parent_of = check_env.parent_of;
     check_env.parent_of = PARENT_OF_BREAK; // TODO
+    check_env.curr_block_has_yield = true;
 
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, yield->break_out_of)) {
@@ -4852,6 +4853,9 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
     PARENT_OF old_parent_of = check_env.parent_of;
     size_t old_switch_prev_idx = check_env.switch_prev_idx;
     bool old_curr_block_has_defer = check_env.curr_block_has_defer;
+    bool old_curr_block_has_yield = check_env.curr_block_has_yield;
+    check_env.curr_block_has_defer = false;
+    check_env.curr_block_has_yield = false;
     check_env.break_in_case = false;
     if (check_env.parent_of == PARENT_OF_ASSIGN_RHS) {
         // TODO: check_env.break_type should eventually be set to its previous value
@@ -4959,7 +4963,8 @@ error_inner:
         lang_switch->pos /* TODO */,
         darr_at(new_if_else->tasts, 0)->body->lang_type,
         outer_scope_id, //darr_at(new_if_else->tasts, 0)->body->scope_id /* TODO */
-        check_env.curr_block_has_defer
+        check_env.curr_block_has_defer,
+        check_env.curr_block_has_yield
     );
     //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
     //    scope_get_parent_tbl_update(darr_at(new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
@@ -4971,6 +4976,7 @@ error:
     check_env.break_type = check_env.break_type;
     check_env.switch_prev_idx = old_switch_prev_idx;
     check_env.curr_block_has_defer = old_curr_block_has_defer;
+    check_env.curr_block_has_yield = old_curr_block_has_yield;
     return status;
 }
 
@@ -5162,6 +5168,9 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     bool status = true;
     bool old_curr_block_has_defer = check_env.curr_block_has_defer;
+    bool old_curr_block_has_yield = check_env.curr_block_has_yield;
+    check_env.curr_block_has_defer = false;
+    check_env.curr_block_has_yield = false;
 
     Tast_stmt_darr new_tasts = {0};
 
@@ -5252,9 +5261,11 @@ error:
         block->pos_end,
         yield_type,
         block->scope_id,
-        check_env.curr_block_has_defer
+        check_env.curr_block_has_defer,
+        check_env.curr_block_has_yield
     );
     check_env.curr_block_has_defer = old_curr_block_has_defer;
+    check_env.curr_block_has_yield = old_curr_block_has_yield;
     if (status) {
         unwrap(*new_tast);
     } else {

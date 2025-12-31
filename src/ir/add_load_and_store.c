@@ -1519,6 +1519,7 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
+            false,
             false
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
@@ -1540,6 +1541,7 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
+            false,
             false
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))

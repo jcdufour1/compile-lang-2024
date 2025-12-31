@@ -14,6 +14,8 @@ static Uast_type tast_gen_block(const char* prefix) {
     append_member(&block.members, "Lang_type", "lang_type");
     append_member(&block.members, "Scope_id", "scope_id");
     append_member(&block.members, "bool", "has_defer");
+    append_member(&block.members, "bool", "has_yield");
+    //append_member(&block.members, "bool", "has_continue");
 
     return block;
 }
