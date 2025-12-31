@@ -53,6 +53,7 @@ Uname name_to_uname(Name name) {
 }
 
 Name ir_name_to_name(Ir_name name) {
+    assert(name.base.count > 0);
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         return *(Name*)&name;

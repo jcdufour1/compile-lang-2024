@@ -432,8 +432,8 @@ static void load_block_stmts(
         .rtn_val = rtn_val,
         .curr_scope_name = block_scope,
         .break_name = name_to_ir_name(break_expr ? break_expr->name : (Name) {0}),
-        .is_yielding = name_to_ir_name(is_yielding->name),
-        .is_cont2ing = name_to_ir_name(is_cont2ing->name)
+        .is_yielding = block_has_defer ? name_to_ir_name(is_yielding->name) : (Ir_name) {0},
+        .is_cont2ing = block_has_defer ? name_to_ir_name(is_cont2ing->name) : (Ir_name) {0}
     }));
 
     switch (parent_of) {
@@ -2785,15 +2785,17 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
 
-            Tast_assignment* is_brk_assign_aux = tast_assignment_new(
-                tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                    .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
-                    .name = ir_name_to_name(get_is_brking_or_conting(darr_at_ref(&defered_collections.coll_stack, idx)))
-                }))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt))))) // TODO: call helper functions for making some of these literals
-            );
-            load_assignment(new_block, is_brk_assign_aux);
+            if (get_is_brking_or_conting(darr_at_ref(&defered_collections.coll_stack, idx)).base.count > 0) {
+                Tast_assignment* is_brk_assign_aux = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
+                        .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
+                        .name = ir_name_to_name(get_is_brking_or_conting(darr_at_ref(&defered_collections.coll_stack, idx)))
+                    }))),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt))))) // TODO: call helper functions for making some of these literals
+                );
+                load_assignment(new_block, is_brk_assign_aux);
+            }
 
             // TODO: this will not always work for custom scopes?
             if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
@@ -2825,15 +2827,17 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
             break;
         } else {
-            Tast_assignment* is_brk_assign_aux = tast_assignment_new(
-                tast_stmt_get_pos(old_stmt),
-                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                    .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
-                    .name = ir_name_to_name(darr_at_ref(&defered_collections.coll_stack, idx)->is_yielding)
-                }))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt)))))
-            );
-            load_assignment(new_block, is_brk_assign_aux);
+            if (get_is_brking_or_conting(darr_at_ref(&defered_collections.coll_stack, idx)).base.count > 0) {
+                Tast_assignment* is_brk_assign_aux = tast_assignment_new(
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
+                        .lang_type = lang_type_new_u1(tast_stmt_get_pos(old_stmt)),
+                        .name = ir_name_to_name(darr_at_ref(&defered_collections.coll_stack, idx)->is_yielding)
+                    }))),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, lang_type_new_u1(tast_stmt_get_pos(old_stmt)))))
+                );
+                load_assignment(new_block, is_brk_assign_aux);
+            }
         }
 
         if (idx < 1) {
@@ -3010,6 +3014,7 @@ static void load_def_out_of_line(Tast_def* old_def) {
 }
 
 static void load_single_is_rtn_check_internal(const char* file, int line, Ir_block* new_block, Ir_name sym_name, Ir_name if_rtning, Ir_name otherwise) {
+    assert(sym_name.base.count > 0);
     if_for_add_cond_goto_internal(
         (Loc) {.file = file, .line = line},
         // if this condition evaluates to true, we are not returning right now
