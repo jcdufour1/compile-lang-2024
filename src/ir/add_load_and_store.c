@@ -448,21 +448,21 @@ static void load_block_stmts(
         case DEFER_PARENT_OF_FUN: {
             darr_append(&a_main, &darr_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")), scope_to_name_tbl_lookup(new_block->scope_id), false)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_fun")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
         case DEFER_PARENT_OF_FOR: {
             darr_append(&a_main, &darr_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")), scope_to_name_tbl_lookup(new_block->scope_id), false)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_for")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
         case DEFER_PARENT_OF_IF: {
             darr_append(&a_main, &darr_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")), scope_to_name_tbl_lookup(new_block->scope_id), false)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_if")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
@@ -470,10 +470,10 @@ static void load_block_stmts(
             assert(new_block);
             assert(new_block->scope_id);
             assert(defer);
-            unwrap(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id), false));
+            unwrap(tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id)));
             darr_append(&a_main, &darr_top_ref(&defered_collections.coll_stack)->pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id), false)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("actual_return_parent_of_block")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             break;
         }
@@ -2078,8 +2078,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     load_label(new_fun_def->body, tast_label_new(
         new_fun_def->pos,
         util_literal_name_new(),
-        scope_to_name_tbl_lookup(new_fun_def->body->scope_id),
-        false
+        scope_to_name_tbl_lookup(new_fun_def->body->scope_id)
     ));
     Tast_variable_def* var_def_thing = tast_variable_def_new(
         new_fun_def->body->pos,
@@ -2308,8 +2307,7 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool 
     load_label(new_block, tast_label_new(
         new_block->pos,
         util_literal_name_new(),
-        scope_to_name_tbl_lookup(new_block->scope_id),
-        false
+        scope_to_name_tbl_lookup(new_block->scope_id)
     ));
 
     Tast_condition* if_cond = if_statement->condition;
@@ -2380,7 +2378,7 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
         symbol_collection_new(scope_get_parent_tbl_lookup(darr_at(if_else->tasts, 0)->body->scope_id), util_literal_name_new()),
         (Cfg_node_darr) {0}
     );
-    load_label(*new_block, tast_label_new((*new_block)->pos, util_literal_name_new(), scope_to_name_tbl_lookup((*new_block)->scope_id), false));
+    load_label(*new_block, tast_label_new((*new_block)->pos, util_literal_name_new(), scope_to_name_tbl_lookup((*new_block)->scope_id)));
 
     // TODO: remove?
     Tast_variable_def* yield_dest = NULL;
@@ -2479,7 +2477,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         (Cfg_node_darr) {0}
     );
 
-    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id), false));
+    load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
 
     size_t for_count = 0;
     (void) for_count;
@@ -3014,7 +3012,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
             darr_append(&a_main, pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), scope_to_name_tbl_lookup(new_block->scope_id), false)
+                tast_label_new(defer->pos, util_literal_name_new_prefix(sv("defered_thing")), scope_to_name_tbl_lookup(new_block->scope_id))
             }));
             return;
         }
@@ -3195,7 +3193,7 @@ static Ir_block* load_block(
     }
 
     if (!is_top_level) {
-        load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id), false));
+        load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
     }
     load_block_stmts(
         new_block,

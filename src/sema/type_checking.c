@@ -4043,7 +4043,7 @@ bool try_set_void_def_types(Uast_void_def* tast) {
 }
 
 bool try_set_label_def_types(Uast_label* tast) {
-    symbol_add(tast_label_wrap(tast_label_new(tast->pos, tast->name, tast->block_scope, tast->has_continue)));
+    symbol_add(tast_label_wrap(tast_label_new(tast->pos, tast->name, tast->block_scope)));
     return true;
 }
 
@@ -4230,13 +4230,12 @@ bool try_set_continue_types(Tast_continue** new_tast, Uast_continue* cont) {
     PARENT_OF old_parent_of = check_env.parent_of;
     check_env.parent_of = PARENT_OF_BREAK; // TODO
 
-    Uast_def* label_def_ = NULL;
-    if (!usymbol_lookup(&label_def_, cont->break_out_of)) {
+    Uast_def* dummy = NULL;
+    if (!usymbol_lookup(&dummy, cont->break_out_of)) {
         msg_undefined_symbol(cont->break_out_of, cont->pos);
         status = false;
         goto error;
     }
-    uast_label_unwrap(label_def_)->has_continue = true;
 
     switch (check_env.parent_of_defer) {
         case PARENT_OF_DEFER_FOR:
