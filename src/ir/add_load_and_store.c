@@ -65,7 +65,6 @@ typedef struct {
     Ir_name curr_scope_name;
     bool block_has_defer;
     bool block_has_yield;
-    bool block_has_continue;
 } Defer_collection;
 
 // stack of scope defered statements
@@ -182,8 +181,7 @@ static void load_block_stmts(
     Lang_type lang_type,
     bool is_top_level, // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
     bool block_has_defer,
-    bool block_has_yield,
-    bool block_has_continue
+    bool block_has_yield
 ) {
     bool old_curr_block_has_defer = curr_block_has_defer;
     curr_block_has_defer = block_has_defer;
@@ -440,8 +438,7 @@ static void load_block_stmts(
         .is_yielding = block_has_defer ? name_to_ir_name(is_yielding->name) : (Ir_name) {0},
         .is_cont2ing = block_has_defer ? name_to_ir_name(is_cont2ing->name) : (Ir_name) {0},
         .block_has_defer = block_has_defer,
-        .block_has_yield = block_has_yield,
-        .block_has_continue = block_has_continue
+        .block_has_yield = block_has_yield
     }));
 
     switch (parent_of) {
@@ -1557,7 +1554,6 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
             false,
-            false,
             false
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
@@ -1579,7 +1575,6 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
-            false,
             false,
             false
         ),
@@ -2119,8 +2114,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         old_fun_def->decl->return_type,
         false,
         old_fun_def->body->has_defer,
-        old_fun_def->body->has_yield,
-        old_fun_def->body->has_continue
+        old_fun_def->body->has_yield
     );
 
     unwrap(ir_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
@@ -2547,8 +2541,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         lang_type_void_const_wrap(lang_type_void_new(pos, 0)),
         false,
         old_for->body->has_defer,
-        old_for->body->has_yield,
-        old_for->body->has_continue
+        old_for->body->has_yield
     );
     add_label(new_block, after_inner_block, pos);
 
@@ -3126,32 +3119,7 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     // TODO: uncomment below
-    if (darr_top(defered_collections.coll_stack).block_has_defer) {
-        load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_cont2_check));
-    } else {
-        // TODO: deduplicate below
-        if_for_add_cond_goto(
-            // if this condition evaluates to true, we are not returning right now
-            tast_binary_wrap(tast_binary_new(
-                new_block->pos,
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    darr_top(defered_collections.coll_stack).block_has_continue ? 0 : 1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                BINARY_DOUBLE_EQUAL,
-                lang_type_new_u1(new_block->pos)
-            )),
-            new_block,
-            name_to_ir_name(after_cont2_check),
-            name_to_ir_name(darr_top(pairs).label->name)
-        );
-    }
+    //load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_cont2_check));
     add_label(new_block, name_to_ir_name(after_cont2_check), new_block->pos);
 }
 
@@ -3205,8 +3173,7 @@ static Ir_block* load_block(
         lang_type,
         is_top_level,
         old_block->has_defer,
-        old_block->has_yield,
-        old_block->has_continue
+        old_block->has_yield
     );
 
     if (defered_collections.coll_stack.info.count > 0) {
