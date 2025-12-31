@@ -49,6 +49,7 @@ typedef struct {
     bool switch_is_orelse;
     bool curr_block_has_defer;
     bool curr_block_has_yield;
+    bool curr_block_has_continue;
 
     bool is_in_defer;
     Pos parent_defer_pos;
