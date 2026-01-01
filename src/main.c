@@ -112,6 +112,7 @@ static void compile_file_to_ir(void) {
     do_pass(expand_def, usymbol_log_level, stderr);
     do_pass(try_set_types, symbol_log_level, stderr);
     do_pass(add_load_and_store, ir_log_level, stderr);
+    __asm__("int3");
 
     // ir passes
     do_pass(construct_cfgs, ir_log_level, stderr);
