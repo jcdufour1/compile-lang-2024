@@ -65,7 +65,7 @@ for_cond :: fn() {
 }
 
 main :: fn() i32 {
-    for_range()
+    //for_range()
     for_cond()
 
     return 0

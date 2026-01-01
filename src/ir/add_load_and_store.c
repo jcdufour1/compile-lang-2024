@@ -2823,9 +2823,11 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     if (use_break_out_of) {
         break_out_of_scope = tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope;
     }
+    size_t idx_of_break_out_of = SIZE_MAX;
     while (1) {
         Ir_name curr_scope = darr_at(defered_collections.coll_stack, idx).curr_scope_name;
         if (use_break_out_of && ir_name_is_equal(curr_scope, name_to_ir_name(break_out_of_scope))) {
+            idx_of_break_out_of = idx;
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2900,19 +2902,25 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     }
 
     if (pairs->info.count > 0) {
-        // jump to the top of the defer stack to execute the defered statements
-        assert(defered_collections.coll_stack.info.count > 0 && "TODO");
-        size_t top_idx = defered_collections.coll_stack.info.count - 1;
-        while (!darr_at(defered_collections.coll_stack, top_idx).block_has_defer) {
-            if (top_idx < 1) {
-                break; // TODO
+        if (idx_of_break_out_of == SIZE_MAX) {
+            assert(break_out_of.base.count > 0);
+            Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(break_out_of));
+            darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+        } else {
+            // jump to the top of the defer stack to execute the defered statements
+            assert(defered_collections.coll_stack.info.count > 0 && "TODO");
+            size_t top_idx = defered_collections.coll_stack.info.count - 1;
+            while (!darr_at(defered_collections.coll_stack, top_idx).block_has_defer && idx > idx_of_break_out_of) {
+                if (top_idx < 1) {
+                    break; // TODO
+                }
+                top_idx--;
             }
-            top_idx--;
-        }
 
-        //Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(*pairs).label->name));
-        Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, top_idx).pairs).label->name));
-        darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+            //Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(*pairs).label->name));
+            Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, top_idx).pairs).label->name));
+            darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+        }
     }
 }
 
@@ -2958,7 +2966,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
             );
             load_assignment(new_block, is_rtn_assign);
 
-            load_yielding_set_etc(new_block, old_stmt, false, (Name) {0}, true);
+            load_yielding_set_etc(new_block, old_stmt, false, (Name) {0}, true, true);
             return;
         }
         case TAST_FOR_WITH_COND:
