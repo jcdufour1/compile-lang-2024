@@ -185,6 +185,9 @@ static void load_block_stmts(
     bool block_has_yield,
     bool block_has_continue
 ) {
+    if (strv_is_equal(ir_name_to_name(block_scope).base, sv("str____5"))) {
+        __asm__("int3");
+    }
     bool old_curr_block_has_defer = curr_block_has_defer;
     curr_block_has_defer = block_has_defer;
 
@@ -443,6 +446,8 @@ static void load_block_stmts(
         .block_has_yield = block_has_yield,
         .block_has_continue = block_has_continue
     }));
+    Ir_label* block_label = ir_label_new(pos, block_scope);
+    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
 
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -2905,8 +2910,21 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
     if (pairs->info.count > 0) {
         if (idx_of_break_out_of == SIZE_MAX && !is_rtning) {
+            Tast_def* label_def_ = NULL;
             assert(break_out_of.base.count > 0);
-            Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(break_out_of));
+            unwrap(symbol_lookup(&label_def_, break_out_of));
+            log(LOG_DEBUG, FMT"\n", tast_print(label_def_));
+
+            Tast_def* label_name_def_ = NULL;
+            unwrap(symbol_lookup(&label_name_def_, tast_label_unwrap(label_def_)->name));
+            log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
+            __asm__("int3");
+
+            Tast_def* label_block_scope_def_ = NULL;
+            //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
+            //log(LOG_DEBUG, FMT"\n", tast_print(label_block_scope_def_));
+            //todo();
+            Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(tast_label_unwrap(label_def_)->block_scope));
             darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
         } else {
             // jump to the top of the defer stack to execute the defered statements
@@ -3024,6 +3042,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 return;
             }
 
+            log(LOG_DEBUG, FMT"\n", tast_print(old_stmt));
             load_yielding_set_etc(new_block, old_stmt, true, tast_continue_unwrap(old_stmt)->break_out_of, false, false);
             return;
         }
