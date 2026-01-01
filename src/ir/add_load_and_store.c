@@ -2807,7 +2807,7 @@ Ir_name get_is_cont2ing(const Defer_collection* item) {
 
 // TODO: try to come up with a better name for this function
 // if use_break_out_of is false, then every scope in function will be breaked out of
-static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool use_break_out_of, Name break_out_of, bool is_yielding) {
+static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool use_break_out_of, Name break_out_of, bool is_yielding, bool is_rtning) {
     Get_is_yielding_or_cont2ing get_is_brking_or_conting = is_yielding ? get_is_yielding : get_is_cont2ing;
     Defer_collection coll = darr_top(defered_collections.coll_stack);
     Defer_pair_darr* pairs = &coll.pairs;
@@ -2827,7 +2827,9 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     while (1) {
         Ir_name curr_scope = darr_at(defered_collections.coll_stack, idx).curr_scope_name;
         if (use_break_out_of && ir_name_is_equal(curr_scope, name_to_ir_name(break_out_of_scope))) {
-            idx_of_break_out_of = idx;
+            if (darr_at(defered_collections.coll_stack, idx).block_has_defer) {
+                idx_of_break_out_of = idx;
+            }
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
             //  defers, etc. to run properly
@@ -2902,7 +2904,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     }
 
     if (pairs->info.count > 0) {
-        if (idx_of_break_out_of == SIZE_MAX) {
+        if (idx_of_break_out_of == SIZE_MAX && !is_rtning) {
             assert(break_out_of.base.count > 0);
             Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(break_out_of));
             darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
@@ -2987,7 +2989,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 Tast_yield* yield = tast_yield_unwrap(old_stmt);
                 log(LOG_DEBUG, "%d\n", yield->do_yield_expr);
                 load_break(new_block, yield->do_yield_expr, yield->yield_expr, yield->pos);
-                load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true);
+                load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true, false);
                 return;
             }
 
@@ -3012,7 +3014,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 load_assignment(new_block, new_assign);
             }
 
-            load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true);
+            load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true, false);
             return;
         }
         case TAST_CONTINUE: {
@@ -3022,7 +3024,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 return;
             }
 
-            load_yielding_set_etc(new_block, old_stmt, true, tast_continue_unwrap(old_stmt)->break_out_of, false);
+            load_yielding_set_etc(new_block, old_stmt, true, tast_continue_unwrap(old_stmt)->break_out_of, false, false);
             return;
         }
         case TAST_DEFER: {

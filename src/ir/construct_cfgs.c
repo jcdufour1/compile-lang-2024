@@ -72,12 +72,14 @@ static void construct_cfg_cond_goto(Ir_cond_goto* cond_goto) {
 static void construct_cfg_goto(Ir_goto* lang_goto) {
     size_t branch_to_idx = SIZE_MAX;
     darr_foreach_ref(idx, Cfg_node, curr, *curr_cfg) {
+        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, ir_name_to_name(curr->label_name), NAME_FULL));
         if (ir_name_is_equal(curr->label_name, lang_goto->label)) {
             branch_to_idx = idx;
             darr_append(&a_main, &curr->preds, curr_cfg_idx_for_cond_goto);
             break;
         }
     }
+    log(LOG_DEBUG, FMT"\n", ir_print(lang_goto));
     unwrap(branch_to_idx != SIZE_MAX && "could not find if true cfg node");
 
     Cfg_node* node = darr_at_ref(curr_cfg, curr_cfg_idx_for_cond_goto);
