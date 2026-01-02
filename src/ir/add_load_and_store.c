@@ -446,8 +446,25 @@ static void load_block_stmts(
         .block_has_yield = block_has_yield,
         .block_has_continue = block_has_continue
     }));
-    Ir_label* block_label = ir_label_new(pos, block_scope);
-    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
+
+#   ifndef NDEBUG
+        if (!is_top_level) {
+            log(LOG_DEBUG, "before thing\n");
+            bool did_find_block_label = false;
+            darr_foreach(idx, Ir*, ir, new_block->children) {
+                log(LOG_DEBUG, FMT"\n", ir_print(ir));
+                if (ir->type == IR_DEF && ir_def_unwrap(ir)->type == IR_LABEL) {
+                    Ir_label* label = ir_label_unwrap(ir_def_unwrap(ir));
+                    if (ir_name_is_equal(label->name, block_scope)) {
+                        did_find_block_label = true;
+                    }
+                }
+            }
+            unwrap(did_find_block_label && "block_label should have been added to new_block->children before calling load_block_stmts");
+        }
+#   endif // NDEBUG
+    //Ir_label* block_label = ir_label_new(pos, block_scope);
+    //darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
 
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -2114,10 +2131,12 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     );
     new_fun_def->decl->return_type = rm_tuple_lang_type(new_lang_type, old_fun_def->pos);
     Name yield_name = util_literal_name_new();
+    Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_fun_def->body->scope_id));
+    darr_append(&a_main, &new_fun_def->body->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_fun_def->pos, block_scope))));
     load_block_stmts(
         new_fun_def->body,
         old_fun_def->body->children,
-        name_to_ir_name(scope_to_name_tbl_lookup(old_fun_def->body->scope_id)),
+        block_scope,
         &yield_name,
         DEFER_PARENT_OF_FUN,
         old_fun_def->pos,
@@ -2528,6 +2547,11 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     darr_append(&a_main, &new_block->children, ir_goto_wrap(jmp_to_check_cond_label));
 
     add_label(new_block, label_if_continue, pos);
+    Ir_name body_block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id));
+    //Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id));
+    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_for->pos, body_block_scope))));
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, body_block_scope));
+    breakpoint();
 
     load_operator(new_block, operator);
 
@@ -2545,7 +2569,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     load_block_stmts(
         new_block,
         old_for->body->children,
-        name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id)),
+        body_block_scope,
         &yield_name,
         DEFER_PARENT_OF_FOR,
         old_for->pos,
@@ -2920,7 +2944,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
             __asm__("int3");
 
-            Tast_def* label_block_scope_def_ = NULL;
+            //Tast_def* label_block_scope_def_ = NULL;
             //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
             //log(LOG_DEBUG, FMT"\n", tast_print(label_block_scope_def_));
             //todo();
@@ -3232,12 +3256,43 @@ static Ir_block* load_block(
     }
 
     if (!is_top_level) {
-        load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
+        //load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
+    }
+    Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_block->scope_id));
+    if (!is_top_level) {
+        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, block_scope));
+        __asm__("int3");
+
+
+        if (!is_top_level) {
+            // TODO: this algorithm takes O(n) time. use hash table, etc. to improve time complexity
+            log(LOG_DEBUG, "before thing\n");
+            bool did_find_block_label = false;
+            darr_foreach(idx, Ir*, ir, new_block->children) {
+                log(LOG_DEBUG, FMT"\n", ir_print(ir));
+                if (ir->type == IR_DEF && ir_def_unwrap(ir)->type == IR_LABEL) {
+                    Ir_label* label = ir_label_unwrap(ir_def_unwrap(ir));
+                    if (ir_name_is_equal(label->name, block_scope)) {
+                        did_find_block_label = true;
+                    }
+                }
+            }
+            if (!did_find_block_label) {
+                darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos, block_scope))));
+            } else {
+                breakpoint();
+            }
+        }
+
+    //Ir_label* block_label = ir_label_new(pos, block_scope);
+    //darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
+
+
     }
     load_block_stmts(
         new_block,
         old_block->children,
-        name_to_ir_name(scope_to_name_tbl_lookup(old_block->scope_id)),
+        block_scope,
         yield_dest_name,
         parent_of,
         old_block->pos,
