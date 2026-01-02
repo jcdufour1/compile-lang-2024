@@ -50,11 +50,9 @@ static Ir* rm_void_label(Ir_label* label, bool is_inline) {
         block_scope
     )))) {
         log(LOG_DEBUG, FMT"\n", ir_print(label));
-        breakpoint();
         return ir_removed_wrap(ir_removed_new(label->pos));
     }
     log(LOG_DEBUG, FMT"\n", ir_print(label));
-    breakpoint();
     return ir_def_wrap(ir_label_wrap(label));
 }
 

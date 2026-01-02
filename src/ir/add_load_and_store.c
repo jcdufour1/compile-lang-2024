@@ -2551,7 +2551,6 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     //Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id));
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_for->pos, body_block_scope))));
     log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, body_block_scope));
-    breakpoint();
 
     load_operator(new_block, operator);
 
@@ -2942,7 +2941,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             Tast_def* label_name_def_ = NULL;
             unwrap(symbol_lookup(&label_name_def_, tast_label_unwrap(label_def_)->name));
             log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
-            __asm__("int3");
 
             //Tast_def* label_block_scope_def_ = NULL;
             //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
@@ -3261,7 +3259,6 @@ static Ir_block* load_block(
     Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_block->scope_id));
     if (!is_top_level) {
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, block_scope));
-        __asm__("int3");
 
 
         if (!is_top_level) {
