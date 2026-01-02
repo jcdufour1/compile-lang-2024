@@ -2852,11 +2852,15 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         break_out_of_scope = tast_label_unwrap(tast_def_from_name(break_out_of))->block_scope;
     }
     size_t idx_of_break_out_of = SIZE_MAX;
+    size_t break_out_no_defer_idx = SIZE_MAX;
     while (1) {
         Ir_name curr_scope = darr_at(defered_collections.coll_stack, idx).curr_scope_name;
         if (use_break_out_of && ir_name_is_equal(curr_scope, name_to_ir_name(break_out_of_scope))) {
             if (idx_of_break_out_of == SIZE_MAX && darr_at(defered_collections.coll_stack, idx).block_has_defer) {
                 idx_of_break_out_of = idx;
+            }
+            if (break_out_no_defer_idx == SIZE_MAX && idx_of_break_out_of == SIZE_MAX && !darr_at(defered_collections.coll_stack, idx).block_has_defer) {
+                break_out_no_defer_idx = idx;
             }
             // this is the last scope; if we are cont2ing, this is the only one that should actually
             //  be set to is_cont2ing; nested scopes are set to is_yielding instead to allow for 
@@ -2931,6 +2935,9 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         idx--;
     }
 
+    if (idx_of_break_out_of != SIZE_MAX) {
+        assert(break_out_no_defer_idx == SIZE_MAX);
+    }
     if (pairs->info.count > 0) {
         if (idx_of_break_out_of == SIZE_MAX && !is_rtning) {
             Tast_def* label_def_ = NULL;
@@ -2938,7 +2945,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
             Name local_label_name = break_out_of;
             if (is_yielding) {
-                Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, 0).pairs).label->name));
+                Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, break_out_no_defer_idx).pairs).label->name));
                 darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             } else {
                 assert(local_label_name.base.count > 0);

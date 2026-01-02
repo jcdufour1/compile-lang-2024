@@ -20,14 +20,13 @@ main :: fn() i32 {
         case .false: break 3
     }
 
-    io.printf("thing\n")
-    //num2 i32 := switch (is_false()) {
-    //    case .true: break 2
-    //    case .false: break 3
-    //}
+    num2 i32 := switch (is_false()) {
+        case .true: break 2
+        case .false: break 3
+    }
 
     io.printf("num1: %d\n", num1)
-    //io.printf("num2: %d\n", num2)
+    io.printf("num2: %d\n", num2)
 
     return 0
 }
