@@ -63,6 +63,7 @@ typedef struct {
     Ir_name is_yielding;
     Ir_name is_cont2ing;
     Ir_name curr_scope_name;
+    Ir_name label_after_block;
     bool block_has_defer;
     bool block_has_yield;
     bool block_has_continue;
@@ -181,6 +182,7 @@ static void load_block_stmts(
     Pos pos,
     Lang_type lang_type,
     bool is_top_level, // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
+    Ir_name label_after_block,
     bool block_has_defer,
     bool block_has_yield,
     bool block_has_continue
@@ -442,6 +444,7 @@ static void load_block_stmts(
         .break_name = name_to_ir_name(break_expr ? break_expr->name : (Name) {0}),
         .is_yielding = block_has_defer ? name_to_ir_name(is_yielding->name) : (Ir_name) {0},
         .is_cont2ing = block_has_defer ? name_to_ir_name(is_cont2ing->name) : (Ir_name) {0},
+        .label_after_block = label_after_block,
         .block_has_defer = block_has_defer,
         .block_has_yield = block_has_yield,
         .block_has_continue = block_has_continue
@@ -2133,6 +2136,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     Name yield_name = util_literal_name_new();
     Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_fun_def->body->scope_id));
     darr_append(&a_main, &new_fun_def->body->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_fun_def->pos, block_scope))));
+    Ir_name label_after_block = util_literal_ir_name_new();
     load_block_stmts(
         new_fun_def->body,
         old_fun_def->body->children,
@@ -2142,10 +2146,12 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         old_fun_def->pos,
         old_fun_def->decl->return_type,
         false,
+        label_after_block,
         old_fun_def->body->has_defer,
         old_fun_def->body->has_yield,
         old_fun_def->body->has_continue
     );
+    darr_append(&a_main, &new_fun_def->body->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_fun_def->body->pos_end, label_after_block))));
 
     unwrap(ir_add(ir_def_wrap(ir_function_def_wrap(new_fun_def))));
     name_parent_fn = old_fun_name;
@@ -2574,6 +2580,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos, 0)),
         false,
+        after_for_loop_label,
         old_for->body->has_defer,
         old_for->body->has_yield,
         old_for->body->has_continue
@@ -2945,7 +2952,11 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
 
             Name local_label_name = break_out_of;
             if (is_yielding) {
-                Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, break_out_no_defer_idx).pairs).label->name));
+                Ir_goto* new_goto = ir_goto_new(
+                    tast_stmt_get_pos(old_stmt),
+                    util_literal_ir_name_new(),
+                    darr_at(defered_collections.coll_stack, break_out_no_defer_idx).label_after_block
+                );
                 darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             } else {
                 assert(local_label_name.base.count > 0);
@@ -3295,6 +3306,7 @@ static Ir_block* load_block(
 
 
     }
+    Ir_name label_after_block = util_literal_ir_name_new();
     load_block_stmts(
         new_block,
         old_block->children,
@@ -3304,10 +3316,12 @@ static Ir_block* load_block(
         old_block->pos,
         lang_type,
         is_top_level,
+        label_after_block,
         old_block->has_defer,
         old_block->has_yield,
         old_block->has_continue
     );
+    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos_end, label_after_block))));
 
     if (defered_collections.coll_stack.info.count > 0) {
         load_all_is_rtn_checks(new_block);
