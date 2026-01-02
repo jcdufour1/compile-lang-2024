@@ -2855,7 +2855,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     while (1) {
         Ir_name curr_scope = darr_at(defered_collections.coll_stack, idx).curr_scope_name;
         if (use_break_out_of && ir_name_is_equal(curr_scope, name_to_ir_name(break_out_of_scope))) {
-            if (darr_at(defered_collections.coll_stack, idx).block_has_defer) {
+            if (idx_of_break_out_of == SIZE_MAX && darr_at(defered_collections.coll_stack, idx).block_has_defer) {
                 idx_of_break_out_of = idx;
             }
             // this is the last scope; if we are cont2ing, this is the only one that should actually
@@ -2935,19 +2935,28 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
         if (idx_of_break_out_of == SIZE_MAX && !is_rtning) {
             Tast_def* label_def_ = NULL;
             assert(break_out_of.base.count > 0);
-            unwrap(symbol_lookup(&label_def_, break_out_of));
-            log(LOG_DEBUG, FMT"\n", tast_print(label_def_));
 
-            Tast_def* label_name_def_ = NULL;
-            unwrap(symbol_lookup(&label_name_def_, tast_label_unwrap(label_def_)->name));
-            log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
+            Name local_label_name = break_out_of;
+            if (is_yielding) {
+                Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, 0).pairs).label->name));
+                darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+            } else {
+                assert(local_label_name.base.count > 0);
+                log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, label_if_break));
+                unwrap(symbol_lookup(&label_def_, local_label_name));
+                log(LOG_DEBUG, FMT"\n", tast_print(label_def_));
 
-            //Tast_def* label_block_scope_def_ = NULL;
-            //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
-            //log(LOG_DEBUG, FMT"\n", tast_print(label_block_scope_def_));
-            //todo();
-            Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(tast_label_unwrap(label_def_)->block_scope));
-            darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+                Tast_def* label_name_def_ = NULL;
+                unwrap(symbol_lookup(&label_name_def_, tast_label_unwrap(label_def_)->name));
+                log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
+
+                //Tast_def* label_block_scope_def_ = NULL;
+                //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
+                //log(LOG_DEBUG, FMT"\n", tast_print(label_block_scope_def_));
+                //todo();
+                Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(tast_label_unwrap(label_def_)->block_scope));
+                darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
+            }
         } else {
             // jump to the top of the defer stack to execute the defered statements
             assert(defered_collections.coll_stack.info.count > 0 && "TODO");

@@ -84,6 +84,7 @@ static inline bool strv_is_equal(Strv a, Strv b) {
     if (a.count != b.count) {
         return false;
     }
+    // TODO: use memcmp instead of strncmp
     return 0 == strncmp(a.str, b.str, a.count);
 }
 
@@ -137,6 +138,7 @@ static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
 
 // TODO: this function may give a different result than strcmp on cstrs
 static inline int strv_cmp(Strv lhs, Strv rhs) {
+    // TODO: use memcmp instead of strncmp
     return strncmp(lhs.str, rhs.str, min(lhs.count, rhs.count));
 }
 
