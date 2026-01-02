@@ -3266,22 +3266,15 @@ static Ir_block* load_block(
 
         if (!is_top_level) {
             // TODO: this algorithm takes O(n) time. use hash table, etc. to improve time complexity
-            log(LOG_DEBUG, "before thing\n");
-            bool did_find_block_label = false;
-            darr_foreach(idx, Ir*, ir, new_block->children) {
-                log(LOG_DEBUG, FMT"\n", ir_print(ir));
-                if (ir->type == IR_DEF && ir_def_unwrap(ir)->type == IR_LABEL) {
-                    Ir_label* label = ir_label_unwrap(ir_def_unwrap(ir));
-                    if (ir_name_is_equal(label->name, block_scope)) {
-                        did_find_block_label = true;
-                    }
-                }
-            }
-            if (!did_find_block_label) {
+            //if (!symbol_add(tast_label_wrap(tast_label_new(
+            //    old_block->pos,
+            //    name_new(MOD_PATH_LOAD_SCOPES, serialize_name(ir_name_to_name(block_scope)), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+            //    util_literal_name_new()
+            //)))) {
                 darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos, block_scope))));
-            } else {
-                breakpoint();
-            }
+            //} else {
+                //todo();
+            //}
         }
 
     //Ir_label* block_label = ir_label_new(pos, block_scope);
