@@ -562,6 +562,7 @@ static void load_block_stmts(
             //} else if (darr_top(defered_collections.coll_stack).block_has_yield) {
             } else {
                 Ir_name label_after_yield_check = util_literal_ir_name_new();
+                // TODO: change this goto to regular goto if condition is false or nothing at all otherwise (cond_goto result is known at compile time)
                 if_for_add_cond_goto(
                     // if this condition evaluates to true, we are not returning right now
                     tast_binary_wrap(tast_binary_new(
@@ -585,6 +586,7 @@ static void load_block_stmts(
                 );
                 darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(pos, label_after_yield_check))));
                 Ir_name label_after_cont_check = util_literal_ir_name_new();
+                // TODO: change this goto to regular goto if condition is false or nothing at all otherwise (cond_goto result is known at compile time)
                 if_for_add_cond_goto(
                     // if this condition evaluates to true, we are not returning right now
                     tast_binary_wrap(tast_binary_new(
@@ -607,6 +609,12 @@ static void load_block_stmts(
                     label_if_continue
                 );
                 darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(pos, label_after_cont_check))));
+
+                Ir_name label_after_rtn_check = util_literal_ir_name_new();
+                load_single_is_rtn_check(new_block, name_to_ir_name(defered_collections.is_rtning), label_if_break/*TODO*/, label_after_rtn_check);
+                darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(pos, label_after_rtn_check))));
+                // TODO: make function called load_todo to load crash in c code to help debugging?
+                // TODO: make load_f function to print stuff at runtime to help with debugging
             }
         }
 
