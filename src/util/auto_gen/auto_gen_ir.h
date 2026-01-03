@@ -339,8 +339,8 @@ static Uast_type ir_gen_struct_memb_def(void) {
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "size_t", "count");
-
+    append_member(&def.members, "size_t", "count"); // TODO: change size_t to int64_t or uint64_t 
+                                                    // (becuause array count size is not always based on computer compile happens)
 
     return def;
 }
