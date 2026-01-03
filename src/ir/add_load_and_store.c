@@ -219,6 +219,7 @@ static void load_block_stmts(
         );
     }
 
+    // TODO: only use util_literal_name_new_prefix when the result is actually used
     Name is_rtning_name = {0};
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -359,15 +360,19 @@ static void load_block_stmts(
     Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
     assert(break_expr->name.base.count > 0);
 
-    Tast_variable_def* is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name, (Attrs) {0} /* TODO */);
-    Tast_assignment* is_yield_assign = tast_assignment_new(
-        pos,
-        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-            .lang_type = is_yielding->lang_type,
-            .name = is_yielding->name
-        }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
-    );
+    Tast_variable_def* is_yielding = NULL;
+    Tast_assignment* is_yield_assign = NULL;
+    if (block_has_defer) {
+        is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name, (Attrs) {0} /* TODO */);
+        is_yield_assign = tast_assignment_new(
+            pos,
+            tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
+                .lang_type = is_yielding->lang_type,
+                .name = is_yielding->name
+            }))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
+        );
+    }
 
     Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name, (Attrs) {0} /* TODO */);
     Tast_assignment* is_cont2_assign = tast_assignment_new(
@@ -522,17 +527,27 @@ static void load_block_stmts(
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
-    unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
+    if (is_yielding) {
+        unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
+    }
     unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
 
     load_variable_def(new_block, break_expr);
     load_variable_def(new_block, is_rtning);
-    load_variable_def(new_block, is_yielding);
-    load_variable_def(new_block, is_cont2ing);
+    if (is_yielding) {
+        load_variable_def(new_block, is_yielding);
+    }
+    if (is_cont2ing) {
+        load_variable_def(new_block, is_cont2ing);
+    }
 
     load_assignment(new_block, is_rtn_assign);
-    load_assignment(new_block, is_yield_assign);
-    load_assignment(new_block, is_cont2_assign);
+    if (is_yield_assign) {
+        load_assignment(new_block, is_yield_assign);
+    }
+    if (is_cont2_assign) {
+        load_assignment(new_block, is_cont2_assign);
+    }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
         load_stmt(new_block, darr_at(children, idx), false);
@@ -2307,6 +2322,7 @@ static Ir_name load_assignment_internal(const char* file, int line, Ir_block* ne
 }
 
 static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def) {
+    assert(old_var_def);
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
 
