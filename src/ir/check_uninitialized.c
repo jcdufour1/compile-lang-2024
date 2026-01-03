@@ -386,30 +386,27 @@ static void check_unit_block(const Ir_block* block) {
         }
     }
     
+    // TODO: make function to log entire cfg_node_areas
+#   ifndef DNDEBUG
+        darr_foreach(idx, Init_table, frame, cfg_node_areas) {
+            log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
+            init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame, INDENT_WIDTH);
+
+            Init_table_iter iter = init_tbl_iter_new_table(frame);
+            Init_table_node curr_in_tbl = {0};
+            while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
+                Init_table_node* dummy = NULL;
+                if (init_symbol_lookup(curr_cfg_node_area, &dummy, curr_in_tbl.name)) {
+                    continue;
+                }
+            }
+
+        }
+#   endif // DNDEBUG
+
 
     // TODO: make function to log entire cfg_node_areas
-    //darr_foreach(idx, Frame, frame, cfg_node_areas) {
-    //    log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
-    //    init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
-    //    log(LOG_DEBUG, "\n");
-    //    //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
-    //        //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-    //        //Init_table_node curr_in_tbl = {0};
-    //        //bool is_init_in_pred = true;
-    //        //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-    //        //    Init_table_node* dummy = NULL;
-    //        //    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &dummy, curr_in_tbl.name)) {
-    //        //        continue;
-    //        //    }
-
-    //        //    if (is_init_in_pred) {
-    //        //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
-    //        //    }
-    //        //}
-    //    //}
-
-    //}
-    //log(LOG_DEBUG, "\n\n");
+    log(LOG_DEBUG, "\n\n");
 
     cfg_node_areas = (Init_table_darr) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));

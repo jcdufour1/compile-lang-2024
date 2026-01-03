@@ -187,9 +187,6 @@ static void load_block_stmts(
     bool block_has_yield,
     bool block_has_continue
 ) {
-    if (strv_is_equal(ir_name_to_name(block_scope).base, sv("str____5"))) {
-        __asm__("int3");
-    }
     bool old_curr_block_has_defer = curr_block_has_defer;
     curr_block_has_defer = block_has_defer;
 
