@@ -844,6 +844,14 @@ void emit_c_from_tree(void) {
 
         darr_append(&a_pass, &cmd, sv("-g"));
 
+#       ifndef NDEBUG
+            darr_append(&a_pass, &cmd, sv("-fsanitize=undefined"));
+            darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=undefined"));
+            darr_append(&a_pass, &cmd, sv("-fsanitize=address"));
+            darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=address"));
+            darr_append(&a_pass, &cmd, sv("-fno-omit-frame-pointer"));
+#       endif // NDEBUG
+
         // output step
         static_assert(STOP_AFTER_COUNT == 7, "exhausive handling of stop after states");
         switch (params.stop_after) {
@@ -892,6 +900,7 @@ void emit_c_from_tree(void) {
         }
 
         int status = subprocess_call(cmd);
+        msg(DIAG_NOTE, POS_BUILTIN, "executable created with command "FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
             msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));

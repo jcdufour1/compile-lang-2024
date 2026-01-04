@@ -129,7 +129,10 @@ static void if_for_add_cond_goto_internal(
 
 static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
-static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_symbol);
+static Ir_name load_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym);
+
+#define load_symbol(new_block, old_sym) \
+    load_symbol_internal(__FILE__, __LINE__, new_block, old_sym)
 
 static void load_struct_def(Tast_struct_def* old_struct_def);
 
@@ -145,11 +148,17 @@ static Ir_block* load_block(
     bool is_top_level
 );
 
-static Ir_name load_expr(Ir_block* new_block, Tast_expr* old_expr);
+static Ir_name load_expr_internal(const char* file, int line, Ir_block* new_block, Tast_expr* old_expr);
+
+#define load_expr(new_block, old_expr) \
+    load_expr_internal(__FILE__, __LINE__, new_block, old_expr)
 
 static Ir_name load_ptr_expr(Ir_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered);
+static void load_stmt_internal(const char* file, int line, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered);
+
+#define load_stmt(new_block, old_stmt, is_defered) \
+    load_stmt_internal(__FILE__, __LINE__, new_block, old_stmt, is_defered)
 
 static Ir_name load_operator(Ir_block* new_block, Tast_operator* old_oper);
 
@@ -253,13 +262,16 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name, (Attrs) {0} /* TODO */);
-    Tast_assignment* is_rtn_assign = tast_assignment_new(
-        pos,
-        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-            .lang_type = is_rtning->lang_type, .name = is_rtning->name
-        }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
-    );
+    Tast_assignment* is_rtn_assign = NULL;
+    if (lang_type.type != LANG_TYPE_VOID) {
+        is_rtn_assign = tast_assignment_new(
+            pos,
+            tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
+                .lang_type = is_rtning->lang_type, .name = is_rtning->name
+            }))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
+        );
+    }
 
     if (lang_type.type != LANG_TYPE_VOID) {
         switch (parent_of) {
@@ -541,7 +553,9 @@ static void load_block_stmts(
         load_variable_def(new_block, is_cont2ing);
     }
 
-    load_assignment(new_block, is_rtn_assign);
+    if (is_rtn_assign) {
+        load_assignment(new_block, is_rtn_assign);
+    }
     if (is_yield_assign) {
         load_assignment(new_block, is_yield_assign);
     }
@@ -550,6 +564,10 @@ static void load_block_stmts(
     }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
+        log(LOG_DEBUG, FMT"\n", tast_print(darr_at(children, idx)));
+        if (tast_stmt_get_pos(darr_at(children, idx)).line == 195) {
+            //breakpoint();
+        }
         load_stmt(new_block, darr_at(children, idx), false);
     }
 
@@ -1517,13 +1535,14 @@ static Ir_name load_ptr_enum_callee(Ir_block* new_block, Tast_enum_callee* old_c
     //return ir_get_name(lang_alloca);
 }
 
-static Ir_name load_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
+static Ir_name load_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
     Ir_name ptr = load_ptr_symbol(new_block, old_sym);
     Ir_name load_name = util_literal_ir_name_new(); 
-    Ir_load_another_ir* new_load = ir_load_another_ir_new(
+    Ir_load_another_ir* new_load = ir_load_another_ir_new_internal(
         pos,
+        ((Loc) {.file = file, .line = line}),
         ptr,
         rm_tuple_lang_type(old_sym->base.lang_type, old_sym->pos),
         load_name 
@@ -2016,7 +2035,7 @@ static Ir_name load_tuple_ptr(Ir_block* new_block, Tast_tuple* old_tuple) {
     //return new_lit;
 }
 
-static Ir_name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
+static Ir_name load_expr_internal(const char* file, int line, Ir_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_BLOCK: {
             // TODO: load_block should return Name instead of Ir_block?
@@ -2047,13 +2066,13 @@ static Ir_name load_expr(Ir_block* new_block, Tast_expr* old_expr) {
             unreachable("");
         }
         case TAST_ASSIGNMENT:
-            return load_assignment(new_block, tast_assignment_unwrap(old_expr));
+            return load_assignment_internal(file, line, new_block, tast_assignment_unwrap(old_expr));
         case TAST_FUNCTION_CALL:
             return load_function_call(new_block, tast_function_call_unwrap(old_expr));
         case TAST_LITERAL:
             return load_literal(new_block, tast_literal_unwrap(old_expr));
         case TAST_SYMBOL:
-            return load_symbol(new_block, tast_symbol_unwrap(old_expr));
+            return load_symbol_internal(file, line, new_block, tast_symbol_unwrap(old_expr));
         case TAST_OPERATOR:
             return load_operator(new_block, tast_operator_unwrap(old_expr));
         case TAST_MEMBER_ACCESS:
@@ -2292,13 +2311,14 @@ static Ir_name load_return(Ir_block* new_block, Tast_return* old_return) {
 }
 
 static Ir_name load_assignment_internal(const char* file, int line, Ir_block* new_block, Tast_assignment* old_assign) {
+    unwrap(old_assign);
     unwrap(old_assign->lhs);
     unwrap(old_assign->rhs);
 
     Pos pos = old_assign->pos;
 
     Ir_name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
-    Ir_name new_rhs = load_expr(new_block, old_assign->rhs);
+    Ir_name new_rhs = load_expr_internal(file, line, new_block, old_assign->rhs);
 
     Ir_name new_store_name = util_literal_ir_name_new_prefix(sv("store_for_assign"));
 
@@ -2513,6 +2533,8 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
     Defer_pair_darr* pairs = &darr_top_ref(&defered_collections.coll_stack)->pairs;
     unwrap(pairs->info.count > 0 && "not implemented");
 
+    // TODO: do not call load_all_is_rtn_checks here; instead, call it in load_block
+    //   (also, do same for other places in loading for loop, etc.)
     load_all_is_rtn_checks(*new_block);
 
     add_label((*new_block), next_if, if_else->pos);
@@ -3039,14 +3061,14 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
     }
 }
 
-static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
+static void load_stmt_internal(const char* file, int line, Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     if (is_defered) {
         // TODO: uncomment below assertion when possible
         //assert(curr_block_has_defer);
     }
     switch (old_stmt->type) {
         case TAST_EXPR:
-            load_expr(new_block, tast_expr_unwrap(old_stmt));
+            load_expr_internal(file, line, new_block, tast_expr_unwrap(old_stmt));
             return;
         case TAST_DEF:
             load_def(new_block, tast_def_unwrap(old_stmt));
@@ -3071,6 +3093,7 @@ static void load_stmt(Ir_block* new_block, Tast_stmt* old_stmt, bool is_defered)
                 load_assignment(new_block, rtn_assign);
             }
 
+            // TODO: only use this assignment if lang_type is non-void?
             Tast_assignment* is_rtn_assign = tast_assignment_new(
                 tast_stmt_get_pos(old_stmt),
                 tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
