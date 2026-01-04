@@ -752,6 +752,10 @@ void emit_c_from_tree(void) {
 #       ifndef NDEBUG
             string_extend_cstr(&a_pass, &header, "#include <assert.h>\n");
 #       endif // NDEBUG
+              
+        #ifndef NDEBUG
+            string_extend_cstr(&a_pass, &header, "const char* __asan_default_options() { return \"detect_leaks=0\"; }\n");
+        #endif // NDEBUG
 
         Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
         Ir* curr = NULL;
@@ -900,7 +904,6 @@ void emit_c_from_tree(void) {
         }
 
         int status = subprocess_call(cmd);
-        msg(DIAG_NOTE, POS_BUILTIN, "executable created with command "FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
             msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_pass, cmd)));

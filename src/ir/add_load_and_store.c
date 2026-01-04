@@ -134,6 +134,16 @@ static Ir_name load_symbol_internal(const char* file, int line, Ir_block* new_bl
 #define load_symbol(new_block, old_sym) \
     load_symbol_internal(__FILE__, __LINE__, new_block, old_sym)
 
+static Ir_name load_operator_internal(const char* file, int line, Ir_block* new_block, Tast_operator* old_oper);
+
+#define load_operator(new_block, old_oper) \
+    load_operator_internal(__FILE__, __LINE__, new_block, old_oper)
+
+static Ir_name load_binary_internal(const char* file, int line, Ir_block* new_block, Tast_binary* old_bin);
+
+#define load_binary(new_block, old_bin) \
+    load_binary_internal(__FILE__, __LINE__, new_block, old_bin)
+
 static void load_struct_def(Tast_struct_def* old_struct_def);
 
 static void load_raw_union_def(Tast_raw_union_def* old_def);
@@ -159,8 +169,6 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
 
 #define load_stmt(new_block, old_stmt, is_defered) \
     load_stmt_internal(__FILE__, __LINE__, new_block, old_stmt, is_defered)
-
-static Ir_name load_operator(Ir_block* new_block, Tast_operator* old_oper);
 
 static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def);
 
@@ -262,16 +270,13 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name, (Attrs) {0} /* TODO */);
-    Tast_assignment* is_rtn_assign = NULL;
-    if (lang_type.type != LANG_TYPE_VOID) {
-        is_rtn_assign = tast_assignment_new(
-            pos,
-            tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-                .lang_type = is_rtning->lang_type, .name = is_rtning->name
-            }))),
-            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
-        );
-    }
+    Tast_assignment* is_rtn_assign = tast_assignment_new(
+        pos,
+        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
+            .lang_type = is_rtning->lang_type, .name = is_rtning->name
+        }))),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
+    );
 
     if (lang_type.type != LANG_TYPE_VOID) {
         switch (parent_of) {
@@ -1124,7 +1129,7 @@ static void if_for_add_cond_goto_internal(
         pos,
         loc,
         util_literal_ir_name_new(),
-        load_operator(new_block, old_oper),
+        load_operator_internal(loc.file, loc.line, new_block, old_oper),
         label_name_if_true,
         label_name_if_false
     );
@@ -1685,15 +1690,15 @@ static Ir_name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_b
     return load_symbol(new_block, tast_symbol_new_from_variable_def(old_bin->pos, new_var));
 }
 
-static Ir_name load_binary(Ir_block* new_block, Tast_binary* old_bin) {
+static Ir_name load_binary_internal(const char* file, int line, Ir_block* new_block, Tast_binary* old_bin) {
     if (binary_is_short_circuit(old_bin->token_type)) {
         return load_binary_short_circuit(new_block, old_bin);
     }
 
     Ir_binary* new_bin = ir_binary_new(
         old_bin->pos,
-        load_expr(new_block, old_bin->lhs),
-        load_expr(new_block, old_bin->rhs),
+        load_expr_internal(file, line, new_block, old_bin->lhs),
+        load_expr_internal(file, line, new_block, old_bin->rhs),
         ir_binary_type_from_binary_type(old_bin->token_type),
         rm_tuple_lang_type(old_bin->lang_type, old_bin->pos),
         util_literal_ir_name_new()
@@ -1793,10 +1798,10 @@ static Ir_name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
     unreachable("");
 }
 
-static Ir_name load_operator(Ir_block* new_block, Tast_operator* old_oper) {
+static Ir_name load_operator_internal(const char* file, int line, Ir_block* new_block, Tast_operator* old_oper) {
     switch (old_oper->type) {
         case TAST_BINARY:
-            return load_binary(new_block, tast_binary_unwrap(old_oper));
+            return load_binary_internal(file, line, new_block, tast_binary_unwrap(old_oper));
         case TAST_UNARY:
             return load_unary(new_block, tast_unary_unwrap(old_oper));
     }
