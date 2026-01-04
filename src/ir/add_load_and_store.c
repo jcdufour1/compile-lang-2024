@@ -279,7 +279,7 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
     );
 
-    if (lang_type.type != LANG_TYPE_VOID) {
+    if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
         switch (parent_of) {
             case DEFER_PARENT_OF_FUN: {
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_fun"));
@@ -311,7 +311,7 @@ static void load_block_stmts(
         }
     }
     load_break_symbol_name = name_to_ir_name(*yield_dest_name);
-    load_break_symbol_name_is_brk = lang_type.type != LANG_TYPE_VOID;
+    load_break_symbol_name_is_brk = lang_type.type != LANG_TYPE_VOID && block_has_yield;
 
     Name is_yielding_name = {0};
     switch (parent_of) {
