@@ -130,6 +130,10 @@ static void if_for_add_cond_goto_internal(
 
 static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
+static void load_variable_def_internal(const char* file, int line, Ir_block* new_block, Tast_variable_def* old_var_def);
+#define load_variable_def(new_block, old_var_def) \
+    load_variable_def_internal(__FILE__, __LINE__, new_block, old_var_def)
+
 static Ir_name load_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym);
 
 #define load_symbol(new_block, old_sym) \
@@ -151,6 +155,12 @@ static void load_raw_union_def(Tast_raw_union_def* old_def);
 
 static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym);
 
+static Ir_alloca* add_load_and_store_alloca_new_internal(const char* file, int line, Ir_variable_def* var_def, bool is_raw_union);
+
+#define add_load_and_store_alloca_new(var_def, is_raw_union) \
+    add_load_and_store_alloca_new_internal(__FILE__, __LINE__, var_def, is_raw_union)
+
+
 static Ir_block* load_block(
     Tast_block* old_block,
     Name* yield_dest_name,
@@ -170,8 +180,6 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
 
 #define load_stmt(new_block, old_stmt, is_defered) \
     load_stmt_internal(__FILE__, __LINE__, new_block, old_stmt, is_defered)
-
-static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def);
 
 static Ir_name load_if_else_chain(Ir_block* new_block, Tast_if_else_chain* old_if_else);
 
@@ -377,7 +385,7 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* break_expr = NULL;
-    if (lang_type.type != LANG_TYPE_VOID) {
+    if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
         break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
         assert(break_expr->name.base.count > 0);
     }
@@ -544,15 +552,17 @@ static void load_block_stmts(
     }
     assert(!break_expr || !symbol_lookup(&dummy, break_expr->name));
 
-    if (lang_type.type == LANG_TYPE_VOID) {
+    if (lang_type.type == LANG_TYPE_VOID || !block_has_yield) {
         assert(!break_expr);
     } else {
-        unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         if (!is_top_level) {
             unwrap(new_block->children.info.count > 0);
             load_variable_def(new_block, local_rtn_def);
         }
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
+    }
+    if (lang_type.type != LANG_TYPE_VOID) {
+        unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     if (is_yielding) {
@@ -668,6 +678,7 @@ static void load_block_stmts(
             }
         }
 
+        log(LOG_DEBUG, FMT"\n", tast_print(pair.defer->child));
         load_stmt(new_block, pair.defer->child, true);
         darr_pop(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -987,9 +998,10 @@ static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
 static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def);
 
-static Ir_alloca* add_load_and_store_alloca_new(Ir_variable_def* var_def, bool is_raw_union) {
-    Ir_alloca* lang_alloca = ir_alloca_new(
+static Ir_alloca* add_load_and_store_alloca_new_internal(const char* file, int line, Ir_variable_def* var_def, bool is_raw_union) {
+    Ir_alloca* lang_alloca = ir_alloca_new_internal(
         var_def->pos,
+        (Loc) {.file = file, .line = line},
         var_def->lang_type,
         var_def->name_corr_param,
         var_def->attrs
@@ -1017,6 +1029,19 @@ static Ir_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) 
         load_function_params_clone(old_decl->params),
         rm_tuple_lang_type(old_decl->return_type, old_decl->pos),
         name_to_ir_name(old_decl->name)
+    );
+}
+
+// TODO: deduplicate load_variable_def_clone_internal and load_variable_def_clone
+static Ir_variable_def* load_variable_def_clone_internal(const char* file, int line, Tast_variable_def* old_var_def) {
+    return ir_variable_def_new_internal(
+        old_var_def->pos,
+        (Loc) {.file = file, .line = line},
+        rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
+        old_var_def->is_variadic,
+        util_literal_ir_name_new(),
+        name_to_ir_name(old_var_def->name),
+        old_var_def->attrs
     );
 }
 
@@ -2361,16 +2386,18 @@ static Ir_name load_assignment_internal(const char* file, int line, Ir_block* ne
     return new_store->name;
 }
 
-static void load_variable_def(Ir_block* new_block, Tast_variable_def* old_var_def) {
+static void load_variable_def_internal(const char* file, int line, Ir_block* new_block, Tast_variable_def* old_var_def) {
     assert(old_var_def);
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
 
-    Ir_variable_def* new_var_def = load_variable_def_clone(old_var_def);
+    Ir_variable_def* new_var_def = load_variable_def_clone_internal(file, line, old_var_def);
 
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, new_var_def->name_self)) {
-        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new(
+        lang_alloca = ir_alloca_wrap(add_load_and_store_alloca_new_internal(
+            file,
+            line,
             new_var_def,
             old_var_def->lang_type.type == LANG_TYPE_RAW_UNION
         ));
@@ -3110,7 +3137,7 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
             Defer_collection coll = darr_at(defered_collections.coll_stack, 0);
 
             Tast_return* rtn = tast_return_unwrap(old_stmt);
-            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
+            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID && coll.block_has_yield) {
                 Tast_assignment* rtn_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
