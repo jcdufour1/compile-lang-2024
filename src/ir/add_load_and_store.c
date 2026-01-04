@@ -88,6 +88,7 @@ static Tast_variable_def* rtn_def;
 
 static Defer_colls defered_collections;
 
+static bool load_break_symbol_name_is_brk;
 static Ir_name load_break_symbol_name;
 static Ir_name label_if_break;
 static Ir_name label_if_after;
@@ -310,6 +311,7 @@ static void load_block_stmts(
         }
     }
     load_break_symbol_name = name_to_ir_name(*yield_dest_name);
+    load_break_symbol_name_is_brk = lang_type.type != LANG_TYPE_VOID;
 
     Name is_yielding_name = {0};
     switch (parent_of) {
@@ -374,8 +376,11 @@ static void load_block_stmts(
             todo();
     }
 
-    Tast_variable_def* break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
-    assert(break_expr->name.base.count > 0);
+    Tast_variable_def* break_expr = NULL;
+    if (lang_type.type != LANG_TYPE_VOID) {
+        break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
+        assert(break_expr->name.base.count > 0);
+    }
 
     Tast_variable_def* is_yielding = NULL;
     Tast_assignment* is_yield_assign = NULL;
@@ -467,7 +472,7 @@ static void load_block_stmts(
         .parent_of = parent_of,
         .rtn_val = rtn_val,
         .curr_scope_name = block_scope,
-        .break_name = name_to_ir_name(break_expr ? break_expr->name : (Name) {0}),
+        .break_name = break_expr ? name_to_ir_name(break_expr->name) : (Ir_name) {0},
         .is_yielding = block_has_defer ? name_to_ir_name(is_yielding->name) : (Ir_name) {0},
         .is_cont2ing = block_has_defer ? name_to_ir_name(is_cont2ing->name) : (Ir_name) {0},
         .label_after_block = label_after_block,
@@ -537,11 +542,10 @@ static void load_block_stmts(
         default:
             unreachable("");
     }
-    unwrap(!symbol_lookup(&dummy, break_expr->name));
+    assert(!break_expr || !symbol_lookup(&dummy, break_expr->name));
 
     if (lang_type.type == LANG_TYPE_VOID) {
-        assert(break_expr->name.base.count > 0);
-        unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
+        assert(!break_expr);
     } else {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         if (!is_top_level) {
@@ -558,7 +562,9 @@ static void load_block_stmts(
         unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
     }
 
-    load_variable_def(new_block, break_expr);
+    if (break_expr) {
+        load_variable_def(new_block, break_expr);
+    }
     load_variable_def(new_block, is_rtning);
     if (is_yielding) {
         load_variable_def(new_block, is_yielding);
@@ -2503,6 +2509,7 @@ static Ir_name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain*
         unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
         load_variable_def(*new_block, yield_dest);
         load_break_symbol_name = name_to_ir_name(yield_dest->name);
+        load_break_symbol_name_is_brk = true;
     }
 
     Ir_name if_after = util_literal_ir_name_new_prefix(sv("if_after"));
@@ -2694,14 +2701,18 @@ static void load_break(Ir_block* new_block, bool old_brk_do_brk_expr, Tast_expr*
     }
 
     if (old_brk_do_brk_expr) {
-        load_assignment(new_block, tast_assignment_new(
-            old_brk_pos,
-            tast_symbol_wrap(tast_symbol_new(old_brk_pos, ((Sym_typed_base) {
-                .lang_type = tast_expr_get_lang_type(old_brk_expr),
-                .name = ir_name_to_name(load_break_symbol_name)
-            }))),
-            old_brk_expr
-        ));
+        if (load_break_symbol_name_is_brk) {
+            load_assignment(new_block, tast_assignment_new(
+                old_brk_pos,
+                tast_symbol_wrap(tast_symbol_new(old_brk_pos, ((Sym_typed_base) {
+                    .lang_type = tast_expr_get_lang_type(old_brk_expr),
+                    .name = ir_name_to_name(load_break_symbol_name)
+                }))),
+                old_brk_expr
+            ));
+        } else {
+            load_expr(new_block, old_brk_expr);
+        }
     }
 
     unwrap(!curr_block_has_defer || label_if_break.base.count > 0);
@@ -2971,27 +2982,30 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
             if (is_yielding && tast_yield_unwrap(old_stmt)->do_yield_expr) {
                 Tast_yield* yield = tast_yield_unwrap(old_stmt);
                 unwrap(is_yielding);
-                Name break_name = ir_name_to_name(darr_at(defered_collections.coll_stack, idx).break_name);
-                Lang_type yield_expr_type = tast_expr_get_lang_type(yield->yield_expr);
+                if (load_break_symbol_name_is_brk) {
+                    Name break_name = ir_name_to_name(darr_at(defered_collections.coll_stack, idx).break_name);
+                    assert(break_name.base.count > 0);
+                    Lang_type yield_expr_type = tast_expr_get_lang_type(yield->yield_expr);
 
-#               ifndef NDEBUG
-                    Tast_def* brk_name_def = NULL;
-                    unwrap(symbol_lookup(&brk_name_def, break_name));
-                    if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
-                        unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
+#                   ifndef NDEBUG
+                        Tast_def* brk_name_def = NULL;
+                        unwrap(symbol_lookup(&brk_name_def, break_name));
+                        if (!lang_type_is_equal(tast_def_get_lang_type(brk_name_def), yield_expr_type)) {
+                            unwrap(strv_is_equal(break_name.mod_path, MOD_PATH_BUILTIN));
+                        }
+#                   endif // NDEBUG
+
+                    Tast_assignment* new_assign = tast_assignment_new(
+                        tast_stmt_get_pos(old_stmt),
+                        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
+                            .lang_type = yield_expr_type,
+                            .name = break_name
+                        }))),
+                        tast_yield_unwrap(old_stmt)->yield_expr
+                    );
+                    if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID) {
+                        load_assignment(new_block, new_assign);
                     }
-#               endif // NDEBUG
-
-                Tast_assignment* new_assign = tast_assignment_new(
-                    tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                        .lang_type = yield_expr_type,
-                        .name = break_name
-                    }))),
-                    tast_yield_unwrap(old_stmt)->yield_expr
-                );
-                if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID) {
-                    load_assignment(new_block, new_assign);
                 }
             }
 
@@ -3145,23 +3159,27 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
 
             Defer_collection* coll = darr_top_ref(&defered_collections.coll_stack);
             Tast_def* def = NULL; 
-            unwrap(symbol_lookup(&def, ir_name_to_name(coll->break_name)));
-            if (tast_def_get_lang_type(def).type == LANG_TYPE_VOID) {
-                if (tast_yield_unwrap(old_stmt)->do_yield_expr) {
-                    load_expr(new_block, tast_yield_unwrap(old_stmt)->yield_expr);
-                }
-            } else {
-                unwrap(tast_yield_unwrap(old_stmt)->do_yield_expr);
+            if (load_break_symbol_name_is_brk) {
+                assert(coll->break_name.base.count > 0);
+                unwrap(symbol_lookup(&def, ir_name_to_name(coll->break_name)));
 
-                Tast_assignment* new_assign = tast_assignment_new(
-                    tast_stmt_get_pos(old_stmt),
-                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
-                        .lang_type = tast_lang_type_from_name(ir_name_to_name(coll->break_name)),
-                        .name = ir_name_to_name(coll->break_name)
-                    }))),
-                    tast_yield_unwrap(old_stmt)->yield_expr
-                );
-                load_assignment(new_block, new_assign);
+                if (tast_def_get_lang_type(def).type == LANG_TYPE_VOID) {
+                    if (tast_yield_unwrap(old_stmt)->do_yield_expr) {
+                        load_expr(new_block, tast_yield_unwrap(old_stmt)->yield_expr);
+                    }
+                } else {
+                    unwrap(tast_yield_unwrap(old_stmt)->do_yield_expr);
+
+                    Tast_assignment* new_assign = tast_assignment_new(
+                        tast_stmt_get_pos(old_stmt),
+                        tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
+                            .lang_type = tast_lang_type_from_name(ir_name_to_name(coll->break_name)),
+                            .name = ir_name_to_name(coll->break_name)
+                        }))),
+                        tast_yield_unwrap(old_stmt)->yield_expr
+                    );
+                    load_assignment(new_block, new_assign);
+                }
             }
 
             load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true, false);
