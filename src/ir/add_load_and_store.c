@@ -380,6 +380,7 @@ static void load_block_stmts(
     Tast_variable_def* is_yielding = NULL;
     Tast_assignment* is_yield_assign = NULL;
     if (block_has_defer) {
+        // TODO: also remvoe and is_yield_assign is_yielding when this block and all child blocks have no yield
         is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name, (Attrs) {0} /* TODO */);
         is_yield_assign = tast_assignment_new(
             pos,
@@ -391,14 +392,20 @@ static void load_block_stmts(
         );
     }
 
-    Tast_variable_def* is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name, (Attrs) {0} /* TODO */);
-    Tast_assignment* is_cont2_assign = tast_assignment_new(
-        pos,
-        tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-            .lang_type = is_cont2ing->lang_type, .name = is_cont2ing->name
-        }))),
-        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
-    );
+    Tast_variable_def* is_cont2ing = NULL;
+    Tast_assignment* is_cont2_assign = NULL;
+    if (block_has_defer) {
+        // TODO: also remvoe is_cont2ing and is_cont2_assign when this block and all child blocks have no continue
+        is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name, (Attrs) {0} /* TODO */);
+        is_cont2_assign = tast_assignment_new(
+            pos,
+            tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
+                .lang_type = is_cont2ing->lang_type,
+                .name = is_cont2ing->name
+            }))),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, lang_type_new_u1(pos))))
+        );
+    }
 
     Tast_expr* rtn_val = {0};
 
@@ -547,7 +554,9 @@ static void load_block_stmts(
     if (is_yielding) {
         unwrap(symbol_add(tast_variable_def_wrap(is_yielding)));
     }
-    unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
+    if (is_cont2ing) {
+        unwrap(symbol_add(tast_variable_def_wrap(is_cont2ing)));
+    }
 
     load_variable_def(new_block, break_expr);
     load_variable_def(new_block, is_rtning);
