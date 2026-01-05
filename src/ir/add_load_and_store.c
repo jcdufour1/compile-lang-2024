@@ -169,8 +169,13 @@ static Ir_block* load_block(
     Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type,
-    bool is_top_level
+    bool is_top_level,
+    bool parent_block_is_top_level
 );
+
+static Ir_name load_ptr_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym);
+
+#define load_ptr_symbol(new_block, old_sym) load_ptr_symbol_internal(__FILE__, __LINE__, new_block, old_sym)
 
 static Ir_name load_expr_internal(const char* file, int line, Ir_block* new_block, Tast_expr* old_expr);
 
@@ -212,6 +217,7 @@ static void load_block_stmts(
     Pos pos,
     Lang_type lang_type,
     bool is_top_level, // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
+    bool parent_block_is_top_level, // if true, we are at top level of function block right now
     Ir_name label_after_block,
     bool block_has_defer,
     bool block_has_yield,
@@ -236,18 +242,6 @@ static void load_block_stmts(
         //
         unwrap(new_block->children.info.count > 0);
         unwrap(ir_is_label(darr_at(new_block->children, 0)));
-    }
-
-    Tast_variable_def* local_rtn_def = NULL;
-    // TODO: this is one rtn_val var per block, but there should be only one per function?
-    if (load_function_rtn_type.type != LANG_TYPE_VOID) {
-        local_rtn_def = tast_variable_def_new(
-            pos,
-            lang_type,
-            false,
-            util_literal_name_new_prefix(sv("rtn_val")),
-            (Attrs) {0} /* TODO */
-        );
     }
 
     // TODO: only use util_literal_name_new_prefix when the result is actually used
@@ -276,7 +270,7 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_NONE:
-            msg_todo("", tast_variable_def_get_pos(local_rtn_def));
+            msg_todo("", tast_variable_def_get_pos(rtn_def));
             is_rtning_name = util_literal_name_new_prefix(sv("is_rtning_top_level"));
             break;
         default:
@@ -427,12 +421,12 @@ static void load_block_stmts(
 
     Tast_expr* rtn_val = {0};
 
-    if (load_function_rtn_type.type == LANG_TYPE_VOID) {
+    if (!parent_block_is_top_level || load_function_rtn_type.type == LANG_TYPE_VOID) {
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
         rtn_val = tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
             .lang_type = lang_type,
-            .name = local_rtn_def->name
+            .name = rtn_def->name
         })));
     }
     Tast_defer* defer = NULL;
@@ -440,7 +434,6 @@ static void load_block_stmts(
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
             old_rtn_def = rtn_def;
-            rtn_def = local_rtn_def;
 
             Tast_return* actual_rtn = tast_return_new(pos, rtn_val, true);
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
@@ -562,12 +555,8 @@ static void load_block_stmts(
     } else {
         if (!is_top_level) {
             unwrap(new_block->children.info.count > 0);
-            load_variable_def(new_block, local_rtn_def);
         }
         unwrap(symbol_add(tast_variable_def_wrap(break_expr)));
-    }
-    if (lang_type.type != LANG_TYPE_VOID) {
-        unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     if (is_yielding) {
@@ -1551,13 +1540,13 @@ static Ir_name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
     unreachable("");
 }
 
-static Ir_name load_ptr_symbol(Ir_block* new_block, Tast_symbol* old_sym) {
+static Ir_name load_ptr_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym) {
     Tast_def* var_def_ = NULL;
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, var_def->name_corr_param)) {
-        load_variable_def(new_block, tast_variable_def_unwrap(var_def_));
+        load_variable_def_internal(file, line, new_block, tast_variable_def_unwrap(var_def_));
         unwrap(ir_lookup(&lang_alloca, var_def->name_corr_param));
     }
     unwrap(var_def);
@@ -2095,6 +2084,7 @@ static Ir_name load_expr_internal(const char* file, int line, Ir_block* new_bloc
                 &yield_dest,
                 DEFER_PARENT_OF_BLOCK,
                 tast_block_unwrap(old_expr)->lang_type,
+                false,
                 false
             );
             for (size_t idx = 0; idx < new_block_block->children.info.count; idx++) {
@@ -2242,6 +2232,21 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         tast_literal_wrap(tast_int_wrap(tast_int_new(old_fun_def->body->pos, 0, lang_type_new_u1(old_fun_def->body->pos))))
     ));
 
+    // TODO: this is one rtn_val var per block, but there should be only one per function?
+    if (old_fun_def->decl->return_type.type == LANG_TYPE_VOID) {
+        rtn_def = NULL;
+    } else {
+        rtn_def = tast_variable_def_new(
+            pos,
+            old_fun_def->decl->return_type,
+            false,
+            util_literal_name_new_prefix(sv("rtn_val")),
+            (Attrs) {0} /* TODO */
+        );
+        unwrap(symbol_add(tast_variable_def_wrap(rtn_def)));
+        load_variable_def(new_fun_def->body, rtn_def);
+    }
+
     Lang_type new_lang_type = {0};
     new_fun_def->decl->params = load_function_parameters(
          new_fun_def->body,
@@ -2263,6 +2268,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         old_fun_def->pos,
         old_fun_def->decl->return_type,
         false,
+        true,
         label_after_block,
         old_fun_def->body->has_defer,
         old_fun_def->body->has_yield,
@@ -2446,6 +2452,7 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool 
         &dummy,
         DEFER_PARENT_OF_IF,
         if_statement->yield_type,
+        false,
         false
     );
     Ir_block* new_block = ir_block_new(
@@ -2705,6 +2712,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos, 0)),
         false,
+        true,
         after_for_loop_label,
         old_for->body->has_defer,
         old_for->body->has_yield,
@@ -2781,7 +2789,7 @@ static void load_import_path(Tast_import_path* old_import) {
     Name yield_name = util_literal_name_new();
     unwrap(ir_add(ir_import_path_wrap(ir_import_path_new(
         old_import->pos,
-        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void(old_import->pos), true),
+        load_block(old_import->block, &yield_name, DEFER_PARENT_OF_TOP_LEVEL, lang_type_new_void(old_import->pos), true, true),
         old_import->mod_path
     ))));
 }
@@ -3384,7 +3392,8 @@ static Ir_block* load_block(
     Name* yield_dest_name,
     DEFER_PARENT_OF parent_of,
     Lang_type lang_type,
-    bool is_top_level
+    bool is_top_level,
+    bool parent_block_is_top_level
 ) {
     memset(yield_dest_name, 0, sizeof(*yield_dest_name));
 
@@ -3452,6 +3461,7 @@ static Ir_block* load_block(
         old_block->pos,
         lang_type,
         is_top_level,
+        parent_block_is_top_level,
         label_after_block,
         old_block->has_defer,
         old_block->has_yield,
