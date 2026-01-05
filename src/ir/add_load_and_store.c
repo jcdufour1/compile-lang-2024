@@ -83,6 +83,9 @@ typedef struct {
 //
 // globals
 //
+//
+
+static Lang_type load_function_rtn_type = {0};
 
 static Tast_variable_def* rtn_def;
 
@@ -199,6 +202,7 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 }
 
 // TODO: this function should not load allocas, labels, gotos, cond_gotos, etc. in top level blocks
+// TODO: make parameter to the function "parent_block_is_top_level"?
 static void load_block_stmts(
     Ir_block* new_block,
     Tast_stmt_darr children,
@@ -235,7 +239,8 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* local_rtn_def = NULL;
-    if (lang_type.type != LANG_TYPE_VOID) {
+    // TODO: this is one rtn_val var per block, but there should be only one per function?
+    if (load_function_rtn_type.type != LANG_TYPE_VOID) {
         local_rtn_def = tast_variable_def_new(
             pos,
             lang_type,
@@ -422,7 +427,7 @@ static void load_block_stmts(
 
     Tast_expr* rtn_val = {0};
 
-    if (lang_type.type == LANG_TYPE_VOID) {
+    if (load_function_rtn_type.type == LANG_TYPE_VOID) {
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
         rtn_val = tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -2181,6 +2186,9 @@ static Ir_function_params* load_function_parameters(
 }
 
 static void load_function_def(Tast_function_def* old_fun_def) {
+    Lang_type old_load_function_rtn_type = load_function_rtn_type;
+    load_function_rtn_type = old_fun_def->decl->return_type;
+
     Name old_fun_name = name_parent_fn;
     name_parent_fn = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
@@ -2266,6 +2274,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     name_parent_fn = old_fun_name;
 
     env.mod_path_curr_file = old_mod_path_curr_file;
+    load_function_rtn_type = old_load_function_rtn_type;
 }
 
 static void load_function_decl(Tast_function_decl* old_fun_decl) {
@@ -3304,7 +3313,6 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
     // TODO: maybe this check should only be done at top level of function to allow for less cfg nodes
     //   (and thus faster compile times)
     //   (and is yield check should be used for child scopes)
-    //   (this may not be nessessary because optimization passes could remove unnessessary assignments)
     Name after_check_rtn = util_literal_name_new_prefix(sv("after_check_rtn"));
     load_single_is_rtn_check(new_block, name_to_ir_name(defered_collections.is_rtning), name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_check_rtn));
     add_label(new_block, name_to_ir_name(after_check_rtn), new_block->pos);

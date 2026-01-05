@@ -116,6 +116,7 @@ for generics:
 - add option to use msg printing for logging ir?
 - fix README.md formatting (of Quickstart)
 - scope name should use Scope_name instead of Name (Scope_name may just contain Name) to catch mistakes at compile time
+- do_test.py should test with optimizations enabled?
 
 
 
