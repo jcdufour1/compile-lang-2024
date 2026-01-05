@@ -3137,7 +3137,7 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
             Defer_collection coll = darr_at(defered_collections.coll_stack, 0);
 
             Tast_return* rtn = tast_return_unwrap(old_stmt);
-            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID && coll.block_has_yield) {
+            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
                 Tast_assignment* rtn_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
