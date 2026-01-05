@@ -86,6 +86,7 @@ typedef struct {
 //
 
 static Lang_type load_function_rtn_type = {0};
+static Tast_expr* load_function_rtn_val = {0};
 
 static Tast_variable_def* rtn_def;
 
@@ -218,6 +219,7 @@ static void load_block_stmts(
     Lang_type lang_type,
     bool is_top_level, // TODO: remove this parameter when top level blocks are always at SCOPE_TOP_LEVEL?
     bool parent_block_is_top_level, // if true, we are at top level of function block right now
+                                    // TODO: remove this parameter
     Ir_name label_after_block,
     bool block_has_defer,
     bool block_has_yield,
@@ -419,38 +421,28 @@ static void load_block_stmts(
         );
     }
 
-    Tast_expr* rtn_val = {0};
-
-    if (!parent_block_is_top_level || load_function_rtn_type.type == LANG_TYPE_VOID) {
-        rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
-    } else {
-        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
-            .lang_type = lang_type,
-            .name = rtn_def->name
-        })));
-    }
     Tast_defer* defer = NULL;
     Tast_variable_def* old_rtn_def = NULL;
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
             old_rtn_def = rtn_def;
 
-            Tast_return* actual_rtn = tast_return_new(pos, rtn_val, true);
+            Tast_return* actual_rtn = tast_return_new(pos, load_function_rtn_val, true);
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, load_function_rtn_val);
             defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, load_function_rtn_val);
             defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
-            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, load_function_rtn_val);
             defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         }
@@ -463,7 +455,7 @@ static void load_block_stmts(
         }
         case DEFER_PARENT_OF_NONE:
             msg_todo("", lang_type_get_pos(lang_type));
-            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, rtn_val);
+            Tast_actual_break* actual_brk = tast_actual_break_new(pos, false, load_function_rtn_val);
             defer = tast_defer_new(pos, tast_actual_break_wrap(actual_brk));
             break;
         default:
@@ -473,10 +465,11 @@ static void load_block_stmts(
     if (defered_collections.coll_stack.info.count < 1) {
         defered_collections.is_rtning = is_rtning->name;
     }
+    // TODO: remove rtn_val from Defer_Collection struct?
     darr_append(&a_main, &defered_collections.coll_stack, ((Defer_collection) {
         .pairs = (Defer_pair_darr) {0},
         .parent_of = parent_of,
-        .rtn_val = rtn_val,
+        .rtn_val = load_function_rtn_val,
         .curr_scope_name = block_scope,
         .break_name = break_expr ? name_to_ir_name(break_expr->name) : (Ir_name) {0},
         .is_yielding = block_has_defer ? name_to_ir_name(is_yielding->name) : (Ir_name) {0},
@@ -2235,6 +2228,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
     // TODO: this is one rtn_val var per block, but there should be only one per function?
     if (old_fun_def->decl->return_type.type == LANG_TYPE_VOID) {
         rtn_def = NULL;
+        load_function_rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
         rtn_def = tast_variable_def_new(
             pos,
@@ -2245,6 +2239,11 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         );
         unwrap(symbol_add(tast_variable_def_wrap(rtn_def)));
         load_variable_def(new_fun_def->body, rtn_def);
+
+        load_function_rtn_val = tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
+            .lang_type = old_fun_def->decl->return_type,
+            .name = rtn_def->name
+        })));
     }
 
     Lang_type new_lang_type = {0};
