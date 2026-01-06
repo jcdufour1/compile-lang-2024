@@ -41,7 +41,12 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child);
 
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access);
 
-static void emit_c_loc(String* output, Loc loc, Pos pos) {
+static void emit_c_loc_internal(const char* file, int line, String* output, Loc loc, Pos pos) {
+    string_extend_cstr(&a_pass, output, "/* c codegen location: ");
+    string_extend_cstr(&a_pass, output, file);
+    string_extend_cstr(&a_pass, output, ":");
+    string_extend_int64_t(&a_pass, output, line);
+    string_extend_cstr(&a_pass, output, " */\n");
     string_extend_cstr(&a_pass, output, "/* loc: ");
     string_extend_cstr(&a_pass, output, loc.file);
     string_extend_cstr(&a_pass, output, ":");
@@ -53,6 +58,9 @@ static void emit_c_loc(String* output, Loc loc, Pos pos) {
     string_extend_int64_t(&a_pass, output, pos.line);
     string_extend_cstr(&a_pass, output, " */\n");
 }
+
+#define emit_c_loc(output, loc, pos) \
+    emit_c_loc_internal(__FILE__, __LINE__, output, loc, pos)
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bool opaque_ptr, bool is_from_fn) {
@@ -451,6 +459,7 @@ static void extend_c_literal(Emit_c_strs* strs, const Ir_literal* lit) {
             string_extend_double(&a_pass, &strs->output, ir_float_const_unwrap(lit)->data);
             return;
         case IR_VOID:
+            breakpoint();
             return;
         case IR_FUNCTION_NAME:
             emit_c_extend_name(&strs->output, ir_function_name_const_unwrap(lit)->fun_name);
@@ -584,6 +593,11 @@ static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
 }
 
 static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir* store) {
+    log(LOG_DEBUG, FMT"\n", ir_print(store));
+    assert(store->ir_src.base.count > 0);
+    assert(store->ir_dest.base.count > 0);
+
+    // TODO: store->src.base.count is zero, and it should not be
     emit_c_loc(&strs->output, ir_get_loc(store), store->pos);
     Ir* src = NULL;
     unwrap(ir_lookup(&src, store->ir_src));

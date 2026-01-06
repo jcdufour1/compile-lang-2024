@@ -121,13 +121,15 @@ static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
 }
 
+#define strv_print(strv) (int)((strv).count), (strv).str
+
 static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
     if (needle.count > haystack.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < haystack.count - needle.count + 1; idx++) {
-        if (strv_starts_with(haystack, needle)) {
+        if (strv_starts_with(strv_slice(haystack, idx, needle.count), needle)) {
             *index = idx;
             return true;
         }
@@ -151,7 +153,5 @@ static inline size_t strv_strlen(Strv strv) {
     }
     return idx;
 }
-
-#define strv_print(strv) (int)((strv).count), (strv).str
 
 #endif // STR_VIEW_H

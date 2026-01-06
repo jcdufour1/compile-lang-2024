@@ -309,6 +309,8 @@ static Uast_type ir_gen_load_another_ir(void) {
 }
 
 static Uast_type ir_gen_store_another_ir(void) {
+    // TODO: add assertion that ir_src.base.count and ir_dest.base.count > 0
+    // TODO: add system to add arbritry text to start of generated function so that above assert todo can be fulfilled
     Uast_type store = {.name = uast_name_new("ir", "store_another_ir", false, "ir")};
 
     append_member(&store.members, "Ir_name", "ir_src");

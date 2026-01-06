@@ -311,6 +311,10 @@ static void load_block_stmts(
             }
             case DEFER_PARENT_OF_BLOCK: {
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_block"));
+                size_t sdfjasdf = 0;
+                if (strv_contains(&sdfjasdf, yield_dest_name->base, sv("575"))) {
+                    breakpoint();
+                }
                 break;
             }
             case DEFER_PARENT_OF_TOP_LEVEL: {
@@ -700,6 +704,11 @@ end:
     load_break_symbol_name_is_brk = old_load_break_symbol_name_is_brk;
     if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
         assert(yield_dest_name->base.count > 0);
+    }
+    //breakpoint();
+    size_t djsfasndf = 0;
+    if (strv_contains(&djsfasndf, yield_dest_name->base, sv("575"))) {
+        breakpoint();
     }
 }
 
@@ -3077,8 +3086,11 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                         }))),
                         tast_yield_unwrap(old_stmt)->yield_expr
                     );
-                    if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID) {
+                    if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID && yield_expr_type.type != LANG_TYPE_VOID) {
+                        darr_dump(LOG_DEBUG, new_block->children, ir_print);
                         load_assignment(new_block, new_assign);
+                        darr_dump(LOG_DEBUG, new_block->children, ir_print);
+                        //breakpoint();
                     }
                 }
             }
