@@ -2528,7 +2528,7 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Ir_name next_if, bool 
     darr_extend(&a_main, &new_block->children, &inner_block->children);
 
     // is_rtn_check
-    // TODO: this should be in load_block_stmts?
+    // TODO: this should be in load_block_stmts
     Ir_name after_is_rtn = util_literal_ir_name_new_prefix(sv("after_is_rtn_check_if_to_branch"));
     Defer_pair_darr* pairs = &darr_top_ref(&defered_collections.coll_stack)->pairs;
     unwrap(pairs->info.count > 0 && "not implemented");
@@ -3374,63 +3374,16 @@ static void load_all_is_rtn_checks(Ir_block* new_block) {
 
     // is_yield_check
     Name after_yield_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
-    if (darr_top(defered_collections.coll_stack).block_has_defer) {
-        load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_yield_check));
-    } else {
-        if_for_add_cond_goto(
-            // if this condition evaluates to true, we are not returning right now
-            tast_binary_wrap(tast_binary_new(
-                new_block->pos,
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    darr_top(defered_collections.coll_stack).block_has_yield ? 0 : 1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                BINARY_DOUBLE_EQUAL,
-                lang_type_new_u1(new_block->pos)
-            )),
-            new_block,
-            name_to_ir_name(after_yield_check),
-            name_to_ir_name(darr_top(pairs).label->name)
-        );
-    }
+    assert(darr_top(defered_collections.coll_stack).block_has_defer && "below statement will no longer work");
+    load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_yielding, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_yield_check));
     add_label(new_block, name_to_ir_name(after_yield_check), new_block->pos);
 
     // TODO: consider only doing is_yield_check when there is continue in child scope?
     // is_cont2_check
     Name after_cont2_check = util_literal_name_new_prefix(sv("after_is_rtn_check"));
     // TODO: uncomment below
-    if (darr_top(defered_collections.coll_stack).block_has_defer) {
-        load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_cont2_check));
-    } else {
-        // TODO: deduplicate below
-        if_for_add_cond_goto(
-            // if this condition evaluates to true, we are not returning right now
-            tast_binary_wrap(tast_binary_new(
-                new_block->pos,
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    darr_top(defered_collections.coll_stack).block_has_continue ? 0 : 1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                tast_literal_wrap(tast_int_wrap(tast_int_new(
-                    new_block->pos,
-                    1,
-                    lang_type_new_u1(new_block->pos)
-                ))),
-                BINARY_DOUBLE_EQUAL,
-                lang_type_new_u1(new_block->pos)
-            )),
-            new_block,
-            name_to_ir_name(after_cont2_check),
-            name_to_ir_name(darr_top(pairs).label->name)
-        );
-    }
+    assert(darr_top(defered_collections.coll_stack).block_has_defer && "below statement will no longer work");
+    load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_cont2ing, name_to_ir_name(darr_top(pairs).label->name), name_to_ir_name(after_cont2_check));
     add_label(new_block, name_to_ir_name(after_cont2_check), new_block->pos);
 }
 
