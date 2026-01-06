@@ -294,7 +294,7 @@ static void load_block_stmts(
 
     Ir_name old_load_break_symbol_name = load_break_symbol_name;
     bool old_load_break_symbol_name_is_brk = load_break_symbol_name_is_brk;
-    if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
+    if (lang_type.type != LANG_TYPE_VOID) {
         switch (parent_of) {
             case DEFER_PARENT_OF_FUN: {
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_fun"));
@@ -313,7 +313,7 @@ static void load_block_stmts(
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_block"));
                 size_t sdfjasdf = 0;
                 if (strv_contains(&sdfjasdf, yield_dest_name->base, sv("575"))) {
-                    breakpoint();
+                    //breakpoint();
                 }
                 break;
             }
@@ -401,7 +401,7 @@ static void load_block_stmts(
     }
 
     Tast_variable_def* break_expr = NULL;
-    if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
+    if (lang_type.type != LANG_TYPE_VOID) {
         break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
         assert(break_expr->name.base.count > 0);
     } else {
@@ -560,7 +560,7 @@ static void load_block_stmts(
     }
     assert(!break_expr || !symbol_lookup(&dummy, break_expr->name));
 
-    if (lang_type.type == LANG_TYPE_VOID || !block_has_yield) {
+    if (lang_type.type == LANG_TYPE_VOID) {
         assert(!break_expr);
     } else {
         if (!is_top_level) {
@@ -708,7 +708,7 @@ end:
     //breakpoint();
     size_t djsfasndf = 0;
     if (strv_contains(&djsfasndf, yield_dest_name->base, sv("575"))) {
-        breakpoint();
+        //breakpoint();
     }
 }
 
@@ -2410,10 +2410,6 @@ static Ir_name load_assignment_internal(const char* file, int line, Ir_block* ne
     Ir_name new_lhs = load_ptr_expr(new_block, old_assign->lhs);
     Ir_name new_rhs = load_expr_internal(file, line, new_block, old_assign->rhs);
 
-    if (tast_expr_get_lang_type(old_assign->lhs).type == LANG_TYPE_VOID) {
-        todo();
-    }
-
     Ir_name new_store_name = util_literal_ir_name_new_prefix(sv("store_for_assign"));
 
     Ir_store_another_ir* new_store = ir_store_another_ir_new_internal(
@@ -3512,6 +3508,7 @@ static Ir_block* load_block(
     if (lang_type.type != LANG_TYPE_VOID && old_block->has_yield) {
         assert(yield_dest_name->base.count > 0);
     }
+    //log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, new_block->lang_type));
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos_end, label_after_block))));
 
     if (defered_collections.coll_stack.info.count > 0) {

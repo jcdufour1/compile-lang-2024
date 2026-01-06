@@ -459,7 +459,6 @@ static void extend_c_literal(Emit_c_strs* strs, const Ir_literal* lit) {
             string_extend_double(&a_pass, &strs->output, ir_float_const_unwrap(lit)->data);
             return;
         case IR_VOID:
-            breakpoint();
             return;
         case IR_FUNCTION_NAME:
             emit_c_extend_name(&strs->output, ir_function_name_const_unwrap(lit)->fun_name);
