@@ -225,9 +225,6 @@ static void load_block_stmts(
     bool block_has_yield,
     bool block_has_continue
 ) {
-    //if (lang_type.type != LANG_TYPE_VOID) {
-    //    breakpoint();
-    //}
     (void) parent_block_is_top_level;
     bool old_curr_block_has_defer = curr_block_has_defer;
     curr_block_has_defer = block_has_defer;
@@ -311,10 +308,6 @@ static void load_block_stmts(
             }
             case DEFER_PARENT_OF_BLOCK: {
                 *yield_dest_name = util_literal_name_new_prefix(sv("break_expr_block"));
-                size_t sdfjasdf = 0;
-                if (strv_contains(&sdfjasdf, yield_dest_name->base, sv("575"))) {
-                    //breakpoint();
-                }
                 break;
             }
             case DEFER_PARENT_OF_TOP_LEVEL: {
@@ -598,10 +591,6 @@ static void load_block_stmts(
     }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        log(LOG_DEBUG, FMT"\n", tast_print(darr_at(children, idx)));
-        if (tast_stmt_get_pos(darr_at(children, idx)).line == 195) {
-            //breakpoint();
-        }
         load_stmt(new_block, darr_at(children, idx), false);
     }
 
@@ -623,7 +612,6 @@ static void load_block_stmts(
             // is_yield_check
             if (darr_top(defered_collections.coll_stack).block_has_defer) {
                 load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
-            //} else if (darr_top(defered_collections.coll_stack).block_has_yield) {
             } else {
                 if (darr_top(defered_collections.coll_stack).block_has_yield) {
                     Ir_name label_after_yield_check = util_literal_ir_name_new();
@@ -709,11 +697,6 @@ end:
     load_break_symbol_name_is_brk = old_load_break_symbol_name_is_brk;
     if (lang_type.type != LANG_TYPE_VOID && block_has_yield) {
         assert(yield_dest_name->base.count > 0);
-    }
-    //breakpoint();
-    size_t djsfasndf = 0;
-    if (strv_contains(&djsfasndf, yield_dest_name->base, sv("575"))) {
-        //breakpoint();
     }
 }
 
@@ -3091,7 +3074,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                         darr_dump(LOG_DEBUG, new_block->children, ir_print);
                         load_assignment(new_block, new_assign);
                         darr_dump(LOG_DEBUG, new_block->children, ir_print);
-                        //breakpoint();
                     }
                 }
             }
