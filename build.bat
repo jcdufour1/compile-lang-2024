@@ -7,6 +7,7 @@ set WARNINGS=^
     -Wall ^
     -Wextra ^
     -Wno-macro-redefined ^
+    -Wno-unused-function ^
     -D _CRT_SECURE_NO_WARNINGS
 
 if "%SHOULD_PRINT_POSIX_MSG%"=="1" (
