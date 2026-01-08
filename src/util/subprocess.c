@@ -242,7 +242,7 @@ static int subprocess_call_win32(Strv_darr cmd) {
         local_exit(EXIT_CODE_FAIL);
     } else if (status == winapi_WAIT_OBJECT_0()) {
     } else {
-        msg(DIAG_CHILD_PROCESS_FAILURE/*TODO*/, POS_BUILTIN, "function WaitForSingleObject from win32 api returned unknown status 0x%08I32x\n", status);
+        msg(DIAG_CHILD_PROCESS_FAILURE/*TODO*/, POS_BUILTIN, "function WaitForSingleObject from win32 api returned unknown status 0x%08lx\n", status);
         msg(DIAG_NOTE, POS_BUILTIN, "attempt to run subprocess with the command: \"%s\"\n", cmd_excaped);
         local_exit(EXIT_CODE_FAIL);
     }
