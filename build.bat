@@ -23,7 +23,7 @@ set AUTOGEN_INCLUDE_PATHS=-I third_party\ -I src\util\ -I src\util\auto_gen\
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 if %errorlevel% neq 0 exit \b %errorlevel%
 
-%CC_COMPILER% -std=c11 %AUTOGEN_C_FILES% -o %BUILD_DIR%\auto_gen.exe %AUTOGEN_INCLUDE_PATHS% -D IN_AUTOGEN 
+%CC_COMPILER% -std=c11 %WARNINGS% %AUTOGEN_C_FILES% -o %BUILD_DIR%\auto_gen.exe %AUTOGEN_INCLUDE_PATHS% -D IN_AUTOGEN 
 if %errorlevel% neq 0 exit \b %errorlevel%
 %~dp0\%BUILD_DIR%\auto_gen.exe %BUILD_DIR%
 if %errorlevel% neq 0 exit \b %errorlevel%

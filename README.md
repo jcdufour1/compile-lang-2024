@@ -93,7 +93,7 @@ $ make build
 ```sh
 $ DEBUG=1 make build
 ```
-#### Linux (debug build, specify custom compiler path)
+#### Linux (debug build; specify custom compiler path)
 ```sh
 $ DEBUG=1 CC_COMPILER=clang make build
 ```
