@@ -592,7 +592,6 @@ static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
 }
 
 static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir* store) {
-    log(LOG_DEBUG, FMT"\n", ir_print(store));
     assert(store->ir_src.base.count > 0);
     assert(store->ir_dest.base.count > 0);
 

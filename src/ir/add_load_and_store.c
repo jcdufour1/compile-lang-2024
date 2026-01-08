@@ -506,8 +506,6 @@ static void load_block_stmts(
             unwrap(did_find_block_label && "block_label should have been added to new_block->children before calling load_block_stmts");
         }
 #   endif // NDEBUG
-    //Ir_label* block_label = ir_label_new(pos, block_scope);
-    //darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
 
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -604,8 +602,6 @@ static void load_block_stmts(
             Ir_name after_check_cont2 = util_literal_ir_name_new_prefix(sv("after_check_cont2"));
             if (darr_top(defered_collections.coll_stack).block_has_defer) {
                 load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_cont2ing, label_if_continue, after_check_cont2);
-            //} else if (darr_top(defered_collections.coll_stack).block_has_cnt) {
-                //todo();
             }
             add_label(new_block, after_check_cont2, new_block->pos);
 
@@ -675,7 +671,6 @@ static void load_block_stmts(
             }
         }
 
-        log(LOG_DEBUG, FMT"\n", tast_print(pair.defer->child));
         load_stmt(new_block, pair.defer->child, true);
         darr_pop(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -2244,7 +2239,6 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         tast_literal_wrap(tast_int_wrap(tast_int_new(old_fun_def->body->pos, 0, lang_type_new_u1(old_fun_def->body->pos))))
     ));
 
-    // TODO: this is one rtn_val var per block, but there should be only one per function?
     if (old_fun_def->decl->return_type.type == LANG_TYPE_VOID) {
         rtn_def = NULL;
         load_function_rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
@@ -2704,9 +2698,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     add_label(new_block, label_if_continue, pos);
     Ir_name body_block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id));
-    //Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_for->body->scope_id));
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_for->pos, body_block_scope))));
-    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, body_block_scope));
 
     load_operator(new_block, operator);
 
@@ -3071,9 +3063,7 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                         tast_yield_unwrap(old_stmt)->yield_expr
                     );
                     if (tast_expr_get_lang_type(yield->yield_expr).type != LANG_TYPE_VOID && yield_expr_type.type != LANG_TYPE_VOID) {
-                        darr_dump(LOG_DEBUG, new_block->children, ir_print);
                         load_assignment(new_block, new_assign);
-                        darr_dump(LOG_DEBUG, new_block->children, ir_print);
                     }
                 }
             }
@@ -3125,18 +3115,10 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             } else {
                 assert(local_label_name.base.count > 0);
-                log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, label_if_break));
                 unwrap(symbol_lookup(&label_def_, local_label_name));
-                log(LOG_DEBUG, FMT"\n", tast_print(label_def_));
 
                 Tast_def* label_name_def_ = NULL;
                 unwrap(symbol_lookup(&label_name_def_, tast_label_unwrap(label_def_)->name));
-                log(LOG_DEBUG, FMT"\n", tast_print(label_name_def_));
-
-                //Tast_def* label_block_scope_def_ = NULL;
-                //unwrap(symbol_lookup(&label_block_scope_def_, tast_label_unwrap(label_def_)->block_scope));
-                //log(LOG_DEBUG, FMT"\n", tast_print(label_block_scope_def_));
-                //todo();
                 Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(tast_label_unwrap(label_def_)->block_scope));
                 darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
             }
@@ -3151,7 +3133,6 @@ static void load_yielding_set_etc(Ir_block* new_block, Tast_stmt* old_stmt, bool
                 top_idx--;
             }
 
-            //Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(*pairs).label->name));
             Ir_goto* new_goto = ir_goto_new(tast_stmt_get_pos(old_stmt), util_literal_ir_name_new(), name_to_ir_name(darr_top(darr_at(defered_collections.coll_stack, top_idx).pairs).label->name));
             darr_append(&a_main, &new_block->children, ir_goto_wrap(new_goto));
         }
@@ -3218,9 +3199,7 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
         case TAST_YIELD: {
             assert(!is_defered && "TAST_ACTUAL_BREAK should represent defered breaks instead of TAST_YIELD");
             if (!curr_block_has_defer) {
-                log(LOG_DEBUG, FMT"\n", tast_print(old_stmt));
                 Tast_yield* yield = tast_yield_unwrap(old_stmt);
-                log(LOG_DEBUG, "%d\n", yield->do_yield_expr);
                 load_break(new_block, yield->do_yield_expr, yield->yield_expr, yield->pos);
                 load_yielding_set_etc(new_block, old_stmt, true, tast_yield_unwrap(old_stmt)->break_out_of, true, false);
                 return;
@@ -3261,7 +3240,6 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
                 return;
             }
 
-            log(LOG_DEBUG, FMT"\n", tast_print(old_stmt));
             load_yielding_set_etc(new_block, old_stmt, true, tast_continue_unwrap(old_stmt)->break_out_of, false, false);
             return;
         }
@@ -3407,31 +3385,9 @@ static Ir_block* load_block(
         load_def_out_of_line(curr);
     }
 
-    if (!is_top_level) {
-        //load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
-    }
     Ir_name block_scope = name_to_ir_name(scope_to_name_tbl_lookup(old_block->scope_id));
     if (!is_top_level) {
-        log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, block_scope));
-
-
-        if (!is_top_level) {
-            // TODO: this algorithm takes O(n) time. use hash table, etc. to improve time complexity
-            //if (!symbol_add(tast_label_wrap(tast_label_new(
-            //    old_block->pos,
-            //    name_new(MOD_PATH_LOAD_SCOPES, serialize_name(ir_name_to_name(block_scope)), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-            //    util_literal_name_new()
-            //)))) {
-                darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos, block_scope))));
-            //} else {
-                //todo();
-            //}
-        }
-
-    //Ir_label* block_label = ir_label_new(pos, block_scope);
-    //darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(block_label)));
-
-
+        darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos, block_scope))));
     }
     Ir_name label_after_block = util_literal_ir_name_new();
     load_block_stmts(
@@ -3452,7 +3408,6 @@ static Ir_block* load_block(
     if (lang_type.type != LANG_TYPE_VOID && old_block->has_yield) {
         assert(yield_dest_name->base.count > 0);
     }
-    //log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, new_block->lang_type));
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(old_block->pos_end, label_after_block))));
 
     if (defered_collections.coll_stack.info.count > 0) {

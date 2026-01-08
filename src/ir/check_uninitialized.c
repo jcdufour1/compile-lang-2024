@@ -163,7 +163,6 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
     assert(env.error_count > 0);
-    todo();
 
 #   ifndef NDEBUG
         log(LOG_DEBUG, FMT"\n", loc_print(loc));
@@ -328,8 +327,6 @@ static void check_unit_block(const Ir_block* block) {
         darr_append(&a_pass, &cfg_node_areas, ((Init_table) {0}));
     }
 
-    log(LOG_DEBUG, FMT"\n", ir_print(block));
-    //breakpoint();
     for (size_t iter_idx = 0; iter_idx < 1; iter_idx++) {
         darr_foreach(idx, Cfg_node, curr, block->cfg) {
             cfg_node_idx = idx;
@@ -370,13 +367,6 @@ static void check_unit_block(const Ir_block* block) {
                         }
                     }
 
-
-                    Name thing_name = ir_name_to_name(curr_in_tbl.name);
-                    if (strv_is_equal(thing_name.base, sv("status"))) {
-                        log(LOG_DEBUG, "%zu, cfg_node_of_init = %zu, block_pos_of_init = %zu\n", idx, curr_in_tbl.cfg_node_of_init, curr_in_tbl.block_pos_of_init);
-                        //cfg_dump(block->cfg, block->children, cfg_node_areas);
-                        breakpoint();
-                    }
                     if (is_init_in_pred) {
                         unwrap(init_symbol_add(curr_cfg_node_area, curr_in_tbl));
                     }
@@ -400,11 +390,6 @@ static void check_unit_block(const Ir_block* block) {
         }
     }
 
-    cfg_dump(block->cfg, block->children, cfg_node_areas);
-    log(LOG_DEBUG, FMT"\n", ir_print(block));
-    
-    breakpoint();
-
     // TODO: make function to log entire cfg_node_areas
 #   ifndef NDEBUG
         //darr_foreach(idx, Init_table, frame, cfg_node_areas) {
@@ -419,9 +404,6 @@ static void check_unit_block(const Ir_block* block) {
 
         //}
 #   endif // NDEBUG
-
-    // TODO: make function to log entire cfg_node_areas
-    log(LOG_DEBUG, "\n\n");
 
     cfg_node_areas = (Init_table_darr) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
@@ -450,7 +432,6 @@ static void check_unit_function_def(const Ir_function_def* def) {
     unwrap(curr_cfg_node_area);
     // NOTE: decl must be checked before body so that parameters can be set as initialized
     check_unit_function_decl(def->decl);
-    breakpoint();
     check_unit_block(def->body);
     
     env.mod_path_curr_file = old_mod_path_curr_file;

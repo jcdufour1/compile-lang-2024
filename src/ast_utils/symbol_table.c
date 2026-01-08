@@ -533,10 +533,6 @@ bool init_symbol_add(Init_table* init_table, Init_table_node node) {
     }
 
     Strv key = serialize_ir_name_symbol_table(&a_pass, node.name);
-    Name name = ir_name_to_name(node.name);
-    if (!strv_is_equal(name.mod_path, sv("builtin")) && strv_is_equal(name.base, sv("status"))) {
-        //breakpoint();
-    }
     Init_table_node* buf = arena_dup(&a_pass, &node);
     return generic_tbl_add((Generic_symbol_table*)init_table, key, buf);
 }

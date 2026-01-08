@@ -36,23 +36,22 @@ static Ir* rm_void_label(Ir_label* label, bool is_inline) {
         return ir_def_wrap(ir_label_wrap(label));
     }
 
+    // avoid duplicate labels
     Name block_scope = ir_name_to_name(label->name);
 
     String buf = {0};
     string_extend_cstr(&a_main/*TODO*/, &buf, "s");
     string_extend_size_t(&a_main/*TODO*/, &buf, rm_void_curr_block_scope_id);
     string_extend_cstr(&a_main/*TODO*/, &buf, "_");
-    string_extend_strv(&a_main, &buf, serialize_name(block_scope));
+    string_extend_strv(&a_main/*TODO*/, &buf, serialize_name(block_scope));
 
     if (!symbol_add(tast_label_wrap(tast_label_new(
         label->pos,
         name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
         block_scope
     )))) {
-        log(LOG_DEBUG, FMT"\n", ir_print(label));
         return ir_removed_wrap(ir_removed_new(label->pos));
     }
-    log(LOG_DEBUG, FMT"\n", ir_print(label));
     return ir_def_wrap(ir_label_wrap(label));
 }
 

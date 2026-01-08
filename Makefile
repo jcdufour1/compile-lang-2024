@@ -47,7 +47,7 @@ ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
     C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
 			   -fsanitize=address -fno-sanitize-recover=address \
-			   -fno-omit-frame-pointer -ferror-limit=1000
+			   -fno-omit-frame-pointer
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
@@ -60,9 +60,6 @@ endif
 ifeq ($(WERROR_ALL), 1)
 	C_FLAGS += -Werror -D OWN_WERROR
 endif
-
-OBJS=\
-	 unity_build_almost_everything.o \
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/*.h src/util/auto_gen/auto_gen.c
 
