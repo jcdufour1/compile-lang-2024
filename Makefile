@@ -120,9 +120,6 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
-#${BUILD_DIR}/main: ${DEP_COMMON}
-	#${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main src/unity_build_almost_everything.c src/util/subprocess.c
-
 ${BUILD_DIR}/main: ${DEP_COMMON} ${BUILD_DIR}/unity_build/unity_build_token_and_parser.o ${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o ${BUILD_DIR}/unity_build/unity_build_miscellaneous.o ${BUILD_DIR}/unity_build/unity_build_sema.o
 	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main \
 		${BUILD_DIR}/unity_build/unity_build_token_and_parser.o \
