@@ -45,15 +45,15 @@ wrong3 :: fn() i32 {
 }
 
 // TODO: uncomment and check that this function generates uninitalized error
-//wrong4 :: fn() i32 {
-//    way Way := .way1
-//    status i32 :
-//    switch way {
-//        case .way1: break
-//        case .way2: status = 4
-//    }
-//    return status
-//}
+wrong4 :: fn() i32 {
+    way Way := .way1
+    status i32 :
+    switch way {
+        case .way1: break
+        case .way2: status = 4
+    }
+    return status
+}
 
 wrong5 :: fn() i32 {
     token Token :
@@ -93,7 +93,7 @@ main :: fn() i32 {
     wrong1()
     wrong2()
     wrong3()
-    //wrong4() // TODO: uncomment wrong4() and check that this function generates uninitalized error
+    wrong4() // TODO: uncomment wrong4() and check that this function generates uninitalized error
     wrong5()
     wrong6()
     wrong7()

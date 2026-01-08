@@ -28,6 +28,7 @@ typedef enum {
 
 // TODO: make this more cross platform
 #define breakpoint() __asm__("int3")
+//#define breakpoint() 
 
 #define QSORT_LESS_THAN (-1)
 #define QSORT_EQUAL 0

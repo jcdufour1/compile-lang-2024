@@ -37,6 +37,7 @@ static inline const char* get_log_level_str(LOG_LEVEL log_level) {
     abort();
 }
 
+__attribute__((format (printf, 7, 8)))
 static inline void log_internal_ex(
     FILE* dest,
     LOG_LEVEL log_level,
@@ -67,6 +68,7 @@ static inline void log_internal_ex(
     va_end(args);
 }
 
+__attribute__((format (printf, 5, 6)))
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
     va_list args;
     va_start(args, format);
