@@ -116,7 +116,6 @@ for generics:
 - in python script, use mutex, etc. to reduce race conditions
 - fix warnings in windows ci
 - add option to use msg printing for logging ir?
-- fix README.md formatting (of Quickstart)
 - scope name should use Scope_name instead of Name (Scope_name may just contain Name) to catch mistakes at compile time
 - do_test.py should test with optimizations enabled for compiled test cases?
 - redo back edge generation algorihm (current one works incorrectly) (initially use naive recurive algorithm, then later use Torjen algorithm?)
