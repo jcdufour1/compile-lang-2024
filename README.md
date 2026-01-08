@@ -79,29 +79,29 @@ $ ./build/release/main examples/snake_game.own -O2 /usr/local/raylib-5.5_linux_a
 ```
 
 ## Quickstart
-1. clone the repo
+### 1. clone the repo
 ```sh
 $ git clone https://github.com/jcdufour1/compile-lang-2024.git
 $ cd compile-lang-2024
 ```
-2. build the compiler
-### Linux (release build)
+### 2. build the compiler
+#### Linux (release build)
 ```sh
 $ make build
 ```
-### Linux (debug build)
+#### Linux (debug build)
 ```sh
 $ DEBUG=1 make build
 ```
-### Linux (debug build, specify custom compiler path)
+#### Linux (debug build, specify custom compiler path)
 ```sh
 $ DEBUG=1 CC_COMPILER=clang make build
 ```
-### Windows (release build)
+#### Windows (release build)
 ```sh
 > build.bat
 ```
-3. build and run an example program
+### 3. build and run an example program
 ```sh
 $ ./build/release/main examples/readme_1.own --run
 ```
