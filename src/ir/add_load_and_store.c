@@ -610,57 +610,11 @@ static void load_block_stmts(
                 load_single_is_rtn_check(new_block, darr_top(defered_collections.coll_stack).is_yielding, label_if_break, label_if_continue);
             } else {
                 if (darr_top(defered_collections.coll_stack).block_has_yield) {
-                    Ir_name label_after_yield_check = util_literal_ir_name_new();
-                    // TODO: change this goto to regular goto if condition is false or nothing at all otherwise (cond_goto result is known at compile time)
-                    if_for_add_cond_goto(
-                        // if this condition evaluates to true, we are not returning right now
-                        tast_binary_wrap(tast_binary_new(
-                            new_block->pos,
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(
-                                new_block->pos,
-                                darr_top(defered_collections.coll_stack).block_has_yield ? 0 : 1,
-                                lang_type_new_u1(new_block->pos)
-                            ))),
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(
-                                new_block->pos,
-                                1,
-                                lang_type_new_u1(new_block->pos)
-                            ))),
-                            BINARY_DOUBLE_EQUAL,
-                            lang_type_new_u1(new_block->pos)
-                        )),
-                        new_block,
-                        label_after_yield_check,
-                        label_if_break
-                    );
-                    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(pos, label_after_yield_check))));
+                    darr_append(&a_main, &new_block->children, ir_goto_wrap(ir_goto_new(new_block->pos, util_literal_ir_name_new(), label_if_break)));
                 }
 
                 if (darr_top(defered_collections.coll_stack).block_has_continue) {
-                    Ir_name label_after_cont_check = util_literal_ir_name_new();
-                    // TODO: change this goto to regular goto if condition is false or nothing at all otherwise (cond_goto result is known at compile time)
-                    if_for_add_cond_goto(
-                        // if this condition evaluates to true, we are not returning right now
-                        tast_binary_wrap(tast_binary_new(
-                            new_block->pos,
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(
-                                new_block->pos,
-                                darr_top(defered_collections.coll_stack).block_has_continue ? 0 : 1,
-                                lang_type_new_u1(new_block->pos)
-                            ))),
-                            tast_literal_wrap(tast_int_wrap(tast_int_new(
-                                new_block->pos,
-                                1,
-                                lang_type_new_u1(new_block->pos)
-                            ))),
-                            BINARY_DOUBLE_EQUAL,
-                            lang_type_new_u1(new_block->pos)
-                        )),
-                        new_block,
-                        label_after_cont_check,
-                        label_if_continue
-                    );
-                    darr_append(&a_main, &new_block->children, ir_def_wrap(ir_label_wrap(ir_label_new(pos, label_after_cont_check))));
+                    darr_append(&a_main, &new_block->children, ir_goto_wrap(ir_goto_new(new_block->pos, util_literal_ir_name_new(), label_if_continue)));
                 }
 
                 Ir_name label_after_rtn_check = util_literal_ir_name_new();
