@@ -864,9 +864,13 @@ void emit_c_from_tree(void) {
             // TODO: uncomment below comments (will require fixing bug that occurs in the ci but not locally)
             //darr_append(&a_pass, &cmd, sv("-fsanitize=undefined"));
             //darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=undefined"));
-            darr_append(&a_pass, &cmd, sv("-fsanitize=address"));
-            darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=address"));
-            darr_append(&a_pass, &cmd, sv("-fno-omit-frame-pointer"));
+            
+            // TODO: use below sanitizers even on windows
+            #ifndef _WIN32
+                darr_append(&a_pass, &cmd, sv("-fsanitize=address"));
+                darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=address"));
+                darr_append(&a_pass, &cmd, sv("-fno-omit-frame-pointer"));
+            #endif // _WIN32
 #       endif // NDEBUG
 
         // output step
