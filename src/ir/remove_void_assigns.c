@@ -15,6 +15,8 @@
         return (wrap_fn)(item); \
     } while (0)
 
+static Scope_id rm_void_curr_block_scope_id = 0;
+
 static Ir* rm_void_block(Ir_block* block);
 
 static Ir* rm_void_function_def(Ir_function_def* def) {
@@ -29,8 +31,32 @@ static Ir* rm_void_variable_def(Ir_variable_def* def) {
     return ir_def_wrap(ir_variable_def_wrap(def));
 }
 
+static Ir* rm_void_label(Ir_label* label, bool is_inline) {
+    if (!is_inline) {
+        return ir_def_wrap(ir_label_wrap(label));
+    }
+
+    // avoid duplicate labels
+    Name block_scope = ir_name_to_name(label->name);
+
+    String buf = {0};
+    string_extend_cstr(&a_main/*TODO*/, &buf, "s");
+    string_extend_size_t(&a_main/*TODO*/, &buf, rm_void_curr_block_scope_id);
+    string_extend_cstr(&a_main/*TODO*/, &buf, "_");
+    string_extend_strv(&a_main/*TODO*/, &buf, serialize_name(block_scope));
+
+    if (!symbol_add(tast_label_wrap(tast_label_new(
+        label->pos,
+        name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+        block_scope
+    )))) {
+        return ir_removed_wrap(ir_removed_new(label->pos));
+    }
+    return ir_def_wrap(ir_label_wrap(label));
+}
+
 // TODO: maybe return Ir_def instead?
-static Ir* rm_void_def(Ir_def* def) {
+static Ir* rm_void_def(Ir_def* def, bool is_inline) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             return rm_void_function_def(ir_function_def_unwrap(def));
@@ -43,7 +69,7 @@ static Ir* rm_void_def(Ir_def* def) {
         case IR_FUNCTION_DECL:
             return ir_def_wrap(def);
         case IR_LABEL:
-            return ir_def_wrap(def);
+            return rm_void_label(ir_label_unwrap(def), is_inline);
         case IR_LITERAL_DEF:
             todo();
     }
@@ -83,7 +109,7 @@ static Ir* rm_void_load_element_ptr(Ir_load_element_ptr* load) {
     rm_void_internal(load, ir_load_element_ptr_wrap);
 }
 
-static Ir* rm_void_ir(Ir* ir) {
+static Ir* rm_void_ir(Ir* ir, bool is_inline) {
     switch (ir->type) {
         case IR_BLOCK:
             return rm_void_block(ir_block_unwrap(ir));
@@ -96,7 +122,7 @@ static Ir* rm_void_ir(Ir* ir) {
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
-            return rm_void_def(ir_def_unwrap(ir));
+            return rm_void_def(ir_def_unwrap(ir), is_inline);
         case IR_RETURN:
             return ir;
         case IR_GOTO:
@@ -120,16 +146,21 @@ static Ir* rm_void_ir(Ir* ir) {
 }
 
 static Ir* rm_void_block(Ir_block* block) {
+    Scope_id old_rm_void_curr_block_scope_id = rm_void_curr_block_scope_id;
+    rm_void_curr_block_scope_id = block->scope_id;
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         assert(darr_at(block->children, idx)->type != IR_BLOCK && "blocks should not be nested at this point");
-        *darr_at_ref(&block->children, idx) = rm_void_ir(darr_at(block->children, idx));
+        *darr_at_ref(&block->children, idx) = rm_void_ir(darr_at(block->children, idx), true);
     }
 
     Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
-        rm_void_ir(curr);
+        rm_void_ir(curr, false);
     }
+
+    rm_void_curr_block_scope_id = old_rm_void_curr_block_scope_id;
     return ir_block_wrap(block);
 }
 
@@ -137,7 +168,7 @@ void remove_void_assigns(void) {
     Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
-        rm_void_ir(curr);
+        rm_void_ir(curr, false);
     }
 }
 

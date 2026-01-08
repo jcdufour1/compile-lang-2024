@@ -53,6 +53,7 @@ Uname name_to_uname(Name name) {
 }
 
 Name ir_name_to_name(Ir_name name) {
+    assert(name.base.count > 0);
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         return *(Name*)&name;
@@ -68,6 +69,8 @@ Name ir_name_to_name(Ir_name name) {
 
 // TODO: Attrs should be stored in hash tables instead of in Name and Ir_name?
 Ir_name name_to_ir_name(Name name) {
+    assert(name.base.count > 0);
+
     if (name.scope_id == SCOPE_NOT) {
         static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
         return *(Ir_name*)&name;

@@ -421,12 +421,12 @@ static Uast_type uast_gen_poison_def(const char* prefix) {
 }
 
 static Uast_type uast_gen_label(const char* prefix) {
-    Uast_type bound = {.name = uast_name_new(prefix, "label", false, "uast")};
+    Uast_type label = {.name = uast_name_new(prefix, "label", false, "uast")};
 
-    append_member(&bound.members, "Name", "name");
-    append_member(&bound.members, "Name", "block_scope");
+    append_member(&label.members, "Name", "name");
+    append_member(&label.members, "Name", "block_scope");
 
-    return bound;
+    return label;
 }
 
 static Uast_type uast_gen_def(const char* prefix) {

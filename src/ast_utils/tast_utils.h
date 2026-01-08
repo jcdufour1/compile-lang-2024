@@ -449,6 +449,7 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
 Name serialize_ulang_type_array(Strv mod_path, Ulang_type_array ulang_type, bool include_scope);
 
 static inline Name tast_def_get_name(const Tast_def* def) {
+    assert(def);
     switch (def->type) {
         case TAST_PRIMITIVE_DEF: {
             Name name = {0};

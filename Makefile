@@ -25,6 +25,7 @@ C_FLAGS_COMMON = ${C_WARNINGS} \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
 
 # TODO: change gnu11 to c11
+# TODO: use same sanitize flags for autogen and regular compilation
 C_FLAGS_AUTO_GEN= ${C_WARNINGS} \
 			     -std=gnu11 -pedantic -g -I ./third_party/ -I src/util/ -I src/util/auto_gen/ \
 			     -D MIN_LOG_LEVEL=${LOG_LEVEL} \
@@ -44,7 +45,6 @@ endif
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
-    #C_FLAGS += -fsanitize=address -fno-sanitize-recover=address -fno-omit-frame-pointer
     C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
 			   -fsanitize=address -fno-sanitize-recover=address \
 			   -fno-omit-frame-pointer
@@ -60,9 +60,6 @@ endif
 ifeq ($(WERROR_ALL), 1)
 	C_FLAGS += -Werror -D OWN_WERROR
 endif
-
-OBJS=\
-	 unity_build_almost_everything.o \
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/*.h src/util/auto_gen/auto_gen.c
 
@@ -116,7 +113,6 @@ test_quick: run
 	./a.out ; echo $$?
 
 # auto_gen and util
-# TODO: reduce duplication in Makefile?
 ${BUILD_DIR}/auto_gen: src/util/auto_gen/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
 
@@ -124,9 +120,6 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
-#${BUILD_DIR}/main: ${DEP_COMMON}
-	#${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main src/unity_build_almost_everything.c src/util/subprocess.c
-
 ${BUILD_DIR}/main: ${DEP_COMMON} ${BUILD_DIR}/unity_build/unity_build_token_and_parser.o ${BUILD_DIR}/unity_build/unity_build_ir_and_codegen.o ${BUILD_DIR}/unity_build/unity_build_miscellaneous.o ${BUILD_DIR}/unity_build/unity_build_sema.o
 	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main \
 		${BUILD_DIR}/unity_build/unity_build_token_and_parser.o \

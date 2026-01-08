@@ -87,6 +87,8 @@ for generics:
     -- better arena management
     -- use views instead of vecs in ast and ir nodes?
     -- tokenizer could tokenize as parsing happens (with look ahead of about 3 tokens) instead of getting all tokens of file at once
+- possible optimizations to increase performance:
+    -- remove Ir_name; when adding new ir object to Ir_table, add object name to block_item_names (each Ir_block should have block_item_names darr)
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing
@@ -113,6 +115,11 @@ for generics:
 - make loc printing work for uasts and tasts
 - in python script, use mutex, etc. to reduce race conditions
 - fix warnings in windows ci
+- add option to use msg printing for logging ir?
+- fix README.md formatting (of Quickstart)
+- scope name should use Scope_name instead of Name (Scope_name may just contain Name) to catch mistakes at compile time
+- do_test.py should test with optimizations enabled for compiled test cases?
+- redo back edge generation algorihm (current one works incorrectly) (initially use naive recurive algorithm, then later use Torjen algorithm?)
 
 
 

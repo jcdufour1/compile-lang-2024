@@ -206,6 +206,7 @@ int main(int argc, char** argv) {
     (void) dummy;
     assert(strv_contains(&dummy, sv("th"), sv("t")));
     assert(strv_contains(&dummy, sv("th"), sv("th")));
+    assert(strv_contains(&dummy, sv("thing"), sv("ing")));
     assert(!strv_contains(&dummy, sv("th"), sv("thi")));
     assert(!strv_contains(&dummy, sv("th"), sv("ih")));
     assert(!strv_contains(&dummy, sv("ih"), sv("eh")));

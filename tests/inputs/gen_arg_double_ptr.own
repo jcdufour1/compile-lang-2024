@@ -12,7 +12,10 @@ main :: fn() i32 {
     ptr_ptr i32** := &ptr
 
     arr coll.Arr(<Token*, 1>) := coll.arr_new(<Token*, 1>)([util.null(<Token>)()])
+    defer coll.arr_free(&arr)
+
     *coll.arr_at_ref(arr, 0) = util.alloc(<Token>)(1)
+
     coll.arr_at_ref(arr, 0).num = 9
 
     io.print_int(coll.arr_at_ref(arr, 0).num)

@@ -138,6 +138,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     ));
 
     Init_table_node* result = NULL;
+    // TODO: init_symbol_lookup is done twice, and should only be done once?
     if (!init_symbol_lookup(curr_cfg_node_area, &result, at_fun_start)) {
         //todo();
         // this frame is unreachable, so printing uninitalized error would not make sense
@@ -161,6 +162,7 @@ static void check_unit_src_internal_name(Ir_name name, Pos pos, Loc loc) {
     } else {
         msg(DIAG_UNINITIALIZED_VARIABLE, pos, "symbol `"FMT"` is used uninitialized on some or all code paths\n", ir_name_print(NAME_MSG, name));
     }
+    assert(env.error_count > 0);
 
 #   ifndef NDEBUG
         log(LOG_DEBUG, FMT"\n", loc_print(loc));
@@ -376,40 +378,32 @@ static void check_unit_block(const Ir_block* block) {
 
     print_errors_for_unit = true;
 
-    cfg_foreach(cfg_node_idx_, curr2, block->cfg) {
-        cfg_node_idx = cfg_node_idx_;
-        curr_cfg_node_area = darr_at_ref(&cfg_node_areas, cfg_node_idx);
+    {
+        cfg_foreach(cfg_node_idx_, curr2, block->cfg) {
+            cfg_node_idx = cfg_node_idx_;
+            curr_cfg_node_area = darr_at_ref(&cfg_node_areas, cfg_node_idx);
 
-        ir_in_cfg_node_foreach(block_idx, ir, curr2, block->children) {
-            block_pos = block_idx;
-            check_unit_ir_from_block(ir);
+            ir_in_cfg_node_foreach(block_idx, ir, curr2, block->children) {
+                block_pos = block_idx;
+                check_unit_ir_from_block(ir);
+            }
         }
     }
-    
 
     // TODO: make function to log entire cfg_node_areas
-    //darr_foreach(idx, Frame, frame, cfg_node_areas) {
-    //    log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
-    //    init_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0, &frame.init_tables);
-    //    log(LOG_DEBUG, "\n");
-    //    //darr_foreach(tbl_idx, Init_table, curr_table, frame.init_tables) {/*{*/
-    //        //Init_table_iter iter = init_tbl_iter_new_table(curr_table);
-    //        //Init_table_node curr_in_tbl = {0};
-    //        //bool is_init_in_pred = true;
-    //        //while (init_tbl_iter_next(&curr_in_tbl, &iter)) {
-    //        //    Init_table_node* dummy = NULL;
-    //        //    if (init_symbol_lookup(&curr_cfg_node_area->init_tables, &dummy, curr_in_tbl.name)) {
-    //        //        continue;
-    //        //    }
+#   ifndef NDEBUG
+        //darr_foreach(idx, Init_table, frame, cfg_node_areas) {
+        //    log(LOG_DEBUG, "frame "SIZE_T_FMT":\n", idx);
+        //    init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, frame, INDENT_WIDTH);
 
-    //        //    if (is_init_in_pred) {
-    //        //        unwrap(init_symbol_add(&curr_cfg_node_area->init_tables, curr_in_tbl));
-    //        //    }
-    //        //}
-    //    //}
+        //    //Init_table_iter iter = init_tbl_iter_new_table(frame);
 
-    //}
-    //log(LOG_DEBUG, "\n\n");
+        //    //for (size_t block_idx = darr_at(curr_block_cfg, cfg_node_idx).pos_in_block; block_idx < curr_block_children.info.count; block_idx++) {
+        //    //    log(LOG_DEBUG, FMT, strv_print(ir_print_internal(darr_at(curr_block_children, block_idx), INDENT_WIDTH)));
+        //    //}
+
+        //}
+#   endif // NDEBUG
 
     cfg_node_areas = (Init_table_darr) {0};
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));

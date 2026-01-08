@@ -48,10 +48,11 @@ class Parameters:
     do_debug_internal: bool
     do_release_internal: bool
 
-COUNT_DIRS = 3 #TODO: automatically set this value
+COUNT_INPUT_DIRS = 3 #TODO: automatically set this value
 EXAMPLES_DIR = "examples"
 TUTORIAL_DIR = "tutorial"
 INPUTS_DIR = os.path.join("tests", "inputs")
+
 RESULTS_DIR = os.path.join("tests", "results")
 
 BUILD_DEBUG_DIR = os.path.join("build", "debug")
@@ -59,10 +60,10 @@ BUILD_RELEASE_DIR = os.path.join("build", "release")
 
 if os.name == "nt":
     EXE_BASE_NAME = "main.exe"
-    DEFAULT_ENCODING = "utf-8" # TODO
+    DEFAULT_ENCODING = "windows-1252" # TODO
 else:
     EXE_BASE_NAME = "main"
-    DEFAULT_ENCODING = "windows-1252" # TODO
+    DEFAULT_ENCODING = "utf-8" # TODO
 
 def remove_extension(file_path: str) -> str:
     return file_path[:file_path.rfind(".")]
@@ -94,7 +95,7 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileNormal | FileExample
     files: list[FileNormal | FileExample] = []
     possible_path: str
 
-    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
+    assert(COUNT_INPUT_DIRS == 3 and "exhausive handling of directories")
 
     for possible_base in map(to_str, list_files_recursively(INPUTS_DIR)):
         possible_path = os.path.realpath(possible_base)
@@ -376,7 +377,7 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
-    assert(COUNT_DIRS == 3 and "exhausive handling of directories")
+    assert(COUNT_INPUT_DIRS == 3 and "exhausive handling of directories")
     for possible_base in list_files_recursively(INPUTS_DIR):
         callback(list_or_map, os.path.realpath(possible_base))
     for possible_base in list_files_recursively(EXAMPLES_DIR):

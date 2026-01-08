@@ -309,6 +309,8 @@ static Uast_type ir_gen_load_another_ir(void) {
 }
 
 static Uast_type ir_gen_store_another_ir(void) {
+    // TODO: add assertion that ir_src.base.count and ir_dest.base.count > 0
+    // TODO: add system to add arbritry text to start of generated function so that above assert todo can be fulfilled
     Uast_type store = {.name = uast_name_new("ir", "store_another_ir", false, "ir")};
 
     append_member(&store.members, "Ir_name", "ir_src");
@@ -339,8 +341,8 @@ static Uast_type ir_gen_struct_memb_def(void) {
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "size_t", "count");
-
+    append_member(&def.members, "size_t", "count"); // TODO: change size_t to int64_t or uint64_t 
+                                                    // (becuause array count size is not always based on computer compile happens)
 
     return def;
 }

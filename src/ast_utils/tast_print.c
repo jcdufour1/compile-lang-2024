@@ -436,9 +436,14 @@ Strv tast_return_print_internal(const Tast_return* lang_rtn, Indent indent) {
 Strv tast_label_print_internal(const Tast_label* label, Indent indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&a_temp, &buf, "label", indent);
+    string_extend_cstr_indent(&a_temp, &buf, "label\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_cstr_indent(&a_temp, &buf, "name: ", indent);
     extend_name(NAME_LOG, &buf, label->name);
-    extend_pos(&buf, label->pos);
+    string_extend_cstr(&a_temp, &buf, "\n");
+
+    string_extend_cstr_indent(&a_temp, &buf, "block_scope: ", indent);
+    extend_name(NAME_LOG, &buf, label->block_scope);
     string_extend_cstr(&a_main, &buf, "\n");
 
     return string_to_strv(buf);

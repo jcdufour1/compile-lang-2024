@@ -28,6 +28,7 @@ typedef enum {
 
 // TODO: make this more cross platform
 #define breakpoint() __asm__("int3")
+//#define breakpoint() 
 
 #define QSORT_LESS_THAN (-1)
 #define QSORT_EQUAL 0
@@ -193,6 +194,7 @@ typedef size_t Scope_id;
 #define MOD_PATH_PRELUDE (sv("std"PATH_SEP"prelude"))
 #define MOD_PATH_OF_MOD_PATHS (sv("std"PATH_SEP"does_not_exist"PATH_SEP"mod_paths"))
 #define MOD_PATH_ARRAYS (sv("std"PATH_SEP"does_not_exist"PATH_SEP"arrays"))
+#define MOD_PATH_LOAD_SCOPES (sv("std"PATH_SEP"does_not_exist"PATH_SEP"load_scopes"))
 #define MOD_PATH_AUX_ALIASES (sv("std"PATH_SEP"does_not_exist"PATH_SEP"aux_aliases"))
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})

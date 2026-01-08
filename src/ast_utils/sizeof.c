@@ -9,6 +9,7 @@
 #include <lang_type_print.h>
 #include <ir_lang_type_print.h>
 
+// TODO: make this an extern function
 static uint64_t bit_width_to_bytes(uint64_t bit_width) {
     return (bit_width + 7)/8;
 }
@@ -34,7 +35,7 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
     if (ir_lang_type_primitive_get_pointer_depth(primitive) > 0) {
-        return params.sizeof_ptr_non_fn;
+        return bit_width_to_bytes(params.sizeof_ptr_non_fn);
     }
 
     switch (primitive.type) {
@@ -51,6 +52,10 @@ uint64_t sizeof_llvm_primitive(Ir_lang_type_primitive primitive) {
 }
 
 uint64_t sizeof_lang_type(Lang_type lang_type) {
+    if (lang_type_get_pointer_depth(lang_type) > 0) {
+        return bit_width_to_bytes(params.sizeof_ptr_non_fn);
+    }
+
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
@@ -140,6 +145,10 @@ uint64_t alignof_lang_type(Lang_type lang_type) {
 }
 
 uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
+    if (ir_lang_type_get_pointer_depth(lang_type) > 0) {
+        return bit_width_to_bytes(params.sizeof_ptr_non_fn);
+    }
+
     switch (lang_type.type) {
         case IR_LANG_TYPE_PRIMITIVE:
             return sizeof_llvm_primitive(ir_lang_type_primitive_const_unwrap(lang_type));

@@ -23,6 +23,7 @@ static void gen_darr_from_cstr(const char* darr_name, const char* item_name) {
     gen_darr_from_strv(sv(darr_name), sv(item_name));
 }
 
+// TODO: gen more darrs from here?
 static void a_genll_darrs_internal(void) {
     gen_darr_from_cstr("Tast_darr", "Tast*");
     gen_darr_from_cstr("Uast_darr", "Uast*");
