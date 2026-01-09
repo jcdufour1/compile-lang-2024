@@ -647,7 +647,7 @@ static void check_unit_ir_builtin(const Ir* ir) {
 void check_uninitialized(void) {
     curr_cfg_node_area = arena_alloc(&a_main /* todo */, sizeof(*curr_cfg_node_area));
 
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         check_unit_ir_builtin(curr);

@@ -113,7 +113,7 @@ static Strv ir_block_graphvis_internal(Name block_name, const Ir_block* block) {
     arrow_names(&buf, block_name, children_name);
     label(&buf, children_name, sv("block children"));
 
-    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
+    Ir_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         Name child_name = util_literal_name_new();

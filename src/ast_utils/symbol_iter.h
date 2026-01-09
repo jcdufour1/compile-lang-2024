@@ -60,14 +60,14 @@ static inline bool usym_tbl_iter_next(Uast_def** result, Usymbol_iter* iter) {
 typedef struct {
     size_t bucket_idx;
     Ir_table tbl;
-} Alloca_iter;
+} Ir_iter;
 
-// TODO: rename Alloca_table to Ir_table, etc.
-static inline Alloca_iter ir_tbl_iter_new(Scope_id scope_id) {
-    return (Alloca_iter) {.bucket_idx = 0, .tbl = darr_at_ref(&env.symbol_tables, scope_id)->ir_table};
+// TODO: rename Ir_table to Ir_table, etc.
+static inline Ir_iter ir_tbl_iter_new(Scope_id scope_id) {
+    return (Ir_iter) {.bucket_idx = 0, .tbl = darr_at_ref(&env.symbol_tables, scope_id)->ir_table};
 }
 
-static inline bool ir_tbl_iter_next(Ir** result, Alloca_iter* iter) {
+static inline bool ir_tbl_iter_next(Ir** result, Ir_iter* iter) {
     bool was_found = false;
     while (!was_found && iter->bucket_idx < iter->tbl.capacity) {
         if (iter->tbl.table_tasts[iter->bucket_idx].status == SYM_TBL_OCCUPIED) {

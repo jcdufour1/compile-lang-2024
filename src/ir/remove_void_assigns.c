@@ -154,7 +154,7 @@ static Ir* rm_void_block(Ir_block* block) {
         *darr_at_ref(&block->children, idx) = rm_void_ir(darr_at(block->children, idx), true);
     }
 
-    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
+    Ir_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr, false);
@@ -165,7 +165,7 @@ static Ir* rm_void_block(Ir_block* block) {
 }
 
 void remove_void_assigns(void) {
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr, false);

@@ -735,7 +735,7 @@ static void emit_c_block(Emit_c_strs* strs, const Ir_block* block) {
         }
     }
 
-    Alloca_iter iter = ir_tbl_iter_new(block->scope_id);
+    Ir_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         emit_c_out_of_line(strs, curr);
@@ -769,7 +769,7 @@ void emit_c_from_tree(void) {
             string_extend_cstr(&a_pass, &header, "const char* __asan_default_options() { return \"detect_leaks=0\"; }\n");
         #endif // NDEBUG
 
-        Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);
