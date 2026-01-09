@@ -201,7 +201,9 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
                 continue;
             }
 
-            uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 3 : 1;
+            assert(curr_name.base.count > 0);
+            uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 
+                min(curr_name.base.count - 1, 3) : 1;
             uint32_t result = levenshtein_distance(curr_name.base, sym_name.base);
             if (result <= max_difference) {
                 darr_append(&a_temp, &candidates, candidate_new(curr_name, result));
