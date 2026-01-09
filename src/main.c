@@ -125,7 +125,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 33,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -139,7 +139,7 @@ NEVER_RETURN void do_passes(void) {
         } else {
             String contents = {0};
 
-            Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+            Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
                 string_extend_strv(&a_temp, &contents, ir_print_internal(curr, INDENT_WIDTH));
@@ -170,7 +170,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 33,
+        PARAMETERS_COUNT == 32,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 
@@ -187,9 +187,9 @@ NEVER_RETURN void do_passes(void) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            if (!params.print_posix_msg) {
+#           ifndef PRINT_POSIX_MSG
                 msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"FMT"`\n", strv_print(cmd_to_strv(&a_main, cmd)));
-            }
+#           endif // PRINT_POSIX_MSG
             // exit with the child process return status
             local_exit(status);
         }

@@ -89,7 +89,7 @@ typedef struct {
 } File_type_pair;
 
 static_assert(FILE_TYPE_COUNT == 8, "exhausive handling of file types");
-// TODO: add exe
+// TODO: add posix executable to this list?
 File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},

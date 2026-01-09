@@ -1,4 +1,3 @@
-// TODO: rename this file to local_string.c
 #include <local_string.h>
 
 #ifdef IN_AUTOGEN
@@ -109,7 +108,6 @@ Strv char_repr(Arena* arena, char ch) {
         return string_to_strv(buf);
     }
     if (ch == '\\') {
-        // TODO: make string_append function
         darr_append(arena, &buf, '\\');
         darr_append(arena, &buf, '\\');
         return string_to_strv(buf);

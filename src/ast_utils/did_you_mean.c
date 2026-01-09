@@ -154,7 +154,7 @@ static int candidate_compare(const void* lhs_, const void* rhs_) {
     return lhs_is_local ? QSORT_LESS_THAN : QSORT_MORE_THAN;
 }
 
-typedef bool(*Is_correct_sym_type)(UAST_DEF_TYPE);
+typedef bool(*Is_correct_sym_type)(const Uast_def* def);
 
 static Strv did_you_mean_print_common_finish(Candidate_darr candidates) {
     if (candidates.info.count < 1) {
@@ -194,14 +194,16 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
-            if (!is_correct_sym_type_fn(curr->type)) {
+            if (!is_correct_sym_type_fn(curr)) {
                 continue;
             }
             if (curr_name.gen_args.info.count > 0 && sym_name.gen_args.info.count == 0) {
                 continue;
             }
 
-            uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 3 : 1;
+            assert(curr_name.base.count > 0);
+            uint32_t max_difference = strv_is_equal(curr_name.mod_path, sym_name.mod_path) ? 
+                min(curr_name.base.count - 1, 3) : 1;
             uint32_t result = levenshtein_distance(curr_name.base, sym_name.base);
             if (result <= max_difference) {
                 darr_append(&a_temp, &candidates, candidate_new(curr_name, result));
@@ -218,8 +220,8 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
 
 }
 
-static bool local_is_struct_like(UAST_DEF_TYPE type) {
-    switch (type) {
+static bool local_is_struct_like(const Uast_def* def) {
+    switch (def->type) {
         case UAST_LABEL:
             return false;
         case UAST_VOID_DEF:
@@ -243,8 +245,8 @@ static bool local_is_struct_like(UAST_DEF_TYPE type) {
         case UAST_ENUM_DEF:
             return true;
         case UAST_LANG_DEF:
-            // TODO: return true if def expands to struct like?
-            return false;
+            // TODO: consider if only defs with struct like exprs should be shown?
+            return true;
         case UAST_PRIMITIVE_DEF:
             return false;
         case UAST_FUNCTION_DECL:
@@ -261,8 +263,8 @@ Strv did_you_mean_type_print_internal(Name sym_name) {
     return did_you_mean_print_common(sym_name, local_is_struct_like);
 }
 
-static bool is_symbol(UAST_DEF_TYPE type) {
-    switch (type) {
+static bool is_symbol(const Uast_def* def) {
+    switch (def->type) {
         case UAST_LABEL:
             return true;
         case UAST_VOID_DEF:
@@ -286,8 +288,7 @@ static bool is_symbol(UAST_DEF_TYPE type) {
         case UAST_ENUM_DEF:
             return false;
         case UAST_LANG_DEF:
-            // TODO: return true if def expands to symbol?
-            return false;
+            return true;
         case UAST_PRIMITIVE_DEF:
             return false;
         case UAST_FUNCTION_DECL:

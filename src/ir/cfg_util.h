@@ -1,5 +1,5 @@
-#ifndef CFG_FOREACH_H
-#define CFG_FOREACH_H
+#ifndef CFG_UTIL_H
+#define CFG_UTIL_H
 
 #include <darr.h>
 #include <util.h>
@@ -68,5 +68,5 @@ static void cfg_dump_internal(const char* file, int line, LOG_LEVEL log_level, C
 #define cfg_dump(log_level, cfg, block_children, cfg_node_areas) \
     cfg_dump_internal(__FILE__, __LINE__, log_level, cfg, block_children, cfg_node_areas)
 
-#endif // CFG_FOREACH_H
+#endif // CFG_UTIL_H
 

@@ -190,7 +190,6 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
         raise NotImplementedError
     compile_cmd.append("--error")
     compile_cmd.append("no-main-function")
-    compile_cmd.append("--print-posix-msg")
     if path_c_compiler is not None:
         compile_cmd.append("--path-c-compiler")
         compile_cmd.append(path_c_compiler)
@@ -256,6 +255,7 @@ def do_tests(do_debug: bool, params: Parameters):
         cmd = ["make", "-j", str(params.count_threads), "build"]
         print_info("compiling " + debug_release_text + " :")
         map_thing = {"DEBUG": debug_env}
+        map_thing["SHOULD_PRINT_POSIX_MSG"] = "1"
         if params.makefile_cc_compiler:
             map_thing["CC_COMPILER"] = params.makefile_cc_compiler
         if params.makefile_werror_all:

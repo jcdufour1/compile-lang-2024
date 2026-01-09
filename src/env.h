@@ -29,8 +29,6 @@ typedef struct Env_ {
 
     Ulang_type parent_fn_rtn_type;
 
-    // TODO: think about functions and structs in different scopes, but with the same name (for both of below objects)
-    //   if I implement functions and structs in non top level
     Name_darr fun_implementations_waiting_to_resolve;
     Function_decl_tbl function_decl_tbl;
     

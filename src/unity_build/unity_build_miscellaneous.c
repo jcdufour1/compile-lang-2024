@@ -25,7 +25,7 @@
 #include <util/cfg.c>
 #include <util/file.c>
 #include <util/ir_operator_type.c>
-#include <util/newstring.c>
+#include <util/local_string.c>
 #include <util/operator_type.c>
 #include <util/parameters.c>
 #include <util/params_log_level.c>

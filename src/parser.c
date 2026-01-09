@@ -1667,7 +1667,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(*tokens, "after `=` in def definition");
+            msg_expected_expr(*tokens, "after `def` in def definition");
             return PARSE_ERROR;
         case PARSE_EXPR_OK:
             break;
@@ -2762,7 +2762,6 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
 
     if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_CURLY_BRACE)) {
         status = PARSE_ERROR;
-        // TODO: expeced failure case no close brace
         goto error;
     }
 
@@ -3635,11 +3634,8 @@ WSWITCH_ENUM_IGNORE_START
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
     Tk_view* tokens,
-    bool can_be_tuple, // TODO: remove this parameter?
     Scope_id scope_id
 ) {
-    (void) can_be_tuple;
-
     if (!is_unary(tk_view_front(*tokens).type)) {
         return parse_right_unary(result, tokens, scope_id);
     }
@@ -3688,7 +3684,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    PARSE_EXPR_STATUS status = parse_unary(&child, tokens, false, scope_id);
+    PARSE_EXPR_STATUS status = parse_unary(&child, tokens, scope_id);
     switch (status) {
         case PARSE_EXPR_OK:
             break;
@@ -3955,7 +3951,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     int depth
 ) {
     if (bin_idx >= array_count(BIN_IDX_TO_TOKEN_TYPES)) {
-        return parse_unary(result, tokens, false, scope_id);
+        return parse_unary(result, tokens, scope_id);
     }
 
     Uast_expr* new_lhs = NULL;

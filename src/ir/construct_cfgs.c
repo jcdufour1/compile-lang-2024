@@ -303,7 +303,7 @@ static void construct_cfg_ir_from_scope_builtin(Ir* ir) {
 }
 
 void construct_cfgs(void) {
-    Alloca_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         construct_cfg_ir_from_scope_builtin(curr);

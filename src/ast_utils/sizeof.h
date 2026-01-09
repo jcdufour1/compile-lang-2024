@@ -4,6 +4,10 @@
 #include <tast.h>
 #include <ir.h>
 
+static inline uint64_t bit_width_to_bytes(uint64_t bit_width) {
+    return (bit_width + 7)/8;
+}
+
 uint64_t sizeof_lang_type(Lang_type lang_type);
 
 uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type);

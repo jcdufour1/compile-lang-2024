@@ -18,6 +18,10 @@ typedef struct {
 
 #define string_print(string) strv_print(string_to_strv(string))
 
+static inline void string_append(Arena* arena, String* str, char ch) {
+    darr_append(arena, str, ch);
+}
+
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
         darr_append(arena, str, *cstr);
@@ -163,7 +167,6 @@ static inline Strv string_slice(String string, size_t start, size_t count) {
     return (Strv) {.str = string.buf + start, .count = count};
 }
 
-// TODO: move these functions to newstring.h?
 static void string_extend_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         darr_append(arena, string, toupper(strv_at(strv, idx)));

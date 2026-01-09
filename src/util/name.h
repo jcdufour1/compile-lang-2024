@@ -44,7 +44,7 @@ typedef struct {
 } Ir_name_darr;
 
 // TODO: nodes should store Uname_id (which would contain size_t) instead of Uname?
-//   lookup table should store actual name struct associated with Uname_id
+//   lookup table should store actual name struct associated with Uname_id?
 
 // eg. in symbol `io.Optional`, mod_alias == "io" and base == "Optional"
 typedef struct {
