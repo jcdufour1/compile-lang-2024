@@ -59,7 +59,7 @@ set MAIN_INCLUDE_PATHS=^
 :: TODO: MIN_LOG_LEVEL should be 3 instead of 4?
 :: TODO: remove print-posix-parameter, and entirely replace with PRINT_POSIX_MSG
 
-%CC_COMPILER% -std=c11 %WARNINGS% -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D MIN_LOG_LEVEL=4 %EXTRA_FLAGS%
+%CC_COMPILER% -std=c11 %WARNINGS% -DNDEBUG -O2 -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D MIN_LOG_LEVEL=4 %EXTRA_FLAGS%
 
 dir build\release\
 
