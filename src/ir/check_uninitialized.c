@@ -5,7 +5,7 @@
 #include <name.h>
 #include <bool_darr.h>
 #include <symbol_log.h>
-#include <cfg_foreach.h>
+#include <cfg_util.h>
 
 // TODO: in generic function, check uninitalized variables for only one of the variants to save time?
 
