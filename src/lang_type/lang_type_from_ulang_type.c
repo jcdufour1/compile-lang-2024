@@ -109,7 +109,6 @@ bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_
         return true;
     }
 
-    (void) new_lang_type;
     Ulang_type resolved = {0};
     LANG_TYPE_TYPE type = {0};
     if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
