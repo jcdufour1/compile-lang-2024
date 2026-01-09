@@ -224,25 +224,10 @@ static void gen_ulang_type_set_ptr_depth_common(Uast_type ulang_type, Strv op_st
         string_extend_cstr(&a_gen, &function, "    }\n");
         string_extend_cstr(&a_gen, &function, "    unreachable(\"\");\n");
     } else {
-        // TODO: always run else case here to simplify things
-        if (!strv_is_equal(ulang_type.name.type, sv("lang_type")) && !strv_is_equal(ulang_type.name.type, sv("ir_lang_type")) && !strv_is_equal(ulang_type.name.type, sv("ulang_type")) && (
-            strv_is_equal(ulang_type.name.base, sv("regular")) || 
-            strv_is_equal(ulang_type.name.base, sv("struct")) || 
-            strv_is_equal(ulang_type.name.base, sv("raw_union")) || 
-            strv_is_equal(ulang_type.name.base, sv("enum"))
-        )) { 
-            if (is_get) {
-                string_extend_f(&a_gen, &function, "return ulang_type.atom.pointer_depth;;\n");
-            } else {
-                string_extend_f(&a_gen, &function, "ulang_type->atom.pointer_depth "FMT" new_ptr_depth;\n", strv_print(op_str));
-            }
+        if (is_get) {
+            string_extend_f(&a_gen, &function, "return ulang_type.pointer_depth;;\n");
         } else {
-            if (is_get) {
-                string_extend_f(&a_gen, &function, "return ulang_type.pointer_depth;;\n");
-            } else {
-                string_extend_f(&a_gen, &function, "ulang_type->pointer_depth "FMT"  new_ptr_depth;\n", strv_print(op_str));
-            }
-
+            string_extend_f(&a_gen, &function, "ulang_type->pointer_depth "FMT"  new_ptr_depth;\n", strv_print(op_str));
         }
     }
 

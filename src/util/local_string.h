@@ -18,6 +18,10 @@ typedef struct {
 
 #define string_print(string) strv_print(string_to_strv(string))
 
+static inline void string_append(Arena* arena, String* str, char ch) {
+    darr_append(arena, str, ch);
+}
+
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
         darr_append(arena, str, *cstr);

@@ -25,8 +25,7 @@ static void gen_darr_from_cstr(const char* darr_name, const char* item_name) {
 
 // TODO: gen more darrs from here?
 static void a_genll_darrs_internal(void) {
-    gen_darr_from_cstr("Tast_darr", "Tast*");
-    gen_darr_from_cstr("Uast_darr", "Uast*");
+    gen_darr_from_cstr("Pos_darr", "Pos");
 }
 
 static void gen_all_darrs(const char* file_path) {
@@ -46,7 +45,7 @@ static void gen_all_darrs(const char* file_path) {
     gen_gen("#include <tast_forward_decl.h>\n");
     gen_gen("#include <ir_forward_decl.h>\n");
 
-    //a_genll_darrs_internal();
+    a_genll_darrs_internal();
 
     gen_gen("#endif // VECS_SKDJFKLJFDS_H\n");
 

@@ -11,6 +11,7 @@
 #include <msg.h>
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
+#include <darrs.h>
 
 static Arena a_token = {0};
 
