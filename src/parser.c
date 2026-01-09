@@ -1667,7 +1667,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(*tokens, "after `=` in def definition");
+            msg_expected_expr(*tokens, "after `def` in def definition");
             return PARSE_ERROR;
         case PARSE_EXPR_OK:
             break;
