@@ -113,7 +113,7 @@ test_quick: run
 
 # auto_gen and util
 ${BUILD_DIR}/auto_gen: src/util/auto_gen/auto_gen.c ${DEP_UTIL}
-	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/newstring.c
+	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -D IN_AUTOGEN -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen/auto_gen.c src/util/local_string.c
 
 ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}

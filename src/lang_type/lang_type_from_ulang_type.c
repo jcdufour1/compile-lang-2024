@@ -99,6 +99,69 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
     unreachable("");
 }
 
+bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type) {
+    if (
+        lang_type_name_base_is_number(lang_type.name.base) ||
+        strv_is_equal(lang_type.name.base, sv("void")) ||
+        strv_is_equal(lang_type.name.base, sv("opaque"))
+    ) {
+        *new_lang_type = lang_type_from_ulang_type_regular_primitive(lang_type);
+        return true;
+    }
+
+    (void) new_lang_type;
+    Ulang_type resolved = {0};
+    LANG_TYPE_TYPE type = {0};
+    if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
+        return false;
+    }
+
+    // report error if generic args are invalid
+    darr_foreach(gen_idx, Ulang_type, gen_arg, lang_type.name.gen_args) {
+        Lang_type dummy = {0};
+        if (!try_lang_type_from_ulang_type(&dummy, gen_arg)) {
+            return false;
+        }
+    }
+
+    Name temp_name = {0};
+    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).name, lang_type.pos)) {
+        return false;
+    }
+
+    //Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    int16_t temp_ptr_depth = ulang_type_regular_const_unwrap(resolved).pointer_depth;
+    switch (type) {
+        case LANG_TYPE_STRUCT:
+            *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, temp_name, temp_ptr_depth));
+            return true;
+        case LANG_TYPE_RAW_UNION:
+            *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, temp_name, temp_ptr_depth));
+            return true;
+        case LANG_TYPE_ENUM:
+            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, temp_name, temp_ptr_depth));
+            return true;
+        case LANG_TYPE_PRIMITIVE:
+            *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
+            return true;
+        case LANG_TYPE_VOID:
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos, lang_type.pointer_depth));
+            return true;
+        case LANG_TYPE_TUPLE:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_ARRAY:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_FN:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_LIT:
+            unreachable("this is not possible with Lang_type_regular");
+        case LANG_TYPE_REMOVED:
+            msg_soft_todo("", ulang_type_get_pos(resolved));
+            return false;
+    }
+    unreachable("");
+}
+
 // TODO: move this function
 bool name_from_uname(Name* new_name, Uname name, Pos name_pos) {
     unwrap(name.mod_alias.base.count > 0);

@@ -9,11 +9,6 @@
 #include <lang_type_print.h>
 #include <ir_lang_type_print.h>
 
-// TODO: make this an extern function
-static uint64_t bit_width_to_bytes(uint64_t bit_width) {
-    return (bit_width + 7)/8;
-}
-
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;

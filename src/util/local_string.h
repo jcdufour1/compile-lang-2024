@@ -163,7 +163,6 @@ static inline Strv string_slice(String string, size_t start, size_t count) {
     return (Strv) {.str = string.buf + start, .count = count};
 }
 
-// TODO: move these functions to newstring.h?
 static void string_extend_upper(Arena* arena, String* string, Strv strv) {
     for (size_t idx = 0; idx < strv.count; idx++) {
         darr_append(arena, string, toupper(strv_at(strv, idx)));
