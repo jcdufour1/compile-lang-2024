@@ -11,9 +11,9 @@ static Strv mod_path_param_normalize(Arena* arena, Strv mod_path) {
         return mod_path;
 #   endif // __WIN32
 
-    if (!params.print_posix_msg) {
+#   ifndef PRINT_POSIX_MSG
         return mod_path;
-    }
+#   endif // PRINT_POSIX_MSG
 
     String new_path = {0};
     for (size_t idx = 0; idx < mod_path.count; idx++) {

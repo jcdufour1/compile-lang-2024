@@ -56,6 +56,10 @@ else
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
+ifdef SHOULD_PRINT_POSIX_MSG
+	C_FLAGS += -D PRINT_POSIX_MSG
+endif
+
 ifeq ($(WERROR_ALL), 1)
 	C_FLAGS += -Werror -D OWN_WERROR
 endif

@@ -803,7 +803,7 @@ void emit_c_from_tree(void) {
 
     {
         static_assert(
-            PARAMETERS_COUNT == 33,
+            PARAMETERS_COUNT == 32,
             "exhausive handling of params (not all parameters are explicitly handled)"
         );
 

@@ -217,9 +217,9 @@ static size_t try_strv_to_char_strv_count(Strv strv) {
         return strv.count;
 #   endif // _WIN32
 
-    if (!params.print_posix_msg) {
+#   ifndef PRINT_POSIX_MSG
         return strv.count;
-    }
+#   endif // PRINT_POSIX_MSG
 
     size_t actual_count = 0;
     for (size_t idx = 0; idx < strv.count; idx++) {
