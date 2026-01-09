@@ -28,6 +28,7 @@ static void emit_c_extend_name(String* output, Ir_name name) {
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 // TODO: look into using #line to make linker messages print location of .own source code?
+
 typedef struct {
     String struct_defs;
     String output;
@@ -864,13 +865,9 @@ void emit_c_from_tree(void) {
             // TODO: uncomment below comments (will require fixing bug that occurs in the ci but not locally)
             //darr_append(&a_pass, &cmd, sv("-fsanitize=undefined"));
             //darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=undefined"));
-            
-            // TODO: use below sanitizers even on windows
-            #ifndef _WIN32
-                darr_append(&a_pass, &cmd, sv("-fsanitize=address"));
-                darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=address"));
-                darr_append(&a_pass, &cmd, sv("-fno-omit-frame-pointer"));
-            #endif // _WIN32
+            darr_append(&a_pass, &cmd, sv("-fsanitize=address"));
+            darr_append(&a_pass, &cmd, sv("-fno-sanitize-recover=address"));
+            darr_append(&a_pass, &cmd, sv("-fno-omit-frame-pointer"));
 #       endif // NDEBUG
 
         // output step

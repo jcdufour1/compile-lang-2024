@@ -10,10 +10,7 @@
 static const char* get_path(const char* build_dir, const char* file_name_in_dir) {
     String path = {0};
 
-    string_extend_cstr(&a_gen, &path, build_dir);
-    string_extend_cstr(&a_gen, &path, "/"); // TODO: do not hardcode this separator?
-    string_extend_cstr(&a_gen, &path, file_name_in_dir);
-    string_extend_cstr(&a_gen, &path, "\0");
+    string_extend_f(&a_gen, &path, "%s"PATH_SEP"%s", build_dir, file_name_in_dir);
 
     return path.buf;
 }
