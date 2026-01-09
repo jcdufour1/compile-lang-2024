@@ -18,7 +18,7 @@ if "%SHOULD_PRINT_POSIX_MSG%"=="1" (
 
 set BUILD_DIR=build\release
 
-set AUTOGEN_C_FILES=src\util\params_log_level.c src\util\arena.c src\util\auto_gen\auto_gen.c src\util\newstring.c
+set AUTOGEN_C_FILES=src\util\params_log_level.c src\util\arena.c src\util\auto_gen\auto_gen.c src\util\local_string.c
 set AUTOGEN_INCLUDE_PATHS=-I third_party\ -I src\util\ -I src\util\auto_gen\
  
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
@@ -59,7 +59,7 @@ set MAIN_INCLUDE_PATHS=^
 :: TODO: MIN_LOG_LEVEL should be 3 instead of 4?
 :: TODO: remove print-posix-parameter, and entirely replace with PRINT_POSIX_MSG
 
-%CC_COMPILER% -std=c11 %WARNINGS% -DNDEBUG -O2 -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D MIN_LOG_LEVEL=4 %EXTRA_FLAGS%
+%CC_COMPILER% -std=c11 %WARNINGS% -o %BUILD_DIR%\main.exe %MAIN_INCLUDE_PATHS% %MAIN_C_FILES% %LIBS% -D MIN_LOG_LEVEL=4 %EXTRA_FLAGS%
 
 dir build\release\
 
