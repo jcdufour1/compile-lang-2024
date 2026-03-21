@@ -54,4 +54,8 @@ static inline size_t get_next_multiple(size_t num, size_t divisor) {
     return num + (divisor - num%divisor)%divisor;
 }
 
+static inline size_t get_prev_multiple(size_t num, size_t divisor) {
+    return num - (divisor + num%divisor)%divisor;
+}
+
 #endif // LOCAL_MATH_H

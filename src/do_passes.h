@@ -36,4 +36,12 @@ void expand_def(void);
 
 void expand_using(void);
 
+void ir_to_bytecode(void);
+
+void backpatch_offsets(void);
+
+void ir_to_bytecode_patch_offsets(void);
+
+void interpret(void);
+
 #endif // PASSES_H

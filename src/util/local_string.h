@@ -223,6 +223,8 @@ void string_extend_f(Arena* arena, String* string, const char* format, ...);
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
 
+void string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1);
+
 // TODO: move to str_and_num_utils?
 Strv char_repr(Arena* arena, char ch);
 

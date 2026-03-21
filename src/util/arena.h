@@ -57,7 +57,7 @@ static inline void* arena_dup_internal(Arena* arena, const void* buf, size_t cou
     arena_dup_internal(arena, buf, sizeof(*(buf)))
 
 // will return null terminated string (by allocating one byte more than count)
-static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t count) {
+static inline char* arena_strndup(Arena* arena, const char* cstr, size_t count) {
     if (!cstr) {
         return NULL;
     }
@@ -67,11 +67,9 @@ static inline const char* arena_strndup(Arena* arena, const char* cstr, size_t c
     return new_cstr;
 }
 
-// will return null terminated string
+// will return null terminated string (by allocating one byte more than count)
 static inline char* arena_strndup_mut(Arena* arena, const char* cstr, size_t count) {
-    char* new_cstr = arena_alloc(arena, count);
-    memcpy(new_cstr, cstr, count);
-    return new_cstr;
+    return arena_strndup(arena, cstr, count);
 }
 
 // will return null terminated string

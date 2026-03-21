@@ -19,6 +19,8 @@
 #include <lang_type.h>
 #include <time_utils.h>
 #include <ir_utils.h>
+#include <ir_to_bytecode.h>
+#include <bytecode.h>
 
 static void add_primitives(void) {
     unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
@@ -125,7 +127,7 @@ NEVER_RETURN void do_passes(void) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_IR) {
@@ -157,20 +159,32 @@ NEVER_RETURN void do_passes(void) {
 
     if (params.stop_after > STOP_AFTER_IR) {
         switch (params.backend_info.backend) {
-            case BACKEND_NONE:
-                unreachable("this should have been caught eariler");
             case BACKEND_LLVM:
                 todo();
+            case BACKEND_INTERPRETER:
+                do_pass(ir_to_bytecode_patch_offsets, ir_log_level, stderr);
+                bytecode_dump(LOG_DEBUG, bytecode);
+                size_t bytecode_first_pass_count = bytecode.code.info.count;
+                // TODO: bytecode dump after second pass has larger positions
+                do_pass(ir_to_bytecode, ir_log_level, stderr);
+                bytecode_dump(LOG_DEBUG, bytecode);
+                assert(bytecode_first_pass_count == bytecode.code.info.count && "the bytecode must be the same size on both bytecode passes");
+
+                // TODO
+                do_pass(interpret, ir_log_level/*TODO*/, stderr);
+                break;
             case BACKEND_C:
                 do_pass(emit_c_from_tree, ir_log_level, stderr);
                 break;
+            case BACKEND_NONE:
+                unreachable("this should have been caught eariler");
             default:
                 unreachable("");
         }
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
 

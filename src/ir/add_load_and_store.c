@@ -3115,6 +3115,15 @@ static void load_stmt_internal(const char* file, int line, Ir_block* new_block, 
 
             Tast_return* rtn = tast_return_unwrap(old_stmt);
             if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
+                log(LOG_DEBUG, FMT, tast_print(tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {
+                    .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
+                })))));
+                log(LOG_DEBUG, FMT, tast_print(rtn->child));
+                log(LOG_DEBUG, FMT"\n", loc_print(loc_get(rtn)));
+
+                assert(
+                    lang_type_is_equal(tast_expr_get_lang_type(coll.rtn_val), tast_expr_get_lang_type(rtn->child))
+                );
                 Tast_assignment* rtn_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), ((Sym_typed_base) {

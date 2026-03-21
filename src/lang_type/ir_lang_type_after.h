@@ -66,4 +66,23 @@ static inline Ir_lang_type ir_lang_type_pointer_depth_dec(Ir_lang_type lang_type
     return lang_type;
 }
 
+static inline bool ir_lang_type_is_int(Ir_lang_type lang_type) {
+    if (lang_type.type != IR_LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    Ir_lang_type_primitive prim = ir_lang_type_primitive_const_unwrap(lang_type);
+
+    switch (prim.type) {
+        case IR_LANG_TYPE_UNSIGNED_INT:
+            return true;
+        case IR_LANG_TYPE_SIGNED_INT:
+            return true;
+        case IR_LANG_TYPE_FLOAT:
+            return false;
+        case IR_LANG_TYPE_OPAQUE:
+            return false;
+    }
+    unreachable(""); 
+}
+
 #endif // IR_LANG_TYPE_AFTER_H

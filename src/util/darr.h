@@ -67,6 +67,16 @@ typedef struct {
         (dest)->info.count += (src)->info.count; \
     } while(0)
 
+#define darr_extend_array(arena, dest, src) \
+    do { \
+        darr_reserve(arena, dest, array_count(src)); \
+        if (array_count(src) > 0) { \
+            unwrap(dest); \
+            memmove((dest)->buf + (dest)->info.count, (src), sizeof((dest)->buf[0])*array_count(src)); \
+        } \
+        (dest)->info.count += array_count(src); \
+    } while(0)
+
 #define darr_first(darr) \
     darr_at_ref((darr), 0)
 

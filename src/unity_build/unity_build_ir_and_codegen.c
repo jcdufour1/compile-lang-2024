@@ -8,3 +8,7 @@
 #include <ir/ir_print.c>
 #include <ir/ir_utils.c>
 #include <ir/remove_void_assigns.c>
+#include <ir/backpatch_offsets.c>
+#include <ir/ir_to_bytecode.c>
+#include <ir/bytecode.c>
+#include <ir/interpret.c>

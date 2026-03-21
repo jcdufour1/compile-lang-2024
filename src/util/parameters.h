@@ -37,8 +37,10 @@ typedef struct {
     DIAG_TYPE* buf;
 } Expect_fail_type_darr;
 
+// TODO: remove BACKEND_NONE?
 typedef enum {
     BACKEND_NONE = 0,
+    BACKEND_INTERPRETER,
     BACKEND_C,
     BACKEND_LLVM,
 } BACKEND;
@@ -46,6 +48,7 @@ typedef enum {
 typedef struct {
     BACKEND backend;
     bool struct_rtn_through_param;
+    bool is_manually_set;
 } Backend_info;
 
 typedef enum {
@@ -73,7 +76,7 @@ typedef enum {
 } STOP_AFTER;
 
 // PARAMETERS_COUNT should be set to the number of members in Parameters
-#define PARAMETERS_COUNT 32
+#define PARAMETERS_COUNT 33
 typedef struct {
     Target_triplet target_triplet;
     uint32_t sizeof_usize; // in bits

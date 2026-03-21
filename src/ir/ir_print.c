@@ -300,7 +300,7 @@ Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, Indent indent) {
     return string_to_strv(buf);
 }
 
-Strv ir_alloca_temp_internal(const Ir_alloca* lang_alloca, Indent indent) {
+Strv ir_alloca_print_internal(const Ir_alloca* lang_alloca, Indent indent) {
     String buf = {0};
 
     bool old_is_printing = env.is_printing;
@@ -631,7 +631,7 @@ Strv ir_print_internal(const Ir* ir, Indent indent) {
         case IR_COND_GOTO:
             return ir_cond_goto_print_internal(ir_cond_goto_const_unwrap(ir), indent);
         case IR_ALLOCA:
-            return ir_alloca_temp_internal(ir_alloca_const_unwrap(ir), indent);
+            return ir_alloca_print_internal(ir_alloca_const_unwrap(ir), indent);
         case IR_LOAD_ANOTHER_IR:
             return ir_load_another_ir_print_internal(ir_load_another_ir_const_unwrap(ir), indent);
         case IR_STORE_ANOTHER_IR:

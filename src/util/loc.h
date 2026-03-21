@@ -23,6 +23,7 @@ static inline Strv loc_print_internal(Loc loc) {
     return string_to_strv(buf);
 }
 
+// extend_loc
 #define loc_print(loc) \
     strv_print(loc_print_internal(loc))
 

@@ -171,6 +171,9 @@ continue(<thing>)
 - use libclang to get size of c types (and use size of c types stored locally in project as fallback)
 - use c89 for the c backend instead of c99 for better compatibility
 - stop using todo macro in main branch?
+- remove () below:
+    3: ------%s0_builtin::str__rtn_val__14(s0_builtin::str__rtn_val__14) = lang_alloca<primitive s0_builtin::i32(s0_builtin::i32)*>
+
 
 
 

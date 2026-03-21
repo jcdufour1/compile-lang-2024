@@ -4157,6 +4157,8 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
         default:
             unreachable("");
     }
+    log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, rtn_lang_type));
+    log(LOG_DEBUG, FMT"\n", tast_print(new_child));
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 

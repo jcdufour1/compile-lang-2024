@@ -196,6 +196,8 @@ typedef size_t Scope_id;
 #define MOD_PATH_ARRAYS (sv("std"PATH_SEP"does_not_exist"PATH_SEP"arrays"))
 #define MOD_PATH_LOAD_SCOPES (sv("std"PATH_SEP"does_not_exist"PATH_SEP"load_scopes"))
 #define MOD_PATH_AUX_ALIASES (sv("std"PATH_SEP"does_not_exist"PATH_SEP"aux_aliases"))
+#define MOD_PATH_BACKPATCH_STACK_SIZE (sv("std"PATH_SEP"does_not_exist"PATH_SEP"backpatch_stack_size"))
+#define MOD_PATH_FUNCTION_TO_LOC (sv("std"PATH_SEP"does_not_exist"PATH_SEP"function_to_location"))
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
@@ -208,7 +210,7 @@ typedef size_t Scope_id;
 // TODO: move this?
 #define BUILTIN_DEFS_COUNT 4
 
-#define FMT "%.*s"
+#define FMT "%s"
 
 // TODO: give better name
 #define thing(expr) #expr
@@ -218,6 +220,11 @@ typedef size_t Scope_id;
 #else
 #   define SIZE_T_FMT "%zu"
 #endif // _WIN32
+
+ /* 1M */
+// TODO: make command line argument for this
+#define INTERPRET_STACK_SIZE (1024*1024UL)
+#define INTERPRET_STACK_M_NOTATION true // if set to false, stack positions will be shown as eg. "1048568" instead of "m-8"
 
 #define MOD_PATH_COMMAND_LINE sv("std"PATH_SEP"does_not_exist"PATH_SEP"cmd")
 

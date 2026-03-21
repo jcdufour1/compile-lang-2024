@@ -464,6 +464,9 @@ void* ir_get_tbl_from_collection(Symbol_collection* collection) {
 
 bool ir_add(Ir* item) {
     Ir_name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    if (strv_is_equal(name.base, sv("_1__7_builtin_str____37"))) {
+        //todo();
+    }
     return generic_symbol_add(
         serialize_ir_name_symbol_table(&a_main, name),
         item,

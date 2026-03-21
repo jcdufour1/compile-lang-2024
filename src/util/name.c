@@ -239,6 +239,11 @@ Strv serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
+Strv serialize_ir_name(Ir_name name) {
+    static_assert(sizeof(name) == sizeof(Ir_name), "type punning below might not work anymore");
+    return serialize_name(*(Name*)&name);
+}
+
 Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, NAME_BASE_ONLY_CHOICE base_only_choice) {
     switch (base_only_choice) {
         case NAME_FULL:

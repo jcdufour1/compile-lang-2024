@@ -466,7 +466,7 @@ static void parse_file_option(int* argc, char*** argv) {
     assert(strv_is_equal(curr_opt.pos.file_path, MOD_PATH_COMMAND_LINE));
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     static_assert(FILE_TYPE_COUNT == 8, "exhaustive handling of file types");
@@ -522,13 +522,17 @@ static void parse_file_option(int* argc, char*** argv) {
 }
 
 static void set_backend(BACKEND backend) {
+    params.backend_info.is_manually_set = true;
+    params.backend_info.backend = backend;
+
     switch (backend) {
+        case BACKEND_INTERPRETER:
+            params.backend_info.struct_rtn_through_param = false;
+            return;
         case BACKEND_C:
-            params.backend_info.backend = BACKEND_C;
             params.backend_info.struct_rtn_through_param = false;
             return;
         case BACKEND_LLVM:
-            params.backend_info.backend = BACKEND_LLVM;
             params.backend_info.struct_rtn_through_param = true;
             return;
         case BACKEND_NONE:
@@ -617,25 +621,33 @@ static void long_option_dump_dot(Pos pos_self, Arg curr_opt) {
     //params.dump_dot = true;
 }
 
-static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
+static void long_option_run_common(Pos pos_self, Strv first_arg, int* argc, char *** argv, Strv name_self, bool backend_must_be_interpret) {
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params for if statement below "
         "(not all parameters are explicitly handled)"
     );
     if (params.stop_after == STOP_AFTER_NONE) {
-        msg(DIAG_CMD_OPT_INVALID_SYNTAX, pos_self, "file to be compiled must be specified prior to `--run` argument\n");
+        msg(DIAG_CMD_OPT_INVALID_SYNTAX, pos_self, "file to be compiled must be specified prior to `--"FMT"` argument\n", strv_print(name_self));
         local_exit(EXIT_CODE_FAIL);
     }
     if (!is_compiling()) {
         msg(
             DIAG_CMD_OPT_INVALID_OPTION,
             pos_self,
-            "`--run` option cannot be used when generating intermediate files (eg. .s files)\n"
+            "`--"FMT"` option cannot be used when generating intermediate files (eg. .s files)\n", strv_print(name_self)
         );
         local_exit(EXIT_CODE_FAIL);
     }
     params.stop_after = STOP_AFTER_RUN;
+
+    if (backend_must_be_interpret) {
+        if (params.backend_info.is_manually_set && params.backend_info.backend != BACKEND_INTERPRETER) {
+            // TODO: print error for wrong backend specified
+            todo();
+        }
+        params.backend_info.backend = BACKEND_INTERPRETER;
+    }
 
     if (first_arg.count > 0) {
         darr_append(&a_leak, &params.run_args, first_arg);
@@ -643,6 +655,14 @@ static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** ar
     while (*argc > 0) {
         darr_append(&a_leak, &params.run_args, consume_arg(argc, argv, sv("internal error")).text);
     }
+}
+
+static void long_option_run(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
+    long_option_run_common(pos_self, first_arg, argc, argv, sv("run"), false);
+}
+
+static void long_option_interpret(Pos pos_self, Strv first_arg, int* argc, char *** argv) {
+    long_option_run_common(pos_self, first_arg, argc, argv, sv("interpret"), true);
 }
 
 static void long_option_lower_o(Pos pos_self, Arg curr_opt) {
@@ -818,7 +838,7 @@ static void long_option_dummy(Pos pos_self, Arg curr_opt) {
 
 static_assert(OPT_LEVEL_COUNT == 5, "exhausive handling of opt types in params below");
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
     const char* text;
@@ -885,6 +905,7 @@ Long_option_pair long_options[] = {
     },
 
     {.text = "run", .description = "n/a", .action = long_option_dummy, .arg_type = ARG_REMAINING_RUN_ONLY},
+    {.text = "interpret", .description = "n/a", .action = long_option_dummy, .arg_type = ARG_REMAINING_RUN_ONLY},
 };
 
 static void parse_long_option(int* argc, char*** argv) {
@@ -916,8 +937,13 @@ static void parse_long_option(int* argc, char*** argv) {
                     return;
                 }
                 case ARG_REMAINING_RUN_ONLY:
-                    assert(0 == strcmp(curr.text, "run") && "ARG_REMAINING_RUN_ONLY must only be used for run");
-                    long_option_run(pos_self, curr_arg.text, argc, argv);
+                    if (0 == strcmp(curr.text, "run")) {
+                        long_option_run(pos_self, curr_arg.text, argc, argv);
+                    } else if (0 == strcmp(curr.text, "interpret")) {
+                        long_option_interpret(pos_self, curr_arg.text, argc, argv);
+                    } else {
+                        unreachable("ARG_REMAINING_RUN_ONLY must only be used for `run` or `interpret`");
+                    }
                     assert(*argc == 0 && "not all args were consumed in long_option_run");
                     return;
                 case ARG_COUNT:
@@ -933,7 +959,7 @@ static void parse_long_option(int* argc, char*** argv) {
 }
 
 static_assert(
-    PARAMETERS_COUNT == 32,
+    PARAMETERS_COUNT == 33,
     "exhausive handling of params (not all parameters are explicitly handled)"
 );
 static void set_params_to_defaults(int argc, char** argv) {
@@ -1005,7 +1031,7 @@ void parse_args(int argc, char** argv) {
     }
 
     static_assert(
-        PARAMETERS_COUNT == 32,
+        PARAMETERS_COUNT == 33,
         "exhausive handling of params (not all parameters are explicitly handled)"
     );
     if (

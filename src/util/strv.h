@@ -121,7 +121,19 @@ static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
 }
 
-#define strv_print(strv) (int)((strv).count), (strv).str
+#ifdef IN_AUTOGEN
+    static Arena fake_a_leak = {0};
+#endif // IN_AUTOGEN
+
+static inline char* strv_print_internal(Strv strv) {
+#   ifdef IN_AUTOGEN
+        return arena_strndup(&fake_a_leak, strv.str, strv.count);
+#   else
+        return arena_strndup(&a_temp, strv.str, strv.count);
+#   endif // IN_AUTOGEN
+}
+
+#define strv_print(strv) strv_print_internal(strv)
 
 static inline bool strv_contains(size_t* index, Strv haystack, Strv needle) {
     if (needle.count > haystack.count) {

@@ -39,8 +39,22 @@ static bool do_implicit_convertions_primitive(
     }
 
     if (src_is_zero) {
+        // TODO: only do unsafe cast if lang_types are unmatched
+
+        // TODO: remove this if statement when big ints are implemented?
+        if (!(dest_bit_width == 1 || dest_bit_width == 8 || dest_bit_width == 16 || dest_bit_width == 32 || dest_bit_width == 64)) {
+            // TODO
+            goto after_if;
+        }
+        *new_src = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            tast_expr_get_pos(*new_src),
+            *new_src,
+            UNARY_UNSAFE_CAST,
+            lang_type_primitive_const_wrap(dest)
+        )));
         return true;
     }
+after_if:
 
     if (dest.type == LANG_TYPE_SIGNED_INT) {
         unwrap(dest_bit_width > 0);
@@ -57,6 +71,7 @@ static bool do_implicit_convertions_primitive(
 
     if ((*new_src)->type == TAST_LITERAL) {
         Tast_literal* lit = tast_literal_unwrap(*new_src);
+        // TODO: remove gotos here
         switch (lit->type) {
             case TAST_INT:
                 tast_int_unwrap(lit)->lang_type = lang_type_primitive_const_wrap(dest);
