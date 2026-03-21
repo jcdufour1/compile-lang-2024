@@ -74,6 +74,7 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
 // returns true if the program is still running
 static bool interpret_instruction(void) {
     uint64_t old_prog_counter = inter_prog_counter;
+    (void) old_prog_counter;
     BYTECODE opcode = interpret_read_uint8_t_aligned();
     switch (opcode) {
         case BYTECODE_COMMENT: {

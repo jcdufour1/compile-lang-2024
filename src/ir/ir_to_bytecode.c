@@ -32,6 +32,7 @@ static Ir_name function_name_to_loc(Ir_name sym_name) {
 static void ir_to_bytecode_uint64_t(uint64_t value) {
     bytecode_align();
     size_t old_count = bytecode.code.info.count;
+    (void) old_count;
 
     uint8_t temp[8] = {0};
     memcpy(temp, &value, sizeof(value));
@@ -142,6 +143,7 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
     ir_to_bytecode_comment("goto");
 
     size_t old_count = bytecode.code.info.count;
+    (void) old_count;
     bytecode_append_align(BYTECODE_GOTO);
 
     if (bytecode_is_backpatching) {
@@ -162,6 +164,7 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
 
     //breakpoint();
     size_t old_count = SIZE_MAX;
+    (void) old_count;
 
     if (0 && bytecode_is_backpatching) {
         // TODO: assert that loads add return arg or function args to stack in the correct order
@@ -273,6 +276,7 @@ static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca) {
     ir_to_bytecode_comment("alloca");
 
     size_t old_count = bytecode.code.info.count;
+    (void) old_count;
     bytecode_append_align(BYTECODE_ALLOCA);
     uint64_t sizeof_alloca = sizeof_ir_lang_type(ir_lang_type_pointer_depth_dec(lang_alloca->lang_type));
     ir_to_bytecode_uint64_t(sizeof_alloca);
@@ -333,6 +337,7 @@ static uint64_t ir_to_bytecode_push_int(Ir_int* lang_int) {
 
 static uint64_t ir_to_bytecode_load_another_ir_alloca(uint64_t* sizeof_lang_type, Ir_load_another_ir* load) {
     size_t old_count = bytecode.code.info.count;
+    (void) old_count;
 
     *sizeof_lang_type = sizeof_ir_lang_type(load->lang_type);
 
@@ -823,6 +828,7 @@ static void ir_to_bytecode_unary(Ir_unary* unary) {
 #   define dest_name (unary->name)
 
     size_t old_count = SIZE_MAX;
+    (void) old_count;
 
     log(LOG_DEBUG, FMT"\n", ir_print(unary));
     assert(unary->token_type == IR_UNARY_UNSAFE_CAST && "not implemented");
