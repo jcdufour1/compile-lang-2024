@@ -462,6 +462,37 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
     return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
 }
 
+// TODO: deduplicate this and simular functions?
+// /
+static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool is_from_rtn /* TODO: remove */) {
+    Ir* stack_pos_name = NULL;
+    unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(var_def->name_self)));
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, symbol_name_to_int_name(var_def->name_self)));
+    log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
+
+    //breakpoint();
+
+    // TODO: make a helper function to create this alloca?
+
+    if (is_from_rtn) {
+    uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
+    bytecode_append_align(BYTECODE_ALLOCA);
+    ir_to_bytecode_uint64_t(sizeof_load);
+    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+
+    log(LOG_DEBUG, FMT" "FMT"\n", bytecode_alloca_pos_print(alloca_pos), bytecode_alloca_pos_print((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data));
+    bytecode_append_align(BYTECODE_STORE_STACK);
+    ir_to_bytecode_uint64_t(alloca_pos);
+    ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+    ir_to_bytecode_uint64_t(sizeof_load);
+    }
+
+    //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
+    //ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+
+    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+}
+
 // TODO: consider using int64_t instead of uint64_t to reduce casts
 static uint64_t ir_to_bytecode_push_unsafe_cast(Ir_unary* unary) {
     assert(unary->token_type == IR_UNARY_UNSAFE_CAST);
@@ -535,6 +566,29 @@ static uint64_t ir_to_bytecode_push_expr(Ir_expr* expr) {
     unreachable("");
 }
 
+// TODO: this function does not actually push new thing on stack in some cases
+// TODO: maybe there should be a separate function for cases where new item on stack is not actually nessessary?
+
+static uint64_t ir_to_bytecode_push_def(Ir_def* def, bool is_from_rtn) {
+    switch (def->type) {
+        case IR_VARIABLE_DEF:
+            return ir_to_bytecode_push_variable_def(ir_variable_def_unwrap(def), is_from_rtn);
+        case IR_FUNCTION_DEF:
+            todo();
+        case IR_STRUCT_DEF:
+            todo();
+        case IR_PRIMITIVE_DEF:
+            todo();
+        case IR_FUNCTION_DECL:
+            todo();
+        case IR_LABEL:
+            todo();
+        case IR_LITERAL_DEF:
+            todo();
+    }
+    unreachable("");
+}
+
 static uint64_t ir_to_bytecode_push_ir(Ir* store_src, bool is_from_rtn) {
     switch (store_src->type) {
         case IR_BLOCK:
@@ -548,7 +602,7 @@ static uint64_t ir_to_bytecode_push_ir(Ir* store_src, bool is_from_rtn) {
         case IR_FUNCTION_PARAMS:
             todo();
         case IR_DEF:
-            todo();
+            return ir_to_bytecode_push_def(ir_def_unwrap(store_src), is_from_rtn);
         case IR_RETURN:
             todo();
         case IR_GOTO:
@@ -671,7 +725,7 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
 
 static void ir_to_bytecode_function_def(Ir_function_def* def) {
     if (def->decl->params->params.info.count > 0) {
-        todo();
+        //todo();
     }
 
     Strv old_mod_path_curr_file = env.mod_path_curr_file;
@@ -697,24 +751,30 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
 
     uint64_t old_bytecode_stack_offset = bytecode_stack_offset;
     bytecode_stack_offset = 0;
+    darr_foreach(arg_idx, Ir_variable_def*, param, def->decl->params->params) {
+        uint64_t arg_pos = ir_to_bytecode_push_ir(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(def->pos/*TODO*/, 0, param->lang_type, util_literal_ir_name_new())))), false);
+        (void) arg_pos;
+    }
+    bytecode_stack_offset = get_next_multiple(bytecode_stack_offset, 8);
+    uint64_t args_count_bytes = bytecode_stack_offset;
 
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of values below in allocs");
     {
         ir_to_bytecode_comment("alloca for return value");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
-        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_RTN_VALUE);
+        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_RTN_VALUE + args_count_bytes);
 
         ir_to_bytecode_comment("alloca for return address");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
-        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_RTN_ADDR);
+        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_RTN_ADDR + args_count_bytes);
 
         ir_to_bytecode_comment("alloca for stack_base_ptr");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
-        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_BASE_PTR);
+        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_BASE_PTR + args_count_bytes);
 
         ir_to_bytecode_comment("alloca for stack_offset");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
-        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_OFFSET);
+        assert(bytecode_stack_offset == BYTECODE_CALL_STACK_OFFSET + args_count_bytes);
     }
                                                                          
     ir_to_bytecode_comment("start of block");
@@ -732,7 +792,8 @@ static void ir_to_bytecode_def_out_of_line(Ir_def* def) {
             ir_to_bytecode_function_def(ir_function_def_unwrap(def));
             return;
         case IR_VARIABLE_DEF:
-            todo();
+            // TODO
+            return;
         case IR_STRUCT_DEF:
             todo();
         case IR_PRIMITIVE_DEF:
@@ -782,12 +843,15 @@ static void ir_to_bytecode_def_inline(Ir_def* def) {
 }
 
 static void ir_to_bytecode_function_call(Ir_function_call* call) {
-    if (call->args.info.count > 0) {
-        todo();
-    }
+    size_t old_count = SIZE_MAX;
 
     (void) call;
     // TODO: make separate ir function call direct and function ptr?
+
+    darr_foreach(arg_idx, Ir_name, arg, call->args) {
+        uint64_t arg_pos = ir_to_bytecode_push_ir(ir_from_ir_name(arg), false);
+        (void) arg_pos;
+    }
 
     uint64_t sizeof_lang_type = sizeof_ir_lang_type(call->lang_type);
     uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_lang_type);
@@ -799,6 +863,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
             symbol_name_to_int_name(call->name_self/*TODO*/)
         )))));
 
+        old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t(0);
     } else {
@@ -807,6 +872,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         Ir* fun_addr_ = NULL;
         unwrap(ir_lookup(&fun_addr_, function_name_to_loc(fun_name_->fun_name)));
 
+        old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data);
     }
@@ -821,6 +887,8 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
     //    //ir_to_bytecode_function_def();
     //}
 
+    assert(old_count != SIZE_MAX);
+    assert(bytecode.code.info.count - old_count == BYTECODE_CALL_DIRECT_SIZE);
 }
 
 static void ir_to_bytecode_unary(Ir_unary* unary) {

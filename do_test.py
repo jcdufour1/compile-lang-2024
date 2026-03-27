@@ -19,6 +19,21 @@ class Action(Enum):
     TEST = 1
     UPDATE = 2
 
+class Backend(Enum):
+    C = 1
+    LLVM = 2
+    INTERPRET = 3
+
+    def print_self(self) -> str:
+        if self == self.C:
+            return "c"
+        elif self == self.LLVM:
+            return "llvm"
+        elif self == self.INTERPRET:
+            return "interpret"
+        else:
+            assert(False)
+
 # FileNormal will be compiled, and test output will be checked
 @dataclass
 class FileNormal:
@@ -37,7 +52,7 @@ class TestResult:
 @dataclass
 class Parameters:
     files_to_test: list[str]
-    test_output: str
+    test_output: str # TODO: when testing with mutliple backends, default test_output should depend on current backend being tested?
     action: Action
     keep_going: bool
     path_c_compiler: Optional[str]
@@ -47,6 +62,10 @@ class Parameters:
     count_threads: int
     do_debug_internal: bool
     do_release_internal: bool
+
+    do_c_internal: bool
+    do_llvm_internal: bool
+    do_interpret_internal: bool
 
 COUNT_INPUT_DIRS = 3 #TODO: automatically set this value
 EXAMPLES_DIR = "examples"
@@ -152,19 +171,24 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes]
 def get_result_from_test_result(process: TestResult) -> str:
     return get_result_from_process_internal(process.compile, "compile")
 
-def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | FileExample, debug_release_text: str, path_c_compiler: Optional[str]) -> TestResult:
+def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | FileExample, debug_release_text: str, path_c_compiler: Optional[str], backend: Backend) -> TestResult:
     compile_cmd: list[str]
     if do_debug:
         compile_cmd = [os.path.join(BUILD_DEBUG_DIR, EXE_BASE_NAME)]
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
 
-    if output_name == "test.c":
+    if backend == Backend.C:
+        assert(output_name == "test.c")
         compile_cmd.append("--backend")
         compile_cmd.append("c")
-    elif output_name == "test.ll":
+    elif backend == Backend.LLVM:
+        assert(output_name == "test.ll")
         compile_cmd.append("--backend")
         compile_cmd.append("llvm")
+    elif backend == Backend.INTERPRET:
+        compile_cmd.append("--backend")
+        compile_cmd.append("interpret")
     else:
         assert(False and "not implemented")
 
@@ -204,21 +228,22 @@ def compile_and_run_test(do_debug: bool, output_name: str, file: FileNormal | Fi
     #print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
-def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]) -> bool:
+# TODO: change tuple below to class
+def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters, Backend]) -> bool:
     if isinstance(file[0], FileNormal):
-        if test_file(file[0], file[1], file[2], file[3]):
+        if test_file(file[0], file[1], file[4], file[2], file[3]):
             return True
         else:
             if not file[3].keep_going:
                 sys.exit(1)
             return False
     elif isinstance(file[0], FileExample):
-        result: TestResult = compile_and_run_test(file[1], file[3].test_output, file[0], file[2], file[3].path_c_compiler)
+        result: TestResult = compile_and_run_test(file[1], file[3].test_output, file[0], file[2], file[3].path_c_compiler, file[4])
         if result.compile.returncode == 0:
             return True
             #success_count += 1
         else:
-            print_error("example compilation fail:" + os.path.join(file[0].path_prefix, file[0].path_base) + " (" + file[2] + ")")
+            print_error("example compilation fail:" + os.path.join(file[0].path_prefix, file[0].path_base) + " (" + file[4].print_self() + ", " + file[2] + ")")
             print_error("compile error:")
             print(get_result_from_test_result(result))
             if not file[3].keep_going:
@@ -227,7 +252,7 @@ def do_regular_test(file: Tuple[FileNormal | FileExample, bool, str, Parameters]
     else:
         raise NotImplementedError
 
-def do_tests(do_debug: bool, params: Parameters):
+def do_tests(do_debug: bool, backend: Backend, params: Parameters):
     global has_been_called
     if os.name == "nt" and do_debug:
         return
@@ -255,7 +280,7 @@ def do_tests(do_debug: bool, params: Parameters):
         cmd = ["make", "-j", str(params.count_threads), "build"]
         print_info("compiling " + debug_release_text + " :")
         map_thing = {"DEBUG": debug_env}
-        map_thing["SHOULD_PRINT_POSIX_MSG"] = "1"
+        map_thing["OWN_SHOULD_PRINT_POSIX_MSG"] = "1"
         if params.makefile_cc_compiler:
             map_thing["CC_COMPILER"] = params.makefile_cc_compiler
         if params.makefile_werror_all:
@@ -268,10 +293,10 @@ def do_tests(do_debug: bool, params: Parameters):
     print()
 
     # TODO: having bool, str, and Parameters in every element of regular_files may not be ideal
-    regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters]] = []
+    regular_files: list[tuple[FileNormal | FileExample, bool, str, Parameters, Backend]] = []
 
     for file in get_files_to_test(params.files_to_test):
-        regular_files.append((file, do_debug, debug_release_text, params))
+        regular_files.append((file, do_debug, debug_release_text, params, backend))
 
     with ProcessPoolExecutor(max_workers = params.count_threads) as executor:
         futures = executor.map(do_regular_test, regular_files)
@@ -301,8 +326,8 @@ def normalize(string: str) -> str:
     return string2.replace("\\", "/")
 
 # return true if test was successful
-def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params: Parameters) -> bool:
-    result: TestResult = compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler)
+def test_file(file: FileNormal, do_debug: bool, backend: Backend, debug_release_text: str, params: Parameters) -> bool:
+    result: TestResult = compile_and_run_test(do_debug, params.test_output, file, debug_release_text, params.path_c_compiler, backend)
     process_result: str = get_result_from_test_result(result)
     expected_output: str = get_expected_output(file, params.action)
 
@@ -323,7 +348,7 @@ def test_file(file: FileNormal, do_debug: bool, debug_release_text: str, params:
     if process_result != expected_output:
         actual_color: str = ""
         expected_color: str = ""
-        print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
+        print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + backend.print_self() + ", " + debug_release_text + ")")
         diff = difflib.SequenceMatcher(None, expected_output, process_result)
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':
@@ -397,9 +422,10 @@ def parse_args() -> Parameters:
     path_c_compiler: Optional[str] = None
     makefile_cc_compiler: Optional[str] = None
     makefile_werror_all: bool = False
-    do_color:bool = True
+    do_color: bool = True
     do_release: Optional[bool] = True
     do_debug: Optional[bool] = True
+    backend: Optional[Backend] = None
     for arg in sys.argv[1:]:
         if arg.startswith("--keep-going"):
             keep_going = True
@@ -420,6 +446,17 @@ def parse_args() -> Parameters:
             action = Action.TEST
         elif arg.startswith("--output-file="):
             test_output = arg[len("--output-file="):]
+        elif arg.startswith("--backend="):
+            backend_str: str = arg[len("--backend="):]
+            if backend_str.lower() == "c":
+                backend = Backend.C
+            elif backend_str.lower() == "llvm":
+                backend = Backend.LLVM
+            elif backend_str.lower() == "interpret":
+                backend = Backend.INTERPRET
+            else:
+                print_error("unsupported backend \"" + backend_str + "\"");
+                sys.exit(1)
         elif arg.startswith("--no-color"):
             do_color = False
         elif arg.startswith("--path-c-compiler="):
@@ -473,6 +510,24 @@ def parse_args() -> Parameters:
     if do_release is not None:
         do_release_actual = do_release
 
+
+    # TODO: assertions for count of backends
+    do_c_actual: bool = False
+    do_llvm_actual: bool = False
+    do_interpret_actual: bool = False
+    if backend is None:
+        do_c_actual = True
+        # TODO: uncomment below line when llvm backend is implemented
+        #do_llvm_actual = True
+        do_interpret_actual = True
+    else:
+        if backend == Backend.C:
+            do_c_actual = True
+        elif backend == Backend.LLVM:
+            do_llvm_actual = True
+        elif backend == Backend.INTERPRET:
+            do_llvm_actual = True
+
     return Parameters(
         to_include_list,
         test_output,
@@ -484,7 +539,10 @@ def parse_args() -> Parameters:
         do_color,
         count_threads,
         do_debug_actual,
-        do_release_actual
+        do_release_actual,
+        do_c_actual,
+        do_llvm_actual,
+        do_interpret_actual,
     )
 
 
@@ -521,10 +579,21 @@ def main() -> None:
             print_error("aborting")
             sys.exit(1)
 
-    if params.do_debug_internal:
-        do_tests(True, params)
-    if params.do_release_internal:
-        do_tests(False, params)
+    if params.do_c_internal:
+        if params.do_debug_internal:
+            do_tests(True, Backend.C, params)
+        if params.do_release_internal:
+            do_tests(False, Backend.C, params)
+    if params.do_llvm_internal:
+        if params.do_debug_internal:
+            do_tests(True, Backend.LLVM, params)
+        if params.do_release_internal:
+            do_tests(False, Backend.LLVM, params)
+    if params.do_interpret_internal:
+        if params.do_debug_internal:
+            do_tests(True, Backend.INTERPRET, params)
+        if params.do_release_internal:
+            do_tests(False, Backend.INTERPRET, params)
 
     examples_in_readme: list[str] = ["examples/optional.own", "examples/defer.own"]
     for example in examples_in_readme:

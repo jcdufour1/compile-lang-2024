@@ -173,6 +173,7 @@ continue(<thing>)
 - stop using todo macro in main branch?
 - remove () below:
     3: ------%s0_builtin::str__rtn_val__14(s0_builtin::str__rtn_val__14) = lang_alloca<primitive s0_builtin::i32(s0_builtin::i32)*>
+- update actions/checkout in github runners to fix github deprecation warnings
 
 
 

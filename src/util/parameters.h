@@ -43,6 +43,8 @@ typedef enum {
     BACKEND_INTERPRETER,
     BACKEND_C,
     BACKEND_LLVM,
+
+    BACKEND_COUNT,
 } BACKEND;
 
 typedef struct {

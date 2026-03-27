@@ -535,6 +535,8 @@ static void set_backend(BACKEND backend) {
         case BACKEND_LLVM:
             params.backend_info.struct_rtn_through_param = true;
             return;
+        case BACKEND_COUNT:
+            unreachable("");
         case BACKEND_NONE:
             unreachable("");
     }
@@ -574,11 +576,15 @@ static void long_option_backend(Pos pos_self, Arg curr_opt) {
     (void) pos_self;
     Strv backend = curr_opt.text;
 
+    static_assert(BACKEND_COUNT == 4, "exhausive handling of backends (none is not explicitly handled)");
     if (strv_is_equal(backend, sv("c"))) {
         set_backend(BACKEND_C);
     } else if (strv_is_equal(backend, sv("llvm"))) {
         set_backend(BACKEND_LLVM);
+    } else if (strv_is_equal(backend, sv("interpret"))) {
+        set_backend(BACKEND_INTERPRETER);
     } else {
+        // TODO: have "did you mean" for backend?
         msg(DIAG_CMD_OPT_INVALID_OPTION, curr_opt.pos, "backend `"FMT"` is not a supported backend\n", strv_print(backend));
         local_exit(EXIT_CODE_FAIL);
     }
@@ -964,6 +970,7 @@ static_assert(
 );
 static void set_params_to_defaults(int argc, char** argv) {
     set_backend(BACKEND_C);
+    params.backend_info.is_manually_set = false;
     params.do_prelude = true;
     params.target_triplet = get_default_target_triplet();
     params.max_errors = 30;

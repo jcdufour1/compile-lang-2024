@@ -179,6 +179,8 @@ NEVER_RETURN void do_passes(void) {
                 break;
             case BACKEND_NONE:
                 unreachable("this should have been caught eariler");
+            case BACKEND_COUNT:
+                unreachable("");
             default:
                 unreachable("");
         }
