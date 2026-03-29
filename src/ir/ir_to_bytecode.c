@@ -748,7 +748,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         bytecode.start_pos = bytecode.code.info.count;
     }
 
-    ir_to_bytecode_comment("START OF FUNCTION "FMT, ir_name_print(NAME_MSG, def->name_self));
+    ir_to_bytecode_comment("START OF FUNCTION "FMT" ("FMT")", ir_name_print(NAME_MSG, def->name_self), ir_name_print(NAME_MSG, def->decl->name));
 
     uint64_t old_bytecode_stack_offset = bytecode_stack_offset;
     bytecode_stack_offset = 0;
@@ -781,7 +781,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     ir_to_bytecode_comment("start of block");
     ir_to_bytecode_block(def->body);
 
-    ir_to_bytecode_comment("END OF FUNCTION "FMT, ir_name_print(NAME_MSG, def->name_self));
+    ir_to_bytecode_comment("END OF FUNCTION "FMT" ("FMT")", ir_name_print(NAME_MSG, def->name_self), ir_name_print(NAME_MSG, def->decl->name));
 
     bytecode_stack_offset = old_bytecode_stack_offset;
     env.mod_path_curr_file = old_mod_path_curr_file;

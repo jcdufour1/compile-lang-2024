@@ -25,7 +25,7 @@ static void inter_stack_dump_internal(LOG_LEVEL log_level, const char* file, int
     
     log(LOG_DEBUG, "%zu\n", inter_stack_offset);
     for (size_t offset = 8/* TODO */; offset <= get_next_multiple(inter_stack_offset, 8); offset += 8) {
-        log(LOG_DEBUG, "%zu %zu\n", inter_base_ptr, offset);
+        //log(LOG_DEBUG, "%zu %zu\n", inter_base_ptr, offset);
         assert(inter_base_ptr >= offset);
         uint64_t mem_loc = inter_base_ptr - offset;
         uint64_t value = 0;
@@ -156,7 +156,7 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             // TODO: rename INTERPRET_STACK_SIZE to avoid confusion with inter_stack_size
             log(LOG_DEBUG, "%zu\n", inter_stack_offset);
-            inter_stack_dump(LOG_DEBUG);
+            //inter_stack_dump(LOG_DEBUG);
 
             log(LOG_DEBUG, "%zu %zu %zu %zu\n", inter_stack_offset, inter_base_ptr, INTERPRET_STACK_SIZE, (inter_base_ptr) - inter_stack_offset);
             inter_stack_dump(LOG_DEBUG);
@@ -320,7 +320,7 @@ void interpret(void) {
     while (interpret_instruction()) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
-        //breakpoint();
+        breakpoint();
         do_nothing();
     }
 
