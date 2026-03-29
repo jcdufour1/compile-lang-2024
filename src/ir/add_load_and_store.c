@@ -132,11 +132,11 @@ static void if_for_add_cond_goto_internal(
     Ir_name label_name_if_false
 );
 
-static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
-
 static void load_variable_def_internal(const char* file, int line, Ir_block* new_block, Tast_variable_def* old_var_def);
 #define load_variable_def(new_block, old_var_def) \
     load_variable_def_internal(__FILE__, __LINE__, new_block, old_var_def)
+
+static Ir_lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
 static Ir_name load_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym);
 
@@ -947,6 +947,20 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
 
 static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
+static Ir_variable_def* load_variable_def_clone_internal(const char* file, int line, Tast_variable_def* old_var_def) {
+    return ir_variable_def_new_internal(
+        old_var_def->pos,
+        (Loc) {.file = file, .line = line},
+        rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
+        old_var_def->is_variadic,
+        util_literal_ir_name_new(),
+        name_to_ir_name(old_var_def->name),
+        old_var_def->attrs
+    );
+}
+
+#define load_variable_def_clone(old_var_def) load_variable_def_clone_internal(__FILE__, __LINE__, old_var_def)
+
 static Ir_struct_memb_def* load_variable_def_clone_struct_def_memb(Tast_variable_def* old_var_def);
 
 static Ir_alloca* add_load_and_store_alloca_new_internal(const char* file, int line, Ir_variable_def* var_def, bool is_raw_union) {
@@ -980,30 +994,6 @@ static Ir_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) 
         load_function_params_clone(old_decl->params),
         rm_tuple_lang_type(old_decl->return_type, old_decl->pos),
         name_to_ir_name(old_decl->name)
-    );
-}
-
-// TODO: deduplicate load_variable_def_clone_internal and load_variable_def_clone
-static Ir_variable_def* load_variable_def_clone_internal(const char* file, int line, Tast_variable_def* old_var_def) {
-    return ir_variable_def_new_internal(
-        old_var_def->pos,
-        (Loc) {.file = file, .line = line},
-        rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
-        old_var_def->is_variadic,
-        util_literal_ir_name_new(),
-        name_to_ir_name(old_var_def->name),
-        old_var_def->attrs
-    );
-}
-
-static Ir_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) {
-    return ir_variable_def_new(
-        old_var_def->pos,
-        rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
-        old_var_def->is_variadic,
-        util_literal_ir_name_new(),
-        name_to_ir_name(old_var_def->name),
-        old_var_def->attrs
     );
 }
 

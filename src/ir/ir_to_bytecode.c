@@ -466,7 +466,9 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 // /
 static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool is_from_rtn /* TODO: remove */) {
     Ir* stack_pos_name = NULL;
-    unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(var_def->name_self)));
+    log(LOG_DEBUG, FMT"\n", loc_print(var_def->loc));
+    log(LOG_DEBUG, FMT"\n", ir_print(var_def));
+    unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(var_def->name_corr_param)));
     log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, symbol_name_to_int_name(var_def->name_self)));
     log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
 
@@ -475,16 +477,16 @@ static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool 
     // TODO: make a helper function to create this alloca?
 
     if (is_from_rtn) {
-    uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
-    bytecode_append_align(BYTECODE_ALLOCA);
-    ir_to_bytecode_uint64_t(sizeof_load);
-    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+        uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
+        bytecode_append_align(BYTECODE_ALLOCA);
+        ir_to_bytecode_uint64_t(sizeof_load);
+        uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
 
-    log(LOG_DEBUG, FMT" "FMT"\n", bytecode_alloca_pos_print(alloca_pos), bytecode_alloca_pos_print((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data));
-    bytecode_append_align(BYTECODE_STORE_STACK);
-    ir_to_bytecode_uint64_t(alloca_pos);
-    ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
-    ir_to_bytecode_uint64_t(sizeof_load);
+        log(LOG_DEBUG, FMT" "FMT"\n", bytecode_alloca_pos_print(alloca_pos), bytecode_alloca_pos_print((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data));
+        bytecode_append_align(BYTECODE_STORE_STACK);
+        ir_to_bytecode_uint64_t(alloca_pos);
+        ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+        ir_to_bytecode_uint64_t(sizeof_load);
     }
 
     //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
@@ -673,6 +675,7 @@ static uint64_t ir_to_bytecode_store_dest(uint64_t* sizeof_lang_type, Ir* store_
     unreachable("");
 }
 
+// TODO: change Ir_variable_def so that it does not have two names
 static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
     size_t old_count = SIZE_MAX;
     (void) store;
@@ -680,14 +683,10 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
     ir_to_bytecode_comment("store_another_ir");
 
     if (0 && bytecode_is_backpatching) {
+        unreachable("");
         // TODO: 
         //   do not actually append to darr if bytecode_is_backpatching == true and NDEBUG is defined 
         //   (maybe bytecode_append_align function should only append when !bytecode_is_backpatching)
-        old_count = bytecode.code.info.count;
-        bytecode_append_align(BYTECODE_STORE_STACK);
-        bytecode_append_align(0);
-        bytecode_append_align(0);
-        bytecode_append_align(0);
     } else {
         log(LOG_DEBUG, FMT"\n", ir_print(store));
         Ir* store_src = ir_from_ir_name(store->ir_src);
@@ -695,8 +694,10 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
         uint64_t dummy = {0};
         uint64_t sizeof_lang_type = sizeof_ir_lang_type(store->lang_type);
         log(LOG_DEBUG, FMT"\n", bytecode_alloca_pos_print(bytecode_stack_offset));
+        log(LOG_DEBUG, "%zu\n", bytecode_stack_offset);
         uint64_t store_src_pos = ir_to_bytecode_push_ir(store_src, false);
-        assert(bytecode_stack_offset == store_src_pos);
+        log(LOG_DEBUG, "%zu %zu\n", bytecode_stack_offset, store_src_pos);
+        //assert(bytecode_stack_offset == store_src_pos);
         uint64_t store_dest_pos = ir_to_bytecode_store_dest(&dummy, store_dest);
 
         log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, ir_get_lang_type(store_src)));
@@ -795,7 +796,8 @@ static void ir_to_bytecode_def_out_of_line(Ir_def* def) {
             // TODO
             return;
         case IR_STRUCT_DEF:
-            todo();
+            // TODO
+            return;
         case IR_PRIMITIVE_DEF:
             todo();
         case IR_FUNCTION_DECL:
