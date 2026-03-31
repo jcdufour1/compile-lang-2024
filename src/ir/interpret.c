@@ -114,14 +114,13 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_STORE_STACK: {
-            log(LOG_TRACE, "bytecode_store_stack\n");
-
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t src_pos = interpret_read_uint64_t_aligned();
+            assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t sizeof_store = interpret_read_uint64_t_aligned();
+            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            log(LOG_TRACE, "bytecode_store_stack (dest_pos = %"PRIu64", src_pos = %"PRIu64", sizeof_store = %"PRIu64")\n", dest_pos, src_pos, sizeof_store);
 
             uint64_t value = bytecode_stack_at(inter_stack, src_pos, inter_base_ptr);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
@@ -149,7 +148,7 @@ static bool interpret_instruction(void) {
         case BYTECODE_RETURN: {
             log(LOG_TRACE, "bytecode_return\n");
 
-            //breakpoint();
+            breakpoint();
             uint64_t sizeof_rtn = interpret_read_uint64_t_aligned();
             log(LOG_DEBUG, "inter_stack_size = %zu\n", inter_stack_offset);
             assert(inter_stack_offset % 8 == 0); // TODO: remove
@@ -223,7 +222,7 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t value = interpret_read_uint64_t_aligned();
             if (value == 7) {
-                breakpoint();
+                //breakpoint();
             }
             inter_stack_dump(LOG_DEBUG);
             bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_alloca);
@@ -298,7 +297,6 @@ static bool interpret_instruction(void) {
 
         // --- BINARY OPERATORS ---
         case BYTECODE_ADD: {
-            breakpoint();
             log(LOG_TRACE, "bytecode_add\n");
             inter_binary(+);
             return true;
@@ -339,7 +337,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
-            breakpoint();
+            //breakpoint();
         }
         do_nothing();
     }

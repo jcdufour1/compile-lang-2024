@@ -467,7 +467,7 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 // TODO: change IR so that variable def is not loaded
 static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool is_from_rtn /* TODO: remove */) {
     // TODO: make function to do this calculation in sizeof.c?
-    uint64_t store_src = sizeof_prev_ir_params(curr_fun_args, var_def->name_corr_param);
+    uint64_t store_src = sizeof_prev_ir_params(curr_fun_args, var_def->name_corr_param) + 8;
 
     log(LOG_DEBUG, FMT"\n", loc_print(var_def->loc));
     log(LOG_DEBUG, FMT"\n", ir_print(var_def));
@@ -684,7 +684,7 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
     ir_to_bytecode_comment("store_another_ir");
 
     if (bytecode.code.info.count == 3720) {
-        breakpoint();
+        //breakpoint();
     }
 
     if (0 && bytecode_is_backpatching) {
