@@ -7,6 +7,7 @@
 #include "util.h"
 #include "arena.h"
 
+// TODO: rename Vec_base to Darr_base
 typedef struct {
     size_t count;
     size_t capacity;

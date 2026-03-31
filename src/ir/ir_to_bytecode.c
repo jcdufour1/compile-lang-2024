@@ -174,17 +174,17 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
     } else {
         log(LOG_DEBUG, FMT"\n", ir_print(ir_from_ir_name(rtn->child)));
         log(LOG_DEBUG, FMT"\n", ir_print(ir_from_ir_name(ir_load_another_ir_unwrap(ir_from_ir_name(rtn->child))->ir_src)));
-        bytecode_dump(LOG_DEBUG, bytecode);
+        //bytecode_dump(LOG_DEBUG, bytecode);
         //breakpoint();
         Ir* rtn_child = ir_from_ir_name(rtn->child);
         // TODO: load loads thing to stack, when thing is already on stack?
-        bytecode_dump(LOG_DEBUG, bytecode);
+        //bytecode_dump(LOG_DEBUG, bytecode);
         uint64_t pos_child = ir_to_bytecode_push_ir(rtn_child, true);
         (void) pos_child;
         rtn_child = ir_from_ir_name(rtn->child);
         log(LOG_DEBUG, FMT"\n", ir_print(rtn_child));
         //breakpoint();
-        bytecode_dump(LOG_DEBUG, bytecode);
+        //bytecode_dump(LOG_DEBUG, bytecode);
 
         old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_RETURN);

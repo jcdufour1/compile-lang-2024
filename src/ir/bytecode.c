@@ -65,7 +65,51 @@ static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t o
     assert(*idx - old_idx == BYTECODE_ADD_SIZE);
 }
 
-void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode) {
+typedef struct {
+    uint64_t fun_start;
+    uint64_t arg_bytes_count;
+} Bytecode_dump_mapping;
+
+static Bytecode_dump_mapping bytecode_dump_mapping_new(uint64_t fun_start, uint64_t arg_bytes_count) {
+    return (Bytecode_dump_mapping) {.fun_start = fun_start, .arg_bytes_count = arg_bytes_count};
+}
+
+typedef struct {
+    Vec_base info;
+    Bytecode_dump_mapping* buf;
+} Bytecode_dump_mapping_darr;
+
+static int bytecode_mapping_cmp(const void* lhs_, const void* rhs_) {
+    const Bytecode_dump_mapping* lhs = lhs_;
+    const Bytecode_dump_mapping* rhs = rhs_;
+
+    if (lhs->fun_start < rhs->fun_start) {
+        return QSORT_LESS_THAN;
+    }
+    if (lhs->fun_start > rhs->fun_start) {
+        return QSORT_MORE_THAN;
+    }
+
+    return QSORT_EQUAL;
+}
+
+static void bytecode_dump_internal_2(
+    const char* file,
+    int line,
+    Bytecode_dump_mapping_darr* mapping, // TODO: rename to mappings
+    LOG_LEVEL log_level,
+    Bytecode bytecode,
+    bool is_first_step
+) {
+    if (is_first_step) {
+        // do main function
+        darr_append(&a_temp, mapping, bytecode_dump_mapping_new(
+            bytecode.start_pos,
+            0/* TODO: change this if main function has more than zero args */
+        ));
+    }
+
+    // TODO: prevent allocating this string twice?
     String buf = {0};
 
     string_extend_f(&a_temp, &buf, "\n");
@@ -73,6 +117,20 @@ void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Byt
     size_t idx = 0;
     uint64_t stack_offset = 0;
     while (idx < bytecode.code.info.count) {
+        if (!is_first_step) {
+            Bytecode_dump_mapping key = bytecode_dump_mapping_new(idx, 0);
+            const Bytecode_dump_mapping* result = bsearch(
+                &key,
+                mapping->buf,
+                mapping->info.count,
+                sizeof(mapping->buf[0]),
+                bytecode_mapping_cmp
+            );
+            if (result) {
+                stack_offset = result->arg_bytes_count;
+            }
+        }
+
         size_t old_idx = idx;
 
         BYTECODE curr_opcode = darr_at(bytecode.code, idx);
@@ -194,9 +252,18 @@ void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Byt
             case BYTECODE_CALL_DIRECT:
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": call direct\n", old_idx);
 
-                string_extend_f(&a_temp, &buf, "    jump to: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
+                uint64_t start_pos = bytecode_dump_read_uint64_t(&idx);
+                string_extend_f(&a_temp, &buf, "    jump to: %"PRIu64" \n", start_pos);
 
-                string_extend_f(&a_temp, &buf, "    arg bytes: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
+                uint64_t arg_bytes_count = bytecode_dump_read_uint64_t(&idx);
+                string_extend_f(&a_temp, &buf, "    arg bytes: %"PRIu64" \n", arg_bytes_count);
+
+                if (is_first_step) {
+                    darr_append(&a_temp, mapping, bytecode_dump_mapping_new(
+                        start_pos,
+                        arg_bytes_count
+                    ));
+                }
 
                 assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE);
                 break;
@@ -215,6 +282,19 @@ void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Byt
         }
     }
 
-    log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
+    if (!is_first_step) {
+        log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
+    }
+}
+
+void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode) {
+    Bytecode_dump_mapping_darr mappings = {0};
+    bytecode_dump_internal_2(file, line, &mappings, log_level, bytecode, true);
+    log(LOG_DEBUG, "%zu\n", mappings.info.count);
+    darr_foreach(idx, Bytecode_dump_mapping, curr_mapping, mappings) {
+        log(LOG_DEBUG, "%zu %zu\n", curr_mapping.fun_start, curr_mapping.arg_bytes_count);
+    }
+    qsort(mappings.buf, mappings.info.count, sizeof(mappings.buf[0]), bytecode_mapping_cmp);
+    bytecode_dump_internal_2(file, line, &mappings, log_level, bytecode, false);
 }
 

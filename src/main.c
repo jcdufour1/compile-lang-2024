@@ -163,7 +163,7 @@ NEVER_RETURN void do_passes(void) {
                 todo();
             case BACKEND_INTERPRETER:
                 do_pass(ir_to_bytecode_patch_offsets, ir_log_level, stderr);
-                bytecode_dump(LOG_DEBUG, bytecode);
+                //bytecode_dump(LOG_DEBUG, bytecode);
                 size_t bytecode_first_pass_count = bytecode.code.info.count;
                 (void) bytecode_first_pass_count;
                 // TODO: bytecode dump after second pass has larger positions
