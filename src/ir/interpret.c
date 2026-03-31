@@ -75,6 +75,9 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
 // TODO: use inter prefix?
 // returns true if the program is still running
 static bool interpret_instruction(void) {
+    if (inter_prog_counter ==  5464) {
+        //breakpoint();
+    }
     uint64_t old_prog_counter = inter_prog_counter;
     (void) old_prog_counter;
     BYTECODE opcode = interpret_read_uint8_t_aligned();
@@ -142,6 +145,24 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_GOTO_SIZE);
+
+            inter_prog_counter = new_prog_counter;
+            return true;
+        }
+        case BYTECODE_COND_GOTO: {
+            log(LOG_TRACE, "bytecode_cond_goto\n");
+            breakpoint();
+
+            uint64_t if_true_prog_counter = interpret_read_uint64_t_aligned();
+            uint64_t if_false_prog_counter = interpret_read_uint64_t_aligned();
+
+            uint64_t cond = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, 1);
+            uint64_t new_prog_counter = if_false_prog_counter;
+            if (cond) {
+                new_prog_counter = if_true_prog_counter;
+            }
+
+            assert(inter_prog_counter - old_prog_counter == BYTECODE_COND_GOTO_SIZE);
 
             inter_prog_counter = new_prog_counter;
             return true;
@@ -315,6 +336,21 @@ static bool interpret_instruction(void) {
             inter_binary(-);
             return true;
         }
+        case BYTECODE_GREATER_THAN: {
+            log(LOG_TRACE, "bytecode_greater_than\n");
+            inter_binary(>);
+            return true;
+        }
+        case BYTECODE_DOUBLE_EQUAL: {
+            log(LOG_TRACE, "bytecode_double_equal\n");
+            inter_binary(==);
+            return true;
+        }
+        case BYTECODE_NOT_EQUAL: {
+            log(LOG_TRACE, "bytecode_not_equal\n");
+            inter_binary(!=);
+            return true;
+        }
 
 
         case BYTECODE_COUNT:
@@ -347,6 +383,9 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
+            //breakpoint();
+        }
+        if (inter_stack_offset >= 144) {
             //breakpoint();
         }
         do_nothing();

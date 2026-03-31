@@ -157,10 +157,38 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
     assert(bytecode.code.info.count - old_count == BYTECODE_GOTO_SIZE);
 }
 
+// arg is item to jump to (offset from start of code)
+static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
+    ir_to_bytecode_comment("goto");
+
+    ir_to_bytecode_push_ir(ir_from_ir_name(cond_goto->condition), false);
+
+    size_t old_count = bytecode.code.info.count;
+    (void) old_count;
+    bytecode_append_align(BYTECODE_COND_GOTO);
+
+    if (bytecode_is_backpatching) {
+        bytecode_append_align(0);
+        bytecode_append_align(0);
+    } else {
+        Ir* if_true_pos_name = NULL;
+        unwrap(ir_lookup(&if_true_pos_name, symbol_name_to_int_name(cond_goto->if_true)));
+        ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_true_pos_name)))->data);
+
+        Ir* if_false_pos_name = NULL;
+        unwrap(ir_lookup(&if_false_pos_name, symbol_name_to_int_name(cond_goto->if_false)));
+        ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_false_pos_name)))->data);
+    }
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_COND_GOTO_SIZE);
+}
+
 // BYTECODE_RETURN
 //   arg 1 is sizeof lang_type to return
 static void ir_to_bytecode_return(Ir_return* rtn) {
-    ir_to_bytecode_comment("return");
+    ir_to_bytecode_comment("return thing thing 76");
+
+    ir_to_bytecode_push_ir(ir_from_ir_name(rtn->child), false);
 
     //breakpoint();
     size_t old_count = SIZE_MAX;
@@ -240,7 +268,8 @@ static void ir_to_bytecode_inline(Ir* ir) {
             ir_to_bytecode_goto(ir_goto_unwrap(ir));
             return;
         case IR_COND_GOTO:
-            todo();
+            ir_to_bytecode_cond_goto(ir_cond_goto_unwrap(ir));
+            return;
         case IR_ALLOCA:
             ir_to_bytecode_alloca(ir_alloca_unwrap(ir));
             return;
@@ -760,8 +789,6 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
 
     uint64_t old_bytecode_stack_offset = bytecode_stack_offset;
     bytecode_stack_offset = sizeof_ir_params(def->decl->params->params);
-    darr_foreach(arg_idx, Ir_variable_def*, param, def->decl->params->params) {
-    }
     bytecode_stack_offset = get_next_multiple(bytecode_stack_offset, 8);
     uint64_t args_count_bytes = bytecode_stack_offset;
 
@@ -1036,11 +1063,14 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
         case IR_BINARY_GREATER_OR_EQUAL:
             todo();
         case IR_BINARY_GREATER_THAN:
-            todo();
+            bytecode_append_align(BYTECODE_GREATER_THAN);
+            break;
         case IR_BINARY_DOUBLE_EQUAL:
-            todo();
+            bytecode_append_align(BYTECODE_DOUBLE_EQUAL);
+            break;
         case IR_BINARY_NOT_EQUAL:
-            todo();
+            bytecode_append_align(BYTECODE_NOT_EQUAL);
+            break;
         case IR_BINARY_BITWISE_XOR:
             todo();
         case IR_BINARY_BITWISE_AND:

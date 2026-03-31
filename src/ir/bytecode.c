@@ -220,6 +220,15 @@ static void bytecode_dump_internal_2(
 
                 assert(idx - old_idx == BYTECODE_GOTO_SIZE);
                 break;
+            case BYTECODE_COND_GOTO:
+                string_extend_f(&a_temp, &buf, "  %"PRIu64": cond_goto:\n", old_idx);
+
+                string_extend_f(&a_temp, &buf, "    if_true: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+
+                string_extend_f(&a_temp, &buf, "    if_false: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+
+                assert(idx - old_idx == BYTECODE_COND_GOTO_SIZE);
+                break;
             case BYTECODE_STORE_STACK:
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": store: \n", old_idx);
@@ -274,6 +283,18 @@ static void bytecode_dump_internal_2(
             }
             case BYTECODE_SUB: {
                 bytecode_dump_internal_binary(&buf, sv("sub"), old_idx, &idx, &stack_offset);
+                break;
+            }
+            case BYTECODE_GREATER_THAN: {
+                bytecode_dump_internal_binary(&buf, sv("greater_than"), old_idx, &idx, &stack_offset);
+                break;
+            }
+            case BYTECODE_DOUBLE_EQUAL: {
+                bytecode_dump_internal_binary(&buf, sv("double_equal"), old_idx, &idx, &stack_offset);
+                break;
+            }
+            case BYTECODE_NOT_EQUAL: {
+                bytecode_dump_internal_binary(&buf, sv("not_equal"), old_idx, &idx, &stack_offset);
                 break;
             }
 
