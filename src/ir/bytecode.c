@@ -196,7 +196,9 @@ void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Byt
 
                 string_extend_f(&a_temp, &buf, "    jump to: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
 
-                assert(idx - old_idx == BYTECODE_RETURN_SIZE);
+                string_extend_f(&a_temp, &buf, "    arg bytes: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
+
+                assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE);
                 break;
             case BYTECODE_NONE:
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": warning: none\n", old_idx);

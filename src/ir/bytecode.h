@@ -55,7 +55,7 @@ static_assert(BYTECODE_COUNT == 11, "exhausive handling of bytecode opcode types
 #define BYTECODE_ZERO_EXTEND_SIZE 24
 #define BYTECODE_ADD_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_SUB_SIZE BYTECODE_BINARY_SIZE
-#define BYTECODE_CALL_DIRECT_SIZE 16
+#define BYTECODE_CALL_DIRECT_SIZE 24
 #define BYTECODE_NONE_SIZE 16
 
 
@@ -160,5 +160,19 @@ static inline void bytecode_stack_write_internal(uint8_t* stack, size_t stack_le
     (bytecode_stack_size_sub_aligned(stack_offset, value_size), *array_at_ref(stack, stack_base_ptr - *stack_offset) = value)
 
 #define bytecode_stack_at(stack, stack_offset, stack_base_ptr) (array_at(stack, (stack_base_ptr) - (stack_offset)))
+
+typedef struct {
+    uint64_t stack_offset;
+    size_t bytecode_count;
+} Bytecode_state;
+
+static Bytecode_state bytecode_state_save(uint64_t stack_offset, size_t bytecode_count) {
+    return (Bytecode_state) {.stack_offset = stack_offset, .bytecode_count = bytecode_count};
+}
+
+static void bytecode_state_restore(uint64_t* stack_offset, size_t* bytecode_count, Bytecode_state state) {
+    *stack_offset = state.stack_offset;
+    *bytecode_count = state.bytecode_count;
+}
 
 #endif // BYTECODE_H

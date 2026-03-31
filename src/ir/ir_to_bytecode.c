@@ -868,6 +868,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t(0);
+        ir_to_bytecode_uint64_t(0);
     } else {
         Ir_function_name* fun_name_ = ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(ir_from_ir_name(call->callee))));
         log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, fun_name_->fun_name));
@@ -877,6 +878,16 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data);
+
+        Bytecode_state bytecode_state = bytecode_state_save(bytecode_stack_offset, bytecode.code.info.count);
+        uint64_t arg_bytes_lower = bytecode_stack_offset;
+        breakpoint();
+        darr_foreach(idx, Ir_name, arg, call->args) {
+            ir_to_bytecode_push_ir(ir_from_ir_name(arg), false);
+        }
+        uint64_t arg_bytes_count = bytecode_stack_offset - arg_bytes_lower;
+        bytecode_state_restore(&bytecode_stack_offset, &bytecode.code.info.count, bytecode_state);
+        ir_to_bytecode_uint64_t(get_next_multiple(arg_bytes_count, 8 /* alignment */));
     }
 
     //if (ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(

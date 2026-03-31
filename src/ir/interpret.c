@@ -256,15 +256,19 @@ static bool interpret_instruction(void) {
         case BYTECODE_CALL_DIRECT: {
             log(LOG_TRACE, "bytecode_call_direct\n");
 
-            static_assert(BYTECODE_CALL_DIRECT_SIZE == 16, "implement functions with arguments?");
+            static_assert(BYTECODE_CALL_DIRECT_SIZE == 24, "implement functions with arguments?");
 
             uint64_t addr = interpret_read_uint64_t_aligned();
+            uint64_t arg_bytes = interpret_read_uint64_t_aligned();
+            assert(get_next_multiple(arg_bytes, 8) == arg_bytes);
 
             assert(inter_base_ptr > 0);
             uint64_t old_base_ptr = inter_base_ptr;
             uint64_t old_offset = inter_stack_offset;
             inter_base_ptr -= get_prev_multiple(inter_stack_offset, 8);
-            inter_stack_offset = 0;
+            log(LOG_DEBUG, "%zu\n", arg_bytes);
+            inter_base_ptr += arg_bytes;
+            inter_stack_offset = arg_bytes;
             
             {
                 static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
