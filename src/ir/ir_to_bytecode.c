@@ -767,7 +767,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     bytecode_stack_offset = get_next_multiple(bytecode_stack_offset, 8);
     uint64_t args_count_bytes = bytecode_stack_offset;
 
-    static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of values below in allocs");
+    static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of values below in allocs");
     {
         ir_to_bytecode_comment("alloca for return value");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
@@ -784,6 +784,10 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         ir_to_bytecode_comment("alloca for stack_offset");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, args_count_bytes));
+
+        ir_to_bytecode_comment("alloca for arg_bytes");
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, args_count_bytes));
     }
                                                                          
     ir_to_bytecode_comment("start of block");

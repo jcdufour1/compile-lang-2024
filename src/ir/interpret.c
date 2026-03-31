@@ -168,15 +168,19 @@ static bool interpret_instruction(void) {
             bytecode_stack_size_add_aligned(&inter_stack_offset, inter_stack_offset - BYTECODE_COUNT_RTN_ITEMS*8 - arg_bytes_count);
             inter_stack_dump(LOG_DEBUG);
 
+            uint64_t arg_bytes = 0;
             uint64_t rtn_addr = 0;
             uint64_t base_ptr = 0;
             uint64_t offset = 0;
             {
-                static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
+                static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
                 // return value is not popped here, because it should remain in the stack
 
                 //breakpoint();
                 inter_stack_dump(LOG_DEBUG);
+
+                assert(inter_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count));
+                arg_bytes = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof(base_ptr));
 
                 assert(inter_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count));
                 offset = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof(base_ptr));
@@ -204,11 +208,12 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             assert(inter_prog_counter - old_prog_counter == BYTECODE_RETURN_SIZE);
 
-            static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "update below if nessessary");
+            static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "update below if nessessary");
             log(LOG_DEBUG, "%zu %zu\n", rtn_addr, INTER_RTN_ADDR_EXIT);
             inter_prog_counter = rtn_addr;
             inter_base_ptr = base_ptr;
             inter_stack_offset = offset;
+            arg_bytes_count = arg_bytes;
             assert(inter_base_ptr > 0);
 
             log(LOG_DEBUG, "inter_prog_counter after return: %zu\n", inter_prog_counter);
@@ -273,6 +278,7 @@ static bool interpret_instruction(void) {
             assert(inter_base_ptr > 0);
             uint64_t old_base_ptr = inter_base_ptr;
             uint64_t old_offset = inter_stack_offset;
+            uint64_t old_arg_bytes = arg_bytes_count;
             inter_base_ptr -= get_prev_multiple(inter_stack_offset, 8);
             log(LOG_DEBUG, "%zu\n", arg_bytes);
             inter_base_ptr += arg_bytes;
@@ -280,12 +286,13 @@ static bool interpret_instruction(void) {
             arg_bytes_count = arg_bytes;
             
             {
-                static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
+                static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
                 // return value not explititly handled here
 
                 bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), inter_prog_counter);
                 bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), old_base_ptr);
                 bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), old_offset);
+                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), old_arg_bytes);
                 //bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_dest);
             }
 
@@ -321,12 +328,13 @@ static bool interpret_instruction(void) {
 
 void interpret(void) {
     breakpoint();
-    static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of main function stack frame initial state");
+    static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of main function stack frame initial state");
     {
         // return value is not explititily handled here
         bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), INTER_RTN_ADDR_EXIT);
         bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), INTERPRET_STACK_SIZE);
         bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), 8/*program return value*/);
+        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), 0);
     }
 
     inter_prog_counter = bytecode.start_pos;

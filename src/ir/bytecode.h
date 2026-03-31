@@ -66,17 +66,16 @@ typedef enum {
     BYTECODE_CALL_STACK_TYPE_RTN_ADDR,
     BYTECODE_CALL_STACK_TYPE_BASE_PTR,
     BYTECODE_CALL_STACK_TYPE_OFFSET,
-} BYTECODE_CALL_STACK_TYPE;
+    BYTECODE_CALL_STACK_TYPE_ARG_BYTES,
 
-#define BYTECODE_COUNT_RTN_ITEMS 4
+    BYTECODE_COUNT_RTN_ITEMS
+} BYTECODE_CALL_STACK_TYPE;
 
 static inline uint64_t bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE offset_type, uint64_t arg_bytes_count) {
     uint64_t base_bytes_call_stack_type = 8*(((uint64_t)offset_type) + 1);
     assert(arg_bytes_count == get_next_multiple(arg_bytes_count, 8) && "not implemented");
     return base_bytes_call_stack_type + arg_bytes_count;
 }
-
-static_assert(__LINE__ == 79, "update BYTECODE_COUNT_RTN_ITEMS if nessessary");
 
 Strv bytecode_alloca_pos_print_internal(uint64_t raw_pos);
 
