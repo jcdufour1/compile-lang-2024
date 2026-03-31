@@ -467,13 +467,7 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 // TODO: change IR so that variable def is not loaded
 static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool is_from_rtn /* TODO: remove */) {
     // TODO: make function to do this calculation in sizeof.c?
-    uint64_t store_src = 0;
-    darr_foreach(idx, Ir_variable_def*, arg, curr_fun_args) {
-        if (ir_name_is_equal(arg->name_corr_param, var_def->name_corr_param)) {
-            break;
-        }
-        todo();
-    }
+    uint64_t store_src = sizeof_prev_ir_params(curr_fun_args, var_def->name_corr_param);
 
     log(LOG_DEBUG, FMT"\n", loc_print(var_def->loc));
     log(LOG_DEBUG, FMT"\n", ir_print(var_def));
@@ -765,7 +759,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     ir_to_bytecode_comment("START OF FUNCTION "FMT" ("FMT")", ir_name_print(NAME_MSG, def->name_self), ir_name_print(NAME_MSG, def->decl->name));
 
     uint64_t old_bytecode_stack_offset = bytecode_stack_offset;
-    bytecode_stack_offset = 0;
+    bytecode_stack_offset = sizeof_ir_params(def->decl->params->params);
     darr_foreach(arg_idx, Ir_variable_def*, param, def->decl->params->params) {
         uint64_t arg_pos = ir_to_bytecode_push_ir(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(def->pos/*TODO*/, 0, param->lang_type, util_literal_ir_name_new())))), false);
         (void) arg_pos;
@@ -894,7 +888,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data);
 
-        // TODO: stop using bytecode_state_save and bytecode_state_restore functions here (use sizeof functions instead)?
+        // TODO: stop using bytecode_state_save and bytecode_state_restore functions here (use sizeof_ir_params instead)
         Bytecode_state bytecode_state = bytecode_state_save(bytecode_stack_offset, bytecode.code.info.count);
         uint64_t arg_bytes_lower = bytecode_stack_offset;
         //breakpoint();

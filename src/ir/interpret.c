@@ -222,7 +222,12 @@ static bool interpret_instruction(void) {
             uint64_t sizeof_alloca = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t value = interpret_read_uint64_t_aligned();
+            if (value == 7) {
+                breakpoint();
+            }
+            inter_stack_dump(LOG_DEBUG);
             bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_alloca);
+            inter_stack_dump(LOG_DEBUG);
             assert(inter_stack_offset % 8 == 0); // TODO: remove
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_PUSH_SIZE);
@@ -317,6 +322,7 @@ static bool interpret_instruction(void) {
 }
 
 void interpret(void) {
+    breakpoint();
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 4, "exhausive handling of main function stack frame initial state");
     {
         // return value is not explititily handled here
@@ -332,7 +338,9 @@ void interpret(void) {
     while (interpret_instruction()) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
-        //breakpoint();
+        if (inter_base_ptr != INTERPRET_STACK_SIZE) {
+            breakpoint();
+        }
         do_nothing();
     }
 

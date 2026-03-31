@@ -8,6 +8,7 @@
 #include <ir.h>
 #include <lang_type_print.h>
 #include <ir_lang_type_print.h>
+#include <local_math.h>
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
@@ -364,3 +365,22 @@ uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base) {
     return total;
 }
 
+uint64_t sizeof_ir_params(Ir_variable_def_darr params) {
+    uint64_t sizeof_params = 0;
+    darr_foreach(idx, Ir_variable_def*, arg, params) {
+        sizeof_params += get_next_multiple(sizeof_ir_lang_type(arg->lang_type), 8/* TODO: this should vary depending on the backend */);
+    }
+    return sizeof_params;
+}
+
+// key is excluded from size calculation
+uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Ir_name key) {
+    uint64_t sizeof_prev = 0;
+    darr_foreach(idx, Ir_variable_def*, arg, params) {
+        if (ir_name_is_equal(arg->name_corr_param, key)) {
+            break;
+        }
+        todo();
+    }
+    return sizeof_prev;
+}
