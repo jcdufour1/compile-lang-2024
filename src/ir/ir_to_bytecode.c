@@ -6,8 +6,8 @@
 Bytecode bytecode;
 
 uint64_t bytecode_stack_offset = 0;
-
 static bool bytecode_is_backpatching = false;
+static Ir_variable_def_darr curr_fun_args = {0};
 
 static Ir_name symbol_name_to_int_name(Ir_name sym_name) {
     assert(sym_name.base.count > 0);
@@ -464,36 +464,42 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 
 // TODO: deduplicate this and simular functions?
 // /
+// TODO: change IR so that variable def is not loaded
 static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool is_from_rtn /* TODO: remove */) {
-    todo();
-    //Ir* stack_pos_name = NULL;
-    //log(LOG_DEBUG, FMT"\n", loc_print(var_def->loc));
-    //log(LOG_DEBUG, FMT"\n", ir_print(var_def));
-    //unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(var_def->name_corr_param)));
-    //log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, symbol_name_to_int_name(var_def->name_self)));
-    //log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
+    // TODO: make function to do this calculation in sizeof.c?
+    uint64_t store_src = 0;
+    darr_foreach(idx, Ir_variable_def*, arg, curr_fun_args) {
+        if (ir_name_is_equal(arg->name_corr_param, var_def->name_corr_param)) {
+            break;
+        }
+        todo();
+    }
 
-    ////breakpoint();
+    log(LOG_DEBUG, FMT"\n", loc_print(var_def->loc));
+    log(LOG_DEBUG, FMT"\n", ir_print(var_def));
+    log(LOG_DEBUG, FMT"\n", ir_name_print(NAME_LOG, symbol_name_to_int_name(var_def->name_self)));
+    log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
 
-    //// TODO: make a helper function to create this alloca?
+    //breakpoint();
 
-    //if (is_from_rtn) {
-    //    uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
-    //    bytecode_append_align(BYTECODE_ALLOCA);
-    //    ir_to_bytecode_uint64_t(sizeof_load);
-    //    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+    // TODO: make a helper function to create this alloca?
 
-    //    log(LOG_DEBUG, FMT" "FMT"\n", bytecode_alloca_pos_print(alloca_pos), bytecode_alloca_pos_print((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data));
-    //    bytecode_append_align(BYTECODE_STORE_STACK);
-    //    ir_to_bytecode_uint64_t(alloca_pos);
-    //    ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
-    //    ir_to_bytecode_uint64_t(sizeof_load);
-    //}
+    if (is_from_rtn) {
+        uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
+        bytecode_append_align(BYTECODE_ALLOCA);
+        ir_to_bytecode_uint64_t(sizeof_load);
+        uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
 
-    ////bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
-    ////ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+        bytecode_append_align(BYTECODE_STORE_STACK);
+        ir_to_bytecode_uint64_t(alloca_pos);
+        ir_to_bytecode_uint64_t(store_src);
+        ir_to_bytecode_uint64_t(sizeof_load);
+    }
 
-    //return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
+    //ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+
+    return store_src;
 }
 
 // TODO: consider using int64_t instead of uint64_t to reduce casts
@@ -734,6 +740,9 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         //todo();
     }
 
+    Ir_variable_def_darr old_curr_fun_args = curr_fun_args;
+    curr_fun_args = def->decl->params->params;
+
     Strv old_mod_path_curr_file = env.mod_path_curr_file;
     env.mod_path_curr_file = def->decl->name.mod_path;
 
@@ -790,6 +799,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
 
     bytecode_stack_offset = old_bytecode_stack_offset;
     env.mod_path_curr_file = old_mod_path_curr_file;
+    curr_fun_args = old_curr_fun_args;
 }
 
 static void ir_to_bytecode_def_out_of_line(Ir_def* def) {
@@ -884,6 +894,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         bytecode_append_align(BYTECODE_CALL_DIRECT);
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data);
 
+        // TODO: stop using bytecode_state_save and bytecode_state_restore functions here (use sizeof functions instead)?
         Bytecode_state bytecode_state = bytecode_state_save(bytecode_stack_offset, bytecode.code.info.count);
         uint64_t arg_bytes_lower = bytecode_stack_offset;
         //breakpoint();
