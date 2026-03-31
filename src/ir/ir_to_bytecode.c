@@ -761,8 +761,6 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     uint64_t old_bytecode_stack_offset = bytecode_stack_offset;
     bytecode_stack_offset = sizeof_ir_params(def->decl->params->params);
     darr_foreach(arg_idx, Ir_variable_def*, param, def->decl->params->params) {
-        uint64_t arg_pos = ir_to_bytecode_push_ir(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(def->pos/*TODO*/, 0, param->lang_type, util_literal_ir_name_new())))), false);
-        (void) arg_pos;
     }
     bytecode_stack_offset = get_next_multiple(bytecode_stack_offset, 8);
     uint64_t args_count_bytes = bytecode_stack_offset;

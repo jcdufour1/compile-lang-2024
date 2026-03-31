@@ -8,6 +8,7 @@ static uint64_t inter_base_ptr = INTERPRET_STACK_SIZE;
 static uint8_t inter_stack[INTERPRET_STACK_SIZE] = {0};
 //static uint64_t inter_fun_rtn_addr = UINT64_MAX;
 
+// TODO: remove this function, and use bytecode_stack_dump_internal instead
 static void inter_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line) {
     //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
 
@@ -267,6 +268,7 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_CALL_DIRECT: {
+            breakpoint();
             log(LOG_TRACE, "bytecode_call_direct\n");
 
             static_assert(BYTECODE_CALL_DIRECT_SIZE == 24, "implement functions with arguments?");

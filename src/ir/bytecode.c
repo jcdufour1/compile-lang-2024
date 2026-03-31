@@ -1,5 +1,35 @@
 #include <bytecode.h>
 
+void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr) {
+    //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
+
+    String buf = {0};
+    string_extend_f(&a_temp, &buf, "inter_stack_dump:\n");
+    //for (size_t row = 0; row < count_rows; row++) {
+    //    uint64_t mem_location = row*8;
+    //    if (mem_location < inter_base_ptr - inter_stack_offset) {
+    //        continue;
+    //    }
+
+    //    uint64_t value = 0;
+    //    memcpy(&value, array_at_ref(inter_stack, mem_location), sizeof(value));
+    //    string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_location, mem_location, value);
+    //}
+    
+    log(LOG_DEBUG, "%zu\n", stack_offset);
+    for (size_t offset = 8/* TODO */; offset <= get_next_multiple(stack_offset, 8); offset += 8) {
+        //log(LOG_DEBUG, "%zu %zu\n", inter_base_ptr, offset);
+        assert(base_ptr >= offset);
+        uint64_t mem_loc = base_ptr - offset;
+        uint64_t value = 0;
+        //log(LOG_DEBUG, "%zu %zu\n", mem_loc, INTERPRET_STACK_SIZE);
+        memcpy(&value, &stack[mem_loc], sizeof(value));
+        string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_loc, offset, value);
+    }
+
+    log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
+}
+
 void bytecode_align(void) {
     while (bytecode.code.info.count != get_next_multiple(bytecode.code.info.count, BYTECODE_ALIGN)) {
         darr_append(&a_main, &bytecode.code, 0);

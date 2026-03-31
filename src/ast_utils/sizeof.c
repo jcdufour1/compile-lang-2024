@@ -380,7 +380,7 @@ uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Ir_name key) {
         if (ir_name_is_equal(arg->name_corr_param, key)) {
             break;
         }
-        todo();
+        sizeof_prev += get_next_multiple(sizeof_ir_lang_type(arg->lang_type), 8/* TODO: this should vary depending on the backend */);
     }
     return sizeof_prev;
 }

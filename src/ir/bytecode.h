@@ -81,6 +81,10 @@ Strv bytecode_alloca_pos_print_internal(uint64_t raw_pos);
 
 #define bytecode_alloca_pos_print(raw_pos) strv_print(bytecode_alloca_pos_print_internal(raw_pos))
 
+void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr);
+
+#define bytecode_stack_dump(log_level, stack, stack_offset, base_ptr) bytecode_stack_dump_internal(log_level, file, line, stack, stack_offset, base_ptr)
+
 void bytecode_align(void);
 
 void bytecode_append_align(BYTECODE opcode);
@@ -153,16 +157,20 @@ static inline uint64_t bytecode_stack_pop_internal(uint8_t* stack, uint64_t stac
 #define bytecode_stack_pop(stack, stack_offset, stack_base_ptr, value_size) \
     bytecode_stack_pop_internal(stack, array_count(stack), stack_offset, stack_base_ptr, value_size)
 
-static inline void bytecode_stack_write_internal(uint8_t* stack, size_t stack_len, uint64_t stack_offset, uint64_t stack_base_ptr, uint64_t sizeof_value, uint64_t value) {
+static inline void bytecode_stack_write_internal(const char* file, int line, uint8_t* stack, size_t stack_len, uint64_t stack_offset, uint64_t stack_base_ptr, uint64_t sizeof_value, uint64_t value) {
     uint64_t stack_index = stack_base_ptr - stack_offset;
+    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
+    log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
+    log_internal(LOG_DEBUG, file, line, 0, "value = %zu\n", value);
     unwrap(stack_index < stack_len && "out of bounds");
 
     // TODO: this and similar memcpys will only work on little endian platforms
     memcpy(&stack[stack_index], &value, sizeof_value);
+    bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
 }
 
 #define bytecode_stack_write(stack, stack_offset, stack_base_ptr, sizeof_value, value) \
-    bytecode_stack_write_internal(stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value, value)
+    bytecode_stack_write_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value, value)
 
 // return the value popped
 #define bytecode_stack_push(stack, stack_offset, stack_base_ptr, value, value_size) \
