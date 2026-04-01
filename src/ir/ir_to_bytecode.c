@@ -379,6 +379,29 @@ static uint64_t ir_to_bytecode_load_another_ir_alloca(uint64_t* sizeof_lang_type
     return alloca_stack_pos;
 }
 
+static uint64_t ir_to_bytecode_push_internal(uint64_t sizeof_load, uint64_t src_pos) {
+    bytecode_append_align(BYTECODE_ALLOCA);
+    ir_to_bytecode_uint64_t(sizeof_load);
+    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+
+    bytecode_append_align(BYTECODE_STORE_STACK);
+    ir_to_bytecode_uint64_t(alloca_pos);
+    ir_to_bytecode_uint64_t(src_pos);
+    ir_to_bytecode_uint64_t(sizeof_load);
+
+    //uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
+    //bytecode_append_align(BYTECODE_ALLOCA);
+    //ir_to_bytecode_uint64_t(sizeof_load);
+    //uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+
+    //bytecode_append_align(BYTECODE_STORE_STACK);
+    //ir_to_bytecode_uint64_t(alloca_pos);
+    //ir_to_bytecode_uint64_t(store_src);
+    //ir_to_bytecode_uint64_t(sizeof_load);
+
+    return alloca_pos;
+}
+
 static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
     ir_to_bytecode_comment("load_another_ir");
 
@@ -458,10 +481,14 @@ static uint64_t ir_to_bytecode_push_alloca(Ir_alloca* lang_alloca) {
     Ir* stack_pos_name = NULL;
     unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(lang_alloca->name)));
     log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
-    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    log(LOG_DEBUG, FMT"\n", ir_print(lang_alloca));
+    uint64_t alloca_pos = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    return ir_to_bytecode_push_internal(
+        sizeof_ir_lang_type(ir_lang_type_pointer_depth_dec(lang_alloca->lang_type)),
+        alloca_pos
+    );
 }
 
-// TODO: this and similar functions should return void
 static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bool is_from_rtn /* TODO: remove */) {
     Ir* stack_pos_name = NULL;
     unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(load->name)));
@@ -470,9 +497,9 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 
     //breakpoint();
 
-    // TODO: make a helper function to create this alloca?
+    // TODO: use ir_to_bytecode_push_internal instead of below
 
-    if (is_from_rtn) {
+    if (0 && is_from_rtn) {
     uint64_t sizeof_load = sizeof_ir_lang_type(load->lang_type);
     bytecode_append_align(BYTECODE_ALLOCA);
     ir_to_bytecode_uint64_t(sizeof_load);
@@ -505,7 +532,7 @@ static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool 
 
     //breakpoint();
 
-    // TODO: make a helper function to create this alloca?
+    // TODO: use ir_to_bytecode_push_internal instead of below
 
     if (is_from_rtn) {
         uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
@@ -547,9 +574,12 @@ static uint64_t ir_to_bytecode_push_unsafe_cast(Ir_unary* unary) {
 
     //ir_to_bytecode_unary(unary);
 
-    Ir* int_thing = NULL;
-    unwrap(ir_lookup(&int_thing, symbol_name_to_int_name(unary->name)));
-    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(int_thing)))->data;
+    Ir* int_thing_ = NULL;
+    unwrap(ir_lookup(&int_thing_, symbol_name_to_int_name(unary->name)));
+    Ir_int* int_thing = ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(int_thing_)));
+    uint64_t unary_pos = (uint64_t)int_thing->data;
+
+    return ir_to_bytecode_push_internal(sizeof_ir_lang_type(int_thing->lang_type), unary_pos);
 }
 
 // returns pos
@@ -562,14 +592,26 @@ static uint64_t ir_to_bytecode_push_unary(Ir_unary* unary) {
 static uint64_t ir_to_bytecode_push_binary(Ir_binary* bin) {
     Ir* bin_pos_ = NULL;
     unwrap(ir_lookup(&bin_pos_, symbol_name_to_int_name(bin->name)));
-    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(bin_pos_)))->data;
+    uint64_t bin_pos = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(bin_pos_)))->data;
+
+    // TODO: Ir top level loc is not set to meaningful value
+    //log(LOG_DEBUG, FMT"\n", ir_print(bin_pos_));
+    //log(LOG_DEBUG, FMT"\n", loc_print(ir_binary_unwrap(ir_operator_unwrap(ir_expr_unwrap(bin_pos_)))->loc));
+    //log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, ir_get_lang_type(bin_pos_)));
+    //if (sizeof_ir_lang_type(ir_get_lang_type(bin_pos_)) > 8) {
+        //breakpoint();
+    //}
+    assert(sizeof_ir_lang_type(ir_get_lang_type(bin_pos_)) <= 8);
+    return ir_to_bytecode_push_internal(sizeof_ir_lang_type(ir_get_lang_type(bin_pos_)), bin_pos);
 }
 
 // returns pos
 static uint64_t ir_to_bytecode_push_function_call(Ir_function_call* call) {
     Ir* call_pos_ = NULL;
     unwrap(ir_lookup(&call_pos_, symbol_name_to_int_name(call->name_self)));
-    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(call_pos_)))->data;
+    uint64_t call_pos = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(call_pos_)))->data;
+
+    return ir_to_bytecode_push_internal(sizeof_ir_lang_type(ir_get_lang_type(call_pos_)), call_pos);
 }
 
 // returns pos
@@ -771,6 +813,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
 
     if (bytecode_is_backpatching) {
         //Ir_function_name* fun_name_ = ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(ir_from_ir_name(def->callee))));
+        // TODO: make function for below statement?
         unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
             def->pos /* TODO*/,
             (int64_t)bytecode.code.info.count,
@@ -1095,7 +1138,7 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
     ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
         bin->pos /* TODO*/,
         (int64_t)alloca_pos,
-        ir_lang_type_new_ux(alloca_pos),
+        ir_lang_type_new_ux(64),
         symbol_name_to_int_name(bin->name/*TODO*/)
     )))));
 }
