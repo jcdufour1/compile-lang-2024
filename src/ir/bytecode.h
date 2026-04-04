@@ -23,7 +23,8 @@ static_assert(sizeof(BYTECODE_ALIGN) == 8, "not implemented"); // TODO
 typedef enum {
     BYTECODE_NONE,
     BYTECODE_ALLOCA,
-    BYTECODE_STORE_STACK,
+    BYTECODE_STORE_STACK, // TODO: rename to BYTECODE_STORE
+    BYTECODE_STORE_STACK_DIR_ADDR, // TODO: rename to BYTECODE_STORE_DIR_ADDR
     BYTECODE_GOTO,
     BYTECODE_COND_GOTO,
     BYTECODE_RETURN,
@@ -50,9 +51,10 @@ static_assert(
 #define BYTECODE_BINARY_SIZE 16
 
 // BYTECODE_COMMENT_SIZE is not defined because comment size is variable
-static_assert(BYTECODE_COUNT == 15, "exhausive handling of bytecode opcode types");
+static_assert(BYTECODE_COUNT == 16, "exhausive handling of bytecode opcode types");
 #define BYTECODE_ALLOCA_SIZE 16
 #define BYTECODE_STORE_STACK_SIZE 32
+#define BYTECODE_STORE_STACK_DIR_ADDR_SIZE 32
 #define BYTECODE_GOTO_SIZE 16
 #define BYTECODE_COND_GOTO_SIZE 24
 #define BYTECODE_RETURN_SIZE 16
@@ -165,7 +167,16 @@ static inline uint64_t bytecode_stack_pop_internal(uint8_t* stack, uint64_t stac
 #define bytecode_stack_pop(stack, stack_offset, stack_base_ptr, value_size) \
     bytecode_stack_pop_internal(stack, array_count(stack), stack_offset, stack_base_ptr, value_size)
 
-static inline void bytecode_stack_write_internal(const char* file, int line, uint8_t* stack, size_t stack_len, uint64_t stack_offset, uint64_t stack_base_ptr, uint64_t sizeof_value, uint64_t value) {
+static inline void bytecode_stack_write_internal(
+    const char* file,
+    int line,
+    uint8_t* stack,
+    size_t stack_len,
+    uint64_t stack_offset, // TODO: rename to pos?
+    uint64_t stack_base_ptr,
+    uint64_t sizeof_value,
+    uint64_t value
+) {
     uint64_t stack_index = stack_base_ptr - stack_offset;
     log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
     log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);

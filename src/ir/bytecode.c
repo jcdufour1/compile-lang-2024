@@ -245,6 +245,22 @@ static void bytecode_dump_internal_2(
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
                 break;
+            case BYTECODE_STORE_STACK_DIR_ADDR:
+                log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                string_extend_f(&a_temp, &buf, "  %"PRIu64": store: \n", old_idx);
+
+                log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                string_extend_f(&a_temp, &buf, "    dest: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
+
+                log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                string_extend_f(&a_temp, &buf, "    src (value): "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));
+
+                log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                string_extend_f(&a_temp, &buf, "    sizeof copy: %"PRIu64" bytes\n", bytecode_dump_read_uint64_t(&idx));
+
+                log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
+                break;
             case BYTECODE_PUSH: {
                 uint64_t alloca_size = bytecode_dump_read_uint64_t(&idx);
                 uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&stack_offset, alloca_size);

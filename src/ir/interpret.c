@@ -134,6 +134,18 @@ static bool interpret_instruction(void) {
             assert(inter_prog_counter - old_prog_counter == BYTECODE_STORE_STACK_SIZE);
             return true;
         }
+        case BYTECODE_STORE_STACK_DIR_ADDR: {
+            uint64_t dest_pos = interpret_read_uint64_t_aligned();
+            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            uint64_t value = interpret_read_uint64_t_aligned();
+            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            uint64_t sizeof_store = interpret_read_uint64_t_aligned();
+            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
+
+            assert(inter_prog_counter - old_prog_counter == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
+            return true;
+        }
         case BYTECODE_GOTO: {
             log(LOG_TRACE, "bytecode_goto\n");
 
@@ -382,6 +394,8 @@ void interpret(void) {
     while (interpret_instruction()) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
+        log(LOG_DEBUG, "%zu\n", inter_prog_counter);
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
