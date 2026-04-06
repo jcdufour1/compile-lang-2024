@@ -6,7 +6,7 @@
 Bytecode bytecode;
 
 uint64_t bytecode_stack_offset = 0;
-uint64_t bytecode_aux_alloca_size = 0; // TODO: rename
+uint64_t bytecode_space_locals_alloca_size = 0; // TODO: rename
 static bool bytecode_is_backpatching = false;
 static Ir_variable_def_darr curr_fun_args = {0};
 static Ir_name bytecode_fun_name = {0};
@@ -32,10 +32,10 @@ static Ir_name function_name_to_loc(Ir_name sym_name) {
     );
 }
 
-static Ir_name fun_name_to_aux_alloc_size(Ir_name sym_name) {
+static Ir_name fun_name_to_space_locals_alloc_size(Ir_name sym_name) {
     assert(sym_name.base.count > 0);
     return ir_name_new(
-        MOD_PATH_FUN_NAME_TO_AUX_ALLOC,
+        MOD_PATH_FUN_NAME_TO_SPACE_LOCALS_ALLOC,
         serialize_ir_name(sym_name),
         (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
@@ -217,9 +217,9 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
         if (bytecode_is_backpatching) {
             unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
                 bytecode_fun_pos,
-                (int64_t)bytecode_aux_alloca_size,
+                (int64_t)bytecode_space_locals_alloca_size,
                 ir_lang_type_new_ux(64),
-                fun_name_to_aux_alloc_size(bytecode_fun_name)
+                fun_name_to_space_locals_alloc_size(bytecode_fun_name)
             ))))));
         }
         log(LOG_DEBUG, FMT"\n", ir_print(ir_from_ir_name(rtn->child)));
@@ -350,7 +350,7 @@ uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size) {
 
     uint64_t pos = bytecode_stack_offset;
     bytecode_stack_offset += get_next_multiple(alloc_size, 8);
-    bytecode_aux_alloca_size += get_next_multiple(alloc_size, 8);
+    bytecode_space_locals_alloca_size += get_next_multiple(alloc_size, 8);
     return pos;
 }
 
@@ -874,7 +874,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     bytecode_stack_offset = get_next_multiple(bytecode_stack_offset, 8);
     uint64_t args_count_bytes = bytecode_stack_offset;
 
-    static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of values below in allocs");
+    static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of values below in allocs");
     {
         ir_to_bytecode_comment("alloca for return value");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
@@ -895,7 +895,16 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         ir_to_bytecode_comment("alloca for arg_bytes");
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, args_count_bytes));
+
     }
+
+    uint64_t space_locals_bytes = 0;
+    if (!bytecode_is_backpatching) {
+        todo();
+    }
+    ir_to_bytecode_comment("alloca for arg_bytes");
+    ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(space_locals_bytes), util_literal_ir_name_new(), 0 /* TODO */));
+    assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_AUX, args_count_bytes));
                                                                          
     ir_to_bytecode_comment("start of block");
     ir_to_bytecode_block(def->body);

@@ -207,11 +207,16 @@ static bool interpret_instruction(void) {
             uint64_t base_ptr = 0;
             uint64_t offset = 0;
             {
-                static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
+                static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
                 // return value is not popped here, because it should remain in the stack
 
                 //breakpoint();
                 inter_stack_dump(LOG_DEBUG);
+
+                uint64_t space_locals_bytes_count = bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count);
+                assert(inter_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_AUX, space_locals_bytes_count));
+                bytecode_stack_size_add_aligned(&inter_stack_offset, inter_stack_offset - BYTECODE_COUNT_RTN_ITEMS*8 - arg_bytes_count);
+                bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof(base_ptr));
 
                 assert(inter_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count));
                 arg_bytes = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof(base_ptr));
@@ -242,7 +247,7 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             assert(inter_prog_counter - old_prog_counter == BYTECODE_RETURN_SIZE);
 
-            static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "update below if nessessary");
+            static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "update below if nessessary");
             log(LOG_DEBUG, "%zu %zu\n", rtn_addr, INTER_RTN_ADDR_EXIT);
             inter_prog_counter = rtn_addr;
             inter_base_ptr = base_ptr;
@@ -321,7 +326,7 @@ static bool interpret_instruction(void) {
             arg_bytes_count = arg_bytes;
             
             {
-                static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
+                static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
                 // return value not explititly handled here
 
                 bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), inter_prog_counter);
@@ -378,7 +383,7 @@ static bool interpret_instruction(void) {
 
 void interpret(void) {
     breakpoint();
-    static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of main function stack frame initial state");
+    static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of main function stack frame initial state");
     {
         // return value is not explititily handled here
         bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), INTER_RTN_ADDR_EXIT);

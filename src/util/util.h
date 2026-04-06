@@ -198,7 +198,7 @@ typedef size_t Scope_id;
 #define MOD_PATH_AUX_ALIASES (sv("std"PATH_SEP"does_not_exist"PATH_SEP"aux_aliases"))
 #define MOD_PATH_BACKPATCH_STACK_SIZE (sv("std"PATH_SEP"does_not_exist"PATH_SEP"backpatch_stack_size"))
 #define MOD_PATH_FUNCTION_TO_LOC (sv("std"PATH_SEP"does_not_exist"PATH_SEP"function_to_location"))
-#define MOD_PATH_FUN_NAME_TO_AUX_ALLOC (sv("std"PATH_SEP"does_not_exist"PATH_SEP"fun_name_to_aux_alloc"))
+#define MOD_PATH_FUN_NAME_TO_SPACE_LOCALS_ALLOC (sv("std"PATH_SEP"does_not_exist"PATH_SEP"fun_name_to_space_locals_alloc"))
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
