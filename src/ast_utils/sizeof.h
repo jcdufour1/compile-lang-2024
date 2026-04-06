@@ -8,6 +8,10 @@ static inline uint64_t bit_width_to_bytes(uint64_t bit_width) {
     return (bit_width + 7)/8;
 }
 
+static inline uint64_t bytes_to_bit_width(uint64_t bytes) {
+    return 8*bytes;
+}
+
 uint64_t sizeof_lang_type(Lang_type lang_type);
 
 uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type);

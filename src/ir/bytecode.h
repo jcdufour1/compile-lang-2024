@@ -76,14 +76,9 @@ typedef enum {
     BYTECODE_CALL_STACK_TYPE_BASE_PTR,
     BYTECODE_CALL_STACK_TYPE_OFFSET,
     BYTECODE_CALL_STACK_TYPE_ARG_BYTES,
-    BYTECODE_CALL_STACK_TYPE_AUX, // TODO: rename
 
     BYTECODE_COUNT_RTN_ITEMS
 } BYTECODE_CALL_STACK_TYPE;
-static_assert(
-    BYTECODE_COUNT_RTN_ITEMS - BYTECODE_CALL_STACK_TYPE_AUX == 1,
-    "BYTECODE_CALL_STACK_TYPE_AUX must have the highest value of any CALL_STACK_TYPE_*"
-);
 
 static inline uint64_t bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE offset_type, uint64_t arg_bytes_count) {
     uint64_t base_bytes_call_stack_type = 8*(((uint64_t)offset_type) + 1);
