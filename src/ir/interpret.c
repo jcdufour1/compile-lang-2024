@@ -118,6 +118,8 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_STORE_STACK: {
+            log(LOG_TRACE, "bytecode_store_stack\n");
+
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t src_pos = interpret_read_uint64_t_aligned();
@@ -135,6 +137,8 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_STORE_STACK_DIR_ADDR: {
+            log(LOG_TRACE, "bytecode_store_stack_dir_addr\n");
+
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t value = interpret_read_uint64_t_aligned();

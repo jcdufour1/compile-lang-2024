@@ -139,7 +139,7 @@ static void ir_to_bytecode_comment_internal(const char* file, int line, const ch
 
 static void ir_to_bytecode_def_inline(Ir_def* def);
 
-static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca);
+static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca, bool is_for_local_var);
 
 static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* lang_store_another_ir);
 
@@ -293,7 +293,7 @@ static void ir_to_bytecode_inline(Ir* ir) {
             ir_to_bytecode_cond_goto(ir_cond_goto_unwrap(ir));
             return;
         case IR_ALLOCA:
-            ir_to_bytecode_alloca(ir_alloca_unwrap(ir));
+            ir_to_bytecode_alloca(ir_alloca_unwrap(ir), true);
             return;
         case IR_LOAD_ANOTHER_IR:
             ir_to_bytecode_load_another_ir(ir_load_another_ir_unwrap(ir));
@@ -322,29 +322,6 @@ static void ir_to_bytecode_import_path(Ir_import_path* import) {
     ir_to_bytecode_block(import->block);
 }
 
-// TODO: this instruction 5takes 2 bytes. make version that takes one?
-static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca) {
-    breakpoint();
-    ir_to_bytecode_comment("alloca");
-
-    size_t old_count = bytecode.code.info.count;
-    (void) old_count;
-    bytecode_append_align(BYTECODE_ALLOCA);
-    uint64_t sizeof_alloca = sizeof_ir_lang_type(ir_lang_type_pointer_depth_dec(lang_alloca->lang_type));
-    ir_to_bytecode_uint64_t(sizeof_alloca);
-
-    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_alloca);
-
-    if (bytecode_is_backpatching) {
-        unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
-            lang_alloca->pos,
-            (int64_t)alloca_pos,
-            ir_lang_type_new_ux(sizeof_alloca),
-            symbol_name_to_int_name(lang_alloca->name)
-        ))))));
-    }
-    assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
-}
 
 uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size) {
     assert(get_next_multiple(bytecode_stack_offset, 8) == bytecode_stack_offset && "not implemented");
@@ -354,6 +331,51 @@ uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size) {
     bytecode_stack_offset += get_next_multiple(alloc_size, 8);
     bytecode_space_locals_alloca_size += get_next_multiple(alloc_size, 8);
     return pos;
+}
+
+// TODO: this instruction 5takes 2 bytes. make version that takes one?
+static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca, bool is_for_local_var) {
+    size_t old_count = 0;
+    //breakpoint();
+    uint64_t sizeof_alloca = sizeof_ir_lang_type(ir_lang_type_pointer_depth_dec(lang_alloca->lang_type));
+
+    if (is_for_local_var) {
+        old_count = bytecode.code.info.count;
+        uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_alloca);
+
+        if (bytecode_is_backpatching) {
+            unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
+                lang_alloca->pos,
+                (int64_t)alloca_pos,
+                ir_lang_type_new_ux(sizeof_alloca),
+                symbol_name_to_int_name(lang_alloca->name)
+            ))))));
+        }
+        assert(bytecode.code.info.count - old_count == 0);
+        return;
+    }
+
+    ir_to_bytecode_comment("alloca");
+
+    old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_ALLOCA);
+    ir_to_bytecode_uint64_t(sizeof_alloca);
+
+    {
+        uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_alloca);
+
+        if (bytecode_is_backpatching) {
+            unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
+                lang_alloca->pos,
+                (int64_t)alloca_pos,
+                ir_lang_type_new_ux(sizeof_alloca),
+                symbol_name_to_int_name(lang_alloca->name)
+            ))))));
+        }
+    }
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
 }
 
 // BYTECODE_PUSH
@@ -370,6 +392,8 @@ static uint64_t ir_to_bytecode_push_int(Ir_int* lang_int) {
     ir_to_bytecode_uint64_t(int_pos);
     ir_to_bytecode_int64_t(lang_int->data);
     ir_to_bytecode_uint64_t(sizeof_int);
+
+    log(LOG_DEBUG, "%zu %zu %zu\n", int_pos, lang_int->data, sizeof_int);
 
     //bytecode_append_align(BYTECODE_PUSH);
     //log(LOG_DEBUG, "lang_int->data = %zu, sizeof_int_push = %zu\n", lang_int->data, sizeof_int_push);
@@ -415,8 +439,8 @@ static uint64_t ir_to_bytecode_load_another_ir_alloca(uint64_t* sizeof_lang_type
 }
 
 static uint64_t ir_to_bytecode_push_internal(uint64_t sizeof_load, uint64_t src_pos) {
-    bytecode_append_align(BYTECODE_ALLOCA);
-    ir_to_bytecode_uint64_t(sizeof_load);
+    //bytecode_append_align(BYTECODE_ALLOCA);
+    //ir_to_bytecode_uint64_t(sizeof_load);
     uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
 
     bytecode_append_align(BYTECODE_STORE_STACK);
@@ -534,8 +558,9 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
 
     // TODO: use ir_to_bytecode_push_internal instead of below
 
-    if (0 && is_from_rtn) {
     uint64_t sizeof_load = sizeof_ir_lang_type(load->lang_type);
+
+    if (0 && is_from_rtn) {
     bytecode_append_align(BYTECODE_ALLOCA);
     ir_to_bytecode_uint64_t(sizeof_load);
     uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
@@ -550,7 +575,8 @@ static uint64_t ir_to_bytecode_push_load_another_ir(Ir_load_another_ir* load, bo
     //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
     //ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
 
-    return (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    uint64_t alloca_pos = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    return ir_to_bytecode_push_internal(sizeof_load, alloca_pos);
 }
 
 // TODO: deduplicate this and simular functions?
@@ -892,23 +918,23 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 5, "exhausive handling of values below in allocs");
     {
         ir_to_bytecode_comment("alloca for return value");
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */), false);
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_VALUE, args_count_bytes));
 
         ir_to_bytecode_comment("alloca for return address");
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */), false);
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, args_count_bytes));
 
         ir_to_bytecode_comment("alloca for stack_base_ptr");
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */), false);
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, args_count_bytes));
 
         ir_to_bytecode_comment("alloca for stack_offset");
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */), false);
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, args_count_bytes));
 
         ir_to_bytecode_comment("alloca for arg_bytes");
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(64), util_literal_ir_name_new(), 0 /* TODO */), false);
         assert(bytecode_stack_offset == bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, args_count_bytes));
 
     }
@@ -922,7 +948,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         }
         ir_to_bytecode_comment("alloca for local variables");
         uint64_t start_local_vars = bytecode_stack_offset;
-        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(bytes_to_bit_width(space_locals_bytes)), util_literal_ir_name_new(), 0 /* TODO */));
+        ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(bytes_to_bit_width(space_locals_bytes)), util_literal_ir_name_new(), 0 /* TODO */), false);
         bytecode_stack_offset = start_local_vars;
     }
                                                                          
@@ -1153,7 +1179,10 @@ static void ir_to_bytecode_unary(Ir_unary* unary) {
 
 static void ir_to_bytecode_binary(Ir_binary* bin) {
     // TODO: assert that bin->lhs and bin->rhs have same lang_type as bin itself
+    ir_to_bytecode_comment("add lhs");
     ir_to_bytecode_push_ir(ir_from_ir_name(bin->lhs), false);
+    breakpoint();
+    ir_to_bytecode_comment("add rhs");
     ir_to_bytecode_push_ir(ir_from_ir_name(bin->rhs), false);
 
     switch (bin->token_type) {
