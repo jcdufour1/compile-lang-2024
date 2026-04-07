@@ -247,7 +247,7 @@ static void bytecode_dump_internal_2(
                 break;
             case BYTECODE_STORE_STACK_DIR_ADDR:
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
-                string_extend_f(&a_temp, &buf, "  %"PRIu64": store: \n", old_idx);
+                string_extend_f(&a_temp, &buf, "  %"PRIu64": store dir_addr: \n", old_idx);
 
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 string_extend_f(&a_temp, &buf, "    dest: "FMT" \n", bytecode_alloca_pos_print(bytecode_dump_read_uint64_t(&idx)));

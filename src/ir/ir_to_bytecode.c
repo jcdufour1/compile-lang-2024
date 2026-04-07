@@ -324,6 +324,7 @@ static void ir_to_bytecode_import_path(Ir_import_path* import) {
 
 // TODO: this instruction 5takes 2 bytes. make version that takes one?
 static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca) {
+    breakpoint();
     ir_to_bytecode_comment("alloca");
 
     size_t old_count = bytecode.code.info.count;
@@ -805,11 +806,14 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
         //   do not actually append to darr if bytecode_is_backpatching == true and NDEBUG is defined 
         //   (maybe bytecode_append_align function should only append when !bytecode_is_backpatching)
     } else {
+        //breakpoint();
         log(LOG_DEBUG, FMT"\n", ir_print(store));
         Ir* store_src = ir_from_ir_name(store->ir_src);
         Ir* store_dest = ir_from_ir_name(store->ir_dest);
         uint64_t dummy = {0};
         uint64_t sizeof_lang_type = sizeof_ir_lang_type(store->lang_type);
+        log(LOG_DEBUG, FMT"\n", ir_print(store_src));
+        log(LOG_DEBUG, FMT"\n", ir_print(store_dest));
         log(LOG_DEBUG, FMT"\n", bytecode_alloca_pos_print(bytecode_stack_offset));
         log(LOG_DEBUG, "%zu\n", bytecode_stack_offset);
         uint64_t store_src_pos = ir_to_bytecode_push_ir(store_src, false);

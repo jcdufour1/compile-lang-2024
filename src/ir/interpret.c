@@ -395,7 +395,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        //breakpoint();
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
