@@ -326,11 +326,9 @@ static void ir_to_bytecode_import_path(Ir_import_path* import) {
 uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size) {
     assert(get_next_multiple(bytecode_stack_offset, 8) == bytecode_stack_offset && "not implemented");
 
-    uint64_t pos = bytecode_stack_offset;
-    log(LOG_DEBUG, "pos = %zu\n", pos);
     bytecode_stack_offset += get_next_multiple(alloc_size, 8);
     bytecode_space_locals_alloca_size += get_next_multiple(alloc_size, 8);
-    return pos;
+    return bytecode_stack_offset;
 }
 
 // TODO: this instruction 5takes 2 bytes. make version that takes one?
@@ -441,7 +439,7 @@ static uint64_t ir_to_bytecode_load_another_ir_alloca(uint64_t* sizeof_lang_type
 static uint64_t ir_to_bytecode_push_internal(uint64_t sizeof_load, uint64_t src_pos) {
     //bytecode_append_align(BYTECODE_ALLOCA);
     //ir_to_bytecode_uint64_t(sizeof_load);
-    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
+    uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_load);
 
     bytecode_append_align(BYTECODE_STORE_STACK);
     ir_to_bytecode_uint64_t(alloca_pos);
@@ -1178,6 +1176,8 @@ static void ir_to_bytecode_unary(Ir_unary* unary) {
 }
 
 static void ir_to_bytecode_binary(Ir_binary* bin) {
+    uint64_t old_count = bytecode.code.info.count;
+
     // TODO: assert that bin->lhs and bin->rhs have same lang_type as bin itself
     ir_to_bytecode_comment("add lhs");
     ir_to_bytecode_push_ir(ir_from_ir_name(bin->lhs), false);
@@ -1225,6 +1225,8 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
             todo();
         case IR_BINARY_COUNT:
             unreachable("");
+        default:
+            unreachable("");
     }
 
     uint64_t sizeof_bin_lang_type = sizeof_ir_lang_type(bin->lang_type);
@@ -1240,6 +1242,9 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
         ir_lang_type_new_ux(64),
         symbol_name_to_int_name(bin->name/*TODO*/)
     )))));
+
+    assert(old_count != SIZE_MAX);
+    assert(bytecode.code.info.count - old_count == BYTECODE_BINARY_SIZE);
 }
 
 static void ir_to_bytecode_operator(Ir_operator* oper) {
