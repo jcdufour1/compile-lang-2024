@@ -214,14 +214,6 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
         bytecode_append_align(0);
 
     } else {
-        if (bytecode_is_backpatching) {
-            unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
-                bytecode_fun_pos,
-                (int64_t)bytecode_space_locals_alloca_size,
-                ir_lang_type_new_ux(64),
-                fun_name_to_space_locals_alloc_size(bytecode_fun_name)
-            ))))));
-        }
         log(LOG_DEBUG, FMT"\n", ir_print(ir_from_ir_name(rtn->child)));
         log(LOG_DEBUG, FMT"\n", ir_print(ir_from_ir_name(ir_load_another_ir_unwrap(ir_from_ir_name(rtn->child))->ir_src)));
         //bytecode_dump(LOG_DEBUG, bytecode);
@@ -235,6 +227,15 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
         log(LOG_DEBUG, FMT"\n", ir_print(rtn_child));
         //breakpoint();
         //bytecode_dump(LOG_DEBUG, bytecode);
+
+        if (bytecode_is_backpatching) {
+            unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
+                bytecode_fun_pos,
+                (int64_t)bytecode_space_locals_alloca_size,
+                ir_lang_type_new_ux(64),
+                fun_name_to_space_locals_alloc_size(bytecode_fun_name)
+            ))))));
+        }
 
         old_count = bytecode.code.info.count;
         bytecode_append_align(BYTECODE_RETURN);
@@ -1195,12 +1196,18 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
 
     uint64_t old_count = bytecode.code.info.count;
 
+    uint64_t sizeof_bin_lang_type = sizeof_ir_lang_type(bin->lang_type);
+
+    uint64_t start_args = ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
+    ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
+    uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_bin_lang_type);
+
     switch (bin->token_type) {
         case IR_BINARY_SUB:
             bytecode_append_align(BYTECODE_SUB);
             break;
         case IR_BINARY_ADD:
-            bytecode_append_align(BYTECODE_ADD);
+            bytecode_append_align(BYTECODE_ADD_);
             break;
         case IR_BINARY_MULTIPLY:
             todo();
@@ -1239,7 +1246,8 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
             unreachable("");
     }
 
-    uint64_t sizeof_bin_lang_type = sizeof_ir_lang_type(bin->lang_type);
+    ir_to_bytecode_uint64_t(start_args);
+    ir_to_bytecode_uint64_t(alloca_pos);
     ir_to_bytecode_uint64_t(sizeof_bin_lang_type);
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_BINARY_SIZE);
@@ -1247,10 +1255,6 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
     //bytecode_stack_size_add_aligned(&bytecode_stack_offset, sizeof_bin_lang_type);
     //bytecode_stack_size_add_aligned(&bytecode_stack_offset, sizeof_bin_lang_type);
     //uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_bin_lang_type);
-    ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
-    ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
-    uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_bin_lang_type);
-
     ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
         bin->pos /* TODO*/,
         (int64_t)alloca_pos,

@@ -65,10 +65,19 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
 
 #define inter_binary(bin) \
     do { \
+        uint64_t start_args = interpret_read_uint64_t_aligned(); \
+        uint64_t alloca_pos = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_size = interpret_read_uint64_t_aligned(); \
-        uint64_t rhs = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, alloca_size); \
-        uint64_t lhs = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, alloca_size); \
-        bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, lhs bin rhs, alloca_size); \
+        \
+        uint64_t pos_rhs = start_args; \
+        uint64_t pos_lhs = pos_rhs; \
+        bytecode_stack_size_add_aligned(&pos_lhs, alloca_size); \
+        \
+        uint64_t lhs = bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size); \
+        uint64_t rhs = bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size); \
+        \
+        bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, lhs bin rhs); \
+        \
         assert(inter_prog_counter - old_prog_counter == BYTECODE_BINARY_SIZE); \
     } while (0)
 
@@ -342,7 +351,7 @@ static bool interpret_instruction(void) {
 
 
         // --- BINARY OPERATORS ---
-        case BYTECODE_ADD: {
+        case BYTECODE_ADD_: {
             log(LOG_TRACE, "bytecode_add\n");
             inter_binary(+);
             return true;
@@ -399,7 +408,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        breakpoint();
+        //breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

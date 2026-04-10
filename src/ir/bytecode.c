@@ -81,11 +81,15 @@ static char bytecode_dump_read_char(uint64_t* idx) {
 }
 
 static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t old_idx, uint64_t* idx, uint64_t* stack_size) {
+    // TODO: change bytecode and interpreter so that start_args and alloca_pos do not need to be
+    //   stored in bytecode?
+    uint64_t start_args = bytecode_dump_read_uint64_t(idx);
+    uint64_t alloca_pos = bytecode_dump_read_uint64_t(idx);
     uint64_t alloca_size = bytecode_dump_read_uint64_t(idx);
 
-    uint64_t pos_rhs = bytecode_stack_size_add_aligned(stack_size, alloca_size);
-    uint64_t pos_lhs = bytecode_stack_size_add_aligned(stack_size, alloca_size);
-    uint64_t alloca_pos = bytecode_stack_size_sub_aligned(stack_size, alloca_size);
+    uint64_t pos_rhs = start_args;
+    uint64_t pos_lhs = pos_rhs;
+    bytecode_stack_size_add_aligned(&pos_lhs, alloca_size);
 
     string_extend_f(&a_temp, buf, "  %"PRIu64": "FMT": (store location: "FMT")\n", old_idx, strv_print(bin_name), bytecode_alloca_pos_print(alloca_pos));
 
@@ -93,6 +97,7 @@ static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t o
     string_extend_f(&a_temp, buf, "    pos rhs: "FMT" \n", bytecode_alloca_pos_print(pos_rhs));
 
     assert(*idx - old_idx == BYTECODE_ADD_SIZE);
+    assert(*idx - old_idx == BYTECODE_BINARY_SIZE);
 }
 
 typedef struct {
@@ -144,7 +149,7 @@ static void bytecode_dump_internal_2(
 
     string_extend_f(&a_temp, &buf, "\n");
 
-    size_t idx = 0;
+    size_t idx = 0; // TODO: rename to bytecode_idx?
     uint64_t stack_offset = 0;
     while (idx < bytecode.code.info.count) {
         if (!is_first_step) {
@@ -293,7 +298,7 @@ static void bytecode_dump_internal_2(
 
 
             // --- BINARY OPERATORS ---
-            case BYTECODE_ADD: {
+            case BYTECODE_ADD_: {
                 bytecode_dump_internal_binary(&buf, sv("add"), old_idx, &idx, &stack_offset);
                 break;
             }

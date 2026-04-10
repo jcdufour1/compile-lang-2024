@@ -34,7 +34,7 @@ typedef enum {
     BYTECODE_COMMENT,
 
     // binary operators
-    BYTECODE_ADD,
+    BYTECODE_ADD_,
     BYTECODE_SUB,
     BYTECODE_GREATER_THAN,
     BYTECODE_DOUBLE_EQUAL,
@@ -48,7 +48,7 @@ static_assert(
     "overflow will occur because only one byte is used to store bytecode opcode in bytecode representation"
 );
 
-#define BYTECODE_BINARY_SIZE 16
+#define BYTECODE_BINARY_SIZE 32
 
 // BYTECODE_COMMENT_SIZE is not defined because comment size is variable
 static_assert(BYTECODE_COUNT == 16, "exhausive handling of bytecode opcode types");
@@ -189,6 +189,31 @@ static inline void bytecode_stack_write_internal(
 
 #define bytecode_stack_write(stack, stack_offset, stack_base_ptr, sizeof_value, value) \
     bytecode_stack_write_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value, value)
+
+static inline uint64_t bytecode_stack_read_internal(
+    const char* file,
+    int line,
+    uint8_t* stack,
+    size_t stack_len,
+    uint64_t stack_offset, // TODO: rename to pos?
+    uint64_t stack_base_ptr,
+    uint64_t sizeof_value
+) {
+    uint64_t stack_index = stack_base_ptr - stack_offset;
+    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
+    log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
+    unwrap(stack_index < stack_len && "out of bounds");
+
+    // TODO: this and similar memcpys will only work on little endian platforms
+    uint64_t result = 0;
+    assert(sizeof_value <= 8);
+    memcpy(&result, &stack[stack_index], sizeof_value);
+    bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
+    return result;
+}
+
+#define bytecode_stack_read(stack, stack_offset, stack_base_ptr, sizeof_value) \
+    bytecode_stack_read_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value)
 
 // return the value popped
 #define bytecode_stack_push(stack, stack_offset, stack_base_ptr, value, value_size) \
