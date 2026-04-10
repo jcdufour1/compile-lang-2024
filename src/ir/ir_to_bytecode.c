@@ -221,13 +221,16 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
         Ir* rtn_child = ir_from_ir_name(rtn->child);
         // TODO: load loads thing to stack, when thing is already on stack?
         //bytecode_dump(LOG_DEBUG, bytecode);
-        uint64_t pos_child = ir_to_bytecode_push_ir(rtn_child, true);
-        (void) pos_child;
+        //uint64_t pos_child = ir_to_bytecode_push_ir(rtn_child, true);
+        //(void) pos_child;
         rtn_child = ir_from_ir_name(rtn->child);
         log(LOG_DEBUG, FMT"\n", ir_print(rtn_child));
         //breakpoint();
         //bytecode_dump(LOG_DEBUG, bytecode);
 
+        log(LOG_DEBUG, "bytecode_space_locals_alloca_size = %zu\n", bytecode_space_locals_alloca_size);
+        log(LOG_DEBUG, "bytecode_stack_offset = %zu\n", bytecode_stack_offset);
+        breakpoint();
         if (bytecode_is_backpatching) {
             unwrap(ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
                 bytecode_fun_pos,
@@ -900,6 +903,9 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     Ir_name old_bytecode_fun_name = bytecode_fun_name;
     bytecode_fun_name = def->decl->name;
 
+    uint64_t old_bytecode_space_locals_alloca_size = bytecode_space_locals_alloca_size;
+    bytecode_space_locals_alloca_size = 0;
+
     if (bytecode_is_backpatching) {
         //Ir_function_name* fun_name_ = ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(ir_from_ir_name(def->callee))));
         // TODO: make function for below statement?
@@ -971,6 +977,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     curr_fun_args = old_curr_fun_args;
     bytecode_fun_pos = old_bytecode_fun_pos;
     bytecode_fun_name = old_bytecode_fun_name;
+    bytecode_space_locals_alloca_size = old_bytecode_space_locals_alloca_size;
 }
 
 static void ir_to_bytecode_def_out_of_line(Ir_def* def) {
@@ -1189,7 +1196,7 @@ static void ir_to_bytecode_unary(Ir_unary* unary) {
 static void ir_to_bytecode_binary(Ir_binary* bin) {
     // TODO: assert that bin->lhs and bin->rhs have same lang_type as bin itself
     ir_to_bytecode_comment("add lhs");
-    ir_to_bytecode_push_ir(ir_from_ir_name(bin->lhs), false);
+    uint64_t start_args = ir_to_bytecode_push_ir(ir_from_ir_name(bin->lhs), false);
     breakpoint();
     ir_to_bytecode_comment("add rhs");
     ir_to_bytecode_push_ir(ir_from_ir_name(bin->rhs), false);
@@ -1198,8 +1205,6 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
 
     uint64_t sizeof_bin_lang_type = sizeof_ir_lang_type(bin->lang_type);
 
-    uint64_t start_args = ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
-    ir_to_bytecode_pop_internal(sizeof_bin_lang_type);
     uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_bin_lang_type);
 
     switch (bin->token_type) {
