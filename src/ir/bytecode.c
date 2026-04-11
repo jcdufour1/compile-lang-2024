@@ -321,8 +321,11 @@ static void bytecode_dump_internal_2(
 
 
 
-            case BYTECODE_CALL_DIRECT:
+            case BYTECODE_CALL_DIRECT_:
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": call direct\n", old_idx);
+
+                uint64_t start_args = bytecode_dump_read_uint64_t(&idx);
+                string_extend_f(&a_temp, &buf, "    start_args: %"PRIu64" \n", start_args);
 
                 uint64_t start_pos = bytecode_dump_read_uint64_t(&idx);
                 string_extend_f(&a_temp, &buf, "    jump to: %"PRIu64" \n", start_pos);

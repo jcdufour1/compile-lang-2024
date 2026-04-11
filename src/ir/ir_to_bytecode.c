@@ -1043,9 +1043,12 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
     (void) call;
     // TODO: make separate ir function call direct and function ptr?
 
+    uint64_t start_args = 0;
     darr_foreach(arg_idx, Ir_name, arg, call->args) {
         uint64_t arg_pos = ir_to_bytecode_push_ir(ir_from_ir_name(arg), false);
-        (void) arg_pos;
+        if (arg_idx == 0) {
+            start_args = arg_pos;
+        }
     }
 
     uint64_t sizeof_lang_type = sizeof_ir_lang_type(call->lang_type);
@@ -1059,7 +1062,8 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         )))));
 
         old_count = bytecode.code.info.count;
-        bytecode_append_align(BYTECODE_CALL_DIRECT);
+        bytecode_append_align(BYTECODE_CALL_DIRECT_);
+        ir_to_bytecode_uint64_t(0);
         ir_to_bytecode_uint64_t(0);
         ir_to_bytecode_uint64_t(0);
     } else {
@@ -1069,7 +1073,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         unwrap(ir_lookup(&fun_addr_, function_name_to_loc(fun_name_->fun_name)));
 
         old_count = bytecode.code.info.count;
-        bytecode_append_align(BYTECODE_CALL_DIRECT);
+        bytecode_append_align(BYTECODE_CALL_DIRECT_);
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data);
 
         // TODO: stop using bytecode_state_save and bytecode_state_restore functions here (use sizeof_ir_params instead)
@@ -1081,6 +1085,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         }
         uint64_t arg_bytes_count = bytecode_stack_offset - arg_bytes_lower;
         bytecode_state_restore(&bytecode_stack_offset, &bytecode.code.info.count, bytecode_state);
+        ir_to_bytecode_uint64_t(start_args);
         ir_to_bytecode_uint64_t(get_next_multiple(arg_bytes_count, 8 /* alignment */));
     }
 
