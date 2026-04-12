@@ -217,6 +217,7 @@ static bool interpret_instruction(void) {
             inter_stack_dump(LOG_DEBUG);
 
             uint64_t curr_rtn_alloc_pos = inter_rtn_alloc_pos;
+            uint64_t curr_arg_bytes_count = arg_bytes_count;
 
             uint64_t arg_bytes = 0;
             uint64_t rtn_addr = 0;
@@ -279,6 +280,11 @@ static bool interpret_instruction(void) {
                 assert(rtn_value == temp_rtn_value);
                 log(LOG_DEBUG, "%zu\n", curr_rtn_alloc_pos);
                 bytecode_stack_write(inter_stack, curr_rtn_alloc_pos, inter_base_ptr, sizeof_rtn, rtn_value);
+            }
+
+            if (curr_arg_bytes_count > 0) {
+                bytecode_stack_size_add_aligned(&inter_stack_offset, curr_arg_bytes_count);
+                //todo();
             }
 
             log(LOG_DEBUG, "inter_prog_counter after return: %zu\n", inter_prog_counter);
@@ -431,7 +437,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        //breakpoint();
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
