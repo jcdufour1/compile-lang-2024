@@ -81,6 +81,7 @@ static char bytecode_dump_read_char(uint64_t* idx) {
 }
 
 static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t old_idx, uint64_t* idx, uint64_t* stack_size) {
+    (void) stack_size;
     // TODO: change bytecode and interpreter so that start_args and alloca_pos do not need to be
     //   stored in bytecode?
     uint64_t start_args = bytecode_dump_read_uint64_t(idx);
@@ -329,6 +330,9 @@ static void bytecode_dump_internal_2(
 
                 uint64_t arg_bytes_count = bytecode_dump_read_uint64_t(&idx);
                 string_extend_f(&a_temp, &buf, "    arg bytes: %"PRIu64" \n", arg_bytes_count);
+
+                uint64_t rtn_alloc_pos = bytecode_dump_read_uint64_t(&idx);
+                string_extend_f(&a_temp, &buf, "    rtn_alloc_pos: %"PRIu64" \n", rtn_alloc_pos);
 
                 if (is_first_step) {
                     darr_append(&a_temp, mapping, bytecode_dump_mapping_new(
