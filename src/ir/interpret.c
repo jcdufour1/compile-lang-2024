@@ -247,6 +247,9 @@ static bool interpret_instruction(void) {
                 );
             }
 
+            offset = get_next_multiple(offset, 8);
+            offset += get_next_multiple(sizeof_rtn, 8);
+
             assert(inter_base_ptr > 0);
             log(LOG_DEBUG, "rtn_value = %zu\n", rtn_value);
             assert(inter_stack_offset % 8 == 0); // TODO: remove
