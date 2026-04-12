@@ -70,9 +70,9 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         uint64_t alloca_pos = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_size = interpret_read_uint64_t_aligned(); \
         \
-        uint64_t pos_rhs = start_args; \
-        uint64_t pos_lhs = pos_rhs; \
-        bytecode_stack_size_add_aligned(&pos_lhs, alloca_size); \
+        uint64_t pos_lhs = start_args; \
+        uint64_t pos_rhs = pos_lhs; \
+        bytecode_stack_size_add_aligned(&pos_rhs, alloca_size); \
         \
         uint64_t lhs = bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size); \
         uint64_t rhs = bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size); \
@@ -431,7 +431,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        breakpoint();
+        //breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
