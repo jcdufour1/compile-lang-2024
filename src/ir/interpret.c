@@ -313,20 +313,15 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             return true;
         }
-        case BYTECODE_CALL_DIRECT_: {
+        case BYTECODE_CALL_DIRECT: {
             breakpoint();
             log(LOG_TRACE, "bytecode_call_direct\n");
 
+            static_assert(BYTECODE_CALL_DIRECT_SIZE == 24, "implement functions with arguments?");
+
             uint64_t addr = interpret_read_uint64_t_aligned();
-            uint64_t start_args = interpret_read_uint64_t_aligned();
             uint64_t arg_bytes = interpret_read_uint64_t_aligned();
             assert(get_next_multiple(arg_bytes, 8) == arg_bytes);
-
-            if (arg_bytes > 0) {
-                todo();
-            } else {
-                //todo();
-            }
 
             assert(inter_base_ptr > 0);
             uint64_t old_base_ptr = inter_base_ptr;
@@ -413,7 +408,7 @@ void interpret(void) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
         inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        //breakpoint();
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
