@@ -203,7 +203,7 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
 static void ir_to_bytecode_return(Ir_return* rtn) {
     ir_to_bytecode_comment("return thing thing 76");
 
-    ir_to_bytecode_push_ir(ir_from_ir_name(rtn->child), false);
+    ir_to_bytecode_push_ir(ir_from_ir_name(rtn->child), true);
 
     //breakpoint();
     size_t old_count = SIZE_MAX;
@@ -484,6 +484,7 @@ static uint64_t ir_to_bytecode_pop_internal(uint64_t sizeof_pop) {
 
 static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
     ir_to_bytecode_comment("load_another_ir");
+    ir_to_bytecode_comment("load_another_ir");
 
     size_t old_count = SIZE_MAX;
     (void) load;
@@ -506,6 +507,9 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         uint64_t sizeof_lang_type = sizeof_ir_lang_type(load->lang_type);
         uint64_t dest_pos = ir_to_bytecode_alloc_internal(sizeof_lang_type, false, true);
         log(LOG_DEBUG, FMT"\n", bytecode_alloca_pos_print(dest_pos));
+        if (dest_pos == 552) {
+            breakpoint();
+        }
         uint64_t load_src_pos = ir_to_bytecode_push_ir(load_src, false);
 
         ir_to_bytecode_comment("load_another_ir actual thing");
@@ -853,6 +857,7 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
         //breakpoint();
     }
 
+    //breakpoint();
     if (0 && bytecode_is_backpatching) {
         unreachable("");
         // TODO: 
