@@ -66,6 +66,8 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
 
 #define inter_binary(bin) \
     do { \
+        inter_stack_dump(LOG_DEBUG); \
+        \
         uint64_t start_args = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_pos = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_size = interpret_read_uint64_t_aligned(); \
@@ -74,6 +76,9 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         uint64_t pos_rhs = pos_lhs; \
         bytecode_stack_size_add_aligned(&pos_rhs, alloca_size); \
         \
+        log(LOG_DEBUG, #bin" alloca_pos = %zu\n", alloca_pos); \
+        log(LOG_DEBUG, #bin" pos_lhs = %zu\n", pos_lhs); \
+        log(LOG_DEBUG, #bin" pos_rhs = %zu\n", pos_rhs); \
         uint64_t lhs = bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size); \
         uint64_t rhs = bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size); \
         \
@@ -435,9 +440,12 @@ void interpret(void) {
 
     while (interpret_instruction()) {
         //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - inter_stack_size);
-        inter_stack_dump(LOG_DEBUG);
+        //inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
-        breakpoint();
+        //if (inter_prog_counter == 2144) {
+            breakpoint();
+        //}
+        //breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

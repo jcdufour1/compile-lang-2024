@@ -153,6 +153,8 @@ static void ir_to_bytecode_expr_inline(Ir_expr* expr);
 
 static void ir_to_bytecode_unary(Ir_unary* unary);
 
+static uint64_t ir_to_bytecode_pop_internal(uint64_t sizeof_pop);
+
 // arg is item to jump to (offset from start of code)
 static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
     ir_to_bytecode_comment("goto");
@@ -176,7 +178,7 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
 static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
     ir_to_bytecode_comment("goto");
 
-    ir_to_bytecode_push_ir(ir_from_ir_name(cond_goto->condition), false);
+    ir_to_bytecode_push_ir(ir_from_ir_name(cond_goto->condition), true);
 
     size_t old_count = bytecode.code.info.count;
     (void) old_count;
@@ -194,6 +196,8 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
         unwrap(ir_lookup(&if_false_pos_name, symbol_name_to_int_name(cond_goto->if_false)));
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_false_pos_name)))->data);
     }
+
+    ir_to_bytecode_pop_internal(1);
 
     assert(bytecode.code.info.count - old_count == BYTECODE_COND_GOTO_SIZE);
 }
@@ -319,6 +323,9 @@ static void ir_to_bytecode_inline(Ir* ir) {
 static void ir_to_bytecode_block(Ir_block* block) {
     darr_foreach(idx, Ir*, ir, block->children) {
         log(LOG_DEBUG, FMT"\n", ir_print(ir));
+        if (ir->type == IR_LITERAL) {
+            //breakpoint();
+        }
         ir_to_bytecode_inline(ir);
     }
 }
