@@ -322,11 +322,12 @@ Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, Indent in
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "load_another_ir", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
-    extend_ir_name(NAME_LOG, &buf, load->name);
-    extend_child_name(&buf, "src", load->ir_src);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "load_another_ir\n", indent);
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, load->lang_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "name self: "FMT"\n", ir_name_print(NAME_LOG, load->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "name child: "FMT"\n", ir_name_print(NAME_LOG, load->ir_src));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);

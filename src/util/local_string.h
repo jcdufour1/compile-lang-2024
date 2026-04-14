@@ -220,6 +220,9 @@ static inline Strv strv_first_upper_print_internal(Arena* arena, Strv strv) {
 __attribute__((format (printf, 3, 4)))
 void string_extend_f(Arena* arena, String* string, const char* format, ...);
 
+__attribute__((format (printf, 4, 5)))
+void string_extend_f_indent(Arena* arena, String* string, Indent indent, const char* format, ...);
+
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
 
