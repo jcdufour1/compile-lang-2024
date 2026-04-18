@@ -45,7 +45,7 @@ static void msg_undefined_type_internal(
             DIAG_UNDEFINED_TYPE,
             pos,
             "type `"FMT"` is not defined\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+            ulang_type_print_(LANG_TYPE_MODE_MSG, lang_type)
         );
 
 end:
@@ -437,7 +437,7 @@ static bool resolve_generics_ulang_type_int_liternal(LANG_TYPE_TYPE* type, Ulang
             return false;
         case UAST_GENERIC_PARAM:
             // TODO: explain why it is unreachable
-            log(LOG_ERROR, FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            log(LOG_ERROR, FMT"\n", ulang_type_print_(LANG_TYPE_MODE_LOG, lang_type));
             unreachable("");
         case UAST_FUNCTION_DEF:
             msg_todo("", ulang_type_get_pos(lang_type));

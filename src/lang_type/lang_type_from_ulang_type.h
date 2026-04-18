@@ -97,7 +97,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     } else if (strv_is_equal(name.base, sv("opaque"))) {
         return lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(lang_type.pos, ulang_type_regular_get_pointer_depth(lang_type))));
     } else {
-        log(LOG_DEBUG, FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
+        log(LOG_DEBUG, FMT"\n", ulang_type_print_(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
     }
     unreachable("");

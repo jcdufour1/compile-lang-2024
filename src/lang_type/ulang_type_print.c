@@ -4,7 +4,7 @@
 #include <lang_type_print.h>
 #include <env.h>
 
-Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
+Strv ulang_type_print_internal_(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     bool old_silent_resol_errors = env.silent_generic_resol_errors;
     env.silent_generic_resol_errors = true;
     if (mode == LANG_TYPE_MODE_MSG) {

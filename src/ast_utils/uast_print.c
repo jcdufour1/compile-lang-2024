@@ -57,7 +57,7 @@ Strv uast_unary_print_internal(UAST_MODE mode, const Uast_unary* unary, Indent i
             extend_pos(&buf, unary->pos);
             string_extend_cstr(&a_temp, &buf, "\n");
             string_extend_cstr_indent(&a_temp, &buf, "", indent);
-            string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, unary->lang_type));
+            string_extend_f(&a_temp, &buf, FMT"\n", ulang_type_print_(LANG_TYPE_MODE_LOG, unary->lang_type));
 
             string_extend_strv(&a_temp, &buf, uast_expr_print_internal(mode, unary->child, indent));
             break;
@@ -876,15 +876,11 @@ Strv uast_generic_param_print_internal(UAST_MODE mode, const Uast_generic_param*
     switch (mode) {
         case UAST_LOG:
             string_extend_cstr_indent(&a_temp, &buf, "generic_params\n", indent);
-            string_extend_strv_indent(&a_temp, &buf, sv(""), indent + INDENT_WIDTH);
+            indent += INDENT_WIDTH;
             if (param->is_expr) {
-                string_extend_cstr(&a_temp, &buf, "expr: ");
-                string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, param->expr_lang_type));
-                string_extend_cstr(&a_temp, &buf, "\n");
-                string_extend_strv_indent(&a_temp, &buf, sv(""), indent + INDENT_WIDTH);
+                string_extend_f_indent(&a_temp, &buf, indent, "expr: "FMT"\n", ulang_type_print_(LANG_TYPE_MODE_LOG, param->expr_lang_type));
             }
-            extend_name(NAME_LOG, &buf, param->name);
-            string_extend_cstr(&a_temp, &buf, "\n");
+            string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", name_print(NAME_LOG, param->name, NAME_BASE_ONLY));
             break;
         case UAST_MSG:
             msg_todo("", param->pos);
@@ -1019,7 +1015,7 @@ Strv uast_fn_print_internal(UAST_MODE mode, const Uast_fn* fn, Indent indent) {
     switch (mode) {
         case UAST_LOG:
             string_extend_cstr_indent(&a_temp, &buf, "fn", indent);
-            string_extend_strv(&a_temp, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, ulang_type_fn_const_wrap(fn->ulang_type)));
+            string_extend_strv(&a_temp, &buf, ulang_type_print_internal_(LANG_TYPE_MODE_LOG, ulang_type_fn_const_wrap(fn->ulang_type)));
             string_extend_cstr(&a_temp, &buf, "\n");
             break;
         case UAST_MSG:

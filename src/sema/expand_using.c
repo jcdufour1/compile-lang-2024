@@ -44,7 +44,7 @@ static void expand_using_using(Uast_using* using) {
                 DIAG_NOTE,
                 uast_def_get_pos(struct_def_),
                 "type `"FMT"` is defined as a non-struct type\n",
-                ulang_type_print(LANG_TYPE_MODE_MSG, var_def->lang_type)
+                ulang_type_print_(LANG_TYPE_MODE_MSG, var_def->lang_type)
             );
             return;
         }
