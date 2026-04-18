@@ -571,7 +571,7 @@ end:
 
 static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
     Ulang_type prev_fn_rtn_type = env.parent_fn_rtn_type;
-    env.parent_fn_rtn_type = def->decl->return_type;
+    env.parent_fn_rtn_type = def->decl->return_type; // TODO: move env.parent_fn_rtn_type to type_env.parent_fn_rtn_type?
     bool status = true;
 
     Tast_function_decl* new_decl = NULL;
