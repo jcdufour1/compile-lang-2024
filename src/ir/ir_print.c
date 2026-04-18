@@ -24,13 +24,14 @@ Strv ir_binary_print_internal(const Ir_binary* binary, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "binary", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
-    string_extend_strv(&a_temp, &buf, ir_binary_type_to_strv(binary->token_type));
-    extend_ir_name(NAME_LOG, &buf, binary->name);
-    extend_child_name(&buf, "lhs", binary->lhs);
-    extend_child_name(&buf, "rhs", binary->rhs);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "binary");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "op: "FMT"\n", ir_binary_type_print(binary->token_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, binary->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, binary->lang_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "lhs: "FMT"\n", ir_name_print(NAME_LOG, binary->lhs));
+    string_extend_f_indent(&a_temp, &buf, indent, "rhs: "FMT"\n", ir_name_print(NAME_LOG, binary->rhs));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -424,11 +425,9 @@ static void extend_ir_struct_def_base(String* buf, const char* type_name, Ir_str
     indent += INDENT_WIDTH;
 
     string_extend_f_indent(&a_temp, buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, base.name));
-    log(LOG_DEBUG, FMT"\n", string_print(*buf));
-    todo();
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = ir_struct_memb_def_print_internal(darr_at(base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = ir_struct_memb_def_print_internal(darr_at(base.members, idx), indent);
         string_extend_strv(&a_temp, buf, memb_text);
     }
 }

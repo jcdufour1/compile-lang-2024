@@ -368,7 +368,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_f(&a_temp, buf, FMT"\n", ulang_type_print_(mode == UNAME_MSG ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
+        string_extend_f(&a_temp, buf, FMT, ulang_type_print_(mode == UNAME_MSG ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
@@ -395,15 +395,21 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
 
 void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
+    log(LOG_DEBUG, FMT"\n", string_print(*buf));
     switch (mode) {
         case NAME_MSG:
             extend_name(mode, buf, ir_name_to_name(name));
             return;
         case NAME_LOG:
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             extend_name(mode, buf, *(Name*)&name);
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_cstr(&a_temp, buf, "(");
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             extend_name(mode, buf, ir_name_to_name(name));
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_cstr(&a_temp, buf, ")");
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             return;
         case NAME_EMIT_C:
             fallthrough;
