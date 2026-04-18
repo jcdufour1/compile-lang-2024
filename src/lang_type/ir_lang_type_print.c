@@ -55,7 +55,7 @@ Strv ir_lang_type_darr_print_internal(Ir_lang_type_darr types) {
     return string_to_strv(buf);
 }
 
-Strv ir_lang_type_print_internal_(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
+Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     String buf = {0};
     extend_ir_lang_type_to_string(&buf, mode, ir_lang_type);
     switch (mode) {
