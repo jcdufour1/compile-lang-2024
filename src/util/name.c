@@ -16,10 +16,6 @@ Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-Ir_name ir_name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
-    return name_to_ir_name(name_new(mod_path, base, gen_args, scope_id));
-}
-
 // this function will convert `io.i32` to `i32`, etc.
 static Uname uname_normalize(Uname name) {
     if (lang_type_name_base_is_number(name.base)) {
@@ -50,62 +46,6 @@ Uname name_to_uname(Name name) {
 #   endif // NDEBUG
 
     return uname_new_internal(alias_name, name.base, name.gen_args, name.scope_id);
-}
-
-Name ir_name_to_name(Ir_name name) {
-    assert(name.base.count > 0);
-    if (name.scope_id == SCOPE_NOT) {
-        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
-        return *(Name*)&name;
-    }
-
-    Ir_name_to_name_table_node* result = NULL;
-    unwrap(
-        ir_name_to_name_lookup(&result, name) &&
-        "\"ir_name_new\" function should not be used directly; use \"name_to_ir_name(name_new(\" instead"
-    );
-    return result->name_regular;
-}
-
-// TODO: Attrs should be stored in hash tables instead of in Name and Ir_name?
-Ir_name name_to_ir_name(Name name) {
-    assert(name.base.count > 0);
-
-    if (name.scope_id == SCOPE_NOT) {
-        static_assert(sizeof(name) == sizeof(Ir_name), "the type punning below will probably not work anymore");
-        return *(Ir_name*)&name;
-    }
-
-    Name_to_ir_name_table_node* result = NULL;
-    if (name_to_ir_name_lookup(&result, name)) {
-        return result->ir_name;
-    }
-
-    if (name.scope_id == SCOPE_TOP_LEVEL) {
-        Ir_name ir_name = *(Ir_name*)&name;
-        static_assert(sizeof(name) == sizeof(ir_name), "the type punning above will probably not work anymore");
-        unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
-        unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-        return ir_name;
-    }
-
-    Scope_id curr = name.scope_id;
-    Scope_id prev = SCOPE_NOT;
-    while (curr != SCOPE_TOP_LEVEL) {
-        prev = curr;
-        curr = scope_get_parent_tbl_lookup(curr);
-    }
-    assert(prev != SCOPE_TOP_LEVEL && prev != SCOPE_NOT);
-
-    Name ir_name_ = util_literal_name_new();
-    Ir_name ir_name = *(Ir_name*)&ir_name_;
-    static_assert(sizeof(ir_name_) == sizeof(ir_name), "the type punning above will probably not work anymore");
-    ir_name.scope_id = prev;
-    assert(ir_name.scope_id != SCOPE_TOP_LEVEL);
-    assert(name.scope_id != SCOPE_TOP_LEVEL);
-    unwrap(ir_name_to_name_add((Ir_name_to_name_table_node) {.name_self = ir_name, .name_regular = name}));
-    unwrap(name_to_ir_name_add((Name_to_ir_name_table_node) {.name_self = name, .ir_name = ir_name}));
-    return ir_name;
 }
 
 Uname uname_new(Name mod_alias, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
@@ -150,7 +90,7 @@ void serialize_strv(String* buf, Strv strv) {
 }
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
-// TODO: deduplicate serialize_name_symbol_table and serialize_ir_name_symbol_table?
+// TODO: deduplicate serialize_name_symbol_table and serialize_name_symbol_table?
 // TODO: this function seems confusing and needlessly complex
 Strv serialize_name_symbol_table(Arena* arena, Name name) {
     // TODO: remove this if body, and instead assert that a and b mod_path always == MOD_PATH_BUILTIN
@@ -220,11 +160,6 @@ Strv serialize_name_symbol_table(Arena* arena, Name name) {
     return string_to_strv(buf);
 }
 
-Strv serialize_ir_name_symbol_table(Arena* arena, Ir_name name) {
-    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    return serialize_name_symbol_table(arena, *(Name*)&name);
-}
-
 Strv serialize_name(Name name) {
     String buf = {0};
 
@@ -256,18 +191,6 @@ Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, NAME_BASE_ON
         
     String buf = {0};
     extend_name(mode, &buf, name);
-    return string_to_strv(buf);
-}
-
-Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name) {
-    if (serialize) {
-        todo();
-        static_assert(sizeof(Name) == sizeof(Ir_name), "this type punning below will no longer work");
-        return serialize_name(*(Name*)&name);
-    }
-        
-    String buf = {0};
-    extend_ir_name(mode, &buf, name);
     return string_to_strv(buf);
 }
 
@@ -393,27 +316,6 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
     unreachable("");
 }
 
-void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
-    static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    switch (mode) {
-        case NAME_MSG:
-            extend_name(mode, buf, ir_name_to_name(name));
-            return;
-        case NAME_LOG:
-            extend_name(mode, buf, *(Name*)&name);
-            string_extend_cstr(&a_temp, buf, "(");
-            extend_name(mode, buf, ir_name_to_name(name));
-            string_extend_cstr(&a_temp, buf, ")");
-            return;
-        case NAME_EMIT_C:
-            fallthrough;
-        case NAME_EMIT_IR:
-            extend_name(mode, buf, *(Name*)&name);
-            return;
-    }
-    unreachable("");
-}
-
 Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return name_new(name.mod_path, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
@@ -422,11 +324,6 @@ Name name_clone(Name name, bool use_new_scope, Scope_id new_scope) {
 Uname uname_clone(Uname name, bool use_new_scope, Scope_id new_scope) {
     Scope_id scope = use_new_scope ? new_scope : name.scope_id;
     return uname_new(name.mod_alias, name.base, ulang_type_darr_clone(name.gen_args, use_new_scope, new_scope), scope);
-}
-
-bool ir_name_is_equal(Ir_name a, Ir_name b) {
-    static_assert(sizeof(a) == sizeof(Name) && sizeof(b) == sizeof(Name), "type punning below might not work anymore");
-    return name_is_equal(*(Name*)&a, *(Name*)&b);
 }
 
 bool name_is_equal(Name a, Name b) {

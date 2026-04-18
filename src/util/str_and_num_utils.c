@@ -441,10 +441,6 @@ Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Str
     return name_new(MOD_PATH_BUILTIN, util_literal_strv_new_internal(file, line, debug_prefix), (Ulang_type_darr) {0}, scope_id);
 }
 
-Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id) {
-    return name_to_ir_name(util_literal_name_new_prefix_scope_internal(file, line, debug_prefix, scope_id));
-}
-
 Strv serialize_double(double num) {
     String buf = {0};
 

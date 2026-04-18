@@ -37,7 +37,7 @@ static Ir* rm_void_label(Ir_label* label, bool is_inline) {
     }
 
     // avoid duplicate labels
-    Name block_scope = ir_name_to_name(label->name);
+    Name block_scope = label->name;
 
     String buf = {0};
     string_extend_cstr(&a_main/*TODO*/, &buf, "s");

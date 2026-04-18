@@ -105,7 +105,7 @@ Ir_lang_type ir_get_lang_type(const Ir* ir) {
     unreachable("");
 }
 
-Ir_name ir_literal_get_name(const Ir_literal* lit) {
+Name ir_literal_get_name(const Ir_literal* lit) {
     switch (lit->type) {
         case IR_INT:
             return ir_int_const_unwrap(lit)->name;
@@ -121,7 +121,7 @@ Ir_name ir_literal_get_name(const Ir_literal* lit) {
     unreachable("");
 }
 
-Ir_name ir_operator_get_name(const Ir_operator* operator) {
+Name ir_operator_get_name(const Ir_operator* operator) {
     switch (operator->type) {
         case IR_BINARY:
             return ir_binary_const_unwrap(operator)->name;
@@ -131,7 +131,7 @@ Ir_name ir_operator_get_name(const Ir_operator* operator) {
     unreachable("");
 }
 
-Ir_name ir_expr_get_name(const Ir_expr* expr) {
+Name ir_expr_get_name(const Ir_expr* expr) {
     switch (expr->type) {
         case IR_OPERATOR:
             return ir_operator_get_name(ir_operator_const_unwrap(expr));
@@ -143,7 +143,7 @@ Ir_name ir_expr_get_name(const Ir_expr* expr) {
     unreachable("");
 }
 
-Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
+Name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
     switch (lit_def->type) {
         case IR_STRUCT_LIT_DEF:
             return ir_struct_lit_def_const_unwrap(lit_def)->name;
@@ -153,10 +153,10 @@ Ir_name ir_literal_def_get_name(const Ir_literal_def* lit_def) {
     unreachable("");
 }
 
-Ir_name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
+Name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
     switch (def->type) {
         case IR_PRIMITIVE_DEF: {
-            Ir_name result = {0};
+            Name result = {0};
             unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
             return result;
         }
@@ -176,7 +176,7 @@ Ir_name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
     unreachable("");
 }
 
-Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
+Name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
     switch (ir->type) {
         case IR_DEF:
             return ir_def_get_name(mode, ir_def_const_unwrap(ir));
@@ -203,7 +203,7 @@ Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return name_to_ir_name(name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL));
+            return name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:
@@ -212,24 +212,25 @@ Ir_name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
     unreachable("");
 }
 
-Ir_lang_type lang_type_from_ir_name(Ir_name name) {
-    return ir_get_lang_type(ir_from_ir_name(name));
+// TODO: remove this function or rename to ir_lang_type_from_name
+Ir_lang_type lang_type_from_ir_name(Name name) {
+    return ir_get_lang_type(ir_from_name(name));
 }
 
 // TODO: use this instead of the verbose `ir_lookup` in more places?
-Ir* ir_from_ir_name(Ir_name name) {
+Ir* ir_from_name(Name name) {
     Ir* result = NULL;
     unwrap(ir_lookup(&result,  name));
     return result;
 }
 
-size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Ir_name memb_name) {
+size_t struct_def_get_idx_matching_member(Ir_struct_def* def, Name memb_name) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
-        if (ir_name_is_equal(darr_at(def->base.members, idx)->name_self, memb_name)) {
+        if (name_is_equal(darr_at(def->base.members, idx)->name_self, memb_name)) {
             return idx;
         }
     }
     log(LOG_DEBUG, FMT"\n", ir_print(def));
-    unreachable(FMT, ir_name_print(NAME_MSG, memb_name));
+    unreachable(FMT, name_print(NAME_MSG, memb_name, NAME_FULL));
 }
 

@@ -9,7 +9,7 @@
 static Uast_type ir_gen_block(void) {
     Uast_type block = {.name = uast_name_new("ir", "block", false, "ir")};
 
-    append_member(&block.members, "Ir_name", "name");
+    append_member(&block.members, "Name", "name");
     append_member(&block.members, "Ir_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
@@ -21,10 +21,10 @@ static Uast_type ir_gen_block(void) {
 static Uast_type ir_gen_unary(void) {
     Uast_type unary = {.name = uast_name_new("operator", "unary", false, "ir")};
 
-    append_member(&unary.members, "Ir_name", "child");
+    append_member(&unary.members, "Name", "child");
     append_member(&unary.members, "IR_UNARY_TYPE", "token_type");
     append_member(&unary.members, "Ir_lang_type", "lang_type");
-    append_member(&unary.members, "Ir_name", "name");
+    append_member(&unary.members, "Name", "name");
 
     return unary;
 }
@@ -32,11 +32,11 @@ static Uast_type ir_gen_unary(void) {
 static Uast_type ir_gen_binary(void) {
     Uast_type binary = {.name = uast_name_new("operator", "binary", false, "ir")};
 
-    append_member(&binary.members, "Ir_name", "lhs");
-    append_member(&binary.members, "Ir_name", "rhs");
+    append_member(&binary.members, "Name", "lhs");
+    append_member(&binary.members, "Name", "rhs");
     append_member(&binary.members, "IR_BINARY_TYPE", "token_type");
     append_member(&binary.members, "Ir_lang_type", "lang_type");
-    append_member(&binary.members, "Ir_name", "name");
+    append_member(&binary.members, "Name", "name");
 
     return binary;
 }
@@ -55,7 +55,7 @@ static Uast_type ir_gen_int(void) {
 
     append_member(&number.members, "int64_t", "data");
     append_member(&number.members, "Ir_lang_type", "lang_type");
-    append_member(&number.members, "Ir_name", "name");
+    append_member(&number.members, "Name", "name");
 
     return number;
 }
@@ -65,7 +65,7 @@ static Uast_type ir_gen_float(void) {
 
     append_member(&number.members, "double", "data");
     append_member(&number.members, "Ir_lang_type", "lang_type");
-    append_member(&number.members, "Ir_name", "name");
+    append_member(&number.members, "Name", "name");
 
     return number;
 }
@@ -74,7 +74,7 @@ static Uast_type ir_gen_string(void) {
     Uast_type string = {.name = uast_name_new("literal", "string", false, "ir")};
 
     append_member(&string.members, "Strv", "data");
-    append_member(&string.members, "Ir_name", "name");
+    append_member(&string.members, "Name", "name");
 
     return string;
 }
@@ -82,8 +82,8 @@ static Uast_type ir_gen_string(void) {
 static Uast_type ir_gen_function_name(void) {
     Uast_type lang_char = {.name = uast_name_new("literal", "function_name", false, "ir")};
 
-    append_member(&lang_char.members, "Ir_name", "fun_name");
-    append_member(&lang_char.members, "Ir_name", "name_self");
+    append_member(&lang_char.members, "Name", "fun_name");
+    append_member(&lang_char.members, "Name", "name_self");
 
     return lang_char;
 }
@@ -91,7 +91,7 @@ static Uast_type ir_gen_function_name(void) {
 static Uast_type ir_gen_void(void) {
     Uast_type lang_void = {.name = uast_name_new("literal", "void", false, "ir")};
 
-    append_member(&lang_void.members, "Ir_name", "name");
+    append_member(&lang_void.members, "Name", "name");
 
     return lang_void;
 }
@@ -111,9 +111,9 @@ static Uast_type ir_gen_literal(void) {
 static Uast_type ir_gen_function_call(void) {
     Uast_type call = {.name = uast_name_new("expr", "function_call", false, "ir")};
 
-    append_member(&call.members, "Ir_name_darr", "args");
-    append_member(&call.members, "Ir_name", "name_self");
-    append_member(&call.members, "Ir_name", "callee");
+    append_member(&call.members, "Name_darr", "args");
+    append_member(&call.members, "Name", "name_self");
+    append_member(&call.members, "Name", "callee");
     append_member(&call.members, "Ir_lang_type", "lang_type");
 
     return call;
@@ -142,7 +142,7 @@ static Uast_type ir_gen_function_decl(void) {
 
     append_member(&def.members, "Ir_function_params*", "params");
     append_member(&def.members, "Ir_lang_type", "return_type");
-    append_member(&def.members, "Ir_name", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -150,7 +150,7 @@ static Uast_type ir_gen_function_decl(void) {
 static Uast_type ir_gen_function_def(void) {
     Uast_type def = {.name = uast_name_new("def", "function_def", false, "ir")};
 
-    append_member(&def.members, "Ir_name", "name_self");
+    append_member(&def.members, "Name", "name_self");
     append_member(&def.members, "Ir_function_decl*", "decl");
     append_member(&def.members, "Ir_block*", "body");
 
@@ -162,8 +162,8 @@ static Uast_type ir_gen_variable_def(void) {
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
-    append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
-    append_member(&def.members, "Ir_name", "name_corr_param"); // for loading from lang_alloca
+    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "Name", "name_corr_param"); // for loading from lang_alloca
     append_member(&def.members, "Attrs", "attrs");
 
     return def;
@@ -180,7 +180,7 @@ static Uast_type ir_gen_primitive_def(void) {
 static Uast_type ir_gen_label(void) {
     Uast_type def = {.name = uast_name_new("def", "label", false, "ir")};
 
-    append_member(&def.members, "Ir_name", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -188,7 +188,7 @@ static Uast_type ir_gen_label(void) {
 static Uast_type ir_gen_string_def(void) {
     Uast_type def = {.name = uast_name_new("literal_def", "string_def", false, "ir")};
 
-    append_member(&def.members, "Ir_name", "name");
+    append_member(&def.members, "Name", "name");
     append_member(&def.members, "Strv", "data");
 
     return def;
@@ -198,7 +198,7 @@ static Uast_type ir_gen_struct_lit_def(void) {
     Uast_type def = {.name = uast_name_new("literal_def", "struct_lit_def", false, "ir")};
 
     append_member(&def.members, "Ir_expr_darr", "members");
-    append_member(&def.members, "Ir_name", "name");
+    append_member(&def.members, "Name", "name");
     append_member(&def.members, "Ir_lang_type", "lang_type");
 
     return def;
@@ -232,8 +232,8 @@ static Uast_type ir_gen_load_element_ptr(void) {
 
     append_member(&load.members, "Ir_lang_type", "lang_type");
     append_member(&load.members, "size_t", "memb_idx");
-    append_member(&load.members, "Ir_name", "ir_src");
-    append_member(&load.members, "Ir_name", "name_self");
+    append_member(&load.members, "Name", "ir_src");
+    append_member(&load.members, "Name", "name_self");
 
     return load;
 }
@@ -242,9 +242,9 @@ static Uast_type ir_gen_array_access(void) {
     Uast_type load = {.name = uast_name_new("ir", "array_access", false, "ir")};
 
     append_member(&load.members, "Ir_lang_type", "lang_type");
-    append_member(&load.members, "Ir_name", "index");
-    append_member(&load.members, "Ir_name", "callee");
-    append_member(&load.members, "Ir_name", "name_self");
+    append_member(&load.members, "Name", "index");
+    append_member(&load.members, "Name", "callee");
+    append_member(&load.members, "Name", "name_self");
 
     return load;
 }
@@ -252,7 +252,7 @@ static Uast_type ir_gen_array_access(void) {
 static Uast_type ir_gen_function_params(void) {
     Uast_type params = {.name = uast_name_new("ir", "function_params", false, "ir")};
 
-    append_member(&params.members, "Ir_name", "name");
+    append_member(&params.members, "Name", "name");
     append_member(&params.members, "Ir_variable_def_darr", "params");
 
     return params;
@@ -261,8 +261,8 @@ static Uast_type ir_gen_function_params(void) {
 static Uast_type ir_gen_return(void) {
     Uast_type rtn = {.name = uast_name_new("ir", "return", false, "ir")};
 
-    append_member(&rtn.members, "Ir_name", "name_self");
-    append_member(&rtn.members, "Ir_name", "child");
+    append_member(&rtn.members, "Name", "name_self");
+    append_member(&rtn.members, "Name", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
@@ -271,8 +271,8 @@ static Uast_type ir_gen_return(void) {
 static Uast_type ir_gen_goto(void) {
     Uast_type lang_goto = {.name = uast_name_new("ir", "goto", false, "ir")};
 
-    append_member(&lang_goto.members, "Ir_name", "name_self");
-    append_member(&lang_goto.members, "Ir_name", "label");
+    append_member(&lang_goto.members, "Name", "name_self");
+    append_member(&lang_goto.members, "Name", "label");
 
     return lang_goto;
 }
@@ -280,10 +280,10 @@ static Uast_type ir_gen_goto(void) {
 static Uast_type ir_gen_cond_goto(void) {
     Uast_type cond_goto = {.name = uast_name_new("ir", "cond_goto", false, "ir")};
 
-    append_member(&cond_goto.members, "Ir_name", "name_self");
-    append_member(&cond_goto.members, "Ir_name", "condition");
-    append_member(&cond_goto.members, "Ir_name", "if_true");
-    append_member(&cond_goto.members, "Ir_name", "if_false");
+    append_member(&cond_goto.members, "Name", "name_self");
+    append_member(&cond_goto.members, "Name", "condition");
+    append_member(&cond_goto.members, "Name", "if_true");
+    append_member(&cond_goto.members, "Name", "if_false");
 
     return cond_goto;
 }
@@ -292,7 +292,7 @@ static Uast_type ir_gen_alloca(void) {
     Uast_type lang_alloca = {.name = uast_name_new("ir", "alloca", false, "ir")};
 
     append_member(&lang_alloca.members, "Ir_lang_type", "lang_type");
-    append_member(&lang_alloca.members, "Ir_name", "name");
+    append_member(&lang_alloca.members, "Name", "name");
     append_member(&lang_alloca.members, "Attrs", "attrs");
 
     return lang_alloca;
@@ -301,9 +301,9 @@ static Uast_type ir_gen_alloca(void) {
 static Uast_type ir_gen_load_another_ir(void) {
     Uast_type load = {.name = uast_name_new("ir", "load_another_ir", false, "ir")};
 
-    append_member(&load.members, "Ir_name", "ir_src");
+    append_member(&load.members, "Name", "ir_src");
     append_member(&load.members, "Ir_lang_type", "lang_type");
-    append_member(&load.members, "Ir_name", "name");
+    append_member(&load.members, "Name", "name");
 
     return load;
 }
@@ -313,10 +313,10 @@ static Uast_type ir_gen_store_another_ir(void) {
     // TODO: add system to add arbritry text to start of generated function so that above assert todo can be fulfilled
     Uast_type store = {.name = uast_name_new("ir", "store_another_ir", false, "ir")};
 
-    append_member(&store.members, "Ir_name", "ir_src");
-    append_member(&store.members, "Ir_name", "ir_dest");
+    append_member(&store.members, "Name", "ir_src");
+    append_member(&store.members, "Name", "ir_dest");
     append_member(&store.members, "Ir_lang_type", "lang_type");
-    append_member(&store.members, "Ir_name", "name");
+    append_member(&store.members, "Name", "name");
 
     return store;
 }
@@ -340,7 +340,7 @@ static Uast_type ir_gen_struct_memb_def(void) {
     Uast_type def = {.name = uast_name_new("ir", "struct_memb_def", false, "ir")};
 
     append_member(&def.members, "Ir_lang_type", "lang_type");
-    append_member(&def.members, "Ir_name", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
     append_member(&def.members, "size_t", "count"); // TODO: change size_t to int64_t or uint64_t 
                                                     // (becuause array count size is not always based on computer compile happens)
 

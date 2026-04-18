@@ -15,7 +15,7 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 
-static void emit_c_extend_name(String* output, Ir_name name) {
+static void emit_c_extend_name(String* output, Name name) {
 #   ifndef NDEBUG
         Ir* result = NULL;
         if (ir_lookup(&result, name) && result->type == IR_EXPR && ir_expr_unwrap(result)->type == IR_LITERAL) {
@@ -38,7 +38,7 @@ typedef struct {
 
 static void emit_c_block(Emit_c_strs* strs, const Ir_block* block);
 
-static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child);
+static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access);
 
@@ -181,15 +181,15 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Ir_struct_def* def) {
         string_extend_cstr(&a_pass, &buf, "    ");
         Ir_lang_type ir_lang_type = {0};
         if (ir_is_struct_like(darr_at(def->base.members, idx)->lang_type.type)) {
-            Ir_name ori_name = {0};
+            Name ori_name = {0};
             unwrap(ir_lang_type_get_name(&ori_name, LANG_TYPE_MODE_EMIT_C, darr_at(def->base.members, idx)->lang_type));
-            Ir_name* struct_to_use = NULL;
+            Name* struct_to_use = NULL;
             if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
                 Ir* child_def_  = NULL;
                 unwrap(ir_lookup(&child_def_, ori_name));
                 Ir_struct_def* child_def = ir_struct_def_unwrap(ir_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_pass, sizeof(*struct_to_use));
-                *struct_to_use = util_literal_ir_name_new();
+                *struct_to_use = util_literal_name_new();
                 Ir_struct_def* new_def = ir_struct_def_new(def->pos, ((Ir_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
@@ -484,7 +484,7 @@ static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Ir_expr* expr) {
 }
 
 // use this for expressions that may be literal
-static void emit_c_expr_piece(Emit_c_strs* strs, Ir_name child) {
+static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
     Ir* result = NULL;
     unwrap(ir_lookup(&result, child));
 
@@ -540,7 +540,7 @@ static void emit_c_return(Emit_c_strs* strs, const Ir_return* rtn) {
 
 static void emit_c_alloca(String* output, const Ir_alloca* lang_alloca) {
     emit_c_loc(output, ir_get_loc(lang_alloca), lang_alloca->pos);
-    Ir_name storage_loc = util_literal_ir_name_new();
+    Name storage_loc = util_literal_name_new();
 
     string_extend_cstr(&a_pass, output, "    ");
     c_extend_type_call_str(output, ir_lang_type_pointer_depth_dec(lang_alloca->lang_type), true, false);
@@ -630,7 +630,7 @@ static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Ir_load_element_ptr* load) {
     emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     Ir* struct_def_ = NULL;
-    Ir_name def_name = {0};
+    Name def_name = {0};
     unwrap(ir_lang_type_get_name(&def_name, LANG_TYPE_MODE_EMIT_C, lang_type_from_ir_name(load->ir_src)));
     unwrap(ir_lookup(&struct_def_, def_name));
 
@@ -662,7 +662,7 @@ static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access
     string_extend_cstr(&a_pass, &strs->output, "]);\n");
 }
 
-static void emit_c_goto_internal(Emit_c_strs* strs, Ir_name label) {
+static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
     string_extend_cstr(&a_pass, &strs->output, "    goto ");
     emit_c_extend_name(&strs->output, label);
     string_extend_cstr(&a_pass, &strs->output, ";\n");
