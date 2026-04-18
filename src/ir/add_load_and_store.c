@@ -2163,8 +2163,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             util_literal_name_new(),
             (Ir_darr) {0},
             old_fun_def->body->pos_end,
-            old_fun_def->body->scope_id,
-            (Cfg_node_darr) {0}
+            old_fun_def->body->scope_id
         )
     );
 
@@ -2426,8 +2425,7 @@ static Ir_block* if_stmt_to_branch(Tast_if* if_statement, Name next_if, bool is_
         util_literal_name_new(),
         (Ir_darr) {0},
         inner_block->pos_end,
-        if_statement->body->scope_id,
-        (Cfg_node_darr) {0}
+        if_statement->body->scope_id
     );
     load_label(new_block, tast_label_new(
         new_block->pos,
@@ -2500,8 +2498,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         util_literal_name_new(),
         (Ir_darr) {0},
         if_else->pos,
-        symbol_collection_new(scope_get_parent_tbl_lookup(darr_at(if_else->tasts, 0)->body->scope_id), util_literal_name_new()),
-        (Cfg_node_darr) {0}
+        symbol_collection_new(scope_get_parent_tbl_lookup(darr_at(if_else->tasts, 0)->body->scope_id), util_literal_name_new())
     );
     load_label(*new_block, tast_label_new((*new_block)->pos, util_literal_name_new(), scope_to_name_tbl_lookup((*new_block)->scope_id)));
 
@@ -2601,8 +2598,7 @@ static Ir_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         util_literal_name_new(),
         (Ir_darr) {0},
         old_for->body->pos_end,
-        old_for->body->scope_id,
-        (Cfg_node_darr) {0}
+        old_for->body->scope_id
     );
 
     load_label(new_block, tast_label_new(new_block->pos, util_literal_name_new(), scope_to_name_tbl_lookup(new_block->scope_id)));
@@ -3318,8 +3314,7 @@ static Ir_block* load_block(
         util_literal_name_new(),
         (Ir_darr) {0},
         old_block->pos_end,
-        old_block->scope_id,
-        (Cfg_node_darr) {0}
+        old_block->scope_id
     );
     unwrap(ir_add(ir_block_wrap(new_block)));
 

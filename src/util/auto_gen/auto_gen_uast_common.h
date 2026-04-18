@@ -630,7 +630,6 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("#include <darrs.h>\n");
         gen_gen("#include <operator_type.h>\n");
         gen_gen("#include <ir_operator_type.h>\n");
-        gen_gen("#include <cfg.h>\n");
         gen_gen("#include <loc.h>\n");
         gen_gen("#include <lang_type.h>\n");
 

@@ -211,10 +211,6 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     string_extend_cstr_indent(&a_temp, &buf, "block {\n", indent);
     indent += INDENT_WIDTH;
 
-    darr_foreach(idx, Cfg_node, curr, block->cfg) {
-        string_extend_strv(&a_temp, &buf, cfg_node_print_internal(curr, idx, indent + INDENT_WIDTH));
-    }
-
     string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
     ir_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
