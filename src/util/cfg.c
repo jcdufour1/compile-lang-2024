@@ -42,7 +42,7 @@ Strv cfg_node_print_internal(Cfg_node node, size_t idx, Indent indent)  {
     string_extend_cstr(&a_temp, &buf, "]\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "name: ", indent);
-    extend_ir_name(NAME_LOG, &buf, node.label_name);
+    extend_name(NAME_LOG, &buf, node.label_name);
     string_extend_cstr(&a_temp, &buf, "\n");
 
     string_extend_cstr_indent(&a_temp, &buf, "pos_in_block: ", indent);

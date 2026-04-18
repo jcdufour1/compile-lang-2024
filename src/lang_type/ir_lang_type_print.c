@@ -126,29 +126,29 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
             goto end;
         }
         case IR_LANG_TYPE_STRUCT: {
-            Ir_name name = {0};
+            Name name = {0};
             if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 goto end;
             }
-            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            extend_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
                 darr_append(&a_temp, string, '*');
             }
             goto end;
         }
         case IR_LANG_TYPE_VOID: {
-            Ir_name name = {0};
+            Name name = {0};
             if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 break;
             }
 
-            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            extend_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             goto end;
         }
         case IR_LANG_TYPE_PRIMITIVE: {
-            Ir_name name = {0};
+            Name name = {0};
             if (!ir_lang_type_get_name(&name, mode, ir_lang_type)) {
                 msg_todo("", ir_lang_type_get_pos(ir_lang_type));
                 break;
@@ -157,7 +157,7 @@ void extend_ir_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Ir_lang_
                 assert(strv_is_equal(name.mod_path, MOD_PATH_BUILTIN));
             }
             assert(name.base.count >= 1);
-            extend_ir_name(ir_lang_type_mode_to_name_mode(mode), string, name);
+            extend_name(ir_lang_type_mode_to_name_mode(mode), string, name);
             for (int16_t idx = 0; idx < ir_lang_type_get_pointer_depth(ir_lang_type); idx++) {
                 darr_append(&a_temp, string, '*');
             }

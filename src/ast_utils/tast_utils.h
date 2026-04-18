@@ -85,7 +85,7 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
         case IR_LANG_TYPE_STRUCT: {
             Ir_lang_type_struct a_struct = ir_lang_type_struct_const_unwrap(a);
             Ir_lang_type_struct b_struct = ir_lang_type_struct_const_unwrap(b);
-            return a_struct.pointer_depth == b_struct.pointer_depth && ir_name_is_equal(a_struct.name, b_struct.name);
+            return a_struct.pointer_depth == b_struct.pointer_depth && name_is_equal(a_struct.name, b_struct.name);
         }
         case IR_LANG_TYPE_VOID:
             assert(ir_lang_type_void_const_unwrap(a).pointer_depth == 0);

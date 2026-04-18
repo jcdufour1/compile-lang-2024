@@ -47,7 +47,7 @@ static inline bool is_at_end_cfg_node(size_t ir_idx_name, Ir_darr block_children
 
 // TODO: move cfg_dump_internal and cfg_dump to another file, or rename this file
 // TODO: make general version of this function that does not require Init_table_darr
-static void cfg_dump_internal(const char* file, int line, LOG_LEVEL log_level, Cfg_node_darr cfg, Ir_darr block_children, Init_table_darr cfg_node_areas) {
+static void cfg_dump_internal(const char* file, int line, LOG_LEVEL log_level, Cfg_node_darr cfg, Ir_darr block_children) {
 #   define log_thing(...) log_internal_ex(stderr, log_level, false, file, line, INDENT_WIDTH, __VA_ARGS__)
 
     cfg_foreach(cfg_node_idx_, curr2, cfg) {
@@ -57,7 +57,6 @@ static void cfg_dump_internal(const char* file, int line, LOG_LEVEL log_level, C
         }
         log_thing("\n");
 
-        init_level_log_internal(LOG_DEBUG, __FILE__, __LINE__, 0 /* TODO */, darr_at(cfg_node_areas, cfg_node_idx_), INDENT_WIDTH);
         log_thing(FMT, cfg_node_print(curr2, cfg_node_idx_));
         log_thing("\n\n\n");
     }

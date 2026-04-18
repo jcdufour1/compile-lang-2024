@@ -448,13 +448,13 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
-    Ir_name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_ir_name_symbol_table(&a_main, name), item);
+    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(&a_main, name), item);
 }
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* item) {
-    Ir_name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
     return ir_tbl_add_ex(&darr_at_ref(&env.symbol_tables, name.scope_id)->ir_table, item);
 }
 
@@ -463,9 +463,9 @@ void* ir_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool ir_add(Ir* item) {
-    Ir_name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
     return generic_symbol_add(
-        serialize_ir_name_symbol_table(&a_main, name),
+        serialize_name_symbol_table(&a_main, name),
         item,
         ir_get_tbl_from_collection,
         name.scope_id
@@ -473,8 +473,8 @@ bool ir_add(Ir* item) {
 }
 
 void ir_tbl_update(Ir* item) {
-    Ir_name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    generic_tbl_update((Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(&a_main, ir_name_to_name(name)), item);
+    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    generic_tbl_update((Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(&a_main, name), item);
 }
 
 void usymbol_update(Uast_def* item) {
@@ -508,152 +508,13 @@ bool ir_tbl_lookup(Ir** result, Name key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_temp, key));
 }
 
-bool ir_lookup(Ir** result, Ir_name key) {
+bool ir_lookup(Ir** result, Name key) {
     return generic_symbol_lookup(
         (void**)result,
-        serialize_ir_name_symbol_table(&a_temp, key),
+        serialize_name_symbol_table(&a_temp, key),
         ir_get_tbl_from_collection,
         key.scope_id
     );
-}
-
-//
-// Initialized implementation
-//
-
-bool init_symbol_lookup(Init_table* init_table, Init_table_node** result, Ir_name name) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)init_table, serialize_ir_name_symbol_table(&a_temp, name));
-}
-
-bool init_symbol_add(Init_table* init_table, Init_table_node node) {
-    if (node.name.scope_id == SCOPE_NOT || node.name.scope_id == SCOPE_TOP_LEVEL) {
-        // not adding top level symbols to the hash table 
-        //   makes the check_uninitialized pass significantly faster
-        return true;
-    }
-
-    Strv key = serialize_ir_name_symbol_table(&a_pass, node.name);
-    Init_table_node* buf = arena_dup(&a_pass, &node);
-    return generic_tbl_add((Generic_symbol_table*)init_table, key, buf);
-}
-
-//
-// Ir_name_to_name implementation
-//
-
-static bool ir_name_to_name_lookup_internal(Ir_name_to_name_table_darr* ir_name_tables, void** result, Strv key, Scope_id scope_id) {
-    if (scope_id == SCOPE_NOT) {
-        return false;
-    }
-
-    while (true) {
-        while (scope_id + 1 > ir_name_tables->info.count) {
-            darr_append(&a_main, ir_name_tables, (Ir_name_to_name_table) {0});
-        }
-
-        void* tbl = darr_at_ref(ir_name_tables, scope_id);
-        if (generic_tbl_lookup(result, tbl, key)) {
-             return true;
-        }
-        if (scope_id == 0) {
-            break;
-        }
-        scope_id = scope_get_parent_tbl_lookup(scope_id);
-    }
-
-    return false;
-}
-
-static Ir_name_to_name_table_darr ir_name_to_name_tbls = {0};
-
-bool ir_name_to_name_add_internal(
-    Strv key,
-    void* item,
-    Scope_id scope_id
-) {
-    while (scope_id + 1 > ir_name_to_name_tbls.info.count) {
-        darr_append(&a_main, &ir_name_to_name_tbls, (Ir_name_to_name_table) {0});
-    }
-
-    void* dummy;
-    if (ir_name_to_name_lookup_internal(&ir_name_to_name_tbls, (void**)&dummy, key, scope_id)) {
-        return false;
-    }
-    void* curr_tast = darr_at_ref(&ir_name_to_name_tbls, scope_id);
-    unwrap(generic_tbl_add(curr_tast, key, item));
-    return true;
-}
-
-bool ir_name_to_name_lookup(Ir_name_to_name_table_node** result, Ir_name name) {
-    return ir_name_to_name_lookup_internal(&ir_name_to_name_tbls, (void**)result, serialize_ir_name_symbol_table(&a_temp, name), name.scope_id);
-}
-
-bool ir_name_to_name_add(Ir_name_to_name_table_node node) {
-    while (ir_name_to_name_tbls.info.count < node.name_self.scope_id + 2) {
-        darr_append(&a_main, &ir_name_to_name_tbls, (Ir_name_to_name_table) {0});
-    }
-    Strv key = serialize_ir_name_symbol_table(&a_main, node.name_self);
-    return ir_name_to_name_add_internal(key, arena_dup(&a_main, &node), node.name_self.scope_id);
-}
-
-//
-// Name_to_ir_name implementation
-//
-
-static bool name_to_ir_name_lookup_internal(Name_to_ir_name_table_darr* ir_name_tables, void** result, Strv key, Scope_id scope_id) {
-    if (scope_id == SCOPE_NOT) {
-        return false;
-    }
-
-    while (true) {
-        while (scope_id + 1 > ir_name_tables->info.count) {
-            darr_append(&a_main, ir_name_tables, (Name_to_ir_name_table) {0});
-        }
-
-        void* tbl = darr_at_ref(ir_name_tables, scope_id);
-        if (generic_tbl_lookup(result, tbl, key)) {
-             return true;
-        }
-        if (scope_id == 0) {
-            break;
-        }
-        scope_id = scope_get_parent_tbl_lookup(scope_id);
-    }
-
-    return false;
-}
-
-static Name_to_ir_name_table_darr name_to_ir_name_tbls = {0};
-
-bool name_to_ir_name_add_internal(
-    Strv key,
-    void* item,
-    Scope_id scope_id
-) {
-    while (scope_id + 1 > name_to_ir_name_tbls.info.count) {
-        darr_append(&a_main, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
-    }
-
-    void* dummy;
-    if (name_to_ir_name_lookup_internal(&name_to_ir_name_tbls, (void**)&dummy, key, scope_id)) {
-        return false;
-    }
-    void* curr_tast = darr_at_ref(&name_to_ir_name_tbls, scope_id);
-    unwrap(generic_tbl_add(curr_tast, key, item));
-    return true;
-}
-
-bool name_to_ir_name_lookup(Name_to_ir_name_table_node** result, Name name) {
-    return name_to_ir_name_lookup_internal(&name_to_ir_name_tbls, (void**)result, serialize_name_symbol_table(&a_temp, name), name.scope_id);
-}
-
-bool name_to_ir_name_add(Name_to_ir_name_table_node node) {
-    while (name_to_ir_name_tbls.info.count < node.name_self.scope_id + 2) {
-        darr_append(&a_main, &name_to_ir_name_tbls, (Name_to_ir_name_table) {0});
-    }
-    Name_to_ir_name_table_node* buf = arena_alloc(&a_main, sizeof(*buf));
-    *buf = node;
-    return name_to_ir_name_add_internal(serialize_name_symbol_table(&a_main, node.name_self), buf, node.name_self.scope_id);
 }
 
 //
@@ -678,13 +539,13 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
 // this is used to define additional structs to get around the requirement of in order definitions in c
 static C_forward_struct_tbl c_forward_struct_tbl;
 
-bool c_forward_struct_tbl_lookup(Ir_name** result, Ir_name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_ir_name_symbol_table(&a_temp, key));
+bool c_forward_struct_tbl_lookup(Name** result, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(&a_temp, key));
 }
 
 // returns false if value has already been added to the table
-bool c_forward_struct_tbl_add(Ir_name* value, Ir_name key) {
-    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(&a_main, ir_name_to_name(key)), value);
+bool c_forward_struct_tbl_add(Name* value, Name key) {
+    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(&a_main, key), value);
 }
 
 //
@@ -789,17 +650,6 @@ void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
 //
 // not generic
 //
-
-void init_extend_table_internal(String* buf, const Init_table sym_table, Indent indent) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Init_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_cstr_indent(&a_temp, buf, "", indent*INDENT_WIDTH);
-            extend_ir_name(NAME_LOG, buf, sym_tast->tast->name);
-            string_extend_cstr(&a_temp, buf, "\n");
-        }
-    }
-}
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = env.symbol_tables.info.count;

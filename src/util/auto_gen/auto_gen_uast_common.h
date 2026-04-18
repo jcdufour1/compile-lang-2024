@@ -670,7 +670,7 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         } else if (strv_is_equal(uast.name.type, sv("ir"))) {
             gen_gen("typedef struct {\n");
                 gen_gen("Ir_struct_memb_def_darr members;\n");
-                gen_gen("Ir_name name;\n");
+                gen_gen("Name name;\n");
             gen_gen("} Ir_struct_def_base;\n");
         } else {
             unreachable("uncovered type");

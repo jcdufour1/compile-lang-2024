@@ -9,7 +9,8 @@
 typedef struct {
     Size_t_darr preds;
     Size_t_darr succs;
-    Ir_name label_name; // should be {0} if pos_in_block is at start of block
+    //Ir_name label_name; // should be {0} if pos_in_block is at start of block
+    Name label_name; // should be {0} if pos_in_block is at start of block
     size_t pred_backedge_start; // eg. if preds has one non-backedge node, then pred_backedge_start == 1
                                 //   if 1 is backedge of 2, control flow must pass through 1 to get to 2
     size_t pos_in_block;

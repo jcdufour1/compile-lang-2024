@@ -122,7 +122,8 @@ for generics:
 - in ir dump, use %84 instead of builtin[...], etc. to make names shorter?
 - consider removing cfg infrastructure and instead require assignment as var decl to prevent uninit var use and uninit return
     (use recursive function in type checking pass to check if last statement (switch, if else block, return, etc. always returns)
-
+- tests/inputs/orelse_print_num_result_in_error_handling_block.own should print error
+- make printing of ir_goto nicer
 
 
 # roadmap to try to get bootstrap compiler done:

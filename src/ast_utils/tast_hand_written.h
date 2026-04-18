@@ -12,7 +12,7 @@
 
 typedef struct {
     Ir_lang_type lang_type;
-    Ir_name name;
+    Name name;
 } Llvm_sym_typed_base;
 
 struct Tast_expr_;
