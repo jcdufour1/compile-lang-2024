@@ -13,7 +13,6 @@ static Uast_type ir_gen_block(void) {
     append_member(&block.members, "Ir_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
-    append_member(&block.members, "Cfg_node_darr", "cfg");
 
     return block;
 }
