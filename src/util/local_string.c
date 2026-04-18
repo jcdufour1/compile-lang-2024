@@ -141,3 +141,18 @@ Strv strv_replace(Arena* arena, Strv strv, Strv find, Strv replace_with) {
 
     return string_to_strv(buf);
 }
+
+__attribute__((format (printf, 4, 5)))
+void string_extend_f_indent(Arena* arena, String* string, Indent indent, const char* format, ...) {
+    for (Indent idx = 0; idx < indent; idx++) {
+        string_append(arena, string, ' ');
+    }
+
+    va_list args1;
+    va_start(args1, format);
+
+    string_extend_f_va(arena, string, format, args1);
+
+    va_end(args1);
+}
+

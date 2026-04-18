@@ -84,7 +84,7 @@ Strv ir_name_print_internal(NAME_MODE mode, bool serialize, Ir_name name);
 
 typedef enum {
     NAME_BASE_ONLY,
-    NAME_FULL,
+    NAME_FULL, // TODO: better prefix?
 } NAME_BASE_ONLY_CHOICE;
 
 Strv name_print_internal(NAME_MODE mode, bool serialize, Name name, NAME_BASE_ONLY_CHOICE base_only_choice);

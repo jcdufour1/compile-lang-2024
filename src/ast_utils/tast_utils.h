@@ -234,8 +234,6 @@ static inline Lang_type_darr lang_type_darr_from_lang_type(Lang_type lang_type) 
     return darr;
 }
 
-Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
-
 Strv tast_print_internal(const Tast* tast, Indent indent);
 
 static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operator) {

@@ -119,6 +119,9 @@ for generics:
 - do_test.py should test with optimizations enabled for compiled test cases?
 - redo back edge generation algorihm (current one works incorrectly) (initially use naive recurive algorithm, then later use Torjen algorithm?)
 - stop do_test.py from cluttering root of project directory with executables
+- in ir dump, use %84 instead of builtin[...], etc. to make names shorter?
+- consider removing cfg infrastructure and instead require assignment as var decl to prevent uninit var use and uninit return
+    (use recursive function in type checking pass to check if last statement (switch, if else block, return, etc. always returns)
 
 
 

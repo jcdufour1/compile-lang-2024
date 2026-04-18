@@ -162,7 +162,7 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
             // TODO
             todo();
     }
-    unreachable(FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    unreachable(FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
 uint64_t sizeof_def(const Tast_def* def) {

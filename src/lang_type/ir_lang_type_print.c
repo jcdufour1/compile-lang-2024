@@ -66,7 +66,6 @@ Strv ir_lang_type_print_internal(LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type)
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
-            string_extend_cstr(&a_temp, &buf, "\n");
             break;
         default:
             unreachable("");

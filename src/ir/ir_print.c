@@ -12,25 +12,20 @@ static void extend_child_name(String* buf, const char* location, Ir_name child_n
     string_extend_cstr(&a_temp, buf, " *) ");
 }
 
-static void extend_lhs_and_eq(String* buf, Ir_name lhs_sym, Indent indent) {
-    string_extend_cstr_indent(&a_temp, buf, "%", indent);
-    extend_ir_name(NAME_LOG, buf, lhs_sym);
-    string_extend_cstr(&a_temp, buf, " = ");
-}
-
 Strv ir_binary_print_internal(const Ir_binary* binary, Indent indent) {
     String buf = {0};
 
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "binary", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
-    string_extend_strv(&a_temp, &buf, ir_binary_type_to_strv(binary->token_type));
-    extend_ir_name(NAME_LOG, &buf, binary->name);
-    extend_child_name(&buf, "lhs", binary->lhs);
-    extend_child_name(&buf, "rhs", binary->rhs);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "binary\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, binary->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "op: "FMT"\n", ir_binary_type_print(binary->token_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, binary->lang_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "lhs: "FMT"\n", ir_name_print(NAME_LOG, binary->lhs));
+    string_extend_f_indent(&a_temp, &buf, indent, "rhs: "FMT"\n", ir_name_print(NAME_LOG, binary->rhs));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -103,11 +98,12 @@ Strv ir_int_print_internal(const Ir_int* num, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "number", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
-    extend_ir_name(NAME_LOG, &buf, num->name);
-    string_extend_int64_t(&a_temp, &buf, num->data);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "number\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, num->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, num->lang_type));
+    string_extend_f_indent(&a_temp, &buf, indent, "value: %"PRIi64"\n", num->data);
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -212,7 +208,7 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "block\n", indent);
+    string_extend_cstr_indent(&a_temp, &buf, "block {\n", indent);
     indent += INDENT_WIDTH;
 
     darr_foreach(idx, Cfg_node, curr, block->cfg) {
@@ -223,11 +219,14 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     ir_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        string_extend_size_t(&a_temp, &buf, idx);
-        string_extend_cstr(&a_temp, &buf, ": ");
-        Strv arg_text = ir_print_internal(darr_at(block->children, idx), indent + INDENT_WIDTH);
-        string_extend_strv(&a_temp, &buf, arg_text);
+        string_extend_f(&a_temp, &buf, "%6zu:\n", idx); // TODO: avoid hardcoded width of 6?
+        indent += INDENT_WIDTH;
+        string_extend_f(&a_temp, &buf, FMT"\n", strv_print(ir_print_internal(darr_at(block->children, idx), indent)));
+        indent -= INDENT_WIDTH;
     }
+
+    indent -= INDENT_WIDTH;
+    string_extend_cstr_indent(&a_temp, &buf, "}\n", indent);
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -286,15 +285,11 @@ Strv ir_cond_goto_print_internal(const Ir_cond_goto* cond_goto, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "cond_goto", indent);
+    string_extend_f_indent(&a_temp, &buf, indent, "cond_goto\n");
     indent += INDENT_WIDTH;
-    string_extend_cstr(&a_temp, &buf, "\n");
-    string_extend_cstr_indent(&a_temp, &buf, "", indent);
-    extend_ir_name(NAME_LOG, &buf, cond_goto->if_true);
-    string_extend_cstr(&a_temp, &buf, "\n");
-    string_extend_cstr_indent(&a_temp, &buf, "", indent);
-    extend_ir_name(NAME_LOG, &buf, cond_goto->if_false);
-    string_extend_cstr(&a_temp, &buf, "\n");
+
+    string_extend_f_indent(&a_temp, &buf, indent, "if true: "FMT"\n", ir_name_print(NAME_LOG, cond_goto->if_true));
+    string_extend_f_indent(&a_temp, &buf, indent, "if false: "FMT"\n", ir_name_print(NAME_LOG, cond_goto->if_false));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -306,11 +301,11 @@ Strv ir_alloca_temp_internal(const Ir_alloca* lang_alloca, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    extend_lhs_and_eq(&buf, lang_alloca->name, indent);
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_alloca\n");
+    indent += INDENT_WIDTH;
 
-    string_extend_cstr(&a_temp, &buf, "lang_alloca");
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lang_alloca->lang_type);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, lang_alloca->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_alloca->lang_type));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -322,11 +317,12 @@ Strv ir_load_another_ir_print_internal(const Ir_load_another_ir* load, Indent in
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "load_another_ir", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
-    extend_ir_name(NAME_LOG, &buf, load->name);
-    extend_child_name(&buf, "src", load->ir_src);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_cstr_indent(&a_temp, &buf, "load_another_ir\n", indent);
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name self: "FMT"\n", ir_name_print(NAME_LOG, load->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "name child: "FMT"\n", ir_name_print(NAME_LOG, load->ir_src));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, load->lang_type));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -338,13 +334,15 @@ Strv ir_store_another_ir_print_internal(const Ir_store_another_ir* store, Indent
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    extend_lhs_and_eq(&buf, store->ir_dest, indent);
+    //extend_lhs_and_eq(&buf, store->ir_dest, indent);
 
-    string_extend_cstr(&a_temp, &buf, "store_another_ir");
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, store->lang_type);
-    extend_ir_name(NAME_LOG, &buf, store->name);
-    extend_child_name(&buf, "src", store->ir_src);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "store_another_ir\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, store->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "dest: "FMT"\n", ir_name_print(NAME_LOG, store->ir_dest));
+    string_extend_f_indent(&a_temp, &buf, indent, "src: "FMT"\n", ir_name_print(NAME_LOG, store->ir_src));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, store->lang_type));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);
@@ -356,11 +354,12 @@ Strv ir_import_path_print_internal(const Ir_import_path* import, Indent indent) 
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "import_path", indent);
-    string_extend_strv(&a_temp, &buf, import->mod_path);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "import_path\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "mod_path: "FMT"\n", strv_print(import->mod_path));
     if (import->block) {
-        string_extend_strv(&a_temp, &buf, ir_block_print_internal(import->block, indent + INDENT_WIDTH));
+        string_extend_strv(&a_temp, &buf, ir_block_print_internal(import->block, indent));
     } else {
         string_extend_cstr_indent(&a_temp, &buf, "<block is null>\n", indent);
     }
@@ -388,15 +387,15 @@ Strv ir_function_decl_print_internal(const Ir_function_decl* fun_decl, Indent in
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "function_decl", indent);
+    string_extend_f_indent(&a_temp, &buf, indent, "function_decl\n");
     indent += INDENT_WIDTH;
-    extend_ir_name(NAME_LOG, &buf, fun_decl->name);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
-    string_extend_cstr(&a_temp, &buf, "\n");
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, fun_decl->name));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, fun_decl->return_type));
     string_extend_strv(&a_temp, &buf, ir_function_params_print_internal(fun_decl->params, indent));
-    indent -= INDENT_WIDTH;
 
     env.is_printing = old_is_printing;
+
     return string_to_strv(buf);
 }
 
@@ -417,12 +416,13 @@ Strv ir_function_def_print_internal(const Ir_function_def* fun_def, Indent inden
 }
 
 static void extend_ir_struct_def_base(String* buf, const char* type_name, Ir_struct_def_base base, Indent indent) {
-    string_extend_cstr_indent(&a_temp, buf, type_name, indent);
-    extend_ir_name(NAME_LOG, buf, base.name);
-    string_extend_cstr(&a_temp, buf, "\n");
+    string_extend_f_indent(&a_temp, buf, indent, "%s\n", type_name);
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, buf, indent, "name: "FMT"\n", ir_name_print(NAME_LOG, base.name));
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Strv memb_text = ir_struct_memb_def_print_internal(darr_at(base.members, idx), indent + INDENT_WIDTH);
+        Strv memb_text = ir_struct_memb_def_print_internal(darr_at(base.members, idx), indent);
         string_extend_strv(&a_temp, buf, memb_text);
     }
 }
@@ -525,11 +525,12 @@ Strv ir_variable_def_print_internal(const Ir_variable_def* def, Indent indent) {
     bool old_is_printing = env.is_printing;
     env.is_printing = true;
 
-    string_extend_cstr_indent(&a_temp, &buf, "variable_def", indent);
-    extend_ir_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_ir_name(NAME_LOG, &buf, def->name_self);
-    extend_child_name(&buf, "corrs_param", def->name_corr_param);
-    string_extend_cstr(&a_temp, &buf, "\n");
+    string_extend_f_indent(&a_temp, &buf, indent, "variable_def\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name_self: "FMT"\n", ir_name_print(NAME_LOG, def->name_self));
+    string_extend_f_indent(&a_temp, &buf, indent, "corres_param: "FMT"\n", ir_name_print(NAME_LOG, def->name_corr_param));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
 
     env.is_printing = old_is_printing;
     return string_to_strv(buf);

@@ -18,7 +18,7 @@ Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, mode, lang_type);
     if (mode == LANG_TYPE_MODE_LOG) {
-        string_extend_cstr(&a_temp, &buf, "\n");
+        //string_extend_cstr(&a_temp, &buf, "\n");
     }
     env.silent_generic_resol_errors = old_silent_resol_errors;
     return string_to_strv(buf);

@@ -142,6 +142,7 @@ NEVER_RETURN void do_passes(void) {
             Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
+                //log(LOG_DEBUG, FMT"\n", ir_print(curr));
                 string_extend_strv(&a_temp, &contents, ir_print_internal(curr, INDENT_WIDTH));
             }
             string_extend_strv(&a_temp, &contents, sv("\n\n"));
