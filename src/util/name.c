@@ -395,21 +395,15 @@ void extend_name(NAME_MODE mode, String* buf, Name name) {
 
 void extend_ir_name(NAME_MODE mode, String* buf, Ir_name name) {
     static_assert(sizeof(name) == sizeof(Name), "type punning below might not work anymore");
-    log(LOG_DEBUG, FMT"\n", string_print(*buf));
     switch (mode) {
         case NAME_MSG:
             extend_name(mode, buf, ir_name_to_name(name));
             return;
         case NAME_LOG:
-            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             extend_name(mode, buf, *(Name*)&name);
-            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_cstr(&a_temp, buf, "(");
-            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             extend_name(mode, buf, ir_name_to_name(name));
-            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             string_extend_cstr(&a_temp, buf, ")");
-            log(LOG_DEBUG, FMT"\n", string_print(*buf));
             return;
         case NAME_EMIT_C:
             fallthrough;
