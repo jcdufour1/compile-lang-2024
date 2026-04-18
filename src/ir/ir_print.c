@@ -219,7 +219,7 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     ir_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        string_extend_f(&a_temp, &buf, "%6zu:\n", idx);
+        string_extend_f(&a_temp, &buf, "%6zu:\n", idx); // TODO: avoid hardcoded width of 6?
         indent += INDENT_WIDTH;
         string_extend_f(&a_temp, &buf, FMT"\n", strv_print(ir_print_internal(darr_at(block->children, idx), indent)));
         indent -= INDENT_WIDTH;

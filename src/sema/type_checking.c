@@ -275,7 +275,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
             file, line,
             DIAG_MISSING_RETURN_IN_FUN, pos,
             "no return statement in function that returns `"FMT"`\n",
-            ulang_type_print_(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     } else {
         msg_internal(
@@ -283,7 +283,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
             DIAG_MISMATCHED_RETURN_TYPE, pos,
             "returning `"FMT"`, but type `"FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
-            ulang_type_print_(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     }
 
@@ -291,7 +291,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
         file, line,
         DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
         "function return type `"FMT"` defined here\n",
-        ulang_type_print_(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
+        ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
     );
 }
 
@@ -388,13 +388,13 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
                         DIAG_BINARY_MISMATCHED_TYPES,
                         sym_untyped->pos,
                         "function callback cannot be assigned to non function callback type `"FMT"`\n",
-                        ulang_type_print_(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                        ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
                     );
                     msg(
                         DIAG_NOTE,
                         ulang_type_get_pos(lhs_lang_type),
                         "non function callback type `"FMT"` defined here\n",
-                        ulang_type_print_(LANG_TYPE_MODE_MSG, lhs_lang_type)
+                        ulang_type_print(LANG_TYPE_MODE_MSG, lhs_lang_type)
                     );
                     return false;
                 }
@@ -1433,7 +1433,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_darr* new_membs, Uast_
                     uast_expr_get_pos(memb),
                     "type `"FMT"` cannot be implicitly converted to `"FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                    ulang_type_print_(LANG_TYPE_MODE_MSG, memb_def->lang_type)
+                    ulang_type_print(LANG_TYPE_MODE_MSG, memb_def->lang_type)
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:

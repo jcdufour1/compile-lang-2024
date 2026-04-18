@@ -333,7 +333,7 @@ after_print_path:
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_f(&a_temp, buf, FMT, ulang_type_print_(is_msg ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
+        string_extend_f(&a_temp, buf, FMT, ulang_type_print(is_msg ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
@@ -368,7 +368,7 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
         if (idx > 0) {
             string_extend_cstr(&a_temp, buf, ", ");
         }
-        string_extend_f(&a_temp, buf, FMT, ulang_type_print_(mode == UNAME_MSG ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
+        string_extend_f(&a_temp, buf, FMT, ulang_type_print(mode == UNAME_MSG ? LANG_TYPE_MODE_MSG : LANG_TYPE_MODE_LOG, darr_at(name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
         string_extend_cstr(&a_temp, buf, ">)");
