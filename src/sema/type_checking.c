@@ -30,6 +30,7 @@
 #include <ulang_type_remove_expr.h>
 #include <ulang_type_after.h>
 #include <did_you_mean.h>
+#include <does_return.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -5158,84 +5159,6 @@ static void do_test_bit_width(void) {
     unwrap(4 == bit_width_needed_unsigned(8));
 }
 
-static bool try_expr_always_returns(Tast_expr* expr) {
-    switch (expr->type) {
-        case TAST_BLOCK:
-            todo();
-        case TAST_MODULE_ALIAS:
-            todo();
-        case TAST_IF_ELSE_CHAIN:
-            todo();
-        case TAST_ASSIGNMENT:
-            todo();
-        case TAST_OPERATOR:
-            todo();
-        case TAST_SYMBOL:
-            todo();
-        case TAST_MEMBER_ACCESS:
-            todo();
-        case TAST_INDEX:
-            todo();
-        case TAST_LITERAL:
-            todo();
-        case TAST_FUNCTION_CALL:
-            return false;
-        case TAST_STRUCT_LITERAL:
-            todo();
-        case TAST_TUPLE:
-            todo();
-        case TAST_ENUM_CALLEE:
-            todo();
-        case TAST_ENUM_CASE:
-            todo();
-        case TAST_ENUM_GET_TAG:
-            todo();
-        case TAST_ENUM_ACCESS:
-            todo();
-    }
-    unreachable("");
-}
-
-static bool try_stmt_always_returns(Tast_stmt* last_stmt_block) {
-    switch (last_stmt_block->type) {
-        case TAST_DEFER:
-            // TODO: warn for useless defer?
-            return false;
-        case TAST_EXPR:
-            log(LOG_DEBUG, FMT"\n", tast_print(last_stmt_block));
-            return try_expr_always_returns(tast_expr_unwrap(last_stmt_block));
-        case TAST_FOR_WITH_COND:
-            todo();
-        case TAST_RETURN:
-            return true;
-        case TAST_ACTUAL_BREAK:
-            return false; // TODO
-        case TAST_YIELD:
-            return false; // TODO
-        case TAST_CONTINUE:
-            return false; // TODO
-        case TAST_DEF:
-            todo();
-    }
-    unreachable("");
-}
-
-static bool try_block_always_returns(Tast_block* block) {
-    for (size_t idx = block->children.info.count - 1; block->children.info.count > 0; idx--) {
-        Tast_stmt* curr_stmt = darr_at(block->children, idx);
-        if (curr_stmt->type == TAST_DEFER) {
-            todo();
-        } else {
-            return try_stmt_always_returns(curr_stmt);
-        }
-
-        if (idx < 1) {
-            break;
-        }
-    }
-    return false;
-}
-
 // TODO: use proper prefix (not try*types) (eg. use "check" as prefix)
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool is_top_level) {
     do_test_bit_width();
@@ -5294,16 +5217,23 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Lang_type fn_rtn_type = {0};
         unwrap(try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type));
         if (fn_rtn_type.type != LANG_TYPE_VOID) {
-            if (new_tasts.info.count < 1 || !try_stmt_always_returns(darr_last(new_tasts))) {
+            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts)) {
                 Pos pos = block->pos;
                 if (new_tasts.info.count > 0) {
                     pos = tast_stmt_get_pos(darr_last(new_tasts));
                 }
 
-                msg(
-                    DIAG_MISSING_RETURN_IN_FUN, pos,
-                    "last statement of function block does not return\n"
-                );
+                if (new_tasts.info.count < 1) {
+                    msg(
+                        DIAG_MISSING_RETURN_IN_FUN, pos,
+                        "function block does not have a statement that returns\n"
+                    );
+                } else {
+                    msg(
+                        DIAG_MISSING_RETURN_IN_FUN, pos,
+                        "last statement of function block does not always return\n"
+                    );
+                }
                 msg(
                     DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
                     "function returns type `"FMT"`\n",
