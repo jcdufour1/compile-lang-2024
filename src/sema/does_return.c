@@ -14,6 +14,7 @@ typedef struct {
     Does_return_pos* buf;
 } Does_return_pos_darr;
 
+static bool does_return_child_if_is_auto_inserted = false;
 static bool does_return_print_notes = false;
 static Does_return_pos does_return_print_prev_pos = (Does_return_pos) {0};
 static Does_return_pos_darr does_return_print_stack = (Does_return_pos_darr) {0};
@@ -27,6 +28,7 @@ static Does_return_pos does_return_pos_new(Pos pos, DOES_RTN_POS_TYPE type) {
 static bool does_return_if_else_chain(Tast_if_else_chain* if_else) {
     darr_foreach(idx, Tast_if*, if_stmt, if_else->tasts) {
         if (!does_return_block(if_stmt->body)) {
+            does_return_child_if_is_auto_inserted = if_stmt->is_auto_inserted;
             return false;
         }
     }
@@ -202,26 +204,51 @@ static bool does_return_is_trivial_stmt(Tast_stmt* stmt) {
 
 bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
     bool result = false;
+
+    //static int num = 0;
+    //num += 1;
+
+    //params_log_level = LOG_NEVER;
+    //if (num > 1) {
+    //    params_log_level = LOG_DEBUG;
+    //}
+    if (does_return_print_notes) {
+        breakpoint();
+    }
     if (stmts.info.count > 0) {
-        log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
+        //if (num > 1) {
+            log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
+        //}
         result = does_return_stmt(darr_last(stmts));
     }
 
-    if (does_return_print_notes) {
-        if (stmts.info.count > 0) {
-            Does_return_pos pos = does_return_pos_new(tast_stmt_get_pos(darr_last(stmts)), DOES_RTN_POS_LAST_DOES_NOT_RETURN);
-            if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
-                darr_append(&a_pass, &does_return_print_stack, pos);
-                does_return_print_prev_pos = pos;
+    if (!result) {
+        if (does_return_print_notes) {
+            if (stmts.info.count > 0) {
+                DOES_RTN_POS_TYPE type = DOES_RTN_POS_LAST_DOES_NOT_RETURN;
+                if (does_return_child_if_is_auto_inserted) {
+                    type = DOES_RTN_POS_EXPECTED_ELSE;
+                }
+
+                Does_return_pos pos = does_return_pos_new(tast_stmt_get_pos(darr_last(stmts)), type);
+                if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
+                    darr_append(&a_pass, &does_return_print_stack, pos);
+                    does_return_print_prev_pos = pos;
+                }
+            } else {
+                DOES_RTN_POS_TYPE type = DOES_RTN_POS_BLOCK_EMPTY;
+                if (does_return_child_if_is_auto_inserted) {
+                    type = DOES_RTN_POS_EXPECTED_ELSE;
+                }
+
+                Does_return_pos pos = does_return_pos_new(pos_parent, type);
+                if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
+                    darr_append(&a_pass, &does_return_print_stack, pos);
+                    does_return_print_prev_pos = pos;
+                }
             }
-        } else {
-            Does_return_pos pos = does_return_pos_new(pos_parent, DOES_RTN_POS_BLOCK_EMPTY);
-            if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
-                darr_append(&a_pass, &does_return_print_stack, pos);
-                does_return_print_prev_pos = pos;
-            }
+                    
         }
-                
     }
 
     return result;
@@ -232,10 +259,9 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
     does_return_print_prev_pos = does_return_pos_new(POS_BUILTIN, DOES_RTN_POS_LAST_DOES_NOT_RETURN);
     does_return_print_stack = (Does_return_pos_darr) {0};
 
-    log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
-    todo();
-
     bool result = does_return_stmt_darr(stmts, pos_parent);
+
+    log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
 
     if (does_return_print_stack.info.count > 0) {
         darr_pop(&does_return_print_stack);
@@ -245,7 +271,11 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
 
         switch (pos.type) {
             case DOES_RTN_POS_EXPECTED_ELSE:
-                todo();
+                msg(
+                    DIAG_NOTE, pos.pos,
+                    "if else chain at end of function must have an else clause\n"
+                );
+                break;
             case DOES_RTN_POS_BLOCK_EMPTY:
                 msg(
                     DIAG_NOTE, pos.pos,

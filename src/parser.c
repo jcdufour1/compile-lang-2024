@@ -2385,8 +2385,8 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
         return PARSE_EXPR_EX_ERROR;
     }
 
-    Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL);
-    if_stmt = uast_if_new(if_token.pos, NULL, NULL);
+    Uast_if* if_stmt = uast_if_new(if_token.pos, NULL, NULL, false); // TODO: uast_if_new is called twice
+    if_stmt = uast_if_new(if_token.pos, NULL, NULL, false);
     
     switch (parse_condition(&if_stmt->condition, tokens, parent)) {
         case PARSE_EXPR_EX_OK_NORMAL:
@@ -2422,7 +2422,7 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
     if_else_chain_consume_newline(tokens);
     bool has_appended_default = false;
     while (try_consume(NULL, tokens, TOKEN_ELSE)) {
-        if_stmt = uast_if_new(if_token.pos, NULL, NULL);
+        if_stmt = uast_if_new(if_token.pos, NULL, NULL, false);
 
         if (try_consume(&if_token, tokens, TOKEN_IF)) {
             switch (parse_condition(&if_stmt->condition, tokens, parent)) {
@@ -2470,7 +2470,8 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
                 (Uast_stmt_darr) {0},
                 if_stmt->pos,
                 symbol_collection_new(parent, util_literal_name_new())
-            )
+            ),
+            true
         );
         darr_append(&a_main, &ifs, if_stmt);
     }

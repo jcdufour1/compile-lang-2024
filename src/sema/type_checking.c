@@ -4293,7 +4293,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     }
 
     if (status) {
-        *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
+        *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type, uast->is_auto_inserted);
         if (check_env.parent_of == PARENT_OF_CASE) {
             if (new_body->lang_type.type != LANG_TYPE_VOID && !check_env.break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
@@ -4918,7 +4918,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         check_env.parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         check_env.switch_lang_type = tast_expr_get_lang_type(new_operand_typed);
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
+        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true, true /* TODO */))) {
             status = false;
             goto error_inner;
         }
@@ -5234,7 +5234,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                         DIAG_MISSING_RETURN_IN_FUN, tast_stmt_get_pos(darr_last(new_tasts)),
                         "last statement of block does not always return\n"
                     );
-                    breakpoint();
+                    //breakpoint();
                     does_return_print_all_notes(new_tasts, block->pos);
                 }
                 msg(

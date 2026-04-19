@@ -519,6 +519,7 @@ static Uast_type uast_gen_if(const char* prefix) {
 
     append_member(&lang_if.members, "Uast_condition*", "condition");
     append_member(&lang_if.members, "Uast_block*", "body");
+    append_member(&lang_if.members, "bool", "is_auto_inserted");
 
     return lang_if;
 }

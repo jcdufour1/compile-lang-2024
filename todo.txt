@@ -125,6 +125,8 @@ for generics:
 - tests/inputs/orelse_print_num_result_in_error_handling_block.own should print error
 - make printing of ir_goto nicer
 - add never_return attribute
+- implement way to easily change debug level temporarily
+- implement I128, etc.
 
 
 # roadmap to try to get bootstrap compiler done:
