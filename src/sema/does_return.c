@@ -1,5 +1,6 @@
 static bool does_return_print_notes = false;
 static Pos does_return_print_prev_pos = (Pos) {0};
+static Pos_darr does_return_print_stack = (Pos_darr) {0};
 
 static bool does_return_block(Tast_block* block);
 
@@ -186,10 +187,7 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts) {
         if (stmts.info.count > 0) {
             Pos pos = tast_stmt_get_pos(darr_last(stmts));
             if (!pos_is_equal(does_return_print_prev_pos, pos)) {
-                msg(
-                    DIAG_NOTE, pos,
-                    "last statement of block does not always return\n"
-                );
+                darr_append(&a_pass, &does_return_print_stack, pos);
                 does_return_print_prev_pos = pos;
             }
         } else {
@@ -204,10 +202,24 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts) {
 bool does_return_print_all_notes(Tast_stmt_darr stmts) {
     does_return_print_notes = true;
     does_return_print_prev_pos = POS_BUILTIN;
+    does_return_print_stack = (Pos_darr) {0};
 
     bool result = does_return_stmt_darr(stmts);
 
+    if (does_return_print_stack.info.count > 0) {
+        darr_pop(&does_return_print_stack);
+    }
+    while (does_return_print_stack.info.count > 0) {
+        Pos pos = darr_pop(&does_return_print_stack);
+        msg(
+            DIAG_NOTE, pos,
+            "last statement of block does not always return\n"
+        );
+    }
+
     does_return_print_notes = false;
+    does_return_print_prev_pos = POS_BUILTIN;
+    does_return_print_stack = (Pos_darr) {0};
     return result;
 }
 
