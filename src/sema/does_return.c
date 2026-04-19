@@ -140,8 +140,6 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, bool is_auto_inserted) {
 
     bool result = does_return_stmt_darr(stmts, is_auto_inserted);
 
-    log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
-
     bool is_first = true;
     while (does_return_print_stack.info.count > 0) {
         Does_return_pos pos = darr_pop(&does_return_print_stack);

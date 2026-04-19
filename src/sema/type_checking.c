@@ -4448,7 +4448,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         if_true_children,
         orelse->pos,
         symbol_collection_new(orelse->scope_id, util_literal_name_new()),
-        true /* TODO */
+        true
     );
 
     Uast_case* if_true_case = uast_case_new(
@@ -4646,7 +4646,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         fun_rtn_expr,
         true
     )));
-    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope, false /* TODO */);
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope, false);
 
     Uast_orelse* orelse = uast_orelse_new(
         mark->pos,
@@ -4920,7 +4920,13 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         check_env.parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         check_env.switch_lang_type = tast_expr_get_lang_type(new_operand_typed);
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true, true /* TODO */, false))) {
+        if (!try_set_if_types(&new_if, uast_if_new(
+            old_case->pos,
+            uast_condition_clone(cond, true, inner_scope, cond->pos),
+            if_true,
+            true,
+            false
+        ))) {
             status = false;
             goto error_inner;
         }
@@ -5228,14 +5234,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 }
 
                 if (new_tasts.info.count < 1) {
-                    // TODO
                     msg(
                         DIAG_MISSING_RETURN_IN_FUN, pos,
                         "function block does not have a statement that returns\n"
                     );
                 } else {
-                    // TODO
-                    //breakpoint();
                     does_return_print_all_notes(new_tasts, block->is_auto_inserted);
                 }
                 msg(
@@ -5271,36 +5274,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             darr_append(&a_main, &new_tasts, new_rtn_statement);
         }
     }
-
-    //if (is_directly_in_fun_def && (
-    //    block->children.info.count < 1 ||
-    //    darr_at(block->children, block->children.info.count - 1)->type != UAST_RETURN
-    //)) {
-    //    Uast_return* rtn_statement = uast_return_new(
-    //        block->pos_end,
-    //        util_uast_literal_new_from_strv(
-    //             sv(""), TOKEN_VOID, block->pos_end
-    //        ),
-    //        true
-    //    );
-    //    unwrap(rtn_statement->pos.line != 0);
-
-    //    Tast_stmt* new_rtn_statement = NULL;
-    //    switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
-    //        case STMT_ERROR:
-    //            status = false;
-    //            goto error;
-    //        case STMT_OK:
-    //            break;
-    //        case STMT_NO_STMT:
-    //            unreachable("statement should be returned when type checking return");
-    //        default:
-    //            todo();
-    //    }
-    //    unwrap(rtn_statement);
-    //    unwrap(new_rtn_statement);
-    //    darr_append(&a_main, &new_tasts, new_rtn_statement);
-    //}
 
 error:
     do_nothing();

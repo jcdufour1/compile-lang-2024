@@ -2480,7 +2480,7 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
 
     Uast_stmt_darr chain_ = {0};
     darr_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
-    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent, true/*TODO*/);
+    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent, true);
     return PARSE_EXPR_EX_OK_NORMAL;
 }
 

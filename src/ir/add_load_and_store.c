@@ -1644,7 +1644,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             false,
             false,
             false,
-            true // TODO
+            true
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
         true,
