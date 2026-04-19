@@ -45,6 +45,6 @@ uint64_t alignof_array_def(const Tast_array_def* def);
 uint64_t sizeof_ir_params(Ir_variable_def_darr params);
 
 // key is excluded from size calculation
-uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Ir_name key);
+uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Name key);
 
 #endif // NEWSIZEOF_H

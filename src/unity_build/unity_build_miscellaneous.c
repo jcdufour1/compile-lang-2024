@@ -22,7 +22,6 @@
 #include <lang_type/ulang_type_serialize.c>
 #include <name.c>
 #include <str_and_num_utils.c>
-#include <util/cfg.c>
 #include <util/file.c>
 #include <util/ir_operator_type.c>
 #include <util/local_string.c>

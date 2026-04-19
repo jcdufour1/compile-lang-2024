@@ -16,6 +16,7 @@ static Uast_type tast_gen_block(const char* prefix) {
     append_member(&block.members, "bool", "has_defer");
     append_member(&block.members, "bool", "has_yield");
     append_member(&block.members, "bool", "has_continue");
+    append_member(&block.members, "bool", "is_auto_inserted");
 
     return block;
 }
@@ -542,6 +543,8 @@ static Uast_type tast_gen_if(const char* prefix) {
     append_member(&lang_if.members, "Tast_condition*", "condition");
     append_member(&lang_if.members, "Tast_block*", "body");
     append_member(&lang_if.members, "Lang_type", "yield_type");
+    append_member(&lang_if.members, "bool", "is_auto_inserted");
+    append_member(&lang_if.members, "bool", "is_auto_inserted_else");
 
     return lang_if;
 }

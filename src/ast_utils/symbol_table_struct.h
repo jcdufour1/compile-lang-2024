@@ -86,78 +86,8 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } Ir_table;
 
-typedef struct {
-    Ir_name name;
-    size_t cfg_node_of_init;
-    size_t block_pos_of_init;
-} Init_table_node;
-
-typedef struct {
-    Init_table_node* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Init_table_tast;
-static_assert(sizeof(Init_table_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Init_table_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Init_table;
-
-typedef struct {
-    Vec_base info;
-    Init_table* buf;
-} Init_table_darr;
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
-
-typedef struct {
-    Ir_name name_self;
-    Name name_regular;
-} Ir_name_to_name_table_node;
-
-typedef struct {
-    Ir_name_to_name_table_node* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Ir_name_to_name_table_tast;
-static_assert(sizeof(Ir_name_to_name_table_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Ir_name_to_name_table_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Ir_name_to_name_table;
-
-typedef struct {
-    Vec_base info;
-    Ir_name_to_name_table* buf;
-} Ir_name_to_name_table_darr;
-
-
-typedef struct {
-    Name name_self;
-    Ir_name ir_name;
-} Name_to_ir_name_table_node;
-
-typedef struct {
-    Name_to_ir_name_table_node* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Name_to_ir_name_table_tast;
-static_assert(sizeof(Name_to_ir_name_table_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Name_to_ir_name_table_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Name_to_ir_name_table;
-
-typedef struct {
-    Vec_base info;
-    Name_to_ir_name_table* buf;
-} Name_to_ir_name_table_darr;
 
 
 typedef struct {

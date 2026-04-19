@@ -116,9 +116,7 @@ static void compile_file_to_ir(void) {
     do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
-    do_pass(construct_cfgs, ir_log_level, stderr);
     do_pass(remove_void_assigns, ir_log_level, stderr);
-    do_pass(check_uninitialized, ir_log_level, stderr);
 }
 
 NEVER_RETURN void do_passes(void) {
@@ -144,6 +142,7 @@ NEVER_RETURN void do_passes(void) {
             Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
+                //log(LOG_DEBUG, FMT"\n", ir_print(curr));
                 string_extend_strv(&a_temp, &contents, ir_print_internal(curr, INDENT_WIDTH));
             }
             string_extend_strv(&a_temp, &contents, sv("\n\n"));

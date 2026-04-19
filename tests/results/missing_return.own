@@ -1,21 +1,22 @@
 compile::stdout 0
 
-compile::stderr 19
-tests/inputs/missing_return.own:3:1:[1;31merror[0;39m:no return statement in function that returns `i32`
+compile::stderr 20
+tests/inputs/missing_return.own:2:21:[1;31merror[0;39m:function block does not have a statement that returns
+     1 | 
      2 | println :: fn() i32 {
+       |                     ^
      3 | }
-       | ^
-     4 | 
-tests/inputs/missing_return.own:2:17:[1;34mnote[0;39m:function return type `i32` defined here
+tests/inputs/missing_return.own:2:17:[1;34mnote[0;39m:function returns type `i32`
      1 | 
      2 | println :: fn() i32 {
        |                 ^
      3 | }
-tests/inputs/missing_return.own:8:1:[1;31merror[0;39m:no return statement in function that returns `i32`
+tests/inputs/missing_return.own:7:5:[1;31merror[0;39m:last statement of block does not always return
+     6 |     string: u8* := "hello"
      7 |     println()
+       |     ^
      8 | }
-       | ^
-tests/inputs/missing_return.own:5:14:[1;34mnote[0;39m:function return type `i32` defined here
+tests/inputs/missing_return.own:5:14:[1;34mnote[0;39m:function returns type `i32`
      4 | 
      5 | main :: fn() i32 {
        |              ^

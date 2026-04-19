@@ -119,8 +119,31 @@ for generics:
 - do_test.py should test with optimizations enabled for compiled test cases?
 - redo back edge generation algorihm (current one works incorrectly) (initially use naive recurive algorithm, then later use Torjen algorithm?)
 - stop do_test.py from cluttering root of project directory with executables
+<<<<<<< HEAD
 - make ir dump look similar to bytecode dump to be more readable
 
+=======
+- in ir dump, use %84 instead of builtin[...], etc. to make names shorter?
+- consider removing cfg infrastructure and instead require assignment as var decl to prevent uninit var use and uninit return
+    (use recursive function in type checking pass to check if last statement (switch, if else block, return, etc. always returns)
+- tests/inputs/orelse_print_num_result_in_error_handling_block.own should print error
+- make printing of ir_goto nicer
+- add never_return attribute
+- implement way to easily change debug level temporarily
+- implement I128, etc.
+- fix compile error for:
+    yes_no YesNo := .Yes
+    switch (yes_no) {
+        case .Yes: {
+            if 1 => return 76
+        }
+        case .No: {
+            if yes_no == .Yes => return 84
+            else => return 23
+        }
+    }
+- make python script show error on seg fault, etc. if possible
+>>>>>>> b7f2f2919f86d3e61b10ff4d6934d68bab1e448e
 
 
 # roadmap to try to get bootstrap compiler done:

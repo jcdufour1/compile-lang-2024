@@ -630,7 +630,6 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("#include <darrs.h>\n");
         gen_gen("#include <operator_type.h>\n");
         gen_gen("#include <ir_operator_type.h>\n");
-        gen_gen("#include <cfg.h>\n");
         gen_gen("#include <loc.h>\n");
         gen_gen("#include <lang_type.h>\n");
 
@@ -670,7 +669,7 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         } else if (strv_is_equal(uast.name.type, sv("ir"))) {
             gen_gen("typedef struct {\n");
                 gen_gen("Ir_struct_memb_def_darr members;\n");
-                gen_gen("Ir_name name;\n");
+                gen_gen("Name name;\n");
             gen_gen("} Ir_struct_def_base;\n");
         } else {
             unreachable("uncovered type");

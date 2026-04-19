@@ -85,7 +85,7 @@ static inline bool ir_lang_type_is_equal(Ir_lang_type a, Ir_lang_type b) {
         case IR_LANG_TYPE_STRUCT: {
             Ir_lang_type_struct a_struct = ir_lang_type_struct_const_unwrap(a);
             Ir_lang_type_struct b_struct = ir_lang_type_struct_const_unwrap(b);
-            return a_struct.pointer_depth == b_struct.pointer_depth && ir_name_is_equal(a_struct.name, b_struct.name);
+            return a_struct.pointer_depth == b_struct.pointer_depth && name_is_equal(a_struct.name, b_struct.name);
         }
         case IR_LANG_TYPE_VOID:
             assert(ir_lang_type_void_const_unwrap(a).pointer_depth == 0);
@@ -233,8 +233,6 @@ static inline Lang_type_darr lang_type_darr_from_lang_type(Lang_type lang_type) 
     darr_append(&a_main, &darr, lang_type);
     return darr;
 }
-
-Strv ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 Strv tast_print_internal(const Tast* tast, Indent indent);
 

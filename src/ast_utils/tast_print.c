@@ -415,9 +415,10 @@ Strv tast_if_print_internal(const Tast_if* lang_if, Indent indent) {
 
     string_extend_cstr_indent(&a_temp, &buf, "if\n", indent);
     indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "is_auto_inserted: %s\n", lang_if->is_auto_inserted ? "true" : "false");
     string_extend_strv(&a_temp, &buf, tast_condition_print_internal(lang_if->condition, indent));
     string_extend_strv(&a_temp, &buf, tast_block_print_internal(lang_if->body, indent));
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }

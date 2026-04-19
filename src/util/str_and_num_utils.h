@@ -31,10 +31,6 @@ static inline Name util_literal_name_new_poison(void) {
     return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
 }
 
-static inline Ir_name util_literal_ir_name_new_poison(void) {
-    return ir_name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
-}
-
 #define util_literal_ir_name_new(ir_name_tables) \
     util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
 
@@ -74,8 +70,6 @@ int64_t strv_to_int64_t(const Pos pos, Strv strv);
 Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix);
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
-
-Ir_name util_literal_ir_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
 
 Strv serialize_double(double num);
 

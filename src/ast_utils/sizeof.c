@@ -150,9 +150,9 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
             return sizeof_llvm_primitive(ir_lang_type_primitive_const_unwrap(lang_type));
         case IR_LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            Ir_name name = {0};
+            Name name = {0};
             unwrap(ir_lang_type_get_name(&name, LANG_TYPE_MODE_LOG, lang_type));
-            unwrap(symbol_lookup(&def, ir_name_to_name(name)));
+            unwrap(symbol_lookup(&def, name));
             return sizeof_def(def);
         }
         case IR_LANG_TYPE_VOID:
@@ -163,7 +163,7 @@ uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type) {
             // TODO
             todo();
     }
-    unreachable(FMT, ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    unreachable(FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
 uint64_t sizeof_def(const Tast_def* def) {
@@ -374,10 +374,10 @@ uint64_t sizeof_ir_params(Ir_variable_def_darr params) {
 }
 
 // key is excluded from size calculation
-uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Ir_name key) {
+uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Name key) {
     uint64_t sizeof_prev = 0;
     darr_foreach(idx, Ir_variable_def*, arg, params) {
-        if (ir_name_is_equal(arg->name_corr_param, key)) {
+        if (name_is_equal(arg->name_corr_param, key)) {
             break;
         }
         sizeof_prev += get_next_multiple(sizeof_ir_lang_type(arg->lang_type), 8/* TODO: this should vary depending on the backend */);

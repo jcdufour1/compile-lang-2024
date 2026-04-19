@@ -9,7 +9,7 @@
 // NOTE: arrow from parent to child created in parent corresponding function, not child
 
 
-static Ir_name ir_graphvis_parent_block_next;
+static Name ir_graphvis_parent_block_next;
 static Ir_table already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
@@ -28,7 +28,7 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
     string_extend_cstr(&a_temp, buf, "\n");
 }
 
-static void extend_name_graphvis(String* buf, Ir_name name) {
+static void extend_name_graphvis(String* buf, Name name) {
     (void) buf;
     (void) name;
     todo();
@@ -37,7 +37,7 @@ static void extend_name_graphvis(String* buf, Ir_name name) {
 
 #define arrow_names(buf, parent, child) arrow_names_internal(__FILE__, __LINE__, buf, parent, child)
 
-static void arrow_names_internal(const char* file, int line, String* buf, Ir_name parent, Ir_name child) {
+static void arrow_names_internal(const char* file, int line, String* buf, Name parent, Name child) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, parent);
@@ -53,8 +53,8 @@ static void arrow_names_label_internal(
     const char* file,
     int line,
     String* buf,
-    Ir_name parent,
-    Ir_name child,
+    Name parent,
+    Name child,
     Strv label
 ) {
     extend_source_loc_internal(file, line, buf);
@@ -69,7 +69,7 @@ static void arrow_names_label_internal(
 
 #define label(buf, name, label) label_internal(__FILE__, __LINE__, buf, name, label)
 
-static void label_internal(const char* file, int line, String* buf, Ir_name name, Strv label) {
+static void label_internal(const char* file, int line, String* buf, Name name, Strv label) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
@@ -86,7 +86,7 @@ static void label_internal(const char* file, int line, String* buf, Ir_name name
 
 #define label_ex(buf, name, label, actual_name) label_ex_internal(__FILE__, __LINE__, buf, name, label, actual_name)
 
-static void label_ex_internal(const char* file, int line, String* buf, Ir_name name, Strv label, Ir_name actual_name) {
+static void label_ex_internal(const char* file, int line, String* buf, Name name, Strv label, Name actual_name) {
     extend_source_loc_internal(file, line, buf);
 
     extend_name_graphvis(buf, name);
@@ -125,8 +125,8 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
         if (ir_tbl_add_ex(&already_visited, curr)) {
-            Ir_name old_parent_block_next = ir_graphvis_parent_block_next;
-            ir_graphvis_parent_block_next = is_last ? (Ir_name) {0} : ir_get_name(LANG_TYPE_MODE_LOG, next);
+            Name old_parent_block_next = ir_graphvis_parent_block_next;
+            ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_get_name(LANG_TYPE_MODE_LOG, next);
             ir_graphvis_internal(buf, curr);
             ir_graphvis_parent_block_next = old_parent_block_next;
         }
@@ -183,7 +183,7 @@ static void ir_function_decl_graphvis_internal(String* buf, const Ir_function_de
 
     ir_function_params_graphvis_internal(buf, decl->params);
     // TODO
-    //string_extend_strv(&a_temp, buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
+    //string_extend_strv(&a_temp, buf, ir_lang_type_printinternal(LANG_TYPE_MODE_MSG, decl->return_type));
 }
 
 static void ir_function_def_graphvis_internal(String* buf, const Ir_function_def* def) {
@@ -251,7 +251,7 @@ static void ir_int_graphvis_internal(String* buf, const Ir_int* lit) {
 
     string_extend_int64_t(&a_temp, &num_buf, lit->data);
     string_extend_cstr(&a_temp, &num_buf, " ");
-    string_extend_strv(&a_temp, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_f(&a_temp, &num_buf, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
@@ -260,7 +260,7 @@ static void ir_float_graphvis_internal(String* buf, const Ir_float* lit) {
 
     string_extend_double(&a_temp, &num_buf, lit->data);
     string_extend_cstr(&a_temp, &num_buf, " ");
-    string_extend_strv(&a_temp, &num_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    string_extend_f(&a_temp, &num_buf, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_MSG, lit->lang_type));
     label(buf, lit->name, string_to_strv(num_buf));
 }
 
@@ -305,7 +305,7 @@ static void ir_function_call_graphvis_internal(String* buf, const Ir_function_ca
     label(buf, call->name_self, sv("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, sv("callee"));
 
-    Ir_name args_name = util_literal_ir_name_new();
+    Name args_name = util_literal_name_new();
     label(buf, args_name, sv("args"));
     arrow_names_label(buf, call->name_self, args_name, sv("args"));
     for (size_t idx = 0; idx < call->args.info.count; idx++) {
@@ -322,7 +322,7 @@ static void ir_binary_graphvis_internal(String* buf, const Ir_binary* bin) {
     string_extend_cstr(&a_temp, &type_buf, "binary ");
     string_extend_strv(&a_temp, &type_buf, ir_binary_type_to_strv(bin->token_type));
     string_extend_cstr(&a_temp, &type_buf, " ");
-    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, bin->lang_type));
+    string_extend_f(&a_temp, &type_buf, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_MSG, bin->lang_type));
     label(buf, bin->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, bin->name, bin->lhs, sv("lhs"));
@@ -334,7 +334,7 @@ static void ir_unary_graphvis_internal(String* buf, const Ir_unary* unary) {
     string_extend_cstr(&a_temp, &type_buf, "unary ");
     string_extend_strv(&a_temp, &type_buf, ir_unary_type_to_strv(unary->token_type));
     string_extend_cstr(&a_temp, &type_buf, " ");
-    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, unary->lang_type));
+    string_extend_f(&a_temp, &type_buf, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_MSG, unary->lang_type));
     label(buf, unary->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, unary->name, unary->child, sv("child"));
@@ -403,7 +403,7 @@ static void ir_store_another_ir_graphvis_internal(String* buf, const Ir_store_an
 static void ir_load_another_ir_graphvis_internal(String* buf, const Ir_load_another_ir* load) {
     String type_buf = {0};
     string_extend_cstr(&a_temp, &type_buf, "load ");
-    string_extend_strv(&a_temp, &type_buf, ir_lang_type_print_internal(LANG_TYPE_MODE_MSG, load->lang_type));
+    string_extend_f(&a_temp, &type_buf, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_MSG, load->lang_type));
     label(buf, load->name, string_to_strv(type_buf));
 
     arrow_names_label(buf, load->name, load->ir_src, sv("src"));

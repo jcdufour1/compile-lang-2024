@@ -8,4 +8,5 @@
 #include <sema/resolve_generics.c>
 #include <sema/type_checking.c>
 #include <sema/uast_expr_to_ulang_type.c>
+#include <sema/does_return.c>
 

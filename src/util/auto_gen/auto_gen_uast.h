@@ -30,6 +30,7 @@ static Uast_type uast_gen_block(const char* prefix) {
     append_member(&block.members, "Uast_stmt_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
+    append_member(&block.members, "bool", "is_auto_inserted");
 
     return block;
 }
@@ -519,6 +520,8 @@ static Uast_type uast_gen_if(const char* prefix) {
 
     append_member(&lang_if.members, "Uast_condition*", "condition");
     append_member(&lang_if.members, "Uast_block*", "body");
+    append_member(&lang_if.members, "bool", "is_auto_inserted"); // TODO: remove if not used?
+    append_member(&lang_if.members, "bool", "is_auto_inserted_else");
 
     return lang_if;
 }

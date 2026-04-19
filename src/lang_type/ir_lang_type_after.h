@@ -4,9 +4,9 @@
 #include <ir_lang_type_hand_written.h>
 #include <ir_lang_type.h>
 
-Ir_name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type);
+Name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type);
 
-bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type);
+bool ir_lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type);
 
 static inline uint32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
     switch (ir_lang_type.type) {

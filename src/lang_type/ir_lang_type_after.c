@@ -3,7 +3,7 @@
 #include <ast_msg.h>
 #include <name.h>
 
-static Ir_name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_lang_type) {
+static Name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_lang_type) {
     Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_SIGNED_INT: {
@@ -29,18 +29,18 @@ static Ir_name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_
     }
 
     assert(new_base.count > 0);
-    Ir_name new_name = name_to_ir_name(name_new(
+    Name new_name = name_new(
         MOD_PATH_BUILTIN,
         new_base,
         (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
-    ));
+    );
     assert(!strv_is_equal(new_name.base, sv("void")));
     assert(new_name.base.count > 0);
     return new_name;
 }
 
-static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_type) {
+static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_type) {
     Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_FLOAT: {
@@ -56,7 +56,7 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
                     "bit widths other than 32, 64, or 128 (for floating point numbers) with the c backend",
                     ir_lang_type_primitive_get_pos(ir_lang_type)
                 );
-                return util_literal_ir_name_new_poison();
+                return util_literal_name_new_poison();
             }
             break;
         }
@@ -69,7 +69,7 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
                     "bit widths other than 8, 16, 32, or 64 (for signed integers) with the c backend",
                     ir_lang_type_primitive_get_pos(ir_lang_type)
                 );
-                return util_literal_ir_name_new_poison();
+                return util_literal_name_new_poison();
             }
             break;
         }
@@ -85,7 +85,7 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
                     "bit widths other than 1, 8, 16, 32, or 64 (for unsigned integers) with the c backend",
                     ir_lang_type_primitive_get_pos(ir_lang_type)
                 );
-                return util_literal_ir_name_new_poison();
+                return util_literal_name_new_poison();
             }
             break;
         }
@@ -95,17 +95,17 @@ static Ir_name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_
     }
 
     assert(new_base.count > 0);
-    Ir_name new_name = name_to_ir_name(name_new(
+    Name new_name = name_new(
         MOD_PATH_EXTERN_C,
         new_base,
         (Ulang_type_darr) {0},
         SCOPE_TOP_LEVEL
-    ));
+    );
     assert(new_name.base.count > 0);
     return new_name;
 }
 
-Ir_name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type) {
+Name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive ir_lang_type) {
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
             return ir_lang_type_primitive_get_name_normal(ir_lang_type);
@@ -120,7 +120,7 @@ Ir_name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primit
 
 }
 
-bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
+bool ir_lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type) {
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_PRIMITIVE:
             *result = ir_lang_type_primitive_get_name(mode, ir_lang_type_primitive_const_unwrap(ir_lang_type));
@@ -135,12 +135,12 @@ bool ir_lang_type_get_name(Ir_name* result, LANG_TYPE_MODE mode, Ir_lang_type ir
             return false;
         }
         case IR_LANG_TYPE_VOID: {
-            *result = name_to_ir_name(name_new(
+            *result = name_new(
                 MOD_PATH_BUILTIN,
                 sv("void"),
                 (Ulang_type_darr) {0},
                 SCOPE_TOP_LEVEL
-            ));
+            );
             return true;
         }
         default:
