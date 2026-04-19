@@ -30,6 +30,7 @@
 #include <ulang_type_remove_expr.h>
 #include <ulang_type_after.h>
 #include <did_you_mean.h>
+#include <does_return.h>
 
 static Strv parent_of_print_internal(PARENT_OF parent_of) {
     switch (parent_of) {
@@ -269,24 +270,14 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
     );
 }
 
-static void msg_invalid_return_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
-    if (is_auto_inserted) {
-        msg_internal(
-            file, line,
-            DIAG_MISSING_RETURN_IN_FUN, pos,
-            "no return statement in function that returns `"FMT"`\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
-        );
-    } else {
-        msg_internal(
-            file, line,
-            DIAG_MISMATCHED_RETURN_TYPE, pos,
-            "returning `"FMT"`, but type `"FMT"` expected\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
-            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
-        );
-    }
-
+static void msg_invalid_return_type_internal(const char* file, int line, Pos pos, const Tast_expr* child) {
+    msg_internal(
+        file, line,
+        DIAG_MISMATCHED_RETURN_TYPE, pos,
+        "returning `"FMT"`, but type `"FMT"` expected\n",
+        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
+        ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
+    );
     msg_internal(
         file, line,
         DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
@@ -298,8 +289,8 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
 #define msg_invalid_yield_type(pos, child, is_auto_inserted) \
     msg_invalid_yield_type_internal(__FILE__, __LINE__, pos, child, is_auto_inserted)
 
-#define msg_invalid_return_type(pos, child, is_auto_inserted) \
-    msg_invalid_return_type_internal(__FILE__, __LINE__, pos, child, is_auto_inserted)
+#define msg_invalid_return_type(pos, child) \
+    msg_invalid_return_type_internal(__FILE__, __LINE__, pos, child)
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
     switch (literal->type) {
@@ -4148,7 +4139,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
-            msg_invalid_return_type(rtn->pos, new_child, rtn->is_auto_inserted);
+            msg_invalid_return_type(rtn->pos, new_child);
             status = false;
             goto error;
         case CHECK_ASSIGN_ERROR:
@@ -4302,7 +4293,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     }
 
     if (status) {
-        *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
+        *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type, uast->is_auto_inserted, uast->is_auto_inserted_else);
         if (check_env.parent_of == PARENT_OF_CASE) {
             if (new_body->lang_type.type != LANG_TYPE_VOID && !check_env.break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
@@ -4456,7 +4447,8 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         orelse->pos,
         if_true_children,
         orelse->pos,
-        symbol_collection_new(orelse->scope_id, util_literal_name_new())
+        symbol_collection_new(orelse->scope_id, util_literal_name_new()),
+        true
     );
 
     Uast_case* if_true_case = uast_case_new(
@@ -4654,7 +4646,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         fun_rtn_expr,
         true
     )));
-    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope);
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope, false);
 
     Uast_orelse* orelse = uast_orelse_new(
         mark->pos,
@@ -4919,7 +4911,8 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             old_case->pos,
             (Uast_stmt_darr) {0},
             old_case->pos,
-            inner_scope
+            inner_scope,
+            true
         );
                 
         Lang_type old_switch_lang_type = check_env.switch_lang_type;
@@ -4927,7 +4920,13 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         check_env.parent_of_operand = uast_symbol_wrap(uast_symbol_new(oper_var->pos, oper_var->name));
         check_env.switch_lang_type = tast_expr_get_lang_type(new_operand_typed);
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, uast_condition_clone(cond, true, inner_scope, cond->pos), if_true))) {
+        if (!try_set_if_types(&new_if, uast_if_new(
+            old_case->pos,
+            uast_condition_clone(cond, true, inner_scope, cond->pos),
+            if_true,
+            true,
+            false
+        ))) {
             status = false;
             goto error_inner;
         }
@@ -4968,7 +4967,8 @@ error_inner:
         outer_scope_id, //darr_at(new_if_else->tasts, 0)->body->scope_id /* TODO */
         check_env.curr_block_has_defer,
         check_env.curr_block_has_yield,
-        check_env.curr_block_has_continue
+        check_env.curr_block_has_continue,
+        true
     );
     //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
     //    scope_get_parent_tbl_update(darr_at(new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
@@ -5168,6 +5168,7 @@ static void do_test_bit_width(void) {
     unwrap(4 == bit_width_needed_unsigned(8));
 }
 
+// TODO: use proper prefix (not try*types) (eg. use "check" as prefix)
 bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool is_top_level) {
     do_test_bit_width();
 
@@ -5221,38 +5222,61 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         }
     }
 
-    if (is_directly_in_fun_def && (
-        block->children.info.count < 1 ||
-        darr_at(block->children, block->children.info.count - 1)->type != UAST_RETURN
-    )) {
-        Uast_return* rtn_statement = uast_return_new(
-            block->pos_end,
-            util_uast_literal_new_from_strv(
-                 sv(""), TOKEN_VOID, block->pos_end
-            ),
-            true
-        );
-        unwrap(rtn_statement->pos.line != 0);
+    if (status && is_directly_in_fun_def) {
+        Lang_type fn_rtn_type = {0};
+        unwrap(try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type));
+        if (fn_rtn_type.type != LANG_TYPE_VOID) {
+            log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, block));
+            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts, block->is_auto_inserted)) {
+                Pos pos = block->pos;
+                if (new_tasts.info.count > 0) {
+                    pos = tast_stmt_get_pos(darr_last(new_tasts));
+                }
 
-        Tast_stmt* new_rtn_statement = NULL;
-        switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
-            case STMT_ERROR:
-                status = false;
-                goto error;
-            case STMT_OK:
-                break;
-            case STMT_NO_STMT:
-                unreachable("statement should be returned when type checking return");
-            default:
-                todo();
+                if (new_tasts.info.count < 1) {
+                    msg(
+                        DIAG_MISSING_RETURN_IN_FUN, pos,
+                        "function block does not have a statement that returns\n"
+                    );
+                } else {
+                    does_return_print_all_notes(new_tasts, block->is_auto_inserted);
+                }
+                msg(
+                    DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
+                    "function returns type `"FMT"`\n",
+                    ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
+                );
+            }
+        } else {
+            Uast_return* rtn_statement = uast_return_new(
+                block->pos_end,
+                util_uast_literal_new_from_strv(
+                     sv(""), TOKEN_VOID, block->pos_end
+                ),
+                true
+            );
+            unwrap(rtn_statement->pos.line != 0);
+
+            Tast_stmt* new_rtn_statement = NULL;
+            switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
+                case STMT_ERROR:
+                    status = false;
+                    goto error;
+                case STMT_OK:
+                    break;
+                case STMT_NO_STMT:
+                    unreachable("statement should be returned when type checking return");
+                default:
+                    todo();
+            }
+            unwrap(rtn_statement);
+            unwrap(new_rtn_statement);
+            darr_append(&a_main, &new_tasts, new_rtn_statement);
         }
-        unwrap(rtn_statement);
-        unwrap(new_rtn_statement);
-        darr_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
 error:
-    check_env.dummy_int = 0; // allow pre-c23 compilers
+    do_nothing();
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0));
     assert(yield_type.type == LANG_TYPE_VOID);
     yield_type = check_env.break_type;
@@ -5270,7 +5294,8 @@ error:
         block->scope_id,
         check_env.curr_block_has_defer,
         check_env.curr_block_has_yield,
-        check_env.curr_block_has_continue
+        check_env.curr_block_has_continue,
+        block->is_auto_inserted
     );
     check_env.curr_block_has_defer = old_curr_block_has_defer;
     check_env.curr_block_has_yield = old_curr_block_has_yield;

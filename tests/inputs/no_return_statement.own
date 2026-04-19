@@ -1,0 +1,68 @@
+io :: import std.io
+
+YesNo :: enum {
+    Yes
+    No
+}
+
+fun_empty :: fn() i32 {
+}
+
+fun_one_stmt_no_rtn :: fn() i32 {
+    io.print_str("hello")
+}
+
+fun_switch_correct :: fn() i32 {
+    yes_no YesNo := .Yes
+    switch (yes_no) {
+        case .Yes: return 9
+        case .No: return 2 
+    }
+}
+
+fun_switch_incorrect :: fn() i32 {
+    yes_no YesNo := .Yes
+    switch (yes_no) {
+        case .Yes: io.print_str("wrong")
+        case .No: return 2 
+    }
+}
+
+fun_if_else_correct :: fn() i32 {
+    yes_no YesNo := .Yes
+    if yes_no == .Yes => return 84
+    else => return 23
+}
+
+fun_if_else_incorrect :: fn() i32 {
+    yes_no YesNo := .Yes
+    if yes_no == .Yes => return 84
+}
+
+fun_complex_incorrect :: fn() i32 {
+    yes_no YesNo := .Yes
+    switch (yes_no) {
+        case .Yes: {
+            if 1 => return 76
+        }
+        case .No: {
+            if 1 => return 84
+            else => return 23
+        }
+    }
+}
+
+main :: fn() i32 {
+    fun_empty()
+    fun_one_stmt_no_rtn()
+
+    fun_switch_correct()
+    fun_switch_incorrect()
+
+    fun_if_else_correct()
+    fun_if_else_incorrect()
+
+    fun_complex_incorrect()
+
+    return 0
+}

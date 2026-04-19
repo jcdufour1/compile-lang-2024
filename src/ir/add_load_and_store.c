@@ -1643,9 +1643,12 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
             false,
             false,
-            false
+            false,
+            true
         ),
-        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
+        true,
+        false
     );
 
     Tast_if* if_false = tast_if_new(
@@ -1666,9 +1669,12 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             symbol_collection_new(new_block->scope_id, util_literal_name_new()),
             false,
             false,
-            false
+            false,
+            true
         ),
-        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
+        true,
+        false
     );
 
     Tast_if_darr ifs = {0};

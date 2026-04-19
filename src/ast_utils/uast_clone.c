@@ -481,13 +481,15 @@ Uast_block* uast_block_clone(const Uast_block* block, bool use_new_scope, Scope_
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         darr_append(&a_main, &new_children, uast_stmt_clone(darr_at(block->children, idx), use_new_scope, scope, dest_pos));
     }
-    return uast_block_new(block->pos, new_children, block->pos_end, scope);
+    return uast_block_new(block->pos, new_children, block->pos_end, scope, block->is_auto_inserted);
 }
 
 Uast_if* uast_if_clone(const Uast_if* lang_if, bool use_new_scope, Scope_id new_scope, Pos dest_pos) {
     return uast_if_new(
         lang_if->pos,
         uast_condition_clone(lang_if->condition, use_new_scope, new_scope, dest_pos),
-        uast_block_clone(lang_if->body, use_new_scope, new_scope, dest_pos)
+        uast_block_clone(lang_if->body, use_new_scope, new_scope, dest_pos),
+        lang_if->is_auto_inserted,
+        lang_if->is_auto_inserted_else
     );
 }
