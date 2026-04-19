@@ -4,4 +4,6 @@
 // returns true if last stmt always returns
 bool does_return_stmt_darr(Tast_stmt_darr stmts);
 
+bool does_return_print_all_notes(Tast_stmt_darr stmts);
+
 #endif // DOES_RETURN_H

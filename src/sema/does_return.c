@@ -1,7 +1,7 @@
+static bool does_return_print_notes = false;
+static Pos does_return_print_prev_pos = (Pos) {0};
 
 static bool does_return_block(Tast_block* block);
-
-static bool does_return_stmt(Tast_stmt* last_stmt_block);
 
 static bool does_return_if_else_chain(Tast_if_else_chain* if_else) {
     darr_foreach(idx, Tast_if*, if_stmt, if_else->tasts) {
@@ -34,6 +34,12 @@ static bool does_return_expr(Tast_expr* expr) {
         case TAST_LITERAL:
             todo();
         case TAST_FUNCTION_CALL:
+            if (does_return_print_notes) {
+                //msg(
+                //    DIAG_NOTE, tast_expr_get_pos(expr),
+                //    "last statement of block does not always return\n"
+                //);
+            }
             return false;
         case TAST_STRUCT_LITERAL:
             todo();
@@ -66,8 +72,12 @@ static bool does_return_stmt(Tast_stmt* last_stmt_block) {
         case TAST_ACTUAL_BREAK:
             todo();
             return false; // TODO
-        case TAST_YIELD:
-            return does_return_expr(tast_yield_unwrap(last_stmt_block)->yield_expr);
+        case TAST_YIELD: {
+            bool status = does_return_expr(tast_yield_unwrap(last_stmt_block)->yield_expr);
+            if (!status && does_return_print_notes) {
+            }
+            return status;
+        }
         case TAST_CONTINUE:
             todo();
             return false; // TODO
@@ -130,6 +140,7 @@ static bool does_return_is_trivial_expr(Tast_expr* expr) {
     unreachable("");
 }
 
+// TODO: remove *trivial*
 static bool does_return_is_trivial_stmt(Tast_stmt* stmt) {
     switch (stmt->type) {
         case TAST_DEFER:
@@ -165,20 +176,39 @@ static bool does_return_is_trivial_stmt(Tast_stmt* stmt) {
 }
 
 bool does_return_stmt_darr(Tast_stmt_darr stmts) {
-    for (size_t idx = stmts.info.count - 1; stmts.info.count > 0; idx--) {
-        Tast_stmt* curr_stmt = darr_at(stmts, idx);
-        log(LOG_DEBUG, FMT"\n", tast_print(curr_stmt));
-
-        //if (!does_return_is_trivial_stmt(curr_stmt)) {
-            return does_return_stmt(curr_stmt);
-        //}
-
-        if (idx < 1) {
-            break;
-        }
+    bool result = false;
+    if (stmts.info.count > 0) {
+        log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
+        result = does_return_stmt(darr_last(stmts));
     }
 
-    return false;
+    if (does_return_print_notes) {
+        if (stmts.info.count > 0) {
+            Pos pos = tast_stmt_get_pos(darr_last(stmts));
+            if (!pos_is_equal(does_return_print_prev_pos, pos)) {
+                msg(
+                    DIAG_NOTE, pos,
+                    "last statement of block does not always return\n"
+                );
+                does_return_print_prev_pos = pos;
+            }
+        } else {
+            todo();
+        }
+                
+    }
+
+    return result;
+}
+
+bool does_return_print_all_notes(Tast_stmt_darr stmts) {
+    does_return_print_notes = true;
+    does_return_print_prev_pos = POS_BUILTIN;
+
+    bool result = does_return_stmt_darr(stmts);
+
+    does_return_print_notes = false;
+    return result;
 }
 
 static bool does_return_block(Tast_block* block) {
