@@ -1155,8 +1155,8 @@ static void ir_to_bytecode_unary(Ir_unary* unary) {
     log(LOG_DEBUG, FMT"\n", ir_print(unary));
     log(LOG_DEBUG, FMT"\n", ir_print(src));
 
-    uint64_t sizeof_dest = sizeof_ir_lang_type(unary->lang_type);
-    uint64_t sizeof_src = sizeof_ir_lang_type(ir_get_lang_type(src));
+    //uint64_t sizeof_dest = sizeof_ir_lang_type(unary->lang_type);
+    //uint64_t sizeof_src = sizeof_ir_lang_type(ir_get_lang_type(src));
 
     if (src_prim_type.type == IR_LANG_TYPE_UNSIGNED_INT && ir_lang_type_is_int(ir_get_lang_type(src))) {
         if (bytecode_is_backpatching) {

@@ -145,6 +145,21 @@ static Ir* rm_void_ir(Ir* ir, bool is_inline) {
     unreachable("");
 }
 
+static int rm_void_alloca_first_compare(const void* lhs__, const void* rhs__) {
+    const Ir*const* lhs_ = lhs__;
+    const Ir*const* rhs_ = rhs__;
+    const Ir* lhs = *lhs_;
+    const Ir* rhs = *rhs_;
+
+    bool lhs_is_alloca = lhs->type == IR_ALLOCA;
+    bool rhs_is_alloca = rhs->type == IR_ALLOCA;
+
+    if (lhs_is_alloca == rhs_is_alloca) {
+        return QSORT_EQUAL;
+    }
+    return lhs_is_alloca ? QSORT_LESS_THAN : QSORT_MORE_THAN;
+}
+
 static Ir* rm_void_block(Ir_block* block) {
     Scope_id old_rm_void_curr_block_scope_id = rm_void_curr_block_scope_id;
     rm_void_curr_block_scope_id = block->scope_id;
@@ -161,6 +176,20 @@ static Ir* rm_void_block(Ir_block* block) {
     }
 
     rm_void_curr_block_scope_id = old_rm_void_curr_block_scope_id;
+
+    if (block->children.info.count > 0) {
+        log(LOG_DEBUG, FMT"\n", ir_print(block));
+        log(LOG_DEBUG, "%p\n", (void*)darr_first_ref(&block->children));
+        log(LOG_DEBUG, "%zu\n", sizeof(block->children.buf[0]));
+        if (block->children.info.count > 15) {
+            breakpoint();
+        }
+        qsort(darr_first_ref(&block->children), block->children.info.count, sizeof(darr_first(&block->children)), rm_void_alloca_first_compare);
+        if (block->children.info.count > 15) {
+            breakpoint();
+        }
+    }
+
     return ir_block_wrap(block);
 }
 

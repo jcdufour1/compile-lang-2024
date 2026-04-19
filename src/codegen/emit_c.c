@@ -548,6 +548,7 @@ static void emit_c_alloca(String* output, const Ir_alloca* lang_alloca) {
     emit_c_extend_name(output, storage_loc);
     string_extend_cstr(&a_pass, output, ";\n");
 
+    // TODO: remove need for separate void* thing (to allow smaller .c output)
     string_extend_cstr(&a_pass, output, "    ");
     string_extend_cstr(&a_pass, output, "void* ");
     emit_c_extend_name(output, lang_alloca->name);
@@ -611,6 +612,7 @@ static void emit_c_store_another_ir(Emit_c_strs* strs, const Ir_store_another_ir
     string_extend_cstr(&a_pass, &strs->output, ";\n");
 }
 
+// TODO: this allocates var in any part of function body, which is not c89 compilant
 static void emit_c_load_another_ir(Emit_c_strs* strs, const Ir_load_another_ir* load) {
     emit_c_loc(&strs->output, ir_get_loc(load), load->pos);
     string_extend_cstr(&a_pass, &strs->output, "    ");

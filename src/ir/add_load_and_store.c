@@ -207,19 +207,6 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
     );
 }
 
-static int load_alloca_first_compare(const void* lhs_, const void* rhs_) {
-    const Ir* lhs = lhs_;
-    const Ir* rhs = rhs_;
-
-    bool lhs_is_alloca = lhs->type == IR_ALLOCA;
-    bool rhs_is_alloca = rhs->type == IR_ALLOCA;
-
-    if (lhs_is_alloca == rhs_is_alloca) {
-        return QSORT_EQUAL;
-    }
-    return lhs_is_alloca ? QSORT_LESS_THAN : QSORT_MORE_THAN;
-}
-
 // TODO: this function should not load allocas, labels, gotos, cond_gotos, etc. in top level blocks
 // TODO: make parameter to the function "parent_block_is_top_level"?
 static void load_block_stmts(
@@ -652,10 +639,6 @@ static void load_block_stmts(
     darr_pop(&defered_collections.coll_stack);
 
     unwrap(defered_collections.coll_stack.info.count == old_colls_count);
-
-    if (new_block->children.info.count > 0) {
-        qsort(darr_first_ref(&new_block->children), new_block->children.info.count, sizeof(darr_first(&new_block->children)), load_alloca_first_compare);
-    }
 
 end:
     curr_block_has_defer = old_curr_block_has_defer;

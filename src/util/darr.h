@@ -80,7 +80,7 @@ typedef struct {
     } while(0)
 
 #define darr_first(darr) \
-    darr_at_ref((darr), 0)
+    (*darr_at_ref((darr), 0))
 
 #define darr_first_ref(darr) \
     darr_at_ref((darr), 0)
