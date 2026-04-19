@@ -28,7 +28,7 @@ static Does_return_pos does_return_pos_new(Pos pos, DOES_RTN_POS_TYPE type) {
 static bool does_return_if_else_chain(Tast_if_else_chain* if_else) {
     darr_foreach(idx, Tast_if*, if_stmt, if_else->tasts) {
         if (!does_return_block(if_stmt->body)) {
-            does_return_child_if_is_auto_inserted = if_stmt->is_auto_inserted;
+            does_return_child_if_is_auto_inserted = if_stmt->is_auto_inserted_else;
             return false;
         }
     }
@@ -212,10 +212,12 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
     //if (num > 1) {
     //    params_log_level = LOG_DEBUG;
     //}
+    //breakpoint();
     if (does_return_print_notes) {
-        breakpoint();
+        //breakpoint();
     }
     if (stmts.info.count > 0) {
+        darr_dump(LOG_DEBUG, stmts, tast_print);
         //if (num > 1) {
             log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
         //}
@@ -231,7 +233,13 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
                 }
 
                 Does_return_pos pos = does_return_pos_new(tast_stmt_get_pos(darr_last(stmts)), type);
-                if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
+                if (pos_is_equal(does_return_print_prev_pos.pos, pos.pos)) {
+                    if (does_return_child_if_is_auto_inserted) {
+                        darr_last_ref(&does_return_print_stack)->type = DOES_RTN_POS_EXPECTED_ELSE;
+                    }
+                } else {
+                    log(LOG_DEBUG, FMT"\n", pos_print(pos.pos));
+                    breakpoint();
                     darr_append(&a_pass, &does_return_print_stack, pos);
                     does_return_print_prev_pos = pos;
                 }
@@ -242,7 +250,13 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
                 }
 
                 Does_return_pos pos = does_return_pos_new(pos_parent, type);
-                if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
+                if (pos_is_equal(does_return_print_prev_pos.pos, pos.pos)) {
+                    if (does_return_child_if_is_auto_inserted) {
+                        darr_last_ref(&does_return_print_stack)->type = DOES_RTN_POS_EXPECTED_ELSE;
+                    }
+                } else {
+                    log(LOG_DEBUG, FMT"\n", pos_print(pos.pos));
+                    breakpoint();
                     darr_append(&a_pass, &does_return_print_stack, pos);
                     does_return_print_prev_pos = pos;
                 }
@@ -277,7 +291,7 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
                 }
                 msg(
                     diag_type, pos.pos,
-                    "if else chain at end of function must have an else clause\n"
+                    "`if` or `else if` at end of function must have an else clause that returns\n"
                 );
                 break;
             case DOES_RTN_POS_BLOCK_EMPTY:
@@ -305,6 +319,7 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
         is_first = false;
     }
 
+    does_return_child_if_is_auto_inserted = false;
     does_return_print_notes = false;
     does_return_print_prev_pos = does_return_pos_new(POS_BUILTIN, DOES_RTN_POS_LAST_DOES_NOT_RETURN);
     does_return_print_stack = (Does_return_pos_darr) {0};

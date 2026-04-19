@@ -489,6 +489,7 @@ Uast_if* uast_if_clone(const Uast_if* lang_if, bool use_new_scope, Scope_id new_
         lang_if->pos,
         uast_condition_clone(lang_if->condition, use_new_scope, new_scope, dest_pos),
         uast_block_clone(lang_if->body, use_new_scope, new_scope, dest_pos),
-        lang_if->is_auto_inserted
+        lang_if->is_auto_inserted,
+        lang_if->is_auto_inserted_else
     );
 }

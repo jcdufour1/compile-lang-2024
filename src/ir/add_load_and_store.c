@@ -1646,7 +1646,8 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             false
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
-        true
+        true,
+        false
     );
 
     Tast_if* if_false = tast_if_new(
@@ -1670,7 +1671,8 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
             false
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0)),
-        true
+        true,
+        false
     );
 
     Tast_if_darr ifs = {0};

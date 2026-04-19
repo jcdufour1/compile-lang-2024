@@ -127,6 +127,17 @@ for generics:
 - add never_return attribute
 - implement way to easily change debug level temporarily
 - implement I128, etc.
+- fix compile error for:
+    yes_no YesNo := .Yes
+    switch (yes_no) {
+        case .Yes: {
+            if 1 => return 76
+        }
+        case .No: {
+            if yes_no == .Yes => return 84
+            else => return 23
+        }
+    }
 
 
 # roadmap to try to get bootstrap compiler done:
