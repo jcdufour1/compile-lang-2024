@@ -1,8 +1,28 @@
+typedef enum {
+    DOES_RTN_POS_EXPECTED_ELSE,
+    DOES_RTN_POS_BLOCK_EMPTY,
+    DOES_RTN_POS_LAST_DOES_NOT_RETURN,
+} DOES_RTN_POS_TYPE;
+
+typedef struct {
+    Pos pos;
+    DOES_RTN_POS_TYPE type;
+} Does_return_pos;
+
+typedef struct {
+    Vec_base info;
+    Does_return_pos* buf;
+} Does_return_pos_darr;
+
 static bool does_return_print_notes = false;
-static Pos does_return_print_prev_pos = (Pos) {0};
-static Pos_darr does_return_print_stack = (Pos_darr) {0};
+static Does_return_pos does_return_print_prev_pos = (Does_return_pos) {0};
+static Does_return_pos_darr does_return_print_stack = (Does_return_pos_darr) {0};
 
 static bool does_return_block(Tast_block* block);
+
+static Does_return_pos does_return_pos_new(Pos pos, DOES_RTN_POS_TYPE type) {
+    return (Does_return_pos) {.pos = pos, .type = type};
+}
 
 static bool does_return_if_else_chain(Tast_if_else_chain* if_else) {
     darr_foreach(idx, Tast_if*, if_stmt, if_else->tasts) {
@@ -12,6 +32,10 @@ static bool does_return_if_else_chain(Tast_if_else_chain* if_else) {
     }
 
     return true;
+}
+
+static bool does_return_pos_is_equal(Does_return_pos a, Does_return_pos b) {
+    return a.type == b.type && pos_is_equal(a.pos, b.pos);
 }
 
 static bool does_return_expr(Tast_expr* expr) {
@@ -185,14 +209,14 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
 
     if (does_return_print_notes) {
         if (stmts.info.count > 0) {
-            Pos pos = tast_stmt_get_pos(darr_last(stmts));
-            if (!pos_is_equal(does_return_print_prev_pos, pos)) {
+            Does_return_pos pos = does_return_pos_new(tast_stmt_get_pos(darr_last(stmts)), DOES_RTN_POS_LAST_DOES_NOT_RETURN);
+            if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
                 darr_append(&a_pass, &does_return_print_stack, pos);
                 does_return_print_prev_pos = pos;
             }
         } else {
-            Pos pos = pos_parent;
-            if (!pos_is_equal(does_return_print_prev_pos, pos)) {
+            Does_return_pos pos = does_return_pos_new(pos_parent, DOES_RTN_POS_BLOCK_EMPTY);
+            if (!does_return_pos_is_equal(does_return_print_prev_pos, pos)) {
                 darr_append(&a_pass, &does_return_print_stack, pos);
                 does_return_print_prev_pos = pos;
             }
@@ -205,8 +229,11 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
 
 bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
     does_return_print_notes = true;
-    does_return_print_prev_pos = POS_BUILTIN;
-    does_return_print_stack = (Pos_darr) {0};
+    does_return_print_prev_pos = does_return_pos_new(POS_BUILTIN, DOES_RTN_POS_LAST_DOES_NOT_RETURN);
+    does_return_print_stack = (Does_return_pos_darr) {0};
+
+    log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
+    todo();
 
     bool result = does_return_stmt_darr(stmts, pos_parent);
 
@@ -214,16 +241,31 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
         darr_pop(&does_return_print_stack);
     }
     while (does_return_print_stack.info.count > 0) {
-        Pos pos = darr_pop(&does_return_print_stack);
-        msg(
-            DIAG_NOTE, pos,
-            "last statement of block does not always return\n"
-        );
+        Does_return_pos pos = darr_pop(&does_return_print_stack);
+
+        switch (pos.type) {
+            case DOES_RTN_POS_EXPECTED_ELSE:
+                todo();
+            case DOES_RTN_POS_BLOCK_EMPTY:
+                msg(
+                    DIAG_NOTE, pos.pos,
+                    "function block does not have a statement that returns\n"
+                );
+                break;
+            case DOES_RTN_POS_LAST_DOES_NOT_RETURN:
+                msg(
+                    DIAG_NOTE, pos.pos,
+                    "last statement of block does not always return\n"
+                );
+                break;
+            default:
+                unreachable("");
+        }
     }
 
     does_return_print_notes = false;
-    does_return_print_prev_pos = POS_BUILTIN;
-    does_return_print_stack = (Pos_darr) {0};
+    does_return_print_prev_pos = does_return_pos_new(POS_BUILTIN, DOES_RTN_POS_LAST_DOES_NOT_RETURN);
+    does_return_print_stack = (Does_return_pos_darr) {0};
     return result;
 }
 

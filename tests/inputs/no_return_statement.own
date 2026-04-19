@@ -46,7 +46,7 @@ main :: fn() i32 {
     //fun_switch_correct()
     //fun_switch_incorrect()
 
-    fun_if_else_correct()
+    //fun_if_else_correct()
     fun_if_else_incorrect()
 
     return 0
