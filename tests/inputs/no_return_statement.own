@@ -28,12 +28,26 @@ fun_switch_incorrect :: fn() i32 {
     }
 }
 
-main :: fn() i32 {
-    fun_empty()
-    fun_one_stmt_no_rtn()
+fun_if_else_correct :: fn() i32 {
+    yes_no YesNo := .Yes
+    if yes_no == .Yes => return 84
+    else => return 23
+}
 
-    fun_switch_correct()
-    fun_switch_incorrect()
+fun_if_else_incorrect :: fn() i32 {
+    yes_no YesNo := .Yes
+    if yes_no == .Yes => return 84
+}
+
+main :: fn() i32 {
+    //fun_empty()
+    //fun_one_stmt_no_rtn()
+
+    //fun_switch_correct()
+    //fun_switch_incorrect()
+
+    fun_if_else_correct()
+    fun_if_else_incorrect()
 
     return 0
 }

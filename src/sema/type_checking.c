@@ -5217,7 +5217,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Lang_type fn_rtn_type = {0};
         unwrap(try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type));
         if (fn_rtn_type.type != LANG_TYPE_VOID) {
-            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts)) {
+            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts, block->pos)) {
                 Pos pos = block->pos;
                 if (new_tasts.info.count > 0) {
                     pos = tast_stmt_get_pos(darr_last(new_tasts));
@@ -5235,7 +5235,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                         "last statement of block does not always return\n"
                     );
                     breakpoint();
-                    does_return_print_all_notes(new_tasts);
+                    does_return_print_all_notes(new_tasts, block->pos);
                 }
                 msg(
                     DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),

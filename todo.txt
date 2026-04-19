@@ -124,6 +124,7 @@ for generics:
     (use recursive function in type checking pass to check if last statement (switch, if else block, return, etc. always returns)
 - tests/inputs/orelse_print_num_result_in_error_handling_block.own should print error
 - make printing of ir_goto nicer
+- add never_return attribute
 
 
 # roadmap to try to get bootstrap compiler done:

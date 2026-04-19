@@ -176,7 +176,7 @@ static bool does_return_is_trivial_stmt(Tast_stmt* stmt) {
     unreachable("");
 }
 
-bool does_return_stmt_darr(Tast_stmt_darr stmts) {
+bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
     bool result = false;
     if (stmts.info.count > 0) {
         log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
@@ -191,7 +191,11 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts) {
                 does_return_print_prev_pos = pos;
             }
         } else {
-            todo();
+            Pos pos = pos_parent;
+            if (!pos_is_equal(does_return_print_prev_pos, pos)) {
+                darr_append(&a_pass, &does_return_print_stack, pos);
+                does_return_print_prev_pos = pos;
+            }
         }
                 
     }
@@ -199,12 +203,12 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts) {
     return result;
 }
 
-bool does_return_print_all_notes(Tast_stmt_darr stmts) {
+bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
     does_return_print_notes = true;
     does_return_print_prev_pos = POS_BUILTIN;
     does_return_print_stack = (Pos_darr) {0};
 
-    bool result = does_return_stmt_darr(stmts);
+    bool result = does_return_stmt_darr(stmts, pos_parent);
 
     if (does_return_print_stack.info.count > 0) {
         darr_pop(&does_return_print_stack);
@@ -224,6 +228,6 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts) {
 }
 
 static bool does_return_block(Tast_block* block) {
-    return does_return_stmt_darr(block->children);
+    return does_return_stmt_darr(block->children, block->pos);
 }
 
