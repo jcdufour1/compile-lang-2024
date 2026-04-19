@@ -5224,16 +5224,13 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 }
 
                 if (new_tasts.info.count < 1) {
+                    // TODO
                     msg(
                         DIAG_MISSING_RETURN_IN_FUN, pos,
                         "function block does not have a statement that returns\n"
                     );
                 } else {
                     // TODO
-                    msg(
-                        DIAG_MISSING_RETURN_IN_FUN, tast_stmt_get_pos(darr_last(new_tasts)),
-                        "last statement of block does not always return\n"
-                    );
                     //breakpoint();
                     does_return_print_all_notes(new_tasts, block->pos);
                 }

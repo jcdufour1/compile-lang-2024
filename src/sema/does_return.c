@@ -247,6 +247,8 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
                     does_return_print_prev_pos = pos;
                 }
             }
+
+            does_return_child_if_is_auto_inserted = false;
                     
         }
     }
@@ -263,34 +265,44 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
 
     log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
 
-    if (does_return_print_stack.info.count > 0) {
-        darr_pop(&does_return_print_stack);
-    }
+    bool is_first = true;
     while (does_return_print_stack.info.count > 0) {
         Does_return_pos pos = darr_pop(&does_return_print_stack);
+        DIAG_TYPE diag_type = DIAG_NOTE;
 
         switch (pos.type) {
             case DOES_RTN_POS_EXPECTED_ELSE:
+                if (is_first) {
+                    diag_type = DIAG_MISSING_RETURN_IN_FUN;
+                }
                 msg(
-                    DIAG_NOTE, pos.pos,
+                    diag_type, pos.pos,
                     "if else chain at end of function must have an else clause\n"
                 );
                 break;
             case DOES_RTN_POS_BLOCK_EMPTY:
+                if (is_first) {
+                    diag_type = DIAG_MISSING_RETURN_IN_FUN;
+                }
                 msg(
-                    DIAG_NOTE, pos.pos,
+                    diag_type, pos.pos,
                     "function block does not have a statement that returns\n"
                 );
                 break;
             case DOES_RTN_POS_LAST_DOES_NOT_RETURN:
+                if (is_first) {
+                    diag_type = DIAG_MISSING_RETURN_IN_FUN;
+                }
                 msg(
-                    DIAG_NOTE, pos.pos,
+                    diag_type, pos.pos,
                     "last statement of block does not always return\n"
                 );
                 break;
             default:
                 unreachable("");
         }
+
+        is_first = false;
     }
 
     does_return_print_notes = false;
