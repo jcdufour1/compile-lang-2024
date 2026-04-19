@@ -142,6 +142,7 @@ for generics:
             else => return 23
         }
     }
+- make log function that logs to file?
 - make python script show error on seg fault, etc. if possible
 >>>>>>> b7f2f2919f86d3e61b10ff4d6934d68bab1e448e
 

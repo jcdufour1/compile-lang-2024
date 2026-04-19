@@ -917,6 +917,9 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         //todo();
     }
 
+    log(LOG_DEBUG, FMT"\n", ir_print(def));
+    breakpoint();
+
     bytecode_stack_offset_ = 0;
 
     Ir_variable_def_darr old_curr_fun_args = curr_fun_args;
