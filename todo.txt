@@ -138,6 +138,7 @@ for generics:
             else => return 23
         }
     }
+- make python script show error on seg fault, etc. if possible
 
 
 # roadmap to try to get bootstrap compiler done:
