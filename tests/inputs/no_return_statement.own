@@ -53,14 +53,14 @@ fun_complex_incorrect :: fn() i32 {
 }
 
 main :: fn() i32 {
-    //fun_empty()
-    //fun_one_stmt_no_rtn()
+    fun_empty()
+    fun_one_stmt_no_rtn()
 
-    //fun_switch_correct()
-    //fun_switch_incorrect()
+    fun_switch_correct()
+    fun_switch_incorrect()
 
-    //fun_if_else_correct()
-    //fun_if_else_incorrect()
+    fun_if_else_correct()
+    fun_if_else_incorrect()
 
     fun_complex_incorrect()
 

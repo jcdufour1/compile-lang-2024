@@ -202,7 +202,7 @@ static bool does_return_is_trivial_stmt(Tast_stmt* stmt) {
     unreachable("");
 }
 
-bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
+bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent, bool is_auto_inserted) {
     bool result = false;
 
     //static int num = 0;
@@ -224,7 +224,7 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
         result = does_return_stmt(darr_last(stmts));
     }
 
-    if (!result) {
+    if (!result && !is_auto_inserted) {
         if (does_return_print_notes) {
             if (stmts.info.count > 0) {
                 DOES_RTN_POS_TYPE type = DOES_RTN_POS_LAST_DOES_NOT_RETURN;
@@ -239,7 +239,7 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
                     }
                 } else {
                     log(LOG_DEBUG, FMT"\n", pos_print(pos.pos));
-                    breakpoint();
+                    //breakpoint();
                     darr_append(&a_pass, &does_return_print_stack, pos);
                     does_return_print_prev_pos = pos;
                 }
@@ -270,12 +270,12 @@ bool does_return_stmt_darr(Tast_stmt_darr stmts, Pos pos_parent) {
     return result;
 }
 
-bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
+bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent, bool is_auto_inserted) {
     does_return_print_notes = true;
     does_return_print_prev_pos = does_return_pos_new(POS_BUILTIN, DOES_RTN_POS_LAST_DOES_NOT_RETURN);
     does_return_print_stack = (Does_return_pos_darr) {0};
 
-    bool result = does_return_stmt_darr(stmts, pos_parent);
+    bool result = does_return_stmt_darr(stmts, pos_parent, is_auto_inserted);
 
     log(LOG_DEBUG, FMT"\n", tast_print(darr_last(stmts)));
 
@@ -327,6 +327,6 @@ bool does_return_print_all_notes(Tast_stmt_darr stmts, Pos pos_parent) {
 }
 
 static bool does_return_block(Tast_block* block) {
-    return does_return_stmt_darr(block->children, block->pos);
+    return does_return_stmt_darr(block->children, block->pos, block->is_auto_inserted);
 }
 

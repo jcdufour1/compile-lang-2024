@@ -1998,7 +1998,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
     
     if (is_for_range(*tokens, block_scope)) {
         PARSE_STATUS status = PARSE_OK;
-        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_darr) {0}, for_token.pos, block_scope);
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_darr) {0}, for_token.pos, block_scope, true);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, false, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
@@ -2469,7 +2469,8 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
                 if_stmt->pos,
                 (Uast_stmt_darr) {0},
                 if_stmt->pos,
-                symbol_collection_new(parent, util_literal_name_new())
+                symbol_collection_new(parent, util_literal_name_new()),
+                true
             ),
             true,
             true
@@ -2479,7 +2480,7 @@ static PARSE_EXPR_EX_STATUS parse_if_else_chain_internal(
 
     Uast_stmt_darr chain_ = {0};
     darr_append(&a_main, &chain_, uast_expr_wrap(uast_if_else_chain_wrap(uast_if_else_chain_new(if_token.pos, ifs))));
-    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent);
+    *if_else_chain = uast_block_new(if_token.pos, chain_, if_token.pos, parent, true/*TODO*/);
     return PARSE_EXPR_EX_OK_NORMAL;
 }
 
@@ -2581,7 +2582,7 @@ static PARSE_STATUS parse_if_let_internal(Uast_switch** lang_switch, Token if_to
 
     if (!if_false) {
         // TODO: make function for making empty block, and call it here?
-        if_false = uast_block_new(if_token.pos, (Uast_stmt_darr) {0}, if_token.pos, if_false_scope);
+        if_false = uast_block_new(if_token.pos, (Uast_stmt_darr) {0}, if_token.pos, if_false_scope, true);
     }
 
 
@@ -2760,7 +2761,7 @@ static PARSE_STATUS parse_switch(Uast_block** lang_switch, Tk_view* tokens, Scop
         status = PARSE_ERROR;
         goto error;
     }
-    *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent);
+    *lang_switch = uast_block_new(start_token.pos, chain_, start_token.pos /* TODO */, parent, true);
 
     if (!consume_expect(NULL, tokens, "", TOKEN_CLOSE_CURLY_BRACE)) {
         status = PARSE_ERROR;
@@ -3003,7 +3004,7 @@ static PARSE_STATUS parse_block(
     if (parse_state.new_scope_name.base.count > 0 && PARSE_OK != label_thing(&dummy, new_scope)) {
         status = PARSE_ERROR;
     }
-    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, tk_view_front(*tokens).pos, new_scope);
+    *block = uast_block_new(tk_view_front(*tokens).pos, init_children, tk_view_front(*tokens).pos, new_scope, false);
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -3410,7 +3411,8 @@ static PARSE_EXPR_STATUS parse_orelse_finish(
         orelse->pos,
         block_children,
         orelse->if_error->pos_end,
-        outer
+        outer,
+        true
     );
     return PARSE_EXPR_OK;
 }
@@ -3435,7 +3437,8 @@ static PARSE_EXPR_STATUS parse_question_mark_finish(
         mark->pos,
         block_children,
         mark->pos,
-        outer
+        outer,
+        true
     );
     return PARSE_EXPR_OK;
 }

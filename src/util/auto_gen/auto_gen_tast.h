@@ -16,6 +16,7 @@ static Uast_type tast_gen_block(const char* prefix) {
     append_member(&block.members, "bool", "has_defer");
     append_member(&block.members, "bool", "has_yield");
     append_member(&block.members, "bool", "has_continue");
+    append_member(&block.members, "bool", "is_auto_inserted");
 
     return block;
 }

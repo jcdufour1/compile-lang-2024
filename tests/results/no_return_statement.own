@@ -1,0 +1,71 @@
+compile::stdout 0
+
+compile::stderr 65
+tests/inputs/no_return_statement.own:8:23:[1;31merror[0;39m:function block does not have a statement that returns
+     7 | 
+     8 | fun_empty :: fn() i32 {
+       |                       ^
+     9 | }
+tests/inputs/no_return_statement.own:8:19:[1;34mnote[0;39m:function returns type `i32`
+     7 | 
+     8 | fun_empty :: fn() i32 {
+       |                   ^
+     9 | }
+tests/inputs/no_return_statement.own:12:7:[1;31merror[0;39m:last statement of block does not always return
+    11 | fun_one_stmt_no_rtn :: fn() i32 {
+    12 |     io.print_str("hello")
+       |       ^
+    13 | }
+tests/inputs/no_return_statement.own:11:29:[1;34mnote[0;39m:function returns type `i32`
+    10 | 
+    11 | fun_one_stmt_no_rtn :: fn() i32 {
+       |                             ^
+    12 |     io.print_str("hello")
+tests/inputs/no_return_statement.own:25:5:[1;31merror[0;39m:last statement of block does not always return
+    24 |     yes_no YesNo := .Yes
+    25 |     switch (yes_no) {
+       |     ^
+    26 |         case .Yes: io.print_str("wrong")
+tests/inputs/no_return_statement.own:26:22:[1;34mnote[0;39m:last statement of block does not always return
+    25 |     switch (yes_no) {
+    26 |         case .Yes: io.print_str("wrong")
+       |                      ^
+    27 |         case .No: return 2 
+tests/inputs/no_return_statement.own:23:30:[1;34mnote[0;39m:function returns type `i32`
+    22 | 
+    23 | fun_switch_incorrect :: fn() i32 {
+       |                              ^
+    24 |     yes_no YesNo := .Yes
+tests/inputs/no_return_statement.own:39:5:[1;31merror[0;39m:`if` or `else if` at end of function must have an else clause that returns
+    38 |     yes_no YesNo := .Yes
+    39 |     if yes_no == .Yes => return 84
+       |     ^
+    40 | }
+tests/inputs/no_return_statement.own:37:31:[1;34mnote[0;39m:function returns type `i32`
+    36 | 
+    37 | fun_if_else_incorrect :: fn() i32 {
+       |                               ^
+    38 |     yes_no YesNo := .Yes
+tests/inputs/no_return_statement.own:44:5:[1;31merror[0;39m:last statement of block does not always return
+    43 |     yes_no YesNo := .Yes
+    44 |     switch (yes_no) {
+       |     ^
+    45 |         case .Yes: {
+tests/inputs/no_return_statement.own:45:20:[1;34mnote[0;39m:last statement of block does not always return
+    44 |     switch (yes_no) {
+    45 |         case .Yes: {
+       |                    ^
+    46 |             if 1 => return 76
+tests/inputs/no_return_statement.own:46:13:[1;34mnote[0;39m:`if` or `else if` at end of function must have an else clause that returns
+    45 |         case .Yes: {
+    46 |             if 1 => return 76
+       |             ^
+    47 |         }
+tests/inputs/no_return_statement.own:42:31:[1;34mnote[0;39m:function returns type `i32`
+    41 | 
+    42 | fun_complex_incorrect :: fn() i32 {
+       |                               ^
+    43 |     yes_no YesNo := .Yes
+
+compile::return_code 1
+

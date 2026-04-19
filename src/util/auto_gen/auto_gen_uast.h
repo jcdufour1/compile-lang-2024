@@ -30,6 +30,7 @@ static Uast_type uast_gen_block(const char* prefix) {
     append_member(&block.members, "Uast_stmt_darr", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
+    append_member(&block.members, "bool", "is_auto_inserted");
 
     return block;
 }

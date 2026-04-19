@@ -4447,7 +4447,8 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
         orelse->pos,
         if_true_children,
         orelse->pos,
-        symbol_collection_new(orelse->scope_id, util_literal_name_new())
+        symbol_collection_new(orelse->scope_id, util_literal_name_new()),
+        true /* TODO */
     );
 
     Uast_case* if_true_case = uast_case_new(
@@ -4645,7 +4646,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
         fun_rtn_expr,
         true
     )));
-    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope);
+    Uast_block* if_error = uast_block_new(mark->pos, if_err_children, mark->pos, error_scope, false /* TODO */);
 
     Uast_orelse* orelse = uast_orelse_new(
         mark->pos,
@@ -4910,7 +4911,8 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
             old_case->pos,
             (Uast_stmt_darr) {0},
             old_case->pos,
-            inner_scope
+            inner_scope,
+            true
         );
                 
         Lang_type old_switch_lang_type = check_env.switch_lang_type;
@@ -4959,7 +4961,8 @@ error_inner:
         outer_scope_id, //darr_at(new_if_else->tasts, 0)->body->scope_id /* TODO */
         check_env.curr_block_has_defer,
         check_env.curr_block_has_yield,
-        check_env.curr_block_has_continue
+        check_env.curr_block_has_continue,
+        true
     );
     //for (size_t idx = 0; idx < new_if_else->tasts.info.count; idx++) {
     //    scope_get_parent_tbl_update(darr_at(new_if_else->tasts, idx)->body->scope_id, (*new_tast)->scope_id);
@@ -5218,8 +5221,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         unwrap(try_lang_type_from_ulang_type(&fn_rtn_type, env.parent_fn_rtn_type));
         if (fn_rtn_type.type != LANG_TYPE_VOID) {
             log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, block));
-            breakpoint();
-            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts, block->pos)) {
+            if (new_tasts.info.count < 1 || !does_return_stmt_darr(new_tasts, block->pos, block->is_auto_inserted)) {
                 Pos pos = block->pos;
                 if (new_tasts.info.count > 0) {
                     pos = tast_stmt_get_pos(darr_last(new_tasts));
@@ -5234,7 +5236,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 } else {
                     // TODO
                     //breakpoint();
-                    does_return_print_all_notes(new_tasts, block->pos);
+                    does_return_print_all_notes(new_tasts, block->pos, block->is_auto_inserted);
                 }
                 msg(
                     DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
@@ -5319,7 +5321,8 @@ error:
         block->scope_id,
         check_env.curr_block_has_defer,
         check_env.curr_block_has_yield,
-        check_env.curr_block_has_continue
+        check_env.curr_block_has_continue,
+        block->is_auto_inserted
     );
     check_env.curr_block_has_defer = old_curr_block_has_defer;
     check_env.curr_block_has_yield = old_curr_block_has_yield;
