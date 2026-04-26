@@ -236,4 +236,8 @@ static void bytecode_state_restore(uint64_t* stack_offset, size_t* bytecode_coun
     *bytecode_count = state.bytecode_count;
 }
 
+void bytecode_append_store_stack_dir_addr(uint64_t dest, int64_t src_value, uint64_t sizeof_data, uint64_t stack_offset_after);
+
+void bytecode_append_store_stack(uint64_t dest, uint64_t src, uint64_t sizeof_data, uint64_t stack_offset_after);
+
 #endif // BYTECODE_H

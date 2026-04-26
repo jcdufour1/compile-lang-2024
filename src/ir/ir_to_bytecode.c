@@ -362,22 +362,23 @@ uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size, bool is_actual_push,
     assert(get_next_multiple(bytecode_locals_offset, 8) == bytecode_locals_offset && "not implemented");
 
     if (is_actual_push) {
-        if (0 && should_emit_push) {
+        assert(bytecode_stack_offset_ < 1000);
+        bytecode_stack_offset_ += get_next_multiple(alloc_size, 8);
+        bytecode_stack_offset_ = get_next_multiple(bytecode_stack_offset_, 8);
+        log(LOG_DEBUG, "%zu\n", bytecode_stack_offset_);
+
+        if (should_emit_push) {
             uint64_t old_count = bytecode.code.info.count;
 
             bytecode_append_align(BYTECODE_ALLOCA);
             ir_to_bytecode_uint64_t(alloc_size);
+            ir_to_bytecode_uint64_t(bytecode_stack_offset_);
 
             assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
         }
 
         if (0) {
         }
-        assert(bytecode_stack_offset_ < 1000);
-        bytecode_stack_offset_ += get_next_multiple(alloc_size, 8);
-        bytecode_stack_offset_ = get_next_multiple(bytecode_stack_offset_, 8);
-        log(LOG_DEBUG, "%zu\n", bytecode_stack_offset_);
-
         if (bytecode_is_backpatching) {
             return 0;
         }
@@ -449,16 +450,14 @@ static uint64_t ir_to_bytecode_push_int(Ir_int* lang_int, bool is_actual_push) {
     size_t old_count = bytecode.code.info.count;
     log(LOG_DEBUG, "ir_to_bytecode_push_int: old_count = %zu\n", old_count);
     uint64_t sizeof_int = sizeof_ir_lang_type(lang_int->lang_type);
-        assert(bytecode_stack_offset_ < 1000);
-        log(LOG_DEBUG, "bytecode_stack_offset_ = %zu\n", bytecode_stack_offset_);
+    assert(bytecode_stack_offset_ < 1000);
+    log(LOG_DEBUG, "bytecode_stack_offset_ = %zu\n", bytecode_stack_offset_);
     uint64_t int_pos = ir_to_bytecode_alloc_internal(sizeof_int, is_actual_push, true);
-        assert(bytecode_stack_offset_ < 1000);
+    assert(bytecode_stack_offset_ < 1000);
 
     assert(sizeof_int <= 64);
-    bytecode_append_align(BYTECODE_STORE_STACK_DIR_ADDR);
-    ir_to_bytecode_uint64_t(int_pos);
-    ir_to_bytecode_int64_t(lang_int->data);
-    ir_to_bytecode_uint64_t(sizeof_int);
+    // TODO: always call function similar to this
+    bytecode_append_store_stack_dir_addr(int_pos, lang_int->data, sizeof_int, bytecode_stack_offset_);
 
     log(LOG_DEBUG, "%zu %zu %zu\n", int_pos, lang_int->data, sizeof_int);
 
@@ -504,10 +503,7 @@ static uint64_t ir_to_bytecode_push_internal(uint64_t sizeof_load, uint64_t src_
     uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_load, is_actual_push, true);
         assert(bytecode_stack_offset_ < 1000);
 
-    bytecode_append_align(BYTECODE_STORE_STACK);
-    ir_to_bytecode_uint64_t(alloca_pos);
-    ir_to_bytecode_uint64_t(src_pos);
-    ir_to_bytecode_uint64_t(sizeof_load);
+    bytecode_append_store_stack(alloca_pos, src_pos, sizeof_load, bytecode_stack_offset_);
 
     //uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
     //bytecode_append_align(BYTECODE_ALLOCA);

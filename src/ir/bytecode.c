@@ -237,12 +237,14 @@ static void bytecode_dump_internal_2(
             case BYTECODE_RETURN:
                 log(LOG_TRACE, "return\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": return: (sizeof rtn_lang_type: %"PRIu64")\n", old_idx, bytecode_dump_read_uint64_t(&idx));
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
 
                 assert(idx - old_idx == BYTECODE_RETURN_SIZE);
                 break;
             case BYTECODE_GOTO:
                 log(LOG_TRACE, "goto\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": goto: %"PRIu64"\n", old_idx, bytecode_dump_read_uint64_t(&idx));
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
 
                 assert(idx - old_idx == BYTECODE_GOTO_SIZE);
                 break;
@@ -408,5 +410,29 @@ void bytecode_dump_internal(FILE* dest, const char* file, int line, LOG_LEVEL lo
     }
     qsort(mappings.buf, mappings.info.count, sizeof(mappings.buf[0]), bytecode_mapping_cmp);
     bytecode_dump_internal_2(dest, file, line, &mappings, log_level, bytecode, false);
+}
+
+void bytecode_append_store_stack_dir_addr(uint64_t dest, int64_t src_value, uint64_t sizeof_data, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_STORE_STACK_DIR_ADDR);
+    ir_to_bytecode_uint64_t(dest);
+    ir_to_bytecode_int64_t(src_value);
+    ir_to_bytecode_uint64_t(sizeof_data);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
+}
+
+void bytecode_append_store_stack(uint64_t dest, uint64_t src, uint64_t sizeof_data, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_STORE_STACK);
+    ir_to_bytecode_uint64_t(dest);
+    ir_to_bytecode_uint64_t(src);
+    ir_to_bytecode_uint64_t(sizeof_data);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_STORE_STACK_SIZE);
 }
 
