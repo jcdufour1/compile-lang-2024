@@ -43,6 +43,15 @@ static void inter_stack_dump_internal(LOG_LEVEL log_level, const char* file, int
 // TODO: figure out why inter_stack_dump seems to print nothing
 #define inter_stack_dump(log_level) inter_stack_dump_internal(log_level, __FILE__, __LINE__)
 
+static uint8_t interpret_read_uint8_t(void) {
+    uint64_t value = 0;
+    // TODO: this memcpys 8 bytes for 1 bytes integer
+    memcpy(&value, darr_at_ref(&bytecode.code, inter_prog_counter), sizeof(value));
+    inter_prog_counter++;
+
+    return value;
+}
+
 static uint8_t interpret_read_uint8_t_aligned(void) {
     uint64_t value = 0;
     // TODO: this memcpys 8 bytes for 1 bytes integer
@@ -81,6 +90,9 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         log(LOG_DEBUG, #bin" pos_rhs = %zu\n", pos_rhs); \
         uint64_t lhs = bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size); \
         uint64_t rhs = bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size); \
+        log(LOG_DEBUG, #bin" lhs = %zu\n", lhs); \
+        log(LOG_DEBUG, #bin" rhs = %zu\n", rhs); \
+        log(LOG_DEBUG, #bin" value = %"PRIi64"\n", (int64_t)(lhs bin rhs)); \
         \
         bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, lhs bin rhs); \
         \
@@ -98,17 +110,28 @@ static bool interpret_instruction(void) {
     BYTECODE opcode = interpret_read_uint8_t_aligned();
     switch (opcode) {
         case BYTECODE_COMMENT: {
+            String buf = {0};
             log(LOG_TRACE, "bytecode_comment\n");
 
             uint64_t file_len = interpret_read_uint64_t_aligned();
-            inter_prog_counter += get_next_multiple(file_len, 8);
+            for (uint64_t file_idx = 0; file_idx < file_len; file_idx++) {
+                string_append(&a_temp, &buf, (char)interpret_read_uint8_t());
+            }
+            inter_prog_counter = get_next_multiple(inter_prog_counter, 8);
+            //inter_prog_counter += get_next_multiple(file_len, 8);
 
-            interpret_read_uint64_t_aligned(); // line
+            uint64_t line = interpret_read_uint64_t_aligned(); // line
+            string_extend_f(&a_temp, &buf, ":%"PRIu64":", line);
 
             uint64_t comment_len = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
-            inter_prog_counter += get_next_multiple(comment_len, 8);
+            for (uint64_t file_idx = 0; file_idx < comment_len; file_idx++) {
+                string_append(&a_temp, &buf, (char)interpret_read_uint8_t());
+            }
+            inter_prog_counter = get_next_multiple(inter_prog_counter, 8);
+            //inter_prog_counter += get_next_multiple(comment_len, 8);
+
+            log(LOG_TRACE, FMT"\n", string_print(buf));
 
             assert(
                 inter_prog_counter - old_prog_counter
@@ -423,6 +446,7 @@ static bool interpret_instruction(void) {
 }
 
 void interpret(void) {
+    log(LOG_DEBUG, "%zu\n", bytecode.code.info.count);
     breakpoint();
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of main function stack frame initial state");
     {
@@ -443,9 +467,9 @@ void interpret(void) {
         //inter_stack_dump(LOG_DEBUG);
         log(LOG_DEBUG, "%zu\n", inter_prog_counter);
         //if (inter_prog_counter == 2144) {
-            breakpoint();
+            //breakpoint();
         //}
-        //breakpoint();
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

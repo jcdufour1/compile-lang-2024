@@ -166,8 +166,21 @@ NEVER_RETURN void do_passes(void) {
                 size_t bytecode_first_pass_count = bytecode.code.info.count;
                 (void) bytecode_first_pass_count;
                 // TODO: bytecode dump after second pass has larger positions
+                {
+                    FILE* bytecode_1_output = fopen("pass1.txt", "w");
+                    unwrap(bytecode_1_output);
+                    bytecode_dump(bytecode_1_output, LOG_DEBUG, bytecode);
+                    fclose(bytecode_1_output);
+                }
+                breakpoint();
                 do_pass(ir_to_bytecode, ir_log_level, stderr);
-                bytecode_dump(LOG_DEBUG, bytecode);
+                // TODO: encode stack offset after executing an instruction (into instructions) to allow for more assertions
+                {
+                    FILE* bytecode_2_output = fopen("pass2.txt", "w");
+                    unwrap(bytecode_2_output);
+                    bytecode_dump(bytecode_2_output, LOG_DEBUG, bytecode);
+                    fclose(bytecode_2_output);
+                }
                 assert(bytecode_first_pass_count == bytecode.code.info.count && "the bytecode must be the same size on both bytecode passes");
 
                 // TODO

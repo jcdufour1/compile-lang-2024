@@ -103,10 +103,10 @@ size_t bytecode_read_size_t(size_t index);
 
 uint64_t bytecode_read_uint64_t(uint64_t index);
 
-void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode);
+void bytecode_dump_internal(FILE* dest, const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode);
 
-#define bytecode_dump(log_level, bytecode) \
-    bytecode_dump_internal(__FILE__, __LINE__, log_level, bytecode)
+#define bytecode_dump(dest, log_level, bytecode) \
+    bytecode_dump_internal(dest, __FILE__, __LINE__, log_level, bytecode)
 
 // returns the position (offset) of the new stack space
 static uint64_t bytecode_stack_size_add_aligned(uint64_t* stack_offset, uint64_t alloc_size) {

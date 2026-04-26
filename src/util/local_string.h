@@ -22,6 +22,14 @@ static inline void string_append(Arena* arena, String* str, char ch) {
     darr_append(arena, str, ch);
 }
 
+static inline char* string_at_ref(String* buf, size_t index) {
+    return darr_at_ref(buf, index);
+}
+
+static inline char string_at(String buf, size_t index) {
+    return darr_at(buf, index);
+}
+
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     if (!cstr) {
         todo();
@@ -221,8 +229,9 @@ static inline Strv strv_first_upper_print_internal(Arena* arena, Strv strv) {
 #define strv_upper_print(arena, strv) \
     strv_print(strv_upper_print_internal(arena, strv))
 
+// return value is printed string size (excluding null byte)
 __attribute__((format (printf, 3, 4)))
-void string_extend_f(Arena* arena, String* string, const char* format, ...);
+size_t string_extend_f(Arena* arena, String* string, const char* format, ...);
 
 __attribute__((format (printf, 4, 5)))
 void string_extend_f_indent(Arena* arena, String* string, Indent indent, const char* format, ...);
@@ -230,7 +239,8 @@ void string_extend_f_indent(Arena* arena, String* string, Indent indent, const c
 __attribute__((format (printf, 2, 3)))
 Strv strv_from_f(Arena* arena, const char* format, ...);
 
-void string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1);
+// return value is printed string size (excluding null byte)
+size_t string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1);
 
 // TODO: move to str_and_num_utils?
 Strv char_repr(Arena* arena, char ch);

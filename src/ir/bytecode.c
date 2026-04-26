@@ -90,6 +90,11 @@ static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t o
 
     uint64_t pos_rhs = start_args;
     uint64_t pos_lhs = pos_rhs;
+    log(LOG_DEBUG, "%zu\n", pos_lhs);
+    if (pos_lhs < 16) {
+        pos_lhs = 80;
+    }
+    log(LOG_DEBUG, "%zu\n", pos_lhs);
     bytecode_stack_size_add_aligned(&pos_lhs, alloca_size);
 
     string_extend_f(&a_temp, buf, "  %"PRIu64": "FMT": (store location: "FMT")\n", old_idx, strv_print(bin_name), bytecode_alloca_pos_print(alloca_pos));
@@ -130,6 +135,7 @@ static int bytecode_mapping_cmp(const void* lhs_, const void* rhs_) {
 }
 
 static void bytecode_dump_internal_2(
+    FILE* dest,
     const char* file,
     int line,
     Bytecode_dump_mapping_darr* mapping, // TODO: rename to mappings
@@ -359,18 +365,18 @@ static void bytecode_dump_internal_2(
     }
 
     if (!is_first_step) {
-        log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
+        log_internal_custom_dest(dest, log_level, file, line, 0, FMT"\n", string_print(buf));
     }
 }
 
-void bytecode_dump_internal(const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode) {
+void bytecode_dump_internal(FILE* dest, const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode) {
     Bytecode_dump_mapping_darr mappings = {0};
-    bytecode_dump_internal_2(file, line, &mappings, log_level, bytecode, true);
+    bytecode_dump_internal_2(dest, file, line, &mappings, log_level, bytecode, true);
     log(LOG_DEBUG, "%zu\n", mappings.info.count);
     darr_foreach(idx, Bytecode_dump_mapping, curr_mapping, mappings) {
         log(LOG_DEBUG, "%zu %zu\n", curr_mapping.fun_start, curr_mapping.arg_bytes_count);
     }
     qsort(mappings.buf, mappings.info.count, sizeof(mappings.buf[0]), bytecode_mapping_cmp);
-    bytecode_dump_internal_2(file, line, &mappings, log_level, bytecode, false);
+    bytecode_dump_internal_2(dest, file, line, &mappings, log_level, bytecode, false);
 }
 

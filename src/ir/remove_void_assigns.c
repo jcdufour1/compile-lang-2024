@@ -182,11 +182,11 @@ static Ir* rm_void_block(Ir_block* block) {
         log(LOG_DEBUG, "%p\n", (void*)darr_first_ref(&block->children));
         log(LOG_DEBUG, "%zu\n", sizeof(block->children.buf[0]));
         if (block->children.info.count > 15) {
-            breakpoint();
+            //breakpoint();
         }
         qsort(darr_first_ref(&block->children), block->children.info.count, sizeof(darr_first(&block->children)), rm_void_alloca_first_compare);
         if (block->children.info.count > 15) {
-            breakpoint();
+            //breakpoint();
         }
     }
 

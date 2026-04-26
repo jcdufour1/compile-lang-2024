@@ -47,6 +47,7 @@ typedef struct {
     (unwrap((darr).info.count > (index) && "out of bounds"), (darr).buf[(index)])
 
 // TODO: make macro to get start of array elements, even if there are zero elements
+// TODO: make darr parameter not a pointer?
 #define darr_at_ref(darr, index) \
     (unwrap((darr)->info.count > (index) && "out of bounds"), &(darr)->buf[(index)])
 

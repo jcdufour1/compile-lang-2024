@@ -7,14 +7,14 @@
 #endif // IN_AUTOGEN
 
 
-void string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1) {
+size_t string_extend_f_va(Arena* arena, String* string, const char* format, va_list args1) {
     va_list args2;
     va_copy(args2, args1);
 
     static String temp_buf = {0};
 
-    size_t count_needed = (size_t)vsnprintf(NULL, 0, format, args1);
-    count_needed++;
+    size_t string_size = (size_t)vsnprintf(NULL, 0, format, args1);
+    size_t count_needed = string_size + 1;
     if (count_needed > temp_buf.info.count) {
         while (temp_buf.info.count < count_needed) {
             darr_append(&A_LEAK_THIS_FILE, &temp_buf, '\0');
@@ -22,19 +22,23 @@ void string_extend_f_va(Arena* arena, String* string, const char* format, va_lis
     }
     vsnprintf(temp_buf.buf, count_needed, format, args2);
 
-    string_extend_strv(arena, string, (Strv) {temp_buf.buf, count_needed - 1});
+    string_extend_strv(arena, string, (Strv) {temp_buf.buf, string_size});
 
     va_end(args2);
+
+    return string_size;
 }
 
 __attribute__((format (printf, 3, 4)))
-void string_extend_f(Arena* arena, String* string, const char* format, ...) {
+size_t string_extend_f(Arena* arena, String* string, const char* format, ...) {
     va_list args1;
     va_start(args1, format);
 
-    string_extend_f_va(arena, string, format, args1);
+    size_t string_size = string_extend_f_va(arena, string, format, args1);
 
     va_end(args1);
+
+    return string_size;
 }
 
 __attribute__((format (printf, 2, 3)))
