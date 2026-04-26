@@ -369,7 +369,7 @@ static bool interpret_instruction(void) {
             breakpoint();
             log(LOG_TRACE, "bytecode_call_direct\n");
 
-            static_assert(BYTECODE_CALL_DIRECT_SIZE == 32, "implement functions with arguments?");
+            static_assert(BYTECODE_CALL_DIRECT_SIZE == 40, "implement functions with arguments?");
 
             uint64_t addr = interpret_read_uint64_t_aligned();
             uint64_t arg_bytes = interpret_read_uint64_t_aligned();
@@ -400,6 +400,8 @@ static bool interpret_instruction(void) {
                 //bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_dest);
             }
 
+            uint64_t expected_stack_offset = interpret_read_uint64_t_aligned();
+            assert(expected_stack_offset == inter_stack_offset);
             assert(inter_prog_counter - old_prog_counter == BYTECODE_CALL_DIRECT_SIZE);
             inter_prog_counter = addr;
             return true;

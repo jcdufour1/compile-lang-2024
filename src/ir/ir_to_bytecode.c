@@ -186,6 +186,8 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
         ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(block_pos_name)))->data);
     }
 
+    ir_to_bytecode_uint64_t(bytecode_stack_offset_);
+
     assert(bytecode.code.info.count - old_count == BYTECODE_GOTO_SIZE);
 }
 
@@ -288,6 +290,9 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
     //} else {
     //    todo();
     //}
+
+    // TODO: remove this stack offset arg (from all instructions) in release mode, etc.?
+    ir_to_bytecode_uint64_t(bytecode_stack_offset_);
     
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_RETURN_SIZE);
@@ -432,6 +437,8 @@ static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca, bool is_for_local_var)
         }
     }
 
+    ir_to_bytecode_uint64_t(bytecode_stack_offset_);
+
     assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
 }
 
@@ -575,6 +582,8 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         ir_to_bytecode_uint64_t(load_src_pos);
         ir_to_bytecode_uint64_t(sizeof_lang_type);
     }
+
+    ir_to_bytecode_uint64_t(bytecode_stack_offset_);
 
     //ir_to_bytecode_uint64_t();
     assert(old_count != SIZE_MAX);
@@ -933,6 +942,8 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
         ir_to_bytecode_uint64_t(store_src_pos);
         ir_to_bytecode_uint64_t(sizeof_lang_type);
     }
+
+    ir_to_bytecode_uint64_t(bytecode_stack_offset_);
 
     // TODO: uncomment
     assert(old_count != SIZE_MAX);

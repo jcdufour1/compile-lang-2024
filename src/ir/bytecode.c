@@ -134,6 +134,15 @@ static int bytecode_mapping_cmp(const void* lhs_, const void* rhs_) {
     return QSORT_EQUAL;
 }
 
+static void bytecode_dump_read_and_extend_stack_offset(String* buf, uint64_t* idx) {
+    string_extend_f(
+        &a_temp,
+        buf,
+        "    stack offset after instruction: %"PRIu64"\n",
+        bytecode_dump_read_uint64_t(idx)
+    );
+}
+
 static void bytecode_dump_internal_2(
     FILE* dest,
     const char* file,
@@ -180,6 +189,7 @@ static void bytecode_dump_internal_2(
 
         switch (curr_opcode) {
             case BYTECODE_COMMENT: {
+                log(LOG_TRACE, "comment\n");
                 string_extend_f(&a_temp, &buf, "\n  %"PRIu64":// ", old_idx);
                 
                 uint64_t file_len = bytecode_dump_read_uint64_t(&idx);
@@ -215,24 +225,29 @@ static void bytecode_dump_internal_2(
                 break;
             }
             case BYTECODE_ALLOCA: {
+                log(LOG_TRACE, "alloca\n");
                 uint64_t alloca_size = bytecode_dump_read_uint64_t(&idx);
                 uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&stack_offset, alloca_size);
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": alloca: %"PRIu64" bytes (store location: "FMT")\n", old_idx, alloca_size, bytecode_alloca_pos_print(alloca_pos));
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
 
                 assert(idx - old_idx == BYTECODE_ALLOCA_SIZE);
                 break;
             }
             case BYTECODE_RETURN:
+                log(LOG_TRACE, "return\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": return: (sizeof rtn_lang_type: %"PRIu64")\n", old_idx, bytecode_dump_read_uint64_t(&idx));
 
                 assert(idx - old_idx == BYTECODE_RETURN_SIZE);
                 break;
             case BYTECODE_GOTO:
+                log(LOG_TRACE, "goto\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": goto: %"PRIu64"\n", old_idx, bytecode_dump_read_uint64_t(&idx));
 
                 assert(idx - old_idx == BYTECODE_GOTO_SIZE);
                 break;
             case BYTECODE_COND_GOTO:
+                log(LOG_TRACE, "cond_goto\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": cond_goto:\n", old_idx);
 
                 string_extend_f(&a_temp, &buf, "    if_true: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
@@ -242,6 +257,7 @@ static void bytecode_dump_internal_2(
                 assert(idx - old_idx == BYTECODE_COND_GOTO_SIZE);
                 break;
             case BYTECODE_STORE_STACK:
+                log(LOG_TRACE, "store_stack\n");
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": store: \n", old_idx);
 
@@ -255,9 +271,12 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "    sizeof copy: %"PRIu64" bytes\n", bytecode_dump_read_uint64_t(&idx));
 
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+
                 assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
                 break;
             case BYTECODE_STORE_STACK_DIR_ADDR:
+                log(LOG_TRACE, "store_stack_dir_addr\n");
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": store dir_addr: \n", old_idx);
 
@@ -271,9 +290,12 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "    sizeof copy: %"PRIu64" bytes\n", bytecode_dump_read_uint64_t(&idx));
 
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
-                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+
+                assert(idx - old_idx == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
                 break;
             case BYTECODE_PUSH: {
+                log(LOG_TRACE, "push\n");
                 uint64_t alloca_size = bytecode_dump_read_uint64_t(&idx);
                 uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&stack_offset, alloca_size);
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": push: (store location: "FMT")\n", old_idx, bytecode_alloca_pos_print(alloca_pos));
@@ -287,6 +309,7 @@ static void bytecode_dump_internal_2(
             }
             // TODO: make ir_zero_extend, etc. instead of ir_unsafe_cast
             case BYTECODE_ZERO_EXTEND: {
+                log(LOG_TRACE, "zero_extend\n");
                 // TODO: encode stack position in bytecode so that assertions can be added here to ensure that
                 //   stack is correctly handled
 
@@ -306,22 +329,27 @@ static void bytecode_dump_internal_2(
 
             // --- BINARY OPERATORS ---
             case BYTECODE_ADD_: {
+                log(LOG_TRACE, "add\n");
                 bytecode_dump_internal_binary(&buf, sv("add"), old_idx, &idx, &stack_offset);
                 break;
             }
             case BYTECODE_SUB: {
+                log(LOG_TRACE, "sub\n");
                 bytecode_dump_internal_binary(&buf, sv("sub"), old_idx, &idx, &stack_offset);
                 break;
             }
             case BYTECODE_GREATER_THAN: {
+                log(LOG_TRACE, "gr_than\n");
                 bytecode_dump_internal_binary(&buf, sv("greater_than"), old_idx, &idx, &stack_offset);
                 break;
             }
             case BYTECODE_DOUBLE_EQUAL: {
+                log(LOG_TRACE, "double_eq\n");
                 bytecode_dump_internal_binary(&buf, sv("double_equal"), old_idx, &idx, &stack_offset);
                 break;
             }
             case BYTECODE_NOT_EQUAL: {
+                log(LOG_TRACE, "not_eq\n");
                 bytecode_dump_internal_binary(&buf, sv("not_equal"), old_idx, &idx, &stack_offset);
                 break;
             }
@@ -329,6 +357,7 @@ static void bytecode_dump_internal_2(
 
 
             case BYTECODE_CALL_DIRECT:
+                log(LOG_TRACE, "call_dir\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": call direct\n", old_idx);
 
                 uint64_t start_pos = bytecode_dump_read_uint64_t(&idx);
@@ -350,6 +379,7 @@ static void bytecode_dump_internal_2(
                 assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE);
                 break;
             case BYTECODE_NONE:
+                log(LOG_TRACE, "noen\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": warning: none\n", old_idx);
 
                 bytecode_dump_read_uint64_t(&idx);
