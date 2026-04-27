@@ -97,6 +97,9 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         \
         bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, lhs bin rhs); \
         \
+        bytecode_stack_size_add_aligned(&inter_stack_offset, alloca_size); \
+        bytecode_stack_size_add_aligned(&inter_stack_offset, alloca_size); \
+        \
         assert(expected_offset == inter_stack_offset); \
         assert(inter_prog_counter - old_prog_counter == BYTECODE_BINARY_SIZE); \
     } while (0)
@@ -177,7 +180,7 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
 
             uint64_t expected_offset = interpret_read_uint64_t_aligned();
-            log(LOG_DEBUG, "expected_offset = %zu, inter_stack_offset = %zu\n", expected_offset, inter_stack_offset);
+            log(LOG_DEBUG, "inter_prog_counter = %zu, expected_offset = %zu, inter_stack_offset = %zu\n", inter_prog_counter, expected_offset, inter_stack_offset);
             assert(expected_offset == inter_stack_offset);
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_STORE_STACK_SIZE);
@@ -230,6 +233,10 @@ static bool interpret_instruction(void) {
             if (cond) {
                 new_prog_counter = if_true_prog_counter;
             }
+
+            uint64_t expected_offset = interpret_read_uint64_t_aligned();
+            log(LOG_DEBUG, "expected_offset = %zu, inter_stack_offset = %zu\n", expected_offset, inter_stack_offset);
+            assert(expected_offset == inter_stack_offset);
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_COND_GOTO_SIZE);
 

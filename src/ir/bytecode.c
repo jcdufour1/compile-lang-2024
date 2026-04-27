@@ -1,5 +1,7 @@
 #include <bytecode.h>
 
+bool bytecode_is_before_backpatching_complete = false;
+
 void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr) {
     //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
 
@@ -80,13 +82,27 @@ static char bytecode_dump_read_char(uint64_t* idx) {
     return value;
 }
 
-static void bytecode_dump_read_and_extend_stack_offset(String* buf, uint64_t* idx) {
+static void bytecode_dump_read_and_extend_stack_offset(
+    String* buf,
+    uint64_t* idx,
+    uint64_t store_location /* could be zero if there is no store location */
+) {
+    uint64_t expected_offset = bytecode_dump_read_uint64_t(idx);
+
     string_extend_f(
         &a_temp,
         buf,
         "    stack offset after instruction: %"PRIu64"\n",
-        bytecode_dump_read_uint64_t(idx)
+        expected_offset
     );
+
+    log(LOG_DEBUG, "idx = %zu, store_location = %zu, expected_offset = %zu\n", *idx, store_location, expected_offset);
+    if (!bytecode_is_before_backpatching_complete) {
+        if (store_location > expected_offset) {
+            log(LOG_DEBUG, FMT"\n", string_print(*buf));
+            unreachable("store location is greater offset than current stack offset here");
+        }
+    }
 }
 
 static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t old_idx, uint64_t* idx, uint64_t* stack_size) {
@@ -111,7 +127,11 @@ static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t o
     string_extend_f(&a_temp, buf, "    pos lhs: "FMT" \n", bytecode_alloca_pos_print(pos_lhs));
     string_extend_f(&a_temp, buf, "    pos rhs: "FMT" \n", bytecode_alloca_pos_print(pos_rhs));
 
-    bytecode_dump_read_and_extend_stack_offset(buf, idx);
+    log(LOG_DEBUG, "idx = %zu\n", *idx);
+    bytecode_dump_read_and_extend_stack_offset(buf, idx, alloca_pos);
+
+    bytecode_stack_size_add_aligned(stack_size, alloca_size);
+    bytecode_stack_size_add_aligned(stack_size, alloca_size);
 
     assert(*idx - old_idx == BYTECODE_ADD_SIZE);
     assert(*idx - old_idx == BYTECODE_BINARY_SIZE);
@@ -230,8 +250,8 @@ static void bytecode_dump_internal_2(
                 log(LOG_TRACE, "alloca\n");
                 uint64_t alloca_size = bytecode_dump_read_uint64_t(&idx);
                 uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&stack_offset, alloca_size);
-                string_extend_f(&a_temp, &buf, "  %"PRIu64": alloca: %"PRIu64" bytes (store location: "FMT")\n", old_idx, alloca_size, bytecode_alloca_pos_print(alloca_pos));
-                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+                string_extend_f(&a_temp, &buf, "  %"PRIu64": alloca: %"PRIu64" bytes (store location: %"PRIu64")\n", old_idx, alloca_size, alloca_pos);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, alloca_pos);
 
                 assert(idx - old_idx == BYTECODE_ALLOCA_SIZE);
                 break;
@@ -239,14 +259,14 @@ static void bytecode_dump_internal_2(
             case BYTECODE_RETURN:
                 log(LOG_TRACE, "return\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": return: (sizeof rtn_lang_type: %"PRIu64")\n", old_idx, bytecode_dump_read_uint64_t(&idx));
-                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_RETURN_SIZE);
                 break;
             case BYTECODE_GOTO:
                 log(LOG_TRACE, "goto\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": goto: %"PRIu64"\n", old_idx, bytecode_dump_read_uint64_t(&idx));
-                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_GOTO_SIZE);
                 break;
@@ -257,6 +277,10 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "    if_true: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
 
                 string_extend_f(&a_temp, &buf, "    if_false: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+
+                bytecode_stack_size_add_aligned(&stack_offset, 1);
+
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_COND_GOTO_SIZE);
                 break;
@@ -275,7 +299,7 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "    sizeof copy: %"PRIu64" bytes\n", bytecode_dump_read_uint64_t(&idx));
 
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
-                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
                 break;
@@ -294,7 +318,7 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "    sizeof copy: %"PRIu64" bytes\n", bytecode_dump_read_uint64_t(&idx));
 
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
-                bytecode_dump_read_and_extend_stack_offset(&buf, &idx);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
                 break;
@@ -403,7 +427,9 @@ static void bytecode_dump_internal_2(
     }
 }
 
-void bytecode_dump_internal(FILE* dest, const char* file, int line, LOG_LEVEL log_level, Bytecode bytecode) {
+void bytecode_dump_internal(FILE* dest, const char* file, int line, LOG_LEVEL log_level, bool is_before_backpatching_complete, Bytecode bytecode) {
+    bytecode_is_before_backpatching_complete = is_before_backpatching_complete;
+
     Bytecode_dump_mapping_darr mappings = {0};
     bytecode_dump_internal_2(dest, file, line, &mappings, log_level, bytecode, true);
     log(LOG_DEBUG, "%zu\n", mappings.info.count);

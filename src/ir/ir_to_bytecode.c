@@ -9,6 +9,7 @@ Bytecode bytecode;
 uint64_t bytecode_stack_offset_ = 0;
 uint64_t bytecode_locals_offset = 0;
 uint64_t bytecode_locals_pos = 0;
+uint64_t bytecode_locals_pos_at_max_alloc = 0;
 uint64_t bytecode_space_locals_alloca_size = 0; // TODO: rename
 static bool bytecode_is_backpatching = false;
 static Ir_variable_def_darr curr_fun_args = {0};
@@ -182,6 +183,15 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
         Ir* block_pos_name = NULL;
         unwrap(ir_lookup(&block_pos_name, symbol_name_to_int_name(lang_goto->label)));
 
+        // TODO: put this assertion in cond_goto as well
+        if (bytecode_stack_offset_ != bytecode_locals_pos_at_max_alloc) {
+            bytecode_dump(stderr, LOG_DEBUG, false, bytecode);
+            log(LOG_DEBUG, "bytecode_stack_offset_ = %zu, bytecode_locals_pos_at_max_alloc = %zu\n", bytecode_stack_offset_, bytecode_locals_pos_at_max_alloc);
+            unreachable(
+                "extra stack space that was allocated in the middle of the function should be freed "
+                "before goto or cond_goto to allow for consistant behavior on all code paths"
+            );
+        }
         bytecode_append_goto(
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(block_pos_name)))->data,
             bytecode_stack_offset_
@@ -202,6 +212,8 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
     size_t old_count = bytecode.code.info.count;
 
     if (bytecode_is_backpatching) {
+        ir_to_bytecode_pop_internal(1);
+
         bytecode_append_cond_goto(0, 0, bytecode_stack_offset_);
     } else {
         Ir* if_true_pos_name = NULL;
@@ -210,14 +222,23 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
         Ir* if_false_pos_name = NULL;
         unwrap(ir_lookup(&if_false_pos_name, symbol_name_to_int_name(cond_goto->if_false)));
 
+        ir_to_bytecode_pop_internal(1);
+
+        // TODO: put this assertion in cond_goto as well
+        if (bytecode_stack_offset_ != bytecode_locals_pos_at_max_alloc) {
+            bytecode_dump(stderr, LOG_DEBUG, false, bytecode);
+            log(LOG_DEBUG, "bytecode_stack_offset_ = %zu, bytecode_locals_pos_at_max_alloc = %zu\n", bytecode_stack_offset_, bytecode_locals_pos_at_max_alloc);
+            unreachable(
+                "extra stack space that was allocated in the middle of the function should be freed "
+                "before goto or cond_goto to allow for consistant behavior on all code paths"
+            );
+        }
         bytecode_append_cond_goto(
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_true_pos_name)))->data,
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_false_pos_name)))->data,
             bytecode_stack_offset_
         );
     }
-
-    ir_to_bytecode_pop_internal(1);
 
     assert(bytecode.code.info.count - old_count == BYTECODE_COND_GOTO_SIZE);
 }
@@ -999,6 +1020,9 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
         }
         ir_to_bytecode_comment("alloca for local variables");
         bytecode_locals_pos = start_local_vars;
+        if (!bytecode_is_backpatching) {
+            bytecode_locals_pos_at_max_alloc = bytecode_locals_pos + space_locals_bytes;
+        }
         ir_to_bytecode_alloca(ir_alloca_new(def->pos, ir_lang_type_new_ux(bytes_to_bit_width(space_locals_bytes)), util_literal_name_new(), 0 /* TODO */), false);
     }
                                                                          
@@ -1321,6 +1345,9 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
             unreachable("");
     }
     assert(bin_type != BYTECODE_NONE);
+
+    bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
+    bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
 
     bytecode_append_binary(bin_type, start_args, alloca_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
 

@@ -169,7 +169,7 @@ NEVER_RETURN void do_passes(void) {
                 {
                     FILE* bytecode_1_output = fopen("pass1.txt", "w");
                     unwrap(bytecode_1_output);
-                    bytecode_dump(bytecode_1_output, LOG_DEBUG, bytecode);
+                    bytecode_dump(bytecode_1_output, LOG_DEBUG, true, bytecode);
                     fclose(bytecode_1_output);
                 }
                 breakpoint();
@@ -178,7 +178,7 @@ NEVER_RETURN void do_passes(void) {
                 {
                     FILE* bytecode_2_output = fopen("pass2.txt", "w");
                     unwrap(bytecode_2_output);
-                    bytecode_dump(bytecode_2_output, LOG_DEBUG, bytecode);
+                    bytecode_dump(bytecode_2_output, LOG_DEBUG, false, bytecode);
                     fclose(bytecode_2_output);
                 }
                 assert(bytecode_first_pass_count == bytecode.code.info.count && "the bytecode must be the same size on both bytecode passes");
