@@ -236,8 +236,22 @@ static void bytecode_state_restore(uint64_t* stack_offset, size_t* bytecode_coun
     *bytecode_count = state.bytecode_count;
 }
 
+static_assert(BYTECODE_COUNT == 16, "add forward declaration bytecode_append_* for new bytecode type if nessessary");
+
 void bytecode_append_store_stack_dir_addr(uint64_t dest, int64_t src_value, uint64_t sizeof_data, uint64_t stack_offset_after);
 
 void bytecode_append_store_stack(uint64_t dest, uint64_t src, uint64_t sizeof_data, uint64_t stack_offset_after);
+
+void bytecode_append_alloca(uint64_t sizeof_data, uint64_t stack_offset_after);
+
+void bytecode_append_call_direct(uint64_t addr, uint64_t arg_bytes, uint64_t rtn_alloc_pos, uint64_t stack_offset_after);
+
+void bytecode_append_binary(BYTECODE bin_type, uint64_t start_args, uint64_t alloca_pos, uint64_t sizeof_bin_lang_type, uint64_t stack_offset_after);
+
+void bytecode_append_goto(uint64_t addr, uint64_t stack_offset_after);
+
+void bytecode_append_cond_goto(uint64_t if_true, uint64_t if_false, uint64_t stack_offset_after);
+
+void bytecode_append_return(uint64_t sizeof_rtn, uint64_t stack_offset_after);
 
 #endif // BYTECODE_H

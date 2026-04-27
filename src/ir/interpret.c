@@ -80,6 +80,7 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         uint64_t start_args = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_pos = interpret_read_uint64_t_aligned(); \
         uint64_t alloca_size = interpret_read_uint64_t_aligned(); \
+        uint64_t expected_offset = interpret_read_uint64_t_aligned(); \
         \
         uint64_t pos_lhs = start_args; \
         uint64_t pos_rhs = pos_lhs; \
@@ -96,6 +97,7 @@ static uint64_t interpret_read_uint64_t_aligned(void) {
         \
         bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, lhs bin rhs); \
         \
+        assert(expected_offset == inter_stack_offset); \
         assert(inter_prog_counter - old_prog_counter == BYTECODE_BINARY_SIZE); \
     } while (0)
 
