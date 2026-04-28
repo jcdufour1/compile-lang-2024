@@ -112,7 +112,7 @@ static void ir_to_bytecode_append_alloca(uint64_t sizeof_data, uint64_t stack_of
 static void ir_to_bytecode_append_call_direct(uint64_t addr, uint64_t arg_bytes, uint64_t rtn_alloc_pos, uint64_t stack_offset_after) {
     uint64_t old_count = bytecode.code.info.count;
 
-    bytecode_append_align(BYTECODE_ALLOCA);
+    bytecode_append_align(BYTECODE_CALL_DIRECT);
     ir_to_bytecode_uint64_t(addr);
     ir_to_bytecode_uint64_t(arg_bytes);
     ir_to_bytecode_uint64_t(rtn_alloc_pos);
@@ -1148,7 +1148,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     }
                                                                          
     ir_to_bytecode_comment("start of block");
-    breakpoint();
+    //breakpoint();
     ir_to_bytecode_block(def->body);
 
     ir_to_bytecode_comment("END OF FUNCTION "FMT" ("FMT")", name_print(NAME_MSG, def->name_self, NAME_FULL), name_print(NAME_MSG, def->decl->name, NAME_FULL));
@@ -1236,7 +1236,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         assert(bytecode_stack_offset_ < 1000);
     uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_lang_type, false, false);
         assert(bytecode_stack_offset_ < 1000);
-    if (bytecode_is_backpatching) {
+    if (0 && bytecode_is_backpatching) {
         ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
             call->pos /* TODO*/,
             (int64_t)alloca_pos,
@@ -1250,27 +1250,43 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         Ir_function_name* fun_name_ = ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(ir_from_name(call->callee))));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, fun_name_->fun_name, NAME_FULL));
         Ir* fun_addr_ = NULL;
-        unwrap(ir_lookup(&fun_addr_, function_name_to_loc(fun_name_->fun_name)));
+        uint64_t fun_addr = 0;
+        if (!bytecode_is_backpatching) {
+            unwrap(ir_lookup(&fun_addr_, function_name_to_loc(fun_name_->fun_name)));
+            fun_addr = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data;
+        }
 
         // TODO: stop using bytecode_state_save and bytecode_state_restore functions here (use sizeof_ir_params instead)
         Bytecode_state bytecode_state = bytecode_state_save(bytecode_stack_offset_, bytecode.code.info.count);
 
         // TODO: remove below code (get arg_bytes_lower a different way)?
         uint64_t arg_bytes_lower = bytecode_stack_offset_;
-        breakpoint();
         darr_foreach(idx, Name, arg, call->args) {
             ir_to_bytecode_push_ir(ir_from_name(arg), true);
         }
         uint64_t arg_bytes_count = bytecode_stack_offset_ - arg_bytes_lower;
+        arg_bytes_count = get_next_multiple(arg_bytes_count, 8 /* alignment */);
+
         bytecode_state_restore(&bytecode_stack_offset_, &bytecode.code.info.count, bytecode_state);
 
         old_count = bytecode.code.info.count;
         ir_to_bytecode_append_call_direct(
-            (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data,
-            get_next_multiple(arg_bytes_count, 8 /* alignment */),
+            fun_addr,
+            arg_bytes_count,
             alloca_pos,
             bytecode_stack_offset_
         );
+
+        bytecode_stack_size_add_aligned(&bytecode_stack_offset_, arg_bytes_count);
+
+        if (bytecode_is_backpatching) {
+            ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
+                call->pos /* TODO*/,
+                (int64_t)alloca_pos,
+                ir_lang_type_new_ux(64),
+                symbol_name_to_int_name(call->name_self/*TODO*/)
+            )))));
+        }
     }
 
     //if (ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
@@ -1283,7 +1299,6 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
     //    //ir_to_bytecode_function_def();
     //}
 
-    todo();
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_CALL_DIRECT_SIZE);
 }

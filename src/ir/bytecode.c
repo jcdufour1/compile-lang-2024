@@ -418,6 +418,9 @@ static void bytecode_dump_internal_2(
                     ));
                 }
 
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
+                bytecode_stack_size_add_aligned(&stack_offset, arg_bytes_count);
+
                 assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE);
                 break;
             case BYTECODE_NONE:
