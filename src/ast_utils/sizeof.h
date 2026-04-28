@@ -47,4 +47,8 @@ uint64_t sizeof_ir_params(Ir_variable_def_darr params);
 // key is excluded from size calculation
 uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Name key);
 
+uint64_t sizeof_ir_struct_def_base(const Ir_struct_def_base* base);
+
+uint64_t sizeof_ir_struct_def_base_internal(const Ir_struct_def_base* base, size_t idx_memb);
+
 #endif // NEWSIZEOF_H

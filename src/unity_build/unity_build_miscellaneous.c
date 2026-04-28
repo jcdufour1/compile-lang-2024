@@ -2,6 +2,7 @@
 #include <ast_utils/ast_msg.c>
 #include <ast_utils/did_you_mean.c>
 #include <ast_utils/sizeof.c>
+#include <ast_utils/offsetof.c>
 #include <ast_utils/symbol_collection_clone.c>
 #include <ast_utils/symbol_table.c>
 #include <ast_utils/tast_print.c>

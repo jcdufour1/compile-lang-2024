@@ -95,11 +95,40 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
     unreachable(FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 }
 
+uint64_t alignof_ir_lang_type(Ir_lang_type lang_type) {
+    switch (lang_type.type) {
+        case IR_LANG_TYPE_PRIMITIVE: {
+            // TODO: this may not work correctly with big ints if they use Lang_type_primitive
+            uint64_t size = sizeof_llvm_primitive(ir_lang_type_primitive_const_unwrap(lang_type));
+            if (size > 8) {
+                todo();
+            }
+            return size;
+        }
+        case IR_LANG_TYPE_STRUCT:
+            todo();
+        case IR_LANG_TYPE_TUPLE:
+            todo();
+        case IR_LANG_TYPE_VOID:
+            todo();
+        case IR_LANG_TYPE_FN:
+            todo();
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 uint64_t alignof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_PRIMITIVE:
+        case LANG_TYPE_PRIMITIVE: {
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
-            return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
+            uint64_t size = sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
+            if (size > 8) {
+                todo();
+            }
+            return size;
+        }
         case LANG_TYPE_STRUCT:
             fallthrough;
         case LANG_TYPE_ENUM:
@@ -384,3 +413,28 @@ uint64_t sizeof_prev_ir_params(Ir_variable_def_darr params, Name key) {
     }
     return sizeof_prev;
 }
+
+// sizeof counts up to idx_memb (exclusive) (make idx_memb SIZE_MAX to include every member)
+uint64_t sizeof_ir_struct_def_base_internal(const Ir_struct_def_base* base, size_t idx_memb) {
+    uint64_t end_alignment = 0;
+
+    uint64_t total = 0;
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        const Ir_struct_memb_def* memb_def = darr_at(base->members, idx);
+        uint64_t sizeof_curr_item = sizeof_ir_lang_type(memb_def->lang_type);
+        end_alignment = max(end_alignment, alignof_ir_lang_type(memb_def->lang_type));
+        if (idx < idx_memb) {
+            total = max(total, sizeof_curr_item);
+        }
+    }
+
+    // TODO: use get_next_multiple function or similar function
+    total += (end_alignment - total%end_alignment)%end_alignment;
+    return total;
+}
+
+// TODO: test that ir versions of sizeof, alignof, etc. always return same values as Tast versions
+uint64_t sizeof_ir_struct_def_base(const Ir_struct_def_base* base) {
+    return sizeof_ir_struct_def_base_internal(base, SIZE_MAX);
+}
+

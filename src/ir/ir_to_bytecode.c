@@ -2,6 +2,7 @@
 #include <uint8_t_darr.h>
 #include <bytecode.h>
 #include <pos_util.h>
+#include <offsetof.h>
 
 // TODO: move this definition?
 Bytecode bytecode;
@@ -435,6 +436,17 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
     assert(bytecode.code.info.count - old_count == BYTECODE_RETURN_SIZE);
 }
 
+// TODO: in Ir_load_element_ptr, size_t member should be after Name members?
+static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
+    Ir* src = ir_from_name(load->ir_src);
+    uint64_t offset = offsetof_ir_lang_type_struct(ir_lang_type_struct_const_unwrap(ir_get_lang_type(src)), load->memb_idx);
+    log(LOG_DEBUG, "offset = %zu\n", offset);
+
+
+    ir_to_bytecode_binary(ir_binary_new(load->pos, load->name_self, ));
+    todo();
+}
+
 static void ir_to_bytecode_inline(Ir* ir) {
     switch (ir->type) {
         case IR_BLOCK:
@@ -443,7 +455,8 @@ static void ir_to_bytecode_inline(Ir* ir) {
             ir_to_bytecode_expr_inline(ir_expr_unwrap(ir));
             return;
         case IR_LOAD_ELEMENT_PTR:
-            todo();
+            ir_to_bytecode_load_element_ptr(ir_load_element_ptr_unwrap(ir));
+            return;
         case IR_ARRAY_ACCESS:
             todo();
         case IR_FUNCTION_PARAMS:
@@ -1529,7 +1542,7 @@ static void ir_to_bytecode_out_of_line(Ir* ir) {
         case IR_EXPR:
             return;
         case IR_LOAD_ELEMENT_PTR:
-            todo();
+            return;
         case IR_ARRAY_ACCESS:
             todo();
         case IR_FUNCTION_PARAMS:
