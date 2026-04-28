@@ -72,6 +72,112 @@ static void ir_to_bytecode_size_t(size_t value) {
     //assert(bytecode.code.info.count - old_count == 8);
 }
 
+
+
+static_assert(BYTECODE_COUNT == 16, "add function ir_to_bytecode_append_* for new bytecode type if nessessary");
+static void ir_to_bytecode_append_store_stack_dir_addr(uint64_t dest, int64_t src_value, uint64_t sizeof_data, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_STORE_STACK_DIR_ADDR);
+    ir_to_bytecode_uint64_t(dest);
+    ir_to_bytecode_int64_t(src_value);
+    ir_to_bytecode_uint64_t(sizeof_data);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
+}
+
+static void ir_to_bytecode_append_store_stack(uint64_t dest, uint64_t src, uint64_t sizeof_data, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_STORE_STACK);
+    ir_to_bytecode_uint64_t(dest);
+    ir_to_bytecode_uint64_t(src);
+    ir_to_bytecode_uint64_t(sizeof_data);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_STORE_STACK_SIZE);
+}
+
+static void ir_to_bytecode_append_alloca(uint64_t sizeof_data, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_ALLOCA);
+    ir_to_bytecode_uint64_t(sizeof_data);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
+}
+
+static void ir_to_bytecode_append_call_direct(uint64_t addr, uint64_t arg_bytes, uint64_t rtn_alloc_pos, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_ALLOCA);
+    ir_to_bytecode_uint64_t(addr);
+    ir_to_bytecode_uint64_t(arg_bytes);
+    ir_to_bytecode_uint64_t(rtn_alloc_pos);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_CALL_DIRECT_SIZE);
+}
+
+static void ir_to_bytecode_append_goto(uint64_t addr, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_GOTO);
+    ir_to_bytecode_uint64_t(addr);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_GOTO_SIZE);
+}
+
+static void ir_to_bytecode_append_cond_goto(uint64_t if_true, uint64_t if_false, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_COND_GOTO);
+    ir_to_bytecode_uint64_t(if_true);
+    ir_to_bytecode_uint64_t(if_false);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_COND_GOTO_SIZE);
+}
+
+static void ir_to_bytecode_append_return(uint64_t sizeof_rtn, uint64_t stack_offset_after) {
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(BYTECODE_RETURN);
+    ir_to_bytecode_uint64_t(sizeof_rtn);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_RETURN_SIZE);
+}
+
+static void ir_to_bytecode_append_binary(BYTECODE bin_type, uint64_t start_args, uint64_t alloca_pos, uint64_t sizeof_bin_lang_type, uint64_t stack_offset_after) {
+    static_assert(BYTECODE_COUNT == 16, "exhausive handling of binary types in below assertion");
+    assert(
+        (
+            bin_type == BYTECODE_ADD_ || 
+            bin_type == BYTECODE_SUB || 
+            bin_type == BYTECODE_GREATER_THAN || 
+            bin_type == BYTECODE_DOUBLE_EQUAL || 
+            bin_type == BYTECODE_NOT_EQUAL 
+        ) && 
+        "bin_type is not a binary type"
+    );
+
+    uint64_t old_count = bytecode.code.info.count;
+
+    bytecode_append_align(bin_type);
+    ir_to_bytecode_uint64_t(start_args);
+    ir_to_bytecode_uint64_t(alloca_pos);
+    ir_to_bytecode_uint64_t(sizeof_bin_lang_type);
+    ir_to_bytecode_uint64_t(stack_offset_after);
+
+    assert(bytecode.code.info.count - old_count == BYTECODE_BINARY_SIZE);
+}
+
+
+
 static Strv char_print_internal(char ch) {
     return strv_from_f(&a_main/*TODO*/, "%c", ch);
 }
@@ -178,7 +284,7 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
     size_t old_count = bytecode.code.info.count;
 
     if (bytecode_is_backpatching) {
-        bytecode_append_goto(0, 0);
+        ir_to_bytecode_append_goto(0, 0);
     } else {
         Ir* block_pos_name = NULL;
         unwrap(ir_lookup(&block_pos_name, symbol_name_to_int_name(lang_goto->label)));
@@ -192,7 +298,7 @@ static void ir_to_bytecode_goto(Ir_goto* lang_goto) {
                 "before goto or cond_goto to allow for consistant behavior on all code paths"
             );
         }
-        bytecode_append_goto(
+        ir_to_bytecode_append_goto(
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(block_pos_name)))->data,
             bytecode_stack_offset_
         );
@@ -214,7 +320,7 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
     if (bytecode_is_backpatching) {
         ir_to_bytecode_pop_internal(1);
 
-        bytecode_append_cond_goto(0, 0, bytecode_stack_offset_);
+        ir_to_bytecode_append_cond_goto(0, 0, bytecode_stack_offset_);
     } else {
         Ir* if_true_pos_name = NULL;
         unwrap(ir_lookup(&if_true_pos_name, symbol_name_to_int_name(cond_goto->if_true)));
@@ -233,7 +339,7 @@ static void ir_to_bytecode_cond_goto(Ir_cond_goto* cond_goto) {
                 "before goto or cond_goto to allow for consistant behavior on all code paths"
             );
         }
-        bytecode_append_cond_goto(
+        ir_to_bytecode_append_cond_goto(
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_true_pos_name)))->data,
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(if_false_pos_name)))->data,
             bytecode_stack_offset_
@@ -290,7 +396,7 @@ static void ir_to_bytecode_return(Ir_return* rtn) {
 
         uint64_t sizeof_rtn_type = sizeof_ir_lang_type(ir_get_lang_type(rtn_child));
 
-        bytecode_append_return(sizeof_rtn_type, bytecode_stack_offset_);
+        ir_to_bytecode_append_return(sizeof_rtn_type, bytecode_stack_offset_);
         
         //bytecode_append_align();
     }
@@ -386,7 +492,7 @@ uint64_t ir_to_bytecode_alloc_internal(uint64_t alloc_size, bool is_actual_push,
         log(LOG_DEBUG, "%zu\n", bytecode_stack_offset_);
 
         if (should_emit_push) {
-            bytecode_append_alloca(alloc_size, bytecode_stack_offset_);
+            ir_to_bytecode_append_alloca(alloc_size, bytecode_stack_offset_);
         }
 
         if (0) {
@@ -447,7 +553,7 @@ static void ir_to_bytecode_alloca(Ir_alloca* lang_alloca, bool is_for_local_var)
         }
     }
 
-    bytecode_append_alloca(sizeof_alloca, bytecode_stack_offset_);
+    ir_to_bytecode_append_alloca(sizeof_alloca, bytecode_stack_offset_);
 
     assert(bytecode.code.info.count - old_count == BYTECODE_ALLOCA_SIZE);
 }
@@ -466,7 +572,7 @@ static uint64_t ir_to_bytecode_push_int(Ir_int* lang_int, bool is_actual_push) {
 
     assert(sizeof_int <= 64);
     // TODO: always call function similar to this
-    bytecode_append_store_stack_dir_addr(int_pos, lang_int->data, sizeof_int, bytecode_stack_offset_);
+    ir_to_bytecode_append_store_stack_dir_addr(int_pos, lang_int->data, sizeof_int, bytecode_stack_offset_);
 
     log(LOG_DEBUG, "%zu %zu %zu\n", int_pos, lang_int->data, sizeof_int);
 
@@ -512,7 +618,7 @@ static uint64_t ir_to_bytecode_push_internal(uint64_t sizeof_load, uint64_t src_
     uint64_t alloca_pos = ir_to_bytecode_alloc_internal(sizeof_load, is_actual_push, true);
         assert(bytecode_stack_offset_ < 1000);
 
-    bytecode_append_store_stack(alloca_pos, src_pos, sizeof_load, bytecode_stack_offset_);
+    ir_to_bytecode_append_store_stack(alloca_pos, src_pos, sizeof_load, bytecode_stack_offset_);
 
     //uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
     //bytecode_append_align(BYTECODE_ALLOCA);
@@ -571,7 +677,7 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         if (old_count == 200) {
             todo();
         }
-        bytecode_append_store_stack(dest_pos, load_src_pos, sizeof_lang_type, bytecode_stack_offset_);
+        ir_to_bytecode_append_store_stack(dest_pos, load_src_pos, sizeof_lang_type, bytecode_stack_offset_);
     }
 
     //ir_to_bytecode_uint64_t();
@@ -657,11 +763,11 @@ static uint64_t ir_to_bytecode_push_variable_def(Ir_variable_def* var_def, bool 
         todo();
         //uint64_t sizeof_load = sizeof_ir_lang_type(var_def->lang_type);
         todo();
-        //bytecode_append_alloca(sizeof_load);
+        //ir_to_bytecode_append_alloca(sizeof_load);
         todo();
         //uint64_t alloca_pos = bytecode_stack_size_sub_aligned(&bytecode_stack_offset, sizeof_load);
 
-        //bytecode_append_store_stack(alloca_pos, store_src, sizeof_load);
+        //ir_to_bytecode_append_store_stack(alloca_pos, store_src, sizeof_load);
         todo();
     }
 
@@ -924,7 +1030,7 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
             log(LOG_DEBUG, FMT"\n", ir_print(store_src));
             //todo();
         }
-        bytecode_append_store_stack(store_dest_pos, store_src_pos, sizeof_lang_type, bytecode_stack_offset_);
+        ir_to_bytecode_append_store_stack(store_dest_pos, store_src_pos, sizeof_lang_type, bytecode_stack_offset_);
     }
 
     // TODO: uncomment
@@ -1124,7 +1230,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         )))));
 
         old_count = bytecode.code.info.count;
-        bytecode_append_call_direct(0, 0, 0, 0);
+        ir_to_bytecode_append_call_direct(0, 0, 0, 0);
     } else {
         Ir_function_name* fun_name_ = ir_function_name_unwrap(ir_literal_unwrap(ir_expr_unwrap(ir_from_name(call->callee))));
         log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, fun_name_->fun_name, NAME_FULL));
@@ -1144,7 +1250,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
         bytecode_state_restore(&bytecode_stack_offset_, &bytecode.code.info.count, bytecode_state);
 
         old_count = bytecode.code.info.count;
-        bytecode_append_call_direct(
+        ir_to_bytecode_append_call_direct(
             (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(fun_addr_)))->data,
             get_next_multiple(arg_bytes_count, 8 /* alignment */),
             alloca_pos,
@@ -1349,7 +1455,7 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
 
-    bytecode_append_binary(bin_type, start_args, alloca_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
+    ir_to_bytecode_append_binary(bin_type, start_args, alloca_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
 
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_BINARY_SIZE);
