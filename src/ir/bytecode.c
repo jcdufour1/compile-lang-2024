@@ -186,6 +186,11 @@ static void bytecode_dump_internal_2(
     String buf = {0};
 
     string_extend_f(&a_temp, &buf, "\n");
+    if (is_first_step) {
+        string_extend_f(&a_temp, &buf, "is_backpatching (1st pass)\n\n");
+    } else {
+        string_extend_f(&a_temp, &buf, "is_not_backpatching (2nd pass)\n\n");
+    }
 
     size_t idx = 0; // TODO: rename to bytecode_idx?
     uint64_t stack_offset = 0;
@@ -420,6 +425,8 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": warning: none\n", old_idx);
 
                 bytecode_dump_read_uint64_t(&idx);
+
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_NONE_SIZE);
                 break;

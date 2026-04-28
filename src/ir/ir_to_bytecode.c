@@ -209,7 +209,6 @@ static Strv uint8_t_print_internal(uint8_t ch) {
 __attribute__((format (printf, 3, 4)))
 static void ir_to_bytecode_comment_internal(const char* file, int line, const char* format, ...) {
     uint64_t old_bytecode_count = bytecode.code.info.count;
-    log(LOG_ERROR, "old_bytecode_count = %zu\n", old_bytecode_count);
 
     // comments are a static size to prevent differences in bytecode size between 1st pass and 2nd pass
     //   (because position, etc. may not be populated yet)
@@ -482,11 +481,13 @@ static void ir_to_bytecode_inline(Ir* ir) {
 
 static void ir_to_bytecode_block(Ir_block* block) {
     darr_foreach(idx, Ir*, ir, block->children) {
-        log(LOG_DEBUG, FMT"\n", ir_print(ir));
         //if (ir->type == IR_LITERAL) {
         //    //breakpoint();
         //}
         ir_to_bytecode_inline(ir);
+        log(LOG_DEBUG, FMT"\n", ir_print(ir));
+        bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
+        do_nothing();
     }
 }
 
@@ -1147,7 +1148,7 @@ static void ir_to_bytecode_function_def(Ir_function_def* def) {
     }
                                                                          
     ir_to_bytecode_comment("start of block");
-    //breakpoint();
+    breakpoint();
     ir_to_bytecode_block(def->body);
 
     ir_to_bytecode_comment("END OF FUNCTION "FMT" ("FMT")", name_print(NAME_MSG, def->name_self, NAME_FULL), name_print(NAME_MSG, def->decl->name, NAME_FULL));
@@ -1282,6 +1283,7 @@ static void ir_to_bytecode_function_call(Ir_function_call* call) {
     //    //ir_to_bytecode_function_def();
     //}
 
+    todo();
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_CALL_DIRECT_SIZE);
 }
