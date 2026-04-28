@@ -347,8 +347,12 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": zero extend: (store location: "FMT")\n", old_idx, bytecode_alloca_pos_print(alloca_pos));
 
                 string_extend_f(&a_temp, &buf, "    sizeof(dest): %"PRIu64" \n", alloca_size);
-
                 string_extend_f(&a_temp, &buf, "    sizeof(src): %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+                string_extend_f(&a_temp, &buf, "    src_pos: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+                string_extend_f(&a_temp, &buf, "    alloca_pos: %"PRIu64" \n", bytecode_dump_read_uint64_t(&idx));
+
+                bytecode_stack_size_add_aligned(&stack_offset, alloca_size);
+                bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
                 assert(idx - old_idx == BYTECODE_ZERO_EXTEND_SIZE);
                 break;
@@ -369,6 +373,11 @@ static void bytecode_dump_internal_2(
             case BYTECODE_GREATER_THAN: {
                 log(LOG_TRACE, "gr_than\n");
                 bytecode_dump_internal_binary(&buf, sv("greater_than"), old_idx, &idx, &stack_offset);
+                break;
+            }
+            case BYTECODE_LESS_THAN: {
+                log(LOG_TRACE, "less_than\n");
+                bytecode_dump_internal_binary(&buf, sv("less_than"), old_idx, &idx, &stack_offset);
                 break;
             }
             case BYTECODE_DOUBLE_EQUAL: {

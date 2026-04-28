@@ -368,27 +368,27 @@ static bool interpret_instruction(void) {
             //breakpoint();
             uint64_t sizeof_dest = interpret_read_uint64_t_aligned();
             uint64_t sizeof_src = interpret_read_uint64_t_aligned();
+            uint64_t src_pos = interpret_read_uint64_t_aligned();
+            uint64_t alloca_pos = interpret_read_uint64_t_aligned();
+
             assert(sizeof_src <= 8 && "not implemented");
             assert(sizeof_dest <= 8 && "not implemented");
-
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
 
             uint64_t ones = 0;
             for (uint64_t idx = 0; idx < 8*sizeof_src; idx++) {
                 ones = ones << 1;
                 ones++;
             }
-            // TODO: bytecode does not actually replace stack place with new thing
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
-            uint64_t value = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof_src);
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_src);
             value &= (0x00 | ones);
-            bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_dest);
+            bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_dest, value);
 
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
+            bytecode_stack_size_add_aligned(&inter_stack_offset, sizeof_src);
+
+            uint64_t expected_offset = interpret_read_uint64_t_aligned();
+            assert(expected_offset == inter_stack_offset);
+
             assert(inter_prog_counter - old_prog_counter == BYTECODE_ZERO_EXTEND_SIZE);
-            assert(inter_stack_offset % 8 == 0); // TODO: remove
             return true;
         }
         case BYTECODE_CALL_DIRECT: {
@@ -428,6 +428,7 @@ static bool interpret_instruction(void) {
 
             uint64_t expected_stack_offset = interpret_read_uint64_t_aligned();
             assert(expected_stack_offset == inter_stack_offset);
+
             assert(inter_prog_counter - old_prog_counter == BYTECODE_CALL_DIRECT_SIZE);
             inter_prog_counter = addr;
             return true;
@@ -448,6 +449,11 @@ static bool interpret_instruction(void) {
         case BYTECODE_GREATER_THAN: {
             log(LOG_TRACE, "bytecode_greater_than\n");
             inter_binary(>);
+            return true;
+        }
+        case BYTECODE_LESS_THAN: {
+            log(LOG_TRACE, "bytecode_less_than\n");
+            inter_binary(<);
             return true;
         }
         case BYTECODE_DOUBLE_EQUAL: {
