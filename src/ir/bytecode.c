@@ -266,6 +266,8 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": return: (sizeof rtn_lang_type: %"PRIu64")\n", old_idx, bytecode_dump_read_uint64_t(&idx));
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, 0);
 
+                stack_offset = 0;
+
                 assert(idx - old_idx == BYTECODE_RETURN_SIZE);
                 break;
             case BYTECODE_GOTO:

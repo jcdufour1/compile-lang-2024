@@ -404,6 +404,10 @@ static bool interpret_instruction(void) {
             uint64_t old_rtn_alloc_pos = inter_rtn_alloc_pos;
             inter_rtn_alloc_pos = interpret_read_uint64_t_aligned();
 
+            uint64_t expected_stack_offset = interpret_read_uint64_t_aligned();
+            log(LOG_DEBUG, "expected_stack_offset = %zu, inter_stack_offset = %zu\n", expected_stack_offset, inter_stack_offset);
+            assert(expected_stack_offset == inter_stack_offset);
+
             assert(inter_base_ptr > 0);
             uint64_t old_base_ptr = inter_base_ptr;
             uint64_t old_offset = inter_stack_offset;
@@ -425,9 +429,6 @@ static bool interpret_instruction(void) {
                 bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ALLOC_POS, arg_bytes_count), inter_base_ptr, sizeof(uint64_t), old_rtn_alloc_pos);
                 //bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_dest);
             }
-
-            uint64_t expected_stack_offset = interpret_read_uint64_t_aligned();
-            assert(expected_stack_offset == inter_stack_offset);
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_CALL_DIRECT_SIZE);
             inter_prog_counter = addr;
