@@ -499,9 +499,8 @@ void usymbol_update(Uast_def* item) {
 }
 
 void ir_update(Ir* item) {
-    (void) item;
-    todo();
-    //generic_symbol_update(serialize_name_symbol_table(ir_get_name(item)), item, ir_get_tbl_from_collection);
+    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
+    generic_symbol_update(serialize_name_symbol_table(&a_main, name), item, ir_get_tbl_from_collection, name.scope_id);
 }
 
 bool ir_tbl_lookup(Ir** result, Name key) {

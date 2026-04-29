@@ -187,7 +187,7 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_STORE_STACK_DIR_ADDR: {
-            log(LOG_TRACE, "bytecode_store_stack_dir_addr\n");
+            log(LOG_TRACE, "bytecode_store_stack_dir_addr; inter_prog_counter = %"PRIu64"\n", inter_prog_counter);
 
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
