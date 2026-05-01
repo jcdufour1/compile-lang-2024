@@ -478,20 +478,10 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
 
     Ir* src = ir_from_name(load->ir_src);
     uint64_t offset = offsetof_ir_lang_type_struct(ir_lang_type_struct_const_unwrap(ir_get_lang_type(src)), load->memb_idx);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
-
 
     bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
 
     // TODO: lhs_pos is incorrect the first time, but is calculated and stored in ir_add below, etc.
-    if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
-        breakpoint();
-    }
     ir_to_bytecode_comment("load_element_ptr lhs");
     if (!bytecode_is_backpatching) {
         breakpoint();

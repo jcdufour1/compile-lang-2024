@@ -163,9 +163,12 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             return true;
         }
-        case BYTECODE_STORE_STACK: {
+        case BYTECODE_STORE_STACK: { // TODO: rename to BYTECODE_STORE
             log(LOG_TRACE, "bytecode_store_stack\n");
 
+            if (inter_prog_counter > 22896) {
+                breakpoint();
+            }
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t src_pos = interpret_read_uint64_t_aligned();
@@ -186,7 +189,7 @@ static bool interpret_instruction(void) {
                 sizeof_store
             );
 
-            uint64_t value = bytecode_stack_at(inter_stack, src_pos, inter_base_ptr);
+            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
             //memcpy(array_at_ref(inter_stack, dest_pos), , sizeof_store);
             assert(inter_stack_offset % 8 == 0); // TODO: remove
@@ -206,8 +209,8 @@ static bool interpret_instruction(void) {
             uint64_t sizeof_store = interpret_read_uint64_t_aligned();
             log(LOG_TRACE, "bytecode_store_stack (dest_pos_ptr = %"PRIu64", src_pos = %"PRIu64", sizeof_store = %"PRIu64")\n", dest_pos_ptr, src_pos, sizeof_store);
 
-            uint64_t dest_pos = bytecode_stack_at(inter_stack, dest_pos_ptr, inter_base_ptr);
-            uint64_t value = bytecode_stack_at(inter_stack, src_pos, inter_base_ptr);
+            uint64_t dest_pos = bytecode_stack_read(inter_stack, dest_pos_ptr, inter_base_ptr, 8);
+            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
             //memcpy(array_at_ref(inter_stack, dest_pos), , sizeof_store);
 
@@ -555,7 +558,7 @@ void interpret(void) {
         //if (inter_prog_counter == 2144) {
             //breakpoint();
         //}
-        breakpoint();
+        //breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

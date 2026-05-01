@@ -232,11 +232,9 @@ static inline uint64_t bytecode_stack_read_internal(
 #define bytecode_stack_read(stack, stack_offset, stack_base_ptr, sizeof_value) \
     bytecode_stack_read_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value)
 
-// return the value popped
+// returns the value popped
 #define bytecode_stack_push(stack, stack_offset, stack_base_ptr, value, value_size) \
-    (bytecode_stack_size_sub_aligned(stack_offset, value_size), *array_at_ref(stack, stack_base_ptr - *stack_offset) = value)
-
-#define bytecode_stack_at(stack, stack_offset, stack_base_ptr) (array_at(stack, (stack_base_ptr) - (stack_offset)))
+    (bytecode_stack_size_sub_aligned(stack_offset, value_size), *array_at_ref(stack, (stack_base_ptr) - *(stack_offset)) = value)
 
 typedef struct {
     uint64_t stack_offset;
