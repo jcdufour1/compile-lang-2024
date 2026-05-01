@@ -541,7 +541,7 @@ void interpret(void) {
         //if (inter_prog_counter == 2144) {
             //breakpoint();
         //}
-        breakpoint();
+        //breakpoint();
         static bool should_break = false;
         if (darr_at(bytecode.code, inter_prog_counter) == BYTECODE_DEREF) {
             //should_break = true;

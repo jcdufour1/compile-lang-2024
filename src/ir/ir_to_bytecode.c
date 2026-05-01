@@ -524,7 +524,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     uint64_t sizeof_alloca = sizeof_ir_lang_type(ir_get_lang_type(src));
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
-    ir_to_bytecode_append_binary(BYTECODE_ADD_, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
+    ir_to_bytecode_append_binary(BYTECODE_SUB, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
 
     bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
     //breakpoint();
