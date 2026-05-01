@@ -140,6 +140,12 @@ for generics:
 - make log function that logs to file?
 - make python script show error on seg fault, etc. if possible
 - make generated ir simpiler if no defer, etc.
+- this error is incorrect:
+main.own:21:12:error:derefencing a type that is not a pointer
+    20 |     num_ptr i32[5]* := &num
+    21 |     return *num_ptr
+       |            ^
+    22 |     //div Div := {.numerator = 45, .denominator = 67}
 
 
 # roadmap to try to get bootstrap compiler done:
