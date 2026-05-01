@@ -219,11 +219,16 @@ static bool interpret_instruction(void) {
             return true;
         }
         case BYTECODE_DEREF: {
-            uint64_t src = interpret_read_uint64_t_aligned();
+            log(LOG_TRACE, "deref\n");
+
+            uint64_t src_ptr = interpret_read_uint64_t_aligned();
             uint64_t sizeof_alloca = interpret_read_uint64_t_aligned();
             uint64_t alloca_pos = interpret_read_uint64_t_aligned();
 
+            uint64_t src = bytecode_stack_read(inter_stack, src_ptr, inter_base_ptr, sizeof_alloca);
             uint64_t derefed = bytecode_stack_read(inter_stack, src, inter_base_ptr, sizeof_alloca);
+            log(LOG_DEBUG, "src_ptr = %zu, src = %zu, derefed = %zu\n", src_ptr, src, derefed);
+            breakpoint();
             bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_alloca, derefed);
 
             uint64_t expected_offset = interpret_read_uint64_t_aligned();
@@ -550,7 +555,7 @@ void interpret(void) {
         //if (inter_prog_counter == 2144) {
             //breakpoint();
         //}
-        breakpoint();
+        //breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

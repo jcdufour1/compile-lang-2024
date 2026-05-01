@@ -914,14 +914,21 @@ static uint64_t ir_to_bytecode_push_load_element_ptr(Ir_load_element_ptr* load, 
     // TODO: use ir_to_bytecode_push_internal instead of below
 
     uint64_t sizeof_load = sizeof_ir_lang_type(load->lang_type);
+    log(LOG_DEBUG, FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, load->lang_type));
 
     //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
     //ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
 
-    uint64_t alloca_pos = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
-    log(LOG_DEBUG, "%zu\n", alloca_pos);
-    todo();
-    return ir_to_bytecode_push_internal(sizeof_load, alloca_pos, is_actual_push, is_ptr);
+    uint64_t elem_ptr = (uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data;
+    log(LOG_DEBUG, "%zu\n", elem_ptr);
+    uint64_t dest_pos = ir_to_bytecode_alloc_internal(sizeof_load, false, false);
+    // TODO: bytecode_deref does not deref, so I should remove it probably
+
+    ir_to_bytecode_comment("push_load_element_ptr");
+    ir_to_bytecode_append_deref(elem_ptr, sizeof_load/*TODO*/, dest_pos, bytecode_stack_offset_);
+    bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
+    //todo();
+    return ir_to_bytecode_push_internal(sizeof_load, dest_pos, is_actual_push, is_ptr);
 }
 
 // TODO: deduplicate this and simular functions?
