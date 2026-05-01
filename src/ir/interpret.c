@@ -34,7 +34,7 @@ static void inter_stack_dump_internal(LOG_LEVEL log_level, const char* file, int
         uint64_t value = 0;
         //log(LOG_DEBUG, "%zu %zu\n", mem_loc, INTERPRET_STACK_SIZE);
         memcpy(&value, array_at_ref(inter_stack, mem_loc), sizeof(value));
-        string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_loc, offset, value);
+        string_extend_f(&a_temp, &buf, "  %08"PRIX64" (%"PRIX64"): %"PRIX64"\n", mem_loc, offset, value);
     }
 
     log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
