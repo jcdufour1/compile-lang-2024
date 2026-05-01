@@ -12,6 +12,7 @@
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return params.sizeof_ptr_non_fn;
+        //return bit_width_to_bytes(params.sizeof_ptr_non_fn);
     }
 
     switch (primitive.type) {
@@ -86,7 +87,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("tuple should not be here");
         case LANG_TYPE_FN:
-            return params.sizeof_ptr_non_fn; // TODO: make separate params member "sizeof_ptr_fn",
+            return bit_width_to_bytes(params.sizeof_ptr_non_fn); // TODO: make separate params member "sizeof_ptr_fn",
                                              //   and use it here
         case LANG_TYPE_REMOVED:
             unreachable("");
