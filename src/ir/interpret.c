@@ -555,7 +555,7 @@ void interpret(void) {
         //if (inter_prog_counter == 2144) {
             //breakpoint();
         //}
-        //breakpoint();
+        breakpoint();
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }

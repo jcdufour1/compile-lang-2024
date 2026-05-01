@@ -190,7 +190,12 @@ static void ir_to_bytecode_append_zero_extend(uint64_t sizeof_dest, uint64_t siz
     assert(bytecode.code.info.count - old_count == BYTECODE_ZERO_EXTEND_SIZE);
 }
 
-static void ir_to_bytecode_append_binary(BYTECODE bin_type, uint64_t start_args, uint64_t alloca_pos, uint64_t sizeof_bin_lang_type, uint64_t stack_offset_after) {
+static void ir_to_bytecode_append_binary(BYTECODE bin_type, uint64_t start_args, uint64_t lhs_pos, uint64_t rhs_pos, uint64_t alloca_pos, uint64_t sizeof_bin_lang_type, uint64_t stack_offset_after) {
+    if (!bytecode_is_backpatching) {
+        assert(rhs_pos > lhs_pos);
+        assert(start_args > lhs_pos);
+    }
+
     static_assert(BYTECODE_COUNT == 19, "exhausive handling of binary types in below assertion");
     assert(
         (
@@ -487,6 +492,10 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
         breakpoint();
     }
+    ir_to_bytecode_comment("load_element_ptr lhs");
+    if (!bytecode_is_backpatching) {
+        breakpoint();
+    }
     uint64_t lhs_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), true, true);
     if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
         bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
@@ -494,6 +503,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
         //todo();
     }
 
+    ir_to_bytecode_comment("load_element_ptr rhs");
     uint64_t rhs_pos = ir_to_bytecode_push_ir(
         ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
             load->pos,
@@ -509,7 +519,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     }
 
 
-    uint64_t start_args = lhs_pos;
+    uint64_t start_args = rhs_pos;
     if (!bytecode_is_backpatching) {
         assert(rhs_pos > lhs_pos);
     }
@@ -523,20 +533,8 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
 
     uint64_t sizeof_alloca = sizeof_ir_lang_type(ir_get_lang_type(src));
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
-
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
-
-    ir_to_bytecode_append_binary(BYTECODE_ADD_, start_args, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
-
+    ir_to_bytecode_append_binary(BYTECODE_ADD_, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
 
     bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
     //breakpoint();
@@ -1697,7 +1695,7 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
 
-    ir_to_bytecode_append_binary(bin_type, start_args, alloca_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
+    ir_to_bytecode_append_binary(bin_type, start_args, alloca_pos, lhs_pos, rhs_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
 
     assert(old_count != SIZE_MAX);
     assert(bytecode.code.info.count - old_count == BYTECODE_BINARY_SIZE);
