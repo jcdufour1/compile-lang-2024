@@ -24,6 +24,7 @@ typedef enum {
     BYTECODE_NONE,
     BYTECODE_ALLOCA,
     BYTECODE_STORE_STACK, // TODO: rename to BYTECODE_STORE
+    BYTECODE_STORE_STACK_DEREF_DEST,
     BYTECODE_STORE_STACK_DIR_ADDR, // TODO: rename to BYTECODE_STORE_DIR_ADDR
     BYTECODE_GOTO,
     BYTECODE_COND_GOTO,
@@ -31,6 +32,7 @@ typedef enum {
     BYTECODE_PUSH,
     BYTECODE_ZERO_EXTEND,
     BYTECODE_CALL_DIRECT,
+    BYTECODE_DEREF,
     BYTECODE_COMMENT,
 
     // binary operators
@@ -52,9 +54,10 @@ static_assert(
 #define BYTECODE_BINARY_SIZE 40
 
 // BYTECODE_COMMENT_SIZE is not defined because comment size is variable
-static_assert(BYTECODE_COUNT == 17, "exhausive handling of bytecode opcode types");
+static_assert(BYTECODE_COUNT == 19, "exhausive handling of bytecode opcode types");
 #define BYTECODE_ALLOCA_SIZE 24
 #define BYTECODE_STORE_STACK_SIZE 40
+#define BYTECODE_STORE_STACK_DEREF_DEST_SIZE 40
 #define BYTECODE_STORE_STACK_DIR_ADDR_SIZE 40
 #define BYTECODE_GOTO_SIZE 24
 #define BYTECODE_COND_GOTO_SIZE 32
@@ -68,6 +71,7 @@ static_assert(BYTECODE_COUNT == 17, "exhausive handling of bytecode opcode types
 #define BYTECODE_DOUBLE_EQUAL_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_NOT_EQUAL_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_CALL_DIRECT_SIZE 40
+#define BYTECODE_DEREF_SIZE 40
 #define BYTECODE_NONE_SIZE 24
 
 
@@ -186,6 +190,9 @@ static inline void bytecode_stack_write_internal(
     uint64_t sizeof_value,
     uint64_t value
 ) {
+    if (stack_offset == 64) {
+        breakpoint();
+    }
     uint64_t stack_index = stack_base_ptr - stack_offset;
     log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
     log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);

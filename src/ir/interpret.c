@@ -172,7 +172,19 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t sizeof_store = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
-            log(LOG_TRACE, "bytecode_store_stack (dest_pos = %"PRIu64", src_pos = %"PRIu64", sizeof_store = %"PRIu64")\n", dest_pos, src_pos, sizeof_store);
+            log(
+                LOG_TRACE,
+                "bytecode_store_stack ("
+                    "inter_prog_counter = %"PRIu64", "
+                    "dest_pos = %"PRIu64", "
+                    "src_pos = %"PRIu64", "
+                    "sizeof_store = %"PRIu64
+                ")\n",
+                inter_prog_counter,
+                dest_pos,
+                src_pos,
+                sizeof_store
+            );
 
             uint64_t value = bytecode_stack_at(inter_stack, src_pos, inter_base_ptr);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
@@ -184,6 +196,40 @@ static bool interpret_instruction(void) {
             assert(expected_offset == inter_stack_offset);
 
             assert(inter_prog_counter - old_prog_counter == BYTECODE_STORE_STACK_SIZE);
+            return true;
+        }
+        case BYTECODE_STORE_STACK_DEREF_DEST: {
+            log(LOG_TRACE, "bytecode_store_stack_deref_dest\n");
+
+            uint64_t dest_pos_ptr = interpret_read_uint64_t_aligned();
+            uint64_t src_pos = interpret_read_uint64_t_aligned();
+            uint64_t sizeof_store = interpret_read_uint64_t_aligned();
+            log(LOG_TRACE, "bytecode_store_stack (dest_pos_ptr = %"PRIu64", src_pos = %"PRIu64", sizeof_store = %"PRIu64")\n", dest_pos_ptr, src_pos, sizeof_store);
+
+            uint64_t dest_pos = bytecode_stack_at(inter_stack, dest_pos_ptr, inter_base_ptr);
+            uint64_t value = bytecode_stack_at(inter_stack, src_pos, inter_base_ptr);
+            bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
+            //memcpy(array_at_ref(inter_stack, dest_pos), , sizeof_store);
+
+            uint64_t expected_offset = interpret_read_uint64_t_aligned();
+            log(LOG_DEBUG, "inter_prog_counter = %zu, expected_offset = %zu, inter_stack_offset = %zu\n", inter_prog_counter, expected_offset, inter_stack_offset);
+            assert(expected_offset == inter_stack_offset);
+
+            assert(inter_prog_counter - old_prog_counter == BYTECODE_STORE_STACK_SIZE);
+            return true;
+        }
+        case BYTECODE_DEREF: {
+            uint64_t src = interpret_read_uint64_t_aligned();
+            uint64_t sizeof_alloca = interpret_read_uint64_t_aligned();
+            uint64_t alloca_pos = interpret_read_uint64_t_aligned();
+
+            uint64_t derefed = bytecode_stack_read(inter_stack, src, inter_base_ptr, sizeof_alloca);
+            bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_alloca, derefed);
+
+            uint64_t expected_offset = interpret_read_uint64_t_aligned();
+            assert(expected_offset == inter_stack_offset);
+
+            assert(inter_prog_counter - old_prog_counter == BYTECODE_DEREF_SIZE);
             return true;
         }
         case BYTECODE_STORE_STACK_DIR_ADDR: {

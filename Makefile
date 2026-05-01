@@ -3,7 +3,6 @@
 WERROR_ALL ?= 0
 
 # TODO: consider if -Wconversion could be used instead of -Wfloat-conversion
-# TODO: decide if -fno-strict-aliasing flag should be kept (if removed, turn on warnings for strict aliasing)
 C_WARNINGS = -Werror=incompatible-pointer-types \
 			 -Wall -Wextra -Wenum-compare -Wimplicit-fallthrough -Wsign-conversion -Wfloat-conversion -Wswitch-enum \
 			 -Wno-missing-braces -Wno-type-limits -Wno-unused-value -Wno-format-zero-length -Wno-unused-function -Wno-address

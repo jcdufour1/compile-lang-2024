@@ -56,11 +56,13 @@ static inline bool ir_is_struct_like(IR_LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
+// refer
 static inline Ir_lang_type ir_lang_type_pointer_depth_inc(Ir_lang_type lang_type) {
     ir_lang_type_set_pointer_depth(&lang_type, ir_lang_type_get_pointer_depth(lang_type) + 1);
     return lang_type;
 }
 
+// deref
 static inline Ir_lang_type ir_lang_type_pointer_depth_dec(Ir_lang_type lang_type) {
     ir_lang_type_set_pointer_depth(&lang_type, ir_lang_type_get_pointer_depth(lang_type) - 1);
     return lang_type;
