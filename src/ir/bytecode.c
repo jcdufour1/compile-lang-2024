@@ -2,6 +2,7 @@
 
 bool bytecode_is_before_backpatching_complete = false;
 
+// TODO: inter_stack_dump_internal should call this function to reduce duplication
 void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr) {
     //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
 
@@ -26,7 +27,7 @@ void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int lin
         uint64_t value = 0;
         //log(LOG_DEBUG, "%zu %zu\n", mem_loc, INTERPRET_STACK_SIZE);
         memcpy(&value, &stack[mem_loc], sizeof(value));
-        string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_loc, offset, value);
+        string_extend_f(&a_temp, &buf, "  %08"PRIX64" (%"PRIX64" (%"PRIu64")): %"PRIX64"\n", mem_loc, offset, offset, value);
     }
 
     log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));

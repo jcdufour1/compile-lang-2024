@@ -224,7 +224,7 @@ typedef size_t Scope_id;
  /* 1M */
 // TODO: make command line argument for this
 #define INTERPRET_STACK_SIZE (1024*1024UL)
-#define INTERPRET_STACK_M_NOTATION true // if set to false, stack positions will be shown as eg. "1048568" instead of "m-8"
+#define INTERPRET_STACK_M_NOTATION true // TODO: remove. if set to false, stack positions will be shown as eg. "1048568" instead of "m-8"
 
 #define MOD_PATH_COMMAND_LINE sv("std"PATH_SEP"does_not_exist"PATH_SEP"cmd")
 

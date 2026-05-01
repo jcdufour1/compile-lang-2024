@@ -190,7 +190,7 @@ static inline void bytecode_stack_write_internal(
     uint64_t sizeof_value,
     uint64_t value
 ) {
-    if (stack_offset == 64) {
+    if (stack_offset == 200) {
         breakpoint();
     }
     uint64_t stack_index = stack_base_ptr - stack_offset;
@@ -216,6 +216,10 @@ static inline uint64_t bytecode_stack_read_internal(
     uint64_t stack_base_ptr,
     uint64_t sizeof_value
 ) {
+    if (stack_offset == 56) {
+        //breakpoint();
+    }
+
     uint64_t stack_index = stack_base_ptr - stack_offset;
     log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
     log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);

@@ -484,7 +484,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     // TODO: lhs_pos is incorrect the first time, but is calculated and stored in ir_add below, etc.
     ir_to_bytecode_comment("load_element_ptr lhs");
     if (!bytecode_is_backpatching) {
-        breakpoint();
+        //breakpoint();
     }
     uint64_t lhs_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), true, true);
     if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
@@ -805,9 +805,13 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         if (dest_pos == 552) {
             breakpoint();
         }
+        ir_to_bytecode_comment("load_another_ir src: "FMT, ir_print(ir_from_name(load->ir_src)));
+        if (!bytecode_is_backpatching && bytecode.code.info.count > 22288) {
+            //breakpoint();
+        }
         uint64_t load_src_pos = ir_to_bytecode_push_ir(load_src, false, false);
 
-        ir_to_bytecode_comment("load_another_ir actual thing");
+        ir_to_bytecode_comment("load_another_ir actual thing: "FMT, ir_print(load));
         ir_add(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
             load->pos,
             (int64_t)dest_pos,
@@ -913,10 +917,13 @@ static uint64_t ir_to_bytecode_push_load_element_ptr(Ir_load_element_ptr* load, 
     // TODO: bytecode_deref does not deref, so I should remove it probably
 
     ir_to_bytecode_comment("push_load_element_ptr");
-    ir_to_bytecode_append_deref(elem_ptr, sizeof_load/*TODO*/, dest_pos, bytecode_stack_offset_);
+    Ir_lang_type inner_lang_type = ir_lang_type_pointer_depth_dec(load->lang_type);
+    uint64_t sizeof_inner = sizeof_ir_lang_type(inner_lang_type);
+    assert(sizeof_inner == 4);
+    ir_to_bytecode_append_deref(elem_ptr, sizeof_inner/*TODO*/, dest_pos, bytecode_stack_offset_);
     bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
     //todo();
-    return ir_to_bytecode_push_internal(sizeof_load, dest_pos, is_actual_push, is_ptr);
+    return ir_to_bytecode_push_internal(sizeof_inner, dest_pos, is_actual_push, is_ptr);
 }
 
 // TODO: deduplicate this and simular functions?
@@ -1200,7 +1207,8 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
             todo();
         }
     }
-    ir_to_bytecode_comment("store_another_ir");
+    ir_to_bytecode_comment("store_another_ir: "FMT, ir_print(store));
+    ir_to_bytecode_comment("store_another_ir src: "FMT, ir_print(ir_from_name(store->ir_src)));
 
     if (bytecode.code.info.count == 3720) {
         //breakpoint();

@@ -9,39 +9,8 @@ static uint64_t inter_base_ptr = INTERPRET_STACK_SIZE;
 static uint8_t inter_stack[INTERPRET_STACK_SIZE] = {0};
 //static uint64_t inter_fun_rtn_addr = UINT64_MAX;
 
-// TODO: remove this function, and use bytecode_stack_dump_internal instead
-static void inter_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line) {
-    //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
-
-    String buf = {0};
-    string_extend_f(&a_temp, &buf, "inter_stack_dump:\n");
-    //for (size_t row = 0; row < count_rows; row++) {
-    //    uint64_t mem_location = row*8;
-    //    if (mem_location < inter_base_ptr - inter_stack_offset) {
-    //        continue;
-    //    }
-
-    //    uint64_t value = 0;
-    //    memcpy(&value, array_at_ref(inter_stack, mem_location), sizeof(value));
-    //    string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_location, mem_location, value);
-    //}
-    
-    log(LOG_DEBUG, "%zu\n", inter_stack_offset);
-    for (size_t offset = 8/* TODO */; offset <= get_next_multiple(inter_stack_offset, 8); offset += 8) {
-        //log(LOG_DEBUG, "%zu %zu\n", inter_base_ptr, offset);
-        assert(inter_base_ptr >= offset);
-        uint64_t mem_loc = inter_base_ptr - offset;
-        uint64_t value = 0;
-        //log(LOG_DEBUG, "%zu %zu\n", mem_loc, INTERPRET_STACK_SIZE);
-        memcpy(&value, array_at_ref(inter_stack, mem_loc), sizeof(value));
-        string_extend_f(&a_temp, &buf, "  %08"PRIX64" (%"PRIX64"): %"PRIX64"\n", mem_loc, offset, value);
-    }
-
-    log_internal(log_level, file, line, 0, FMT"\n", string_print(buf));
-}
-
 // TODO: figure out why inter_stack_dump seems to print nothing
-#define inter_stack_dump(log_level) inter_stack_dump_internal(log_level, __FILE__, __LINE__)
+#define inter_stack_dump(log_level) bytecode_stack_dump_internal(log_level, __FILE__, __LINE__, inter_stack, inter_stack_offset, inter_base_ptr)
 
 static uint8_t interpret_read_uint8_t(void) {
     uint64_t value = 0;
@@ -167,7 +136,7 @@ static bool interpret_instruction(void) {
             log(LOG_TRACE, "bytecode_store_stack\n");
 
             if (inter_prog_counter > 22896) {
-                breakpoint();
+                //breakpoint();
             }
             uint64_t dest_pos = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
@@ -175,21 +144,24 @@ static bool interpret_instruction(void) {
             assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t sizeof_store = interpret_read_uint64_t_aligned();
             assert(inter_stack_offset % 8 == 0); // TODO: remove
+
+            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             log(
                 LOG_TRACE,
                 "bytecode_store_stack ("
                     "inter_prog_counter = %"PRIu64", "
                     "dest_pos = %"PRIu64", "
                     "src_pos = %"PRIu64", "
-                    "sizeof_store = %"PRIu64
+                    "sizeof_store = %"PRIu64", "
+                    "value = %"PRIu64
                 ")\n",
                 inter_prog_counter,
                 dest_pos,
                 src_pos,
-                sizeof_store
+                sizeof_store,
+                value
             );
 
-            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
             //memcpy(array_at_ref(inter_stack, dest_pos), , sizeof_store);
             assert(inter_stack_offset % 8 == 0); // TODO: remove
@@ -207,10 +179,21 @@ static bool interpret_instruction(void) {
             uint64_t dest_pos_ptr = interpret_read_uint64_t_aligned();
             uint64_t src_pos = interpret_read_uint64_t_aligned();
             uint64_t sizeof_store = interpret_read_uint64_t_aligned();
-            log(LOG_TRACE, "bytecode_store_stack (dest_pos_ptr = %"PRIu64", src_pos = %"PRIu64", sizeof_store = %"PRIu64")\n", dest_pos_ptr, src_pos, sizeof_store);
 
             uint64_t dest_pos = bytecode_stack_read(inter_stack, dest_pos_ptr, inter_base_ptr, 8);
             uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
+            log(
+                LOG_TRACE,
+                "bytecode_store_stack (dest_pos_ptr = %"PRIu64", "
+                    "dest_pos = %"PRIu64", "
+                    "src_pos = %"PRIu64", "
+                    "sizeof_store = %"PRIu64
+                ")\n",
+                dest_pos_ptr,
+                dest_pos,
+                src_pos,
+                sizeof_store
+            );
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
             //memcpy(array_at_ref(inter_stack, dest_pos), , sizeof_store);
 
@@ -228,9 +211,9 @@ static bool interpret_instruction(void) {
             uint64_t sizeof_alloca = interpret_read_uint64_t_aligned();
             uint64_t alloca_pos = interpret_read_uint64_t_aligned();
 
-            uint64_t src = bytecode_stack_read(inter_stack, src_ptr, inter_base_ptr, sizeof_alloca);
+            uint64_t src = bytecode_stack_read(inter_stack, src_ptr, inter_base_ptr, 8);
             uint64_t derefed = bytecode_stack_read(inter_stack, src, inter_base_ptr, sizeof_alloca);
-            log(LOG_DEBUG, "src_ptr = %zu, src = %zu, derefed = %zu\n", src_ptr, src, derefed);
+            log(LOG_DEBUG, "src_ptr = %zu, src = %zu, sizeof_alloca = %zu, derefed = %zu\n", src_ptr, src, sizeof_alloca, derefed);
             breakpoint();
             bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_alloca, derefed);
 
@@ -558,7 +541,14 @@ void interpret(void) {
         //if (inter_prog_counter == 2144) {
             //breakpoint();
         //}
-        //breakpoint();
+        breakpoint();
+        static bool should_break = false;
+        if (darr_at(bytecode.code, inter_prog_counter) == BYTECODE_DEREF) {
+            //should_break = true;
+        }
+        if (should_break) {
+            breakpoint();
+        }
         if (inter_base_ptr != INTERPRET_STACK_SIZE) {
             //breakpoint();
         }
