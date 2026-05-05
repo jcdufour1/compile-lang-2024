@@ -22,11 +22,11 @@ static void print_usage(Pos pos);
 typedef struct {
     TARGET_ARCH arch;
     const char* arch_cstr;
-    unsigned int sizeof_usize;
-    unsigned int sizeof_ptr_non_fn;
+    Bits sizeof_usize;
+    Bits sizeof_ptr_non_fn;
 } Arch_row;
 static Arch_row arch_table[] = {
-    {.arch = ARCH_X86_64, .arch_cstr = "x86_64", .sizeof_usize = 64, .sizeof_ptr_non_fn = 64},
+    {.arch = ARCH_X86_64, .arch_cstr = "x86_64", .sizeof_usize = bits_new_macro(64), .sizeof_ptr_non_fn = bits_new_macro(64)},
 };
 
 static struct {
@@ -1088,7 +1088,7 @@ void parse_args(int argc, char** argv) {
     params.sizeof_usize = arch_row.sizeof_usize;
     params.sizeof_ptr_non_fn = arch_row.sizeof_ptr_non_fn;
     unwrap(
-        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u%u", params.sizeof_usize) <
+        (size_t)snprintf(params.usize_size_ux, array_count(params.usize_size_ux), "u"FMT, bits_print(params.sizeof_usize)) <
         array_count(params.usize_size_ux) &&
         "the buffer (params.usize_size_ux) is too small"
     );

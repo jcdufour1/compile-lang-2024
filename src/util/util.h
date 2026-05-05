@@ -332,4 +332,67 @@ static inline void log_internal_custom_dest(FILE* dest, LOG_LEVEL log_level, con
     va_end(args);
 }
 
+
+
+typedef struct {
+    uint64_t value;
+} Bytes;
+
+static inline Bytes bytes_new(uint64_t value) {
+    return (Bytes) {.value = value};
+}
+
+static inline Bytes bytes_add(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value + rhs.value);
+}
+
+static inline Bytes bytes_subtract(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value - rhs.value);
+}
+
+static inline Bytes bytes_multiply(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value*rhs.value);
+}
+
+static inline Bytes bytes_modulo(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value%rhs.value);
+}
+
+static inline Bytes bytes_max(Bytes lhs, Bytes rhs) {
+    return lhs.value > rhs.value ? bytes_new(lhs.value) : bytes_new(rhs.value);
+}
+
+static inline bool bytes_is_greater_than(Bytes lhs, Bytes rhs) {
+    return lhs.value > rhs.value;
+}
+
+typedef struct {
+    uint64_t value;
+} Bits;
+
+#define bits_new_macro(num) ((Bits) {.value = num})
+static inline Bits bits_new(uint64_t value) {
+    return bits_new_macro(value);
+}
+
+static inline bool bits_is_equal(Bits a, Bits b) {
+    return a.value == b.value;
+}
+
+static inline bool bits_is_less_than(Bits lhs, Bits rhs) {
+    return lhs.value < rhs.value;
+}
+
+static inline bool bits_is_greater(Bits lhs, Bits rhs) {
+    return lhs.value > rhs.value;
+}
+
+static inline bool bits_is_less_or_equal(Bits lhs, Bits rhs) {
+    return lhs.value <= rhs.value;
+}
+
+static inline void bits_decrement(Bits* a) {
+    a->value--;
+}
+
 #endif // UTIL_H

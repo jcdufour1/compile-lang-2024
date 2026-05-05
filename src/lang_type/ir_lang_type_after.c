@@ -2,23 +2,24 @@
 #include <str_and_num_utils.h>
 #include <ast_msg.h>
 #include <name.h>
+#include <bits_print.h>
 
 static Name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_lang_type) {
     Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "i%"PRIu32, ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "i"FMT, bits_print(ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width));
             break;
         }
         case IR_LANG_TYPE_FLOAT: {
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "f%"PRIu32, ir_lang_type_float_const_unwrap(ir_lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "f"FMT, bits_print(ir_lang_type_float_const_unwrap(ir_lang_type).bit_width));
             break;
         }
         case IR_LANG_TYPE_UNSIGNED_INT:
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "u%"PRIu32, ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "u"FMT, bits_print(ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width));
             break;
         case IR_LANG_TYPE_OPAQUE: {
             new_base = sv("opaque");
@@ -44,12 +45,12 @@ static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_typ
     Strv new_base = {0};
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_FLOAT: {
-            uint32_t bit_width = ir_lang_type_float_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 32) {
+            Bits bit_width = ir_lang_type_float_const_unwrap(ir_lang_type).bit_width;
+            if (bits_is_equal(bit_width, bits_new(32))) {
                 new_base = sv("float");
-            } else if (bit_width == 64) {
+            } else if (bits_is_equal(bit_width, bits_new(64))) {
                 new_base = sv("double");
-            } else if (bit_width == 128) {
+            } else if (bits_is_equal(bit_width, bits_new(128))) {
                 new_base = sv("long double");
             } else {
                 msg_todo(
@@ -61,9 +62,14 @@ static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_typ
             break;
         }
         case IR_LANG_TYPE_SIGNED_INT: {
-            uint32_t bit_width = ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
-                new_base = strv_from_f(&a_main, "int%d_t", bit_width);
+            Bits bit_width = ir_lang_type_signed_int_const_unwrap(ir_lang_type).bit_width;
+            if (
+                bits_is_equal(bit_width, bits_new(8)) || 
+                bits_is_equal(bit_width, bits_new(16)) || 
+                bits_is_equal(bit_width, bits_new(32)) ||
+                bits_is_equal(bit_width, bits_new(64))
+            ) {
+                new_base = strv_from_f(&a_main, "int"FMT"_t", bits_print(bit_width));
             } else {
                 msg_todo(
                     "bit widths other than 8, 16, 32, or 64 (for signed integers) with the c backend",
@@ -74,12 +80,17 @@ static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_typ
             break;
         }
         case IR_LANG_TYPE_UNSIGNED_INT: {
-            uint32_t bit_width = ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
-            if (bit_width == 1) {
+            Bits bit_width = ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
+            if (bits_is_equal(bit_width, bits_new(1))) {
                 // TODO: overflow may not work correctly when using bool
                 new_base = sv("bool");
-            } else if (bit_width == 8 || bit_width == 16 || bit_width == 32 || bit_width == 64) {
-                new_base = strv_from_f(&a_main, "uint%d_t", bit_width);
+            } else if (
+                bits_is_equal(bit_width, bits_new(8)) || 
+                bits_is_equal(bit_width, bits_new(16)) || 
+                bits_is_equal(bit_width, bits_new(32)) ||
+                bits_is_equal(bit_width, bits_new(64))
+            ) {
+                new_base = strv_from_f(&a_main, "uint"FMT"_t", bits_print(bit_width));
             } else {
                 msg_todo(
                     "bit widths other than 1, 8, 16, 32, or 64 (for unsigned integers) with the c backend",
@@ -93,7 +104,7 @@ static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_typ
             new_base = sv("void");
             break;
     }
-
+//
     assert(new_base.count > 0);
     Name new_name = name_new(
         MOD_PATH_EXTERN_C,

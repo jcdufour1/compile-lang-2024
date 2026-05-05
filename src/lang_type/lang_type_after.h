@@ -24,7 +24,7 @@ bool lang_type_name_base_is_number(Strv name);
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type);
 
-static inline uint32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
+static inline Bits lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
@@ -38,7 +38,7 @@ static inline uint32_t lang_type_primitive_get_bit_width(Lang_type_primitive lan
     unreachable("");
 }
 
-static inline uint32_t lang_type_get_bit_width(Lang_type lang_type) {
+static inline Bits lang_type_get_bit_width(Lang_type lang_type) {
     return lang_type_primitive_get_bit_width(lang_type_primitive_const_unwrap(lang_type));
 }
 

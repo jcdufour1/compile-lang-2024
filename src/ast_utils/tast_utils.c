@@ -29,7 +29,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child)),
         if_cond_child,
         BINARY_NOT_EQUAL,
-        lang_type_new_ux(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), 32)
+        lang_type_new_ux(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), bits_new(32))
     );
 
     return tast_binary_wrap(binary);
@@ -37,11 +37,11 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     size_t result = 0;
-    uint64_t size_result = 0;
+    Bytes size_result = bytes_new(0);
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type(darr_at(base.members, idx)->lang_type);
-        if (curr_size > size_result) {
+        Bytes curr_size = sizeof_lang_type(darr_at(base.members, idx)->lang_type);
+        if (bytes_is_greater_than(curr_size, size_result)) {
             size_result = curr_size;
             result = idx;
         }

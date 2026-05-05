@@ -409,6 +409,16 @@ int64_t strv_to_int64_t(const Pos pos, Strv strv) {
     return result;
 }
 
+uint64_t strv_to_uint64_t(const Pos pos, Strv strv) {
+    uint64_t result = UINT64_MAX;
+
+    // TODO: use try_strv_to_uint64_t?
+    if (!try_strv_to_int64_t((int64_t*)&result,  pos, strv)) {
+        unreachable(FMT, strv_print(strv));
+    }
+    return result;
+}
+
 Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix) {
     (void) debug_prefix;
     (void) file;
@@ -556,3 +566,6 @@ bool check_string_literal_is_valid(Strv lit_text, Pos pos) {
     return true;
 }
 
+Bits bits_from_strv(Pos pos, Strv strv) {
+    return bits_new(strv_to_uint64_t(pos, strv));
+}

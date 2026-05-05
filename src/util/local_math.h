@@ -3,13 +3,11 @@
 
 #include <stddef.h>
 
-
-
-static inline int min_int(int a, int b) {
+static inline uint8_t min_uint8_t(uint8_t a, uint8_t b) {
     return a < b ? a : b;
 }
 
-static inline size_t min_size_t(size_t a, size_t b) {
+static inline uint16_t min_uint16_t(uint16_t a, uint16_t b) {
     return a < b ? a : b;
 }
 
@@ -17,25 +15,41 @@ static inline uint32_t min_uint32_t(uint32_t a, uint32_t b) {
     return a < b ? a : b;
 }
 
+static inline uint64_t min_uint64_t(uint64_t a, uint64_t b) {
+    return a < b ? a : b;
+}
+
 #define min(a, b) _Generic ((a), \
-        int: min_int, \
-        size_t: min_size_t, \
-        uint32_t: min_uint32_t \
+        uint8_t: min_uint8_t, \
+        uint16_t: min_uint16_t, \
+        uint32_t: min_uint32_t, \
+        uint64_t: min_uint64_t \
     ) (a, b)
 
 
 
-static inline int max_int(int a, int b) {
+static inline uint64_t max_uint64_t(uint64_t a, uint64_t b) {
     return a > b ? a : b;
 }
 
-static inline size_t max_size_t(size_t a, size_t b) {
+static inline uint32_t max_uint32_t(uint32_t a, uint32_t b) {
+    return a > b ? a : b;
+}
+
+static inline uint16_t max_uint16_t(uint16_t a, uint16_t b) {
+    return a > b ? a : b;
+}
+
+static inline uint8_t max_uint8_t(uint8_t a, uint8_t b) {
     return a > b ? a : b;
 }
 
 #define max(a, b) _Generic ((a), \
-        int: max_int, \
-        size_t: max_size_t \
+        uint8_t: max_uint8_t, \
+        uint16_t: max_uint16_t, \
+        uint32_t: max_uint32_t, \
+        uint64_t: max_uint64_t, \
+        Bytes: bytes_max \
     ) (a, b)
 
 
