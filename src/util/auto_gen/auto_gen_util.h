@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <local_string.h>
 #include <arena.h>
-#include <log_internal.h>
 #include <string_darr.h>
 #include <util.h>
 

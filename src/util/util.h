@@ -70,8 +70,6 @@ typedef struct Pos_ {
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
 
-#include <log_internal.h>
-
 #define log_indent_file(...) \
     do { \
         log_internal(__VA_ARGS__); \
