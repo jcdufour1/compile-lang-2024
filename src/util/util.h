@@ -27,7 +27,11 @@ typedef enum {
 } LOG_LEVEL;
 
 // TODO: make this more cross platform
-#define breakpoint() __asm__("int3")
+#define breakpoint() \
+    do { \
+        log(LOG_DEBUG, "breakpoint trap\n"); \
+        __asm__("int3"); \
+    } while(0)
 
 #define QSORT_LESS_THAN (-1)
 #define QSORT_EQUAL 0
@@ -66,8 +70,6 @@ typedef struct Pos_ {
 static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
 
-#include <log_internal.h>
-
 #define log_indent_file(...) \
     do { \
         log_internal(__VA_ARGS__); \
@@ -89,7 +91,7 @@ __attribute__((format (printf, 5, 6)));
 #define todo() \
     do { \
         log(LOG_FATAL, "not implemented\n"); \
-        abort(); \
+        local_abort(); \
     } while (0);
 
 #define unreachable(...) \
@@ -97,7 +99,7 @@ __attribute__((format (printf, 5, 6)));
         log(LOG_FATAL, "unreachable:"); \
         fprintf(stderr, __VA_ARGS__); \
         fprintf(stderr, "\n"); \
-        abort(); \
+        local_abort(); \
     } while (0)
 
 #define fallthrough \
@@ -155,10 +157,16 @@ __attribute__((format (printf, 5, 6)));
         _Pragma("GCC diagnostic warning \"-Wsign-conversion\"")
 #endif // OWN_WERROR
 
+#define local_abort() \
+    do { \
+        log_internal(LOG_FATAL, __FILE__, __LINE__, 0, "aborting\n"); \
+        abort(); \
+    } while (0)
+
 static inline void unwrap_internal(bool cond, const char* cond_text, const char* file, int line) {
     if (!(cond)) {
         log_internal(LOG_FATAL, file, line, 0, "condition \"%s\" failed\n", cond_text);
-        abort();
+        local_abort();
     }
 }
 
@@ -221,5 +229,168 @@ typedef size_t Scope_id;
 #define MOD_PATH_COMMAND_LINE sv("std"PATH_SEP"does_not_exist"PATH_SEP"cmd")
 
 #define DEFAULT_BUILD_DIR "own_build"
+
+extern LOG_LEVEL params_log_level;
+
+#define LOG_GREEN "\033[1;32m"
+#define LOG_BLUE "\033[1;34m"
+#define LOG_YELLOW "\033[1;33m"
+#define LOG_RED "\033[1;31m"
+#define LOG_NORMAL "\033[0;39m"
+
+static inline const char* get_log_level_str(LOG_LEVEL log_level) {
+    switch (log_level) {
+        case LOG_NEVER:
+            return ""; // TODO
+        case LOG_TRACE:
+            return "trace";
+        case LOG_DEBUG:
+            return "debug";
+        case LOG_VERBOSE:
+            return "verbose";
+        case LOG_INFO:
+            return LOG_GREEN"info"LOG_NORMAL;
+        case LOG_NOTE:
+            return LOG_BLUE"note"LOG_NORMAL;
+        case LOG_WARNING:
+            return LOG_YELLOW"warning"LOG_NORMAL;
+        case LOG_ERROR:
+            return LOG_RED"error"LOG_NORMAL;
+        case LOG_FATAL:
+            return LOG_RED"fatal error"LOG_NORMAL;
+        case LOG_COUNT:
+            fprintf(stderr, "unreachable: uncovered log_level\n");
+            local_abort();
+    }
+    fprintf(stderr, "unreachable: uncovered log_level\n");
+    local_abort();
+}
+
+__attribute__((format (printf, 7, 8)))
+static inline void log_internal_ex(
+    FILE* dest,
+    LOG_LEVEL log_level,
+    bool print_location,
+    const char* file,
+    int line,
+    Indent indent,
+    const char* format, ...
+) {
+    // TODO: figure out why log_internal_ex does not seem to work for dest other than stderr
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        for (Indent idx = 0; idx < indent; idx++) {
+            fprintf(dest, " ");
+        }
+        if (print_location) {
+            fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        }
+        if (vfprintf(dest, format, args) < 0) {
+            // TODO: consider if abort should be done here
+            fprintf(stderr, "unreachable: vfprintf failed. destination file stream may have been opened for reading instead of writing\n");
+            local_abort();
+        }
+    }
+
+    va_end(args);
+}
+
+__attribute__((format (printf, 5, 6)))
+static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        for (Indent idx = 0; idx < indent; idx++) {
+            fprintf(stderr, " ");
+        }
+        fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+    }
+
+    va_end(args);
+}
+
+// log_internal_custom_file
+__attribute__((format (printf, 6, 7)))
+static inline void log_internal_custom_dest(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
+        for (Indent idx = 0; idx < indent; idx++) {
+            fprintf(dest, " ");
+        }
+        fprintf(dest, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        vfprintf(dest, format, args);
+    }
+
+    va_end(args);
+}
+
+
+
+typedef struct {
+    uint64_t value;
+} Bytes;
+
+static inline Bytes bytes_new(uint64_t value) {
+    return (Bytes) {.value = value};
+}
+
+static inline Bytes bytes_add(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value + rhs.value);
+}
+
+static inline Bytes bytes_subtract(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value - rhs.value);
+}
+
+static inline Bytes bytes_multiply(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value*rhs.value);
+}
+
+static inline Bytes bytes_modulo(Bytes lhs, Bytes rhs) {
+    return bytes_new(lhs.value%rhs.value);
+}
+
+static inline Bytes bytes_max(Bytes lhs, Bytes rhs) {
+    return lhs.value > rhs.value ? bytes_new(lhs.value) : bytes_new(rhs.value);
+}
+
+static inline bool bytes_is_greater_than(Bytes lhs, Bytes rhs) {
+    return lhs.value > rhs.value;
+}
+
+typedef struct {
+    uint64_t value;
+} Bits;
+
+#define bits_new_macro(num) ((Bits) {.value = num})
+static inline Bits bits_new(uint64_t value) {
+    return bits_new_macro(value);
+}
+
+static inline bool bits_is_equal(Bits a, Bits b) {
+    return a.value == b.value;
+}
+
+static inline bool bits_is_less_than(Bits lhs, Bits rhs) {
+    return lhs.value < rhs.value;
+}
+
+static inline bool bits_is_greater(Bits lhs, Bits rhs) {
+    return lhs.value > rhs.value;
+}
+
+static inline bool bits_is_less_or_equal(Bits lhs, Bits rhs) {
+    return lhs.value <= rhs.value;
+}
+
+static inline void bits_decrement(Bits* a) {
+    a->value--;
+}
 
 #endif // UTIL_H

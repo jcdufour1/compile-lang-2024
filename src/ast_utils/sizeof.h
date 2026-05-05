@@ -4,38 +4,38 @@
 #include <tast.h>
 #include <ir.h>
 
-static inline uint64_t bit_width_to_bytes(uint64_t bit_width) {
-    return (bit_width + 7)/8;
+static inline Bytes bits_to_bytes(Bits bit_width) {
+    return bytes_new((bit_width.value + 7)/8);
 }
 
-uint64_t sizeof_lang_type(Lang_type lang_type);
+Bytes sizeof_lang_type(Lang_type lang_type);
 
-uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type);
+Bytes sizeof_ir_lang_type(Ir_lang_type lang_type);
 
-uint64_t sizeof_item(const Tast* item);
+Bytes sizeof_item(const Tast* item);
 
-uint64_t sizeof_struct(const Tast* struct_literal);
+Bytes sizeof_struct(const Tast* struct_literal);
 
-uint64_t sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type);
+Bytes sizeof_struct_def_base(const Struct_def_base* base, bool is_sum_type);
 
-uint64_t alignof_struct_def_base(const Struct_def_base* base);
+Bytes alignof_struct_def_base(const Struct_def_base* base);
 
-uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal);
+Bytes sizeof_struct_literal(const Tast_struct_literal* struct_literal);
 
-uint64_t ir_sizeof_item(const Ir* item);
+Bytes ir_sizeof_item(const Ir* item);
 
-uint64_t sizeof_def(const Tast_def* def);
+Bytes sizeof_def(const Tast_def* def);
 
-uint64_t sizeof_ir_lang_type(Ir_lang_type lang_type);
+Bytes sizeof_ir_lang_type(Ir_lang_type lang_type);
 
-uint64_t ir_sizeof_struct_def_base(const Struct_def_base* base);
+Bytes ir_sizeof_struct_def_base(const Struct_def_base* base);
 
-uint64_t sizeof_def(const Tast_def* def);
+Bytes sizeof_def(const Tast_def* def);
 
-uint64_t alignof_def(const Tast_def* def);
+Bytes alignof_def(const Tast_def* def);
 
-uint64_t sizeof_array_def(const Tast_array_def* def);
+Bytes sizeof_array_def(const Tast_array_def* def);
 
-uint64_t alignof_array_def(const Tast_array_def* def);
+Bytes alignof_array_def(const Tast_array_def* def);
 
 #endif // NEWSIZEOF_H

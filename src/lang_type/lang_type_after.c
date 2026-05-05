@@ -6,17 +6,17 @@ Name lang_type_primitive_get_name(const Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "i%"PRIu32, lang_type_signed_int_const_unwrap(lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "i"FMT, bits_print(lang_type_signed_int_const_unwrap(lang_type).bit_width));
             break;
         }
         case LANG_TYPE_FLOAT: {
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "f%"PRIu32, lang_type_float_const_unwrap(lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "f"FMT, bits_print(lang_type_float_const_unwrap(lang_type).bit_width));
             break;
         }
         case LANG_TYPE_UNSIGNED_INT:
             // TODO: use hashtable, etc. to reduce allocations?
-            new_base = strv_from_f(&a_main, "u%"PRIu32, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
+            new_base = strv_from_f(&a_main, "u"FMT, bits_print(lang_type_unsigned_int_const_unwrap(lang_type).bit_width));
             break;
         case LANG_TYPE_OPAQUE: {
             new_base = sv("opaque");
@@ -138,14 +138,14 @@ bool lang_type_name_base_is_number(Strv name_base) {
     return lang_type_name_base_is_int(name_base) || lang_type_name_base_is_float(name_base);
 }
 
-static bool bit_width_calculation(uint32_t* new_width, uint32_t old_width, Pos pos_arg) {
-    if (old_width <= 32) {
-        *new_width = 32;
+static bool bit_width_calculation(Bits* new_width, Bits old_width, Pos pos_arg) {
+    if (bits_is_less_or_equal(old_width, bits_new(32))) {
+        *new_width = bits_new(32);
         return true;
     }
 
-    if (old_width <= 64) {
-        *new_width = 64;
+    if (bits_is_less_or_equal(old_width, bits_new(32))) {
+        *new_width = bits_new(64);
         return true;
     }
 

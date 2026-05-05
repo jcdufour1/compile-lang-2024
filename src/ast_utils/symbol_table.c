@@ -381,7 +381,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
         );
@@ -392,7 +392,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
         );
@@ -403,7 +403,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        uint32_t bit_width = strv_to_int64_t(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
+        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
         Uast_primitive_def* def = uast_primitive_def_new(
             POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
         );

@@ -77,7 +77,7 @@ static int64_t log2_int64_t(int64_t num) {
     unreachable("");
 }
 
-static int64_t bit_width_needed_unsigned(int64_t num) {
+static int64_t bit_width_needed_unsigned_internal(int64_t num) {
     if (num == 0) {
         return 1;
     }
@@ -87,17 +87,25 @@ static int64_t bit_width_needed_unsigned(int64_t num) {
     return log2_int64_t(num + 1);
 }
 
-static int64_t bit_width_needed_signed(int64_t num) {
+static Bits bit_width_needed_unsigned(int64_t num) {
+    return bits_new((uint64_t)bit_width_needed_unsigned_internal(num));
+}
+
+static int64_t bit_width_needed_signed_internal(int64_t num) {
     if (num < 0) {
         return log2_int64_t(-num) + 1;
     }
     return log2_int64_t(num + 1) + 1;
 }
 
+static Bits bit_width_needed_signed(int64_t num) {
+    return bits_new((uint64_t)bit_width_needed_signed_internal(num));
+}
+
 // TODO: actually implement this, or require user to specify double in literal suffix, etc.
-static int64_t bit_width_needed_float(double num) {
+static Bits bit_width_needed_float(double num) {
     (void) num;
-    return 32;
+    return bits_new(32);
 }
 
 static Tast_expr* tast_auto_deref_to_n(Tast_expr* expr, int16_t n) {
@@ -305,14 +313,14 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         case UAST_INT: {
             Uast_int* old_number = uast_int_unwrap(literal);
             if (old_number->data < 0) {
-                int64_t bit_width = bit_width_needed_signed(old_number->data);
+                Bits bit_width = bit_width_needed_signed(old_number->data);
                 return tast_int_wrap(tast_int_new(
                     old_number->pos,
                     old_number->data,
                     lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_number->pos, bit_width, 0)))
                 ));
             } else {
-                int64_t bit_width = bit_width_needed_unsigned(old_number->data);
+                Bits bit_width = bit_width_needed_unsigned(old_number->data);
                 return tast_int_wrap(tast_int_new(
                     old_number->pos,
                     old_number->data,
@@ -322,7 +330,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         }
         case UAST_FLOAT: {
             Uast_float* old_number = uast_float_unwrap(literal);
-            int64_t bit_width = bit_width_needed_float(old_number->data);
+            Bits bit_width = bit_width_needed_float(old_number->data);
             return tast_float_wrap(tast_float_new(
                 old_number->pos,
                 old_number->data,
@@ -3850,7 +3858,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     if (!try_set_expr_types(&new_inner_index, index->index, true)) {
         return false;
     }
-    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= params.sizeof_usize) {
+    if (bits_is_less_or_equal(lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)), params.sizeof_usize)) {
         unwrap(try_set_unary_types_finish(
             &new_inner_index,
             new_inner_index,
@@ -5128,44 +5136,44 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 // TODO: consider how to do this
 static void do_test_bit_width(void) {
-    unwrap(0 == log2_int64_t(1));
-    unwrap(1 == log2_int64_t(2));
-    unwrap(2 == log2_int64_t(3));
-    unwrap(2 == log2_int64_t(4));
-    unwrap(3 == log2_int64_t(5));
-    unwrap(3 == log2_int64_t(6));
-    unwrap(3 == log2_int64_t(7));
-    unwrap(3 == log2_int64_t(8));
+    unwrap(bits_is_equal(bits_new(0), bits_new((uint64_t)log2_int64_t(1))));
+    unwrap(bits_is_equal(bits_new(1), bits_new((uint64_t)log2_int64_t(2))));
+    unwrap(bits_is_equal(bits_new(2), bits_new((uint64_t)log2_int64_t(3))));
+    unwrap(bits_is_equal(bits_new(2), bits_new((uint64_t)log2_int64_t(4))));
+    unwrap(bits_is_equal(bits_new(3), bits_new((uint64_t)log2_int64_t(5))));
+    unwrap(bits_is_equal(bits_new(3), bits_new((uint64_t)log2_int64_t(6))));
+    unwrap(bits_is_equal(bits_new(3), bits_new((uint64_t)log2_int64_t(7))));
+    unwrap(bits_is_equal(bits_new(3), bits_new((uint64_t)log2_int64_t(8))));
 
-    unwrap(1 == bit_width_needed_signed(-1));
-    unwrap(2 == bit_width_needed_signed(-2));
-    unwrap(3 == bit_width_needed_signed(-3));
-    unwrap(3 == bit_width_needed_signed(-4));
-    unwrap(4 == bit_width_needed_signed(-5));
-    unwrap(4 == bit_width_needed_signed(-6));
-    unwrap(4 == bit_width_needed_signed(-7));
-    unwrap(4 == bit_width_needed_signed(-8));
-    unwrap(5 == bit_width_needed_signed(-9));
+    unwrap(bits_is_equal(bits_new(1), bit_width_needed_signed(-1)));
+    unwrap(bits_is_equal(bits_new(2), bit_width_needed_signed(-2)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_signed(-3)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_signed(-4)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(-5)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(-6)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(-7)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(-8)));
+    unwrap(bits_is_equal(bits_new(5), bit_width_needed_signed(-9)));
 
-    unwrap(1 == bit_width_needed_signed(0));
-    unwrap(2 == bit_width_needed_signed(1));
-    unwrap(3 == bit_width_needed_signed(2));
-    unwrap(3 == bit_width_needed_signed(3));
-    unwrap(4 == bit_width_needed_signed(4));
-    unwrap(4 == bit_width_needed_signed(5));
-    unwrap(4 == bit_width_needed_signed(6));
-    unwrap(4 == bit_width_needed_signed(7));
-    unwrap(5 == bit_width_needed_signed(8));
+    unwrap(bits_is_equal(bits_new(1), bit_width_needed_signed(0)));
+    unwrap(bits_is_equal(bits_new(2), bit_width_needed_signed(1)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_signed(2)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_signed(3)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(4)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(5)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(6)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_signed(7)));
+    unwrap(bits_is_equal(bits_new(5), bit_width_needed_signed(8)));
 
-    unwrap(1 == bit_width_needed_unsigned(0));
-    unwrap(1 == bit_width_needed_unsigned(1));
-    unwrap(2 == bit_width_needed_unsigned(2));
-    unwrap(2 == bit_width_needed_unsigned(3));
-    unwrap(3 == bit_width_needed_unsigned(4));
-    unwrap(3 == bit_width_needed_unsigned(5));
-    unwrap(3 == bit_width_needed_unsigned(6));
-    unwrap(3 == bit_width_needed_unsigned(7));
-    unwrap(4 == bit_width_needed_unsigned(8));
+    unwrap(bits_is_equal(bits_new(1), bit_width_needed_unsigned(0)));
+    unwrap(bits_is_equal(bits_new(1), bit_width_needed_unsigned(1)));
+    unwrap(bits_is_equal(bits_new(2), bit_width_needed_unsigned(2)));
+    unwrap(bits_is_equal(bits_new(2), bit_width_needed_unsigned(3)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_unsigned(4)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_unsigned(5)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_unsigned(6)));
+    unwrap(bits_is_equal(bits_new(3), bit_width_needed_unsigned(7)));
+    unwrap(bits_is_equal(bits_new(4), bit_width_needed_unsigned(8)));
 }
 
 // TODO: use proper prefix (not try*types) (eg. use "check" as prefix)

@@ -76,8 +76,8 @@ typedef enum {
 #define PARAMETERS_COUNT 32
 typedef struct {
     Target_triplet target_triplet;
-    uint32_t sizeof_usize; // in bits
-    uint32_t sizeof_ptr_non_fn; // in bits
+    Bits sizeof_usize;
+    Bits sizeof_ptr_non_fn;
     char usize_size_ux[8]; // eg. "u64"
     Strv build_dir;
     Strv input_file_path;

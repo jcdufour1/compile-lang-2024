@@ -1732,10 +1732,10 @@ static Name load_unary(Ir_block* new_block, Tast_unary* old_unary) {
         case UNARY_COUNTOF:
             unreachable("this should have been eliminated in the type checking pass");
         case UNARY_SIZEOF: {
-            uint32_t size = sizeof_ir_lang_type(rm_tuple_lang_type(
+            Bytes size = sizeof_ir_lang_type(rm_tuple_lang_type(
                 tast_expr_get_lang_type(old_unary->child), old_unary->pos
             ));
-            return load_int(tast_int_new(old_unary->pos, size, lang_type_new_usize(old_unary->pos)));
+            return load_int(tast_int_new(old_unary->pos, (int64_t)size.value/*TODO*/, lang_type_new_usize(old_unary->pos)));
         }
         case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {

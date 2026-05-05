@@ -8,7 +8,7 @@ static Uast_type ir_lang_type_gen_signed_int(const char* prefix) {
     const char* base_name = "signed_int";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ir_lang_type")};
 
-    append_member(&sym.members, "uint32_t", "bit_width");
+    append_member(&sym.members, "Bits", "bit_width");
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -18,7 +18,7 @@ static Uast_type ir_lang_type_gen_unsigned_int(const char* prefix) {
     const char* base_name = "unsigned_int";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ir_lang_type")};
 
-    append_member(&sym.members, "uint32_t", "bit_width");
+    append_member(&sym.members, "Bits", "bit_width");
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
@@ -28,7 +28,7 @@ static Uast_type ir_lang_type_gen_float(const char* prefix) {
     const char* base_name = "float";
     Uast_type sym = {.name = uast_name_new(prefix, base_name, false, "ir_lang_type")};
 
-    append_member(&sym.members, "uint32_t", "bit_width");
+    append_member(&sym.members, "Bits", "bit_width");
     append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
