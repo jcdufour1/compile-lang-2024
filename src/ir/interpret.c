@@ -1,12 +1,12 @@
 #define INTER_RTN_ADDR_EXIT (2LU << 60)
 
-static uint64_t inter_prog_counter = 0;
-static uint64_t inter_stack_size_ = INTERPRET_STACK_SIZE; // TODO: remove this variable?
-static uint64_t inter_stack_offset = 0;
-static uint64_t arg_bytes_count = 0; // TODO: use inter prefix
-static uint64_t inter_rtn_alloc_pos = 0;
-static uint64_t inter_base_ptr = INTERPRET_STACK_SIZE;
-static uint8_t inter_stack[INTERPRET_STACK_SIZE] = {0};
+static Bytes inter_prog_counter = bytes_new_macro(0);
+static Bytes inter_stack_size_ = INTERPRET_STACK_SIZE; // TODO: remove this variable?
+static Bytes inter_stack_offset = bytes_new_macro(0);
+static Bytes arg_bytes_count = bytes_new_macro(0); // TODO: use inter prefix
+static Bytes inter_rtn_alloc_pos = bytes_new_macro(0);
+static Bytes inter_base_ptr = INTERPRET_STACK_SIZE;
+static uint8_t inter_stack[(1024*1024UL)] = {0};
 //static uint64_t inter_fun_rtn_addr = UINT64_MAX;
 
 // TODO: figure out why inter_stack_dump seems to print nothing
@@ -518,6 +518,8 @@ static bool interpret_instruction(void) {
 }
 
 void interpret(void) {
+    assert(array_count(inter_stack) == INTERPRET_STACK_SIZE.value);
+
     log(LOG_DEBUG, "%zu\n", bytecode.code.info.count);
     breakpoint();
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of main function stack frame initial state");
