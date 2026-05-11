@@ -66,7 +66,7 @@ char bytecode_read_char(uint64_t index) {
     return (char)bytecode_read_uint8_t(index);
 }
 
-// TODO: remove this function?
+// TODO: remove this function
 Strv bytecode_alloca_pos_print_internal(uint64_t raw_pos) {
     return strv_from_f(&a_temp, "%"PRIu64, raw_pos);
 }

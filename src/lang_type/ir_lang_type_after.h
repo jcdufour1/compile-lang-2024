@@ -8,7 +8,7 @@ Name ir_lang_type_primitive_get_name(LANG_TYPE_MODE mode, Ir_lang_type_primitive
 
 bool ir_lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_lang_type);
 
-static inline uint32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
+static inline Bits ir_lang_type_primitive_get_bit_width(Ir_lang_type_primitive ir_lang_type) {
     switch (ir_lang_type.type) {
         case IR_LANG_TYPE_UNSIGNED_INT:
             return ir_lang_type_unsigned_int_const_unwrap(ir_lang_type).bit_width;
@@ -22,18 +22,18 @@ static inline uint32_t ir_lang_type_primitive_get_bit_width(Ir_lang_type_primiti
     unreachable("");
 }
 
-static inline uint32_t ir_lang_type_get_bit_width(Ir_lang_type ir_lang_type) {
+static inline Bits ir_lang_type_get_bit_width(Ir_lang_type ir_lang_type) {
     return ir_lang_type_primitive_get_bit_width(ir_lang_type_primitive_const_unwrap(ir_lang_type));
 }
 
-static inline Ir_lang_type ir_lang_type_new_ux(uint32_t bit_width) {
+static inline Ir_lang_type ir_lang_type_new_ux(Bits bit_width) {
     return ir_lang_type_primitive_const_wrap(ir_lang_type_unsigned_int_const_wrap(
         ir_lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)
     ));
 }
 
 static inline Ir_lang_type ir_lang_type_new_u8(void) {
-    return ir_lang_type_new_ux(8);
+    return ir_lang_type_new_ux(bits_new(8));
 }
 
 static inline Ir_lang_type ir_lang_type_new_usize(void) {

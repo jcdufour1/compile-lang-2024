@@ -26,8 +26,8 @@ static bool do_implicit_convertions_primitive(
         return false;
     }
 
-    uint32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
-    uint32_t src_bit_width = lang_type_primitive_get_bit_width(src_type);
+    Bits dest_bit_width = lang_type_primitive_get_bit_width(dest);
+    Bits src_bit_width = lang_type_primitive_get_bit_width(src_type);
 
     // both or none of types must be float
     if ((dest.type == LANG_TYPE_FLOAT) != (src_type.type == LANG_TYPE_FLOAT)) {
@@ -42,7 +42,13 @@ static bool do_implicit_convertions_primitive(
         // TODO: only do unsafe cast if lang_types are unmatched
 
         // TODO: remove this if statement when big ints are implemented?
-        if (!(dest_bit_width == 1 || dest_bit_width == 8 || dest_bit_width == 16 || dest_bit_width == 32 || dest_bit_width == 64)) {
+        if (!(
+            bits_is_equal(dest_bit_width, bits_new(1)) || 
+            bits_is_equal(dest_bit_width, bits_new(8)) || 
+            bits_is_equal(dest_bit_width, bits_new(16)) || 
+            bits_is_equal(dest_bit_width, bits_new(32)) || 
+            bits_is_equal(dest_bit_width, bits_new(64))
+        )) {
             // TODO
             goto after_if;
         }
@@ -57,15 +63,15 @@ static bool do_implicit_convertions_primitive(
 after_if:
 
     if (dest.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(dest_bit_width > 0);
-        dest_bit_width--;
+        unwrap(bits_is_greater(dest_bit_width, bits_new(0)));
+        bits_decrement(&dest_bit_width);
     }
     if (src_type.type == LANG_TYPE_SIGNED_INT) {
-        unwrap(src_bit_width > 0);
-        src_bit_width--;
+        unwrap(bits_is_greater(src_bit_width, bits_new(0)));
+        bits_decrement(&src_bit_width);
     }
 
-    if (dest_bit_width < src_bit_width) {
+    if (bits_is_less_than(dest_bit_width, src_bit_width)) {
         return false;
     }
 

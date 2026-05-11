@@ -3,6 +3,7 @@
 
 #include <uint8_t_darr.h>
 #include <util.h>
+#include <bytes_print.h>
 
 typedef struct {
     Uint8_t_darr code;
@@ -87,14 +88,15 @@ typedef enum {
     BYTECODE_COUNT_RTN_ITEMS
 } BYTECODE_CALL_STACK_TYPE;
 
-static inline uint64_t bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE offset_type, uint64_t arg_bytes_count) {
-    uint64_t base_bytes_call_stack_type = 8*(((uint64_t)offset_type) + 1);
-    assert(arg_bytes_count == get_next_multiple(arg_bytes_count, 8) && "not implemented");
-    return base_bytes_call_stack_type + arg_bytes_count;
+static inline Bytes bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE offset_type, Bytes arg_bytes_count) {
+    Bytes base_bytes_call_stack_type = bytes_multiply(bytes_new(8), bytes_new(((uint64_t)offset_type) + 1));
+    assert(bytes_is_equal(arg_bytes_count, get_next_multiple(arg_bytes_count, bytes_new(8))) && "not implemented");
+    return bytes_add(base_bytes_call_stack_type, arg_bytes_count);
 }
 
 Strv bytecode_alloca_pos_print_internal(uint64_t raw_pos);
 
+// TODO: remove this macro
 #define bytecode_alloca_pos_print(raw_pos) strv_print(bytecode_alloca_pos_print_internal(raw_pos))
 
 void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr);
@@ -122,52 +124,52 @@ void bytecode_dump_internal(
     bytecode_dump_internal(dest, __FILE__, __LINE__, log_level, is_before_backpatching_complete, bytecode)
 
 // returns the position (offset) of the new stack space
-static uint64_t bytecode_stack_size_add_aligned(uint64_t* stack_offset, uint64_t alloc_size) {
-    log(LOG_DEBUG, "%zu\n", *stack_offset);
-    assert(*stack_offset < INTERPRET_STACK_SIZE);
-    assert(*stack_offset % 8 == 0); // TODO: remove this assertion if allocs smaller than 8 are actually done (but also remove // ALIGN statement below)
+static Bytes bytecode_stack_size_add_aligned(Bytes* stack_offset, Bytes alloc_size) {
+    log(LOG_DEBUG, FMT"\n", bytes_print(*stack_offset));
+    assert(bytes_is_less_than(*stack_offset, INTERPRET_STACK_SIZE));
+    assert(bytes_is_equal(bytes_modulo(*stack_offset, bytes_new(8)), bytes_new(0))); // TODO: remove this assertion if allocs smaller than 8 are actually done (but also remove // ALIGN statement below)
                                   
     //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
     //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
-    assert(*stack_offset <= INTERPRET_STACK_SIZE);
-    uint64_t alloc_pos = *stack_offset;
+    assert(bytes_is_less_or_equal(*stack_offset, INTERPRET_STACK_SIZE));
+    Bytes alloc_pos = *stack_offset;
     //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
-    assert(*stack_offset >= alloc_size);
-    *stack_offset -= alloc_size;
-    //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
-
-    //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
-    *stack_offset = get_prev_multiple(*stack_offset, 8); // ALIGN
+    assert(bytes_is_greater_or_equal(*stack_offset, alloc_size));
+    *stack_offset = bytes_subtract(*stack_offset, alloc_size);
     //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
 
-    assert(*stack_offset <= INTERPRET_STACK_SIZE);
+    //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
+    *stack_offset = get_prev_multiple(*stack_offset, bytes_new(8)); // ALIGN
+    //log(LOG_DEBUG, "%zu\n", INTERPRET_STACK_SIZE - *stack_size);
+
+    assert(bytes_is_less_or_equal(*stack_offset, INTERPRET_STACK_SIZE));
     return alloc_pos;
 }
 
 // returns the position of the new stack space
-static uint64_t bytecode_stack_size_sub_aligned(uint64_t* stack_offset, uint64_t alloc_size) {
-    assert(*stack_offset % 8 == 0); // TODO: remove this assertion if allocs smaller than 8 are actually done
+static Bytes bytecode_stack_size_sub_aligned(Bytes* stack_offset, Bytes alloc_size) {
+    assert(bytes_is_equal(bytes_modulo(*stack_offset, bytes_new(8)), bytes_new(0))); // TODO: remove this assertion if allocs smaller than 8 are actually done
                                   
-    *stack_offset += alloc_size;
-    *stack_offset = get_next_multiple(*stack_offset, 8/*TODO: make smaller if alloc size is tiny*/);
-    uint64_t alloc_pos = *stack_offset;
-    log(LOG_DEBUG, FMT"\n", bytecode_alloca_pos_print(alloc_pos));
+    *stack_offset = bytes_add(*stack_offset, alloc_size);
+    *stack_offset = get_next_multiple(*stack_offset, bytes_new(8)/*TODO: make smaller if alloc size is tiny*/);
+    Bytes alloc_pos = *stack_offset;
+    log(LOG_DEBUG, FMT"\n", bytes_print(alloc_pos));
     //breakpoint();
 
-    assert(*stack_offset % 8 == 0); // TODO: remove this assertion if allocs smaller than 8 are actually done
+    assert(bytes_is_equal(bytes_modulo(*stack_offset, bytes_new(8)), bytes_new(0))); // TODO: remove this assertion if allocs smaller than 8 are actually done
     return alloc_pos;
 }
 
 // return the value popped
 // TODO: array_at macro is not currently being used becuause of side effect issues (but maybe should be)
 
-static inline uint64_t bytecode_stack_pop_internal(uint8_t* stack, uint64_t stack_len, uint64_t* stack_offset, uint64_t stack_base_ptr, uint64_t sizeof_value) {
-    uint64_t stack_index = stack_base_ptr - *stack_offset;
+static inline uint64_t bytecode_stack_pop_internal(uint8_t* stack, uint64_t stack_len, Bytes* stack_offset, Bytes stack_base_ptr, Bytes sizeof_value) {
+    uint64_t stack_index = bytes_subtract(stack_base_ptr, *stack_offset).value;
     unwrap(stack_index < stack_len && "out of bounds");
 
     uint64_t value = 0;
     // TODO: this and similar memcpys will only work on little endian platforms
-    memcpy(&value, &stack[stack_index], sizeof_value);
+    memcpy(&value, &stack[stack_index], sizeof_value.value);
 
     bytecode_stack_size_add_aligned(stack_offset, sizeof_value);
 

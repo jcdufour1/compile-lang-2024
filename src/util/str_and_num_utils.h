@@ -67,6 +67,8 @@ bool try_strv_consume_size_t(size_t* result, Strv* strv, bool ignore_underscore)
 
 int64_t strv_to_int64_t(const Pos pos, Strv strv);
 
+uint64_t strv_to_uint64_t(const Pos pos, Strv strv);
+
 Strv util_literal_strv_new_internal(const char* file, int line, Strv debug_prefix);
 
 Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Strv debug_prefix, Scope_id scope_id);
@@ -74,5 +76,7 @@ Name util_literal_name_new_prefix_scope_internal(const char* file, int line, Str
 Strv serialize_double(double num);
 
 bool check_string_literal_is_valid(Strv lit_text, Pos pos);
+
+Bits bits_from_strv(Pos pos, Strv strv);
 
 #endif // STR_AND_NUM_UTILS_H

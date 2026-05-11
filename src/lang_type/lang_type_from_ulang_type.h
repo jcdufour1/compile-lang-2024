@@ -74,21 +74,21 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
     if (lang_type_name_base_is_signed(name.base)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            bits_from_strv(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
             ulang_type_regular_get_pointer_depth(lang_type)
         );
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
     } else if (lang_type_name_base_is_unsigned(name.base)) {
         Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            bits_from_strv(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
             ulang_type_regular_get_pointer_depth(lang_type) 
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (lang_type_name_base_is_float(name.base)) {
         Lang_type_float new_float = lang_type_float_new(
             lang_type.pos,
-            strv_to_int64_t(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
+            bits_from_strv(POS_BUILTIN, strv_slice(name.base, 1, name.base.count - 1)),
             ulang_type_regular_get_pointer_depth(lang_type) 
         );
         return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));

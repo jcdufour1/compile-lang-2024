@@ -4,7 +4,7 @@
 #include <lang_type.h>
 #include <util.h>
 
-static inline Lang_type lang_type_new_ux(Pos pos, uint32_t bit_width) {
+static inline Lang_type lang_type_new_ux(Pos pos, Bits bit_width) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(pos, bit_width, 0)
     ));
@@ -18,12 +18,12 @@ static inline Lang_type lang_type_new_usize(Pos pos) {
 
 static inline Lang_type lang_type_new_u1(Pos pos) {
     return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(pos, 1, 0)
+        lang_type_unsigned_int_new(pos, bits_new(1), 0)
     ));
 }
 
 static inline Lang_type lang_type_new_char(Pos pos) {
-    return lang_type_new_ux(pos, 8);
+    return lang_type_new_ux(pos, bits_new(8));
 }
 
 static inline Lang_type lang_type_new_void(Pos pos) {

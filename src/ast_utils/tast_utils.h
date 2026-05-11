@@ -51,17 +51,17 @@ static inline bool ir_lang_type_primitive_is_equal(Ir_lang_type_primitive a, Ir_
         case IR_LANG_TYPE_SIGNED_INT: {
             Ir_lang_type_signed_int a_int = ir_lang_type_signed_int_const_unwrap(a);
             Ir_lang_type_signed_int b_int = ir_lang_type_signed_int_const_unwrap(b);
-            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+            return bits_is_equal(a_int.bit_width, b_int.bit_width) && a_int.pointer_depth == b_int.pointer_depth;
         }
         case IR_LANG_TYPE_UNSIGNED_INT: {
             Ir_lang_type_unsigned_int a_int = ir_lang_type_unsigned_int_const_unwrap(a);
             Ir_lang_type_unsigned_int b_int = ir_lang_type_unsigned_int_const_unwrap(b);
-            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+            return bits_is_equal(a_int.bit_width, b_int.bit_width) && a_int.pointer_depth == b_int.pointer_depth;
         }
         case IR_LANG_TYPE_FLOAT: {
             Ir_lang_type_float a_int = ir_lang_type_float_const_unwrap(a);
             Ir_lang_type_float b_int = ir_lang_type_float_const_unwrap(b);
-            return a_int.bit_width == b_int.bit_width && a_int.pointer_depth == b_int.pointer_depth;
+            return bits_is_equal(a_int.bit_width, b_int.bit_width) && a_int.pointer_depth == b_int.pointer_depth;
         }
         case IR_LANG_TYPE_OPAQUE:
             return ir_lang_type_opaque_const_unwrap(a).pointer_depth == ir_lang_type_opaque_const_unwrap(b).pointer_depth;
@@ -160,17 +160,17 @@ static inline bool lang_type_primitive_is_equal(Lang_type_primitive a, Lang_type
         case LANG_TYPE_SIGNED_INT: {
             Lang_type_signed_int a_signed = lang_type_signed_int_const_unwrap(a);
             Lang_type_signed_int b_signed = lang_type_signed_int_const_unwrap(b);
-            return a_signed.bit_width == b_signed.bit_width && a_signed.pointer_depth == b_signed.pointer_depth;
+            return bits_is_equal(a_signed.bit_width, b_signed.bit_width) && a_signed.pointer_depth == b_signed.pointer_depth;
         }
         case LANG_TYPE_UNSIGNED_INT: {
             Lang_type_unsigned_int a_unsigned = lang_type_unsigned_int_const_unwrap(a);
             Lang_type_unsigned_int b_unsigned = lang_type_unsigned_int_const_unwrap(b);
-            return a_unsigned.bit_width == b_unsigned.bit_width && a_unsigned.pointer_depth == b_unsigned.pointer_depth;
+            return bits_is_equal(a_unsigned.bit_width, b_unsigned.bit_width) && a_unsigned.pointer_depth == b_unsigned.pointer_depth;
         }
         case LANG_TYPE_FLOAT: {
             Lang_type_float a_float = lang_type_float_const_unwrap(a);
             Lang_type_float b_float = lang_type_float_const_unwrap(b);
-            return a_float.bit_width == b_float.bit_width && a_float.pointer_depth == b_float.pointer_depth;
+            return bits_is_equal(a_float.bit_width, b_float.bit_width) && a_float.pointer_depth == b_float.pointer_depth;
         }
         case LANG_TYPE_OPAQUE: {
             Lang_type_opaque a_opaque = lang_type_opaque_const_unwrap(a);
