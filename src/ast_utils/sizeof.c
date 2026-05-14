@@ -125,7 +125,10 @@ Bytes alignof_lang_type(Lang_type lang_type) {
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
             Bytes size = sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
             if (bytes_is_greater_than(size, bytes_new(8))) {
-                todo();
+                // TODO: todo below commented out because f128 used for struct member in 
+                //   tests/inputs/sizeof.own, and bigints not implemented
+                //log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+                //todo();
             }
             return size;
         }
