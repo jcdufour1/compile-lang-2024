@@ -475,7 +475,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     }
 
     Ir* src = ir_from_name(load->ir_src);
-    Bytes offset = offsetof_ir_lang_type_struct(ir_lang_type_struct_const_unwrap(ir_get_lang_type(src)), load->memb_idx);
+    Bytes offset = offsetof_ir_lang_type_struct(ir_lang_type_struct_const_unwrap(ir_get_lang_type(src)), load->memb_idx, false);
 
     bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
 
@@ -484,64 +484,62 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
     if (!bytecode_is_backpatching) {
         //breakpoint();
     }
-    Bytes lhs_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), true, true);
-    if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
-        bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
-        log(LOG_DEBUG, FMT"\n", ir_print(ir_from_name(load->ir_src)));
+    Bytes src_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), false, false);
+    Bytes elem_loc = bytes_add(src_pos, offset);
+    log(LOG_DEBUG, "src_pos = "FMT", offset = "FMT", elem_loc = "FMT"\n", bytes_print(src_pos), bytes_print(offset), bytes_print(elem_loc));
+
+    if (!bytecode_is_backpatching) {
         //todo();
     }
 
-    ir_to_bytecode_comment("load_element_ptr rhs");
-    Bytes rhs_pos = ir_to_bytecode_push_ir(
-        ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
-            load->pos,
-            (int64_t)offset.value/*TODO*/,
-            ir_lang_type_new_ux(bits_new(64)),
-            util_literal_name_new())
-        ))),
-        true,
-        false
-    );
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
+    //if (!bytecode_is_backpatching && bytecode.code.info.count > 17000) {
+    //    bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
+    //    log(LOG_DEBUG, FMT"\n", ir_print(ir_from_name(load->ir_src)));
+    //    //todo();
+    //}
+
+    //ir_to_bytecode_comment("load_element_ptr rhs");
+
+    //if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
+    //    todo();
+    //}
 
 
-    Bytes start_args = rhs_pos;
-    if (!bytecode_is_backpatching) {
-        assert(bytes_is_greater_than(rhs_pos, lhs_pos));
-    }
+    //todo();
+    //Bytes start_args = rhs_pos;
+    //if (!bytecode_is_backpatching) {
+    //    assert(bytes_is_greater_than(rhs_pos, lhs_pos));
+    //}
 
-    Bytes alloca_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), false, false);
-    if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
-        todo();
-    }
+    //if (!bytecode_is_backpatching && bytecode.code.info.count == 17560) {
+    //    todo();
+    //}
 
-    log(LOG_DEBUG, "alloca_pos = "FMT", lhs_pos = "FMT"\n", bytes_print(alloca_pos), bytes_print(lhs_pos));
+    //log(LOG_DEBUG, "alloca_pos = "FMT", lhs_pos = "FMT"\n", bytes_print(alloca_pos), bytes_print(lhs_pos));
 
-    Bytes sizeof_alloca = sizeof_ir_lang_type(ir_get_lang_type(src));
-    bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
-    bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
-    ir_to_bytecode_append_binary(BYTECODE_SUB, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
+    //Bytes sizeof_alloca = sizeof_ir_lang_type(ir_get_lang_type(src));
+    //bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
+    //bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_alloca);
+    //ir_to_bytecode_append_binary(BYTECODE_SUB, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_alloca, bytecode_stack_offset_);
 
-    bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
-    //breakpoint();
+    //bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
+    ////breakpoint();
 
 
-    //ir_to_bytecode_append_store_stack(dest_pos, load_src_pos, sizeof_lang_type, bytecode_stack_offset_);
+    ////ir_to_bytecode_append_store_stack(dest_pos, load_src_pos, sizeof_lang_type, bytecode_stack_offset_);
 
-    if (bytes_is_equal(alloca_pos, bytes_new(64))) {
-        todo();
-    }
-    if (bytes_is_equal(alloca_pos, bytes_new(60))) {
-        todo();
-    }
-    if (bytes_is_equal(alloca_pos, bytes_new(56))) {
-        todo();
-    }
+    //if (bytes_is_equal(alloca_pos, bytes_new(64))) {
+    //    todo();
+    //}
+    //if (bytes_is_equal(alloca_pos, bytes_new(60))) {
+    //    todo();
+    //}
+    //if (bytes_is_equal(alloca_pos, bytes_new(56))) {
+    //    todo();
+    //}
     ir_update(ir_expr_wrap(ir_literal_wrap(ir_int_wrap(ir_int_new(
         load->pos /* TODO*/,
-        (int64_t)alloca_pos.value/*TODO*/,
+        (int64_t)elem_loc.value/*TODO*/,
         ir_lang_type_new_ux(bits_new(64)),
         symbol_name_to_int_name(load->name_self/*TODO*/)
     )))));
@@ -884,6 +882,12 @@ static Bytes ir_to_bytecode_push_load_element_ptr(Ir_load_element_ptr* load, boo
     unwrap(ir_lookup(&stack_pos_name, symbol_name_to_int_name(load->name_self)));
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, symbol_name_to_int_name(load->name_self), NAME_FULL));
     log(LOG_DEBUG, "ir_to_bytecode_push_alloca: old_count = %zu\n", bytecode.code.info.count);
+    Bytes elem_ptr = bytes_new((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+    return elem_ptr;
+    //log(LOG_DEBUG, "elem_ptr = "FMT"\n", bytes_print(elem_ptr));
+    todo();
+
+    //return ir_to_bytecode_push_internal(sizeof_inner, dest_pos, is_actual_push, is_ptr);
 
     //breakpoint();
 
@@ -895,19 +899,19 @@ static Bytes ir_to_bytecode_push_load_element_ptr(Ir_load_element_ptr* load, boo
     //bytecode_append_align(sizeof_ir_lang_type(load->lang_type));
     //ir_to_bytecode_uint64_t((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
 
-    Bytes elem_ptr = bytes_new((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
-    log(LOG_DEBUG, FMT"\n", bytes_print(elem_ptr));
-    Bytes dest_pos = ir_to_bytecode_alloc_internal(sizeof_load, false, false);
-    // TODO: bytecode_deref does not deref, so I should remove it probably
+    //Bytes elem_ptr = bytes_new((uint64_t)ir_int_unwrap(ir_literal_unwrap(ir_expr_unwrap(stack_pos_name)))->data);
+    //log(LOG_DEBUG, FMT"\n", bytes_print(elem_ptr));
+    //Bytes dest_pos = ir_to_bytecode_alloc_internal(sizeof_load, false, false);
+    //// TODO: bytecode_deref does not deref, so I should remove it probably
 
-    ir_to_bytecode_comment("push_load_element_ptr");
-    Ir_lang_type inner_lang_type = ir_lang_type_pointer_depth_dec(load->lang_type);
-    Bytes sizeof_inner = sizeof_ir_lang_type(inner_lang_type);
-    assert(bytes_is_equal(sizeof_inner, bytes_new(4)));
-    ir_to_bytecode_append_deref(elem_ptr, sizeof_inner/*TODO*/, dest_pos, bytecode_stack_offset_);
-    bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
-    //todo();
-    return ir_to_bytecode_push_internal(sizeof_inner, dest_pos, is_actual_push, is_ptr);
+    //ir_to_bytecode_comment("push_load_element_ptr");
+    //Ir_lang_type inner_lang_type = ir_lang_type_pointer_depth_dec(load->lang_type);
+    //Bytes sizeof_inner = sizeof_ir_lang_type(inner_lang_type);
+    //assert(bytes_is_equal(sizeof_inner, bytes_new(4)));
+    //ir_to_bytecode_append_deref(elem_ptr, sizeof_inner/*TODO*/, dest_pos, bytecode_stack_offset_);
+    //bytecode_dump(stderr, LOG_DEBUG, bytecode_is_backpatching, bytecode);
+    ////todo();
+    //return ir_to_bytecode_push_internal(sizeof_inner, dest_pos, is_actual_push, is_ptr);
 }
 
 // TODO: deduplicate this and simular functions?
@@ -1237,6 +1241,7 @@ static void ir_to_bytecode_store_another_ir(Ir_store_another_ir* store) {
             //todo();
         }
         if (deref_is_req) {
+            todo();
             ir_to_bytecode_append_store_stack_deref_dest(store_dest_pos, store_src_pos, sizeof_lang_type, bytecode_stack_offset_);
         } else {
             ir_to_bytecode_append_store_stack(store_dest_pos, store_src_pos, sizeof_lang_type, bytecode_stack_offset_);

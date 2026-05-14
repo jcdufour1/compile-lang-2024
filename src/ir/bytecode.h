@@ -196,7 +196,7 @@ static inline void bytecode_stack_write_internal(
     //    breakpoint();
     //}
     uint64_t stack_index = stack_base_ptr.value - stack_offset.value;
-    //log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
+    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = "FMT", stack_offset = "FMT"\n", stack_index, bytes_print(stack_base_ptr), bytes_print(stack_offset));
     //log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
     //log_internal(LOG_DEBUG, file, line, 0, "value = %zu\n", value);
     unwrap(stack_index < stack_len && "out of bounds");
