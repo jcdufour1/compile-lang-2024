@@ -196,8 +196,8 @@ static void ir_to_bytecode_append_zero_extend(Bytes sizeof_dest, Bytes sizeof_sr
 
 static void ir_to_bytecode_append_binary(BYTECODE bin_type, Bytes start_args, Bytes lhs_pos, Bytes rhs_pos, Bytes alloca_pos, Bytes sizeof_bin_lang_type, Bytes stack_offset_after) {
     if (!bytecode_is_backpatching) {
-        assert(bytes_is_less_than(rhs_pos, lhs_pos));
-        assert(bytes_is_less_than(start_args, lhs_pos));
+        assert(bytes_is_greater_than(rhs_pos, lhs_pos));
+        assert(bytes_is_greater_than(start_args, lhs_pos));
     }
 
     static_assert(BYTECODE_COUNT == 19, "exhausive handling of binary types in below assertion");
@@ -509,7 +509,7 @@ static void ir_to_bytecode_load_element_ptr(Ir_load_element_ptr* load) {
 
     Bytes start_args = rhs_pos;
     if (!bytecode_is_backpatching) {
-        assert(bytes_is_less_than(rhs_pos, lhs_pos));
+        assert(bytes_is_greater_than(rhs_pos, lhs_pos));
     }
 
     Bytes alloca_pos = ir_to_bytecode_push_ir(ir_from_name(load->ir_src), false, false);
@@ -822,7 +822,6 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
 //   argument 1 is the destination (number of bytes from the bottom of the stack)
 //   argument 2 is the src (number of bytes from the bottom of the stack)
 //   argument 3 is the size of the item to store
-
 
 static Bytes ir_to_bytecode_push_literal(Ir_literal* lit, bool is_actual_push, bool is_ptr) {
     switch (lit->type) {
