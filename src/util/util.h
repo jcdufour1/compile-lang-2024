@@ -382,8 +382,16 @@ static inline bool bytes_is_greater_or_equal(Bytes lhs, Bytes rhs) {
     return lhs.value >= rhs.value;
 }
 
+static inline bool bytes_is_greater(Bytes lhs, Bytes rhs) {
+    return lhs.value > rhs.value;
+}
+
 static inline bool bytes_is_equal(Bytes lhs, Bytes rhs) {
     return lhs.value == rhs.value;
+}
+
+static inline void bytes_increment(Bytes* a) {
+    a->value++;
 }
 
 typedef struct {

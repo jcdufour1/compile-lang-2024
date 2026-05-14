@@ -52,28 +52,28 @@ static_assert(
     "overflow will occur because only one byte is used to store bytecode opcode in bytecode representation"
 );
 
-#define BYTECODE_BINARY_SIZE 40
+#define BYTECODE_BINARY_SIZE bytes_new_macro(40)
 
 // BYTECODE_COMMENT_SIZE is not defined because comment size is variable
 static_assert(BYTECODE_COUNT == 19, "exhausive handling of bytecode opcode types");
-#define BYTECODE_ALLOCA_SIZE 24
-#define BYTECODE_STORE_STACK_SIZE 40
-#define BYTECODE_STORE_STACK_DEREF_DEST_SIZE 40
-#define BYTECODE_STORE_STACK_DIR_ADDR_SIZE 40
-#define BYTECODE_GOTO_SIZE 24
-#define BYTECODE_COND_GOTO_SIZE 32
-#define BYTECODE_RETURN_SIZE 24
-#define BYTECODE_PUSH_SIZE 32
-#define BYTECODE_ZERO_EXTEND_SIZE 48
+#define BYTECODE_ALLOCA_SIZE bytes_new_macro(24)
+#define BYTECODE_STORE_STACK_SIZE bytes_new_macro(40)
+#define BYTECODE_STORE_STACK_DEREF_DEST_SIZE bytes_new_macro(40)
+#define BYTECODE_STORE_STACK_DIR_ADDR_SIZE bytes_new_macro(40)
+#define BYTECODE_GOTO_SIZE bytes_new_macro(24)
+#define BYTECODE_COND_GOTO_SIZE bytes_new_macro(32)
+#define BYTECODE_RETURN_SIZE bytes_new_macro(24)
+#define BYTECODE_PUSH_SIZE bytes_new_macro(32)
+#define BYTECODE_ZERO_EXTEND_SIZE bytes_new_macro(48)
 #define BYTECODE_ADD_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_SUB_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_GREATER_THAN_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_LESS_THAN_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_DOUBLE_EQUAL_SIZE BYTECODE_BINARY_SIZE
 #define BYTECODE_NOT_EQUAL_SIZE BYTECODE_BINARY_SIZE
-#define BYTECODE_CALL_DIRECT_SIZE 40
-#define BYTECODE_DEREF_SIZE 40
-#define BYTECODE_NONE_SIZE 24
+#define BYTECODE_CALL_DIRECT_SIZE bytes_new_macro(40)
+#define BYTECODE_DEREF_SIZE bytes_new_macro(40)
+#define BYTECODE_NONE_SIZE bytes_new_macro(24)
 
 
 
@@ -99,7 +99,7 @@ Strv bytecode_alloca_pos_print_internal(uint64_t raw_pos);
 // TODO: remove this macro
 #define bytecode_alloca_pos_print(raw_pos) strv_print(bytecode_alloca_pos_print_internal(raw_pos))
 
-void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr);
+void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, Bytes stack_offset, Bytes base_ptr);
 
 #define bytecode_stack_dump(log_level, stack, stack_offset, base_ptr) bytecode_stack_dump_internal(log_level, file, line, stack, stack_offset, base_ptr)
 
@@ -187,22 +187,22 @@ static inline void bytecode_stack_write_internal(
     int line,
     uint8_t* stack,
     size_t stack_len,
-    uint64_t stack_offset, // TODO: rename to pos?
-    uint64_t stack_base_ptr,
-    uint64_t sizeof_value,
+    Bytes stack_offset, // TODO: rename to pos?
+    Bytes stack_base_ptr,
+    Bytes sizeof_value,
     uint64_t value
 ) {
-    if (stack_offset == 200) {
-        breakpoint();
-    }
-    uint64_t stack_index = stack_base_ptr - stack_offset;
-    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
-    log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
-    log_internal(LOG_DEBUG, file, line, 0, "value = %zu\n", value);
+    //if (stack_offset == 200) {
+    //    breakpoint();
+    //}
+    uint64_t stack_index = stack_base_ptr.value - stack_offset.value;
+    //log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
+    //log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
+    //log_internal(LOG_DEBUG, file, line, 0, "value = %zu\n", value);
     unwrap(stack_index < stack_len && "out of bounds");
 
     // TODO: this and similar memcpys will only work on little endian platforms?
-    memcpy(&stack[stack_index], &value, sizeof_value);
+    memcpy(&stack[stack_index], &value, (size_t)sizeof_value.value);
     bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
 }
 
@@ -214,23 +214,24 @@ static inline uint64_t bytecode_stack_read_internal(
     int line,
     uint8_t* stack,
     size_t stack_len,
-    uint64_t stack_offset, // TODO: rename to pos?
-    uint64_t stack_base_ptr,
-    uint64_t sizeof_value
+    Bytes stack_offset, // TODO: rename to pos?
+    Bytes stack_base_ptr,
+    Bytes sizeof_value
 ) {
-    if (stack_offset == 56) {
+    //if (stack_offset == 56) {
         //breakpoint();
-    }
+    //}
 
-    uint64_t stack_index = stack_base_ptr - stack_offset;
-    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = %zu, stack_offset = %zu\n", stack_index, stack_base_ptr, stack_offset);
-    log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = %zu\n", sizeof_value);
+    uint64_t stack_index = stack_base_ptr.value - stack_offset.value;
+    log_internal(LOG_DEBUG, file, line, 0, "stack_index = %zu; stack_base_ptr = "FMT", stack_offset = "FMT"\n", stack_index, bytes_print(stack_base_ptr), bytes_print(stack_offset));
+    log_internal(LOG_DEBUG, file, line, 0, "sizeof_value = "FMT"\n", bytes_print(sizeof_value));
     unwrap(stack_index < stack_len && "out of bounds");
 
     // TODO: this and similar memcpys will only work on little endian platforms?
     uint64_t result = 0;
-    assert(sizeof_value <= 8);
-    memcpy(&result, &stack[stack_index], sizeof_value);
+    assert(bytes_is_less_or_equal(sizeof_value, bytes_new(8)));
+    size_t raw_sizeof_val = (size_t)sizeof_value.value;
+    memcpy(&result, &stack[stack_index], raw_sizeof_val);
     bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
     return result;
 }
@@ -239,8 +240,9 @@ static inline uint64_t bytecode_stack_read_internal(
     bytecode_stack_read_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value)
 
 // returns the value popped
+// TODO: make function bytecode_stack_push_internal, and call bytecode_stack_push_internal to prevent bad macro errors
 #define bytecode_stack_push(stack, stack_offset, stack_base_ptr, value, value_size) \
-    (bytecode_stack_size_sub_aligned(stack_offset, value_size), *array_at_ref(stack, (stack_base_ptr) - *(stack_offset)) = value)
+    (bytecode_stack_size_sub_aligned(stack_offset, value_size), *array_at_ref(stack, bytes_subtract((stack_base_ptr), *(stack_offset)).value) = value)
 
 typedef struct {
     uint64_t stack_offset;

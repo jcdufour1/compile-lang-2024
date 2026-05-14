@@ -124,7 +124,7 @@ Bytes alignof_lang_type(Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE: {
             // TODO: this may not work correctly with big ints if they use Lang_type_primitive
             Bytes size = sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-            if (bytes_is_less_than(size, bytes_new(8))) {
+            if (bytes_is_greater_than(size, bytes_new(8))) {
                 todo();
             }
             return size;

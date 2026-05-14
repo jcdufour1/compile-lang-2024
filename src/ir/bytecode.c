@@ -3,7 +3,7 @@
 bool bytecode_is_before_backpatching_complete = false;
 
 // TODO: inter_stack_dump_internal should call this function to reduce duplication
-void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, uint64_t stack_offset, uint64_t base_ptr) {
+void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int line, uint8_t* stack, Bytes stack_offset, Bytes base_ptr) {
     //uint64_t count_rows = get_next_multiple(INTERPRET_STACK_SIZE, 8)/8;
 
     String buf = {0};
@@ -19,11 +19,11 @@ void bytecode_stack_dump_internal(LOG_LEVEL log_level, const char* file, int lin
     //    string_extend_f(&a_temp, &buf, "  %08"PRIu64" (%"PRIu64"): %"PRIu64"\n", mem_location, mem_location, value);
     //}
     
-    log(LOG_DEBUG, "%zu\n", stack_offset);
-    for (size_t offset = 8/* TODO */; offset <= get_next_multiple(stack_offset, 8); offset += 8) {
+    //log(LOG_DEBUG, "%zu\n", stack_offset);
+    for (size_t offset = 8/* TODO */; offset <= get_next_multiple(stack_offset.value/*TODO*/, 8); offset += 8) {
         //log(LOG_DEBUG, "%zu %zu\n", inter_base_ptr, offset);
-        assert(base_ptr >= offset);
-        uint64_t mem_loc = base_ptr - offset;
+        assert(base_ptr.value/*TODO*/ >= offset);
+        uint64_t mem_loc = base_ptr.value/*TODO*/ - offset;
         uint64_t value = 0;
         //log(LOG_DEBUG, "%zu %zu\n", mem_loc, INTERPRET_STACK_SIZE);
         memcpy(&value, &stack[mem_loc], sizeof(value));
@@ -138,8 +138,8 @@ static void bytecode_dump_internal_binary(String* buf, Strv bin_name, uint64_t o
     bytecode_stack_size_add_aligned(stack_size, alloca_size);
     bytecode_stack_size_add_aligned(stack_size, alloca_size);
 
-    assert(*idx - old_idx == BYTECODE_ADD_SIZE);
-    assert(*idx - old_idx == BYTECODE_BINARY_SIZE);
+    assert(bytes_is_equal(bytes_new(*idx - old_idx), BYTECODE_ADD_SIZE));
+    assert(bytes_is_equal(bytes_new(*idx - old_idx), BYTECODE_BINARY_SIZE));
 }
 
 typedef struct {
@@ -263,7 +263,7 @@ static void bytecode_dump_internal_2(
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": alloca: "FMT" bytes (store location: "FMT")\n", old_idx, bytes_print(alloca_size), bytes_print(alloca_pos));
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, alloca_pos);
 
-                assert(idx - old_idx == BYTECODE_ALLOCA_SIZE);
+                assert(idx - old_idx == BYTECODE_ALLOCA_SIZE.value/*TODO*/);
                 break;
             }
             case BYTECODE_RETURN:
@@ -273,14 +273,14 @@ static void bytecode_dump_internal_2(
 
                 stack_offset = bytes_new(0);
 
-                assert(idx - old_idx == BYTECODE_RETURN_SIZE);
+                assert(idx - old_idx == BYTECODE_RETURN_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_GOTO:
                 log(LOG_TRACE, "goto\n");
                 string_extend_f(&a_temp, &buf, "  %"PRIu64": goto: %"PRIu64"\n", old_idx, bytecode_dump_read_uint64_t(&idx));
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_GOTO_SIZE);
+                assert(idx - old_idx == BYTECODE_GOTO_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_COND_GOTO:
                 log(LOG_TRACE, "cond_goto\n");
@@ -294,7 +294,7 @@ static void bytecode_dump_internal_2(
 
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_COND_GOTO_SIZE);
+                assert(idx - old_idx == BYTECODE_COND_GOTO_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_STORE_STACK:
                 log(LOG_TRACE, "store_stack\n");
@@ -313,7 +313,7 @@ static void bytecode_dump_internal_2(
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
+                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_STORE_STACK_DEREF_DEST:
                 log(LOG_TRACE, "store_stack_deref_dest\n");
@@ -332,7 +332,7 @@ static void bytecode_dump_internal_2(
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
+                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_DEREF:
                 log(LOG_TRACE, "deref\n");
@@ -351,7 +351,7 @@ static void bytecode_dump_internal_2(
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE);
+                assert(idx - old_idx == BYTECODE_STORE_STACK_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_STORE_STACK_DIR_ADDR:
                 log(LOG_TRACE, "store_stack_dir_addr\n");
@@ -370,7 +370,7 @@ static void bytecode_dump_internal_2(
                 log(LOG_DEBUG, "%zu %zu %zu\n", idx, old_idx, idx - old_idx);
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_STORE_STACK_DIR_ADDR_SIZE);
+                assert(idx - old_idx == BYTECODE_STORE_STACK_DIR_ADDR_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_PUSH: {
                 log(LOG_TRACE, "push\n");
@@ -382,7 +382,7 @@ static void bytecode_dump_internal_2(
 
                 string_extend_f(&a_temp, &buf, "    item: %"PRIu64"\n", bytecode_dump_read_uint64_t(&idx));
 
-                assert(idx - old_idx == BYTECODE_PUSH_SIZE);
+                assert(idx - old_idx == BYTECODE_PUSH_SIZE.value/*TODO*/);
                 break;
             }
             // TODO: make ir_zero_extend, etc. instead of ir_unsafe_cast
@@ -404,7 +404,7 @@ static void bytecode_dump_internal_2(
                 bytecode_stack_size_add_aligned(&stack_offset, alloca_size);
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_ZERO_EXTEND_SIZE);
+                assert(idx - old_idx == BYTECODE_ZERO_EXTEND_SIZE.value/*TODO*/);
                 break;
             }
 
@@ -466,7 +466,7 @@ static void bytecode_dump_internal_2(
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
                 bytecode_stack_size_add_aligned(&stack_offset, arg_bytes_count);
 
-                assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE);
+                assert(idx - old_idx == BYTECODE_CALL_DIRECT_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_NONE:
                 log(LOG_TRACE, "noen\n");
@@ -476,7 +476,7 @@ static void bytecode_dump_internal_2(
 
                 bytecode_dump_read_and_extend_stack_offset(&buf, &idx, bytes_new(0));
 
-                assert(idx - old_idx == BYTECODE_NONE_SIZE);
+                assert(idx - old_idx == BYTECODE_NONE_SIZE.value/*TODO*/);
                 break;
             case BYTECODE_COUNT:
                 unreachable("");
