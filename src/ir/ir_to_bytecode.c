@@ -1726,7 +1726,7 @@ static void ir_to_bytecode_binary(Ir_binary* bin) {
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
     bytecode_stack_size_add_aligned(&bytecode_stack_offset_, sizeof_bin_lang_type);
 
-    ir_to_bytecode_append_binary(bin_type, start_args, alloca_pos, lhs_pos, rhs_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
+    ir_to_bytecode_append_binary(bin_type, start_args, lhs_pos, rhs_pos, alloca_pos, sizeof_bin_lang_type, bytecode_stack_offset_);
 
     //bytecode_stack_size_add_aligned(&bytecode_stack_offset, sizeof_bin_lang_type);
     //bytecode_stack_size_add_aligned(&bytecode_stack_offset, sizeof_bin_lang_type);
