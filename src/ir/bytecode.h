@@ -90,6 +90,7 @@ typedef enum {
 
 static inline Bytes bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE offset_type, Bytes arg_bytes_count) {
     Bytes base_bytes_call_stack_type = bytes_multiply(bytes_new(8), bytes_new(((uint64_t)offset_type) + 1));
+    log(LOG_DEBUG, "base_bytes_call_stack_type = %zu\n", base_bytes_call_stack_type.value);
     assert(bytes_is_equal(arg_bytes_count, get_next_multiple(arg_bytes_count, bytes_new(8))) && "not implemented");
     return bytes_add(base_bytes_call_stack_type, arg_bytes_count);
 }
@@ -163,12 +164,17 @@ static Bytes bytecode_stack_size_sub_aligned(Bytes* stack_offset, Bytes alloc_si
 // return the value popped
 // TODO: array_at macro is not currently being used becuause of side effect issues (but maybe should be)
 
+// WARNING: if this function is changed to return Uint8_t_view, view could point to memory already
+//   popped (and therefore already invalidated)
 static inline uint64_t bytecode_stack_pop_internal(uint8_t* stack, uint64_t stack_len, Bytes* stack_offset, Bytes stack_base_ptr, Bytes sizeof_value) {
     uint64_t stack_index = bytes_subtract(stack_base_ptr, *stack_offset).value;
+    log(LOG_DEBUG, "stack_index = %zu, stack_base_ptr = "FMT", *stack_offset = "FMT"\n", stack_index, bytes_print(stack_base_ptr), bytes_print(*stack_offset));
     unwrap(stack_index < stack_len && "out of bounds");
 
+    unwrap(bytes_is_less_or_equal(sizeof_value, bytes_new(8)) && "return Uint8_t_view instead of uint64_t");
+
     uint64_t value = 0;
-    // TODO: this and similar memcpys will only work on little endian platforms
+    // TODO: this and similar memcpys will only work on little endian platforms?
     memcpy(&value, &stack[stack_index], sizeof_value.value);
 
     bytecode_stack_size_add_aligned(stack_offset, sizeof_value);
@@ -190,7 +196,7 @@ static inline void bytecode_stack_write_internal(
     Bytes stack_offset, // TODO: rename to pos?
     Bytes stack_base_ptr,
     Bytes sizeof_value,
-    uint64_t value
+    Uint8_t_view value
 ) {
     //if (stack_offset == 200) {
     //    breakpoint();
@@ -202,14 +208,15 @@ static inline void bytecode_stack_write_internal(
     unwrap(stack_index < stack_len && "out of bounds");
 
     // TODO: this and similar memcpys will only work on little endian platforms?
-    memcpy(&stack[stack_index], &value, (size_t)sizeof_value.value);
+    // TODO: use memcpy in some situations where data does not overlap?
+    memmove(&stack[stack_index], value.buf, (size_t)sizeof_value.value);
     bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
 }
 
 #define bytecode_stack_write(stack, stack_offset, stack_base_ptr, sizeof_value, value) \
     bytecode_stack_write_internal(__FILE__, __LINE__, stack, array_count(stack), stack_offset, stack_base_ptr, sizeof_value, value)
 
-static inline uint64_t bytecode_stack_read_internal(
+static inline Uint8_t_view bytecode_stack_read_internal(
     const char* file,
     int line,
     uint8_t* stack,
@@ -228,12 +235,10 @@ static inline uint64_t bytecode_stack_read_internal(
     unwrap(stack_index < stack_len && "out of bounds");
 
     // TODO: this and similar memcpys will only work on little endian platforms?
-    uint64_t result = 0;
-    assert(bytes_is_less_or_equal(sizeof_value, bytes_new(8)));
     size_t raw_sizeof_val = (size_t)sizeof_value.value;
-    memcpy(&result, &stack[stack_index], raw_sizeof_val);
+    //memcpy(&result, &stack[stack_index], raw_sizeof_val);
     bytecode_stack_dump(LOG_DEBUG, stack, stack_offset, stack_base_ptr);
-    return result;
+    return uint8_t_view_new(&stack[stack_index], raw_sizeof_val);
 }
 
 #define bytecode_stack_read(stack, stack_offset, stack_base_ptr, sizeof_value) \

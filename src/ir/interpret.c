@@ -62,13 +62,14 @@ static Bytes interpret_read_bytes_aligned(void) {
         log(LOG_DEBUG, #bin" alloca_pos = "FMT"\n", bytes_print(alloca_pos)); \
         log(LOG_DEBUG, #bin" pos_lhs = "FMT"\n", bytes_print(pos_lhs)); \
         log(LOG_DEBUG, #bin" pos_rhs = "FMT"\n", bytes_print(pos_rhs)); \
-        uint64_t lhs = bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size); \
-        uint64_t rhs = bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size); \
+        uint64_t lhs = uint8_t_view_cast_to_uint64_t(bytecode_stack_read(inter_stack, pos_lhs, inter_base_ptr, alloca_size)); \
+        uint64_t rhs = uint8_t_view_cast_to_uint64_t(bytecode_stack_read(inter_stack, pos_rhs, inter_base_ptr, alloca_size)); \
         log(LOG_DEBUG, #bin" lhs = %"PRIi64"\n", lhs); \
         log(LOG_DEBUG, #bin" rhs = %"PRIi64"\n", rhs); \
         log(LOG_DEBUG, #bin" value = %"PRIi64"\n", (int64_t)(lhs bin rhs)); \
         \
-        bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, lhs bin rhs); \
+        uint64_t result = lhs bin rhs; \
+        bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, alloca_size, uint8_t_view_from_uint64_t(&result)); \
         \
         bytecode_stack_size_add_aligned(&inter_stack_offset, alloca_size); \
         bytecode_stack_size_add_aligned(&inter_stack_offset, alloca_size); \
@@ -146,7 +147,7 @@ static bool interpret_instruction(void) {
             Bytes src_pos = interpret_read_bytes_aligned();
             Bytes sizeof_store = interpret_read_bytes_aligned();
 
-            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
+            Uint8_t_view value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             log(
                 LOG_TRACE,
                 "in the middle of bytecode_store_stack ("
@@ -154,13 +155,13 @@ static bool interpret_instruction(void) {
                     "dest_pos = "FMT", "
                     "src_pos = "FMT", "
                     "sizeof_store = "FMT", "
-                    "value = %"PRIu64
+                    "value = "FMT
                 ")\n",
                 bytes_print(inter_prog_counter),
                 bytes_print(dest_pos),
                 bytes_print(src_pos),
                 bytes_print(sizeof_store),
-                value
+                uint8_t_view_print(value)
             );
 
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
@@ -181,8 +182,8 @@ static bool interpret_instruction(void) {
             Bytes src_pos = interpret_read_bytes_aligned();
             Bytes sizeof_store = interpret_read_bytes_aligned();
 
-            Bytes dest_pos = bytes_new(bytecode_stack_read(inter_stack, dest_pos_ptr, inter_base_ptr, bytes_new(8)));
-            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
+            Bytes dest_pos = uint8_t_view_to_bytes(bytecode_stack_read(inter_stack, dest_pos_ptr, inter_base_ptr, bytes_new(8)));
+            Uint8_t_view value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             log(
                 LOG_TRACE,
                 "bytecode_store_stack (dest_pos_ptr = "FMT", "
@@ -212,9 +213,9 @@ static bool interpret_instruction(void) {
             Bytes sizeof_alloca = interpret_read_bytes_aligned();
             Bytes alloca_pos = interpret_read_bytes_aligned();
 
-            Bytes src = bytes_new(bytecode_stack_read(inter_stack, src_ptr, inter_base_ptr, bytes_new(8)));
-            uint64_t derefed = bytecode_stack_read(inter_stack, src, inter_base_ptr, sizeof_alloca);
-            log(LOG_DEBUG, "src_ptr = "FMT", src = "FMT", sizeof_alloca = "FMT", derefed = %zu\n", bytes_print(src_ptr), bytes_print(src), bytes_print(sizeof_alloca), derefed);
+            Bytes src = uint8_t_view_to_bytes(bytecode_stack_read(inter_stack, src_ptr, inter_base_ptr, bytes_new(8)));
+            Uint8_t_view derefed = bytecode_stack_read(inter_stack, src, inter_base_ptr, sizeof_alloca);
+            log(LOG_DEBUG, "src_ptr = "FMT", src = "FMT", sizeof_alloca = "FMT", derefed = "FMT"\n", bytes_print(src_ptr), bytes_print(src), bytes_print(sizeof_alloca), uint8_t_view_print(derefed));
             breakpoint();
             bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_alloca, derefed);
 
@@ -231,7 +232,7 @@ static bool interpret_instruction(void) {
             uint64_t value = interpret_read_uint64_t_aligned();
             Bytes sizeof_store = interpret_read_bytes_aligned();
             log(LOG_DEBUG, "value = %"PRIu64"\n", value);
-            bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
+            bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, uint8_t_view_from_uint64_t(&value));
 
             Bytes expected_offset = interpret_read_bytes_aligned();
             assert(bytes_is_equal(expected_offset, inter_stack_offset));
@@ -300,7 +301,13 @@ static bool interpret_instruction(void) {
             inter_stack_dump(LOG_DEBUG);
             uint64_t rtn_value = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof_rtn);
             inter_stack_dump(LOG_DEBUG);
-            bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_VALUE, arg_bytes_count), inter_base_ptr, sizeof_rtn, rtn_value);
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_VALUE, arg_bytes_count),
+                inter_base_ptr,
+                sizeof_rtn,
+                uint8_t_view_from_uint64_t(&rtn_value)
+            );
             inter_stack_dump(LOG_DEBUG);
 
             bytecode_stack_size_add_aligned(&inter_stack_offset, bytes_subtract(bytes_subtract(inter_stack_offset, bytes_new(BYTECODE_COUNT_RTN_ITEMS*8)), arg_bytes_count));
@@ -369,7 +376,7 @@ static bool interpret_instruction(void) {
                 uint64_t temp_rtn_value = bytecode_stack_pop(inter_stack, &inter_stack_offset, inter_base_ptr, sizeof_rtn);
                 assert(rtn_value == temp_rtn_value);
                 //log(LOG_DEBUG, "%zu\n", curr_rtn_alloc_pos);
-                bytecode_stack_write(inter_stack, curr_rtn_alloc_pos, inter_base_ptr, sizeof_rtn, rtn_value);
+                bytecode_stack_write(inter_stack, curr_rtn_alloc_pos, inter_base_ptr, sizeof_rtn, uint8_t_view_from_uint64_t(&rtn_value));
             }
 
             if (bytes_is_greater(curr_arg_bytes_count, bytes_new(0))) {
@@ -415,9 +422,9 @@ static bool interpret_instruction(void) {
                 ones = ones << 1;
                 ones++;
             }
-            uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_src);
+            uint64_t value = uint8_t_view_cast_to_uint64_t(bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_src));
             value &= (0x00 | ones);
-            bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_dest, value);
+            bytecode_stack_write(inter_stack, alloca_pos, inter_base_ptr, sizeof_dest, uint8_t_view_from_uint64_t(&value));
 
             bytecode_stack_size_add_aligned(&inter_stack_offset, sizeof_src);
 
@@ -458,11 +465,56 @@ static bool interpret_instruction(void) {
                 static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of BYTECODE_CALL_STACK_* in this block");
                 // return value not explititly handled here
 
-                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), inter_prog_counter.value/*TODO*/);
-                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), old_base_ptr.value/*TODO*/);
-                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), old_offset.value/*TODO*/);
-                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), old_arg_bytes.value/*TODO*/);
-                bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ALLOC_POS, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), old_rtn_alloc_pos.value/*TODO*/);
+                {
+                    uint64_t temp = inter_prog_counter.value/*TODO*/;
+                    bytecode_stack_write(
+                        inter_stack,
+                        bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count),
+                        inter_base_ptr,
+                        bytes_new(sizeof(uint64_t)),
+                        uint8_t_view_from_uint64_t(&temp)
+                    );
+                }
+                {
+                    uint64_t temp = old_base_ptr.value/*TODO*/;
+                    bytecode_stack_write(
+                        inter_stack,
+                        bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count),
+                        inter_base_ptr,
+                        bytes_new(sizeof(uint64_t)),
+                        uint8_t_view_from_uint64_t(&temp)
+                    );
+                }
+                {
+                    uint64_t temp = old_offset.value/*TODO*/;
+                    bytecode_stack_write(
+                        inter_stack,
+                        bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count),
+                        inter_base_ptr,
+                        bytes_new(sizeof(uint64_t)),
+                        uint8_t_view_from_uint64_t(&temp)
+                    );
+                }
+                {
+                    uint64_t temp = old_arg_bytes.value/*TODO*/;
+                    bytecode_stack_write(
+                        inter_stack,
+                        bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count),
+                        inter_base_ptr,
+                        bytes_new(sizeof(uint64_t)),
+                        uint8_t_view_from_uint64_t(&temp)
+                    );
+                }
+                {
+                    uint64_t temp = old_rtn_alloc_pos.value/*TODO*/;
+                    bytecode_stack_write(
+                        inter_stack,
+                        bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ALLOC_POS, arg_bytes_count),
+                        inter_base_ptr,
+                        bytes_new(sizeof(uint64_t)),
+                        uint8_t_view_from_uint64_t(&temp)
+                    );
+                }
                 //bytecode_stack_push(inter_stack, &inter_stack_offset, inter_base_ptr, value, sizeof_dest);
             }
 
@@ -521,15 +573,63 @@ void interpret(void) {
 
     log(LOG_DEBUG, "%zu\n", bytecode.code.info.count);
     breakpoint();
+    assert(bytes_is_equal(inter_stack_offset, bytes_new(0)));
     static_assert(BYTECODE_COUNT_RTN_ITEMS == 6, "exhausive handling of main function stack frame initial state");
     {
         // return value is not explititily handled here
-        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), INTER_RTN_ADDR_EXIT);
-        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), INTERPRET_STACK_SIZE.value/*TODO*/);
-        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), 0);
-        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), 0);
-        bytecode_stack_write(inter_stack, bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ALLOC_POS, arg_bytes_count), inter_base_ptr, bytes_new(sizeof(uint64_t)), 0);
+        {
+            uint64_t temp = INTER_RTN_ADDR_EXIT;
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ADDR, arg_bytes_count),
+                inter_base_ptr,
+                bytes_new(sizeof(uint64_t)),
+                uint8_t_view_from_uint64_t(&temp)
+            );
+        }
+        {
+            uint64_t temp = INTERPRET_STACK_SIZE.value/*TODO*/;
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_BASE_PTR, arg_bytes_count),
+                inter_base_ptr,
+                bytes_new(sizeof(uint64_t)),
+                uint8_t_view_from_uint64_t(&temp)
+            );
+        }
+        {
+            uint64_t temp = 0;
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_OFFSET, arg_bytes_count),
+                inter_base_ptr,
+                bytes_new(sizeof(uint64_t)),
+                uint8_t_view_from_uint64_t(&temp)
+            );
+        }
+        {
+            uint64_t temp = 0;
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_ARG_BYTES, arg_bytes_count),
+                inter_base_ptr,
+                bytes_new(sizeof(uint64_t)),
+                uint8_t_view_from_uint64_t(&temp)
+            );
+        }
+        {
+            uint64_t temp = 0;
+            bytecode_stack_write(
+                inter_stack,
+                bytecode_call_stack_get_offset(BYTECODE_CALL_STACK_TYPE_RTN_ALLOC_POS, arg_bytes_count),
+                inter_base_ptr,
+                bytes_new(sizeof(uint64_t)),
+                uint8_t_view_from_uint64_t(&temp)
+            );
+        }
     }
+    inter_stack_dump(LOG_DEBUG);
+    //bytecode_dump(stderr, LOG_DEBUG, false, bytecode);
 
     inter_prog_counter = bytes_new(bytecode.start_pos);
 
@@ -553,7 +653,7 @@ void interpret(void) {
         if (!bytes_is_equal(inter_base_ptr, INTERPRET_STACK_SIZE)) {
             //breakpoint();
         }
-        breakpoint();
+        //breakpoint();
         //if (inter_stack_offset >= 144) {
         //    //breakpoint();
         //}

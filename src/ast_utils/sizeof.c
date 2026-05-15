@@ -446,7 +446,7 @@ Bytes sizeof_ir_struct_def_base_internal(const Ir_struct_def_base* base, size_t 
         Bytes sizeof_curr_item = sizeof_ir_lang_type(memb_def->lang_type);
         end_alignment = max(end_alignment, alignof_ir_lang_type(memb_def->lang_type));
         if (idx < idx_memb) {
-            total = max(total, sizeof_curr_item);
+            total = bytes_add(total, sizeof_curr_item);
         }
     }
 

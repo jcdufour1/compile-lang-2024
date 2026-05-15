@@ -827,7 +827,7 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         //assert(bytecode_stack_offset_ < 1000);
         log(LOG_DEBUG, FMT"\n", bytes_print(dest_pos));
         if (bytes_is_equal(dest_pos, bytes_new(552))) {
-            breakpoint();
+            //breakpoint();
         }
         ir_to_bytecode_comment("load_another_ir src: "FMT, ir_print(ir_from_name(load->ir_src)));
         if (!bytecode_is_backpatching && bytecode.code.info.count > 22288) {
@@ -835,7 +835,7 @@ static void ir_to_bytecode_load_another_ir(Ir_load_another_ir* load) {
         }
         static size_t count = 0;
         if (count == 1) {
-            breakpoint();
+            //breakpoint();
         }
         Bytes load_src_pos = ir_to_bytecode_push_ir(load_src, false, false);
         // struct is at 176
