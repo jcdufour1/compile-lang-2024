@@ -149,7 +149,7 @@ static bool interpret_instruction(void) {
             uint64_t value = bytecode_stack_read(inter_stack, src_pos, inter_base_ptr, sizeof_store);
             log(
                 LOG_TRACE,
-                "bytecode_store_stack ("
+                "in the middle of bytecode_store_stack ("
                     "inter_prog_counter = "FMT", "
                     "dest_pos = "FMT", "
                     "src_pos = "FMT", "
@@ -228,11 +228,9 @@ static bool interpret_instruction(void) {
             log(LOG_TRACE, "bytecode_store_stack_dir_addr; inter_prog_counter = "FMT"\n", bytes_print(inter_prog_counter));
 
             Bytes dest_pos = interpret_read_bytes_aligned();
-            //assert(inter_stack_offset % 8 == 0); // TODO: remove
             uint64_t value = interpret_read_uint64_t_aligned();
-            //assert(inter_stack_offset % 8 == 0); // TODO: remove
             Bytes sizeof_store = interpret_read_bytes_aligned();
-            //assert(inter_stack_offset % 8 == 0); // TODO: remove
+            log(LOG_DEBUG, "value = %"PRIu64"\n", value);
             bytecode_stack_write(inter_stack, dest_pos, inter_base_ptr, sizeof_store, value);
 
             Bytes expected_offset = interpret_read_bytes_aligned();
@@ -555,6 +553,7 @@ void interpret(void) {
         if (!bytes_is_equal(inter_base_ptr, INTERPRET_STACK_SIZE)) {
             //breakpoint();
         }
+        breakpoint();
         //if (inter_stack_offset >= 144) {
         //    //breakpoint();
         //}

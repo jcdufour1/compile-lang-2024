@@ -90,6 +90,7 @@ typedef struct {
 
 static_assert(FILE_TYPE_COUNT == 8, "exhausive handling of file types");
 // TODO: add posix executable to this list?
+// TODO: add dll to this list?
 File_type_pair file_type_pairs[] = {
     {"own", FILE_TYPE_OWN},
     {"a", FILE_TYPE_STATIC_LIB},
@@ -108,6 +109,7 @@ bool get_file_type(FILE_TYPE* result, Strv* err_text, Strv file_path) {
         return false;
     }
 
+    // TODO: use array_count below
     for (size_t idx = 0; idx < sizeof(file_type_pairs)/sizeof(file_type_pairs[0]); idx++) {
         File_type_pair curr = file_type_pairs[idx];
         if (strv_is_equal(sv(curr.text), ext)) {
@@ -127,7 +129,6 @@ void file_extend_strv(FILE* file, Strv strv) {
             return;
         }
     }
-
 }
 
 Strv file_strip_extension(Strv file_path) {

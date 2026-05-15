@@ -117,6 +117,7 @@ static inline bool strv_try_consume_count(Strv* strv, char ch, size_t count) {
     return true;
 }
 
+// TODO: rename to strv_to_cstr, etc.
 static inline const char* strv_dup(Arena* arena, Strv strv) {
     return arena_strndup(arena, strv.str, strv.count);
 }

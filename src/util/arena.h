@@ -63,7 +63,7 @@ static inline char* arena_strndup(Arena* arena, const char* cstr, size_t count) 
     }
     char* new_cstr = arena_alloc(arena, count + 1);
     memcpy(new_cstr, cstr, count);
-    unwrap(new_cstr[count] == 0);
+    unwrap(new_cstr[count] == 0 && "string is not null terminated");
     return new_cstr;
 }
 
