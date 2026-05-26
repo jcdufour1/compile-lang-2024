@@ -182,7 +182,7 @@ typedef size_t Scope_id;
 #endif // INDENT_WIDTH
 
 // TODO: consider if this is the ideal place
-#define SCOPE_TOP_LEVEL 0
+#define SCOPE_BUILTIN 0
 #define SCOPE_NOT SIZE_MAX
 
 #ifdef _WIN32
@@ -206,9 +206,9 @@ typedef size_t Scope_id;
 
 #define MOD_PATH_EXTERN_C ((Strv) {0})
 
-#define MOD_ALIAS_BUILTIN name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
-#define MOD_ALIAS_TOP_LEVEL name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
-#define MOD_ALIAS_PRELUDE name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
+#define MOD_ALIAS_BUILTIN name_new(MOD_PATH_BUILTIN, sv("mod_aliases"), (Ulang_type_darr) {0}, SCOPE_BUILTIN)
+#define MOD_ALIAS_TOP_LEVEL name_new(MOD_PATH_BUILTIN, sv("mod_aliases_top_level"), (Ulang_type_darr) {0}, SCOPE_BUILTIN)
+#define MOD_ALIAS_PRELUDE name_new(MOD_PATH_BUILTIN, sv("mod_aliases_prelude"), (Ulang_type_darr) {0}, SCOPE_BUILTIN)
 
 #define EXTERN_C_OWN_PREFIX "own"
 

@@ -36,6 +36,7 @@ typedef struct Env_ {
     Usymbol_table struct_like_tbl;
 
     Strv mod_path_main_fn;
+    Uname name_main_fn;
 
     Ulang_type_darr gen_args_char;
 

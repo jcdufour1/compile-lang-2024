@@ -250,14 +250,14 @@ static inline Lang_type tast_string_get_lang_type(const Tast_string* str) {
     if (str->is_cstr) {
         return lang_type_struct_const_wrap(lang_type_struct_new(
             str->pos,
-            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_BUILTIN, sv("u8"), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
             0
         ));
     }
 
     return lang_type_struct_const_wrap(lang_type_struct_new(
         str->pos,
-        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
+        name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_BUILTIN),
         0
     ));
 }
@@ -470,7 +470,7 @@ static inline Name tast_def_get_name(const Tast_def* def) {
         case TAST_ENUM_DEF:
             return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_OF_MOD_PATHS, tast_import_path_const_unwrap(def)->mod_path, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
         case TAST_LABEL:
             return tast_label_const_unwrap(def)->name;
         case TAST_ARRAY_DEF: {

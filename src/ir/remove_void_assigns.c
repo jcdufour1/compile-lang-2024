@@ -47,7 +47,7 @@ static Ir* rm_void_label(Ir_label* label, bool is_inline) {
 
     if (!symbol_add(tast_label_wrap(tast_label_new(
         label->pos,
-        name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+        name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
         block_scope
     )))) {
         return ir_removed_wrap(ir_removed_new(label->pos));
@@ -165,7 +165,7 @@ static Ir* rm_void_block(Ir_block* block) {
 }
 
 void remove_void_assigns(void) {
-    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr, false);

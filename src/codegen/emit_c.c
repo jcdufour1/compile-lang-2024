@@ -138,7 +138,7 @@ static void emit_c_function_decl_internal(String* output, const Ir_function_decl
             break;
         case IR_LANG_TYPE_PRIMITIVE:
             break;
-        case IR_LANG_TYPE_TUPLE:
+        case IR_LANG_TYPE_TUPLE: // TODO: remove IR_LANG_TYPE_TUPLE
             unreachable("");
     }
     c_extend_type_call_str(output, decl->return_type, true, false);
@@ -770,7 +770,7 @@ void emit_c_from_tree(void) {
             string_extend_cstr(&a_pass, &header, "const char* __asan_default_options() { return \"detect_leaks=0\"; }\n");
         #endif // NDEBUG
 
-        Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
         Ir* curr = NULL;
         while (ir_tbl_iter_next(&curr, &iter)) {
             emit_c_out_of_line(&strs, curr);

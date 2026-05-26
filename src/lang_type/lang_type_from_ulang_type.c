@@ -283,7 +283,7 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_VOID:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(
                 lang_type_void_const_unwrap(lang_type).pos,
-                uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+                uname_new(MOD_ALIAS_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
                 0
             ));
         case LANG_TYPE_PRIMITIVE:

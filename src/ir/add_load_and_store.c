@@ -1345,7 +1345,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(
             old_lit->pos, 
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_BUILTIN),
             0
         ))
     ));
@@ -2178,6 +2178,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         util_literal_name_new(),
         scope_to_name_tbl_lookup(new_fun_def->body->scope_id)
     ));
+    // TODO: remove at_fun_start variable
     Tast_variable_def* var_def_thing = tast_variable_def_new(
         new_fun_def->body->pos,
         lang_type_new_u1(new_fun_def->body->pos),
@@ -3380,7 +3381,7 @@ static Ir_block* load_block(
 void add_load_and_store(void) {
     assert(defered_collections.coll_stack.info.count == 0);
 
-    Symbol_iter iter = sym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         load_def_out_of_line(curr);

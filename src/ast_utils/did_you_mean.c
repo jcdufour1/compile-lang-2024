@@ -210,7 +210,7 @@ static Strv did_you_mean_print_common(Name sym_name, Is_correct_sym_type is_corr
             }
         }
 
-        if (curr_scope == SCOPE_TOP_LEVEL) {
+        if (curr_scope == SCOPE_BUILTIN) {
             break;
         }
         curr_scope = scope_get_parent_tbl_lookup(curr_scope);
@@ -315,7 +315,7 @@ Strv did_you_mean_strv_choice_print_internal(Strv sym_strv, Strv_darr candidates
                     MOD_PATH_BUILTIN,
                     curr_strv,
                     (Ulang_type_darr) {0},
-                    SCOPE_TOP_LEVEL
+                    SCOPE_BUILTIN
                 ),
                 difference
             ));

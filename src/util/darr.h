@@ -67,6 +67,7 @@ typedef struct {
         (dest)->info.count += (src)->info.count; \
     } while(0)
 
+// TODO: darr_first should use darr_at instead of darr_at_ref
 #define darr_first(darr) \
     darr_at_ref((darr), 0)
 

@@ -78,34 +78,35 @@ static void expand_using_using(Uast_using* using) {
         //   eventually, it may be a good idea to speed this up 
         //   (eg. by keeping (array of symbols of top level) of each module)
 
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
-        Uast_def* curr = NULL;
-        while (usym_tbl_iter_next(&curr, &iter)) {
-            Name curr_name = uast_def_get_name(curr);
-            if (strv_is_equal(curr_name.mod_path, mod_path)) {
-                Name alias_name = using->sym_name;
-                alias_name.mod_path = using->mod_path_to_put_defs;
-                alias_name.base = curr_name.base;
-                alias_name.scope_id = curr_name.scope_id;
-                Uast_lang_def* lang_def = uast_lang_def_new(
-                    using->pos,
-                    alias_name,
-                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
-                    true
-                );
-                lang_def->pos.expanded_from = uast_def_get_pos_ref(curr);
-                assert(!pos_is_equal(lang_def->pos, (Pos) {0}));
-                if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-                    Uast_def* prev_def = NULL;
-                    unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
-                    if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-                        if (!is_builtin || !strv_starts_with(uast_def_get_name(prev_def).mod_path, MOD_PATH_STD)) {
-                            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                        }
-                    }
-                }
-            }
-        }
+        todo();
+        //Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+        //Uast_def* curr = NULL;
+        //while (usym_tbl_iter_next(&curr, &iter)) {
+        //    Name curr_name = uast_def_get_name(curr);
+        //    if (strv_is_equal(curr_name.mod_path, mod_path)) {
+        //        Name alias_name = using->sym_name;
+        //        alias_name.mod_path = using->mod_path_to_put_defs;
+        //        alias_name.base = curr_name.base;
+        //        alias_name.scope_id = curr_name.scope_id;
+        //        Uast_lang_def* lang_def = uast_lang_def_new(
+        //            using->pos,
+        //            alias_name,
+        //            uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
+        //            true
+        //        );
+        //        lang_def->pos.expanded_from = uast_def_get_pos_ref(curr);
+        //        assert(!pos_is_equal(lang_def->pos, (Pos) {0}));
+        //        if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
+        //            Uast_def* prev_def = NULL;
+        //            unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
+        //            if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
+        //                if (!is_builtin || !strv_starts_with(uast_def_get_name(prev_def).mod_path, MOD_PATH_STD)) {
+        //                    msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
         return;
     } else {
         msg(
@@ -207,7 +208,7 @@ static void expand_using_def(Uast_def* def) {
 }
 
 void expand_using(void) {
-    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         expand_using_def(curr);

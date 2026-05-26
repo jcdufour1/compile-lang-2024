@@ -502,7 +502,7 @@ Strv ir_graphvis(const Ir_block* block) {
     string_extend_cstr(&a_temp, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_temp, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
-    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make ir_add_ex)

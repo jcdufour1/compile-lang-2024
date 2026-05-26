@@ -111,6 +111,8 @@ void scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 
+bool scope_id_is_top_level(Scope_id scope);
+
 bool resolved_done_or_waiting_tbl_add(Name key);
 
 bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);

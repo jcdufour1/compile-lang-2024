@@ -360,12 +360,12 @@ static bool get_mod_alias_from_path_token(
         parse_state.curr_mod_alias = util_literal_name_new();
     } else if (is_main_mod) {
         assert(strv_is_equal(MOD_ALIAS_TOP_LEVEL.base, alias_tk.text));
-        parse_state.curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+        parse_state.curr_mod_alias = name_new(MOD_ALIAS_TOP_LEVEL.mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
     } else {
         assert(parse_state.curr_mod_path.count > 0);
-        parse_state.curr_mod_alias = name_new(parse_state.curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+        parse_state.curr_mod_alias = name_new(parse_state.curr_mod_path, alias_tk.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
     }
-    *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_TOP_LEVEL, true);
+    *mod_alias = uast_mod_alias_new(alias_tk.pos, parse_state.curr_mod_alias, mod_path, SCOPE_BUILTIN, true);
     Strv old_mod_path = parse_state.curr_mod_path;
     parse_state.curr_mod_path = mod_path;
     if (!usymbol_add(uast_mod_alias_wrap(*mod_alias))) {
@@ -374,7 +374,7 @@ static bool get_mod_alias_from_path_token(
         goto finish;
     }
 
-    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL))) {
+    if (usymbol_lookup(&prev_def, name_new(MOD_PATH_OF_MOD_PATHS, mod_path, (Ulang_type_darr) {0}, SCOPE_BUILTIN))) {
         goto finish;
     }
 
@@ -391,12 +391,12 @@ static bool get_mod_alias_from_path_token(
         .curr_mod_alias = parse_state.curr_mod_alias
     }));
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, mod_path, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
         alias_name,
         mod_path,
-        SCOPE_TOP_LEVEL,
+        SCOPE_BUILTIN,
         false
     ))));
 
@@ -550,7 +550,7 @@ static void sync(Tk_view* tokens) {
             starts_with_for(*tokens) ||
             starts_with_break(*tokens) ||
             starts_with_function_call(*tokens) ||
-            starts_with_variable_def(*tokens, SCOPE_TOP_LEVEL /* TODO */)
+            starts_with_variable_def(*tokens, SCOPE_BUILTIN /* TODO */)
         ) {
             return;
         }
@@ -1395,6 +1395,7 @@ static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_
     }
     if (strv_is_equal(fun_decl->name.base, sv("main"))) {
         env.mod_path_main_fn = parse_state.curr_mod_path;
+        env.name_main_fn = uname_new(parse_state.curr_mod_alias, sv("main"), (Ulang_type_darr) {0}, fn_scope);
     }
 
     Uast_block* fun_body = NULL;
@@ -1587,16 +1588,17 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(
-        &base,
-        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-        tokens,
-        true,
-        (Ulang_type) {0},
-        scope_id
-    )) {
-        return PARSE_ERROR;
-    }
+    todo();
+    //if (PARSE_OK != parse_struct_def_base(
+    //    &base,
+    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+    //    tokens,
+    //    true,
+    //    (Ulang_type) {0},
+    //    scope_id
+    //)) {
+    //    return PARSE_ERROR;
+    //}
 
     *struct_def = uast_struct_def_new(name.pos, base);
     if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
@@ -1610,16 +1612,17 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(
-        &base,
-        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-        tokens,
-        true,
-        (Ulang_type) {0},
-        scope_id)
-    ) {
-        return PARSE_ERROR;
-    }
+    todo();
+    //if (PARSE_OK != parse_struct_def_base(
+    //    &base,
+    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+    //    tokens,
+    //    true,
+    //    (Ulang_type) {0},
+    //    scope_id)
+    //) {
+    //    return PARSE_ERROR;
+    //}
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
     if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
@@ -1634,16 +1637,17 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     unwrap(try_consume(&enum_tk, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_def_base(
-        &base,
-        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-        tokens,
-        false,
-        ulang_type_new_void(tk_view_front(*tokens).pos),
-        scope_id
-    )) {
-        return PARSE_ERROR;
-    }
+    todo();
+    //if (PARSE_OK != parse_struct_def_base(
+    //    &base,
+    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+    //    tokens,
+    //    false,
+    //    ulang_type_new_void(tk_view_front(*tokens).pos),
+    //    scope_id
+    //)) {
+    //    return PARSE_ERROR;
+    //}
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
@@ -1674,12 +1678,13 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
             unreachable("");
     }
 
-    *def = uast_lang_def_new(
-        name.pos,
-        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-        expr,
-        false
-    );
+    todo();
+    //*def = uast_lang_def_new(
+    //    name.pos,
+    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+    //    expr,
+    //    false
+    //);
     assert((*def)->pos.file_path.count != SIZE_MAX);
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
@@ -2192,7 +2197,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_TOP_LEVEL, symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new()) /* TODO */, false, fn_name_tk)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_BUILTIN/*TODO*/, symbol_collection_new(SCOPE_BUILTIN/*TODO*/, util_literal_name_new()) /* TODO */, false, fn_name_tk)) {
         goto error;
     }
     try_consume_newlines(tokens);
@@ -3716,7 +3721,7 @@ static PARSE_EXPR_STATUS parse_unary(
                     MOD_PATH_RUNTIME,
                     sv("bitwise_not"),
                     (Ulang_type_darr) {0},
-                    SCOPE_TOP_LEVEL
+                    SCOPE_BUILTIN
                 ))),
                 false
             ));
@@ -4117,7 +4122,7 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
         }
     }
 
-    Scope_id new_scope = symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
+    Scope_id new_scope = symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
     parse_state.scope_id_curr_mod_path = new_scope;
 
 #ifndef NDEBUG
@@ -4174,12 +4179,12 @@ error:
 bool parse(void) {
     bool status = true;
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, MOD_PATH_BUILTIN, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
     unwrap(usymbol_add(uast_mod_alias_wrap(uast_mod_alias_new(
         POS_BUILTIN,
         alias_name,
         MOD_PATH_BUILTIN,
-        SCOPE_TOP_LEVEL,
+        SCOPE_BUILTIN,
         true /* TODO */
     ))));
 
@@ -4215,7 +4220,7 @@ bool parse(void) {
             goto loop_end;
         }
 
-        assert(block->scope_id != SCOPE_TOP_LEVEL && "this will cause infinite recursion");
+        assert(block->scope_id != SCOPE_BUILTIN && "this will cause infinite recursion");
         // TODO: replace block in existing import path instead of making new import path?
         usym_tbl_update(uast_import_path_wrap(uast_import_path_new(
             curr_mod.mod_path_pos,

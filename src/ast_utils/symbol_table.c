@@ -611,7 +611,7 @@ static Scope_id_darr scope_id_to_parent;
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    assert(key != SCOPE_TOP_LEVEL);
+    assert(key != SCOPE_BUILTIN);
     return darr_at(scope_id_to_parent, key);
 }
 
@@ -637,6 +637,10 @@ void scope_id_to_parent_dump(void) {
     }
 
     log(LOG_DEBUG, FMT"\n", string_print(buf));
+}
+
+bool scope_id_is_top_level(Scope_id scope) {
+    return scope_get_parent_tbl_lookup(scope) == SCOPE_BUILTIN;
 }
 
 //

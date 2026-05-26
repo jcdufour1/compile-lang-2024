@@ -30,7 +30,7 @@ static void add_builtin_def(Strv name) {
         MOD_PATH_RUNTIME,
         name,
         (Ulang_type_darr) {0},
-        SCOPE_TOP_LEVEL
+        SCOPE_BUILTIN
     )))));
 }
 
@@ -54,7 +54,7 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-        sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
+        sym_log_fn(sym_log_dest, LOG_DEBUG, SCOPE_BUILTIN);\
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_temp);\
@@ -76,7 +76,7 @@ static void add_builtin_defs(void) {
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         if (params_log_level <= LOG_DEBUG) { \
-            sym_log_fn(dest, LOG_DEBUG, SCOPE_TOP_LEVEL);\
+            sym_log_fn(dest, LOG_DEBUG, SCOPE_BUILTIN);\
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
@@ -90,13 +90,13 @@ static void compile_file_to_ir(void) {
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    symbol_collection_new(SCOPE_TOP_LEVEL, util_literal_name_new());
+    symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new());
 
     Uast_mod_alias* new_alias = uast_mod_alias_new(
         POS_BUILTIN,
         MOD_ALIAS_BUILTIN,
         MOD_PATH_BUILTIN,
-        SCOPE_TOP_LEVEL,
+        SCOPE_BUILTIN,
         true /* TODO */
     );
     log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, new_alias->name, NAME_FULL));
@@ -114,7 +114,7 @@ static void compile_file_to_ir(void) {
     do_pass(expand_def, usymbol_log_level, stderr);
     do_pass(try_set_types, symbol_log_level, output);
     fclose(output);
-    todo();
+    //todo();
     do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
@@ -141,7 +141,7 @@ NEVER_RETURN void do_passes(void) {
         } else {
             String contents = {0};
 
-            Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+            Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
             Ir* curr = NULL;
             while (ir_tbl_iter_next(&curr, &iter)) {
                 //log(LOG_DEBUG, FMT"\n", ir_print(curr));
