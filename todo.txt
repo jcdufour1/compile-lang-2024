@@ -139,6 +139,7 @@ for generics:
         }
     }
 - make python script show error on seg fault, etc. if possible
+- rename Scope_id to Block_id
 
 
 # roadmap to try to get bootstrap compiler done:

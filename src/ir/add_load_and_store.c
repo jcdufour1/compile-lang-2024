@@ -2388,7 +2388,11 @@ static void load_variable_def_internal(const char* file, int line, Ir_block* new
             old_var_def->lang_type.type == LANG_TYPE_RAW_UNION
         ));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
-        darr_insert(&a_main, &new_block->children, 1, lang_alloca);
+        if (new_block->children.info.count < 1) {
+            darr_append(&a_main, &new_block->children, lang_alloca);
+        } else {
+            darr_insert(&a_main, &new_block->children, 1, lang_alloca);
+        }
     }
 
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));

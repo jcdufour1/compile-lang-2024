@@ -5340,21 +5340,28 @@ static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
     unreachable("");
 }
 
+void scope_id_to_parent_dump(void);
+
 STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_top_level) {
     STMT_STATUS status = STMT_OK;
 
     bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
     check_env.expr_is_actually_used_as_expr = false;
 
-    if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
-        // TODO: actually print the types of statements that are allowed?
-        msg(
-            DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
-            "this statement is not permitted in the top level\n"
-        );
-        status = STMT_ERROR;
-        goto end;
-    }
+
+
+    //if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
+    //    // TODO: actually print the types of statements that are allowed?
+    //    msg(
+    //        DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
+    //        "this statement is not permitted in the top level\n"
+    //    );
+    //    status = STMT_ERROR;
+    //    goto end;
+    //}
+
+    scope_id_to_parent_dump();
+    //todo();
 
     switch (stmt->type) {
         case UAST_EXPR: {
@@ -5476,6 +5483,7 @@ void try_set_types(void) {
         Name new_name = {0};
         resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_darr) {0}, POS_BUILTIN);
     } else {
+        todo();
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
         // TODO: use diag for warnings and error for errors to reduce mistakes?
     }
@@ -5496,6 +5504,4 @@ after_main:
     while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
         check_struct_for_rec(curr_def);
     }
-
-    return;
 }

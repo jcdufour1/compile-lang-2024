@@ -1,0 +1,13 @@
+//io :: import std.io
+
+hello_world u8* := "hello"
+
+aux :: fn() i32 {
+    return 72
+}
+main :: fn() i32 {
+    printf(hello_world)
+    return 0
+}
+
+printf :: extern("c") fn(format_string u8*, args opaque...) i32
