@@ -7,6 +7,8 @@ Token :: enum {
 }
 
 token Token := .none
+// TODO: assignment below should print error for being invalid thing for top level
+token = .none
 switch token {
     case .num(num): break
     case .none: break

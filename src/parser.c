@@ -1388,7 +1388,7 @@ static PARSE_STATUS parse_function_decl_common(
 
 static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda, Token fn_name_tk_if_not_lambda) {
     Scope_id fn_scope = SCOPE_BUILTIN;
-    Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
+    Scope_id block_scope = symbol_collection_new(parse_state.scope_id_curr_mod_path, util_literal_name_new());
 
     Uast_function_decl* fun_decl = NULL;
     if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, true, fn_scope, block_scope, is_lambda, fn_name_tk_if_not_lambda)) {
