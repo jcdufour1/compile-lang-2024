@@ -42,6 +42,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
 static void emit_c_array_access(Emit_c_strs* strs, const Ir_array_access* access);
 
+static void emit_c_global_variable_def(String* output, const Ir_global_variable_def* def);
+
 static void emit_c_loc_internal(const char* file, int line, String* output, Loc loc, Pos pos) {
     string_extend_cstr(&a_pass, output, "/* c codegen location: ");
     string_extend_cstr(&a_pass, output, file);
@@ -241,6 +243,9 @@ static void emit_c_def_out_of_line(Emit_c_strs* strs, const Ir_def* def) {
             break;
         case IR_STRUCT_DEF:
             emit_c_struct_def(strs, ir_struct_def_const_unwrap(def));
+            break;
+        case IR_GLOBAL_VARIABLE_DEF:
+            emit_c_global_variable_def(&strs->forward_decls/*TODO*/, ir_global_variable_def_const_unwrap(def));
             break;
         case IR_PRIMITIVE_DEF:
             todo();
@@ -556,6 +561,25 @@ static void emit_c_alloca(String* output, const Ir_alloca* lang_alloca) {
     string_extend_cstr(&a_pass, output, ";\n");
 }
 
+static void emit_c_global_variable_def(String* output, const Ir_global_variable_def* def) {
+    emit_c_loc(output, ir_get_loc(def), def->pos);
+
+    c_extend_type_call_str(output, def->lang_type, true, false);
+    string_extend_cstr(&a_pass, output, " ");
+    emit_c_extend_name(output, def->name);
+    string_extend_cstr(&a_pass, output, ";\n");
+    log(LOG_DEBUG, FMT"\n", string_print(*output));
+    return;
+
+    //string_extend_cstr(&a_pass, output, "    ");
+    //string_extend_cstr(&a_pass, output, "void* ");
+    //emit_c_extend_name(output, lang_alloca->name);
+    //string_extend_cstr(&a_pass, output, " = (void*)&");
+    //emit_c_extend_name(output, storage_loc);
+    //string_extend_cstr(&a_pass, output, ";\n");
+    todo();
+}
+
 static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
     emit_c_loc(&strs->output, ir_get_loc(def), def->pos);
     emit_c_extend_name(&strs->output, def->name);
@@ -588,6 +612,10 @@ static void emit_c_def_inline(Emit_c_strs* strs, const Ir_def* def) {
             todo();
         case IR_LITERAL_DEF:
             todo();
+        case IR_GLOBAL_VARIABLE_DEF:
+            return;
+        default:
+            unreachable("");
     }
     unreachable("");
 }

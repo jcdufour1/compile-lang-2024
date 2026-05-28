@@ -2387,7 +2387,14 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 
 static void load_variable_def_internal(const char* file, int line, Ir_block* new_block, Tast_variable_def* old_var_def) {
     if (old_var_def->is_global) {
-        todo();
+        Ir_global_variable_def* new_def = ir_global_variable_def_new(
+            old_var_def->pos,
+            rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
+            old_var_def->name,
+            old_var_def->attrs
+        );
+        unwrap(ir_add(ir_def_wrap(ir_global_variable_def_wrap(new_def))));
+        return;
     }
 
     assert(old_var_def);

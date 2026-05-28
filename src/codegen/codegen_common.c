@@ -20,6 +20,8 @@ bool is_extern_c(const Ir* ir) {
             return false;
         case IR_LITERAL_DEF:
             return false;
+        case IR_GLOBAL_VARIABLE_DEF:
+            return false;
     }
     unreachable("");
 }

@@ -47,6 +47,8 @@ Ir_lang_type ir_def_get_lang_type(const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             unreachable("");
+        case IR_GLOBAL_VARIABLE_DEF:
+            return ir_global_variable_def_const_unwrap(def)->lang_type;
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->lang_type;
         case IR_FUNCTION_DECL:
@@ -160,6 +162,8 @@ Name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
             unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
             return result;
         }
+        case IR_GLOBAL_VARIABLE_DEF:
+            return ir_global_variable_def_const_unwrap(def)->name;
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
