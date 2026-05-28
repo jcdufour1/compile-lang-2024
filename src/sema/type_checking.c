@@ -5030,98 +5030,7 @@ error:
 }
 
 bool try_set_using_types(const Uast_using* using) {
-    todo();
-    //bool status = true;
-    //Uast_def* def = NULL;
-    //if (!usymbol_lookup(&def, using->sym_name)) {
-    //    msg_undefined_symbol(using->sym_name, using->pos);
-    //    return false;
-    //}
-
-    //if (def->type == UAST_VARIABLE_DEF) {
-    //    Uast_variable_def* var_def = uast_variable_def_unwrap(def);
-    //    Name lang_type_name = {0};
-    //    Uname var_def_type_name = {0};
-    //    if (!ulang_type_get_uname(&var_def_type_name, var_def->lang_type)) {
-    //        msg_todo("", var_def->pos);
-    //        msg_todo("", using->pos);
-    //        return false;
-    //    }
-    //    if (!name_from_uname(
-    //        &lang_type_name,
-    //        var_def_type_name,
-    //        ulang_type_get_pos(var_def->lang_type)
-    //    )) {
-    //        return false;
-    //    }
-    //    Uast_def* struct_def_ = NULL;
-    //    unwrap(usymbol_lookup(&struct_def_, lang_type_name));
-    //    Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
-    //    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-    //        Uast_variable_def* curr = darr_at(struct_def->base.members, idx);
-    //        Name alias_name = using->sym_name;
-    //        alias_name.mod_path = using->mod_path_to_put_defs;
-    //        alias_name.base = curr->name.base;
-    //        Uast_lang_def* lang_def = uast_lang_def_new(
-    //            using->pos,
-    //            alias_name,
-    //            uast_member_access_wrap(uast_member_access_new(
-    //                curr->pos,
-    //                uast_symbol_new(curr->pos, curr->name),
-    //                uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
-    //            )),
-    //            true
-    //        );
-    //        if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-    //            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-    //            status = false;
-    //        }
-    //    }
-    //    return true;
-    //} else if (def->type == UAST_MOD_ALIAS) {
-    //    Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
-    //    bool is_builtin = strv_is_equal(MOD_PATH_BUILTIN, using->sym_name.mod_path);
-    //    // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
-    //    //   eventually, it may be a good idea to speed this up 
-    //    //   (eg. by keeping array of symbols of top level of each module)
-
-    //    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
-    //    Uast_def* curr = NULL;
-    //    while (usym_tbl_iter_next(&curr, &iter)) {
-    //        Name curr_name = uast_def_get_name(curr);
-    //        if (strv_is_equal(curr_name.mod_path, mod_path)) {
-    //            Name alias_name = using->sym_name;
-    //            alias_name.mod_path = using->mod_path_to_put_defs;
-    //            alias_name.base = curr_name.base;
-    //            alias_name.scope_id = curr_name.scope_id;
-    //            Uast_lang_def* lang_def = uast_lang_def_new(
-    //                using->pos,
-    //                alias_name,
-    //                uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
-    //                true
-    //            );
-    //            if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-    //                Uast_def* prev_def = NULL;
-    //                unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
-    //                if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-    //                    if (!is_builtin) {
-    //                        msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-    //                        status = false;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //    return status;
-    //} else {
-    //    msg(
-    //        DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
-    //        using->pos,
-    //        "symbol after `using` must be struct or module alias\n"
-    //    );
-    //    return false;
-    //}
-    unreachable("");
+    unreachable("using should have been removed in the expand_using pass");
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?
@@ -5131,7 +5040,7 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
         "redefinition of symbol "FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def), NAME_FULL)
     );
 
-    Uast_def* original_def;
+    Uast_def* original_def = NULL;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         DIAG_NOTE, uast_def_get_pos(original_def),
@@ -5272,7 +5181,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             unwrap(rtn_statement->pos.line != 0);
 
             Tast_stmt* new_rtn_statement = NULL;
-            switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), scope_id_is_top_level(block->scope_id))) {
+            switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), is_top_level)) {
                 case STMT_ERROR:
                     status = false;
                     goto error;
@@ -5356,15 +5265,16 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 
 
 
-    //if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
-    //    // TODO: actually print the types of statements that are allowed?
-    //    msg(
-    //        DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
-    //        "this statement is not permitted in the top level\n"
-    //    );
-    //    status = STMT_ERROR;
-    //    goto end;
-    //}
+    if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
+        // TODO: actually print the types of statements that are allowed?
+        log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, stmt));
+        msg(
+            DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
+            "this statement is not permitted in the top level\n"
+        );
+        status = STMT_ERROR;
+        goto end;
+    }
 
     scope_id_to_parent_dump();
     //todo();
@@ -5489,7 +5399,6 @@ void try_set_types(void) {
         Name new_name = {0};
         resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_darr) {0}, POS_BUILTIN);
     } else {
-        todo();
         msg(DIAG_NO_MAIN_FUNCTION, POS_BUILTIN, "no main function\n");
         // TODO: use diag for warnings and error for errors to reduce mistakes?
     }

@@ -18,5 +18,5 @@ usize :: def _builtin__rt.usize
 //ptr :: def _builtin__util.ptr
 
 // TODO: remove min and max from the prelude?
-//min :: def _builtin__math.min
-//max :: def _builtin__math.max
+min :: def _builtin__math.min
+max :: def _builtin__math.max
