@@ -1386,7 +1386,8 @@ static PARSE_STATUS parse_function_decl_common(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda, Token fn_name_tk_if_not_lambda, Scope_id fn_scope) {
+static PARSE_STATUS parse_function_def_internal(Uast_function_def** fun_def, Tk_view* tokens, bool is_lambda, Token fn_name_tk_if_not_lambda) {
+    Scope_id fn_scope = SCOPE_BUILTIN;
     Scope_id block_scope = symbol_collection_new(fn_scope, util_literal_name_new());
 
     Uast_function_decl* fun_decl = NULL;
@@ -1421,7 +1422,7 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
             scope_id
         );
         Uast_function_def* fun_def = NULL;
-        if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, true, fn_name_tk_if_not_lambda, scope_id)) {
+        if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, true, fn_name_tk_if_not_lambda)) {
             return PARSE_ERROR;
         }
 
@@ -1446,7 +1447,7 @@ static PARSE_STATUS parse_function_def(Uast_stmt** result, Tk_view* tokens, bool
     }
 
     Uast_function_def* fun_def = NULL;
-    if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, is_lambda, fn_name_tk_if_not_lambda, scope_id)) {
+    if (PARSE_OK != parse_function_def_internal(&fun_def, tokens, is_lambda, fn_name_tk_if_not_lambda)) {
         return PARSE_ERROR;
     }
     *result = uast_def_wrap(uast_function_def_wrap(fun_def));

@@ -34,14 +34,14 @@ swap :: fn(<ItemT>)(lhs ItemT*, rhs ItemT*) {
 alloc :: fn(<ItemT>)(count_items u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     dummy ItemT* := null(<ItemT>)();
     buf ItemT* := unsafe_cast<ItemT*>libc.malloc(sizeof(*dummy)*count_items)
-    assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
+    rt.assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
 // TODO: return optional, etc.?
 realloc :: fn(<ItemT>)(buf ItemT*, new_cnt_items u64, file Str = #file, line i32 = #line, column i32 = #column) ItemT* {
     buf = unsafe_cast<ItemT*>libc.realloc(unsafe_cast<opaque*>buf, sizeof(ItemT)*new_cnt_items)
-    assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
+    rt.assert(buf != null(<ItemT>)(), "out of memory", .file = file, .line = line, .column = column)
     return buf
 }
 
