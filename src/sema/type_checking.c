@@ -5231,10 +5231,73 @@ error:
     return status;
 }
 
-static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
-    switch (type) {
-        case UAST_EXPR:
+static bool operator_allowed_in_top_level(Uast_operator* oper) {
+    if (oper->type != UAST_BINARY) {
+        return false;
+    }
+    Uast_binary* bin = uast_binary_unwrap(oper);
+
+    if (bin->token_type != BINARY_SINGLE_EQUAL) {
+        return false;
+    }
+    // TODO: this should only return true if this binary defines a new variable
+    return bin->lhs->type == UAST_SYMBOL;
+}
+
+static bool expr_allowed_in_top_level(Uast_expr* expr) {
+    switch (expr->type) {
+        case UAST_IF_ELSE_CHAIN:
             return false;
+        case UAST_BLOCK:
+            return false;
+        case UAST_SWITCH:
+            return false;
+        case UAST_UNKNOWN:
+            return false;
+        case UAST_OPERATOR:
+            return operator_allowed_in_top_level(uast_operator_unwrap(expr));
+        case UAST_SYMBOL:
+            return false;
+        case UAST_MEMBER_ACCESS:
+            return false;
+        case UAST_INDEX:
+            return false;
+        case UAST_LITERAL:
+            return false;
+        case UAST_FUNCTION_CALL:
+            return false;
+        case UAST_STRUCT_LITERAL:
+            return false;
+        case UAST_ARRAY_LITERAL:
+            return false;
+        case UAST_TUPLE:
+            return false;
+        case UAST_DIRECTIVE:
+            return false;
+        case UAST_ENUM_ACCESS:
+            return false;
+        case UAST_ENUM_GET_TAG:
+            return false;
+        case UAST_ORELSE:
+            return false;
+        case UAST_FN:
+            return false;
+        case UAST_QUESTION_MARK:
+            return false;
+        case UAST_UNDERSCORE:
+            return false;
+        case UAST_EXPR_REMOVED:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static bool stmt_allowed_in_top_level(Uast_stmt* stmt) {
+    switch (stmt->type) {
+        case UAST_EXPR:
+            return expr_allowed_in_top_level(uast_expr_unwrap(stmt));
         case UAST_DEF:
             return true;
         case UAST_FOR_WITH_COND:
@@ -5265,7 +5328,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 
 
 
-    if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
+    if (is_top_level && !stmt_allowed_in_top_level(stmt)) {
         // TODO: actually print the types of statements that are allowed?
         log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, stmt));
         msg(
