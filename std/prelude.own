@@ -12,7 +12,7 @@ Str :: def _builtin__coll.Str
 Dstr :: def _builtin__coll.Darr(<u8>)
 Darr :: def _builtin__coll.Darr
 
-assert :: def _builtin__util.assert
+//assert :: def _builtin__rt.assert
 
 usize :: def _builtin__rt.usize
 //ptr :: def _builtin__util.ptr

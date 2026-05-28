@@ -49,7 +49,7 @@ free :: fn(<ItemT>)(buf ItemT*) {
     libc.free(unsafe_cast<opaque*>buf)
 }
 
-assert :: def rt.assert
+//assert :: def rt.assert
 
 // NOTE: cstr_free should be called on the returned string later
 str_to_cstr :: fn(str coll.Str) u8* {

@@ -293,65 +293,64 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
         }
     }
 
-    todo();
-    //Name new_name = name_new(
-    //    old_base.name.mod_path,
-    //    old_base.name.base,
-    //    ulang_type_regular_const_unwrap(lang_type).name.gen_args,
-    //    SCOPE_TOP_LEVEL /* TODO */
-    //);
+    Name new_name = name_new(
+        old_base.name.mod_path,
+        old_base.name.base,
+        ulang_type_regular_const_unwrap(lang_type).name.gen_args,
+        SCOPE_BUILTIN /* TODO */
+    );
 
-    //if (!struct_like_tbl_lookup(after_res, new_name)) {
-    //    if (env.silent_generic_resol_errors) {
-    //        // this early return is nessessary to avoid storing uasts in struct_like_tbl that have
-    //        //   not been fully run through the expand_def pass
-    //        return false;
-    //    }
+    if (!struct_like_tbl_lookup(after_res, new_name)) {
+        if (env.silent_generic_resol_errors) {
+            // this early return is nessessary to avoid storing uasts in struct_like_tbl that have
+            //   not been fully run through the expand_def pass
+            return false;
+        }
 
-    //    if (old_base.generics.info.count != new_name.gen_args.info.count) {
-    //        msg_invalid_count_generic_args(
-    //            pos_def,
-    //            ulang_type_get_pos(lang_type),
-    //            new_name.gen_args.info.count,
-    //            old_base.generics.info.count,
-    //            old_base.generics.info.count
-    //        );
-    //        return false;
-    //    }
+        if (old_base.generics.info.count != new_name.gen_args.info.count) {
+            msg_invalid_count_generic_args(
+                pos_def,
+                ulang_type_get_pos(lang_type),
+                new_name.gen_args.info.count,
+                old_base.generics.info.count,
+                old_base.generics.info.count
+            );
+            return false;
+        }
 
-    //    if (!check_gen_constraints(old_base.generics, new_name.gen_args)) {
-    //        return false;
-    //    }
+        if (!check_gen_constraints(old_base.generics, new_name.gen_args)) {
+            return false;
+        }
 
-    //    Uast_def* new_def_ = NULL;
-    //    if (usymbol_lookup(&new_def_, new_name)) {
-    //        *after_res = new_def_;
-    //    } else {
-    //        Ustruct_def_base new_base = {0};
-    //        // TODO: struct def base is substituted for every encounter of a struct like Lang_type
-    //        //   compilation times could possibly be improved by only making def base sometimes
-    //        resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
-    //        // TODO: avoid casting function pointers?
-    //        *after_res = (void*)obj_new(pos_def, new_base);
-    //    }
-    //}
+        Uast_def* new_def_ = NULL;
+        if (usymbol_lookup(&new_def_, new_name)) {
+            *after_res = new_def_;
+        } else {
+            Ustruct_def_base new_base = {0};
+            // TODO: struct def base is substituted for every encounter of a struct like Lang_type
+            //   compilation times could possibly be improved by only making def base sometimes
+            resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name);
+            // TODO: avoid casting function pointers?
+            *after_res = (void*)obj_new(pos_def, new_base);
+        }
+    }
 
-    //*result = ulang_type_regular_const_wrap(ulang_type_regular_new(
-    //    ulang_type_get_pos(lang_type),
-    //    name_to_uname(uast_def_get_struct_def_base(*after_res).name),
-    //    ulang_type_get_pointer_depth(lang_type)
-    //));
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(
+        ulang_type_get_pos(lang_type),
+        name_to_uname(uast_def_get_struct_def_base(*after_res).name),
+        ulang_type_get_pointer_depth(lang_type)
+    ));
 
-    //Tast_def* dummy = NULL;
-    //// TODO: remove symbol_lookup?
-    //if (symbol_lookup(&dummy, new_name)) {
-    //    return true;
-    //}
-    //if (struct_like_tbl_add(*after_res)) {
-    //    usym_tbl_update(*after_res);
-    //    darr_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
-    //}
-    //return true;
+    Tast_def* dummy = NULL;
+    // TODO: remove symbol_lookup?
+    if (symbol_lookup(&dummy, new_name)) {
+        return true;
+    }
+    if (struct_like_tbl_add(*after_res)) {
+        usym_tbl_update(*after_res);
+        darr_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
+    }
+    return true;
 }
 
 static void* local_uast_raw_union_def_new(Pos pos, Ustruct_def_base base) {
@@ -468,6 +467,7 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.name, lang_type.pos)) {
+        todo();
         return false;
     }
     assert(name_base.scope_id != SCOPE_NOT);

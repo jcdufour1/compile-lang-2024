@@ -1588,17 +1588,16 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    todo();
-    //if (PARSE_OK != parse_struct_def_base(
-    //    &base,
-    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-    //    tokens,
-    //    true,
-    //    (Ulang_type) {0},
-    //    scope_id
-    //)) {
-    //    return PARSE_ERROR;
-    //}
+    if (PARSE_OK != parse_struct_def_base(
+        &base,
+        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+        tokens,
+        true,
+        (Ulang_type) {0},
+        scope_id
+    )) {
+        return PARSE_ERROR;
+    }
 
     *struct_def = uast_struct_def_new(name.pos, base);
     if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
@@ -1612,17 +1611,16 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    todo();
-    //if (PARSE_OK != parse_struct_def_base(
-    //    &base,
-    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-    //    tokens,
-    //    true,
-    //    (Ulang_type) {0},
-    //    scope_id)
-    //) {
-    //    return PARSE_ERROR;
-    //}
+    if (PARSE_OK != parse_struct_def_base(
+        &base,
+        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+        tokens,
+        true,
+        (Ulang_type) {0},
+        scope_id)
+    ) {
+        return PARSE_ERROR;
+    }
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
     if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
@@ -1637,17 +1635,16 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     unwrap(try_consume(&enum_tk, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    todo();
-    //if (PARSE_OK != parse_struct_def_base(
-    //    &base,
-    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-    //    tokens,
-    //    false,
-    //    ulang_type_new_void(tk_view_front(*tokens).pos),
-    //    scope_id
-    //)) {
-    //    return PARSE_ERROR;
-    //}
+    if (PARSE_OK != parse_struct_def_base(
+        &base,
+        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+        tokens,
+        false,
+        ulang_type_new_void(tk_view_front(*tokens).pos),
+        scope_id
+    )) {
+        return PARSE_ERROR;
+    }
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
@@ -1678,13 +1675,12 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
             unreachable("");
     }
 
-    todo();
-    //*def = uast_lang_def_new(
-    //    name.pos,
-    //    name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
-    //    expr,
-    //    false
-    //);
+    *def = uast_lang_def_new(
+        name.pos,
+        name_new(parse_state.curr_mod_path, name.text, (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+        expr,
+        false
+    );
     assert((*def)->pos.file_path.count != SIZE_MAX);
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));

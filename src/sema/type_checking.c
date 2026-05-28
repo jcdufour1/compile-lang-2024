@@ -1882,6 +1882,11 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
             if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
+                if (env.error_count < 1) {
+                    breakpoint();
+                    if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
+                    }
+                }
                 assert(env.error_count > 0);
                 return STMT_ERROR;
             }
