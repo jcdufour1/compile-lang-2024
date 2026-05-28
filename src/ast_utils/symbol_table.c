@@ -15,7 +15,7 @@ WSIGN_CONVERSION_IGNORE_END
 #include <symbol_log.h>
 
 #define SYM_TBL_DEFAULT_CAPACITY 1
-#define SYM_TBL_MAX_DENSITY (0.6f)
+#define SYM_TBL_MAX_DENSITY (0.6f) // TODO: change this to an integer
 
 //
 // util
