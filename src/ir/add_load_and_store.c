@@ -243,8 +243,8 @@ static void load_block_stmts(
         //         load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
         //     }
         //
-        unwrap(new_block->children.info.count > 0);
-        unwrap(ir_is_label(darr_at(new_block->children, 0)));
+        assert(new_block->children.info.count > 0);
+        assert(ir_is_label(darr_at(new_block->children, 0)));
     }
 
     // TODO: only use util_literal_name_new_prefix when the result is actually used
@@ -2188,6 +2188,40 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         util_literal_name_new(),
         scope_to_name_tbl_lookup(new_fun_def->body->scope_id)
     ));
+
+    assert(new_fun_def->body->children.info.count < 2 && "call to initialize globals should be the first block statement (except label)");
+    Name name_main_fn = {0};
+    unwrap(name_from_uname(&name_main_fn, env.name_main_fn, POS_BUILTIN/*TODO*/));
+    if (env.do_initialize_globals && name_is_equal(old_fun_def->decl->name, name_main_fn)) {
+        Lang_type void_fn_rtn_type = lang_type_new_void(POS_BUILTIN);
+        load_function_call(new_fun_def->body, tast_function_call_new(
+            POS_BUILTIN,
+            (Tast_expr_darr) {0},
+            tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
+                POS_BUILTIN,
+                name_new(MOD_PATH_BUILTIN, sv("own_initialize_globals"), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+                lang_type_fn_const_wrap(lang_type_fn_new(
+                    POS_BUILTIN,
+                    (Lang_type_tuple) {0},
+                    arena_dup(&a_main, &void_fn_rtn_type),
+                    0
+                ))
+            ))),
+            void_fn_rtn_type
+        ));
+        //darr_append(&a_main, &new_fun_def->body->children, (ir_function_call_new(
+        //    (Name_darr) {0},
+        //    util_literal_name_new(),
+        //    
+        //    ir_function_name_new(
+        //        POS_BUILTIN,
+        //        ,
+        //        util_literal_name_new()
+        //    ),
+        //    rm_tuple_lang_type(lang_type_new_void(POS_BUILTIN), POS_BUILTIN) // TODO
+        //));
+    }
+
     // TODO: remove at_fun_start variable
     Tast_variable_def* var_def_thing = tast_variable_def_new(
         new_fun_def->body->pos,

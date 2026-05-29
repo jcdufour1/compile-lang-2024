@@ -60,6 +60,8 @@ typedef struct {
     bool expr_is_actually_used_as_expr;
 
     Scope_id scope_top_level_curr_mod;
+
+    Tast_stmt_darr initialize_globals_stmts;
 } Type_checking_env;
 
 // returns false if unsuccessful

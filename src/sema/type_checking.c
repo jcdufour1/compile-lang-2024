@@ -5143,7 +5143,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         switch (try_set_stmt_types(&new_stmt, curr_tast, is_top_level)) {
             case STMT_OK:
                 unwrap(curr_tast);
-                darr_append(&a_main, &new_tasts, new_stmt);
+                if (is_top_level) {
+                    darr_append(&a_main, &check_env.initialize_globals_stmts, new_stmt);
+                } else {
+                    darr_append(&a_main, &new_tasts, new_stmt);
+                }
                 break;
             case STMT_NO_STMT:
                 break;
@@ -5191,6 +5195,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             unwrap(rtn_statement->pos.line != 0);
 
             Tast_stmt* new_rtn_statement = NULL;
+            assert(!is_top_level);
             switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), is_top_level)) {
                 case STMT_ERROR:
                     status = false;
@@ -5492,4 +5497,30 @@ after_main:
     while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
         check_struct_for_rec(curr_def);
     }
+
+    if (check_env.initialize_globals_stmts.info.count > 0) {
+        Tast_function_decl* initialize_decl = tast_function_decl_new(
+            POS_BUILTIN,
+            tast_function_params_new(POS_BUILTIN, (Tast_variable_def_darr) {0}),
+            lang_type_new_void(POS_BUILTIN),
+            name_new(MOD_PATH_BUILTIN, sv("own_initialize_globals"), (Ulang_type_darr) {0}, SCOPE_BUILTIN)
+        );
+        unwrap(symbol_add(tast_function_def_wrap(tast_function_def_new(
+            POS_BUILTIN,
+            initialize_decl,
+            tast_block_new(
+                POS_BUILTIN,
+                check_env.initialize_globals_stmts,
+                POS_BUILTIN,
+                lang_type_new_void(POS_BUILTIN),
+                symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new()),
+                false,
+                false,
+                false,
+                true
+            )
+        ))));
+        env.do_initialize_globals = true;
+    }
+
 }

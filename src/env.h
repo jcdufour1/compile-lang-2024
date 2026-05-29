@@ -47,6 +47,8 @@ typedef struct Env_ {
 
     bool is_printing;
 
+    bool do_initialize_globals;
+
     Strv mod_path_curr_file;
 } Env;
 
