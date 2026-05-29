@@ -1,5 +1,7 @@
-compile::stdout 1
+compile::stdout 3
+9
 hello
+8
 
 compile::stderr 0
 

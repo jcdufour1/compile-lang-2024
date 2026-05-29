@@ -1,12 +1,16 @@
 //io :: import std.io
+coll :: import std.collections
 
 hello_world u8* := "hello"
+hello_int u8 := 9
 
-aux :: fn() i32 {
-    return 72
-}
+hello_struct coll.Darr(<i32>) := coll.darr_new(<i32>)()
+
 main :: fn() i32 {
+    printf("%d\n", hello_int)
     printf("%s\n", hello_world)
+    coll.darr_append(&hello_struct, 8);
+    printf("%d\n", coll.darr_first(hello_struct))
     return 0
 }
 

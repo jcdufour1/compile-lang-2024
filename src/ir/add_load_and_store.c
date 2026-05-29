@@ -1507,17 +1507,22 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 }
 
 static Name load_ptr_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym) {
-    Tast_def* var_def_ = NULL;
-    unwrap(symbol_lookup(&var_def_, old_sym->base.name));
-    Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
+    Tast_def* old_var_def_ = NULL;
+    unwrap(symbol_lookup(&old_var_def_, old_sym->base.name));
+    Tast_variable_def* old_var_def = tast_variable_def_unwrap(old_var_def_);
+    Ir_variable_def* var_def = load_variable_def_clone(old_var_def);
+
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, var_def->name_corr_param)) {
-        load_variable_def_internal(file, line, new_block, tast_variable_def_unwrap(var_def_));
+        load_variable_def_internal(file, line, new_block, old_var_def);
         unwrap(ir_lookup(&lang_alloca, var_def->name_corr_param));
+        log(LOG_DEBUG, FMT"\n", ir_print(lang_alloca));
     }
-    unwrap(var_def);
-    if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
-        unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca))) > 0);
+    assert(var_def);
+
+    if (!old_var_def->is_global && old_sym->base.lang_type.type != LANG_TYPE_VOID) {
+        assert(lang_alloca->type == IR_ALLOCA);
+        assert(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca))) > 0);
     }
 
     return ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca);
