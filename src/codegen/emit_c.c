@@ -563,21 +563,35 @@ static void emit_c_alloca(String* output, const Ir_alloca* lang_alloca) {
 
 static void emit_c_global_variable_def(String* output, const Ir_global_variable_def* def) {
     emit_c_loc(output, ir_get_loc(def), def->pos);
+    Name storage_loc = util_literal_name_new();
 
     c_extend_type_call_str(output, def->lang_type, true, false);
     string_extend_cstr(&a_pass, output, " ");
-    emit_c_extend_name(output, def->name);
+    emit_c_extend_name(output, storage_loc);
     string_extend_cstr(&a_pass, output, ";\n");
-    log(LOG_DEBUG, FMT"\n", string_print(*output));
+
+    string_extend_cstr(&a_pass, output, "void* ");
+    emit_c_extend_name(output, def->name);
+    string_extend_cstr(&a_pass, output, " = (void*)&");
+    emit_c_extend_name(output, storage_loc);
+    string_extend_cstr(&a_pass, output, ";\n");
+    emit_c_loc(output, ir_get_loc(def), def->pos);
     return;
 
-    //string_extend_cstr(&a_pass, output, "    ");
-    //string_extend_cstr(&a_pass, output, "void* ");
-    //emit_c_extend_name(output, lang_alloca->name);
-    //string_extend_cstr(&a_pass, output, " = (void*)&");
-    //emit_c_extend_name(output, storage_loc);
+    //c_extend_type_call_str(output, def->lang_type, true, false);
+    //string_extend_cstr(&a_pass, output, " ");
+    //emit_c_extend_name(output, def->name);
     //string_extend_cstr(&a_pass, output, ";\n");
-    todo();
+    //log(LOG_DEBUG, FMT"\n", string_print(*output));
+    //return;
+
+    ////string_extend_cstr(&a_pass, output, "    ");
+    ////string_extend_cstr(&a_pass, output, "void* ");
+    ////emit_c_extend_name(output, lang_alloca->name);
+    ////string_extend_cstr(&a_pass, output, " = (void*)&");
+    ////emit_c_extend_name(output, storage_loc);
+    ////string_extend_cstr(&a_pass, output, ";\n");
+    //todo();
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Ir_label* def) {
