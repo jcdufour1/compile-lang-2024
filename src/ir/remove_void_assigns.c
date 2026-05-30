@@ -25,9 +25,9 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
 }
 
 static Ir* rm_void_global_variable_def(Ir_global_variable_def* def) {
-    //if (def->lang_type.type == IR_LANG_TYPE_VOID) {
-    //    return ir_removed_wrap(ir_removed_new(def->pos));
-    //}
+    if (def->lang_type.type == IR_LANG_TYPE_VOID) {
+        return ir_removed_wrap(ir_removed_new(def->pos));
+    }
     return ir_def_wrap(ir_global_variable_def_wrap(def));
 }
 

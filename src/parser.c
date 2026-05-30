@@ -2194,7 +2194,15 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     if (!consume_expect(NULL, tokens, "in function decl", TOKEN_FN)) {
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, false, SCOPE_BUILTIN/*TODO*/, symbol_collection_new(SCOPE_BUILTIN/*TODO*/, util_literal_name_new()) /* TODO */, false, fn_name_tk)) {
+    if (PARSE_OK != parse_function_decl_common(
+        fun_decl,
+        tokens,
+        false,
+        SCOPE_BUILTIN,
+        symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new()),
+        false,
+        fn_name_tk
+    )) {
         goto error;
     }
     try_consume_newlines(tokens);

@@ -616,9 +616,6 @@ Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
 }
 
 void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
-    if (key == 3) {
-        //todo();
-    }
     while (scope_id_to_parent.info.count <= key) {
         darr_append(&a_main, &scope_id_to_parent, 0);
     }
@@ -629,14 +626,14 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
     *darr_at_ref(&scope_id_to_parent, key) = parent;
 }
 
-void scope_id_to_parent_dump(void) {
+void scope_id_to_parent_dump(LOG_LEVEL log_level) {
     String buf = {0};
 
     darr_foreach(idx, Scope_id, scope, scope_id_to_parent) {
         string_extend_f(&a_main, &buf, "%zu, ", scope);
     }
 
-    log(LOG_DEBUG, FMT"\n", string_print(buf));
+    log(log_level, FMT"\n", string_print(buf));
 }
 
 bool scope_id_is_top_level(Scope_id scope) {

@@ -247,7 +247,7 @@ Name serialize_ulang_type_regular(Strv mod_path, Ulang_type_regular ulang_type, 
         mod_path,
         serialize_ulang_type_atom(ulang_type.name, ulang_type.pointer_depth, include_scope, ulang_type.pos),
         (Ulang_type_darr) {0},
-        SCOPE_BUILTIN/*TODO*/
+        SCOPE_BUILTIN
     );
 }
 

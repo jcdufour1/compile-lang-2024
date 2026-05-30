@@ -137,6 +137,8 @@ void scope_to_name_tbl_add(Scope_id key, Name scope_name);
 
 void scope_to_name_tbl_update(Scope_id key, Name scope_name);
 
+void scope_id_to_parent_dump(LOG_LEVEL log_level);
+
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 
 bool expand_again_add(Arena* arena, Uast_def* item);

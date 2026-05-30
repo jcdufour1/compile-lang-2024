@@ -1516,7 +1516,6 @@ static Name load_ptr_symbol_internal(const char* file, int line, Ir_block* new_b
     if (!ir_lookup(&lang_alloca, var_def->name_corr_param)) {
         load_variable_def_internal(file, line, new_block, old_var_def);
         unwrap(ir_lookup(&lang_alloca, var_def->name_corr_param));
-        log(LOG_DEBUG, FMT"\n", ir_print(lang_alloca));
     }
     assert(var_def);
 
@@ -2214,17 +2213,6 @@ static void load_function_def(Tast_function_def* old_fun_def) {
             ))),
             void_fn_rtn_type
         ));
-        //darr_append(&a_main, &new_fun_def->body->children, (ir_function_call_new(
-        //    (Name_darr) {0},
-        //    util_literal_name_new(),
-        //    
-        //    ir_function_name_new(
-        //        POS_BUILTIN,
-        //        ,
-        //        util_literal_name_new()
-        //    ),
-        //    rm_tuple_lang_type(lang_type_new_void(POS_BUILTIN), POS_BUILTIN) // TODO
-        //));
     }
 
     // TODO: remove at_fun_start variable

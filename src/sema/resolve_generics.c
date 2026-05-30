@@ -467,7 +467,6 @@ bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* resul
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.name, lang_type.pos)) {
-        todo();
         return false;
     }
     assert(name_base.scope_id != SCOPE_NOT);
@@ -589,7 +588,7 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
 
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, new_decl->name));
-    sym_tbl_update(SCOPE_BUILTIN/*TODO*/, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    sym_tbl_update(SCOPE_BUILTIN, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     unwrap(symbol_lookup(&result, new_decl->name));
 
 error:

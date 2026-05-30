@@ -1883,11 +1883,6 @@ STMT_STATUS try_set_def_types(Uast_def* uast) {
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
             if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
-                if (env.error_count < 1) {
-                    breakpoint();
-                    if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
-                    }
-                }
                 assert(env.error_count > 0);
                 return STMT_ERROR;
             }
@@ -5333,19 +5328,14 @@ static bool stmt_allowed_in_top_level(Uast_stmt* stmt) {
     unreachable("");
 }
 
-void scope_id_to_parent_dump(void);
-
 STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_top_level) {
     STMT_STATUS status = STMT_OK;
 
     bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
     check_env.expr_is_actually_used_as_expr = false;
 
-
-
     if (is_top_level && !stmt_allowed_in_top_level(stmt)) {
         // TODO: actually print the types of statements that are allowed?
-        log(LOG_DEBUG, FMT"\n", uast_print(UAST_LOG, stmt));
         msg(
             DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
             "this statement is not permitted in the top level\n"
@@ -5353,9 +5343,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
         status = STMT_ERROR;
         goto end;
     }
-
-    scope_id_to_parent_dump();
-    //todo();
 
     switch (stmt->type) {
         case UAST_EXPR: {

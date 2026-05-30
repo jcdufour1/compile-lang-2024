@@ -106,15 +106,13 @@ static void compile_file_to_ir(void) {
     add_builtin_defs();
 
     // generate ir from file(s)
-    // TODO: figure out why it does not work to put non-stderr file in log_internal_ex
-    FILE* output = fopen("output.txt", "w");
-    unwrap(output);
+    //FILE* output = fopen("output.txt", "w");
+    //unwrap(output);
     do_pass_status(parse, usymbol_log_level, stderr);
     do_pass(expand_using, usymbol_log_level, stderr);
-    do_pass(expand_def, usymbol_log_level, output);
+    do_pass(expand_def, usymbol_log_level, stderr);
     do_pass(try_set_types, symbol_log_level, stderr);
-    fclose(output);
-    //todo();
+    //fclose(output);
     do_pass(add_load_and_store, ir_log_level, stderr);
 
     // ir passes
