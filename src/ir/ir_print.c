@@ -532,6 +532,22 @@ Strv ir_variable_def_print_internal(const Ir_variable_def* def, Indent indent) {
     return string_to_strv(buf);
 }
 
+Strv ir_global_variable_def_print_internal(const Ir_global_variable_def* def, Indent indent) {
+    String buf = {0};
+
+    bool old_is_printing = env.is_printing;
+    env.is_printing = true;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "global_variable_def\n");
+    indent += INDENT_WIDTH;
+
+    string_extend_f_indent(&a_temp, &buf, indent, "name: "FMT"\n", name_print(NAME_LOG, def->name, NAME_FULL));
+    string_extend_f_indent(&a_temp, &buf, indent, "lang_type: "FMT"\n", ir_lang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
+
+    env.is_printing = old_is_printing;
+    return string_to_strv(buf);
+}
+
 Strv ir_struct_memb_def_print_internal(const Ir_struct_memb_def* def, Indent indent) {
     String buf = {0};
 
@@ -586,6 +602,9 @@ Strv ir_def_print_internal(const Ir_def* def, Indent indent) {
             break;
         case IR_LITERAL_DEF:
             result = ir_literal_def_print_internal(ir_literal_def_const_unwrap(def), indent);
+            break;
+        case IR_GLOBAL_VARIABLE_DEF:
+            result = ir_global_variable_def_print_internal(ir_global_variable_def_const_unwrap(def), indent);
             break;
         default:
             unreachable("");

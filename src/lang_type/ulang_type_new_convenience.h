@@ -19,7 +19,7 @@ static inline Ulang_type ulang_type_new_int_x(Pos pos, Strv base) {
 
     return ulang_type_regular_const_wrap(ulang_type_regular_new(
         pos,
-        uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+        uname_new(MOD_ALIAS_BUILTIN, base, (Ulang_type_darr) {0}, SCOPE_BUILTIN),
         0
     ));
 }

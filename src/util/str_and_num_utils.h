@@ -16,23 +16,23 @@ Name util_literal_name_new_prefix_scope_internal(
 );
 
 #define util_literal_name_new_prefix(debug_prefix) \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_TOP_LEVEL)
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_BUILTIN)
 
 #define util_literal_ir_name_new_prefix(debug_prefix) \
-    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_TOP_LEVEL)
+    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, SCOPE_BUILTIN)
 
 #define util_literal_name_new_prefix_scope(debug_prefix, scope_id) \
     util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, debug_prefix, scope_id)
 
 #define util_literal_name_new() \
-    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
+    util_literal_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_BUILTIN)
 
 static inline Name util_literal_name_new_poison(void) {
-    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+    return name_new(MOD_PATH_BUILTIN, sv("poison"), (Ulang_type_darr) {0}, SCOPE_BUILTIN);
 }
 
 #define util_literal_ir_name_new(ir_name_tables) \
-    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_TOP_LEVEL)
+    util_literal_ir_name_new_prefix_scope_internal(__FILE__, __LINE__, sv(""), SCOPE_BUILTIN)
 
 bool try_strv_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Strv strv);
 

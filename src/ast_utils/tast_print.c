@@ -303,8 +303,9 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     string_extend_size_t(&a_temp, &buf, scope_get_parent_tbl_lookup(block->scope_id));
     string_extend_cstr(&a_temp, &buf, "\n");
 
-    string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
-    usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
+    // TODO: make a flag to print below?:
+    //string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
+    //usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
     symbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);

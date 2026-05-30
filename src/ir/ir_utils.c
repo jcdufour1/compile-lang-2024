@@ -47,6 +47,8 @@ Ir_lang_type ir_def_get_lang_type(const Ir_def* def) {
     switch (def->type) {
         case IR_FUNCTION_DEF:
             unreachable("");
+        case IR_GLOBAL_VARIABLE_DEF:
+            return ir_global_variable_def_const_unwrap(def)->lang_type;
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->lang_type;
         case IR_FUNCTION_DECL:
@@ -160,6 +162,8 @@ Name ir_def_get_name(LANG_TYPE_MODE mode, const Ir_def* def) {
             unwrap(ir_lang_type_get_name(&result, mode, ir_primitive_def_const_unwrap(def)->lang_type));
             return result;
         }
+        case IR_GLOBAL_VARIABLE_DEF:
+            return ir_global_variable_def_const_unwrap(def)->name;
         case IR_VARIABLE_DEF:
             return ir_variable_def_const_unwrap(def)->name_self;
         case IR_STRUCT_DEF:
@@ -203,7 +207,7 @@ Name ir_get_name(LANG_TYPE_MODE mode, const Ir* ir) {
         case IR_ARRAY_ACCESS:
             return ir_array_access_const_unwrap(ir)->name_self;
         case IR_IMPORT_PATH:
-            return name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+            return name_new(MOD_PATH_OF_MOD_PATHS, ir_import_path_const_unwrap(ir)->mod_path, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
         case IR_STRUCT_MEMB_DEF:
             return ir_struct_memb_def_const_unwrap(ir)->name_self;
         case IR_REMOVED:

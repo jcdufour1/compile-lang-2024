@@ -35,7 +35,7 @@ Uname name_to_uname(Name name) {
         return uname_new_internal(MOD_ALIAS_BUILTIN, name.base, name.gen_args, name.scope_id);
     }
 
-    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL);
+    Name alias_name = name_new(MOD_PATH_AUX_ALIASES, name.mod_path, (Ulang_type_darr) {0}, SCOPE_BUILTIN);
 #   ifndef NDEBUG
         // TODO: uncomment this code (before uncommenting code, it may be nessessary to fix issue of runtime not being autoimported when prelude is disabled)
         //Uast_def* dummy = NULL;
@@ -233,7 +233,7 @@ void extend_name_log_internal(bool is_msg, String* buf, Name name) {
                         }
                     }
 
-                    if (curr_scope == SCOPE_TOP_LEVEL) {
+                    if (curr_scope == SCOPE_BUILTIN) {
                         break;
                     }
                     curr_scope = scope_get_parent_tbl_lookup(curr_scope);

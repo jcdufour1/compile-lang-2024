@@ -212,6 +212,8 @@ static void ir_def_graphvis_internal(String* buf, const Ir_def* def) {
         case IR_FUNCTION_DEF:
             ir_function_def_graphvis_internal(buf, ir_function_def_const_unwrap(def));
             return;
+        case IR_GLOBAL_VARIABLE_DEF:
+            todo();
         case IR_VARIABLE_DEF:
             ir_variable_def_graphvis_internal(buf, ir_variable_def_const_unwrap(def));
             return;
@@ -502,7 +504,7 @@ Strv ir_graphvis(const Ir_block* block) {
     string_extend_cstr(&a_temp, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_temp, &buf, "edge [color=\"white\", fontcolor=\"white\"];\n");
 
-    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make ir_add_ex)

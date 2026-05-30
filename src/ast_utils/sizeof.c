@@ -301,9 +301,11 @@ static Bytes ir_sizeof_expr(const Ir_expr* expr) {
 static Bytes ir_sizeof_def(const Ir_def* def) {
     (void) env;
     switch (def->type) {
-        case TAST_VARIABLE_DEF:
+        case IR_PRIMITIVE_DEF:
             return sizeof_ir_lang_type(ir_variable_def_const_unwrap(def)->lang_type);
         case IR_FUNCTION_DEF:
+            fallthrough;
+        case IR_GLOBAL_VARIABLE_DEF:
             fallthrough;
         case IR_VARIABLE_DEF:
             fallthrough;

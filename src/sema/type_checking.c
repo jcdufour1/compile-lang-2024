@@ -1574,6 +1574,7 @@ bool try_set_array_literal_types(
             lit->pos,
             gen_arg,
             false,
+            false,
             util_literal_name_new(),
             (Attrs) {0} /* TODO */
         ));
@@ -2132,7 +2133,7 @@ bool try_set_function_call_builtin_types(
             util_literal_name_new(),
             lang_type_struct_const_wrap(lang_type_struct_new(
                 array.pos, 
-                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_TOP_LEVEL),
+                name_new(MOD_PATH_RUNTIME, sv("Slice"), new_gen_args, SCOPE_BUILTIN),
                 0
             ))
         ));
@@ -3893,7 +3894,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_BUILTIN
             ))),
             false
         );
@@ -3932,7 +3933,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("static_array_slice"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_BUILTIN
             ))),
             false
         );
@@ -3947,7 +3948,7 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
                 MOD_PATH_RUNTIME,
                 sv("slice_at_ref"),
                 gen_args,
-                SCOPE_TOP_LEVEL
+                SCOPE_BUILTIN
             ))),
             false
         );
@@ -4049,8 +4050,15 @@ bool try_set_label_def_types(Uast_label* tast) {
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
     Strv old_mod_path_curr_file = env.mod_path_curr_file;
     env.mod_path_curr_file = tast->mod_path;
+
+    Scope_id old_scope_curr_mod_path = check_env.scope_top_level_curr_mod;
+    check_env.scope_top_level_curr_mod = tast->block->scope_id;
+
     bool status = try_set_block_types(new_tast, tast->block, false, true);
+
     env.mod_path_curr_file = old_mod_path_curr_file;
+    check_env.scope_top_level_curr_mod = old_scope_curr_mod_path;
+
     return status;
 }
 
@@ -4073,7 +4081,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name, uast->attrs);
+    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, check_env.scope_top_level_curr_mod, uast->name, uast->attrs);
     if (add_to_sym_tbl && !check_env.is_in_struct_base_def) {
         symbol_add(tast_variable_def_wrap(*new_tast));
     }
@@ -4345,7 +4353,7 @@ static bool try_set_orelse_lang_type_is(Lang_type lang_type, Strv base) {
         
     return name_is_equal(
         enum_name,
-        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL)
+        name_new(MOD_PATH_RUNTIME, base, (Ulang_type_darr) {0}, SCOPE_BUILTIN)
     );
 }
 
@@ -4428,7 +4436,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
                     MOD_PATH_RUNTIME,
                     sv("error"),
                     (Ulang_type_darr) {0},
-                    SCOPE_TOP_LEVEL
+                    SCOPE_BUILTIN
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->error_symbol->pos))
             )),
@@ -4471,7 +4479,7 @@ bool try_set_orelse(Tast_expr** new_tast, Uast_orelse* orelse) {
                     MOD_PATH_RUNTIME,
                     some_sv,
                     (Ulang_type_darr) {0},
-                    SCOPE_TOP_LEVEL
+                    SCOPE_BUILTIN
                 )),
                 uast_unknown_wrap(uast_unknown_new(orelse->pos))
             )),
@@ -4542,7 +4550,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
                 MOD_PATH_RUNTIME,
                 sv("none"),
                 (Ulang_type_darr) {0},
-                SCOPE_TOP_LEVEL
+                SCOPE_BUILTIN
             )),
             uast_unknown_wrap(uast_unknown_new(mark->pos))
         ));
@@ -4561,7 +4569,7 @@ bool try_set_question_mark(Tast_expr** new_tast, Uast_question_mark* mark) {
                     MOD_PATH_RUNTIME,
                     sv("error"),
                     (Ulang_type_darr) {0},
-                    SCOPE_TOP_LEVEL
+                    SCOPE_BUILTIN
                 )),
                 uast_unknown_wrap(uast_unknown_new(mark->pos))
             )),
@@ -4836,6 +4844,7 @@ bool try_set_switch_types(Tast_block** new_tast, const Uast_switch* lang_switch)
         oper_var->pos,
         tast_expr_get_lang_type(new_operand_typed),
         false,
+        false,
         oper_var->name,
         oper_var->attrs
     )));
@@ -5025,97 +5034,8 @@ error:
 }
 
 bool try_set_using_types(const Uast_using* using) {
-    bool status = true;
-    Uast_def* def = NULL;
-    if (!usymbol_lookup(&def, using->sym_name)) {
-        msg_undefined_symbol(using->sym_name, using->pos);
-        return false;
-    }
-
-    if (def->type == UAST_VARIABLE_DEF) {
-        Uast_variable_def* var_def = uast_variable_def_unwrap(def);
-        Name lang_type_name = {0};
-        Uname var_def_type_name = {0};
-        if (!ulang_type_get_uname(&var_def_type_name, var_def->lang_type)) {
-            msg_todo("", var_def->pos);
-            msg_todo("", using->pos);
-            return false;
-        }
-        if (!name_from_uname(
-            &lang_type_name,
-            var_def_type_name,
-            ulang_type_get_pos(var_def->lang_type)
-        )) {
-            return false;
-        }
-        Uast_def* struct_def_ = NULL;
-        unwrap(usymbol_lookup(&struct_def_, lang_type_name));
-        Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
-        for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-            Uast_variable_def* curr = darr_at(struct_def->base.members, idx);
-            Name alias_name = using->sym_name;
-            alias_name.mod_path = using->mod_path_to_put_defs;
-            alias_name.base = curr->name.base;
-            Uast_lang_def* lang_def = uast_lang_def_new(
-                using->pos,
-                alias_name,
-                uast_member_access_wrap(uast_member_access_new(
-                    curr->pos,
-                    uast_symbol_new(curr->pos, curr->name),
-                    uast_symbol_wrap(uast_symbol_new(using->pos, using->sym_name))
-                )),
-                true
-            );
-            if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-                msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                status = false;
-            }
-        }
-        return true;
-    } else if (def->type == UAST_MOD_ALIAS) {
-        Strv mod_path = uast_mod_alias_unwrap(def)->mod_path;
-        bool is_builtin = strv_is_equal(MOD_PATH_BUILTIN, using->sym_name.mod_path);
-        // TODO: this linear search searches through all mod_paths, which may be slow for large projects.
-        //   eventually, it may be a good idea to speed this up 
-        //   (eg. by keeping array of symbols of top level of each module)
-
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
-        Uast_def* curr = NULL;
-        while (usym_tbl_iter_next(&curr, &iter)) {
-            Name curr_name = uast_def_get_name(curr);
-            if (strv_is_equal(curr_name.mod_path, mod_path)) {
-                Name alias_name = using->sym_name;
-                alias_name.mod_path = using->mod_path_to_put_defs;
-                alias_name.base = curr_name.base;
-                alias_name.scope_id = curr_name.scope_id;
-                Uast_lang_def* lang_def = uast_lang_def_new(
-                    using->pos,
-                    alias_name,
-                    uast_symbol_wrap(uast_symbol_new(uast_def_get_pos(curr), curr_name)),
-                    true
-                );
-                if (!usymbol_add(uast_lang_def_wrap(lang_def))) {
-                    Uast_def* prev_def = NULL;
-                    unwrap(usymbol_lookup(&prev_def, lang_def->alias_name));
-                    if (prev_def->type != UAST_LANG_DEF || !uast_lang_def_unwrap(prev_def)->is_from_using) {
-                        if (!is_builtin) {
-                            msg_redefinition_of_symbol(uast_lang_def_wrap(lang_def));
-                            status = false;
-                        }
-                    }
-                }
-            }
-        }
-        return status;
-    } else {
-        msg(
-            DIAG_USING_ON_NON_STRUCT_OR_MOD_ALIAS,
-            using->pos,
-            "symbol after `using` must be struct or module alias\n"
-        );
-        return false;
-    }
-    unreachable("");
+    (void) using;
+    unreachable("using should have been removed in the expand_using pass");
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?
@@ -5125,7 +5045,7 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
         "redefinition of symbol "FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def), NAME_FULL)
     );
 
-    Uast_def* original_def;
+    Uast_def* original_def = NULL;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         DIAG_NOTE, uast_def_get_pos(original_def),
@@ -5218,7 +5138,11 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         switch (try_set_stmt_types(&new_stmt, curr_tast, is_top_level)) {
             case STMT_OK:
                 unwrap(curr_tast);
-                darr_append(&a_main, &new_tasts, new_stmt);
+                if (is_top_level) {
+                    darr_append(&a_main, &check_env.initialize_globals_stmts, new_stmt);
+                } else {
+                    darr_append(&a_main, &new_tasts, new_stmt);
+                }
                 break;
             case STMT_NO_STMT:
                 break;
@@ -5266,7 +5190,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             unwrap(rtn_statement->pos.line != 0);
 
             Tast_stmt* new_rtn_statement = NULL;
-            switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
+            assert(!is_top_level);
+            switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), is_top_level)) {
                 case STMT_ERROR:
                     status = false;
                     goto error;
@@ -5316,10 +5241,73 @@ error:
     return status;
 }
 
-static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
-    switch (type) {
-        case UAST_EXPR:
+static bool operator_allowed_in_top_level(Uast_operator* oper) {
+    if (oper->type != UAST_BINARY) {
+        return false;
+    }
+    Uast_binary* bin = uast_binary_unwrap(oper);
+
+    if (bin->token_type != BINARY_SINGLE_EQUAL) {
+        return false;
+    }
+    // TODO: this should only return true if this binary defines a new variable
+    return bin->lhs->type == UAST_SYMBOL;
+}
+
+static bool expr_allowed_in_top_level(Uast_expr* expr) {
+    switch (expr->type) {
+        case UAST_IF_ELSE_CHAIN:
             return false;
+        case UAST_BLOCK:
+            return false;
+        case UAST_SWITCH:
+            return false;
+        case UAST_UNKNOWN:
+            return false;
+        case UAST_OPERATOR:
+            return operator_allowed_in_top_level(uast_operator_unwrap(expr));
+        case UAST_SYMBOL:
+            return false;
+        case UAST_MEMBER_ACCESS:
+            return false;
+        case UAST_INDEX:
+            return false;
+        case UAST_LITERAL:
+            return false;
+        case UAST_FUNCTION_CALL:
+            return false;
+        case UAST_STRUCT_LITERAL:
+            return false;
+        case UAST_ARRAY_LITERAL:
+            return false;
+        case UAST_TUPLE:
+            return false;
+        case UAST_DIRECTIVE:
+            return false;
+        case UAST_ENUM_ACCESS:
+            return false;
+        case UAST_ENUM_GET_TAG:
+            return false;
+        case UAST_ORELSE:
+            return false;
+        case UAST_FN:
+            return false;
+        case UAST_QUESTION_MARK:
+            return false;
+        case UAST_UNDERSCORE:
+            return false;
+        case UAST_EXPR_REMOVED:
+            return false;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static bool stmt_allowed_in_top_level(Uast_stmt* stmt) {
+    switch (stmt->type) {
+        case UAST_EXPR:
+            return expr_allowed_in_top_level(uast_expr_unwrap(stmt));
         case UAST_DEF:
             return true;
         case UAST_FOR_WITH_COND:
@@ -5346,7 +5334,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     bool old_expr_is_actually_used_as_expr = check_env.expr_is_actually_used_as_expr;
     check_env.expr_is_actually_used_as_expr = false;
 
-    if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
+    if (is_top_level && !stmt_allowed_in_top_level(stmt)) {
         // TODO: actually print the types of statements that are allowed?
         msg(
             DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
@@ -5440,7 +5428,7 @@ void try_set_types(void) {
 
     // TODO: this def iteration should be abstracted to a separate function? (try_set_block_types has similar)
     {
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             // TODO: make switch for this if for exhausive checking
@@ -5464,7 +5452,7 @@ void try_set_types(void) {
     }
 
     Uast_def* main_fn_ = NULL;
-    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL))) {
+    if (usymbol_lookup(&main_fn_, name_new(env.mod_path_main_fn, sv("main"), (Ulang_type_darr) {0}, env.name_main_fn.scope_id))) {
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             msg_todo(
                 "actual error message for symbol that is named `main` but is not a function",
@@ -5497,5 +5485,29 @@ after_main:
         check_struct_for_rec(curr_def);
     }
 
-    return;
+    if (check_env.initialize_globals_stmts.info.count > 0) {
+        Tast_function_decl* initialize_decl = tast_function_decl_new(
+            POS_BUILTIN,
+            tast_function_params_new(POS_BUILTIN, (Tast_variable_def_darr) {0}),
+            lang_type_new_void(POS_BUILTIN),
+            name_new(MOD_PATH_BUILTIN, sv("own_initialize_globals"), (Ulang_type_darr) {0}, SCOPE_BUILTIN)
+        );
+        unwrap(symbol_add(tast_function_def_wrap(tast_function_def_new(
+            POS_BUILTIN,
+            initialize_decl,
+            tast_block_new(
+                POS_BUILTIN,
+                check_env.initialize_globals_stmts,
+                POS_BUILTIN,
+                lang_type_new_void(POS_BUILTIN),
+                symbol_collection_new(SCOPE_BUILTIN, util_literal_name_new()),
+                false,
+                false,
+                false,
+                true
+            )
+        ))));
+        env.do_initialize_globals = true;
+    }
+
 }

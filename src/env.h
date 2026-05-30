@@ -36,6 +36,7 @@ typedef struct Env_ {
     Usymbol_table struct_like_tbl;
 
     Strv mod_path_main_fn;
+    Uname name_main_fn;
 
     Ulang_type_darr gen_args_char;
 
@@ -45,6 +46,8 @@ typedef struct Env_ {
     bool supress_type_inference_failures;
 
     bool is_printing;
+
+    bool do_initialize_globals;
 
     Strv mod_path_curr_file;
 } Env;

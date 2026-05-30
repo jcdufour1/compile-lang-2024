@@ -24,6 +24,13 @@ static Ir* rm_void_function_def(Ir_function_def* def) {
     return ir_def_wrap(ir_function_def_wrap(def));
 }
 
+static Ir* rm_void_global_variable_def(Ir_global_variable_def* def) {
+    if (def->lang_type.type == IR_LANG_TYPE_VOID) {
+        return ir_removed_wrap(ir_removed_new(def->pos));
+    }
+    return ir_def_wrap(ir_global_variable_def_wrap(def));
+}
+
 static Ir* rm_void_variable_def(Ir_variable_def* def) {
     if (def->lang_type.type == IR_LANG_TYPE_VOID) {
         return ir_removed_wrap(ir_removed_new(def->pos));
@@ -47,7 +54,7 @@ static Ir* rm_void_label(Ir_label* label, bool is_inline) {
 
     if (!symbol_add(tast_label_wrap(tast_label_new(
         label->pos,
-        name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_TOP_LEVEL),
+        name_new(MOD_PATH_LOAD_SCOPES, string_to_strv(buf), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
         block_scope
     )))) {
         return ir_removed_wrap(ir_removed_new(label->pos));
@@ -62,6 +69,8 @@ static Ir* rm_void_def(Ir_def* def, bool is_inline) {
             return rm_void_function_def(ir_function_def_unwrap(def));
         case IR_VARIABLE_DEF:
             return rm_void_variable_def(ir_variable_def_unwrap(def));
+        case IR_GLOBAL_VARIABLE_DEF:
+            return rm_void_global_variable_def(ir_global_variable_def_unwrap(def));
         case IR_STRUCT_DEF:
             return ir_def_wrap(def);
         case IR_PRIMITIVE_DEF:
@@ -165,7 +174,7 @@ static Ir* rm_void_block(Ir_block* block) {
 }
 
 void remove_void_assigns(void) {
-    Ir_iter iter = ir_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Ir_iter iter = ir_tbl_iter_new(SCOPE_BUILTIN);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         rm_void_ir(curr, false);

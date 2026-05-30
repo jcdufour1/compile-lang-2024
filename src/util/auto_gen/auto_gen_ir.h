@@ -168,6 +168,16 @@ static Uast_type ir_gen_variable_def(void) {
     return def;
 }
 
+static Uast_type ir_gen_global_variable_def(void) {
+    Uast_type def = {.name = uast_name_new("def", "global_variable_def", false, "ir")};
+
+    append_member(&def.members, "Ir_lang_type", "lang_type");
+    append_member(&def.members, "Name", "name");
+    append_member(&def.members, "Attrs", "attrs");
+
+    return def;
+}
+
 static Uast_type ir_gen_primitive_def(void) {
     Uast_type def = {.name = uast_name_new("def", "primitive_def", false, "ir")};
 
@@ -217,6 +227,7 @@ static Uast_type ir_gen_def(void) {
 
     darr_append(&a_gen, &def.sub_types, ir_gen_function_def());
     darr_append(&a_gen, &def.sub_types, ir_gen_variable_def());
+    darr_append(&a_gen, &def.sub_types, ir_gen_global_variable_def());
     darr_append(&a_gen, &def.sub_types, ir_gen_struct_def());
     darr_append(&a_gen, &def.sub_types, ir_gen_primitive_def());
     darr_append(&a_gen, &def.sub_types, ir_gen_function_decl());

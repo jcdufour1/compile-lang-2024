@@ -243,8 +243,8 @@ static void load_block_stmts(
         //         load_label(new_block, tast_label_new(pos, util_literal_name_new(), new_block->scope_id));
         //     }
         //
-        unwrap(new_block->children.info.count > 0);
-        unwrap(ir_is_label(darr_at(new_block->children, 0)));
+        assert(new_block->children.info.count > 0);
+        assert(ir_is_label(darr_at(new_block->children, 0)));
     }
 
     // TODO: only use util_literal_name_new_prefix when the result is actually used
@@ -280,7 +280,7 @@ static void load_block_stmts(
             unreachable("");
     }
 
-    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_rtning_name, (Attrs) {0} /* TODO */);
+    Tast_variable_def* is_rtning = tast_variable_def_new(pos, lang_type_new_u1(pos), false, false, is_rtning_name, (Attrs) {0} /* TODO */);
     Tast_assignment* is_rtn_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -395,7 +395,7 @@ static void load_block_stmts(
 
     Tast_variable_def* break_expr = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
-        break_expr = tast_variable_def_new(pos, lang_type, false, *yield_dest_name, (Attrs) {0} /* TODO */);
+        break_expr = tast_variable_def_new(pos, lang_type, false, false, *yield_dest_name, (Attrs) {0} /* TODO */);
         assert(break_expr->name.base.count > 0);
     } else {
         assert(yield_dest_name->base.count < 1);
@@ -405,7 +405,7 @@ static void load_block_stmts(
     Tast_assignment* is_yield_assign = NULL;
     if (block_has_defer) {
         // TODO: also remvoe and is_yield_assign is_yielding when this block and all child blocks have no yield
-        is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_yielding_name, (Attrs) {0} /* TODO */);
+        is_yielding = tast_variable_def_new(pos, lang_type_new_u1(pos), false, false, is_yielding_name, (Attrs) {0} /* TODO */);
         is_yield_assign = tast_assignment_new(
             pos,
             tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -420,7 +420,7 @@ static void load_block_stmts(
     Tast_assignment* is_cont2_assign = NULL;
     if (block_has_defer) {
         // TODO: also remvoe is_cont2ing and is_cont2_assign when this block and all child blocks have no continue
-        is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, is_cont2ing_name, (Attrs) {0} /* TODO */);
+        is_cont2ing = tast_variable_def_new(pos, lang_type_new_u1(pos), false, false, is_cont2ing_name, (Attrs) {0} /* TODO */);
         is_cont2_assign = tast_assignment_new(
             pos,
             tast_symbol_wrap(tast_symbol_new(pos, ((Sym_typed_base) {
@@ -657,6 +657,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
             lang_type_pos,
             darr_at(lang_type.lang_types, idx),
             false,
+            false,
             util_literal_name_new_prefix(sv("rm_tuple_lang_type_tuple")),
             (Attrs) {0} /* TODO */
         );
@@ -725,6 +726,7 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
         lang_type_pos,
         tag_lang_type,
         false,
+        false,
         util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_tag")),
         (Attrs) {0} /* TODO */
     );
@@ -739,6 +741,7 @@ static Ir_lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_t
             item_type_def->base.name,
             0
         )),
+        false,
         false,
         util_literal_name_new_prefix(sv("rm_tuple_lang_type_enum_item")),
         (Attrs) {0} /* TODO */
@@ -1070,6 +1073,7 @@ static Ir_function_params* do_function_def_alloca(
             old_params->pos,
             rtn_lang_type,
             false,
+            false,
             util_literal_name_new(),
             (Attrs) {0} /* TODO */
         );
@@ -1137,7 +1141,7 @@ static Name load_function_call(Ir_block* new_block, Tast_function_call* old_call
     Ir_lang_type fun_lang_type = rm_tuple_lang_type(old_call->lang_type, old_call->pos);
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         def_name = util_literal_name_new();
-        Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name, (Attrs) {0} /* TODO */);
+        Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, false, def_name, (Attrs) {0} /* TODO */);
         unwrap(sym_tbl_add(tast_variable_def_wrap(def)));
         
         darr_append(&a_main, &new_args, def_name);
@@ -1186,6 +1190,7 @@ static Name load_ptr_function_call(Ir_block* new_block, Tast_function_call* old_
         old_call->pos,
         old_call->lang_type,
         false,
+        false,
         util_literal_name_new(),
         (Attrs) {0} /* TODO */
     );
@@ -1207,6 +1212,7 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         old_lit->pos,
         old_lit->lang_type,
         false,
+        false,
         old_lit->name,
         (Attrs) {0} /* TODO */
     );
@@ -1222,6 +1228,7 @@ static Tast_variable_def* load_struct_literal_internal_array(Ir_block* new_block
         Tast_variable_def* index_var = tast_variable_def_new(
             tast_expr_get_pos(darr_at(old_lit->members, idx)), 
             lang_type_new_usize(lang_type_get_pos(old_lit->lang_type)),
+            false,
             false,
             util_literal_name_new(),
             (Attrs) {0} /* TODO */
@@ -1268,6 +1275,7 @@ static Tast_variable_def* load_struct_literal_internal(Ir_block* new_block, Tast
     Tast_variable_def* new_var = tast_variable_def_new(
         old_lit->pos,
         old_lit->lang_type,
+        false,
         false,
         util_literal_name_new(),
         (Attrs) {0} /* TODO */
@@ -1345,7 +1353,7 @@ static Name load_string(Ir_block* new_block, Tast_string* old_lit) {
         util_literal_name_new(),
         lang_type_struct_const_wrap(lang_type_struct_new(
             old_lit->pos, 
-            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_TOP_LEVEL),
+            name_new(MOD_PATH_RUNTIME, sv("Slice"), ulang_type_gen_args_char_new(), SCOPE_BUILTIN),
             0
         ))
     ));
@@ -1451,6 +1459,7 @@ static Name load_raw_union_lit(Ir_block* new_block, Tast_raw_union_lit* old_lit)
         union_def->pos,
         old_lit->lang_type,
         false,
+        false,
         util_literal_name_new(),
         (Attrs) {0} /* TODO */
     );
@@ -1498,17 +1507,21 @@ static Name load_literal(Ir_block* new_block, Tast_literal* old_lit) {
 }
 
 static Name load_ptr_symbol_internal(const char* file, int line, Ir_block* new_block, Tast_symbol* old_sym) {
-    Tast_def* var_def_ = NULL;
-    unwrap(symbol_lookup(&var_def_, old_sym->base.name));
-    Ir_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
+    Tast_def* old_var_def_ = NULL;
+    unwrap(symbol_lookup(&old_var_def_, old_sym->base.name));
+    Tast_variable_def* old_var_def = tast_variable_def_unwrap(old_var_def_);
+    Ir_variable_def* var_def = load_variable_def_clone(old_var_def);
+
     Ir* lang_alloca = NULL;
     if (!ir_lookup(&lang_alloca, var_def->name_corr_param)) {
-        load_variable_def_internal(file, line, new_block, tast_variable_def_unwrap(var_def_));
+        load_variable_def_internal(file, line, new_block, old_var_def);
         unwrap(ir_lookup(&lang_alloca, var_def->name_corr_param));
     }
-    unwrap(var_def);
-    if (old_sym->base.lang_type.type != LANG_TYPE_VOID) {
-        unwrap(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca))) > 0);
+    assert(var_def);
+
+    if (!old_var_def->is_global && old_sym->base.lang_type.type != LANG_TYPE_VOID) {
+        assert(lang_alloca->type == IR_ALLOCA);
+        assert(ir_lang_type_get_pointer_depth(lang_type_from_ir_name(ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca))) > 0);
     }
 
     return ir_get_name(LANG_TYPE_MODE_LOG, lang_alloca);
@@ -1605,6 +1618,7 @@ static Name load_binary_short_circuit(Ir_block* new_block, Tast_binary* old_bin)
     Tast_variable_def* new_var = tast_variable_def_new(
         old_bin->pos,
         lang_type_new_u1(old_bin->pos),
+        false,
         false,
         util_literal_name_new(),
         (Attrs) {0} /* TODO */
@@ -2178,9 +2192,34 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         util_literal_name_new(),
         scope_to_name_tbl_lookup(new_fun_def->body->scope_id)
     ));
+
+    assert(new_fun_def->body->children.info.count < 2 && "call to initialize globals should be the first block statement (except label)");
+    Name name_main_fn = {0};
+    unwrap(name_from_uname(&name_main_fn, env.name_main_fn, POS_BUILTIN/*TODO*/));
+    if (env.do_initialize_globals && name_is_equal(old_fun_def->decl->name, name_main_fn)) {
+        Lang_type void_fn_rtn_type = lang_type_new_void(POS_BUILTIN);
+        load_function_call(new_fun_def->body, tast_function_call_new(
+            POS_BUILTIN,
+            (Tast_expr_darr) {0},
+            tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
+                POS_BUILTIN,
+                name_new(MOD_PATH_BUILTIN, sv("own_initialize_globals"), (Ulang_type_darr) {0}, SCOPE_BUILTIN),
+                lang_type_fn_const_wrap(lang_type_fn_new(
+                    POS_BUILTIN,
+                    (Lang_type_tuple) {0},
+                    arena_dup(&a_main, &void_fn_rtn_type),
+                    0
+                ))
+            ))),
+            void_fn_rtn_type
+        ));
+    }
+
+    // TODO: remove at_fun_start variable
     Tast_variable_def* var_def_thing = tast_variable_def_new(
         new_fun_def->body->pos,
         lang_type_new_u1(new_fun_def->body->pos),
+        false,
         false,
         name_new(
             MOD_PATH_BUILTIN,
@@ -2205,6 +2244,7 @@ static void load_function_def(Tast_function_def* old_fun_def) {
         rtn_def = tast_variable_def_new(
             pos,
             old_fun_def->decl->return_type,
+            false,
             false,
             util_literal_name_new_prefix(sv("rtn_val")),
             (Attrs) {0} /* TODO */
@@ -2373,6 +2413,17 @@ static Name load_assignment_internal(const char* file, int line, Ir_block* new_b
 }
 
 static void load_variable_def_internal(const char* file, int line, Ir_block* new_block, Tast_variable_def* old_var_def) {
+    if (old_var_def->is_global) {
+        Ir_global_variable_def* new_def = ir_global_variable_def_new(
+            old_var_def->pos,
+            rm_tuple_lang_type(old_var_def->lang_type, old_var_def->pos),
+            old_var_def->name,
+            old_var_def->attrs
+        );
+        unwrap(ir_add(ir_def_wrap(ir_global_variable_def_wrap(new_def))));
+        return;
+    }
+
     assert(old_var_def);
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, old_var_def->name) && "this variable should have been added to the symbol table already");
@@ -2388,7 +2439,11 @@ static void load_variable_def_internal(const char* file, int line, Ir_block* new
             old_var_def->lang_type.type == LANG_TYPE_RAW_UNION
         ));
         // TODO: this insert takes O(n) time. A more efficient solution should be used
-        darr_insert(&a_main, &new_block->children, 1, lang_alloca);
+        if (new_block->children.info.count < 1) {
+            darr_append(&a_main, &new_block->children, lang_alloca);
+        } else {
+            darr_insert(&a_main, &new_block->children, 1, lang_alloca);
+        }
     }
 
     darr_append(&a_main, &new_block->children, ir_def_wrap(ir_variable_def_wrap(new_var_def)));
@@ -2514,6 +2569,7 @@ static Name if_else_chain_to_branch(Ir_block** new_block, Tast_if_else_chain* if
         yield_dest = tast_variable_def_new(
             (*new_block)->pos,
             tast_if_else_chain_get_lang_type(if_else),
+            false,
             false,
             util_literal_name_new_prefix(sv("yield_dest")),
             (Attrs) {0} /* TODO */
@@ -3329,6 +3385,7 @@ static Ir_block* load_block(
         old_block->pos,
         lang_type,
         false,
+        false,
         util_literal_name_new_prefix(sv("yield_dest")),
         (Attrs) {0} /* TODO */
     );
@@ -3376,7 +3433,7 @@ static Ir_block* load_block(
 void add_load_and_store(void) {
     assert(defered_collections.coll_stack.info.count == 0);
 
-    Symbol_iter iter = sym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Symbol_iter iter = sym_tbl_iter_new(SCOPE_BUILTIN);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         load_def_out_of_line(curr);

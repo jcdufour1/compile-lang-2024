@@ -78,7 +78,7 @@ static void expand_using_using(Uast_using* using) {
         //   eventually, it may be a good idea to speed this up 
         //   (eg. by keeping (array of symbols of top level) of each module)
 
-        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+        Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN/*TODO*/);
         Uast_def* curr = NULL;
         while (usym_tbl_iter_next(&curr, &iter)) {
             Name curr_name = uast_def_get_name(curr);
@@ -207,7 +207,7 @@ static void expand_using_def(Uast_def* def) {
 }
 
 void expand_using(void) {
-    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         expand_using_def(curr);

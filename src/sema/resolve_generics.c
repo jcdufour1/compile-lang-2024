@@ -297,7 +297,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
         old_base.name.mod_path,
         old_base.name.base,
         ulang_type_regular_const_unwrap(lang_type).name.gen_args,
-        SCOPE_TOP_LEVEL /* TODO */
+        SCOPE_BUILTIN /* TODO */
     );
 
     if (!struct_like_tbl_lookup(after_res, new_name)) {
@@ -588,7 +588,7 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
 
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, new_decl->name));
-    sym_tbl_update(SCOPE_TOP_LEVEL, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    sym_tbl_update(SCOPE_BUILTIN, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     unwrap(symbol_lookup(&result, new_decl->name));
 
 error:

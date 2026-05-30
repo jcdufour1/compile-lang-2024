@@ -968,7 +968,7 @@ static EXPAND_EXPR_STATUS expand_def_member_access(
     sym->name.gen_args = old_gen_args;
 
     if (callee_def->type == UAST_MOD_ALIAS) {
-        Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_TOP_LEVEL);
+        Uname uname = uname_new(sym->name, access->member_name->name.base, access->member_name->name.gen_args, SCOPE_BUILTIN);
         Name name = {0};
         if (!name_from_uname(&name, uname, access->pos)) {
             msg_todo("error message for this situation", access->pos);
@@ -1544,7 +1544,7 @@ static bool expand_def_block(Uast_block* block) {
 }
 
 void expand_def(void) {
-    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_TOP_LEVEL);
+    Usymbol_iter iter = usym_tbl_iter_new(SCOPE_BUILTIN);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         expand_def_def(curr, false/*TODO*/, NULL);

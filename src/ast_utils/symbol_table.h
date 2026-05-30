@@ -111,6 +111,8 @@ void scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 
+bool scope_id_is_top_level(Scope_id scope);
+
 bool resolved_done_or_waiting_tbl_add(Name key);
 
 bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);
@@ -134,6 +136,8 @@ Name scope_to_name_tbl_lookup(Scope_id key);
 void scope_to_name_tbl_add(Scope_id key, Name scope_name);
 
 void scope_to_name_tbl_update(Scope_id key, Name scope_name);
+
+void scope_id_to_parent_dump(LOG_LEVEL log_level);
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 

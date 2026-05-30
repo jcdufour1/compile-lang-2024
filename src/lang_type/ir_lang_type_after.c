@@ -34,7 +34,7 @@ static Name ir_lang_type_primitive_get_name_normal(Ir_lang_type_primitive ir_lan
         MOD_PATH_BUILTIN,
         new_base,
         (Ulang_type_darr) {0},
-        SCOPE_TOP_LEVEL
+        SCOPE_BUILTIN
     );
     assert(!strv_is_equal(new_name.base, sv("void")));
     assert(new_name.base.count > 0);
@@ -110,7 +110,7 @@ static Name ir_lang_type_primitive_get_name_c(Ir_lang_type_primitive ir_lang_typ
         MOD_PATH_EXTERN_C,
         new_base,
         (Ulang_type_darr) {0},
-        SCOPE_TOP_LEVEL
+        SCOPE_BUILTIN
     );
     assert(new_name.base.count > 0);
     return new_name;
@@ -150,7 +150,7 @@ bool ir_lang_type_get_name(Name* result, LANG_TYPE_MODE mode, Ir_lang_type ir_la
                 MOD_PATH_BUILTIN,
                 sv("void"),
                 (Ulang_type_darr) {0},
-                SCOPE_TOP_LEVEL
+                SCOPE_BUILTIN
             );
             return true;
         }

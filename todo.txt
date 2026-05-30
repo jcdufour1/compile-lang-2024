@@ -139,6 +139,7 @@ for generics:
         }
     }
 - make python script show error on seg fault, etc. if possible
+- rename Scope_id to Block_id
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -190,6 +191,11 @@ continue(<thing>)
 - use libclang to get size of c types (and use size of c types stored locally in project as fallback)
 - use c89 for the c backend instead of c99 for better compatibility
 - stop using todo macro in main branch?
+-  s258__1__7_builtin_at_fun_start below should be a marro instead of a variable to reduce stack allocations
+     when optimizations are disabled and to allow c89 compilers in the future.
+        bool _1__7_builtin_str____610;
+        void* s258__1__7_builtin_at_fun_start = (void*)&_1__7_builtin_str____610;
+
 
 
 
