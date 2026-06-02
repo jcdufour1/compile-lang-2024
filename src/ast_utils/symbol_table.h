@@ -1,6 +1,8 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
+#if 0
+
 #include "strv.h"
 #include <local_string.h>
 #include "symbol_table_struct.h"
@@ -144,6 +146,8 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 bool expand_again_add(Arena* arena, Uast_def* item);
     
 bool expand_again_lookup(Uast_def** result, Name name);
+
+#endif // 0
 
 #endif // SYMBOL_TABLE_H
 

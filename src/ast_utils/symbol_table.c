@@ -1,3 +1,4 @@
+#if 0
 
 #include <util.h>
 WIMPLICIT_FALLTHROUGH_IGNORE_START
@@ -673,4 +674,6 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     scope_to_name_tbl_add(new_scope, scope_name);
     return new_scope;
 }
+
+#endif // 0
 

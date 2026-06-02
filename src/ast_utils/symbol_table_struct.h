@@ -1,6 +1,7 @@
 #ifndef SYMBOL_TABLE_STRUCT_H
 #define SYMBOL_TABLE_STRUCT_H
 
+#if 0
 typedef enum {
     SYM_TBL_NEVER_OCCUPIED = 0,
     SYM_TBL_PREVIOUSLY_OCCUPIED,
@@ -160,15 +161,7 @@ typedef struct {
 } File_path_to_text;
 
 
-// TODO: this symbol_collection system is suboptional (come up with a better system):
-//   - Expand_again is only used in one pass, but is stored everywhere
-//   - Symbol_table and Ir_table are stored even in Uast
-typedef struct {
-    Usymbol_table usymbol_table;
-    Symbol_table symbol_table;
-    Ir_table ir_table;
-    Expand_again_table expand_again_table;
-} Symbol_collection;
+#endif // 0
 
 #endif // SYMBOL_TABLE_STRUCT_H
 

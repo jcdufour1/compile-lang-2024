@@ -6,6 +6,7 @@
 #include <ir_forward_decl.h>
 #include <ulang_type.h>
 #include <msg.h>
+#include <hash_tables.h>
 
 typedef struct {
     Vec_base info;
