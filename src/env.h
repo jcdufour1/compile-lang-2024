@@ -34,7 +34,7 @@ typedef struct Env_ {
     Function_decl_tbl function_decl_tbl;
     
     Name_darr struct_like_waiting_to_resolve;
-    Usymbol_table struct_like_tbl;
+    Hash_table_stable_uast struct_like_tbl;
 
     Strv mod_path_main_fn;
     Uname name_main_fn;

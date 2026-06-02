@@ -14,7 +14,7 @@
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
 
-void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, Indent indent, const char* file_path, int line);
+void usymbol_log_table_internal(int log_level, const Hash_table_stable_uast sym_table, Indent indent, const char* file_path, int line);
 
 #define usymbol_log_table(log_level, sym_table) \
     do { \
@@ -22,9 +22,9 @@ void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, In
     } while(0)
 
 // returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol);
+bool usym_tbl_add_internal(Hash_table_stable_uast_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol);
 
-bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Strv key);
+bool usym_tbl_lookup_internal(Hash_table_stable_uast_tast** result, const Hash_table_stable_uast* sym_table, Strv key);
 
 bool usym_tbl_lookup(Uast_def** result, Name key);
 
@@ -39,7 +39,7 @@ bool usymbol_add(Uast_def* tast_of_symbol);
 
 void usymbol_update(Uast_def* tast_of_symbol);
 
-void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Indent indent, const char* file_path, int line);
+void symbol_log_table_internal(int log_level, const Hash_table_stable_tast sym_table, Indent indent, const char* file_path, int line);
 
 #define symbol_log_table(log_level, sym_table) \
     do { \
@@ -47,9 +47,9 @@ void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Inde
     } while(0)
 
 // returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol);
+bool sym_tbl_add_internal(Hash_table_stable_tast_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol);
 
-bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Strv key);
+bool sym_tbl_lookup_internal(Hash_table_stable_tast_tast** result, const Hash_table_stable_tast* sym_table, Strv key);
 
 bool sym_tbl_lookup(Tast_def** result, Name key);
 
@@ -64,7 +64,7 @@ bool symbol_add(Tast_def* tast_of_symbol);
 
 void symbol_update(Tast_def* tast_of_symbol);
 
-void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
+void ir_log_table_internal(int log_level, const Hash_table_stable_ir sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
     do { \
@@ -72,14 +72,14 @@ void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent inden
     } while(0)
 
 // returns false if symbol is already added to the table
-bool ir_tbl_add_internal(Ir_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
+bool ir_tbl_add_internal(Hash_table_stable_ir_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
 
-bool ir_tbl_lookup_internal(Ir_table_tast** result, const Ir_table* sym_table, Strv key);
+bool ir_tbl_lookup_internal(Hash_table_stable_ir_tast** result, const Hash_table_stable_ir* sym_table, Strv key);
 
 bool ir_tbl_lookup(Ir** result, Name key);
 
 // returns false if symbol has already been added to the table
-bool ir_tbl_add_ex(Ir_table* tbl, Ir* item);
+bool ir_tbl_add_ex(Hash_table_stable_ir* tbl, Ir* item);
 
 // returns false if symbol has already been added to the table
 bool ir_tbl_add(Ir* tast_of_symbol);
@@ -92,7 +92,7 @@ bool ir_add(Ir* tast_of_symbol);
 
 void ir_update(Ir* tast_of_symbol);
 
-Symbol_table* symbol_get_block(void);
+Hash_table_stable_tast* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);
 

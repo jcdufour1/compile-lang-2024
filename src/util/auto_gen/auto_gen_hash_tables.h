@@ -20,27 +20,12 @@ static void gen_hash_table(Strv base_type, int16_t pointer_depth, bool implement
     Strv suffix = strv_lower_print_internal(&a_gen, base_type);
     
     if (implementation) {
-        gen_gen("#ifndef HASH_TABLES_H\n");
-        gen_gen("#define HASH_TABLES_H\n");
-
         gen_gen("#include <hash_table_structs.h>\n");
-
-        gen_gen("#endif // HASH_TABLES_H\n");
     } else {
-        gen_gen("#ifndef HASH_TABLE_STRUCTS_H\n");
-        gen_gen("#define HASH_TABLE_STRUCTS_H\n");
-
-
         gen_gen("typedef struct {\n");
         gen_gen("    Vec_base info;\n");
         gen_gen("    "FMT" buf;\n", strv_print(type_with_ptr));
         gen_gen("} Hash_table_"FMT"_darr;\n", strv_print(suffix));
-
-        gen_gen("typedef enum {\n");
-        gen_gen("    HASH_TABLE_NODE_NEVER_OCCUPIED = 0,\n");
-        gen_gen("    HASH_TABLE_NODE_PREVIOUSLY_OCCUPIED,\n");
-        gen_gen("    HASH_TABLE_NODE_OCCUPIED,\n");
-        gen_gen("} SYM_TBL_STATUS;\n");
 
         gen_gen("typedef struct {\n");
         gen_gen("    "FMT" item;\n", strv_print(type_with_ptr));
@@ -58,25 +43,12 @@ static void gen_hash_table(Strv base_type, int16_t pointer_depth, bool implement
         gen_gen("    Hash_table_"FMT" hash_table;\n\n", strv_print(suffix));
         gen_gen("    Hash_table_"FMT"_darr keys;\n", strv_print(suffix));
         gen_gen("} Hash_table_stable_"FMT";\n\n", strv_print(suffix));
-
-        gen_gen("typedef struct {\n");
-        gen_gen("    Hash_table_"FMT" hash_table;\n\n", strv_print(suffix));
-        gen_gen("    Hash_table_"FMT"_darr keys;\n", strv_print(suffix));
-        gen_gen("} Hash_table_stable_"FMT";\n\n", strv_print(suffix));
-
-        gen_gen("#endif // HASH_TABLE_STRUCTS_H\n");
     }
     
     gen_gen(
         "static void hash_table_reserve_"FMT"(void) {\n", strv_lower_print(&a_gen, base_type)
     );
     gen_gen("}\n\n");
-
-
-
-// TODO: this symbol_collection system is suboptional (come up with a better system):
-//   - Expand_again is only used in one pass, but is stored everywhere
-//   - Symbol_table and Ir_table are stored even in Uast
 }
 
 static void gen_all_hash_tables(const char* file_path, bool implementation) {
@@ -86,17 +58,42 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         exit(1);
     }
 
+    if (implementation) {
+        gen_gen("#ifndef HASH_TABLES_H\n");
+        gen_gen("#define HASH_TABLES_H\n");
+    } else {
+        gen_gen("#ifndef HASH_TABLE_STRUCTS_H\n");
+        gen_gen("#define HASH_TABLE_STRUCTS_H\n");
+
+        gen_gen("typedef enum {\n");
+        gen_gen("    HASH_TABLE_NODE_NEVER_OCCUPIED = 0,\n");
+        gen_gen("    HASH_TABLE_NODE_PREVIOUSLY_OCCUPIED,\n");
+        gen_gen("    HASH_TABLE_NODE_OCCUPIED,\n");
+        gen_gen("} SYM_TBL_STATUS;\n");
+    }
+
     gen_hash_table(sv("Uast"), 1, implementation);
+    gen_hash_table(sv("Tast"), 1, implementation);
+    gen_hash_table(sv("Ir"), 1, implementation);
 
     if (implementation) {
-        //gen_gen("#define Usymbol_table hash_table");
+        //gen_gen("#define Hash_table_stable_uast hash_table");
     } else {
+        // TODO: this symbol_collection system is suboptional (come up with a better system):
+        //   - Expand_again is only used in one pass, but is stored everywhere
+        //   - Hash_table_stable_tast and Hash_table_stable_ir are stored even in Uast
         gen_gen("typedef struct {\n");
-        gen_gen("    Usymbol_table usymbol_table;\n");
-        gen_gen("    Symbol_table symbol_table;\n");
-        gen_gen("    Ir_table ir_table;\n");
+        gen_gen("    Hash_table_stable_uast usymbol_table;\n");
+        gen_gen("    Hash_table_stable_tast symbol_table;\n");
+        gen_gen("    Hash_table_stable_ir ir_table;\n");
         gen_gen("    Expand_again_table expand_again_table;\n");
         gen_gen("} Symbol_collection;\n");
+    }
+
+    if (implementation) {
+        gen_gen("#endif // HASH_TABLES_H\n");
+    } else {
+        gen_gen("#endif // HASH_TABLE_STRUCTS_H\n");
     }
 
     close_file(global_output);

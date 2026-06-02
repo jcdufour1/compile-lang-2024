@@ -10,7 +10,7 @@
 
 
 static Name ir_graphvis_parent_block_next;
-static Ir_table already_visited = {0};
+static Hash_table_stable_ir already_visited = {0};
 
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
 

@@ -73,7 +73,7 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     size_t tast_size = sizeof(Generic_symbol_table_tast);
 
     bool should_move_elements = false;
-    Usymbol_table_tast* new_table_tasts = NULL;
+    Hash_table_stable_uast_tast* new_table_tasts = NULL;
 
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         ((Generic_symbol_table*)sym_table)->capacity = SYM_TBL_DEFAULT_CAPACITY;
@@ -448,7 +448,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 //
 
 // returns false if symbol has already been added to the table
-bool ir_tbl_add_ex(Ir_table* tbl, Ir* item) {
+bool ir_tbl_add_ex(Hash_table_stable_ir* tbl, Ir* item) {
     Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
     return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(&a_main, name), item);
 }

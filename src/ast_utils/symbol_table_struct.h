@@ -36,28 +36,28 @@ typedef struct {
     Uast_def* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Usymbol_table_tast;
-static_assert(sizeof(Usymbol_table_tast) == sizeof(Generic_symbol_table_tast), "");
+} Hash_table_stable_uast_tast;
+static_assert(sizeof(Hash_table_stable_uast_tast) == sizeof(Generic_symbol_table_tast), "");
 
 typedef struct {
-    Usymbol_table_tast* table_tasts;
+    Hash_table_stable_uast_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Usymbol_table;
+} Hash_table_stable_uast;
 
 
 typedef struct {
     Tast_def* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Symbol_table_tast;
-static_assert(sizeof(Symbol_table_tast) == sizeof(Generic_symbol_table_tast), "");
+} Hash_table_stable_tast_tast;
+static_assert(sizeof(Hash_table_stable_tast_tast) == sizeof(Generic_symbol_table_tast), "");
 
 typedef struct {
-    Symbol_table_tast* table_tasts;
+    Hash_table_stable_tast_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Symbol_table;
+} Hash_table_stable_tast;
 
 
 typedef struct {
@@ -78,14 +78,14 @@ typedef struct {
     Ir* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Ir_table_tast;
-static_assert(sizeof(Ir_table_tast) == sizeof(Generic_symbol_table_tast), "");
+} Hash_table_stable_ir_tast;
+static_assert(sizeof(Hash_table_stable_ir_tast) == sizeof(Generic_symbol_table_tast), "");
 
 typedef struct {
-    Ir_table_tast* table_tasts;
+    Hash_table_stable_ir_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Ir_table;
+} Hash_table_stable_ir;
 
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.

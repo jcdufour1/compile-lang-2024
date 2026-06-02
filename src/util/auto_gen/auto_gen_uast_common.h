@@ -516,9 +516,9 @@ static void gen_uast_darrs(Uast_type uast) {
 static void gen_symbol_table_log(Uast_type uast) {
     Strv sym_text = {0};
     if (strv_is_equal(uast.name.type, sv("uast"))) {
-        gen_gen("static void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {\n");
+        gen_gen("static void usymbol_extend_table_internal(String* buf, const Hash_table_stable_uast sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
+        gen_gen("        Hash_table_stable_uast_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
         gen_gen("            string_extend_strv(&a_temp, buf, uast_def_print_internal(UAST_LOG, sym_tast->tast, indent));\n");
         gen_gen("        }\n");
@@ -527,9 +527,9 @@ static void gen_symbol_table_log(Uast_type uast) {
 
         sym_text = sv("usymbol");
     } else if (strv_is_equal(uast.name.type, sv("tast"))) {
-        gen_gen("static void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {\n");
+        gen_gen("static void symbol_extend_table_internal(String* buf, const Hash_table_stable_tast sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
+        gen_gen("        Hash_table_stable_tast_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
         gen_gen("            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, indent));\n");
         gen_gen("        }\n");
@@ -538,9 +538,9 @@ static void gen_symbol_table_log(Uast_type uast) {
 
         sym_text = sv("symbol");
     } else if (strv_is_equal(uast.name.type, sv("ir"))) {
-        gen_gen("static void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {\n");
+        gen_gen("static void ir_extend_table_internal(String* buf, const Hash_table_stable_ir sym_table, Indent indent) {\n");
         gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
+        gen_gen("        Hash_table_stable_ir_tast* sym_tast = &sym_table.table_tasts[idx];\n");
         gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
         gen_gen("            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, indent));\n");
         gen_gen("        }\n");
