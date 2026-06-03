@@ -31,7 +31,7 @@ typedef struct Env_ {
     Ulang_type parent_fn_rtn_type;
 
     Name_darr fun_implementations_waiting_to_resolve;
-    Function_decl_tbl function_decl_tbl;
+    Hash_table_function_decl_was_encountered function_decl_tbl;
     
     Name_darr struct_like_waiting_to_resolve;
     Hash_table_stable_uast struct_like_tbl;

@@ -64,14 +64,14 @@ typedef struct {
     Tast_def* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Expand_again_table_tast;
-static_assert(sizeof(Expand_again_table_tast) == sizeof(Generic_symbol_table_tast), "");
+} Hash_table_stable_expand_again_tast;
+static_assert(sizeof(Hash_table_stable_expand_again_tast) == sizeof(Generic_symbol_table_tast), "");
 
 typedef struct {
-    Expand_again_table_tast* table_tasts;
+    Hash_table_stable_expand_again_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Expand_again_table;
+} Hash_table_stable_expand_again;
 
 
 typedef struct {
@@ -95,14 +95,14 @@ typedef struct {
     Uast_function_decl* tast;
     Strv key;
     SYM_TBL_STATUS status;
-} Function_decl_tbl_tast;
-static_assert(sizeof(Function_decl_tbl_tast) == sizeof(Generic_symbol_table_tast), "");
+} Hash_table_function_decl_was_encountered_tast;
+static_assert(sizeof(Hash_table_function_decl_was_encountered_tast) == sizeof(Generic_symbol_table_tast), "");
 
 typedef struct {
-    Function_decl_tbl_tast* table_tasts;
+    Hash_table_function_decl_was_encountered_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Function_decl_tbl;
+} Hash_table_function_decl_was_encountered;
 
 
 typedef struct {

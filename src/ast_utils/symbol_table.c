@@ -550,7 +550,7 @@ bool c_forward_struct_tbl_add(Name* value, Name key) {
 }
 
 //
-// Function_decl_tbl implementation
+// Hash_table_function_decl_was_encountered implementation
 //
 
 bool function_decl_tbl_add(Uast_function_decl* decl) {

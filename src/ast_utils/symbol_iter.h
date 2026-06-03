@@ -1,6 +1,8 @@
 #ifndef SYMBOL_ITER_H
 #define SYMBOL_ITER_H
 
+#if 0
+
 #include <util.h>
 #include <symbol_table.h>
 
@@ -79,5 +81,7 @@ static inline bool ir_tbl_iter_next(Ir** result, Ir_iter* iter) {
 
     return was_found;
 }
+
+#endif // 0
 
 #endif // SYMBOL_ITER_H

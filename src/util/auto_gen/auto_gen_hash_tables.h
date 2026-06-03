@@ -4,7 +4,9 @@
 #include <auto_gen_util.h>
 #include <local_string.h>
 
-static void gen_hash_table(Strv base_type, int16_t pointer_depth, bool implementation) {
+static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, bool do_scoped_lookup, bool implementation) {
+    assert(strv_is_equal(suffix, strv_lower_print_internal(&a_gen, suffix)));
+
     String ptr_depth_str = {0};
     for (uint16_t idx = 0; idx < pointer_depth; idx++) {
         string_append(&a_gen, &ptr_depth_str, '*');
@@ -17,11 +19,27 @@ static void gen_hash_table(Strv base_type, int16_t pointer_depth, bool implement
         type_with_ptr = strv_from_f(&a_gen, FMT, strv_print(base_type));
     }
 
-    Strv suffix = strv_lower_print_internal(&a_gen, base_type);
-    
     if (implementation) {
         gen_gen("#include <hash_table_structs.h>\n");
+
+        gen_gen("static void hash_table_reserve_"FMT"(void) {\n", strv_print(suffix));
+        gen_gen("    todo();\n");
+        gen_gen("}\n\n");
+
+        gen_gen("static void hash_table_add_"FMT"(void) {\n", strv_print(suffix));
+        gen_gen("    todo();\n");
+        gen_gen("}\n\n");
+
+        gen_gen("static void hash_table_stable_add_"FMT"(void) {\n", strv_print(suffix));
+        gen_gen("    todo();\n");
+        gen_gen("}\n\n");
     } else {
+        gen_gen("#include <util.h>\n");
+        gen_gen("#include <darr.h>\n");
+        gen_gen("#include <uast_forward_decl.h>\n");
+        gen_gen("#include <tast_forward_decl.h>\n");
+        gen_gen("#include <ir_forward_decl.h>\n");
+
         gen_gen("typedef struct {\n");
         gen_gen("    Vec_base info;\n");
         gen_gen("    "FMT" buf;\n", strv_print(type_with_ptr));
@@ -44,11 +62,6 @@ static void gen_hash_table(Strv base_type, int16_t pointer_depth, bool implement
         gen_gen("    Hash_table_"FMT"_darr keys;\n", strv_print(suffix));
         gen_gen("} Hash_table_stable_"FMT";\n\n", strv_print(suffix));
     }
-    
-    gen_gen(
-        "static void hash_table_reserve_"FMT"(void) {\n", strv_lower_print(&a_gen, base_type)
-    );
-    gen_gen("}\n\n");
 }
 
 static void gen_all_hash_tables(const char* file_path, bool implementation) {
@@ -72,9 +85,10 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("} SYM_TBL_STATUS;\n");
     }
 
-    gen_hash_table(sv("Uast"), 1, implementation);
-    gen_hash_table(sv("Tast"), 1, implementation);
-    gen_hash_table(sv("Ir"), 1, implementation);
+    gen_hash_table(sv("uast"), sv("Uast"), 1, true, implementation);
+    gen_hash_table(sv("tast"), sv("Tast"), 1, true, implementation);
+    gen_hash_table(sv("ir"), sv("Ir"), 1, true, implementation);
+    gen_hash_table(sv("function_decl_was_encountered"), sv("Uast_function_decl"), 1, false, implementation);
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");
@@ -86,7 +100,7 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    Hash_table_stable_uast usymbol_table;\n");
         gen_gen("    Hash_table_stable_tast symbol_table;\n");
         gen_gen("    Hash_table_stable_ir ir_table;\n");
-        gen_gen("    Expand_again_table expand_again_table;\n");
+        //gen_gen("    Hash_table_stable_expand_again expand_again_table;\n");
         gen_gen("} Symbol_collection;\n");
     }
 
