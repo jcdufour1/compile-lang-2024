@@ -22,16 +22,84 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
     if (implementation) {
         gen_gen("#include <hash_table_structs.h>\n");
 
-        gen_gen("static void hash_table_reserve_"FMT"(void) {\n", strv_print(suffix));
-        gen_gen("    todo();\n");
+        gen_gen("static void hash_table_reserve_"FMT"(Hash_table_"FMT"* hash_table, size_t count_to_add) {\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("    assert(count_to_add == 1 && \"TODO\");\n");
+        gen_gen("    Hash_table_"FMT" old_hash_table = *hash_table;\n", strv_print(suffix));
+        gen_gen("    bool resize_is_nessessary = false;\n");
+        gen_gen("    while (hash_table->count + count_to_add >= (size_t)((uint64_t /*TODO*/)hash_table->capacity*70/100) /* TODO: do not hardcode percent */) {\n");
+        gen_gen("        resize_is_nessessary = true;\n");
+        gen_gen("        if (hash_table->capacity < 1) {\n");
+        gen_gen("            hash_table->capacity = 1;\n");
+        gen_gen("        } else {\n");
+        gen_gen("            hash_table->capacity *= 2;\n");
+        gen_gen("        }\n");
+        gen_gen("    }\n");
+        gen_gen("    if (resize_is_nessessary) {\n");
+        gen_gen("        hash_table->nodes = arena_alloc(&a_leak/*TODO*/, sizeof(hash_table->nodes[0])*hash_table->capacity);\n");
+        gen_gen("        if (old_hash_table.capacity > 0) {\n");
+        gen_gen("            todo();\n");
+        gen_gen("        }\n");
+        gen_gen("    }\n");
         gen_gen("}\n\n");
 
-        gen_gen("static void hash_table_add_"FMT"(void) {\n", strv_print(suffix));
-        gen_gen("    todo();\n");
+        gen_gen("static bool hash_table_iter_node_any_status_"FMT"(", strv_print(suffix));
+        gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen(") {\n");
+        gen_gen("    if (iter->index < hash_table->capacity) {\n");
+        gen_gen("        size_t curr_idx = iter->index;\n");
+        gen_gen("        iter->index++;\n");
+        gen_gen("        *curr_node = &hash_table->nodes[curr_idx];\n");
+        gen_gen("        return true;\n");
+        gen_gen("    }\n");
+        gen_gen("    return false;\n");
         gen_gen("}\n\n");
 
-        gen_gen("static void hash_table_stable_add_"FMT"(void) {\n", strv_print(suffix));
-        gen_gen("    todo();\n");
+        gen_gen("static bool hash_table_iter_node_"FMT"(", strv_print(suffix));
+        gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen(") {\n");
+        gen_gen("    while (iter->index < hash_table->capacity) {\n");
+        gen_gen("        size_t curr_idx = iter->index;\n");
+        gen_gen("        iter->index++;\n");
+        gen_gen("        if (hash_table->nodes[curr_idx].status == HASH_TABLE_NODE_OCCUPIED) {\n");
+        gen_gen("            *curr_node = &hash_table->nodes[curr_idx];\n");
+        gen_gen("        }\n");
+        gen_gen("    }\n");
+        gen_gen("    return false;\n");
+        gen_gen("}\n\n");
+
+        gen_gen("static bool hash_table_add_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+        gen_gen("    Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("    hash_table_reserve_"FMT"(hash_table, 1);\n", strv_print(suffix));
+        gen_gen("    iter.index = hash_table_calculate_idx(key, hash_table->capacity);\n");
+        gen_gen("    log(LOG_DEBUG, \"%%zu\\n\", hash_table->capacity);\n");
+        gen_gen("    log(LOG_DEBUG, \"%%zu\\n\", iter.index);\n");
+        gen_gen("    breakpoint();\n");
+        gen_gen("    while (hash_table_iter_node_any_status_"FMT"(hash_table, &curr_node, &iter)) {\n", strv_print(suffix));
+        gen_gen("        if (curr_node->status == HASH_TABLE_NODE_OCCUPIED) {\n");
+        gen_gen("            if (strv_is_equal(curr_node->key, key)) {\n");
+        gen_gen("                return false;\n");
+        gen_gen("            }\n");
+        gen_gen("        } else {");
+        gen_gen("            curr_node->status = HASH_TABLE_NODE_OCCUPIED;\n");
+        gen_gen("            curr_node->key = key;\n");
+        gen_gen("            curr_node->item = item;\n");
+        gen_gen("            return true;\n");
+        gen_gen("        }\n");
+        gen_gen("    }\n\n");
+        gen_gen("    unreachable(\"add should have happened in the while loop above\");\n");
+        gen_gen("}\n\n");
+
+        gen_gen("static bool hash_table_stable_add_"FMT"(Hash_table_stable_"FMT"* hash_table_stable, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+        gen_gen("    if (!hash_table_add_"FMT"(&hash_table_stable->hash_table, key, item)) {\n", strv_print(suffix));
+        gen_gen("        return false;\n");
+        gen_gen("    }\n");
+        gen_gen("    darr_append(&a_leak/*TODO*/, &hash_table_stable->keys, key);\n");
+        gen_gen("    return true;\n");
         gen_gen("}\n\n");
     } else {
         gen_gen("#include <util.h>\n");
@@ -59,8 +127,14 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
 
         gen_gen("typedef struct {\n");
         gen_gen("    Hash_table_"FMT" hash_table;\n\n", strv_print(suffix));
-        gen_gen("    Hash_table_"FMT"_darr keys;\n", strv_print(suffix));
+        gen_gen("    Strv_darr keys;\n");
         gen_gen("} Hash_table_stable_"FMT";\n\n", strv_print(suffix));
+
+        gen_gen("typedef struct {\n");
+        gen_gen("    size_t index;\n");
+        gen_gen("} Hash_table_iter_node_"FMT";\n\n", strv_print(suffix));
+
+
     }
 }
 
@@ -74,6 +148,32 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     if (implementation) {
         gen_gen("#ifndef HASH_TABLES_H\n");
         gen_gen("#define HASH_TABLES_H\n");
+
+gen_gen("#include <util.h>\n");
+gen_gen("WIMPLICIT_FALLTHROUGH_IGNORE_START\n");
+gen_gen("WSIGN_CONVERSION_IGNORE_START\n");
+gen_gen("#define STB_DS_IMPLEMENTATION\n");
+gen_gen("#include <stb_ds.h>\n");
+gen_gen("WIMPLICIT_FALLTHROUGH_IGNORE_END\n");
+gen_gen("WSIGN_CONVERSION_IGNORE_END\n");
+gen_gen("\n");
+//gen_gen("#include <uast_utils.h>\n");
+//gen_gen("#include <tast_utils.h>\n");
+//gen_gen("#include <ir_utils.h>\n");
+//gen_gen("#include <symbol_log.h>\n");
+gen_gen("\n");
+gen_gen("#define SYM_TBL_DEFAULT_CAPACITY 1\n");
+gen_gen("#define SYM_TBL_MAX_DENSITY (0.6f) // TODO: change this to an integer\n");
+gen_gen("\n");
+gen_gen("//\n");
+gen_gen("// util\n");
+gen_gen("//\n");
+gen_gen("static size_t hash_table_calculate_idx(Strv key, size_t capacity) {\n");
+gen_gen("    assert(capacity > 0);\n");
+gen_gen("    return stbds_hash_bytes(key.str, key.count, 0)%%capacity;\n");
+gen_gen("}\n");
+gen_gen("//\n");
+
     } else {
         gen_gen("#ifndef HASH_TABLE_STRUCTS_H\n");
         gen_gen("#define HASH_TABLE_STRUCTS_H\n");
@@ -89,6 +189,7 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     gen_hash_table(sv("tast"), sv("Tast"), 1, true, implementation);
     gen_hash_table(sv("ir"), sv("Ir"), 1, true, implementation);
     gen_hash_table(sv("function_decl_was_encountered"), sv("Uast_function_decl"), 1, false, implementation);
+    gen_hash_table(sv("int"), sv("int"), 0, false, implementation);
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");
