@@ -22,6 +22,18 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
     if (implementation) {
         gen_gen("#include <hash_table_structs.h>\n");
 
+        gen_gen("static bool hash_table_iter_node_"FMT"(", strv_print(suffix));
+        gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen(");\n");
+        gen_gen("static bool hash_table_iter_node_any_status_"FMT"(", strv_print(suffix));
+        gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen(");\n");
+        gen_gen("static bool hash_table_add_internal_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item);\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+
         gen_gen("static void hash_table_reserve_"FMT"(Hash_table_"FMT"* hash_table, size_t count_to_add) {\n", strv_print(suffix), strv_print(suffix));
         gen_gen("    assert(count_to_add == 1 && \"TODO\");\n");
         gen_gen("    Hash_table_"FMT" old_hash_table = *hash_table;\n", strv_print(suffix));
@@ -35,9 +47,14 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("        }\n");
         gen_gen("    }\n");
         gen_gen("    if (resize_is_nessessary) {\n");
+        gen_gen("        hash_table->count = 0;\n");
         gen_gen("        hash_table->nodes = arena_alloc(&a_leak/*TODO*/, sizeof(hash_table->nodes[0])*hash_table->capacity);\n");
+        gen_gen("        Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
+        gen_gen("        Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
         gen_gen("        if (old_hash_table.capacity > 0) {\n");
-        gen_gen("            todo();\n");
+        gen_gen("            while (hash_table_iter_node_"FMT"(&old_hash_table, &curr_node, &iter)) {\n", strv_print(suffix));
+        gen_gen("                unwrap(hash_table_add_internal_"FMT"(hash_table, curr_node->key, curr_node->item));\n", strv_print(suffix));
+        gen_gen("            }\n");
         gen_gen("        }\n");
         gen_gen("    }\n");
         gen_gen("}\n\n");
@@ -66,6 +83,7 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("        iter->index++;\n");
         gen_gen("        if (hash_table->nodes[curr_idx].status == HASH_TABLE_NODE_OCCUPIED) {\n");
         gen_gen("            *curr_node = &hash_table->nodes[curr_idx];\n");
+        gen_gen("            return true;\n");
         gen_gen("        }\n");
         gen_gen("    }\n");
         gen_gen("    return false;\n");
@@ -75,7 +93,16 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("    Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
         gen_gen("    Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
         gen_gen("    iter.index = hash_table_calculate_idx(key, hash_table->capacity);\n");
-        gen_gen("    while (hash_table_iter_node_any_status_"FMT"(hash_table, &curr_node, &iter)) {\n", strv_print(suffix));
+        gen_gen("    size_t original_iter_idx = iter.index;\n");
+        gen_gen("    while (1) {\n");
+        gen_gen("        iter.index = iter.index%%hash_table->capacity;\n");
+        gen_gen("        size_t curr_idx = iter.index;\n");
+        gen_gen("        iter.index++;\n");
+        gen_gen("        assert(iter.index != original_iter_idx && \"every hash node is occupied, which should not be the case\");\n");
+        gen_gen("        assert(hash_table);\n");
+        gen_gen("        assert(hash_table->nodes);\n");
+        gen_gen("        curr_node = &hash_table->nodes[curr_idx];\n");
+        gen_gen("        assert(curr_node);\n");
         gen_gen("        if (curr_node->status == HASH_TABLE_NODE_OCCUPIED) {\n");
         gen_gen("            if (strv_is_equal(curr_node->key, key)) {\n");
         gen_gen("                return false;\n");
@@ -84,6 +111,7 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("            curr_node->status = HASH_TABLE_NODE_OCCUPIED;\n");
         gen_gen("            curr_node->key = key;\n");
         gen_gen("            curr_node->item = item;\n");
+        gen_gen("            hash_table->count++;\n");
         gen_gen("            return true;\n");
         gen_gen("        }\n");
         gen_gen("    }\n");
