@@ -13,11 +13,11 @@ typedef struct {
     Symbol_collection* buf;
 } Sym_coll_darr;
 
-// TODO: consider if this should be moved
-typedef struct {
-    Vec_base info;
-    Scope_id* buf;
-} Scope_id_darr;
+//// TODO: consider if this should be moved
+//typedef struct {
+//    Vec_base info;
+//    Scope_id* buf;
+//} Scope_id_darr;
 
 typedef struct Env_ {
     uint32_t error_count;
