@@ -30,7 +30,8 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("static bool hash_table_iter_node_any_status_"FMT"(", strv_print(suffix));
         gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
         gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
-        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter,\n", strv_print(suffix));
+        gen_gen("    bool wrap_around\n");
         gen_gen(");\n");
         gen_gen("static bool hash_table_add_internal_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item);\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
 
@@ -62,9 +63,13 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("static bool hash_table_iter_node_any_status_"FMT"(", strv_print(suffix));
         gen_gen("    Hash_table_"FMT"* hash_table,\n", strv_print(suffix));
         gen_gen("    Hash_table_node_"FMT"** curr_node,\n", strv_print(suffix));
-        gen_gen("    Hash_table_iter_node_"FMT"* iter\n", strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT"* iter,\n", strv_print(suffix));
+        gen_gen("    bool wrap_around\n");
         gen_gen(") {\n");
-        gen_gen("    if (iter->index < hash_table->capacity) {\n");
+        gen_gen("    if (wrap_around || iter->index < hash_table->capacity) {\n");
+        gen_gen("        if (wrap_around) {\n");
+        gen_gen("            iter->index %%= hash_table->capacity;\n");
+        gen_gen("        }\n");
         gen_gen("        size_t curr_idx = iter->index;\n");
         gen_gen("        iter->index++;\n");
         gen_gen("        *curr_node = &hash_table->nodes[curr_idx];\n");
@@ -91,8 +96,8 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
 
         gen_gen("static bool hash_table_add_internal_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
         gen_gen("    Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
-        gen_gen("    Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
         gen_gen("    iter.index = hash_table_calculate_idx(key, hash_table->capacity);\n");
+        gen_gen("    Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
         gen_gen("    size_t original_iter_idx = iter.index;\n");
         gen_gen("    while (1) {\n");
         gen_gen("        iter.index = iter.index%%hash_table->capacity;\n");
@@ -121,6 +126,62 @@ static void gen_hash_table(Strv suffix, Strv base_type, int16_t pointer_depth, b
         gen_gen("static bool hash_table_add_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
         gen_gen("    hash_table_reserve_"FMT"(hash_table, 1);\n", strv_print(suffix));
         gen_gen("    return hash_table_add_internal_"FMT"(hash_table, key, item);\n", strv_print(suffix));
+        gen_gen("}\n\n");
+
+        gen_gen("static bool hash_table_lookup_node_"FMT"(Hash_table_node_"FMT"** result, Hash_table_"FMT"* hash_table, Strv key) {\n", strv_print(suffix), strv_print(suffix), strv_print(suffix));
+        gen_gen("    Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("    iter.index = hash_table_calculate_idx(key, hash_table->capacity);\n");
+        gen_gen("    Hash_table_node_"FMT"* curr_node = NULL;\n", strv_print(suffix));
+        gen_gen("    size_t original_iter_idx = iter.index;\n");
+        gen_gen("    while (hash_table_iter_node_any_status_"FMT"(hash_table, &curr_node, &iter, true)) {\n", strv_print(suffix));
+        gen_gen("        if (iter.index == original_iter_idx) {\n");
+        gen_gen("            assert(false && \"not implementation\");\n");
+        gen_gen("        }\n");
+        gen_gen("        switch (curr_node->status) {\n");
+        gen_gen("            case HASH_TABLE_NODE_NEVER_OCCUPIED: {\n");
+        gen_gen("                return false;\n");
+        gen_gen("            }\n");
+        gen_gen("            case HASH_TABLE_NODE_PREVIOUSLY_OCCUPIED: {\n");
+        gen_gen("                break;\n");
+        gen_gen("            }\n");
+        gen_gen("            case HASH_TABLE_NODE_OCCUPIED: {\n");
+        gen_gen("                if (strv_is_equal(curr_node->key, key)) {\n");
+        gen_gen("                    *result = curr_node;\n");
+        gen_gen("                    return true;\n");
+        gen_gen("                }\n");
+        gen_gen("                break;\n");
+        gen_gen("            }\n");
+        gen_gen("            default: {\n");
+        gen_gen("               unreachable(\"\");\n");
+        gen_gen("            }\n");
+        gen_gen("        }\n");
+        gen_gen("    }\n");
+        gen_gen("    unreachable(\"\");\n");
+        gen_gen("}\n\n");
+
+        gen_gen("static bool hash_table_lookup_"FMT"("FMT"* result, Hash_table_"FMT"* hash_table, Strv key) {\n", strv_print(suffix), strv_print(type_with_ptr), strv_print(suffix));
+        gen_gen("    Hash_table_node_"FMT"* node = NULL;\n", strv_print(suffix));
+        gen_gen("    if (!hash_table_lookup_node_"FMT"(&node, hash_table, key)) {\n", strv_print(suffix));
+        gen_gen("        return false;\n");
+        gen_gen("    }\n");
+        gen_gen("    *result = node->item;\n");
+        gen_gen("    return true;\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool hash_table_stable_lookup_"FMT"("FMT"* result, Hash_table_stable_"FMT"* hash_table, Strv key) {\n", strv_print(suffix), strv_print(type_with_ptr), strv_print(suffix));
+        gen_gen("    todo();\n");
+        //gen_gen("    if (hash_table_lookup_"FMT"(result, &hash_table->hash_table, key);\n", strv_print(suffix));
+        gen_gen("}\n\n");
+
+        gen_gen("static void hash_table_update_"FMT"(Hash_table_"FMT"* hash_table, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+        gen_gen("    Hash_table_node_"FMT"* node = NULL;\n", strv_print(suffix));
+        gen_gen("    if (hash_table_lookup_node_"FMT"(&node, hash_table, key)) {\n", strv_print(suffix));
+        gen_gen("        assert(strv_is_equal(node->key, key));\n");
+        gen_gen("        assert(node->status == HASH_TABLE_NODE_OCCUPIED);\n");
+        gen_gen("        node->item = item;\n");
+        gen_gen("        return;\n");
+        gen_gen("    }\n");
+        gen_gen("    todo();\n");
         gen_gen("}\n\n");
 
         gen_gen("static bool hash_table_stable_add_"FMT"(Hash_table_stable_"FMT"* hash_table_stable, Strv key, "FMT" item) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
