@@ -454,25 +454,34 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");
 
-        gen_gen("static bool usymbol_lookup(Uast_def** result, Name key) {\n");
-        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
-        gen_gen("    todo();\n");
-        gen_gen("}\n");
-
-        gen_gen("static bool symbol_lookup(Tast_def** result, Name key) {\n");
-        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
-        gen_gen("    todo();\n");
-        gen_gen("}\n");
-
-        gen_gen("static bool ir_lookup(Ir** result, Name key) {\n");
-        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
-        gen_gen("    todo();\n");
-        gen_gen("}\n");
-
         gen_gen("static bool c_forward_struct_tbl_lookup(Name** result, Name key) {\n");
         //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
         gen_gen("    todo();\n");
         gen_gen("}\n");
+
+        gen_gen("static bool c_forward_struct_tbl_add(Name* struct_to_use, Name key) {\n");
+        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("    todo();\n");
+        gen_gen("}\n");
+
+
+        gen_gen("static Name_darr scope_to_name;\n");
+        gen_gen("\n");
+        gen_gen("Name scope_to_name_tbl_lookup(Scope_id key) {\n");
+        gen_gen("    return darr_at(scope_to_name, key);\n");
+        gen_gen("}\n");
+        gen_gen("\n");
+        gen_gen("void scope_to_name_tbl_add(Scope_id key, Name scope_name) {\n");
+        gen_gen("    while (scope_to_name.info.count <= key) {\n");
+        gen_gen("        darr_append(&a_main, &scope_to_name, (Name) {0});\n");
+        gen_gen("    }\n");
+        gen_gen("    *darr_at_ref(&scope_to_name, key) = scope_name;\n");
+        gen_gen("}\n");
+        gen_gen("\n");
+        gen_gen("void scope_to_name_tbl_update(Scope_id key, Name scope_name) {\n");
+        gen_gen("    *darr_at_ref(&scope_to_name, key) = scope_name;\n");
+        gen_gen("}\n");
+        gen_gen("\n");
 
         gen_gen("#define Usymbol_iter Hash_table_scoped_iter_node_uast");
         gen_gen("#define Symbol_iter Hash_table_scoped_iter_node_tast");
@@ -490,9 +499,85 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    return hash_table_scoped_iter_new_ir(scope_id);\n");
         gen_gen("}\n");
 
-        gen_gen("static bool usym_tbl_iter_next(Uast_def* curr_def, Usymbol_iter* iter) {\n");
+        gen_gen("static bool usym_tbl_iter_next(Uast_def** curr_def, Usymbol_iter* iter) {\n");
         gen_gen("    Strv curr_key = (Strv) {0};\n");
-        gen_gen("    return hash_table_scoped_iter_uast(&symbol_tables.usymbol_table, &curr_key, &curr_def, iter);\n");
+        gen_gen("    return hash_table_scoped_iter_uast(&symbol_tables.usymbol_table, &curr_key, curr_def, iter);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool sym_tbl_iter_next(Tast_def** curr_def, Symbol_iter* iter) {\n");
+        gen_gen("    Strv curr_key = (Strv) {0};\n");
+        gen_gen("    return hash_table_scoped_iter_tast(&symbol_tables.symbol_table, &curr_key, curr_def, iter);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool ir_tbl_iter_next(Ir_def** curr_def, Ir_iter* iter) {\n");
+        gen_gen("    Strv curr_key = (Strv) {0};\n");
+        gen_gen("    return hash_table_scoped_iter_ir(&symbol_tables.ir_table, &curr_key, curr_def, iter);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool usymbol_lookup(Uast_def** result, Name key) {\n");
+        gen_gen("    return hash_table_scoped_lookup_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool symbol_lookup(Tast_def** result, Name key) {\n");
+        gen_gen("    return hash_table_scoped_lookup_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool ir_lookup(Ir_def** result, Name key) {\n");
+        gen_gen("    return hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("}\n");
+
+        //gen_gen("static bool usymbol_add(Uast_def** result, Name key) {\n");
+        //gen_gen("    return hash_table_scoped_add_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        //gen_gen("}\n");
+
+        //gen_gen("static bool symbol_add(Tast_def** result, Name key) {\n");
+        //gen_gen("    return hash_table_scoped_add_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        //gen_gen("}\n");
+
+        gen_gen("static inline Name ir_def_get_name(const Ir_def* def);\n");
+
+        gen_gen("static bool ir_add(Ir_def* def_to_add) {\n");
+        gen_gen("    Name key = ir_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_scoped_add_ir(&symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add, key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static inline Name uast_def_get_name(const Uast_def* def);\n");
+
+        gen_gen("static bool usymbol_add(Uast_def* def_to_add) {\n");
+        gen_gen("    Name key = uast_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_scoped_add_uast(&symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add, key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static void usymbol_update(Uast_def* def_to_update) {\n");
+        gen_gen("    Name key = uast_def_get_name(def_to_update);\n");
+        gen_gen("    hash_table_scoped_update_uast(&symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_update, key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static inline Name tast_def_get_name(const Tast_def* def);\n");
+
+        gen_gen("static bool symbol_add(Tast_def* def_to_add) {\n");
+        gen_gen("    Name key = tast_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_scoped_add_tast(&symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add, key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static void symbol_update(Tast_def* def_to_add) {\n");
+        gen_gen("    Name key = tast_def_get_name(def_to_add);\n");
+        gen_gen("    hash_table_scoped_update_tast(&symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add, key.scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool usym_tbl_add(Uast_def* def_to_add) {\n");
+        gen_gen("    Name key = uast_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_stable_add_uast(darr_at_ref(&symbol_tables.usymbol_table, key.scope_id), serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool sym_tbl_add(Tast_def* def_to_add) {\n");
+        gen_gen("    Name key = tast_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_stable_add_tast(darr_at_ref(&symbol_tables.symbol_table, key.scope_id), serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool ir_tbl_add(Ir_def* def_to_add) {\n");
+        gen_gen("    Name key = ir_def_get_name(def_to_add);\n");
+        gen_gen("    return hash_table_stable_add_ir(darr_at_ref(&symbol_tables.ir_table, key.scope_id), serialize_name_symbol_table(&a_leak/*TODO*/, key), def_to_add);\n");
         gen_gen("}\n");
 
         //gen_gen("#define usym_tbl_iter_new ((Hash_table_stable_iter_uast) {0})");
@@ -508,6 +593,9 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("} Symbol_collection;\n");
 
         gen_gen("extern Symbol_collection symbol_tables;\n");
+
+
+        gen_gen("Scope_id symbol_collection_new(Scope_id parent, Name scope_name);\n");
     }
 
     if (implementation) {

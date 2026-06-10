@@ -645,26 +645,11 @@ bool scope_id_is_top_level(Scope_id scope) {
 // Scope_id_to_name implementation
 //
 
-static Name_darr scope_to_name;
-
-Name scope_to_name_tbl_lookup(Scope_id key) {
-    return darr_at(scope_to_name, key);
-}
-
-void scope_to_name_tbl_add(Scope_id key, Name scope_name) {
-    while (scope_to_name.info.count <= key) {
-        darr_append(&a_main, &scope_to_name, (Name) {0});
-    }
-    *darr_at_ref(&scope_to_name, key) = scope_name;
-}
-
-void scope_to_name_tbl_update(Scope_id key, Name scope_name) {
-    *darr_at_ref(&scope_to_name, key) = scope_name;
-}
-
 //
 // not generic
 //
+
+#endif // 0
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = env.symbol_tables.info.count;
@@ -674,6 +659,4 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     scope_to_name_tbl_add(new_scope, scope_name);
     return new_scope;
 }
-
-#endif // 0
 
