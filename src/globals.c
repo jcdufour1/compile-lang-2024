@@ -16,3 +16,5 @@ Pos prev_pos = {0};
 
 Env env = {0};
 
+Symbol_collection symbol_tables;
+

@@ -8,11 +8,6 @@
 #include <msg.h>
 #include <hash_tables.h>
 
-typedef struct {
-    Vec_base info;
-    Symbol_collection* buf;
-} Sym_coll_darr;
-
 //// TODO: consider if this should be moved
 //typedef struct {
 //    Vec_base info;
@@ -22,8 +17,6 @@ typedef struct {
 typedef struct Env_ {
     uint32_t error_count;
     uint32_t warning_count;
-
-    Sym_coll_darr symbol_tables;
 
     // needed to prevent infinite recursion when printing errors
     bool silent_generic_resol_errors;
