@@ -303,6 +303,21 @@ static void gen_hash_table(
             gen_gen("    unwrap(hash_table_scoped_add_"FMT"(collection, key, item, scope_id));\n", strv_print(suffix));
             gen_gen("}\n\n");
 
+            gen_gen("static bool hash_table_scoped_iter_"FMT"(", strv_print(suffix));
+            gen_gen("    Hash_table_stable_"FMT"_darr* collection,\n", strv_print(suffix));
+            gen_gen("    Strv* curr_key,\n");
+            gen_gen("    "FMT"* curr_item,\n", strv_print(type_with_ptr));
+            gen_gen("    Hash_table_scoped_iter_node_"FMT"* iter\n", strv_print(suffix));
+            gen_gen(") {\n");
+            gen_gen("    return hash_table_stable_iter_"FMT"(darr_at_ref(collection, iter->scope_id), curr_key, curr_item, &iter->iter);\n", strv_print(suffix));
+            gen_gen("}\n\n");
+
+            gen_gen("static Hash_table_scoped_iter_node_"FMT" hash_table_scoped_iter_new_"FMT"(\n", strv_print(suffix), strv_print(suffix));
+            gen_gen("    Scope_id scope_id\n");
+            gen_gen(") {\n");
+            gen_gen("    return (Hash_table_scoped_iter_node_"FMT") {.scope_id = scope_id, .iter = (Hash_table_iter_node_"FMT") {0}};\n", strv_print(suffix), strv_print(suffix));
+            gen_gen("}\n\n");
+
         }
     } else {
         gen_gen("#include <util.h>\n");
@@ -336,9 +351,15 @@ static void gen_hash_table(
         gen_gen("typedef struct {\n");
         gen_gen("    size_t index;\n");
         gen_gen("} Hash_table_iter_node_"FMT";\n\n", strv_print(suffix));
+        gen_gen("typedef Hash_table_iter_node_"FMT" Hash_table_iter_"FMT";\n", strv_print(suffix), strv_print(suffix));
 
-        gen_gen("#define Hash_table_iter_"FMT" Hash_table_iter_node_"FMT"\n", strv_print(suffix), strv_print(suffix));
-        gen_gen("#define Hash_table_stable_iter_"FMT" Hash_table_iter_node_"FMT"\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("typedef struct {\n");
+        gen_gen("    Hash_table_iter_node_"FMT" iter;\n", strv_print(suffix));
+        gen_gen("    Scope_id scope_id;\n");
+        gen_gen("} Hash_table_scoped_iter_node_"FMT";\n\n", strv_print(suffix));
+        gen_gen("typedef Hash_table_scoped_iter_node_"FMT" Hash_table_scoped_iter_"FMT";\n", strv_print(suffix), strv_print(suffix));
+
+        //gen_gen("#define Hash_table_stable_iter_"FMT" Hash_table_iter_node_"FMT"\n", strv_print(suffix), strv_print(suffix));
         //gen_gen("typedef struct {\n");
         //gen_gen("    size_t index;\n");
         //gen_gen("} Hash_table_stable_iter_"FMT";\n\n", strv_print(suffix));
@@ -348,6 +369,8 @@ static void gen_hash_table(
             gen_gen("    Vec_base info;\n");
             gen_gen("    Hash_table_stable_"FMT"* buf;\n", strv_print(suffix));
             gen_gen("} Hash_table_stable_"FMT"_darr;\n\n", strv_print(suffix));
+
+            gen_gen("typedef Hash_table_stable_"FMT"_darr Hash_table_scoped_"FMT";\n", strv_print(suffix), strv_print(suffix));
         }
 
     }
@@ -421,19 +444,58 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("} SYM_TBL_STATUS;\n");
     }
 
-    gen_hash_table(sv("uast"), sv("Uast"), 1, true, implementation);
-    gen_hash_table(sv("tast"), sv("Tast"), 1, true, implementation);
-    gen_hash_table(sv("ir"), sv("Ir"), 1, true, implementation);
+    gen_hash_table(sv("uast"), sv("Uast_def"), 1, true, implementation);
+    gen_hash_table(sv("tast"), sv("Tast_def"), 1, true, implementation);
+    gen_hash_table(sv("ir"), sv("Ir_def"), 1, true, implementation);
     gen_hash_table(sv("function_decl_was_encountered"), sv("Uast_function_decl"), 1, false, implementation);
     gen_hash_table(sv("int"), sv("int"), 0, true, implementation);
+    gen_hash_table(sv("c_forward_struct"), sv("Name"), 1/*TODO: could be changed to 0?*/, true, implementation);
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");
-        //
+
+        gen_gen("static bool usymbol_lookup(Uast_def** result, Name key) {\n");
+        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("    todo();\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool symbol_lookup(Tast_def** result, Name key) {\n");
+        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("    todo();\n");
+        gen_gen("}\n");
+
         gen_gen("static bool ir_lookup(Ir** result, Name key) {\n");
         //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
         gen_gen("    todo();\n");
         gen_gen("}\n");
+
+        gen_gen("static bool c_forward_struct_tbl_lookup(Name** result, Name key) {\n");
+        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("    todo();\n");
+        gen_gen("}\n");
+
+        gen_gen("#define Usymbol_iter Hash_table_scoped_iter_node_uast");
+        gen_gen("#define Symbol_iter Hash_table_scoped_iter_node_tast");
+        gen_gen("#define Ir_iter Hash_table_scoped_iter_node_ir");
+
+        gen_gen("static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {\n");
+        gen_gen("    return hash_table_scoped_iter_new_uast(scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {\n");
+        gen_gen("    return hash_table_scoped_iter_new_tast(scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static inline Ir_iter ir_tbl_iter_new(Scope_id scope_id) {\n");
+        gen_gen("    return hash_table_scoped_iter_new_ir(scope_id);\n");
+        gen_gen("}\n");
+
+        gen_gen("static bool usym_tbl_iter_next(Uast_def* curr_def, Usymbol_iter* iter) {\n");
+        gen_gen("    Strv curr_key = (Strv) {0};\n");
+        gen_gen("    return hash_table_scoped_iter_uast(&symbol_tables.usymbol_table, &curr_key, &curr_def, iter);\n");
+        gen_gen("}\n");
+
+        //gen_gen("#define usym_tbl_iter_new ((Hash_table_stable_iter_uast) {0})");
     } else {
         // TODO: this symbol_collection system is suboptional (come up with a better system):
         //   - Expand_again is only used in one pass, but is stored everywhere
