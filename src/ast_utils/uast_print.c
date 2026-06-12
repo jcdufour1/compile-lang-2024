@@ -433,13 +433,13 @@ Strv uast_block_print_internal(UAST_MODE mode, const Uast_block* block, Indent i
             string_extend_cstr(&a_temp, &buf, "\n");
 
             string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
-            usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
+            string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_uast(darr_at_ref(&symbol_tables.usymbol_table, block->scope_id)));
 
             string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-            symbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
+            string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_tast(darr_at_ref(&symbol_tables.symbol_table, block->scope_id)));
 
             string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-            ir_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).ir_table, indent + 2*INDENT_WIDTH);
+            string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_ir(darr_at_ref(&symbol_tables.ir_table, block->scope_id)));
 
             for (size_t idx = 0; idx < block->children.info.count; idx++) {
                 Strv arg_text = uast_stmt_print_internal(mode, darr_at(block->children, idx), indent + INDENT_WIDTH);

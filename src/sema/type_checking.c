@@ -5479,9 +5479,10 @@ after_main:
         resolve_generics_struct_like_def_implementation(curr_name);
     }
 
-    Usymbol_iter rec_iter = usym_tbl_iter_new_table(env.struct_like_tbl);
+    Hash_table_stable_iter_node_uast rec_iter = hash_table_stable_iter_new_uast();
     Uast_def* curr_def = NULL;
-    while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
+    Strv curr_key = {0};
+    while (hash_table_stable_iter_uast(&env.struct_like_tbl, &curr_key, &curr_def, &rec_iter)) {
         check_struct_for_rec(curr_def);
     }
 

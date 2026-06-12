@@ -1,8 +1,6 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
-#if 0
-
 #include "strv.h"
 #include <local_string.h>
 #include "symbol_table_struct.h"
@@ -21,24 +19,6 @@ void usymbol_log_table_internal(int log_level, const Hash_table_stable_uast sym_
         usymbol_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
     } while(0)
 
-// returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Hash_table_stable_uast_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol);
-
-bool usym_tbl_lookup_internal(Hash_table_stable_uast_tast** result, const Hash_table_stable_uast* sym_table, Strv key);
-
-bool usym_tbl_lookup(Uast_def** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool usym_tbl_add(Uast_def* tast_of_symbol);
-
-void usym_tbl_update(Uast_def* tast_of_symbol);
-
-bool usymbol_lookup(Uast_def** result, Name key);
-
-bool usymbol_add(Uast_def* tast_of_symbol);
-
-void usymbol_update(Uast_def* tast_of_symbol);
-
 void symbol_log_table_internal(int log_level, const Hash_table_stable_tast sym_table, Indent indent, const char* file_path, int line);
 
 #define symbol_log_table(log_level, sym_table) \
@@ -53,11 +33,6 @@ bool sym_tbl_lookup_internal(Hash_table_stable_tast_tast** result, const Hash_ta
 
 bool sym_tbl_lookup(Tast_def** result, Name key);
 
-// returns false if symbol has already been added to the table
-bool sym_tbl_add(Tast_def* tast_of_symbol);
-
-void sym_tbl_update(Scope_id scope_id, Tast_def* tast_of_symbol);
-
 bool symbol_lookup(Tast_def** result, Name key);
 
 bool symbol_add(Tast_def* tast_of_symbol);
@@ -70,27 +45,6 @@ void ir_log_table_internal(int log_level, const Hash_table_stable_ir sym_table, 
     do { \
         alloca_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
     } while(0)
-
-// returns false if symbol is already added to the table
-bool ir_tbl_add_internal(Hash_table_stable_ir_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
-
-bool ir_tbl_lookup_internal(Hash_table_stable_ir_tast** result, const Hash_table_stable_ir* sym_table, Strv key);
-
-bool ir_tbl_lookup(Ir** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool ir_tbl_add_ex(Hash_table_stable_ir* tbl, Ir* item);
-
-// returns false if symbol has already been added to the table
-bool ir_tbl_add(Ir* tast_of_symbol);
-
-void ir_tbl_update(Ir* tast_of_symbol);
-
-bool ir_lookup(Ir** result, Name key);
-
-bool ir_add(Ir* tast_of_symbol);
-
-void ir_update(Ir* tast_of_symbol);
 
 Hash_table_stable_tast* symbol_get_block(void);
 
@@ -108,8 +62,6 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key);
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key);
-
-void scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 
@@ -146,8 +98,6 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 bool expand_again_add(Arena* arena, Uast_def* item);
     
 bool expand_again_lookup(Uast_def** result, Name name);
-
-#endif // 0
 
 #endif // SYMBOL_TABLE_H
 

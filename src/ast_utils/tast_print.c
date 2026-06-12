@@ -308,7 +308,7 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     //usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
     string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-    symbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).symbol_table, indent + 2*INDENT_WIDTH);
+    string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_tast(darr_at_ref(&symbol_tables.symbol_table, block->scope_id)));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Strv arg_text = tast_stmt_print_internal(darr_at(block->children, idx), indent + INDENT_WIDTH);

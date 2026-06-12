@@ -124,12 +124,13 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
 
         String idx_buf = {0};
         string_extend_size_t(&a_temp, &idx_buf, idx);
-        if (ir_tbl_add_ex(&already_visited, curr)) {
-            Name old_parent_block_next = ir_graphvis_parent_block_next;
-            ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_get_name(LANG_TYPE_MODE_LOG, next);
-            ir_graphvis_internal(buf, curr);
-            ir_graphvis_parent_block_next = old_parent_block_next;
-        }
+        todo();
+        //if (ir_tbl_add_ex(&already_visited, curr)) {
+        //    Name old_parent_block_next = ir_graphvis_parent_block_next;
+        //    ir_graphvis_parent_block_next = is_last ? (Name) {0} : ir_get_name(LANG_TYPE_MODE_LOG, next);
+        //    ir_graphvis_internal(buf, curr);
+        //    ir_graphvis_parent_block_next = old_parent_block_next;
+        //}
         if (ir_graphvis_do_next_arrow(curr)) {
             if (is_last) {
                 // this is the last node of this block. If we are nested in a parent block, then
@@ -151,11 +152,12 @@ static void ir_block_graphvis_internal(String* buf, const Ir_block* block) {
     Ir_iter iter = ir_tbl_iter_new(block->scope_id);
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
-        if (ir_tbl_add_ex(&already_visited, curr)) {
-            todo();
-            arrow_names(buf, block->name, ir_get_name(LANG_TYPE_MODE_LOG, curr));
-            ir_graphvis_internal(buf, curr);
-        }
+        todo();
+        //if (ir_tbl_add_ex(&already_visited, curr)) {
+        //    todo();
+        //    arrow_names(buf, block->name, ir_get_name(LANG_TYPE_MODE_LOG, curr));
+        //    ir_graphvis_internal(buf, curr);
+        //}
     }
 }
 
@@ -508,9 +510,10 @@ Strv ir_graphvis(const Ir_block* block) {
     Ir* curr = NULL;
     while (ir_tbl_iter_next(&curr, &iter)) {
         // TODO: do scopes correctly (make ir_add_ex)
-        if (ir_tbl_add_ex(&already_visited, curr)) {
-            ir_graphvis_internal(&buf, curr);
-        }
+        todo();
+        //if (ir_tbl_add_ex(&already_visited, curr)) {
+            //ir_graphvis_internal(&buf, curr);
+        //}
     }
 
     string_extend_cstr(&a_temp, &buf, "}\n");

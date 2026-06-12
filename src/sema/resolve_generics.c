@@ -588,7 +588,8 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
 
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, new_decl->name));
-    sym_tbl_update(SCOPE_BUILTIN, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    assert(new_decl->name.scope_id == SCOPE_BUILTIN);
+    symbol_update(tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     unwrap(symbol_lookup(&result, new_decl->name));
 
 error:

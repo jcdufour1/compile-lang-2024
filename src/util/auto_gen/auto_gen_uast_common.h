@@ -559,7 +559,7 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("    "FMT"_MSG,", uast_upper_print(uast.name));
         gen_gen("} "FMT"_MODE;\n\n", uast_upper_print(uast.name));
 
-        gen_gen("Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
+        gen_gen("static Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
     }
 
     uast_gen_uast_forward_decl(uast);

@@ -1,18 +1,12 @@
 #ifndef SYMBOL_TABLE_STRUCT_H
 #define SYMBOL_TABLE_STRUCT_H
 
-#if 0
-typedef enum {
-    SYM_TBL_NEVER_OCCUPIED = 0,
-    SYM_TBL_PREVIOUSLY_OCCUPIED,
-    SYM_TBL_OCCUPIED,
-} SYM_TBL_STATUS;
-
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
 #include <ir_forward_decl.h>
 #include <name.h>
 
+#include <hash_tables.h>
 
 typedef struct {
     void* tast;
@@ -33,31 +27,11 @@ typedef struct {
 
 
 typedef struct {
-    Uast_def* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Hash_table_stable_uast_tast;
-static_assert(sizeof(Hash_table_stable_uast_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Hash_table_stable_uast_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Hash_table_stable_uast;
-
-
-typedef struct {
     Tast_def* tast;
     Strv key;
     SYM_TBL_STATUS status;
 } Hash_table_stable_tast_tast;
 static_assert(sizeof(Hash_table_stable_tast_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Hash_table_stable_tast_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Hash_table_stable_tast;
 
 
 typedef struct {
@@ -74,35 +48,9 @@ typedef struct {
 } Hash_table_stable_expand_again;
 
 
-typedef struct {
-    Ir* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Hash_table_stable_ir_tast;
-static_assert(sizeof(Hash_table_stable_ir_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Hash_table_stable_ir_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Hash_table_stable_ir;
-
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
 
-
-typedef struct {
-    Uast_function_decl* tast;
-    Strv key;
-    SYM_TBL_STATUS status;
-} Hash_table_function_decl_was_encountered_tast;
-static_assert(sizeof(Hash_table_function_decl_was_encountered_tast) == sizeof(Generic_symbol_table_tast), "");
-
-typedef struct {
-    Hash_table_function_decl_was_encountered_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Hash_table_function_decl_was_encountered;
 
 
 typedef struct {
@@ -160,8 +108,6 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } File_path_to_text;
 
-
-#endif // 0
 
 #endif // SYMBOL_TABLE_STRUCT_H
 

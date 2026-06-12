@@ -1,5 +1,3 @@
-#if 0
-
 #include <util.h>
 WIMPLICIT_FALLTHROUGH_IGNORE_START
 WSIGN_CONVERSION_IGNORE_START
@@ -73,7 +71,7 @@ static void generic_tbl_expand_if_nessessary(void* sym_table) {
     size_t tast_size = sizeof(Generic_symbol_table_tast);
 
     bool should_move_elements = false;
-    Hash_table_stable_uast_tast* new_table_tasts = NULL;
+    Generic_symbol_table_tast* new_table_tasts = NULL;
 
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         ((Generic_symbol_table*)sym_table)->capacity = SYM_TBL_DEFAULT_CAPACITY;
@@ -166,16 +164,17 @@ bool generic_symbol_add(
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
 ) {
-    if (scope_id == SCOPE_NOT) {
-        return false;
-    }
-    void* dummy;
-    if (generic_symbol_lookup((void**)&dummy, key, get_tbl_from_collection_fn, scope_id)) {
-        return false;
-    }
-    Symbol_collection* curr_tast = darr_at_ref(&env.symbol_tables, scope_id);
-    unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
-    return true;
+    todo();
+    //if (scope_id == SCOPE_NOT) {
+    //    return false;
+    //}
+    //void* dummy;
+    //if (generic_symbol_lookup((void**)&dummy, key, get_tbl_from_collection_fn, scope_id)) {
+    //    return false;
+    //}
+    //Symbol_collection* curr_tast = darr_at_ref(&env.symbol_tables, scope_id);
+    //unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
+    //return true;
 }
 
 void generic_tbl_update(Generic_symbol_table* sym_table, Strv key, void* item) {
@@ -188,27 +187,28 @@ void generic_tbl_update(Generic_symbol_table* sym_table, Strv key, void* item) {
 }
 
 void generic_symbol_update(Strv key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
-    if (scope_id == SCOPE_NOT) {
-        return;
-    }
-    if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
-        return;
-    }
+    todo();
+    //if (scope_id == SCOPE_NOT) {
+    //    return;
+    //}
+    //if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
+    //    return;
+    //}
 
-    Scope_id curr_scope = scope_id;
-    while (true) {
-        void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
-        Generic_symbol_table_tast* curr_tast = NULL;
-        if (generic_tbl_lookup_internal(&curr_tast, tbl, key)) {
-             curr_tast->tast = item;
-             return;
-        }
-        if (curr_scope == 0) {
-            break;
-        }
-        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-    }
-    unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
+    //Scope_id curr_scope = scope_id;
+    //while (true) {
+    //    void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
+    //    Generic_symbol_table_tast* curr_tast = NULL;
+    //    if (generic_tbl_lookup_internal(&curr_tast, tbl, key)) {
+    //         curr_tast->tast = item;
+    //         return;
+    //    }
+    //    if (curr_scope == 0) {
+    //        break;
+    //    }
+    //    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+    //}
+    //unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
 }
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key) {
@@ -226,69 +226,37 @@ bool generic_symbol_lookup(
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
 ) {
-    if (scope_id == SCOPE_NOT) {
-        return false;
-    }
+    todo();
+    //if (scope_id == SCOPE_NOT) {
+    //    return false;
+    //}
 
-    Scope_id curr_scope = scope_id;
-    while (true) {
-        void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
-        if (generic_tbl_lookup(result, tbl, key)) {
-             return true;
-        }
-        if (curr_scope == 0) {
-            break;
-        }
-        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-    }
+    //Scope_id curr_scope = scope_id;
+    //while (true) {
+    //    void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
+    //    if (generic_tbl_lookup(result, tbl, key)) {
+    //         return true;
+    //    }
+    //    if (curr_scope == 0) {
+    //        break;
+    //    }
+    //    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
+    //}
 
-    return false;
+    //return false;
 }
 
 //
 // Uast_def implementation
 //
 
-// returns false if symbol has already been added to the table
-bool sym_tbl_add(Tast_def* item) {
-    Scope_id scope_id = tast_def_get_name(item).scope_id;
-    return generic_tbl_add(
-        (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, scope_id)->symbol_table,
-        serialize_name_symbol_table(&a_main, tast_def_get_name(item)),
-        item
-    );
-}
-
 void* sym_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->symbol_table;
 }
 
 void* expand_get_tbl_from_collection(Symbol_collection* collection) {
-    return &collection->expand_again_table;
-}
-
-bool symbol_add(Tast_def* item) {
-    Name name = tast_def_get_name(item);
-    return generic_symbol_add(
-        serialize_name_symbol_table(&a_main, name),
-        item,
-        sym_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-void sym_tbl_update(Scope_id scope_id, Tast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, scope_id)->symbol_table, serialize_name_symbol_table(&a_main, tast_def_get_name(item)), item);
-}
-
-void symbol_update(Tast_def* item) {
-    (void) item;
     todo();
-    //generic_symbol_update(serialize_name_symbol_table(tast_def_get_name(item)), item, sym_get_tbl_from_collection);
-}
-
-bool symbol_lookup(Tast_def** result, Name key) {
-    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(&a_temp, key), sym_get_tbl_from_collection, key.scope_id);
+    //return &collection->expand_again_table;
 }
 
 //
@@ -297,36 +265,6 @@ bool symbol_lookup(Tast_def** result, Name key) {
 
 void* usym_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->usymbol_table;
-}
-
-bool usymbol_add(Uast_def* item) {
-#ifndef NDEBUG
-    Name prim_key = uast_def_get_name(item);
-    prim_key.scope_id = 0;
-    prim_key.mod_path = MOD_PATH_BUILTIN;
-    // TODO: factor these nested if-else checks (for is primitive type) into seperate function?
-    if (lang_type_name_base_is_number(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return false;
-    }
-#endif // NDEBUG
-
-    assert(item);
-    Name name = uast_def_get_name(item);
-    return generic_symbol_add(
-        serialize_name_symbol_table(&a_main, name),
-        item,
-        usym_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-bool sym_tbl_lookup(Tast_def** result, Name key) {
-    return generic_tbl_lookup(
-        (void**)result,
-        (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, key.scope_id)->symbol_table,
-        serialize_name_symbol_table(&a_temp, key)
-    );
 }
 
 //
@@ -357,91 +295,6 @@ bool expand_again_lookup(Uast_def** result, Name name) {
 //
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Uast_def* item) {
-    Name name = uast_def_get_name(item);
-    return generic_tbl_add(
-        (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table,
-        serialize_name_symbol_table(&a_main, name),
-        item
-    );
-}
-
-void usym_tbl_update(Uast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, uast_def_get_name(item).scope_id)->usymbol_table, serialize_name_symbol_table(&a_main, uast_def_get_name(item)), item);
-}
-
-bool usym_tbl_lookup(Uast_def** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_temp, key));
-}
-
-bool usymbol_lookup(Uast_def** result, Name key) {
-    Name prim_key = key;
-    prim_key.scope_id = 0;
-    prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_name_base_is_signed(prim_key.base)) {
-        if (usym_tbl_lookup(result, prim_key)) {
-            return true;
-        }
-        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
-        );
-        usym_tbl_add(uast_primitive_def_wrap(def));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    } else if (lang_type_name_base_is_unsigned(prim_key.base)) {
-        if (usym_tbl_lookup(result, prim_key)) {
-            return true;
-        }
-        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
-        );
-        usym_tbl_add(uast_primitive_def_wrap(def));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    } else if (lang_type_name_base_is_float(prim_key.base)) {
-        if (usym_tbl_lookup(result, prim_key)) {
-            return true;
-        }
-        Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(prim_key.base, 1, prim_key.base.count - 1));
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
-        );
-        usym_tbl_add(uast_primitive_def_wrap(def));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    } else if (strv_is_equal(prim_key.base, sv("opaque"))) {
-        if (usym_tbl_lookup(result, prim_key)) {
-            return true;
-        }
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN,
-            lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0)))
-        );
-        usym_tbl_add(uast_primitive_def_wrap(def));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    } else if (strv_is_equal(prim_key.base, sv("void"))) {
-        if (usym_tbl_lookup(result, prim_key)) {
-            return true;
-        }
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
-        );
-        usym_tbl_add(uast_primitive_def_wrap(def));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    }
-
-    return generic_symbol_lookup(
-        (void**)result,
-        serialize_name_symbol_table(&a_temp, key),
-        usym_get_tbl_from_collection,
-        key.scope_id
-    );
-}
 
 //
 // Ir implementation
@@ -451,71 +304,6 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 bool ir_tbl_add_ex(Hash_table_stable_ir* tbl, Ir* item) {
     Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
     return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(&a_main, name), item);
-}
-
-// returns false if symbol has already been added to the table
-bool ir_tbl_add(Ir* item) {
-    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    return ir_tbl_add_ex(&darr_at_ref(&env.symbol_tables, name.scope_id)->ir_table, item);
-}
-
-void* ir_get_tbl_from_collection(Symbol_collection* collection) {
-    return &collection->ir_table;
-}
-
-bool ir_add(Ir* item) {
-    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    return generic_symbol_add(
-        serialize_name_symbol_table(&a_main, name),
-        item,
-        ir_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-void ir_tbl_update(Ir* item) {
-    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    generic_tbl_update((Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(&a_main, name), item);
-}
-
-void usymbol_update(Uast_def* item) {
-#ifndef NDEBUG
-    Name prim_key = uast_def_get_name(item);
-    prim_key.scope_id = 0;
-    prim_key.mod_path = MOD_PATH_BUILTIN;
-    if (lang_type_name_base_is_number(prim_key.base)) {
-        msg_todo("", uast_def_get_pos(item));
-        return;
-    }
-#endif // NDEBUG
-
-    assert(item);
-    Name name = uast_def_get_name(item);
-    generic_symbol_update(
-        serialize_name_symbol_table(&a_main, name),
-        item,
-        usym_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-void ir_update(Ir* item) {
-    (void) item;
-    todo();
-    //generic_symbol_update(serialize_name_symbol_table(ir_get_name(item)), item, ir_get_tbl_from_collection);
-}
-
-bool ir_tbl_lookup(Ir** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&darr_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(&a_temp, key));
-}
-
-bool ir_lookup(Ir** result, Name key) {
-    return generic_symbol_lookup(
-        (void**)result,
-        serialize_name_symbol_table(&a_temp, key),
-        ir_get_tbl_from_collection,
-        key.scope_id
-    );
 }
 
 //
@@ -536,18 +324,6 @@ bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
 //
 // C_forward_struct_tbl implementation
 //
-
-// this is used to define additional structs to get around the requirement of in order definitions in c
-static C_forward_struct_tbl c_forward_struct_tbl;
-
-bool c_forward_struct_tbl_lookup(Name** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(&a_temp, key));
-}
-
-// returns false if value has already been added to the table
-bool c_forward_struct_tbl_add(Name* value, Name key) {
-    return generic_tbl_add((Generic_symbol_table*)&c_forward_struct_tbl, serialize_name_symbol_table(&a_main, key), value);
-}
 
 //
 // Hash_table_function_decl_was_encountered implementation
@@ -608,34 +384,26 @@ bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
 // Scope_id_to_next_table implementation
 //
 
-static Scope_id_darr scope_id_to_parent;
-
-// returns parent of key
-Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    assert(key != SCOPE_BUILTIN);
-    return darr_at(scope_id_to_parent, key);
-}
-
-void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
-    while (scope_id_to_parent.info.count <= key) {
-        darr_append(&a_main, &scope_id_to_parent, 0);
-    }
-    *darr_at_ref(&scope_id_to_parent, key) = parent;
-}
-
-void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
-    *darr_at_ref(&scope_id_to_parent, key) = parent;
-}
-
-void scope_id_to_parent_dump(LOG_LEVEL log_level) {
-    String buf = {0};
-
-    darr_foreach(idx, Scope_id, scope, scope_id_to_parent) {
-        string_extend_f(&a_main, &buf, "%zu, ", scope);
-    }
-
-    log(log_level, FMT"\n", string_print(buf));
-}
+//void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
+//    while (scope_id_to_parent.info.count <= key) {
+//        darr_append(&a_main, &scope_id_to_parent, 0);
+//    }
+//    *darr_at_ref(&scope_id_to_parent, key) = parent;
+//}
+//
+//void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
+//    *darr_at_ref(&scope_id_to_parent, key) = parent;
+//}
+//
+//void scope_id_to_parent_dump(LOG_LEVEL log_level) {
+//    String buf = {0};
+//
+//    darr_foreach(idx, Scope_id, scope, scope_id_to_parent) {
+//        string_extend_f(&a_main, &buf, "%zu, ", scope);
+//    }
+//
+//    log(log_level, FMT"\n", string_print(buf));
+//}
 
 bool scope_id_is_top_level(Scope_id scope) {
     return scope_get_parent_tbl_lookup(scope) == SCOPE_BUILTIN;
@@ -649,11 +417,12 @@ bool scope_id_is_top_level(Scope_id scope) {
 // not generic
 //
 
-#endif // 0
-
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
-    Scope_id new_scope = env.symbol_tables.info.count;
-    darr_append(&a_main, &env.symbol_tables, (Symbol_collection) {0});
+    Scope_id new_scope = scope_to_name.info.count;
+
+    darr_append(&a_main, &symbol_tables.ir_table, (Hash_table_stable_ir) {0});
+    darr_append(&a_main, &symbol_tables.usymbol_table, (Hash_table_stable_uast) {0});
+    darr_append(&a_main, &symbol_tables.symbol_table, (Hash_table_stable_tast) {0});
 
     scope_get_parent_tbl_add(new_scope, parent);
     scope_to_name_tbl_add(new_scope, scope_name);
