@@ -73,9 +73,17 @@ static inline bool uast_get_lang_type(Lang_type* result, const Uast* uast, Ulang
 }
 
 static inline Name uast_primitive_def_get_name(const Uast_primitive_def* def) {
-    // TODO: store Lang_type_primitive in Uast_prmitive_def instead of Lang_type?
+    if (def->lang_type.type == LANG_TYPE_VOID) {
+        // TODO: this is a hack. LANG_TYPE_VOID is not really a primitive type, but for some reason
+        //   usymbol_lookup adds it as a primitive type
+        return name_new(MOD_PATH_BUILTIN, sv("void"), (Ulang_type_darr) {0}, SCOPE_BUILTIN);
+    }
+
     if (def->lang_type.type != LANG_TYPE_PRIMITIVE) {
+        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
+        log(LOG_DEBUG, "%d\n", def->lang_type.type);
         msg_todo("", def->pos);
+        todo();
         return util_literal_name_new_poison();
     }
     Lang_type_primitive lang_type = lang_type_primitive_const_unwrap(def->lang_type);

@@ -578,10 +578,6 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    return hash_table_scoped_iter_ir(&symbol_tables.ir_table, &curr_key, curr_def, iter);\n");
         gen_gen("}\n");
 
-        gen_gen("static bool usymbol_lookup(Uast_def** result, Name key) {\n");
-        gen_gen("    return hash_table_scoped_lookup_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
-        gen_gen("}\n");
-
         gen_gen("static bool symbol_lookup(Tast_def** result, Name key) {\n");
         gen_gen("    return hash_table_scoped_lookup_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
         gen_gen("}\n");

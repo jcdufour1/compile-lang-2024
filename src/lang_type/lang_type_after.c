@@ -138,13 +138,24 @@ bool lang_type_name_base_is_number(Strv name_base) {
     return lang_type_name_base_is_int(name_base) || lang_type_name_base_is_float(name_base);
 }
 
+bool lang_type_name_base_is_primitive(Strv base) {
+        // TODO: make static assert fail here if more primitive types are added?
+        return 
+            lang_type_name_base_is_signed(base) ||
+            lang_type_name_base_is_unsigned(base) ||
+            lang_type_name_base_is_float(base) ||
+            strv_is_equal(base, sv("opaque")) ||
+            strv_is_equal(base, sv("void"))
+        ;
+}
+
 static bool bit_width_calculation(Bits* new_width, Bits old_width, Pos pos_arg) {
     if (bits_is_less_or_equal(old_width, bits_new(32))) {
         *new_width = bits_new(32);
         return true;
     }
 
-    if (bits_is_less_or_equal(old_width, bits_new(32))) {
+    if (bits_is_less_or_equal(old_width, bits_new(32 /*TODO: this should be 64 */))) {
         *new_width = bits_new(64);
         return true;
     }

@@ -433,3 +433,70 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     //    return true;
     //}
 
+
+
+
+bool usymbol_lookup(Uast_def** result, Name key) {
+        // TODO: add static assertion for new primitive type being added?
+            if (lang_type_name_base_is_signed(key.base)) {
+                if (usym_tbl_lookup(result, key)) {
+                    return true;
+                }
+                Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(key.base, 1, key.base.count - 1));
+                Uast_primitive_def* def = uast_primitive_def_new(
+                    POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, bit_width, 0)))
+                );
+                usym_tbl_add(uast_primitive_def_wrap(def));
+                *result = uast_primitive_def_wrap(def);
+                return true;
+            } else if (lang_type_name_base_is_unsigned(key.base)) {
+                if (usym_tbl_lookup(result, key)) {
+                    return true;
+                }
+                Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(key.base, 1, key.base.count - 1));
+                Uast_primitive_def* def = uast_primitive_def_new(
+                    POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, bit_width, 0)))
+                );
+                usym_tbl_add(uast_primitive_def_wrap(def));
+                *result = uast_primitive_def_wrap(def);
+                return true;
+            } else if (lang_type_name_base_is_float(key.base)) {
+                if (usym_tbl_lookup(result, key)) {
+                    return true;
+                }
+                Bits bit_width = bits_from_strv(POS_BUILTIN, strv_slice(key.base, 1, key.base.count - 1));
+                Uast_primitive_def* def = uast_primitive_def_new(
+                    POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(POS_BUILTIN, bit_width, 0)))
+                );
+                usym_tbl_add(uast_primitive_def_wrap(def));
+                *result = uast_primitive_def_wrap(def);
+                return true;
+            } else if (strv_is_equal(key.base, sv("opaque"))) {
+                if (usym_tbl_lookup(result, key)) {
+                    return true;
+                }
+                Uast_primitive_def* def = uast_primitive_def_new(
+                    POS_BUILTIN,
+                    lang_type_primitive_const_wrap(lang_type_opaque_const_wrap(lang_type_opaque_new(POS_BUILTIN, 0)))
+                );
+                usym_tbl_add(uast_primitive_def_wrap(def));
+                *result = uast_primitive_def_wrap(def);
+                return true;
+            } else if (strv_is_equal(key.base, sv("void"))) {
+                if (usym_tbl_lookup(result, key)) {
+                    return true;
+                }
+                Uast_primitive_def* def = uast_primitive_def_new(
+                    POS_BUILTIN,
+                    lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN, 0))
+                );
+                usym_tbl_add(uast_primitive_def_wrap(def));
+                *result = uast_primitive_def_wrap(def);
+                return true;
+            } else {
+                assert(!lang_type_name_base_is_primitive(key.base) && "add new else if here?");
+            } 
+
+            return hash_table_scoped_lookup_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+        }
+

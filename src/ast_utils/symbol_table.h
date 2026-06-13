@@ -97,5 +97,7 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 
 bool expand_again_lookup(Uast_def** result, Name name);
 
+bool usymbol_lookup(Uast_def** result, Name key);
+
 #endif // SYMBOL_TABLE_H
 

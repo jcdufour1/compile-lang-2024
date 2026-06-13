@@ -13,15 +13,9 @@ Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
 
 // TODO: replace genrgs in src with gen_args
 Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
-    if (!strv_is_equal(mod_path, MOD_PATH_BUILTIN)) {
-        // TODO: make static assert fail here if more primitive types are added?
-        assert(!lang_type_name_base_is_signed(base));
-        assert(!lang_type_name_base_is_unsigned(base));
-        assert(!lang_type_name_base_is_float(base));
-        assert(!strv_is_equal(base, sv("opaque")));
-        assert(!strv_is_equal(base, sv("void")));
+    if (lang_type_name_base_is_primitive(base)) {
+        mod_path = MOD_PATH_BUILTIN;
     }
-
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
