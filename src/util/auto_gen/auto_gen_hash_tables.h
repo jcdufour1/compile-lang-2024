@@ -274,14 +274,12 @@ static void gen_hash_table(
         gen_gen("}\n\n");
 
         if (do_scoped_lookup) {
-            gen_gen("static bool hash_table_scoped_add_"FMT"(Hash_table_stable_"FMT"_darr* collection, Strv key, "FMT" item, Scope_id scope_id) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
-            gen_gen("    while (collection->info.count <= scope_id) {\n");
-            gen_gen("        darr_append(&a_leak/*TODO*/, collection, (Hash_table_stable_"FMT") {0});\n", strv_print(suffix));
-            gen_gen("    }\n");
-            gen_gen("    return hash_table_stable_add_"FMT"(darr_at_ref(collection, scope_id), key, item);\n", strv_print(suffix));
-            gen_gen("}\n");
-            
-            gen_gen("static bool hash_table_scoped_lookup_node_"FMT"(Hash_table_node_"FMT"** result, Hash_table_stable_"FMT"_darr* collection, Strv key, Scope_id scope_id) {\n", strv_print(suffix), strv_print(suffix), strv_print(suffix));
+            gen_gen("static bool hash_table_scoped_lookup_node_"FMT"(\n", strv_print(suffix));
+            gen_gen("    Hash_table_node_"FMT"** result,\n", strv_print(suffix));
+            gen_gen("    Hash_table_stable_"FMT"_darr* collection,\n", strv_print(suffix));
+            gen_gen("    Strv key,\n");
+            gen_gen("    Scope_id scope_id\n");
+            gen_gen(") {\n");
             //gen_gen("    if (scope_id >= collection->info.count) {\n");
             //gen_gen("        return false;\n");
             //gen_gen("    }\n");
@@ -323,7 +321,22 @@ static void gen_hash_table(
             gen_gen("    unreachable(\"\");\n");
             gen_gen("}\n");
 
+            gen_gen("static bool hash_table_scoped_add_"FMT"(Hash_table_stable_"FMT"_darr* collection, Strv key, "FMT" item, Scope_id scope_id) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+            gen_gen("    "FMT" dummy = {0};\n", strv_print(type_with_ptr));
+            gen_gen("    if (hash_table_scoped_lookup_"FMT"(&dummy, collection, key, scope_id)) {\n", strv_print(suffix));
+            gen_gen("        return false;\n");
+            gen_gen("    }\n");
+            gen_gen("    while (collection->info.count <= scope_id) {\n");
+            gen_gen("        darr_append(&a_leak/*TODO*/, collection, (Hash_table_stable_"FMT") {0});\n", strv_print(suffix));
+            gen_gen("    }\n");
+            gen_gen("    return hash_table_stable_add_"FMT"(darr_at_ref(collection, scope_id), key, item);\n", strv_print(suffix));
+            gen_gen("}\n");
+            
             gen_gen("static void hash_table_scoped_update_"FMT"(Hash_table_stable_"FMT"_darr* collection, Strv key, "FMT" item, Scope_id scope_id) {\n", strv_print(suffix), strv_print(suffix), strv_print(type_with_ptr));
+            gen_gen("    if (scope_id == SCOPE_NOT) {\n");
+            gen_gen("        return; // TODO: returning for SCOPE_NOT seems like a hack\n");
+            gen_gen("    }\n");
+            gen_gen("\n");
             gen_gen("    Hash_table_node_"FMT"* node = NULL;\n", strv_print(suffix));
             gen_gen("    if (hash_table_scoped_lookup_node_"FMT"(&node, collection, key, scope_id)) {\n", strv_print(suffix));
             gen_gen("        assert(strv_is_equal(node->key, key));\n");
