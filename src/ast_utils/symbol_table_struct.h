@@ -41,12 +41,6 @@ typedef struct {
 } Hash_table_stable_expand_again_tast;
 static_assert(sizeof(Hash_table_stable_expand_again_tast) == sizeof(Generic_symbol_table_tast), "");
 
-typedef struct {
-    Hash_table_stable_expand_again_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Hash_table_stable_expand_again;
-
 
 
 // TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.

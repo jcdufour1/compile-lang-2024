@@ -84,6 +84,7 @@ static inline Name uast_primitive_def_get_name(const Uast_primitive_def* def) {
 }
 
 static inline Name uast_def_get_name(const Uast_def* def) {
+    assert(def);
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
             return uast_primitive_def_get_name(uast_primitive_def_const_unwrap(def));

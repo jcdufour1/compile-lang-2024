@@ -220,32 +220,6 @@ bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, St
     return true;
 }
 
-bool generic_symbol_lookup(
-    void** result,
-    Strv key,
-    Get_tbl_from_collection_fn get_tbl_from_collection_fn,
-    Scope_id scope_id
-) {
-    todo();
-    //if (scope_id == SCOPE_NOT) {
-    //    return false;
-    //}
-
-    //Scope_id curr_scope = scope_id;
-    //while (true) {
-    //    void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
-    //    if (generic_tbl_lookup(result, tbl, key)) {
-    //         return true;
-    //    }
-    //    if (curr_scope == 0) {
-    //        break;
-    //    }
-    //    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-    //}
-
-    //return false;
-}
-
 //
 // Uast_def implementation
 //
@@ -266,35 +240,6 @@ void* expand_get_tbl_from_collection(Symbol_collection* collection) {
 void* usym_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->usymbol_table;
 }
-
-//
-// Expand_again implementation
-//
-
-bool expand_again_add(Arena* arena, Uast_def* item) {
-    Name name = uast_def_get_name(item);
-    return generic_symbol_add(
-        serialize_name_symbol_table(arena, name),
-        item,
-        expand_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-bool expand_again_lookup(Uast_def** result, Name name) {
-    return generic_symbol_lookup(
-        (void**)result,
-        serialize_name_symbol_table(&a_temp, name),
-        expand_get_tbl_from_collection,
-        name.scope_id
-    );
-}
-
-//
-// Uast_def implementation
-//
-
-// returns false if symbol has already been added to the table
 
 //
 // Ir implementation
@@ -419,6 +364,7 @@ bool scope_id_is_top_level(Scope_id scope) {
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = scope_to_name.info.count;
+    log(LOG_DEBUG, "%zu\n", new_scope);
 
     darr_append(&a_main, &symbol_tables.ir_table, (Hash_table_stable_ir) {0});
     darr_append(&a_main, &symbol_tables.usymbol_table, (Hash_table_stable_uast) {0});
@@ -426,6 +372,7 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
 
     scope_get_parent_tbl_add(new_scope, parent);
     scope_to_name_tbl_add(new_scope, scope_name);
+    assert(scope_to_name.info.count == scope_id_to_parent.info.count);
     return new_scope;
 }
 

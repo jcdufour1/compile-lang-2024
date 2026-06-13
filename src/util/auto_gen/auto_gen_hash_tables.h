@@ -306,7 +306,11 @@ static void gen_hash_table(
             //gen_gen("    }\n");
             //gen_gen("\n");
             gen_gen("    Scope_id curr_scope = scope_id;\n");
+            gen_gen("    if (curr_scope == SCOPE_NOT) {\n");
+            gen_gen("        return false;\n");
+            gen_gen("    }\n");
             gen_gen("    while (1) {\n");
+            gen_gen("        assert(curr_scope != SCOPE_NOT);\n");
             gen_gen("        if (curr_scope < collection->info.count && hash_table_stable_lookup_"FMT"(result, darr_at_ref(collection, curr_scope), key)) {\n", strv_print(suffix));
             gen_gen("            return true;\n");
             gen_gen("        }\n");
@@ -493,6 +497,7 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     gen_hash_table(sv("function_decl_was_encountered"), sv("Uast_function_decl"), 1, false, implementation);
     gen_hash_table(sv("int"), sv("int"), 0, true, implementation);
     gen_hash_table(sv("c_forward_struct"), sv("Name"), 1/*TODO: could be changed to 0?*/, true, implementation);
+    gen_hash_table(sv("expand_again"), sv("Uast_def"), 1/*TODO: could be changed to 0?*/, true, implementation);
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");

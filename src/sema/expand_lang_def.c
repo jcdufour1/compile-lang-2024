@@ -11,6 +11,8 @@
 #include <ulang_type_is_equal.h>
 #include <resolve_generics.h>
 
+static Hash_table_expand_again expand_again = {0};
+
 // TODO: consider if def definition has pointer_depth > 0
 
 typedef enum {
@@ -1148,7 +1150,7 @@ static EXPAND_NAME_STATUS expand_def_symbol(
     EXPAND_NAME_STATUS status = expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 
     Uast_def* def = NULL;
-    if (expand_again_lookup(&def, sym->name)) {
+    if (hash_table_lookup_expand_again(&def, &expand_again, serialize_name_symbol_table(&a_pass, sym->name))) {
         if (!expand_def_def(def, is_rhs, rhs)) {
             status = EXPAND_NAME_ERROR;
         }
@@ -1511,7 +1513,7 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
     env.mod_path_curr_file = old_mod_path_curr_file;
 
     if (must_expand_again) {
-        expand_again_add(&a_pass, def);
+        hash_table_add_expand_again(&expand_again, serialize_name_symbol_table(&a_pass, uast_def_get_name(def)), def);
     }
     must_expand_again = old_must_expand_again;
 
