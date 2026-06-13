@@ -548,8 +548,7 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
 static inline Tast_def* tast_def_from_name(Name name) {
     Tast_def* def = NULL;
     // TODO: assert that name.base.count > 0
-    todo();
-    //unwrap(symbol_lookup(&def, name));
+    unwrap(symbol_lookup(&def, name));
     return def;
 }
 

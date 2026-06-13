@@ -247,19 +247,19 @@ static void gen_hash_table(
         gen_gen("}\n\n");
 
         gen_gen("static Strv hash_table_stable_print_internal_"FMT"(", strv_print(suffix));
-        gen_gen("    Hash_table_stable_"FMT"* hash_table\n", strv_print(suffix));
+        gen_gen("    Hash_table_stable_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Strv(*item_print_internal_fn)(const "FMT" item, Indent indent)\n", strv_print(type_with_ptr));
         gen_gen(") {\n");
         gen_gen("    String buf = {0};\n");
         gen_gen("    Hash_table_iter_node_"FMT" iter = (Hash_table_iter_node_"FMT") {0};\n", strv_print(suffix), strv_print(suffix));
         gen_gen("    "FMT" curr_item = {0};\n", strv_print(type_with_ptr));
         gen_gen("    Strv curr_key = {0};\n");
         gen_gen("    while (hash_table_stable_iter_"FMT"(hash_table, &curr_key, &curr_item, &iter)) {\n", strv_print(suffix));
-        gen_gen("        todo();\n");
-        gen_gen("        //string_extend_f(&a_temp, FMT\"\\n\", \n");
+        gen_gen("        string_extend_f(&a_temp, &buf, FMT\"\\n\", strv_print(item_print_internal_fn(curr_item, 0)));\n");
         gen_gen("    }\n");
         gen_gen("    return string_to_strv(buf);\n");
         gen_gen("}\n\n");
-        gen_gen("#define hash_table_stable_print_"FMT"(hash_table) strv_print(hash_table_stable_print_internal_"FMT"(hash_table))\n\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("#define hash_table_stable_print_"FMT"(hash_table, item_print_internal_fn) strv_print(hash_table_stable_print_internal_"FMT"(hash_table, item_print_internal_fn))\n\n", strv_print(suffix), strv_print(suffix));
 
         gen_gen("static Hash_table_iter_node_"FMT" hash_table_iter_new_"FMT"(\n", strv_print(suffix), strv_print(suffix));
         gen_gen("    void\n");
@@ -484,6 +484,7 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    HASH_TABLE_NODE_OCCUPIED,\n");
         gen_gen("} HASH_TABLE_STATUS;\n");
 
+        // TODO: remove
         gen_gen("typedef enum {\n");
         gen_gen("    SYM_TBL_NEVER_OCCUPIED = 0,\n");
         gen_gen("    SYM_TBL_PREVIOUSLY_OCCUPIED,\n");
@@ -501,14 +502,16 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");
+        
+        gen_gen("extern Hash_table_stable_c_forward_struct c_forward_struct_tbl;\n");
 
         gen_gen("static bool c_forward_struct_tbl_lookup(Name** result, Name key) {\n");
         //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
-        gen_gen("    todo();\n");
+        gen_gen("    return hash_table_stable_lookup_c_forward_struct(result, &c_forward_struct_tbl, serialize_name_symbol_table(&a_leak/*TODO*/, key));\n");
         gen_gen("}\n");
 
         gen_gen("static bool c_forward_struct_tbl_add(Name* struct_to_use, Name key) {\n");
-        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
+        gen_gen("    return hash_table_stable_add_c_forward_struct(&c_forward_struct_tbl, serialize_name_symbol_table(&a_leak/*TODO*/, key), struct_to_use);\n");
         gen_gen("    todo();\n");
         gen_gen("}\n");
 

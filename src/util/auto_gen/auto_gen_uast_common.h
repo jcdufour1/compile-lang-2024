@@ -514,6 +514,7 @@ static void gen_uast_darrs(Uast_type uast) {
 }
 
 static void gen_uasts_common(const char* file_path, bool implementation, Uast_type uast) {
+    unwrap(!global_output);
     unwrap(uast.name.type.count > 0);
 
     global_output = fopen(file_path, "w");
@@ -560,6 +561,14 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("} "FMT"_MODE;\n\n", uast_upper_print(uast.name));
 
         gen_gen("static Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
+    }
+
+    if (implementation && strv_is_equal(uast.name.type, sv("uast"))) {
+        gen_gen("Strv uast_def_print_internal(UAST_MODE mode, const Uast_def* def, Indent indent);\n");
+
+        gen_gen("static Strv uast_def_print_internal_simple(const Uast_def* def, Indent indent) {\n");
+        gen_gen("    return uast_def_print_internal(UAST_LOG, def, indent);\n");
+        gen_gen("}\n");
     }
 
     uast_gen_uast_forward_decl(uast);
