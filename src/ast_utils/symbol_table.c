@@ -283,20 +283,6 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
 }
 
 //
-// Struct_to_struct implementation
-//
-
-static Struct_to_struct struct_to_struct;
-
-bool struct_to_struct_add(Tast_struct_def* def, Name enum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(&a_main, enum_name), def);
-}
-
-bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&struct_to_struct, serialize_name_symbol_table(&a_temp, enum_name));
-}
-
-//
 // Scope_id_to_next_table implementation
 //
 

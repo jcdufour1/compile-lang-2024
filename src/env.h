@@ -46,6 +46,7 @@ typedef struct Env_ {
     Strv mod_path_curr_file;
 
     Hash_table_stable_raw_union_of_enum raw_union_of_enum;
+    Hash_table_stable_struct_to_struct struct_to_struct;
 } Env;
 
 // TODO: move this function?
