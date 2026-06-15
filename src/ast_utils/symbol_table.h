@@ -55,11 +55,6 @@ bool c_forward_struct_tbl_lookup(Name** result, Name key);
 // returns false if value has already been added to the table
 bool c_forward_struct_tbl_add(Name* value, Name key);
 
-bool file_path_to_text_tbl_lookup(Strv** result, Strv key);
-
-// returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(Strv* file_text, Strv key);
-
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key);
 
@@ -68,14 +63,6 @@ void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 bool scope_id_is_top_level(Scope_id scope);
 
 bool resolved_done_or_waiting_tbl_add(Name key);
-
-bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);
-
-bool function_decl_tbl_add(Uast_function_decl* decl);
-
-bool struct_to_struct_add(Tast_struct_def* def, Name enum_name);
-
-bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name);
 
 Name scope_to_name_tbl_lookup(Scope_id key);
 

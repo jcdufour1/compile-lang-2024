@@ -362,8 +362,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
-            function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
             Uast_function_decl* new_decl = uast_function_decl_unwrap(sym_def);
+            hash_table_stable_add_function_decls(&env.function_decls, serialize_name_symbol_table(&a_leak/*TODO*/, new_decl->name), new_decl);
             Lang_type decl_lang_type = {0};
             if (!try_lang_type_from_ulang_type(&decl_lang_type, ulang_type_from_uast_function_decl(new_decl))) {
                 return false;
@@ -2308,7 +2308,7 @@ static FUN_MIDDLE_STATUS try_set_function_call_types_middle_common(
                 return FUN_MIDDLE_ERROR;
             } else if (tast_literal_unwrap(new_callee)->type == TAST_FUNCTION_LIT) {
                 *fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
-                unwrap(function_decl_tbl_lookup(fun_decl, *fun_name));
+                unwrap(hash_table_stable_lookup_function_decls(fun_decl, &env.function_decls, serialize_name_symbol_table(&a_temp, *fun_name)));
                 return FUN_MIDDLE_NORMAL;
             } else {
                 msg(

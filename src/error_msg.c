@@ -36,9 +36,7 @@ static void show_location_error(Pos pos) {
         }
         file_con = string_to_strv(buf);
     } else {
-        Strv* file_con_ = NULL;
-        unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
-        file_con = *file_con_;
+        unwrap(hash_table_stable_lookup_file_path_to_text(&file_con, &env.file_path_to_text, pos.file_path));
         unwrap(pos.line > 0);
     }
 

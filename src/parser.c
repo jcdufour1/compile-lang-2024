@@ -4135,13 +4135,13 @@ static bool parse_file(Uast_block** block, Strv file_path, Pos import_pos) {
     //parser_do_tests();
 #endif // NDEBUG
 
-    Strv* file_con = arena_alloc(&a_main, sizeof(*file_con));
-    if (!read_file(file_con, file_path)) {
+    Strv file_con = {0};
+    if (!read_file(&file_con, file_path)) {
         msg(DIAG_NOTE, import_pos, "error occured when attempting to import module\n");
         status = false;
         goto error;
     }
-    unwrap(file_path_to_text_tbl_add(file_con, file_path) && "parse_file should not be called with the same file path more than once");
+    unwrap(hash_table_stable_add_file_path_to_text(&env.file_path_to_text, file_path, file_con) && "parse_file should not be called with the same file path more than once");
 
     Tk_view tokens = {0};
     if (!tokenize(&tokens, file_path)) {

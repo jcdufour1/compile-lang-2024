@@ -718,7 +718,7 @@ bool resolve_generics_function_def_call(
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
-    if (function_decl_tbl_lookup(&cached, name)) {
+    if (hash_table_stable_lookup_function_decls(&cached, &env.function_decls, serialize_name_symbol_table(&a_temp, name))) {
         // TODO: consider caching ulang_types
         Ulang_type_darr ulang_types = {0};
         for (size_t idx = 0; idx < cached->params->params.info.count; idx++) {
@@ -767,8 +767,8 @@ bool resolve_generics_function_def_call(
     decl->name = name;
     Uast_function_decl* dummy = NULL;
     (void) dummy;
-    unwrap(function_decl_tbl_add(decl));
-    assert(function_decl_tbl_lookup(&dummy, decl->name));
+    unwrap(hash_table_stable_add_function_decls(&env.function_decls, serialize_name_symbol_table(&a_leak/*TODO*/, decl->name), decl));
+    assert(hash_table_stable_lookup_function_decls(&dummy, &env.function_decls, serialize_name_symbol_table(&a_temp, decl->name)));
 
     // TODO: consider caching ulang_types
     Ulang_type_darr ulang_types = {0};
@@ -821,7 +821,7 @@ bool resolve_generics_function_def_implementation(Name name) {
     } else {
         // we need to make new uast function implementation and then type check it
         unwrap(usymbol_lookup(&result, name_plain));
-        unwrap(function_decl_tbl_lookup(&dummy_3, name));
+        unwrap(hash_table_stable_lookup_function_decls(&dummy_3, &env.function_decls, serialize_name_symbol_table(&a_temp, name)));
         Uast_function_def* def = uast_function_def_unwrap(result);
         Uast_block* new_block = uast_block_clone(def->body, true, def->decl->name.scope_id, def->body->pos);
         assert(new_block != def->body);

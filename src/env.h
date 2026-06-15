@@ -47,6 +47,8 @@ typedef struct Env_ {
 
     Hash_table_stable_raw_union_of_enum raw_union_of_enum;
     Hash_table_stable_struct_to_struct struct_to_struct;
+    Hash_table_stable_file_path_to_text file_path_to_text;
+    Hash_table_stable_function_decls function_decls;
 } Env;
 
 // TODO: move this function?

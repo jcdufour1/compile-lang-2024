@@ -34,61 +34,6 @@ typedef void*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
 bool generic_symbol_lookup(void** result, Strv key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
-// TODO: symbol_add should call symbol_update to reduce duplication
-bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Strv key, void* item) {
-    unwrap(key.count > 0 && "invalid item");
-
-    unwrap(capacity > 0);
-    size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
-    size_t init_table_idx = curr_table_idx; 
-    while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (strv_is_equal(sym_tbl_tasts[curr_table_idx].key, key)) {
-            return false;
-        }
-        curr_table_idx = (curr_table_idx + 1) % capacity;
-        unwrap(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
-        (void) init_table_idx;
-    }
-
-    Generic_symbol_table_tast tast = {.tast = item, .status = SYM_TBL_OCCUPIED, .key = key};
-    assert(sym_tbl_tasts[curr_table_idx].status != SYM_TBL_OCCUPIED);
-    sym_tbl_tasts[curr_table_idx] = tast;
-    return true;
-}
-
-static void generic_tbl_cpy(void* dest, const void* src, size_t capacity, size_t count_tasts_to_cpy) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (((Generic_symbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
-            generic_symbol_table_add_internal(dest, capacity, ((Generic_symbol_table_tast*)src)[bucket_src].key, ((Generic_symbol_table_tast*)src)[bucket_src].tast);
-        }
-    }
-}
-
-static void generic_tbl_expand_if_nessessary(void* sym_table) {
-    size_t old_capacity_tast_count = ((Generic_symbol_table*)sym_table)->capacity;
-    size_t minimum_count_to_reserve = 1;
-    size_t new_count = ((Generic_symbol_table*)sym_table)->count + minimum_count_to_reserve;
-    size_t tast_size = sizeof(Generic_symbol_table_tast);
-
-    bool should_move_elements = false;
-    Generic_symbol_table_tast* new_table_tasts = NULL;
-
-    if (((Generic_symbol_table*)sym_table)->capacity < 1) {
-        ((Generic_symbol_table*)sym_table)->capacity = SYM_TBL_DEFAULT_CAPACITY;
-        should_move_elements = true;
-    }
-    while (((float)new_count / ((Generic_symbol_table*)sym_table)->capacity) >= SYM_TBL_MAX_DENSITY) {
-        ((Generic_symbol_table*)sym_table)->capacity *= 2;
-        should_move_elements = true;
-    }
-
-    if (should_move_elements) {
-        new_table_tasts = arena_alloc(&a_leak /* TODO */, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
-        generic_tbl_cpy(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count);
-        ((Generic_symbol_table*)sym_table)->table_tasts = new_table_tasts;
-    }
-}
-
 static Strv sym_tbl_status_print_internal(SYM_TBL_STATUS status) {
     switch (status) {
         case SYM_TBL_NEVER_OCCUPIED:
@@ -139,87 +84,6 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
     unreachable("");
 }
 
-// returns false if symbol has already been added to the table
-bool generic_tbl_add(Generic_symbol_table* sym_table, Strv key, void* item) {
-    bool status = true;
-
-    generic_tbl_expand_if_nessessary(sym_table);
-    unwrap(((Generic_symbol_table*)sym_table)->capacity > 0);
-    if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
-        status = false;
-        goto error;
-    }
-
-    Ir* dummy = NULL;
-    (void) dummy;
-    assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
-    sym_table->count++;
-error:
-    return status;
-}
-
-bool generic_symbol_add(
-    Strv key,
-    void* item,
-    Get_tbl_from_collection_fn get_tbl_from_collection_fn,
-    Scope_id scope_id
-) {
-    todo();
-    //if (scope_id == SCOPE_NOT) {
-    //    return false;
-    //}
-    //void* dummy;
-    //if (generic_symbol_lookup((void**)&dummy, key, get_tbl_from_collection_fn, scope_id)) {
-    //    return false;
-    //}
-    //Symbol_collection* curr_tast = darr_at_ref(&env.symbol_tables, scope_id);
-    //unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
-    //return true;
-}
-
-void generic_tbl_update(Generic_symbol_table* sym_table, Strv key, void* item) {
-    Generic_symbol_table_tast* sym_tast;
-    if (generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
-        sym_tast->tast = item;
-        return;
-    }
-    unwrap(generic_tbl_add(sym_table, key, item));
-}
-
-void generic_symbol_update(Strv key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
-    todo();
-    //if (scope_id == SCOPE_NOT) {
-    //    return;
-    //}
-    //if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
-    //    return;
-    //}
-
-    //Scope_id curr_scope = scope_id;
-    //while (true) {
-    //    void* tbl = get_tbl_from_collection_fn(darr_at_ref(&env.symbol_tables, curr_scope));
-    //    Generic_symbol_table_tast* curr_tast = NULL;
-    //    if (generic_tbl_lookup_internal(&curr_tast, tbl, key)) {
-    //         curr_tast->tast = item;
-    //         return;
-    //    }
-    //    if (curr_scope == 0) {
-    //        break;
-    //    }
-    //    curr_scope = scope_get_parent_tbl_lookup(curr_scope);
-    //}
-    //unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
-}
-
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key) {
-    Generic_symbol_table_tast* sym_tast;
-    if (!generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
-        return false;
-    }
-    *result = sym_tast->tast;
-    return true;
-}
-
 //
 // Uast_def implementation
 //
@@ -245,42 +109,9 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 // Ir implementation
 //
 
-// returns false if symbol has already been added to the table
-bool ir_tbl_add_ex(Hash_table_stable_ir* tbl, Ir* item) {
-    Name name = ir_get_name(LANG_TYPE_MODE_LOG, item);
-    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(&a_main, name), item);
-}
-
-//
-// File_path_to_text implementation
-//
-
-static File_path_to_text file_path_to_text;
-
-bool file_path_to_text_tbl_lookup(Strv** result, Strv key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&file_path_to_text, key);
-}
-
-// returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(Strv* file_text, Strv key) {
-    return generic_tbl_add((Generic_symbol_table*)&file_path_to_text, key, file_text);
-}
-
 //
 // C_forward_struct_tbl implementation
 //
-
-//
-// Hash_table_function_decl_was_encountered implementation
-//
-
-bool function_decl_tbl_add(Uast_function_decl* decl) {
-    return generic_tbl_add((Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(&a_main, decl->name), decl);
-}
-
-bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
-    return generic_tbl_lookup((void**)decl, (Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(&a_temp, key));
-}
 
 //
 // Scope_id_to_next_table implementation
