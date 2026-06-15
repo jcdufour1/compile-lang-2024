@@ -283,20 +283,6 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
 }
 
 //
-// Raw_union_of_enum implementation
-//
-
-static Raw_union_of_enum raw_union_of_enum;
-
-bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(&a_main, enum_name), def);
-}
-
-bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&raw_union_of_enum, serialize_name_symbol_table(&a_temp, enum_name));
-}
-
-//
 // Struct_to_struct implementation
 //
 

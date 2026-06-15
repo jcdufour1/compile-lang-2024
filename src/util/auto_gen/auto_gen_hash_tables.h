@@ -512,6 +512,7 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     gen_hash_table(sv("int"), sv("int"), 0, true, implementation);
     gen_hash_table(sv("c_forward_struct"), sv("Name"), 1/*TODO: could be changed to 0?*/, true, implementation);
     gen_hash_table(sv("expand_again"), sv("Uast_def"), 1/*TODO: could be changed to 0?*/, true, implementation);
+    gen_hash_table(sv("raw_union_of_enum"), sv("Tast_raw_union_def"), 1/*TODO: could be changed to 0?*/, false, implementation);
 
     if (implementation) {
         //gen_gen("#define Hash_table_stable_uast hash_table");

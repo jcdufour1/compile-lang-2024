@@ -73,10 +73,6 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);
 
 bool function_decl_tbl_add(Uast_function_decl* decl);
 
-bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name);
-
-bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name);
-
 bool struct_to_struct_add(Tast_struct_def* def, Name enum_name);
 
 bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name);

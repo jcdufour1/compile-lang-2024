@@ -684,13 +684,13 @@ static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_d
 #   endif // NDEBUG
        
     Tast_raw_union_def* cached_def = NULL;
-    if (raw_union_of_enum_lookup(&cached_def, enum_def->base.name)) {
+    if (hash_table_stable_lookup_raw_union_of_enum(&cached_def, &env.raw_union_of_enum, serialize_name_symbol_table(&a_temp, enum_def->base.name))) {
         return cached_def;
     }
 
     Tast_raw_union_def* union_def = tast_raw_union_def_new(enum_def->pos, enum_def->base);
     union_def->base.name = util_literal_name_new_prefix(union_def->base.name.base);
-    unwrap(raw_union_of_enum_add(union_def, enum_def->base.name));
+    unwrap(hash_table_stable_add_raw_union_of_enum(&env.raw_union_of_enum, serialize_name_symbol_table(&a_leak/*TODO*/, enum_def->base.name), union_def));
     load_raw_union_def(union_def);
     return union_def;
 }

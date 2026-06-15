@@ -44,6 +44,8 @@ typedef struct Env_ {
     bool do_initialize_globals;
 
     Strv mod_path_curr_file;
+
+    Hash_table_stable_raw_union_of_enum raw_union_of_enum;
 } Env;
 
 // TODO: move this function?
