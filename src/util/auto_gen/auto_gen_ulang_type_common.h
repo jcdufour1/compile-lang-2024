@@ -213,7 +213,11 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
 
         string_extend_cstr(&a_gen, &function, "    return (");
         extend_uast_name_first_upper(&function, type.name);
-        string_extend_cstr(&a_gen, &function, ") {.pos = pos, .loc = loc ");
+        string_extend_cstr(&a_gen, &function, ") {.pos = pos\n");
+        string_extend_cstr(&a_gen, &function, "#ifndef NDEBUG\n");
+        string_extend_cstr(&a_gen, &function, " \n, .loc = loc\n");
+        string_extend_cstr(&a_gen, &function, "#endif // NDEBUG\n");
+    
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             string_extend_cstr(&a_gen, &function, ", ");

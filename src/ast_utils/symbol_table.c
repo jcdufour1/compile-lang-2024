@@ -283,21 +283,6 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
 }
 
 //
-// Struct_like_tbl implementation
-//
-
-bool struct_like_tbl_add(Uast_def* def) {
-    if (def->type == UAST_IMPORT_PATH) {
-        todo();
-    }
-    return generic_tbl_add((Generic_symbol_table*)&env.struct_like_tbl, serialize_name_symbol_table(&a_main, uast_def_get_name(def)), def);
-}
-
-bool struct_like_tbl_lookup(Uast_def** def, Name key) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_like_tbl, serialize_name_symbol_table(&a_temp, key));
-}
-
-//
 // Raw_union_of_enum implementation
 //
 

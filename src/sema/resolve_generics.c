@@ -300,7 +300,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
         SCOPE_BUILTIN /* TODO */
     );
 
-    if (!struct_like_tbl_lookup(after_res, new_name)) {
+    if (!hash_table_stable_lookup_uast(after_res, &env.struct_like_tbl, serialize_name_symbol_table(&a_temp, new_name))) {
         if (env.silent_generic_resol_errors) {
             // this early return is nessessary to avoid storing uasts in struct_like_tbl that have
             //   not been fully run through the expand_def pass
@@ -346,7 +346,7 @@ static bool resolve_generics_ulang_type_int_liternal_struct_like(
     if (symbol_lookup(&dummy, new_name)) {
         return true;
     }
-    if (struct_like_tbl_add(*after_res)) {
+    if (hash_table_stable_add_uast(&env.struct_like_tbl, serialize_name_symbol_table(&a_leak/*TODO*/, uast_def_get_name(*after_res)), *after_res)) {
         usym_tbl_update(*after_res);
         darr_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
