@@ -211,6 +211,8 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
     if (implementation) {
         string_extend_cstr(&a_gen, &function, "{\n");
 
+        string_extend_cstr(&a_gen, &function, "    (void) (loc);\n");
+
         string_extend_cstr(&a_gen, &function, "    return (");
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&a_gen, &function, ") {.pos = pos\n");
