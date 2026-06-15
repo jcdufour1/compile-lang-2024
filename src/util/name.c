@@ -13,9 +13,14 @@ Name name_new_quick(Strv mod_path, Strv base, Scope_id scope_id) {
 
 // TODO: replace genrgs in src with gen_args
 Name name_new(Strv mod_path, Strv base, Ulang_type_darr gen_args, Scope_id scope_id) {
-    if (lang_type_name_base_is_primitive(base)) {
-        mod_path = MOD_PATH_BUILTIN;
+    // TODO: this outer if statement condition is a hack. Find an actual solution.
+    //   (inner if may actually be needed though)
+    if (!strv_is_equal(mod_path, MOD_PATH_EXTERN_C)) {
+        if (lang_type_name_base_is_primitive(base)) {
+            mod_path = MOD_PATH_BUILTIN;
+        }
     }
+
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 

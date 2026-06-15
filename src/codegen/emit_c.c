@@ -84,6 +84,7 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
                 if (idx > 0) {
                     string_extend_cstr(&a_pass, output, ", ");
                 }
+                log(LOG_DEBUG, FMT"\n", loc_print(loc_get(&fn)));
                 c_extend_type_call_str(output, darr_at(fn.params.ir_lang_types, idx), opaque_ptr, true);
             }
             string_extend_cstr(&a_pass, output, ")");
@@ -104,9 +105,17 @@ static void c_extend_type_call_str(String* output, Ir_lang_type ir_lang_type, bo
             ir_lang_type = ir_lang_type_void_const_wrap(ir_lang_type_void_new(ir_lang_type_get_pos(ir_lang_type), 0));
             string_extend_strv(&a_pass, output, sv("void"));
             return;
-        case IR_LANG_TYPE_PRIMITIVE:
+        case IR_LANG_TYPE_PRIMITIVE: {
+#           ifndef NDEBUG
+                //Name result = {0};
+                //unwrap(ir_lang_type_get_name(&result, LANG_TYPE_MODE_EMIT_C, ir_lang_type));
+                //log(LOG_DEBUG, FMT"\n", loc_print(loc_get(&ir_lang_type)));
+                //unwrap(!strv_is_equal(result.base, sv("void")) && "void type should use IR_LANG_TYPE_VOID instead of IR_LANG_TYPE_PRIMITIVE");
+#           endif // NDEBUG
+
             extend_ir_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, ir_lang_type);
             return;
+        }
     }
     unreachable("");
 }
@@ -119,7 +128,7 @@ static void emit_c_function_params(String* output, const Ir_function_params* par
 
         if (darr_at(params->params, idx)->is_variadic) {
             string_extend_cstr(&a_pass, output, "... ");
-            unwrap(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
+            assert(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
             return;
         }
 

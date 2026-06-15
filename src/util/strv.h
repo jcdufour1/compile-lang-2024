@@ -84,6 +84,9 @@ static inline bool strv_is_equal(Strv a, Strv b) {
     if (a.count != b.count) {
         return false;
     }
+    if (!a.str) {
+        return !b.str;
+    }
     // TODO: use memcmp instead of strncmp
     return 0 == strncmp(a.str, b.str, a.count);
 }
