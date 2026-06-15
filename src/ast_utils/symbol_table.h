@@ -26,19 +26,6 @@ void symbol_log_table_internal(int log_level, const Hash_table_stable_tast sym_t
         symbol_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
     } while(0)
 
-// returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Hash_table_stable_tast_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol);
-
-bool sym_tbl_lookup_internal(Hash_table_stable_tast_tast** result, const Hash_table_stable_tast* sym_table, Strv key);
-
-bool sym_tbl_lookup(Tast_def** result, Name key);
-
-bool symbol_lookup(Tast_def** result, Name key);
-
-bool symbol_add(Tast_def* tast_of_symbol);
-
-void symbol_update(Tast_def* tast_of_symbol);
-
 void ir_log_table_internal(int log_level, const Hash_table_stable_ir sym_table, Indent indent, const char* file_path, int line);
 
 #define alloca_log_table(log_level, sym_table) \
@@ -77,6 +64,68 @@ Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
 bool expand_again_lookup(Uast_def** result, Name name);
 
 bool usymbol_lookup(Uast_def** result, Name key);
+
+#define Usymbol_iter Hash_table_scoped_iter_node_uast
+#define Symbol_iter Hash_table_scoped_iter_node_tast
+#define Ir_iter Hash_table_scoped_iter_node_ir
+
+static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_uast(scope_id);
+}
+
+static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_tast(scope_id);
+}
+
+static inline Ir_iter ir_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_ir(scope_id);
+}
+
+static bool usym_tbl_iter_next(Uast_def** curr_def, Usymbol_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_uast(&symbol_tables.usymbol_table, &curr_key, curr_def, iter);
+}
+
+static bool sym_tbl_iter_next(Tast_def** curr_def, Symbol_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_tast(&symbol_tables.symbol_table, &curr_key, curr_def, iter);
+}
+
+static bool ir_tbl_iter_next(Ir** curr_def, Ir_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_ir(&symbol_tables.ir_table, &curr_key, curr_def, iter);
+}
+
+static bool symbol_lookup(Tast_def** result, Name key) {
+    return hash_table_scoped_lookup_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+}
+
+static bool ir_lookup(Ir** result, Name key) {
+    return hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+}
+
+//static bool usymbol_add(Uast_def** result, Name key) {
+//    return hash_table_scoped_add_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+//}
+
+//static bool symbol_add(Tast_def** result, Name key) {
+//    return hash_table_scoped_add_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+//}
+
+bool ir_add(Ir* def_to_add);
+bool usymbol_add(Uast_def* def_to_add);
+void usymbol_update(Uast_def* def_to_update);
+bool symbol_add(Tast_def* def_to_add);
+void symbol_update(Tast_def* def_to_add);
+bool usym_tbl_add(Uast_def* def_to_add);
+bool sym_tbl_add(Tast_def* def_to_add);
+bool ir_tbl_add(Ir* def_to_add);
+bool usym_tbl_lookup(Uast_def** result, Name key);
+bool sym_tbl_lookup(Tast_def** result, Name key);
+bool ir_tbl_lookup(Ir** result, Name key);
+void ir_tbl_update(Ir* def_to_update);
+void usym_tbl_update(Uast_def* def_to_update);
+void sym_tbl_update(Tast_def* def_to_update);
 
 #endif // SYMBOL_TABLE_H
 
