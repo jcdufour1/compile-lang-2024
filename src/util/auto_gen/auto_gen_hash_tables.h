@@ -124,6 +124,7 @@ static void gen_hash_table(
         gen_gen("        iter.index = iter.index%%hash_table->capacity;\n");
         gen_gen("        size_t curr_idx = iter.index;\n");
         gen_gen("        iter.index++;\n");
+        gen_gen("        (void) original_iter_idx;\n");
         gen_gen("        assert(iter.index != original_iter_idx && \"every hash node is occupied, which should not be the case\");\n");
         gen_gen("        assert(hash_table);\n");
         gen_gen("        assert(hash_table->nodes);\n");
