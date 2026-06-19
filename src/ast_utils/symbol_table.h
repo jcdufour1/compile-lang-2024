@@ -126,6 +126,9 @@ bool ir_tbl_lookup(Ir** result, Name key);
 void ir_tbl_update(Ir* def_to_update);
 void usym_tbl_update(Uast_def* def_to_update);
 void sym_tbl_update(Tast_def* def_to_update);
+void usymbol_log(LOG_LEVEL log_level, Scope_id scope_id);
+void symbol_log(LOG_LEVEL log_level, Scope_id scope_id);
+void ir_log(LOG_LEVEL log_level, Scope_id scope_id);
 
 #endif // SYMBOL_TABLE_H
 

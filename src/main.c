@@ -54,7 +54,7 @@ static void add_builtin_defs(void) {
         } \
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
-            /* TODO: sym_log_fn(dest, LOG_DEBUG, SCOPE_BUILTIN); */\
+        sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN); \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
         arena_reset(&a_temp);\
@@ -76,7 +76,7 @@ static void add_builtin_defs(void) {
 \
         log(LOG_DEBUG, "after " #pass_fn " start--------------------\n");\
         if (params_log_level <= LOG_DEBUG) { \
-            /* TODO: sym_log_fn(dest, LOG_DEBUG, SCOPE_BUILTIN); */\
+            sym_log_fn(LOG_DEBUG, SCOPE_BUILTIN); \
         } \
         log(LOG_DEBUG, "after " #pass_fn " end--------------------\n");\
 \
@@ -108,15 +108,16 @@ static void compile_file_to_ir(void) {
     // generate ir from file(s)
     //FILE* output = fopen("output.txt", "w");
     //unwrap(output);
-    do_pass_status(parse, hash_table_scoped_print_uast, stderr);
-    do_pass(expand_using, hash_table_scoped_print_uast, stderr);
-    do_pass(expand_def, hash_table_scoped_print_uast, stderr);
-    do_pass(try_set_types, hash_table_scoped_print_tast, stderr);
+    do_pass_status(parse, usymbol_log, stderr);
+    todo();
+    do_pass(expand_using, usymbol_log, stderr);
+    do_pass(expand_def, usymbol_log, stderr);
+    do_pass(try_set_types, symbol_log, stderr);
     //fclose(output);
-    do_pass(add_load_and_store, hash_table_scoped_print_ir, stderr);
+    do_pass(add_load_and_store, ir_log, stderr);
 
     // ir passes
-    do_pass(remove_void_assigns, hash_table_scoped_print_ir, stderr);
+    do_pass(remove_void_assigns, ir_log, stderr);
 }
 
 NEVER_RETURN void do_passes(void) {
@@ -163,7 +164,7 @@ NEVER_RETURN void do_passes(void) {
             case BACKEND_LLVM:
                 todo();
             case BACKEND_C:
-                do_pass(emit_c_from_tree, ir_log_level, stderr);
+                do_pass(emit_c_from_tree, ir_log, stderr);
                 break;
             default:
                 unreachable("");

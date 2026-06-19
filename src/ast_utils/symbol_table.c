@@ -88,15 +88,6 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 // Uast_def implementation
 //
 
-void* sym_get_tbl_from_collection(Symbol_collection* collection) {
-    return &collection->symbol_table;
-}
-
-void* expand_get_tbl_from_collection(Symbol_collection* collection) {
-    todo();
-    //return &collection->expand_again_table;
-}
-
 //
 // usymbol implementation
 //
@@ -354,4 +345,26 @@ bool usymbol_lookup(Uast_def** result, Name key) {
     return hash_table_scoped_lookup_uast(result, &symbol_tables.usymbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
 }
 
+static Strv symbol_table_uast_print_internal(const Uast_def* item, Indent indent) {
+    return uast_def_print_internal(UAST_LOG, item, indent);
+}
 
+static Strv symbol_table_tast_print_internal(const Tast_def* item, Indent indent) {
+    return tast_def_print_internal(item, indent);
+}
+
+static Strv symbol_table_ir_print_internal(const Ir* item, Indent indent) {
+    return ir_print_internal(item, indent);
+}
+
+void usymbol_log(LOG_LEVEL log_level, Scope_id scope_id) {
+    log(log_level, FMT"\n", hash_table_scoped_print_uast(&symbol_tables.usymbol_table, scope_id, symbol_table_uast_print_internal));
+}
+
+void symbol_log(LOG_LEVEL log_level, Scope_id scope_id) {
+    log(log_level, FMT"\n", hash_table_scoped_print_tast(&symbol_tables.symbol_table, scope_id, symbol_table_tast_print_internal));
+}
+
+void ir_log(LOG_LEVEL log_level, Scope_id scope_id) {
+    log(log_level, FMT"\n", hash_table_scoped_print_ir(&symbol_tables.ir_table, scope_id, symbol_table_ir_print_internal));
+}
