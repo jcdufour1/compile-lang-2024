@@ -293,13 +293,15 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
 
     string_extend_cstr_indent(&a_temp, &buf, "block\n", indent);
 
-    string_extend_cstr_indent(&a_temp, &buf, "lang_type: ", indent + INDENT_WIDTH);
+    indent += INDENT_WIDTH;
+
+    string_extend_cstr_indent(&a_temp, &buf, "lang_type: ", indent);
     string_extend_strv(&a_temp, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, block->lang_type));
 
     tast_extend_scope(&buf, block->scope_id, indent + INDENT_WIDTH);
     string_extend_cstr(&a_temp, &buf, "\n");
 
-    string_extend_cstr_indent(&a_temp, &buf, "parent_block_scope: ", indent + INDENT_WIDTH);
+    string_extend_cstr_indent(&a_temp, &buf, "parent_block_scope: ", indent);
     string_extend_size_t(&a_temp, &buf, scope_get_parent_tbl_lookup(block->scope_id));
     string_extend_cstr(&a_temp, &buf, "\n");
 
@@ -307,11 +309,11 @@ Strv tast_block_print_internal(const Tast_block* block, Indent indent) {
     //string_extend_cstr_indent(&a_temp, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
     //usymbol_extend_table_internal(&buf, darr_at(env.symbol_tables, block->scope_id).usymbol_table, indent + 2*INDENT_WIDTH);
 
-    string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent + INDENT_WIDTH);
-    string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_tast(darr_at_ref(&symbol_tables.symbol_table, block->scope_id), tast_def_print_internal));
+    string_extend_cstr_indent(&a_temp, &buf, "symbol_table\n", indent);
+    string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_tast(darr_at_ref(&symbol_tables.symbol_table, block->scope_id), indent, tast_def_print_internal));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Strv arg_text = tast_stmt_print_internal(darr_at(block->children, idx), indent + INDENT_WIDTH);
+        Strv arg_text = tast_stmt_print_internal(darr_at(block->children, idx), indent);
         string_extend_strv(&a_temp, &buf, arg_text);
     }
 

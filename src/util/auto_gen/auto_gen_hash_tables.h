@@ -249,6 +249,7 @@ static void gen_hash_table(
 
         gen_gen("static Strv hash_table_stable_print_internal_"FMT"(", strv_print(suffix));
         gen_gen("    Hash_table_stable_"FMT"* hash_table,\n", strv_print(suffix));
+        gen_gen("    Indent indent,\n");
         gen_gen("    Strv(*item_print_internal_fn)(const "FMT" item, Indent indent)\n", strv_print(type_with_ptr));
         gen_gen(") {\n");
         gen_gen("    String buf = {0};\n");
@@ -256,11 +257,11 @@ static void gen_hash_table(
         gen_gen("    "FMT" curr_item = {0};\n", strv_print(type_with_ptr));
         gen_gen("    Strv curr_key = {0};\n");
         gen_gen("    while (hash_table_stable_iter_"FMT"(hash_table, &curr_key, &curr_item, &iter)) {\n", strv_print(suffix));
-        gen_gen("        string_extend_f(&a_temp, &buf, FMT\"\\n\", strv_print(item_print_internal_fn(curr_item, 0)));\n");
+        gen_gen("        string_extend_f(&a_temp, &buf, FMT, strv_print(item_print_internal_fn(curr_item, indent)));\n");
         gen_gen("    }\n");
         gen_gen("    return string_to_strv(buf);\n");
         gen_gen("}\n\n");
-        gen_gen("#define hash_table_stable_print_"FMT"(hash_table, item_print_internal_fn) strv_print(hash_table_stable_print_internal_"FMT"(hash_table, item_print_internal_fn))\n\n", strv_print(suffix), strv_print(suffix));
+        gen_gen("#define hash_table_stable_print_"FMT"(hash_table, indent, item_print_internal_fn) strv_print(hash_table_stable_print_internal_"FMT"(hash_table, indent, item_print_internal_fn))\n\n", strv_print(suffix), strv_print(suffix));
 
         gen_gen("static Hash_table_iter_node_"FMT" hash_table_iter_new_"FMT"(\n", strv_print(suffix), strv_print(suffix));
         gen_gen("    void\n");
