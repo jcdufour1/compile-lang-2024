@@ -80,10 +80,7 @@ static inline Name uast_primitive_def_get_name(const Uast_primitive_def* def) {
     }
 
     if (def->lang_type.type != LANG_TYPE_PRIMITIVE) {
-        log(LOG_DEBUG, FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
-        log(LOG_DEBUG, "%d\n", def->lang_type.type);
         msg_todo("", def->pos);
-        todo();
         return util_literal_name_new_poison();
     }
     Lang_type_primitive lang_type = lang_type_primitive_const_unwrap(def->lang_type);

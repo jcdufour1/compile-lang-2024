@@ -254,15 +254,10 @@ static bool expand_def_ulang_type_array(
 
     Uast_expr* count_rhs = rhs;
     if (is_rhs) {
-        if (rhs->type != UAST_ARRAY_LITERAL) {
-            log(LOG_DEBUG, FMT"\n", strv_print(uast_expr_print_internal(UAST_LOG, rhs, 0)));
-            //msg_todo("", dest_pos);
-            //todo();
-            //return false;
-        } else {
-        Uast_array_literal* rhs_arr = uast_array_literal_unwrap(rhs);
-        Uast_int* new_count = uast_int_new(rhs_arr->pos, (int64_t)rhs_arr->members.info.count);
-        count_rhs = uast_literal_wrap(uast_int_wrap(new_count));
+        if (rhs->type == UAST_ARRAY_LITERAL) {
+            Uast_array_literal* rhs_arr = uast_array_literal_unwrap(rhs);
+            Uast_int* new_count = uast_int_new(rhs_arr->pos, (int64_t)rhs_arr->members.info.count);
+            count_rhs = uast_literal_wrap(uast_int_wrap(new_count));
         }
     }
     

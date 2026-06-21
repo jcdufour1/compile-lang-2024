@@ -354,7 +354,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped, bool i
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
-            log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, base_name, NAME_FULL));
             msg_undefined_symbol(sym_untyped->name, sym_untyped->pos);
             return false;
         }

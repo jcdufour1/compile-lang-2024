@@ -46,7 +46,7 @@ ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_COMMON}
     C_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined \
 			   -fsanitize=address -fno-sanitize-recover=address \
-			   -fno-omit-frame-pointer
+			   -fno-omit-frame-pointer -pg
 	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
@@ -72,8 +72,8 @@ DEP_UTIL = Makefile src/util/*.h src/util/auto_gen/*.h src/util/auto_gen/auto_ge
 DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.[hc]")
 
-FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level VERBOSE
+FILE_TO_TEST ?= main.own
+ARGS_PROGRAM ?= ${FILE_TO_TEST} --set-log-level DEBUG
 
 all: build
 

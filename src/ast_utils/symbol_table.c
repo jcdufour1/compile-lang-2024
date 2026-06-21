@@ -143,7 +143,6 @@ bool scope_id_is_top_level(Scope_id scope) {
 
 Scope_id symbol_collection_new(Scope_id parent, Name scope_name) {
     Scope_id new_scope = scope_to_name.info.count;
-    log(LOG_DEBUG, "%zu\n", new_scope);
 
     darr_append(&a_main, &symbol_tables.ir_table, (Hash_table_stable_ir) {0});
     darr_append(&a_main, &symbol_tables.usymbol_table, (Hash_table_stable_uast) {0});

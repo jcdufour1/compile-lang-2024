@@ -8,12 +8,6 @@
 #include <msg.h>
 #include <hash_tables.h>
 
-//// TODO: consider if this should be moved
-//typedef struct {
-//    Vec_base info;
-//    Scope_id* buf;
-//} Scope_id_darr;
-
 typedef struct Env_ {
     uint32_t error_count;
     uint32_t warning_count;

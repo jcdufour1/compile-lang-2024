@@ -33,8 +33,6 @@ static void expand_using_using(Uast_using* using) {
         }
         darr_reset(&lang_type_name.gen_args);
         Uast_def* struct_def_ = NULL;
-        log(LOG_DEBUG, FMT"\n", uname_print(UNAME_LOG, lang_type_uname));
-        log(LOG_DEBUG, FMT"\n", name_print(NAME_LOG, lang_type_name, NAME_FULL));
         unwrap(usymbol_lookup(&struct_def_, lang_type_name));
         if (struct_def_->type != UAST_STRUCT_DEF) {
             msg(

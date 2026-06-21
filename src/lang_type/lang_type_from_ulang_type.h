@@ -5,11 +5,9 @@
 #include <lang_type.h>
 #include <lang_type_print.h>
 #include <uast_utils.h>
-//#include <resolve_generics.h>
 #include <msg.h>
 #include <tast_utils.h>
 #include <ulang_type_serialize.h>
-//#include <uast_expr_to_ulang_type.h>
 #include <ulang_type_remove_expr.h>
 #include <ast_msg.h>
 
