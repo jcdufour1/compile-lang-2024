@@ -211,14 +211,12 @@ Strv ir_block_print_internal(const Ir_block* block, Indent indent) {
     string_extend_cstr_indent(&a_temp, &buf, "block {\n", indent);
     indent += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent + INDENT_WIDTH);
-    string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_ir(darr_at_ref(&symbol_tables.ir_table, block->scope_id), indent, ir_print_internal));
+    string_extend_cstr_indent(&a_temp, &buf, "alloca_table\n", indent);
+    string_extend_f(&a_temp, &buf, FMT"\n", hash_table_stable_print_ir(darr_at_ref(&symbol_tables.ir_table, block->scope_id), indent + INDENT_WIDTH, ir_print_internal));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         string_extend_f(&a_temp, &buf, "%6zu:\n", idx); // TODO: avoid hardcoded width of 6?
-        indent += INDENT_WIDTH;
-        string_extend_f(&a_temp, &buf, FMT"\n", strv_print(ir_print_internal(darr_at(block->children, idx), indent)));
-        indent -= INDENT_WIDTH;
+        string_extend_f(&a_temp, &buf, FMT, strv_print(ir_print_internal(darr_at(block->children, idx), indent)));
     }
 
     indent -= INDENT_WIDTH;

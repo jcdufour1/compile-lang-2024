@@ -109,7 +109,6 @@ static void compile_file_to_ir(void) {
     //FILE* output = fopen("output.txt", "w");
     //unwrap(output);
     do_pass_status(parse, usymbol_log, stderr);
-    todo();
     do_pass(expand_using, usymbol_log, stderr);
     do_pass(expand_def, usymbol_log, stderr);
     do_pass(try_set_types, symbol_log, stderr);
