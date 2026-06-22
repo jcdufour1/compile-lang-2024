@@ -22,6 +22,8 @@ bool lang_type_name_base_is_int(Strv name_base);
 
 bool lang_type_name_base_is_number(Strv name);
 
+bool lang_type_name_base_is_primitive(Strv base);
+
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type);
 
 static inline Bits lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {

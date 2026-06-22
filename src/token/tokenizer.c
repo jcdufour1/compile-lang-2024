@@ -682,9 +682,9 @@ bool tokenize(Tk_view* result, Strv file_path) {
     size_t prev_err_count = env.error_count;
     Token_darr tokens = {0};
 
-    Strv* file_con = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
-    Strv_col curr_file_text = {.base = *file_con};
+    Strv file_con = {0};
+    unwrap(hash_table_stable_lookup_file_path_to_text(&file_con, &env.file_path_to_text, file_path));
+    Strv_col curr_file_text = {.base = file_con};
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token = {0};

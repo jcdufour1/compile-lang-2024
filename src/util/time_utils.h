@@ -14,6 +14,7 @@ INLINE uint64_t get_time_milliseconds(void) {
 #   else
         struct timeval time_now = {0};
         gettimeofday(&time_now, NULL);
+        // TODO: time_now.tv_usec should be multiplied by 1000?
         return (uint64_t)time_now.tv_usec + (uint64_t)time_now.tv_sec*1000000;
 #   endif // _WIN32
     unreachable("");

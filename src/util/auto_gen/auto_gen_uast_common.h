@@ -513,89 +513,8 @@ static void gen_uast_darrs(Uast_type uast) {
     gen_darr_from_strv(string_to_strv(darr_name), string_to_strv(item_name));
 }
 
-static void gen_symbol_table_log(Uast_type uast) {
-    Strv sym_text = {0};
-    if (strv_is_equal(uast.name.type, sv("uast"))) {
-        gen_gen("static void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, Indent indent) {\n");
-        gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
-        gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
-        gen_gen("            string_extend_strv(&a_temp, buf, uast_def_print_internal(UAST_LOG, sym_tast->tast, indent));\n");
-        gen_gen("        }\n");
-        gen_gen("    }\n");
-        gen_gen("}\n");
-
-        sym_text = sv("usymbol");
-    } else if (strv_is_equal(uast.name.type, sv("tast"))) {
-        gen_gen("static void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, Indent indent) {\n");
-        gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
-        gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
-        gen_gen("            string_extend_strv(&a_temp, buf, tast_def_print_internal(sym_tast->tast, indent));\n");
-        gen_gen("        }\n");
-        gen_gen("    }\n");
-        gen_gen("}\n");
-
-        sym_text = sv("symbol");
-    } else if (strv_is_equal(uast.name.type, sv("ir"))) {
-        gen_gen("static void ir_extend_table_internal(String* buf, const Ir_table sym_table, Indent indent) {\n");
-        gen_gen("    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-        gen_gen("        Ir_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
-        gen_gen("        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
-        gen_gen("            string_extend_strv(&a_temp, buf, ir_print_internal(sym_tast->tast, indent));\n");
-        gen_gen("        }\n");
-        gen_gen("    }\n");
-        gen_gen("}\n");
-
-        sym_text = sv("ir");
-    } else {
-        unreachable(FMT" not covered\n", strv_print(uast.name.type));
-    }
-    
-    gen_gen(
-        "#define "FMT"_log(log_level, scope_id) "FMT"_log_internal(log_level, __FILE__, __LINE__,  0, scope_id);\n",
-        strv_print(sym_text),
-        strv_print(sym_text)
-    );
-    gen_gen(
-        "#define "FMT"_log_level(dest, log_level, scope_id) \\\n"
-        "    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) { \\\n"
-        "        "FMT"_level_log_internal(dest, log_level, __FILE__, __LINE__, darr_at(env.symbol_tables, scope_id)."FMT"_table, 0); \\\n"
-        "    }\n",
-        strv_print(sym_text),
-        strv_print(sym_text),
-        strv_print(sym_text)
-    );
-    gen_gen(
-        "static void "FMT"_level_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, "FMT"_table level, Indent indent) {\n",
-        strv_print(sym_text),
-        strv_first_upper_print(&a_gen, sym_text)
-    );
-        gen_gen("    String buf = {0};\n");
-        gen_gen("    "FMT"_extend_table_internal(&buf, level, indent);\n", strv_print(sym_text));
-        gen_gen("    log_internal_ex(dest, log_level, true, file, line, indent + INDENT_WIDTH, \"\\n\"FMT\"\\n\", string_print(buf));\n");
-    gen_gen("}\n");
-
-    gen_gen("static void "FMT"_log_internal(FILE* dest, LOG_LEVEL log_level, const char* file, int line, Indent indent, Scope_id scope_id) {\n", strv_print(sym_text));
-    gen_gen("    log_internal(log_level, file, line, 0, \"----start "FMT" table----\\n\");\n", strv_print(sym_text));
-    gen_gen("    Scope_id curr_scope = scope_id;\n");
-    gen_gen("    size_t idx = 0;\n");
-    gen_gen("    while (true) {\n");
-    gen_gen("        "FMT"_table curr = darr_at(env.symbol_tables, curr_scope)."FMT"_table;\n", strv_first_upper_print(&a_gen, sym_text), strv_print(sym_text));
-    gen_gen("        log_internal(log_level, file, line, 0, \"level: \"SIZE_T_FMT\"\\n\", idx);\n");
-    gen_gen("        "FMT"_level_log_internal(dest, log_level, file, line, curr, indent + INDENT_WIDTH);\n", strv_print(sym_text));
-    gen_gen("        if (curr_scope == 0) {\n");
-    gen_gen("            break;\n");
-    gen_gen("        }\n");
-    gen_gen("        curr_scope = scope_get_parent_tbl_lookup(curr_scope);\n");
-    gen_gen("    }\n");
-    gen_gen("    log_internal(log_level, file, line, 0, \"----end "FMT" table------\\n\");\n", strv_print(sym_text));
-    gen_gen("}\n");
-
-}
-
-
 static void gen_uasts_common(const char* file_path, bool implementation, Uast_type uast) {
+    unwrap(!global_output);
     unwrap(uast.name.type.count > 0);
 
     global_output = fopen(file_path, "w");
@@ -641,7 +560,15 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
         gen_gen("    "FMT"_MSG,", uast_upper_print(uast.name));
         gen_gen("} "FMT"_MODE;\n\n", uast_upper_print(uast.name));
 
-        gen_gen("Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
+        gen_gen("static Scope_id scope_get_parent_tbl_lookup(Scope_id key);\n");
+    }
+
+    if (implementation && strv_is_equal(uast.name.type, sv("uast"))) {
+        gen_gen("Strv uast_def_print_internal(UAST_MODE mode, const Uast_def* def, Indent indent);\n");
+
+        gen_gen("static Strv uast_def_print_internal_simple(const Uast_def* def, Indent indent) {\n");
+        gen_gen("    return uast_def_print_internal(UAST_LOG, def, indent);\n");
+        gen_gen("}\n");
     }
 
     uast_gen_uast_forward_decl(uast);
@@ -690,7 +617,6 @@ static void gen_uasts_common(const char* file_path, bool implementation, Uast_ty
 
     if (implementation) {
         gen_uast_new_forward_decl(uast);
-        gen_symbol_table_log(uast);
     }
     uast_gen_new_macro(uast, implementation);
     uast_gen_print_forward_decl(uast);

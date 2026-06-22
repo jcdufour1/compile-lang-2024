@@ -10,140 +10,64 @@
 #include <ir_forward_decl.h>
 #include <env.h>
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Strv key);
-
-void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, Indent indent, const char* file_path, int line);
-
-#define usymbol_log_table(log_level, sym_table) \
-    do { \
-        usymbol_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
-    } while(0)
-
-// returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol);
-
-bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Strv key);
-
-bool usym_tbl_lookup(Uast_def** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool usym_tbl_add(Uast_def* tast_of_symbol);
-
-void usym_tbl_update(Uast_def* tast_of_symbol);
-
 bool usymbol_lookup(Uast_def** result, Name key);
 
-bool usymbol_add(Uast_def* tast_of_symbol);
+#define Usymbol_iter Hash_table_scoped_iter_node_uast
+#define Symbol_iter Hash_table_scoped_iter_node_tast
+#define Ir_iter Hash_table_scoped_iter_node_ir
 
-void usymbol_update(Uast_def* tast_of_symbol);
+static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_uast(scope_id);
+}
 
-void symbol_log_table_internal(int log_level, const Symbol_table sym_table, Indent indent, const char* file_path, int line);
+static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_tast(scope_id);
+}
 
-#define symbol_log_table(log_level, sym_table) \
-    do { \
-        symbol_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
-    } while(0)
+static inline Ir_iter ir_tbl_iter_new(Scope_id scope_id) {
+    return hash_table_scoped_iter_new_ir(scope_id);
+}
 
-// returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol);
+static inline bool usym_tbl_iter_next(Uast_def** curr_def, Usymbol_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_uast(&symbol_tables.usymbol_table, &curr_key, curr_def, iter);
+}
 
-bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Strv key);
+static inline bool sym_tbl_iter_next(Tast_def** curr_def, Symbol_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_tast(&symbol_tables.symbol_table, &curr_key, curr_def, iter);
+}
 
+static inline bool ir_tbl_iter_next(Ir** curr_def, Ir_iter* iter) {
+    Strv curr_key = (Strv) {0};
+    return hash_table_scoped_iter_ir(&symbol_tables.ir_table, &curr_key, curr_def, iter);
+}
+
+static inline bool symbol_lookup(Tast_def** result, Name key) {
+    return hash_table_scoped_lookup_tast(result, &symbol_tables.symbol_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+}
+
+static inline bool ir_lookup(Ir** result, Name key) {
+    return hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);
+}
+
+bool ir_add(Ir* def_to_add);
+bool usymbol_add(Uast_def* def_to_add);
+void usymbol_update(Uast_def* def_to_update);
+bool symbol_add(Tast_def* def_to_add);
+void symbol_update(Tast_def* def_to_add);
+bool usym_tbl_add(Uast_def* def_to_add);
+bool sym_tbl_add(Tast_def* def_to_add);
+bool ir_tbl_add(Ir* def_to_add);
+bool usym_tbl_lookup(Uast_def** result, Name key);
 bool sym_tbl_lookup(Tast_def** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool sym_tbl_add(Tast_def* tast_of_symbol);
-
-void sym_tbl_update(Scope_id scope_id, Tast_def* tast_of_symbol);
-
-bool symbol_lookup(Tast_def** result, Name key);
-
-bool symbol_add(Tast_def* tast_of_symbol);
-
-void symbol_update(Tast_def* tast_of_symbol);
-
-void ir_log_table_internal(int log_level, const Ir_table sym_table, Indent indent, const char* file_path, int line);
-
-#define alloca_log_table(log_level, sym_table) \
-    do { \
-        alloca_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \
-    } while(0)
-
-// returns false if symbol is already added to the table
-bool ir_tbl_add_internal(Ir_table_tast* sym_tbl_tasts, size_t capacity, Ir* tast_of_symbol);
-
-bool ir_tbl_lookup_internal(Ir_table_tast** result, const Ir_table* sym_table, Strv key);
-
 bool ir_tbl_lookup(Ir** result, Name key);
-
-// returns false if symbol has already been added to the table
-bool ir_tbl_add_ex(Ir_table* tbl, Ir* item);
-
-// returns false if symbol has already been added to the table
-bool ir_tbl_add(Ir* tast_of_symbol);
-
-void ir_tbl_update(Ir* tast_of_symbol);
-
-bool ir_lookup(Ir** result, Name key);
-
-bool ir_add(Ir* tast_of_symbol);
-
-void ir_update(Ir* tast_of_symbol);
-
-Symbol_table* symbol_get_block(void);
-
-void log_symbol_table_if_block(const char* file_path, int line);
-
-bool c_forward_struct_tbl_lookup(Name** result, Name key);
-
-// returns false if value has already been added to the table
-bool c_forward_struct_tbl_add(Name* value, Name key);
-
-bool file_path_to_text_tbl_lookup(Strv** result, Strv key);
-
-// returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(Strv* file_text, Strv key);
-
-// returns parent of key
-Scope_id scope_get_parent_tbl_lookup(Scope_id key);
-
-void scope_get_parent_tbl_add(Scope_id key, Scope_id next);
-
-void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
-
-bool scope_id_is_top_level(Scope_id scope);
-
-bool resolved_done_or_waiting_tbl_add(Name key);
-
-bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);
-
-bool function_decl_tbl_add(Uast_function_decl* decl);
-
-bool struct_like_tbl_add(Uast_def* def);
-
-bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name);
-
-bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name);
-
-bool struct_to_struct_add(Tast_struct_def* def, Name enum_name);
-
-bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name);
-
-bool struct_like_tbl_lookup(Uast_def** def, Name key);
-
-Name scope_to_name_tbl_lookup(Scope_id key);
-
-void scope_to_name_tbl_add(Scope_id key, Name scope_name);
-
-void scope_to_name_tbl_update(Scope_id key, Name scope_name);
-
-void scope_id_to_parent_dump(LOG_LEVEL log_level);
-
-Scope_id symbol_collection_new(Scope_id parent, Name scope_name);
-
-bool expand_again_add(Arena* arena, Uast_def* item);
-    
-bool expand_again_lookup(Uast_def** result, Name name);
+void ir_tbl_update(Ir* def_to_update);
+void usym_tbl_update(Uast_def* def_to_update);
+void sym_tbl_update(Tast_def* def_to_update);
+void usymbol_log(LOG_LEVEL log_level, Scope_id scope_id);
+void symbol_log(LOG_LEVEL log_level, Scope_id scope_id);
+void ir_log(LOG_LEVEL log_level, Scope_id scope_id);
 
 #endif // SYMBOL_TABLE_H
 

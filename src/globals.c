@@ -16,3 +16,10 @@ Pos prev_pos = {0};
 
 Env env = {0};
 
+Symbol_collection symbol_tables;
+
+Name_darr scope_to_name;
+
+Scope_id_darr scope_id_to_parent;
+
+Hash_table_stable_c_forward_struct c_forward_struct_tbl;

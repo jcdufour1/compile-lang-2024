@@ -88,7 +88,10 @@ for generics:
     -- use views instead of vecs in ast and ir nodes?
     -- tokenizer could tokenize as parsing happens (with look ahead of about 3 tokens) instead of getting all tokens of file at once
 - possible optimizations to increase performance:
-    -- remove Ir_name; when adding new ir object to Ir_table, add object name to block_item_names (each Ir_block should have block_item_names darr)
+    -- remove function serialize_name_symbol_table (hash Name directly instead)
+         this is the most expensive function of the compiler
+    -- remove hash_table_stable_* to increase performance (by not requiring hash_table_lookups for iterating over defs)
+         or make hash_table_stable_iter* more efficient by storing precomputed hash index in array
 - test case for int value being used as lang_type generic arg and vice versa
 - if using "--no-prelude", and prelude functionality is still used anyway, the compiler should print
     proper error instead of crashing

@@ -6,23 +6,11 @@
 #include <ir_forward_decl.h>
 #include <ulang_type.h>
 #include <msg.h>
-
-typedef struct {
-    Vec_base info;
-    Symbol_collection* buf;
-} Sym_coll_darr;
-
-// TODO: consider if this should be moved
-typedef struct {
-    Vec_base info;
-    Scope_id* buf;
-} Scope_id_darr;
+#include <hash_tables.h>
 
 typedef struct Env_ {
     uint32_t error_count;
     uint32_t warning_count;
-
-    Sym_coll_darr symbol_tables;
 
     // needed to prevent infinite recursion when printing errors
     bool silent_generic_resol_errors;
@@ -30,10 +18,10 @@ typedef struct Env_ {
     Ulang_type parent_fn_rtn_type;
 
     Name_darr fun_implementations_waiting_to_resolve;
-    Function_decl_tbl function_decl_tbl;
+    Hash_table_function_decl_was_encountered function_decl_tbl;
     
     Name_darr struct_like_waiting_to_resolve;
-    Usymbol_table struct_like_tbl;
+    Hash_table_stable_uast struct_like_tbl;
 
     Strv mod_path_main_fn;
     Uname name_main_fn;
@@ -50,6 +38,11 @@ typedef struct Env_ {
     bool do_initialize_globals;
 
     Strv mod_path_curr_file;
+
+    Hash_table_stable_raw_union_of_enum raw_union_of_enum;
+    Hash_table_stable_struct_to_struct struct_to_struct;
+    Hash_table_stable_file_path_to_text file_path_to_text;
+    Hash_table_stable_function_decls function_decls;
 } Env;
 
 // TODO: move this function?

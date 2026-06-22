@@ -56,6 +56,7 @@ else
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
+# TODO: this may not work because program is not always rebuilt. maybe make SHOULD_PRINT_POSIX_MSG a runtime argument instead?
 ifdef SHOULD_PRINT_POSIX_MSG
 	C_FLAGS += -D PRINT_POSIX_MSG
 endif

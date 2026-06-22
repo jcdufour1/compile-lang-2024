@@ -126,6 +126,56 @@ static void ulang_type_gen_ulang_type_wrap(Uast_type ulang_type) {
     ulang_type_gen_internal_wrap(ulang_type, true);
 }
 
+static void ulang_type_gen_new_define(Uast_type type, bool implementation) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        ulang_type_gen_new_define(darr_at(type.sub_types, idx), implementation);
+    }
+
+    if (type.name.is_topmost) {
+        return;
+    }
+    if (type.sub_types.info.count > 0) {
+        return;
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&a_gen, &function, "#define ");
+    extend_uast_name_lower(&function, type.name);
+    string_extend_cstr(&a_gen, &function, "_new(pos ");
+
+    for (size_t idx = 0; idx < type.members.info.count; idx++) {
+        string_extend_cstr(&a_gen, &function, ", ");
+
+        Member curr = darr_at(type.members, idx);
+
+        string_extend_strv(&a_gen, &function, curr.name);
+    }
+
+    string_extend_cstr(&a_gen, &function, ")");
+
+    if (implementation) {
+        string_extend_cstr(&a_gen, &function, "    (");
+        extend_uast_name_lower(&function, type.name);
+        string_extend_cstr(&a_gen, &function, "_new_internal(pos, loc_new() ");
+
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            string_extend_cstr(&a_gen, &function, ", ");
+
+            Member curr = darr_at(type.members, idx);
+
+            string_extend_lower(&a_gen, &function, curr.name);
+        }
+
+        string_extend_cstr(&a_gen, &function, "))");
+
+    } else {
+        string_extend_cstr(&a_gen, &function, ";");
+    }
+
+    gen_gen(FMT"\n", strv_print(string_to_strv(function)));
+}
+
 static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         ulang_type_gen_new_internal(darr_at(type.sub_types, idx), implementation);
@@ -144,7 +194,7 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
     extend_uast_name_first_upper(&function, type.name);
     string_extend_cstr(&a_gen, &function, " ");
     extend_uast_name_lower(&function, type.name);
-    string_extend_cstr(&a_gen, &function, "_new(Pos pos ");
+    string_extend_cstr(&a_gen, &function, "_new_internal(Pos pos, Loc loc");
 
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
         string_extend_cstr(&a_gen, &function, ", ");
@@ -161,9 +211,15 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
     if (implementation) {
         string_extend_cstr(&a_gen, &function, "{\n");
 
+        string_extend_cstr(&a_gen, &function, "    (void) (loc);\n");
+
         string_extend_cstr(&a_gen, &function, "    return (");
         extend_uast_name_first_upper(&function, type.name);
-        string_extend_cstr(&a_gen, &function, ") {.pos = pos");
+        string_extend_cstr(&a_gen, &function, ") {.pos = pos\n");
+        string_extend_cstr(&a_gen, &function, "#ifndef NDEBUG\n");
+        string_extend_cstr(&a_gen, &function, " \n, .loc = loc\n");
+        string_extend_cstr(&a_gen, &function, "#endif // NDEBUG\n");
+    
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             string_extend_cstr(&a_gen, &function, ", ");
@@ -188,6 +244,11 @@ static void ulang_type_gen_new_internal(Uast_type type, bool implementation) {
 
 // "constructors" for ulang_types
 static void gen_ulang_type_new_define(Uast_type ulang_type) {
+    ulang_type_gen_new_define(ulang_type, true);
+}
+
+// "constructors" for ulang_types
+static void gen_ulang_type_new_internal(Uast_type ulang_type) {
     ulang_type_gen_new_internal(ulang_type, true);
 }
 
@@ -366,6 +427,7 @@ static void gen_ulang_type_common(const char* file_path, Uast_type ulang_type) {
 
     gen_uast_new_forward_decl(ulang_type);
     gen_ulang_type_new_define(ulang_type);
+    gen_ulang_type_new_internal(ulang_type);
     gen_ulang_type_get_ptr_depth(ulang_type);
     gen_ulang_type_set_ptr_depth(ulang_type);
     gen_ulang_type_add_ptr_depth(ulang_type);

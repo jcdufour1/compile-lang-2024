@@ -23,6 +23,9 @@ static inline void string_append(Arena* arena, String* str, char ch) {
 }
 
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
+    if (!cstr) {
+        return;
+    }
     for (;*cstr; cstr++) {
         darr_append(arena, str, *cstr);
     }

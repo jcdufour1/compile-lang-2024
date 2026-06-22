@@ -597,6 +597,21 @@ static Uast_type uast_gen_uast(void) {
 }
 
 static void gen_all_uasts(const char* file_path, bool implementation) {
+    {
+        unwrap(!global_output);
+        global_output = fopen(file_path, "w");
+        if (!global_output) {
+            fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
+            exit(1);
+        }
+
+        gen_gen("static Strv uast_def_print_internal_simple(const Uast_def* def, Indent indent) {\n");
+        gen_gen("    return uast_def_print_internal_simple(UAST_LOG, def, indent);\n");
+        gen_gen("}\n");
+
+        close_file(global_output);
+    }
+
     Uast_type uast = uast_gen_uast();
     unwrap(uast.name.type.count > 0);
     gen_uasts_common(file_path, implementation, uast);

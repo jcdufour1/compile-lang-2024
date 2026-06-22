@@ -11,6 +11,8 @@
 #include <ulang_type_is_equal.h>
 #include <resolve_generics.h>
 
+static Hash_table_expand_again expand_again = {0};
+
 // TODO: consider if def definition has pointer_depth > 0
 
 typedef enum {
@@ -252,13 +254,11 @@ static bool expand_def_ulang_type_array(
 
     Uast_expr* count_rhs = rhs;
     if (is_rhs) {
-        if (rhs->type != UAST_ARRAY_LITERAL) {
-            msg_todo("", dest_pos);
-            return false;
+        if (rhs->type == UAST_ARRAY_LITERAL) {
+            Uast_array_literal* rhs_arr = uast_array_literal_unwrap(rhs);
+            Uast_int* new_count = uast_int_new(rhs_arr->pos, (int64_t)rhs_arr->members.info.count);
+            count_rhs = uast_literal_wrap(uast_int_wrap(new_count));
         }
-        Uast_array_literal* rhs_arr = uast_array_literal_unwrap(rhs);
-        Uast_int* new_count = uast_int_new(rhs_arr->pos, (int64_t)rhs_arr->members.info.count);
-        count_rhs = uast_literal_wrap(uast_int_wrap(new_count));
     }
     
     Ulang_type dummy = {0};
@@ -1148,7 +1148,7 @@ static EXPAND_NAME_STATUS expand_def_symbol(
     EXPAND_NAME_STATUS status = expand_def_name(new_lang_type, new_expr, &sym->name, sym->pos);
 
     Uast_def* def = NULL;
-    if (expand_again_lookup(&def, sym->name)) {
+    if (hash_table_lookup_expand_again(&def, &expand_again, serialize_name_symbol_table(&a_pass, sym->name))) {
         if (!expand_def_def(def, is_rhs, rhs)) {
             status = EXPAND_NAME_ERROR;
         }
@@ -1511,7 +1511,7 @@ static bool expand_def_def(Uast_def* def, bool is_rhs, Uast_expr* rhs) {
     env.mod_path_curr_file = old_mod_path_curr_file;
 
     if (must_expand_again) {
-        expand_again_add(&a_pass, def);
+        hash_table_add_expand_again(&expand_again, serialize_name_symbol_table(&a_pass, uast_def_get_name(def)), def);
     }
     must_expand_again = old_must_expand_again;
 

@@ -684,13 +684,13 @@ static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_d
 #   endif // NDEBUG
        
     Tast_raw_union_def* cached_def = NULL;
-    if (raw_union_of_enum_lookup(&cached_def, enum_def->base.name)) {
+    if (hash_table_stable_lookup_raw_union_of_enum(&cached_def, &env.raw_union_of_enum, serialize_name_symbol_table(&a_temp, enum_def->base.name))) {
         return cached_def;
     }
 
     Tast_raw_union_def* union_def = tast_raw_union_def_new(enum_def->pos, enum_def->base);
     union_def->base.name = util_literal_name_new_prefix(union_def->base.name.base);
-    unwrap(raw_union_of_enum_add(union_def, enum_def->base.name));
+    unwrap(hash_table_stable_add_raw_union_of_enum(&env.raw_union_of_enum, serialize_name_symbol_table(&a_leak/*TODO*/, enum_def->base.name), union_def));
     load_raw_union_def(union_def);
     return union_def;
 }
@@ -698,7 +698,7 @@ static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_d
 static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_darr membs, Pos pos) {
     Tast_struct_def* cached_def = NULL;
     // TODO: rename this hash table
-    if (struct_to_struct_lookup(&cached_def, enum_name)) {
+    if (hash_table_stable_lookup_struct_to_struct(&cached_def, &env.struct_to_struct, serialize_name_symbol_table(&a_temp, enum_name))) {
         return cached_def;
     }
 
@@ -706,7 +706,7 @@ static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_da
         .members = membs,
         .name = util_literal_name_new_prefix(enum_name.base)
     }));
-    unwrap(struct_to_struct_add(new_def, enum_name));
+    unwrap(hash_table_stable_add_struct_to_struct(&env.struct_to_struct, serialize_name_symbol_table(&a_leak/*TODO*/, enum_name), new_def));
     load_struct_def(new_def);
     return new_def;
 }

@@ -6,6 +6,7 @@
 #include <auto_gen_ulang_type.h>
 #include <auto_gen_lang_type.h>
 #include <auto_gen_ir_lang_type.h>
+#include <auto_gen_hash_tables.h>
 
 static const char* get_path(const char* build_dir, const char* file_name_in_dir) {
     String path = {0};
@@ -44,6 +45,11 @@ int main(int argc, char** argv) {
     unwrap(!global_output);
 
     gen_all_irs(get_path(argv[1], "ir.h"), true);
+    unwrap(!global_output);
+
+    gen_all_hash_tables(get_path(argv[1], "hash_table_structs.h"), false);
+    unwrap(!global_output);
+    gen_all_hash_tables(get_path(argv[1], "hash_tables.h"), true);
     unwrap(!global_output);
 }
 
