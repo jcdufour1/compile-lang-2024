@@ -282,10 +282,6 @@ static void gen_hash_table(
             gen_gen("    Strv key,\n");
             gen_gen("    Scope_id scope_id\n");
             gen_gen(") {\n");
-            //gen_gen("    if (scope_id >= collection->info.count) {\n");
-            //gen_gen("        return false;\n");
-            //gen_gen("    }\n");
-            //gen_gen("\n");
             gen_gen("    Scope_id curr_scope = scope_id;\n");
             gen_gen("    while (1) {\n");
             gen_gen("        if (curr_scope < collection->info.count && hash_table_stable_lookup_node_"FMT"(result, darr_at_ref(collection, curr_scope), key)) {\n", strv_print(suffix));
@@ -301,10 +297,6 @@ static void gen_hash_table(
             gen_gen("}\n");
 
             gen_gen("static bool hash_table_scoped_lookup_"FMT"("FMT"* result, Hash_table_stable_"FMT"_darr* collection, Strv key, Scope_id scope_id) {\n", strv_print(suffix), strv_print(type_with_ptr), strv_print(suffix));
-            //gen_gen("    if (scope_id >= collection->info.count) {\n");
-            //gen_gen("        return false;\n");
-            //gen_gen("    }\n");
-            //gen_gen("\n");
             gen_gen("    Scope_id curr_scope = scope_id;\n");
             gen_gen("    if (curr_scope == SCOPE_NOT) {\n");
             gen_gen("        return false;\n");
@@ -427,13 +419,7 @@ static void gen_hash_table(
         gen_gen("} Hash_table_scoped_iter_node_"FMT";\n\n", strv_print(suffix));
         gen_gen("typedef Hash_table_scoped_iter_node_"FMT" Hash_table_scoped_iter_"FMT";\n", strv_print(suffix), strv_print(suffix));
 
-        //gen_gen("#define Hash_table_stable_iter_"FMT" Hash_table_iter_node_"FMT"\n", strv_print(suffix), strv_print(suffix));
-        //gen_gen("typedef struct {\n");
-        //gen_gen("    size_t index;\n");
-        //gen_gen("} Hash_table_stable_iter_"FMT";\n\n", strv_print(suffix));
-
         gen_gen("typedef Hash_table_iter_node_"FMT" Hash_table_stable_iter_node_"FMT";\n", strv_print(suffix), strv_print(suffix));
-        //gen_gen("typedef Hash_table_stable_iter_node_"FMT" Hash_table_stable_iter_node_"FMT"");
 
         if (do_scoped_lookup) {
             gen_gen("typedef struct {\n");
@@ -467,27 +453,15 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("#include <util.h>\n");
         gen_gen("WIMPLICIT_FALLTHROUGH_IGNORE_START\n");
         gen_gen("WSIGN_CONVERSION_IGNORE_START\n");
-        gen_gen("//#define STB_DS_IMPLEMENTATION\n");
         gen_gen("#include <stb_ds.h>\n");
         gen_gen("WIMPLICIT_FALLTHROUGH_IGNORE_END\n");
         gen_gen("WSIGN_CONVERSION_IGNORE_END\n");
         gen_gen("\n");
-        //gen_gen("#include <uast_utils.h>\n");
-        //gen_gen("#include <tast_utils.h>\n");
-        //gen_gen("#include <ir_utils.h>\n");
-        //gen_gen("#include <symbol_log.h>\n");
         gen_gen("\n");
-        gen_gen("#define SYM_TBL_DEFAULT_CAPACITY 1\n");
-        gen_gen("#define SYM_TBL_MAX_DENSITY (0.6f) // TODO: change this to an integer\n");
-        gen_gen("\n");
-        gen_gen("//\n");
-        gen_gen("// util\n");
-        gen_gen("//\n");
         gen_gen("static size_t hash_table_calculate_idx(Strv key, size_t capacity) {\n");
         gen_gen("    assert(capacity > 0);\n");
         gen_gen("    return stbds_hash_bytes(key.str, key.count, 0)%%capacity;\n");
         gen_gen("}\n");
-        gen_gen("//\n");
 
         gen_gen("typedef struct {\n");
         gen_gen("    Vec_base info;\n");
@@ -514,13 +488,6 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    HASH_TABLE_NODE_PREVIOUSLY_OCCUPIED,\n");
         gen_gen("    HASH_TABLE_NODE_OCCUPIED,\n");
         gen_gen("} HASH_TABLE_STATUS;\n");
-
-        // TODO: remove
-        gen_gen("typedef enum {\n");
-        gen_gen("    SYM_TBL_NEVER_OCCUPIED = 0,\n");
-        gen_gen("    SYM_TBL_PREVIOUSLY_OCCUPIED,\n");
-        gen_gen("    SYM_TBL_OCCUPIED,\n");
-        gen_gen("} SYM_TBL_STATUS;\n");
     }
 
     gen_hash_table(sv("uast"), sv("Uast_def"), 1, true, implementation);
@@ -536,12 +503,9 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
     gen_hash_table(sv("function_decls"), sv("Uast_function_decl"), 1, false, implementation);
 
     if (implementation) {
-        //gen_gen("#define Hash_table_stable_uast hash_table");
-        
         gen_gen("extern Hash_table_stable_c_forward_struct c_forward_struct_tbl;\n");
 
         gen_gen("static bool c_forward_struct_tbl_lookup(Name** result, Name key) {\n");
-        //gen_gen("    bool status = hash_table_scoped_lookup_ir(result, &symbol_tables.ir_table, serialize_name_symbol_table(&a_leak/*TODO*/, key), key.scope_id);\n");
         gen_gen("    return hash_table_stable_lookup_c_forward_struct(result, &c_forward_struct_tbl, serialize_name_symbol_table(&a_leak/*TODO*/, key));\n");
         gen_gen("}\n");
 
@@ -568,8 +532,6 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    *darr_at_ref(&scope_to_name, key) = scope_name;\n");
         gen_gen("}\n");
         gen_gen("\n");
-
-        //gen_gen("#define usym_tbl_iter_new ((Hash_table_stable_iter_uast) {0})");
     } else {
         // TODO: this symbol_collection system is suboptional (come up with a better system):
         //   - Expand_again is only used in one pass, but is stored everywhere
@@ -578,7 +540,6 @@ static void gen_all_hash_tables(const char* file_path, bool implementation) {
         gen_gen("    Hash_table_stable_uast_darr usymbol_table;\n");
         gen_gen("    Hash_table_stable_tast_darr symbol_table;\n");
         gen_gen("    Hash_table_stable_ir_darr ir_table;\n");
-        //gen_gen("    Hash_table_stable_expand_again expand_again_table;\n");
         gen_gen("} Symbol_collection;\n");
 
         gen_gen("extern Symbol_collection symbol_tables;\n");
